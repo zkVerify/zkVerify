@@ -136,7 +136,7 @@ pub mod pallet {
         type RuntimeEvent: From<Event<Self, I>>
             + IsType<<Self as frame_system::Config>::RuntimeEvent>;
         /// Proof verified call back
-        type OnProofVerified: OnProofVerified;
+        type OnProofVerified: OnProofVerified<Self::AccountId>;
         /// Weights
         type WeightInfo: hp_verifiers::WeightInfo<I>;
     }
@@ -258,7 +258,11 @@ pub mod pallet {
             };
             I::verify_proof(&vk, &proof, &pubs)
                 .map(|_x| {
-                    T::OnProofVerified::on_proof_verified(compute_hash::<I>(&pubs, &vk_or_hash))
+                    T::OnProofVerified::on_proof_verified(
+                        None,
+                        None,
+                        compute_hash::<I>(&pubs, &vk_or_hash),
+                    )
                 })
                 .map_err(Error::<T, I>::from)?;
             Ok(().into())

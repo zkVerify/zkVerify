@@ -91,8 +91,8 @@ impl sp_inherents::InherentDataProvider for InherentDataProvider {
 /// happened.
 /// This must be implemented by proof storage pallets (e.g. pallet-poe) to subscribe to proof verification events.
 #[impl_trait_for_tuples::impl_for_tuples(10)]
-pub trait OnProofVerified {
-    fn on_proof_verified(pubs_hash: H256);
+pub trait OnProofVerified<A> {
+    fn on_proof_verified(account_id: Option<A>, chain_id: Option<u32>, pubs_hash: H256);
 }
 
 /// Wrapper around u64 for MaxStorageAttestations

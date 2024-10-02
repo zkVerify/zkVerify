@@ -64,8 +64,12 @@ pub mod pallet {
         type WeightInfo: WeightInfo;
     }
 
-    impl<T: Config> hp_poe::OnProofVerified for Pallet<T> {
-        fn on_proof_verified(pubs_hash: H256) {
+    impl<T: Config> hp_poe::OnProofVerified<<T as frame_system::Config>::AccountId> for Pallet<T> {
+        fn on_proof_verified(
+            _account_id: Option<<T as frame_system::Config>::AccountId>,
+            _chain_id: std::option::Option<u32>,
+            pubs_hash: H256,
+        ) {
             Self::insert(pubs_hash);
         }
     }

@@ -1,0 +1,44 @@
+[package]
+name = "pay-on-demand-poc"
+version = "0.1.0"
+description = "A pallet to experiment how to generate a pay on demand for attestation"
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license = "Apache-2.0"
+
+[dependencies]
+log = "0.4.20"
+binary-merkle-tree = { workspace = true }
+
+codec = { workspace = true }
+scale-info = { workspace = true, features = ["derive"] }
+
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+sp-std = { workspace = true }
+
+hp-poe = { workspace = true }
+
+[dev-dependencies]
+pallet-balances = { workspace = true, features = ["std"] }
+sp-runtime = { workspace = true, features = ["std"] }
+sp-core = { workspace = true, features = ["std"] }
+sp-io = { workspace = true, features = ["std"] }
+
+[features]
+default = ["std"]
+runtime-benchmarks = [
+    "frame-support/runtime-benchmarks",
+    "frame-system/runtime-benchmarks",
+]
+std = [
+    "codec/std",
+    "scale-info/std",
+    "frame-support/std",
+    "frame-system/std",
+    "binary-merkle-tree/std",
+    "hp-poe/std",
+]
+try-runtime = ["frame-support/try-runtime", "frame-system/try-runtime"]
