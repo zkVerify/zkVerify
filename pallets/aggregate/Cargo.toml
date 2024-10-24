@@ -1,7 +1,7 @@
 [package]
-name = "pay-on-demand-poc"
+name = "aggregate-pallet"
 version = "0.1.0"
-description = "A pallet to experiment how to generate a pay on demand for attestation"
+description = "A pallet to aggregate proof statements based on domain id"
 authors.workspace = true
 edition.workspace = true
 homepage.workspace = true

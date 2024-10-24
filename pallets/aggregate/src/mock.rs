@@ -16,16 +16,14 @@
 
 use frame_support::{derive_impl, parameter_types};
 use sp_core::{ConstU128, ConstU32};
-use sp_runtime::{
-    traits::{IdentityLookup, Saturating},
-    BuildStorage, Perbill, Percent, Permill,
-};
+use sp_runtime::{traits::IdentityLookup, BuildStorage, Perbill};
 
-use crate::ComputeFeeFor;
+use crate::{ComputeFeeFor, Domains};
 
 parameter_types! {
     pub const AttestationSize: u32 = 4;
     pub const MaxPublishedPerBlock: u32 = 2;
+    pub const MaxPendingPublishQueueSize: u32 = 2;
 }
 
 pub const FEE_PER_STATEMENT: u32 = 100;
@@ -38,6 +36,10 @@ pub const ESTIMATED_FEE_CORRECTED: u32 = FEE_PER_STATEMENT_CORRECTED * Attestati
 pub type Balance = u128;
 pub type AccountId = u64;
 
+pub const DOMAIN_ID: u32 = 51;
+pub const DOMAIN: Option<u32> = Some(DOMAIN_ID);
+pub const NOT_REGISTERED_DOMAIN_ID: u32 = 911;
+pub const NOT_REGISTERED_DOMAIN: Option<u32> = Some(NOT_REGISTERED_DOMAIN_ID);
 pub const NUM_TEST_ACCOUNTS: usize = 4;
 pub const NO_FOUND_USER: AccountId = 999;
 pub const PUBLISHER_USER: AccountId = 100;
@@ -78,6 +80,8 @@ impl crate::Config for Test {
 
     type MaxPublishedPerBlock = MaxPublishedPerBlock;
 
+    type MaxPendingPublishQueueSize = MaxPendingPublishQueueSize;
+
     type Currency = Balances;
 
     type EstimateCallFee = frame_support::traits::ConstU32<ESTIMATED_FEE>;
@@ -91,7 +95,7 @@ frame_support::construct_runtime!(
     {
         System: frame_system,
         Balances: pallet_balances,
-        Pod: crate,
+        Aggregate: crate,
     }
 );
 
@@ -134,6 +138,16 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
     let mut ext = sp_io::TestExternalities::from(t);
 
-    ext.execute_with(|| System::set_block_number(1));
+    ext.execute_with(|| {
+        System::set_block_number(1);
+        Domains::<Test>::insert(
+            DOMAIN_ID,
+            crate::Domain::<Test>::create(
+                DOMAIN_ID,
+                1,
+                <Test as crate::Config>::AttestationSize::get(),
+            ),
+        );
+    });
     ext
 }
