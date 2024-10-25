@@ -17,123 +17,16 @@
 
 use super::*;
 use crate::mock;
-use crate::mock::RuntimeEvent as TestEvent;
 use crate::mock::*;
 use frame_support::assert_ok;
 use frame_support::traits::Hooks;
-use frame_system::{EventRecord, Phase, RawOrigin};
+use frame_system::RawOrigin;
 use hp_poe::OnProofVerified;
 use sp_core::H256;
 use sp_runtime::SaturatedConversion;
+use utility::*;
 
-fn _assert_evt_gen(contains: bool, event: Event<Test>, context: &str) {
-    let message = match contains {
-        true => format!("{context} - CANNOT FIND {:?}", event),
-        false => format!("{context} - FOUND {:?}", event),
-    };
-    assert_eq!(
-        contains,
-        mock::System::events().contains(&EventRecord {
-            phase: Phase::Initialization,
-            event: TestEvent::Aggregate(event),
-            topics: vec![],
-        }),
-        "{message}"
-    )
-}
-
-fn assert_evt(event: Event<Test>, context: &str) {
-    _assert_evt_gen(true, event, context);
-}
-
-fn assert_not_evt(event: Event<Test>, context: &str) {
-    _assert_evt_gen(false, event, context);
-}
-
-fn _assert_proof_evt_gen(contains: bool, domain_id: u32, id: u64, value: H256) {
-    _assert_evt_gen(
-        contains,
-        Event::ProofVerified {
-            domain_id,
-            aggregation_id: id,
-            statement: value,
-        },
-        "Search new proof",
-    );
-}
-
-fn assert_proof_evt(domain_id: u32, id: u64, value: H256) {
-    _assert_proof_evt_gen(true, domain_id, id, value)
-}
-
-fn assert_not_proof_evt(domain_id: u32, id: u64, value: H256) {
-    _assert_proof_evt_gen(false, domain_id, id, value)
-}
-
-fn _assert_ready_evt_gen(contains: bool, domain_id: u32, id: u64) {
-    _assert_evt_gen(
-        contains,
-        Event::ReadyToAggregate {
-            domain_id,
-            aggregation_id: id,
-        },
-        "Available aggregation",
-    );
-}
-
-fn assert_ready_evt(domain_id: u32, id: u64) {
-    _assert_ready_evt_gen(true, domain_id, id);
-}
-
-fn assert_not_ready_evt(domain_id: u32, id: u64) {
-    _assert_ready_evt_gen(false, domain_id, id);
-}
-
-fn _assert_cannot_aggregate_evt_gen(contains: bool, statement: H256, cause: CannotAggregateCause) {
-    _assert_evt_gen(
-        contains,
-        Event::CannotAggregate { statement, cause },
-        "Cannot aggregate error",
-    );
-}
-
-fn assert_cannot_aggregate_evt(statement: H256, cause: CannotAggregateCause) {
-    _assert_cannot_aggregate_evt_gen(true, statement, cause);
-}
-
-fn assert_new_receipt(domain: u32, id: u64, expected_receipt: Option<H256>) {
-    let matched = mock::System::events()
-        .iter()
-        .find(|record| {
-            matches!(record.event, TestEvent::Aggregate(Event::<Test>::NewAggregationReceipt {
-                    domain_id,
-                    aggregation_id,
-                    receipt,
-                }
-            ) if domain_id == domain && aggregation_id == id && expected_receipt.map(|h| h == receipt).unwrap_or(true))
-        })
-        .is_some();
-    assert!(
-        matched,
-        "Cannot find aggregation receipt [{domain}-{id}]-{expected_receipt:?}"
-    );
-}
-
-fn statement_entry(account: u64, statement: H256) -> StatementEntry<AccountId, Balance> {
-    StatementEntry::new(account, FEE_PER_STATEMENT_CORRECTED as u128, statement)
-}
-
-fn count_all_statements() -> usize {
-    Domains::<Test>::iter_values()
-        .map(|d| {
-            d.next.statements.iter().count()
-                + d.should_publish
-                    .values()
-                    .map(|a| a.statements.len())
-                    .sum::<usize>()
-        })
-        .sum()
-}
+mod utility;
 
 #[test]
 fn should_add_a_proof() {

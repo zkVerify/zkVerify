@@ -16,10 +16,10 @@
 
 use frame_support::weights::RuntimeDbWeight;
 use frame_support::{derive_impl, parameter_types};
-use sp_core::{ConstU128, ConstU32, Get, H256};
+use sp_core::{ConstU128, ConstU32};
 use sp_runtime::{traits::IdentityLookup, BuildStorage, Perbill};
 
-use crate::{AccountOf, Aggregation, BalanceOf, ComputeFeeFor, Domains, StatementEntry};
+use crate::{ComputeFeeFor, Domains};
 
 parameter_types! {
     pub const AttestationSize: u32 = 4;
@@ -132,23 +132,6 @@ impl pallet_balances::Config for Test {
     type MaxFreezes = ();
     type RuntimeHoldReason = RuntimeHoldReason;
     type RuntimeFreezeReason = ();
-}
-
-impl Aggregation<Test> {
-    pub(crate) fn add_statement(
-        &mut self,
-        account: AccountOf<Test>,
-        reserve: BalanceOf<Test>,
-        statement: H256,
-    ) {
-        self.statements
-            .try_push(StatementEntry::new(account, reserve, statement))
-            .unwrap();
-    }
-}
-
-pub fn db_weights() -> RuntimeDbWeight {
-    <<Test as frame_system::Config>::DbWeight as Get<RuntimeDbWeight>>::get()
 }
 
 // Build genesis storage according to the mock runtime.
