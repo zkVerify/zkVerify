@@ -14,17 +14,18 @@
 // limitations under the License.
 #![cfg(test)]
 
+use frame_support::traits::EnsureOrigin;
 use frame_support::weights::RuntimeDbWeight;
 use frame_support::{derive_impl, parameter_types};
+use frame_system::RawOrigin;
 use sp_core::{ConstU128, ConstU32};
 use sp_runtime::{traits::IdentityLookup, BuildStorage, Perbill};
 
 use crate::{ComputeFeeFor, Domains};
 
 parameter_types! {
-    pub const AttestationSize: u32 = 4;
-    pub const MaxPublishedPerBlock: u32 = 3;
-    pub const MaxPendingPublishQueueSize: u32 = 6;
+    pub const AttestationSize: u32 = 32;
+    pub const MaxPendingPublishQueueSize: u32 = 16;
 }
 
 pub const FEE_PER_STATEMENT: u32 = 100;
@@ -41,15 +42,20 @@ pub const DOMAIN_ID: u32 = 51;
 pub const DOMAIN: Option<u32> = Some(DOMAIN_ID);
 pub const NOT_REGISTERED_DOMAIN_ID: u32 = 911;
 pub const NOT_REGISTERED_DOMAIN: Option<u32> = Some(NOT_REGISTERED_DOMAIN_ID);
-pub const NUM_TEST_ACCOUNTS: usize = 4;
+pub const NUM_TEST_ACCOUNTS: usize = 6;
 pub const NO_FOUND_USER: AccountId = 999;
 pub const PUBLISHER_USER: AccountId = 100;
 pub const USER_1: AccountId = 42;
 pub const USER_2: AccountId = 24;
+pub const USER_DOMAIN_1: AccountId = 42_000;
+pub const USER_DOMAIN_2: AccountId = 24_000;
+pub const ROOT_USER: AccountId = 666;
 
 pub static USERS: [(AccountId, Balance); NUM_TEST_ACCOUNTS] = [
     (USER_1, 42_000_000_000),
     (USER_2, 24_000_000_000),
+    (USER_DOMAIN_1, 100_000_000_000),
+    (USER_DOMAIN_2, 200_000_000_000),
     (PUBLISHER_USER, 1_000_000_000),
     (NO_FOUND_USER, (FEE_PER_STATEMENT / 2) as u128),
 ];
@@ -64,6 +70,14 @@ impl MockWeightInfo {
 impl crate::WeightInfo for MockWeightInfo {
     fn aggregate() -> frame_support::weights::Weight {
         frame_support::weights::Weight::from_parts(Self::REF_TIME, Self::PROOF_SIZE)
+    }
+
+    fn register_domain() -> frame_support::weights::Weight {
+        todo!()
+    }
+
+    fn unregister_domain() -> frame_support::weights::Weight {
+        todo!()
     }
 }
 
@@ -82,6 +96,25 @@ impl ComputeFeeFor<Balance> for PercentComputeFeeFor {
     }
 }
 
+pub struct MockManager;
+impl<O: Into<Result<RawOrigin<AccountId>, O>> + From<RawOrigin<AccountId>>> EnsureOrigin<O>
+    for MockManager
+{
+    type Success = ();
+
+    fn try_origin(o: O) -> Result<Self::Success, O> {
+        o.into().and_then(|o| match o {
+            RawOrigin::Signed(ROOT_USER) => Ok(()),
+            r => Err(O::from(r)),
+        })
+    }
+
+    #[cfg(feature = "runtime-benchmarks")]
+    fn try_successful_origin() -> Result<O, ()> {
+        Ok(O::from(RawOrigin::Signed(ROOT_USER)))
+    }
+}
+
 impl crate::Config for Test {
     type RuntimeEvent = RuntimeEvent;
     type WeightInfo = MockWeightInfo;
@@ -95,6 +128,8 @@ impl crate::Config for Test {
     type EstimateCallFee = frame_support::traits::ConstU32<ESTIMATED_FEE>;
 
     type ComputeFeeFor = PercentComputeFeeFor;
+
+    type ManagerOrigin = MockManager;
 }
 
 // Configure a mock runtime to test the pallet.
@@ -153,6 +188,7 @@ pub fn test() -> sp_io::TestExternalities {
             DOMAIN_ID,
             crate::Domain::<Test>::create(
                 DOMAIN_ID,
+                USER_DOMAIN_1,
                 1,
                 <Test as crate::Config>::AggregationSize::get(),
                 <Test as crate::Config>::MaxPendingPublishQueueSize::get(),

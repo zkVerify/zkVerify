@@ -18,12 +18,12 @@ scale-info = { workspace = true, features = ["derive"] }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
 sp-std = { workspace = true }
+sp-runtime = { workspace = true }
 
 hp-poe = { workspace = true }
 
 [dev-dependencies]
 pallet-balances = { workspace = true, features = ["std"] }
-sp-runtime = { workspace = true, features = ["std"] }
 sp-core = { workspace = true, features = ["std"] }
 sp-io = { workspace = true, features = ["std"] }
 
@@ -36,6 +36,7 @@ runtime-benchmarks = [
 std = [
     "codec/std",
     "scale-info/std",
+    "sp-runtime/std",
     "frame-support/std",
     "frame-system/std",
     "binary-merkle-tree/std",

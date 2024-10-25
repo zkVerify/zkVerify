@@ -85,6 +85,16 @@ pub fn db_weights() -> RuntimeDbWeight {
     <<Test as frame_system::Config>::DbWeight as Get<RuntimeDbWeight>>::get()
 }
 
+pub fn registered_ids() -> Vec<u32> {
+    mock::System::events()
+        .iter()
+        .filter_map(|record| match record.event {
+            TestEvent::Aggregate(Event::<Test>::NewDomain { id, .. }) => Some(id),
+            _ => None,
+        })
+        .collect()
+}
+
 fn assert_evt_gen(contains: bool, event: Event<Test>, context: &str) {
     let message = match contains {
         true => format!("{context} - CANNOT FIND {:?}", event),

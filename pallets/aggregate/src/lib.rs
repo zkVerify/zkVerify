@@ -23,6 +23,8 @@ mod should;
 
 pub trait WeightInfo {
     fn aggregate() -> Weight;
+    fn register_domain() -> Weight;
+    fn unregister_domain() -> Weight;
 }
 
 #[frame_support::pallet]
@@ -34,6 +36,7 @@ pub mod pallet {
     use frame_support::{sp_runtime::testing::H256, BoundedVec};
     use frame_system::ensure_signed;
     use frame_system::pallet_prelude::{BlockNumberFor, OriginFor};
+    use sp_runtime::traits::BadOrigin;
 
     pub type AccountOf<T> = <T as frame_system::Config>::AccountId;
     pub type BalanceOf<T> =
@@ -57,6 +60,9 @@ pub mod pallet {
         /// for a single domain to wait a publish_aggregation call.
         #[pallet::constant]
         type MaxPendingPublishQueueSize: Get<u32>;
+        /// An origin that can request a domain be registered on-chain without a deposit or fee, or
+        /// manage existing not owned domains.
+        type ManagerOrigin: EnsureOrigin<Self::RuntimeOrigin>;
         /// The currency trait.
         type Currency: ReservableCurrency<Self::AccountId>;
         /// What should we use to estimate publish aggregation cost (pallet-transaction-payment implement it)
@@ -203,6 +209,9 @@ pub mod pallet {
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
+        NewDomain {
+            id: u32,
+        },
         ProofVerified {
             statement: H256,
             domain_id: u32,
@@ -244,7 +253,7 @@ pub mod pallet {
     }
 
     /// A complete Verification Key or its hash.
-    #[derive(Clone, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
+    #[derive(Clone, Encode, Decode, TypeInfo, MaxEncodedLen)]
     #[scale_info(skip_type_params(S))]
     pub struct AggregationEntry<A, B, S: Get<u32>> {
         pub(crate) id: u64,
@@ -261,6 +270,12 @@ pub mod pallet {
                 .field("size", &self.size)
                 .field("statements", &self.statements)
                 .finish()
+        }
+    }
+
+    impl<A: PartialEq, B: PartialEq, S: Get<u32>> PartialEq for AggregationEntry<A, B, S> {
+        fn eq(&self, other: &Self) -> bool {
+            self.id == other.id && self.size == other.size && self.statements == other.statements
         }
     }
 
@@ -307,6 +322,7 @@ pub mod pallet {
     #[scale_info(skip_type_params(S, M))]
     pub(crate) struct DomainEntry<A, B, S: Get<u32>, M: Get<u32>> {
         pub id: u32,
+        pub owner: A,
         pub next: AggregationEntry<A, B, S>,
         pub max_aggregation_size: u32,
         pub should_publish: BoundedBTreeMap<u64, AggregationEntry<A, B, S>, M>,
@@ -320,6 +336,7 @@ pub mod pallet {
         /// publish_queue_size is greater than Config::MaxPendingPublishQueueSize.
         pub fn create(
             id: u32,
+            owner: A,
             next_attestation_id: u64,
             max_attestation_size: u32,
             publish_queue_size: u32,
@@ -334,6 +351,7 @@ pub mod pallet {
             );
             Self {
                 id,
+                owner,
                 next: AggregationEntry::create(next_attestation_id, max_attestation_size),
                 max_aggregation_size: max_attestation_size,
                 should_publish: Default::default(),
@@ -367,6 +385,11 @@ pub mod pallet {
         <T as Config>::AggregationSize,
         <T as Config>::MaxPendingPublishQueueSize,
     >;
+
+    /// Domains storage
+    #[pallet::storage]
+    #[pallet::getter(fn next_domain_id)]
+    pub(crate) type NextDomainId<T: Config> = StorageValue<_, u32, ValueQuery>;
 
     /// Domains storage
     #[pallet::storage]
@@ -436,6 +459,71 @@ pub mod pallet {
                 });
             }
             Ok(().into())
+        }
+
+        #[pallet::call_index(1)]
+        pub fn register_domain(
+            origin: OriginFor<T>,
+            aggregation_size: u32,
+            queue_size: Option<u32>,
+        ) -> DispatchResultWithPostInfo {
+            let id = Self::next_domain_id();
+            let owner = ensure_signed(origin)?;
+            Self::deposit_event(Event::NewDomain { id });
+            Domains::<T>::insert(
+                id,
+                Domain::<T>::create(
+                    id,
+                    owner,
+                    1,
+                    aggregation_size,
+                    queue_size.unwrap_or_else(|| T::MaxPendingPublishQueueSize::get()),
+                ),
+            );
+            NextDomainId::<T>::put(id + 1);
+
+            Ok(().into())
+        }
+
+        #[pallet::call_index(2)]
+        pub fn unregister_domain(
+            origin: OriginFor<T>,
+            domain_id: u32,
+        ) -> DispatchResultWithPostInfo {
+            let owner = User::<T::AccountId>::from_origin::<T>(origin)?;
+            Domains::<T>::try_mutate_exists(domain_id, |domain| {
+                *domain = match domain {
+                    Some(domain) if owner.can_remove_domain::<T>(&domain) => None,
+                    Some(_) => Err(BadOrigin)?,
+                    None => Err(Error::<T>::UnknownDomainId)?,
+                };
+                Ok::<_, DispatchError>(())
+            })?;
+            Ok(().into())
+        }
+    }
+
+    #[derive(Debug)]
+    enum User<A> {
+        Owner(A),
+        Manager,
+    }
+
+    impl<A: PartialEq> User<A> {
+        pub fn from_origin<T: Config<AccountId = A>>(
+            origin: OriginFor<T>,
+        ) -> Result<Self, BadOrigin> {
+            match T::ManagerOrigin::ensure_origin(origin.clone()) {
+                Ok(_) => Ok(User::Manager),
+                Err(_) => ensure_signed(origin.clone()).map(User::Owner),
+            }
+        }
+
+        pub fn can_remove_domain<T: Config<AccountId = A>>(&self, domain: &Domain<T>) -> bool {
+            match self {
+                User::Owner(owner) => &domain.owner == owner,
+                User::Manager => true,
+            }
         }
     }
 
