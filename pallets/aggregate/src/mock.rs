@@ -88,8 +88,6 @@ impl crate::Config for Test {
 
     type AggregationSize = AttestationSize;
 
-    type MaxPublishedPerBlock = MaxPublishedPerBlock;
-
     type MaxPendingPublishQueueSize = MaxPendingPublishQueueSize;
 
     type Currency = Balances;

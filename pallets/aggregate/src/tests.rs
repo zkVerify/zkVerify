@@ -431,12 +431,8 @@ mod should_clean_the_published_storage_on_initialize {
     fn should_be_emptied_on_initialize() {
         test().execute_with(|| {
             Published::<Test>::mutate(|published: &mut _| {
-                published
-                    .try_push(Aggregation::<Test>::create(12, 3))
-                    .unwrap();
-                published
-                    .try_push(Aggregation::<Test>::create(13, 3))
-                    .unwrap();
+                published.push(Aggregation::<Test>::create(12, 3));
+                published.push(Aggregation::<Test>::create(13, 3));
             });
 
             Aggregate::on_initialize(36);
@@ -448,12 +444,8 @@ mod should_clean_the_published_storage_on_initialize {
     fn and_return_the_write_db_weight() {
         test().execute_with(|| {
             Published::<Test>::mutate(|published: &mut _| {
-                published
-                    .try_push(Aggregation::<Test>::create(12, 3))
-                    .unwrap();
-                published
-                    .try_push(Aggregation::<Test>::create(13, 3))
-                    .unwrap();
+                published.push(Aggregation::<Test>::create(12, 3));
+                published.push(Aggregation::<Test>::create(13, 3));
             });
 
             let w = Aggregate::on_initialize(36);
@@ -524,38 +516,6 @@ mod should_aggregate {
                 ),
                 Error::<Test>::UnknownDomainId
             );
-        })
-    }
-
-    #[test]
-    fn no_refound_publisher_on_error() {
-        test().execute_with(|| {
-            // Generate the aggregations. We use USER_1 for all operations till the last aggregate
-            // call where we'll use USER_2: in this case if an error occurred we CANNOT refound
-            // USER_2 because the submitters should not pay for a service that they not received.
-            let max = <Test as crate::Config>::MaxPublishedPerBlock::get() as u32;
-            let statements = (max + 1) * <Test as crate::Config>::AggregationSize::get();
-            for _ in 0..statements {
-                Aggregate::on_proof_verified(Some(USER_1), DOMAIN, Default::default());
-            }
-
-            for id in 1..=max {
-                Aggregate::aggregate(RawOrigin::Signed(USER_1).into(), DOMAIN_ID, id as u64)
-                    .unwrap();
-                assert_new_receipt(DOMAIN_ID, id as u64, None);
-            }
-
-            let user_balance = Balances::free_balance(USER_2);
-            assert_err!(
-                Aggregate::aggregate(
-                    RawOrigin::Signed(USER_2).into(),
-                    DOMAIN_ID,
-                    (max + 1) as u64
-                ),
-                Error::<Test>::TooMuchAggregations
-            );
-
-            assert_eq!(user_balance, Balances::free_balance(USER_2));
         })
     }
 }

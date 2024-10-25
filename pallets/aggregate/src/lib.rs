@@ -53,9 +53,6 @@ pub mod pallet {
         /// The (max) size of aggregations.
         #[pallet::constant]
         type AggregationSize: Get<u32>;
-        /// The upperbound on the number of aggregations that can be published per block.
-        #[pallet::constant]
-        type MaxPublishedPerBlock: Get<u32>;
         /// The upperbound on the number of aggregations that can stay in _to be published_ state
         /// for a single domain to wait a publish_aggregation call.
         #[pallet::constant]
@@ -192,8 +189,6 @@ pub mod pallet {
         UnknownDomainId,
         /// This aggregation cannot be published or it's already published.
         InvalidAggregationId,
-        /// Too much aggregations in a block.
-        TooMuchAggregations,
     }
 
     #[derive(Debug, Clone, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
@@ -380,8 +375,10 @@ pub mod pallet {
 
     #[pallet::storage]
     #[pallet::getter(fn published)]
-    pub type Published<T: Config> =
-        StorageValue<_, BoundedVec<Aggregation<T>, T::MaxPublishedPerBlock>, ValueQuery>;
+    #[pallet::unbounded]
+    /// Vector of published aggregations. This will stay just in one block because we remove
+    /// this vector at the start of every block (on_initialize hook).
+    pub type Published<T: Config> = StorageValue<_, Vec<Aggregation<T>>, ValueQuery>;
 
     #[pallet::hooks]
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
@@ -409,8 +406,7 @@ pub mod pallet {
                     .ok_or(Error::<T>::InvalidAggregationId)?;
 
                 let root = aggregation.compute();
-                Published::<T>::mutate(|published: &mut _| published.try_push(aggregation))
-                    .map_err(|_| Error::<T>::TooMuchAggregations)?;
+                Published::<T>::mutate(|published: &mut _| published.push(aggregation));
 
                 if let Some(published) = Published::<T>::get().last() {
                     for s in published.statements.iter() {
