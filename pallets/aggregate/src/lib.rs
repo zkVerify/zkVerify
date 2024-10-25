@@ -22,7 +22,7 @@ mod mock;
 mod tests;
 
 pub trait WeightInfo {
-    fn publish_attestation() -> Weight;
+    fn aggregate() -> Weight;
 }
 
 #[frame_support::pallet]
@@ -33,8 +33,9 @@ pub mod pallet {
     use frame_support::traits::{BalanceStatus, Currency, EstimateCallFee, ReservableCurrency};
     use frame_support::{sp_runtime::testing::H256, BoundedVec};
     use frame_system::ensure_signed;
-    use frame_system::pallet_prelude::OriginFor;
+    use frame_system::pallet_prelude::{BlockNumberFor, OriginFor};
 
+    pub type AccountOf<T> = <T as frame_system::Config>::AccountId;
     pub type BalanceOf<T> =
         <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
@@ -49,18 +50,21 @@ pub mod pallet {
     pub trait Config: frame_system::Config {
         /// Because this pallet emits events, it depends on the runtime's definition of an event.
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
-        /// The (max) size of attestations.
-        type AttestationSize: Get<u32>;
-        /// The upperbound on the number of attestations that can be published per block.
+        /// The (max) size of aggregations.
+        #[pallet::constant]
+        type AggregationSize: Get<u32>;
+        /// The upperbound on the number of aggregations that can be published per block.
+        #[pallet::constant]
         type MaxPublishedPerBlock: Get<u32>;
-        /// The upperbound on the number of attestations that can stay in _to be published_ state
-        /// for a single domain for wait a publish call.
+        /// The upperbound on the number of aggregations that can stay in _to be published_ state
+        /// for a single domain to wait a publish_aggregation call.
+        #[pallet::constant]
         type MaxPendingPublishQueueSize: Get<u32>;
         /// The currency trait.
         type Currency: ReservableCurrency<Self::AccountId>;
-        /// What should we use to estimate pubblish attestaion cost (pallet-transaction-payment implement it)
+        /// What should we use to estimate publish aggregation cost (pallet-transaction-payment implement it)
         type EstimateCallFee: EstimateCallFee<Call<Self>, BalanceOf<Self>>;
-        /// How to compute the fee for publishing an attestation.
+        /// How to compute the fee for publishing an aggregation.
         type ComputeFeeFor: ComputeFeeFor<BalanceOf<Self>>;
         /// The weight definition for this pallet
         type WeightInfo: WeightInfo;
@@ -72,7 +76,10 @@ pub mod pallet {
             domain_id: Option<u32>,
             statement: H256,
         ) {
-            log::info!("Proof: [{account:?}]-{domain_id:?} {statement:?}");
+            log::trace!("Proof: [{account:?}]-{domain_id:?} {statement:?}");
+            // Preconditions: You should provide
+            // - An account for reserve found.
+            // - A valid domain id
             let Some(account) = account else {
                 log::warn!("No account, skip");
                 Self::deposit_event(Event::<T>::CannotAggregate {
@@ -92,8 +99,9 @@ pub mod pallet {
                 return;
             };
             Domains::<T>::mutate(domain_id, |domain| {
+                // Check if the domain is registered
                 let Some(domain) = domain else {
-                    log::warn!("No account, skip");
+                    log::debug!("The requested domain is not registered, skip");
                     Self::deposit_event(Event::<T>::CannotAggregate {
                         statement,
                         cause: CannotAggregateCause::DomainNotRegistered { domain_id },
@@ -101,30 +109,40 @@ pub mod pallet {
 
                     return;
                 };
-                let estimated = estimate_publish_attestation_fee::<T>();
-                let reserve = (estimated
-                    + <T as Config>::ComputeFeeFor::compute_fee(estimated).unwrap_or_default())
-                    / domain.next_attestation.size.into();
-                match <T as Config>::Currency::reserve(&account, reserve) {
-                    Ok(_) => (),
-                    Err(err) => {
+                // Check if we can add a new statement
+                if !domain.can_add_statement() {
+                    log::warn!("Storage complete, skip");
+                    Self::deposit_event(Event::<T>::CannotAggregate {
+                        statement,
+                        cause: CannotAggregateCause::DomainStorageFull { domain_id },
+                    });
+
+                    return;
+                }
+
+                // Reserve balance for publication: if not raise a fail event
+                let Ok(reserve) = reserve_currency_for_publication::<T>(domain, &account)
+                    .inspect_err(|err| {
                         Self::deposit_event(Event::<T>::CannotAggregate {
                             statement,
                             cause: CannotAggregateCause::InsufficientFound,
                         });
 
-                        log::debug!("Failed to reserve balance: {:?}", err);
-                        return;
-                    }
-                }
-                Self::deposit_event(Event::<T>::NewElement {
-                    value: statement,
+                        log::debug!("Failed to reserve balance {err:?}");
+                    })
+                else {
+                    return;
+                };
+
+                // We can add the statement and check if we should also move the aggregation in the should publish set
+                Self::deposit_event(Event::<T>::ProofVerified {
+                    statement,
                     domain_id,
-                    attestation_id: domain.next_attestation.id,
+                    aggregation_id: domain.next.id,
                 });
                 let to_publish = append_statement::<T>(domain, account.clone(), reserve, statement);
-                if let Some(attestation) = to_publish {
-                    available_attestation::<T>(domain, attestation);
+                if let Some(aggregation) = to_publish {
+                    available_aggregation::<T>(domain, aggregation);
                 }
             });
         }
@@ -134,30 +152,37 @@ pub mod pallet {
         domain: &mut Domain<T>,
         account: T::AccountId,
         reserve: BalanceOf<T>,
-        pubs_hash: H256,
-    ) -> Option<Attestation<T>> {
-        let attestation = &mut domain.next_attestation;
-        attestation
+        statement: H256,
+    ) -> Option<Aggregation<T>> {
+        let aggregation = &mut domain.next;
+        aggregation
             .statements
-            .force_push(StatementEntry::new(account.clone(), reserve, pubs_hash));
-        if attestation.size <= attestation.statements.len() as u32 {
+            .force_push(StatementEntry::new(account.clone(), reserve, statement));
+        if aggregation.size as usize <= aggregation.statements.len() {
             Some(sp_std::mem::replace(
-                attestation,
-                attestation.create_next(attestation.size),
+                aggregation,
+                aggregation.create_next(aggregation.size),
             ))
         } else {
             None
         }
     }
 
-    fn available_attestation<T: Config>(domain: &mut Domain<T>, attestation: Attestation<T>) {
-        Pallet::<T>::deposit_event(Event::<T>::AvailableAttestation {
+    fn available_aggregation<T: Config>(domain: &mut Domain<T>, aggregation: Aggregation<T>) {
+        Pallet::<T>::deposit_event(Event::<T>::ReadyToAggregate {
             domain_id: domain.id,
-            id: attestation.id,
+            aggregation_id: aggregation.id,
         });
         domain
             .should_publish
-            .try_insert(attestation.id, attestation);
+            .try_insert(aggregation.id, aggregation)
+            .expect("Should not publish aggregation if it's not possible: qed");
+        // If is full send an alert event
+        if domain.should_publish.len() >= domain.publish_queue_size as usize {
+            Pallet::<T>::deposit_event(Event::<T>::DomainFull {
+                domain_id: domain.id,
+            });
+        }
     }
 
     // Errors inform users that something went wrong.
@@ -165,10 +190,10 @@ pub mod pallet {
     pub enum Error<T> {
         /// This domain id is unknown.
         UnknownDomainId,
-        /// This attestation cannot be published or it's already published.
-        InvalidAttestationId,
-        /// Too much attestations in a block.
-        TooMuchAttestations,
+        /// This aggregation cannot be published or it's already published.
+        InvalidAggregationId,
+        /// Too much aggregations in a block.
+        TooMuchAggregations,
     }
 
     #[derive(Debug, Clone, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
@@ -176,29 +201,33 @@ pub mod pallet {
         NoAccount,
         NoDomain,
         DomainNotRegistered { domain_id: u32 },
+        DomainStorageFull { domain_id: u32 },
         InsufficientFound,
     }
 
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
-        NewElement {
-            value: H256,
+        ProofVerified {
+            statement: H256,
             domain_id: u32,
-            attestation_id: u64,
+            aggregation_id: u64,
         },
-        AvailableAttestation {
+        ReadyToAggregate {
             domain_id: u32,
-            id: u64,
+            aggregation_id: u64,
         },
-        NewAttestation {
+        NewAggregationReceipt {
             domain_id: u32,
-            id: u64,
-            attestation: H256,
+            aggregation_id: u64,
+            receipt: H256,
         },
         CannotAggregate {
             statement: H256,
             cause: CannotAggregateCause,
+        },
+        DomainFull {
+            domain_id: u32,
         },
     }
 
@@ -220,30 +249,46 @@ pub mod pallet {
     }
 
     /// A complete Verification Key or its hash.
-    #[derive(Debug, Clone, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
+    #[derive(Clone, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
     #[scale_info(skip_type_params(S))]
-    pub struct AttestationEntry<A, B, S: Get<u32>> {
+    pub struct AggregationEntry<A, B, S: Get<u32>> {
         pub(crate) id: u64,
         pub(crate) size: u32,
         pub(crate) statements: BoundedVec<StatementEntry<A, B>, S>,
     }
 
-    impl<A, B, S: Get<u32>> AttestationEntry<A, B, S> {
-        fn create(id: u64, size: u32) -> Self {
-            assert!(size <= S::get(), "Attestation size is out of bound");
+    impl<A: sp_std::fmt::Debug, B: sp_std::fmt::Debug, S: Get<u32>> sp_std::fmt::Debug
+        for AggregationEntry<A, B, S>
+    {
+        fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+            f.debug_struct("AggregationEntry")
+                .field("id", &self.id)
+                .field("size", &self.size)
+                .field("statements", &self.statements)
+                .finish()
+        }
+    }
+
+    impl<A, B, S: Get<u32>> AggregationEntry<A, B, S> {
+        fn new(id: u64, size: u32, statements: BoundedVec<StatementEntry<A, B>, S>) -> Self {
+            assert!(size <= S::get(), "Aggregation size is out of bound");
             Self {
                 id,
                 size,
-                statements: BoundedVec::new(),
+                statements,
             }
+        }
+
+        pub(crate) fn create(id: u64, size: u32) -> Self {
+            Self::new(id, size, BoundedVec::new())
         }
 
         fn create_next(&self, size: u32) -> Self {
             Self::create(self.id + 1, size)
         }
 
-        fn is_complete(&self) -> bool {
-            self.statements.len() == BoundedVec::<(A, B, H256), S>::bound()
+        fn space_left(&self) -> usize {
+            (self.size as usize).saturating_sub(self.statements.len())
         }
 
         fn compute(&self) -> H256 {
@@ -253,53 +298,82 @@ pub mod pallet {
         }
     }
 
-    impl<A, B, S: Get<u32>> Default for AttestationEntry<A, B, S> {
+    impl<A, B, S: Get<u32>> Default for AggregationEntry<A, B, S> {
         fn default() -> Self {
             Self::create(1, S::get())
         }
     }
 
-    type Attestation<T> = AttestationEntry<
-        <T as frame_system::Config>::AccountId,
-        BalanceOf<T>,
-        <T as Config>::AttestationSize,
-    >;
+    pub type Aggregation<T> =
+        AggregationEntry<AccountOf<T>, BalanceOf<T>, <T as Config>::AggregationSize>;
 
     /// A complete Verification Key or its hash.
     #[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
     #[scale_info(skip_type_params(S, M))]
     pub(crate) struct DomainEntry<A, B, S: Get<u32>, M: Get<u32>> {
         pub id: u32,
-        pub next_attestation: AttestationEntry<A, B, S>,
-        pub max_attestation_size: u32,
-        pub should_publish: BoundedBTreeMap<u64, AttestationEntry<A, B, S>, M>,
+        pub next: AggregationEntry<A, B, S>,
+        pub max_aggregation_size: u32,
+        pub should_publish: BoundedBTreeMap<u64, AggregationEntry<A, B, S>, M>,
+        pub publish_queue_size: u32,
     }
 
     impl<A, B, S: Get<u32>, M: Get<u32>> DomainEntry<A, B, S, M> {
-        pub fn create(id: u32, next_attestation_id: u64, max_attestation_size: u32) -> Self {
+        /// Create a new domain.
+        ///
+        /// PANIC: If max_aggregation_size is greater than Config::AggregationSize or
+        /// publish_queue_size is greater than Config::MaxPendingPublishQueueSize.
+        pub fn create(
+            id: u32,
+            next_attestation_id: u64,
+            max_attestation_size: u32,
+            publish_queue_size: u32,
+        ) -> Self {
             assert!(
                 max_attestation_size <= S::get(),
-                "Max attestation size must be less than or equal to Config::AttestationSize"
+                "Max aggregation size must be less or equal than Config::AggregationSize"
+            );
+            assert!(
+                publish_queue_size <= M::get(),
+                "Publish queue size must be less or equal than Config::MaxPendingPublishQueueSize"
             );
             Self {
                 id,
-                next_attestation: AttestationEntry::create(
-                    next_attestation_id,
-                    max_attestation_size,
-                ),
-                max_attestation_size,
+                next: AggregationEntry::create(next_attestation_id, max_attestation_size),
+                max_aggregation_size: max_attestation_size,
                 should_publish: Default::default(),
+                publish_queue_size,
             }
+        }
+
+        /// Return true iff it's possible to add a new statement.
+        pub fn can_add_statement(&self) -> bool {
+            (self.publish_queue_size as usize).saturating_sub(self.should_publish.len()) > 0
+                || self.next.space_left() > 1
         }
     }
 
+    /// Compute and reserve the currency for further publication
+    fn reserve_currency_for_publication<T: Config>(
+        domain: &mut Domain<T>,
+        account: &AccountOf<T>,
+    ) -> Result<BalanceOf<T>, DispatchError> {
+        let estimated = estimate_publish_attestation_fee::<T>();
+        let reserve = (estimated
+            + <T as Config>::ComputeFeeFor::compute_fee(estimated).unwrap_or_default())
+            / domain.next.size.into();
+        T::Currency::reserve(account, reserve).map(|_| reserve)
+    }
+
+    /// Shortcut to get the Domain type from config.
     pub(crate) type Domain<T> = DomainEntry<
-        <T as frame_system::Config>::AccountId,
+        AccountOf<T>,
         BalanceOf<T>,
-        <T as Config>::AttestationSize,
+        <T as Config>::AggregationSize,
         <T as Config>::MaxPendingPublishQueueSize,
     >;
 
+    /// Domains storage
     #[pallet::storage]
     pub(crate) type Domains<T: Config> =
         StorageMap<Hasher = Blake2_128Concat, Key = u32, Value = Domain<T>>;
@@ -307,28 +381,36 @@ pub mod pallet {
     #[pallet::storage]
     #[pallet::getter(fn published)]
     pub type Published<T: Config> =
-        StorageValue<_, BoundedVec<Attestation<T>, T::MaxPublishedPerBlock>, ValueQuery>;
+        StorageValue<_, BoundedVec<Aggregation<T>, T::MaxPublishedPerBlock>, ValueQuery>;
+
+    #[pallet::hooks]
+    impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+        fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
+            Published::<T>::take();
+            T::DbWeight::get().writes(1_u64)
+        }
+    }
 
     #[pallet::call(weight(<T as Config>::WeightInfo))]
     impl<T: Config> Pallet<T> {
-        /// Publish the attestation.
+        /// Publish the aggregation.
         #[pallet::call_index(0)]
-        pub fn publish_attestation(
+        pub fn aggregate(
             origin: OriginFor<T>,
             domain_id: u32,
             id: u64,
         ) -> DispatchResultWithPostInfo {
             let origin = ensure_signed(origin)?;
             let root = Domains::<T>::try_mutate(domain_id, |domain| {
-                let domain = domain.as_mut().ok_or(Error::<T>::TooMuchAttestations)?;
-                let attestation = domain
+                let domain = domain.as_mut().ok_or(Error::<T>::UnknownDomainId)?;
+                let aggregation = domain
                     .should_publish
                     .remove(&id)
-                    .ok_or(Error::<T>::InvalidAttestationId)?;
+                    .ok_or(Error::<T>::InvalidAggregationId)?;
 
-                let root = attestation.compute();
-                Published::<T>::mutate(|published: &mut _| published.try_push(attestation))
-                    .map_err(|_| Error::<T>::TooMuchAttestations)?;
+                let root = aggregation.compute();
+                Published::<T>::mutate(|published: &mut _| published.try_push(aggregation))
+                    .map_err(|_| Error::<T>::TooMuchAggregations)?;
 
                 if let Some(published) = Published::<T>::get().last() {
                     for s in published.statements.iter() {
@@ -351,10 +433,10 @@ pub mod pallet {
                 Result::<_, Error<T>>::Ok(Some(root))
             })?;
             if let Some(root) = root {
-                Self::deposit_event(Event::NewAttestation {
+                Self::deposit_event(Event::NewAggregationReceipt {
                     domain_id,
-                    id,
-                    attestation: root,
+                    aggregation_id: id,
+                    receipt: root,
                 });
             }
             Ok(().into())
@@ -363,7 +445,7 @@ pub mod pallet {
 
     fn estimate_publish_attestation_fee<T: Config>() -> BalanceOf<T> {
         T::EstimateCallFee::estimate_call_fee(
-            &Call::publish_attestation {
+            &Call::aggregate {
                 domain_id: 0,
                 id: 0,
             },

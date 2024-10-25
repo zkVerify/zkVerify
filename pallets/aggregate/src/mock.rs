@@ -14,16 +14,17 @@
 // limitations under the License.
 #![cfg(test)]
 
+use frame_support::weights::RuntimeDbWeight;
 use frame_support::{derive_impl, parameter_types};
-use sp_core::{ConstU128, ConstU32};
+use sp_core::{ConstU128, ConstU32, Get, H256};
 use sp_runtime::{traits::IdentityLookup, BuildStorage, Perbill};
 
-use crate::{ComputeFeeFor, Domains};
+use crate::{AccountOf, Aggregation, BalanceOf, ComputeFeeFor, Domains, StatementEntry};
 
 parameter_types! {
     pub const AttestationSize: u32 = 4;
-    pub const MaxPublishedPerBlock: u32 = 2;
-    pub const MaxPendingPublishQueueSize: u32 = 2;
+    pub const MaxPublishedPerBlock: u32 = 3;
+    pub const MaxPendingPublishQueueSize: u32 = 6;
 }
 
 pub const FEE_PER_STATEMENT: u32 = 100;
@@ -43,10 +44,12 @@ pub const NOT_REGISTERED_DOMAIN: Option<u32> = Some(NOT_REGISTERED_DOMAIN_ID);
 pub const NUM_TEST_ACCOUNTS: usize = 4;
 pub const NO_FOUND_USER: AccountId = 999;
 pub const PUBLISHER_USER: AccountId = 100;
+pub const USER_1: AccountId = 42;
+pub const USER_2: AccountId = 24;
 
 pub static USERS: [(AccountId, Balance); NUM_TEST_ACCOUNTS] = [
-    (42, 42_000_000_000),
-    (24, 24_000_000_000),
+    (USER_1, 42_000_000_000),
+    (USER_2, 24_000_000_000),
     (PUBLISHER_USER, 1_000_000_000),
     (NO_FOUND_USER, (FEE_PER_STATEMENT / 2) as u128),
 ];
@@ -59,9 +62,16 @@ impl MockWeightInfo {
 }
 
 impl crate::WeightInfo for MockWeightInfo {
-    fn publish_attestation() -> frame_support::weights::Weight {
+    fn aggregate() -> frame_support::weights::Weight {
         frame_support::weights::Weight::from_parts(Self::REF_TIME, Self::PROOF_SIZE)
     }
+}
+
+parameter_types! {
+    pub const MockDbWeight: RuntimeDbWeight = RuntimeDbWeight {
+        read: 4_200_000,
+       write: 2_400_000,
+    };
 }
 
 pub struct PercentComputeFeeFor;
@@ -76,7 +86,7 @@ impl crate::Config for Test {
     type RuntimeEvent = RuntimeEvent;
     type WeightInfo = MockWeightInfo;
 
-    type AttestationSize = AttestationSize;
+    type AggregationSize = AttestationSize;
 
     type MaxPublishedPerBlock = MaxPublishedPerBlock;
 
@@ -105,6 +115,7 @@ impl frame_system::Config for Test {
     type Lookup = IdentityLookup<Self::AccountId>;
     type Block = frame_system::mocking::MockBlockU32<Test>;
     type AccountData = pallet_balances::AccountData<Balance>;
+    type DbWeight = MockDbWeight;
 }
 
 impl pallet_balances::Config for Test {
@@ -125,8 +136,25 @@ impl pallet_balances::Config for Test {
     type RuntimeFreezeReason = ();
 }
 
+impl Aggregation<Test> {
+    pub(crate) fn add_statement(
+        &mut self,
+        account: AccountOf<Test>,
+        reserve: BalanceOf<Test>,
+        statement: H256,
+    ) {
+        self.statements
+            .try_push(StatementEntry::new(account, reserve, statement))
+            .unwrap();
+    }
+}
+
+pub fn db_weights() -> RuntimeDbWeight {
+    <<Test as frame_system::Config>::DbWeight as Get<RuntimeDbWeight>>::get()
+}
+
 // Build genesis storage according to the mock runtime.
-pub fn new_test_ext() -> sp_io::TestExternalities {
+pub fn test() -> sp_io::TestExternalities {
     let mut t = frame_system::GenesisConfig::<Test>::default()
         .build_storage()
         .unwrap();
@@ -145,7 +173,8 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
             crate::Domain::<Test>::create(
                 DOMAIN_ID,
                 1,
-                <Test as crate::Config>::AttestationSize::get(),
+                <Test as crate::Config>::AggregationSize::get(),
+                <Test as crate::Config>::MaxPendingPublishQueueSize::get(),
             ),
         );
     });
