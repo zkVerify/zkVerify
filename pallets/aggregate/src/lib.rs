@@ -19,7 +19,7 @@ use frame_support::weights::Weight;
 pub use pallet::*;
 
 mod mock;
-mod tests;
+mod should;
 
 pub trait WeightInfo {
     fn aggregate() -> Weight;

@@ -29,7 +29,7 @@ use utility::*;
 mod utility;
 
 #[test]
-fn should_add_a_proof() {
+fn add_a_proof() {
     test().execute_with(|| {
         let statement = H256::from_low_u64_be(123);
 
@@ -43,7 +43,7 @@ fn should_add_a_proof() {
 }
 
 #[test]
-fn should_emit_domain_full_event_when_publish_queue_is_full() {
+fn emit_domain_full_event_when_publish_queue_is_full() {
     test().execute_with(|| {
         let statements = <Test as crate::Config>::MaxPendingPublishQueueSize::get()
             * <Test as crate::Config>::AggregationSize::get();
@@ -62,7 +62,7 @@ fn should_emit_domain_full_event_when_publish_queue_is_full() {
     })
 }
 
-mod should_not_add_the_statement_to_any_domain_if {
+mod not_add_the_statement_to_any_domain_if {
     use super::*;
 
     #[test]
@@ -110,7 +110,7 @@ mod should_not_add_the_statement_to_any_domain_if {
     }
 }
 
-mod when_there_is_no_room_for_new_statements_in_should_published_set {
+mod check_if_no_room_for_new_statements_in_should_published_set_and {
     use super::*;
 
     const LAST_ID: u64 = 999;
@@ -138,73 +138,77 @@ mod when_there_is_no_room_for_new_statements_in_should_published_set {
         ext
     }
 
-    #[test]
-    fn should_not_add_any_statement() {
-        test().execute_with(|| {
-            let statements = count_all_statements();
+    mod on_proof_verified {
+        use super::*;
 
-            Aggregate::on_proof_verified(Some(USER_1), DOMAIN, H256::from_low_u64_be(123));
+        #[test]
+        fn not_add_any_statement() {
+            test().execute_with(|| {
+                let statements = count_all_statements();
 
-            assert_eq!(statements, count_all_statements());
-        })
+                Aggregate::on_proof_verified(Some(USER_1), DOMAIN, H256::from_low_u64_be(123));
+
+                assert_eq!(statements, count_all_statements());
+            })
+        }
+
+        #[test]
+        fn not_emit_aggregation_event() {
+            test().execute_with(|| {
+                let statement = H256::from_low_u64_be(123);
+
+                Aggregate::on_proof_verified(Some(USER_1), DOMAIN, statement);
+
+                assert_not_proof_evt(DOMAIN_ID, LAST_ID, statement);
+            })
+        }
+
+        #[test]
+        fn not_emit_queue_aggregation() {
+            test().execute_with(|| {
+                let statement = H256::from_low_u64_be(123);
+
+                Aggregate::on_proof_verified(Some(USER_1), DOMAIN, statement);
+
+                assert_not_ready_evt(DOMAIN_ID, LAST_ID);
+            })
+        }
+
+        #[test]
+        fn not_reserve_currency() {
+            test().execute_with(|| {
+                let statement = H256::from_low_u64_be(123);
+
+                Aggregate::on_proof_verified(Some(USER_1), DOMAIN, statement);
+
+                assert_eq!(
+                    Balances::reserved_balance(USER_1),
+                    0,
+                    "Should not reserve any balance"
+                );
+            })
+        }
+
+        #[test]
+        fn emit_cannot_aggregate_event() {
+            test().execute_with(|| {
+                let statement = H256::from_low_u64_be(123);
+
+                Aggregate::on_proof_verified(Some(USER_1), DOMAIN, statement);
+
+                assert_not_ready_evt(DOMAIN_ID, LAST_ID);
+                assert_cannot_aggregate_evt(
+                    statement,
+                    CannotAggregateCause::DomainStorageFull {
+                        domain_id: DOMAIN_ID,
+                    },
+                );
+            })
+        }
     }
 
     #[test]
-    fn should_not_emit_aggregation_event() {
-        test().execute_with(|| {
-            let statement = H256::from_low_u64_be(123);
-
-            Aggregate::on_proof_verified(Some(USER_1), DOMAIN, statement);
-
-            assert_not_proof_evt(DOMAIN_ID, LAST_ID, statement);
-        })
-    }
-
-    #[test]
-    fn should_not_emit_queue_aggregation() {
-        test().execute_with(|| {
-            let statement = H256::from_low_u64_be(123);
-
-            Aggregate::on_proof_verified(Some(USER_1), DOMAIN, statement);
-
-            assert_not_ready_evt(DOMAIN_ID, LAST_ID);
-        })
-    }
-
-    #[test]
-    fn should_not_reserve_currency() {
-        test().execute_with(|| {
-            let statement = H256::from_low_u64_be(123);
-
-            Aggregate::on_proof_verified(Some(USER_1), DOMAIN, statement);
-
-            assert_eq!(
-                Balances::reserved_balance(USER_1),
-                0,
-                "Should not reserve any balance"
-            );
-        })
-    }
-
-    #[test]
-    fn should_emit_cannot_aggregate_event() {
-        test().execute_with(|| {
-            let statement = H256::from_low_u64_be(123);
-
-            Aggregate::on_proof_verified(Some(USER_1), DOMAIN, statement);
-
-            assert_not_ready_evt(DOMAIN_ID, LAST_ID);
-            assert_cannot_aggregate_evt(
-                statement,
-                CannotAggregateCause::DomainStorageFull {
-                    domain_id: DOMAIN_ID,
-                },
-            );
-        })
-    }
-
-    #[test]
-    fn should_free_room_for_new_aggregations_when_aggregated() {
+    fn free_room_for_new_aggregations_when_old_aggregated() {
         test().execute_with(|| {
             Aggregate::aggregate(RawOrigin::Signed(33).into(), DOMAIN_ID, 1).unwrap();
             mock::System::events().clear();
@@ -225,7 +229,7 @@ mod when_there_is_no_room_for_new_statements_in_should_published_set {
     }
 
     #[test]
-    fn should_free_room_for_aggregation_when_aggregated_more_than_once() {
+    fn free_room_for_aggregation_when_olds_aggregated_more_than_once() {
         test().execute_with(|| {
             Aggregate::aggregate(RawOrigin::Signed(33).into(), DOMAIN_ID, 1).unwrap();
             Aggregate::aggregate(RawOrigin::Signed(33).into(), DOMAIN_ID, 3).unwrap();
@@ -259,7 +263,7 @@ mod when_there_is_no_room_for_new_statements_in_should_published_set {
 }
 
 #[test]
-fn should_queue_a_new_aggregation_when_is_complete() {
+fn queue_a_new_aggregation_when_is_complete() {
     test().execute_with(|| {
         let elements = (0..<Test as crate::Config>::AggregationSize::get())
             .map(|i| statement_entry(USER_1, H256::from_low_u64_be(i.into())))
@@ -278,7 +282,7 @@ fn should_queue_a_new_aggregation_when_is_complete() {
     })
 }
 #[test]
-fn add_a_proof_should_reserve_at_least_the_publish_proof_price_fraction() {
+fn reserve_at_least_the_publish_proof_price_fraction_when_on_proof_verified() {
     test().execute_with(|| {
         let statement = H256::from_low_u64_be(123);
         let account = USER_1;
@@ -293,7 +297,7 @@ fn add_a_proof_should_reserve_at_least_the_publish_proof_price_fraction() {
 }
 
 #[test]
-fn if_a_user_doesn_t_have_enough_found_to_reserve_the_proof_should_not_fail_but_raise_just_an_event(
+fn not_fail_but_raise_just_an_event_if_a_user_doesn_t_have_enough_found_to_reserve_on_on_proof_verified(
 ) {
     test().execute_with(|| {
         let statement = H256::from_low_u64_be(123);
@@ -310,18 +314,18 @@ fn if_a_user_doesn_t_have_enough_found_to_reserve_the_proof_should_not_fail_but_
     })
 }
 
-mod should_clean_the_published_storage_on_initialize {
+mod clean_the_published_storage_on_initialize {
     use super::*;
 
     #[test]
-    fn is_empty() {
+    fn in_base_case() {
         test().execute_with(|| {
             assert_eq!(Published::<Test>::get().is_empty(), true);
         })
     }
 
     #[test]
-    fn should_be_emptied_on_initialize() {
+    fn when_some_aggregations_are_present() {
         test().execute_with(|| {
             Published::<Test>::mutate(|published: &mut _| {
                 published.push(Aggregation::<Test>::create(12, 3));
@@ -334,7 +338,7 @@ mod should_clean_the_published_storage_on_initialize {
     }
 
     #[test]
-    fn and_return_the_write_db_weight() {
+    fn and_return_the_correct_weight() {
         test().execute_with(|| {
             Published::<Test>::mutate(|published: &mut _| {
                 published.push(Aggregation::<Test>::create(12, 3));
@@ -349,13 +353,13 @@ mod should_clean_the_published_storage_on_initialize {
     }
 }
 
-mod should_aggregate {
+mod aggregate {
     use frame_support::assert_err;
 
     use super::*;
 
     #[test]
-    fn in_happy_path() {
+    fn emit_a_new_receipt() {
         test().execute_with(|| {
             for i in 0..<Test as crate::Config>::AggregationSize::get() {
                 Aggregate::on_proof_verified(Some(USER_2), DOMAIN, H256::from_low_u64_be(i.into()));
