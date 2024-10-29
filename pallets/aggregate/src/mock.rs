@@ -29,16 +29,13 @@ use sp_runtime::{traits::IdentityLookup, BuildStorage, Perbill};
 use crate::{ComputeFeeFor, Domains};
 
 parameter_types! {
-    pub const AttestationSize: u32 = 32;
+    pub const AttestationSize: u32 = 64;
     pub const MaxPendingPublishQueueSize: u32 = 16;
 }
 
-pub const FEE_PER_STATEMENT: u32 = 100;
+pub const ESTIMATED_FEE: u32 = 6400;
 pub const FEE_PERCENT_CORRECTION: u32 = 10;
-pub const FEE_PER_STATEMENT_CORRECTED: u32 =
-    (FEE_PER_STATEMENT * (100 + FEE_PERCENT_CORRECTION)) / 100;
-pub const ESTIMATED_FEE: u32 = FEE_PER_STATEMENT * AttestationSize::get();
-pub const ESTIMATED_FEE_CORRECTED: u32 = FEE_PER_STATEMENT_CORRECTED * AttestationSize::get();
+pub const ESTIMATED_FEE_CORRECTED: u32 = (ESTIMATED_FEE * (100 + FEE_PERCENT_CORRECTION)) / 100;
 
 pub type Balance = u128;
 pub type AccountId = u64;
@@ -46,6 +43,9 @@ pub type Origin = RawOrigin<AccountId>;
 
 pub const DOMAIN_ID: u32 = 51;
 pub const DOMAIN: Option<u32> = Some(DOMAIN_ID);
+pub const DOMAIN_SIZE: u32 = 32;
+pub const DOMAIN_QUEUE_SIZE: u32 = 16;
+pub const DOMAIN_FEE: Balance = (ESTIMATED_FEE_CORRECTED / DOMAIN_SIZE) as Balance;
 pub const NOT_REGISTERED_DOMAIN_ID: u32 = 911;
 pub const NOT_REGISTERED_DOMAIN: Option<u32> = Some(NOT_REGISTERED_DOMAIN_ID);
 pub const NUM_TEST_ACCOUNTS: usize = 6;
@@ -65,7 +65,7 @@ pub static USERS: [(AccountId, Balance); NUM_TEST_ACCOUNTS] = [
     (USER_DOMAIN_1, 100_000_000_000),
     (USER_DOMAIN_2, 200_000_000_000),
     (PUBLISHER_USER, 1_000_000_000),
-    (NO_FOUND_USER, (FEE_PER_STATEMENT / 2) as u128),
+    (NO_FOUND_USER, (ESTIMATED_FEE / 64 / 2) as u128),
 ];
 
 pub struct MockWeightInfo;
@@ -256,8 +256,8 @@ pub fn test() -> sp_io::TestExternalities {
                 DOMAIN_ID,
                 USER_DOMAIN_1.into(),
                 1,
-                <Test as crate::Config>::AggregationSize::get(),
-                <Test as crate::Config>::MaxPendingPublishQueueSize::get(),
+                DOMAIN_SIZE,
+                DOMAIN_QUEUE_SIZE,
                 None,
             ),
         );

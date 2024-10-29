@@ -52,8 +52,21 @@ pub fn assert_new_receipt(domain: u32, id: u64, expected_receipt: Option<H256>) 
     );
 }
 
-pub fn statement_entry(account: u64, statement: H256) -> StatementEntry<AccountId, Balance> {
-    StatementEntry::new(account, FEE_PER_STATEMENT_CORRECTED as u128, statement)
+pub fn statement_entry(
+    domain: Option<&Domain<Test>>,
+    account: u64,
+    statement: H256,
+) -> StatementEntry<AccountId, Balance> {
+    let size = |d: &Domain<Test>| d.max_aggregation_size as BalanceOf<Test>;
+    let aggregation_size: BalanceOf<Test> = domain
+        .map(size)
+        .or_else(|| Domains::<Test>::get(DOMAIN_ID).map(|d| size(&d)))
+        .unwrap();
+    StatementEntry::new(
+        account,
+        ESTIMATED_FEE_CORRECTED as u128 / aggregation_size,
+        statement,
+    )
 }
 
 pub fn count_all_statements() -> usize {

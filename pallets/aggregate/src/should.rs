@@ -25,11 +25,6 @@ use utility::*;
 
 mod utility;
 
-// #[test]
-// fn test_should_use_value_defined_in_domains_and_not_the_configured_traits() {
-//     todo!()
-// }
-
 #[test]
 fn add_a_proof() {
     test().execute_with(|| {
@@ -40,15 +35,17 @@ fn add_a_proof() {
         assert_proof_evt(DOMAIN_ID, 1, statement);
         let att = &Domains::<Test>::get(DOMAIN_ID).unwrap().next;
         assert_eq!(1, att.id);
-        assert_eq!(vec![statement_entry(USER_1, statement)], *att.statements);
+        assert_eq!(
+            vec![statement_entry(None, USER_1, statement)],
+            *att.statements
+        );
     })
 }
 
 #[test]
 fn emit_domain_full_event_when_publish_queue_is_full() {
     test().execute_with(|| {
-        let statements = <Test as crate::Config>::MaxPendingPublishQueueSize::get()
-            * <Test as crate::Config>::AggregationSize::get();
+        let statements = DOMAIN_QUEUE_SIZE * DOMAIN_SIZE;
         let event = Event::DomainFull {
             domain_id: DOMAIN_ID,
         };
@@ -267,8 +264,8 @@ mod check_if_no_room_for_new_statements_in_should_published_set_and {
 #[test]
 fn queue_a_new_aggregation_when_is_complete() {
     test().execute_with(|| {
-        let elements = (0..<Test as crate::Config>::AggregationSize::get())
-            .map(|i| statement_entry(USER_1, H256::from_low_u64_be(i.into())))
+        let elements = (0..DOMAIN_SIZE)
+            .map(|i| statement_entry(None, USER_1, H256::from_low_u64_be(i.into())))
             .collect::<Vec<_>>();
         for s in elements.clone().into_iter() {
             Aggregate::on_proof_verified(Some(s.account.clone()), DOMAIN, s.statement);
@@ -291,10 +288,7 @@ fn reserve_at_least_the_publish_proof_price_fraction_when_on_proof_verified() {
 
         Aggregate::on_proof_verified(Some(account), DOMAIN, statement);
 
-        assert_eq!(
-            Balances::reserved_balance(account),
-            FEE_PER_STATEMENT_CORRECTED as u128
-        );
+        assert_eq!(Balances::reserved_balance(account), DOMAIN_FEE);
     })
 }
 
@@ -549,7 +543,7 @@ mod register_domain {
     }
 
     #[test]
-    fn not_change_domain_size() {
+    fn not_change_domain_encoded_size() {
         // This test is here to check the you don't changed the domain struct without change `encoded_size`
         // accordantly
         use codec::MaxEncodedLen;
@@ -560,19 +554,19 @@ mod register_domain {
         );
 
         // Fixture max
-        assert_eq!(Domain::<Test>::max_encoded_len(), 30860);
+        assert_eq!(Domain::<Test>::max_encoded_len(), 61341);
 
         // Fixtures
         assert_eq!(
-            1348,
+            1365,
             Domain::<Test>::encoded_size(1, MaxPendingPublishQueueSize::get())
         );
         assert_eq!(
-            3665,
+            7251,
             Domain::<Test>::encoded_size(AttestationSize::get(), 1)
         );
         assert_eq!(
-            8292,
+            16365,
             Domain::<Test>::encoded_size(
                 AttestationSize::get() / 2,
                 MaxPendingPublishQueueSize::get() / 2
