@@ -30,9 +30,12 @@ pub trait WeightInfo {
 #[frame_support::pallet]
 pub mod pallet {
     use super::WeightInfo;
-    use frame_support::pallet_prelude::*;
-    use frame_support::sp_runtime::traits::Keccak256;
-    use frame_support::traits::{BalanceStatus, Currency, EstimateCallFee, ReservableCurrency};
+    use frame_support::traits::fungible::{Inspect, InspectHold, MutateHold};
+    use frame_support::traits::tokens::{Fortitude, Precision, Restriction};
+    use frame_support::traits::{
+        Consideration, Defensive, EstimateCallFee, Footprint, VariantCount,
+    };
+    use frame_support::{pallet_prelude::*, sp_runtime::traits::Keccak256};
     use frame_support::{sp_runtime::testing::H256, BoundedVec};
     use frame_system::ensure_signed;
     use frame_system::pallet_prelude::{BlockNumberFor, OriginFor};
@@ -40,7 +43,8 @@ pub mod pallet {
 
     pub type AccountOf<T> = <T as frame_system::Config>::AccountId;
     pub type BalanceOf<T> =
-        <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+        <<T as Config>::Hold as Inspect<<T as frame_system::Config>::AccountId>>::Balance;
+    type TicketOf<T> = <T as Config>::Consideration;
 
     #[pallet::pallet]
     pub struct Pallet<T>(_);
@@ -53,6 +57,13 @@ pub mod pallet {
     pub trait Config: frame_system::Config {
         /// Because this pallet emits events, it depends on the runtime's definition of an event.
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+        /// The overarching hold reason.
+        type RuntimeHoldReason: From<HoldReason>
+            + Parameter
+            + Member
+            + MaxEncodedLen
+            + Copy
+            + VariantCount;
         /// The (max) size of aggregations.
         #[pallet::constant]
         type AggregationSize: Get<u32>;
@@ -63,8 +74,11 @@ pub mod pallet {
         /// An origin that can request a domain be registered on-chain without a deposit or fee, or
         /// manage existing not owned domains.
         type ManagerOrigin: EnsureOrigin<Self::RuntimeOrigin>;
-        /// The currency trait.
-        type Currency: ReservableCurrency<Self::AccountId>;
+        /// The Hold trait.
+        type Hold: MutateHold<Self::AccountId>
+            + InspectHold<Self::AccountId, Reason = Self::RuntimeHoldReason>;
+        /// A means of providing some cost while data is stored on-chain.
+        type Consideration: Consideration<Self::AccountId>;
         /// What should we use to estimate publish aggregation cost (pallet-transaction-payment implement it)
         type EstimateCallFee: EstimateCallFee<Call<Self>, BalanceOf<Self>>;
         /// How to compute the fee for publishing an aggregation.
@@ -195,6 +209,8 @@ pub mod pallet {
         UnknownDomainId,
         /// This aggregation cannot be published or it's already published.
         InvalidAggregationId,
+        /// The domain params are invalid.
+        InvalidDomainParams,
     }
 
     #[derive(Debug, Clone, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
@@ -225,6 +241,10 @@ pub mod pallet {
             domain_id: u32,
             aggregation_id: u64,
             receipt: H256,
+        },
+        AggregationRemoved {
+            domain_id: u32,
+            aggregation_id: u64,
         },
         CannotAggregate {
             statement: H256,
@@ -290,7 +310,7 @@ pub mod pallet {
         }
 
         pub(crate) fn create(id: u64, size: u32) -> Self {
-            Self::new(id, size, BoundedVec::new())
+            Self::new(id, size, BoundedVec::with_bounded_capacity(size as usize))
         }
 
         fn create_next(&self, size: u32) -> Self {
@@ -306,6 +326,21 @@ pub mod pallet {
                 self.statements.iter().map(|s| s.statement.as_ref()),
             )
         }
+
+        fn encoded_size(size: u32) -> usize
+        where
+            Self: MaxEncodedLen,
+            BoundedVec<StatementEntry<A, B>, S>: MaxEncodedLen,
+            StatementEntry<A, B>: MaxEncodedLen,
+        {
+            let dyn_size = codec::Compact(S::get()).encoded_size().saturating_add(
+                (size as usize).saturating_mul(StatementEntry::<A, B>::max_encoded_len()),
+            );
+
+            Self::max_encoded_len()
+                .saturating_sub(BoundedVec::<StatementEntry<A, B>, S>::max_encoded_len())
+                .saturating_add(dyn_size)
+        }
     }
 
     impl<A, B, S: Get<u32>> Default for AggregationEntry<A, B, S> {
@@ -320,26 +355,34 @@ pub mod pallet {
     /// A complete Verification Key or its hash.
     #[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
     #[scale_info(skip_type_params(S, M))]
-    pub(crate) struct DomainEntry<A, B, S: Get<u32>, M: Get<u32>> {
+    pub(crate) struct DomainEntry<
+        A,
+        B,
+        S: Get<u32>,
+        M: Get<u32>,
+        T: Encode + Decode + TypeInfo + MaxEncodedLen,
+    > {
         pub id: u32,
-        pub owner: A,
+        pub owner: User<A>,
         pub next: AggregationEntry<A, B, S>,
         pub max_aggregation_size: u32,
         pub should_publish: BoundedBTreeMap<u64, AggregationEntry<A, B, S>, M>,
         pub publish_queue_size: u32,
+        pub ticket: Option<T>,
     }
 
-    impl<A, B, S: Get<u32>, M: Get<u32>> DomainEntry<A, B, S, M> {
+    impl<A, B, S: Get<u32>, M: Get<u32>, Ticket: Encode + Decode + TypeInfo + MaxEncodedLen>
+        DomainEntry<A, B, S, M, Ticket>
+    {
         /// Create a new domain.
         ///
-        /// PANIC: If max_aggregation_size is greater than Config::AggregationSize or
-        /// publish_queue_size is greater than Config::MaxPendingPublishQueueSize.
         pub fn create(
             id: u32,
-            owner: A,
+            owner: User<A>,
             next_attestation_id: u64,
             max_attestation_size: u32,
             publish_queue_size: u32,
+            ticket: Option<Ticket>,
         ) -> Self {
             assert!(
                 max_attestation_size <= S::get(),
@@ -356,6 +399,7 @@ pub mod pallet {
                 max_aggregation_size: max_attestation_size,
                 should_publish: Default::default(),
                 publish_queue_size,
+                ticket,
             }
         }
 
@@ -363,6 +407,28 @@ pub mod pallet {
         pub fn can_add_statement(&self) -> bool {
             (self.publish_queue_size as usize).saturating_sub(self.should_publish.len()) > 0
                 || self.next.space_left() > 1
+        }
+
+        pub(crate) fn encoded_size(max_attestation_size: u32, publish_queue_size: u32) -> usize
+        where
+            AggregationEntry<A, B, S>: MaxEncodedLen,
+            Self: MaxEncodedLen,
+            BoundedVec<StatementEntry<A, B>, S>: MaxEncodedLen,
+            StatementEntry<A, B>: MaxEncodedLen,
+        {
+            let upper = Self::max_encoded_len();
+            let aggregation_size = AggregationEntry::<A, B, S>::encoded_size(max_attestation_size);
+            upper
+                .saturating_sub(AggregationEntry::<A, B, S>::max_encoded_len())
+                .saturating_sub(
+                    BoundedBTreeMap::<u64, AggregationEntry<A, B, S>, M>::max_encoded_len(),
+                )
+                .saturating_add(aggregation_size)
+                .saturating_add(
+                    (publish_queue_size as usize)
+                        .saturating_mul(u64::max_encoded_len().saturating_add(aggregation_size))
+                        .saturating_add(codec::Compact(M::get()).encoded_size()),
+                )
         }
     }
 
@@ -375,7 +441,25 @@ pub mod pallet {
         let reserve = (estimated
             + <T as Config>::ComputeFeeFor::compute_fee(estimated).unwrap_or_default())
             / domain.next.size.into();
-        T::Currency::reserve(account, reserve).map(|_| reserve)
+        T::Hold::hold(&HoldReason::Aggregation.into(), account, reserve).map(|_| reserve)
+    }
+
+    /// Clean Domain
+    fn clean_domain<T: Config>(domain: &mut Domain<T>) {
+        sp_std::mem::take(&mut domain.should_publish)
+            .into_iter()
+            .chain(sp_std::iter::once((
+                domain.next.id,
+                sp_std::mem::take(&mut domain.next),
+            )))
+            .for_each(|(id, aggregation)| {
+                Pallet::<T>::release_aggregation_founds(&aggregation);
+                Pallet::<T>::deposit_event(Event::AggregationRemoved {
+                    domain_id: domain.id,
+                    aggregation_id: id,
+                });
+            });
+        domain.next = domain.next.create_next(domain.max_aggregation_size);
     }
 
     /// Shortcut to get the Domain type from config.
@@ -384,7 +468,17 @@ pub mod pallet {
         BalanceOf<T>,
         <T as Config>::AggregationSize,
         <T as Config>::MaxPendingPublishQueueSize,
+        TicketOf<T>,
     >;
+
+    /// A reason for this pallet placing a hold on funds.
+    #[pallet::composite_enum]
+    pub enum HoldReason {
+        /// The funds are held as storage deposit for a aggregation pay.
+        Aggregation,
+        /// The funds are held as storage deposit for a domain registration.
+        Domain,
+    }
 
     /// Domains storage
     #[pallet::storage]
@@ -402,6 +496,32 @@ pub mod pallet {
     /// Vector of published aggregations. This will stay just in one block because we remove
     /// this vector at the start of every block (on_initialize hook).
     pub type Published<T: Config> = StorageValue<_, Vec<Aggregation<T>>, ValueQuery>;
+
+    impl<T: Config> Pallet<T> {
+        fn ensure_domain_params(
+            aggregation_size: u32,
+            queue_size: u32,
+        ) -> Result<(), DispatchError> {
+            if aggregation_size > T::AggregationSize::get()
+                || queue_size > T::MaxPendingPublishQueueSize::get()
+            {
+                Err(Error::<T>::InvalidDomainParams)?;
+            }
+            Ok(())
+        }
+
+        fn release_aggregation_founds(aggregation: &Aggregation<T>) {
+            for s in &aggregation.statements {
+                let _ = T::Hold::release(
+                    &HoldReason::Aggregation.into(),
+                    &s.account,
+                    s.reserve,
+                    Precision::BestEffort,
+                )
+                .defensive_proof("In besteffort mode should ever release funds: qed");
+            }
+        }
+    }
 
     #[pallet::hooks]
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
@@ -434,11 +554,14 @@ pub mod pallet {
                 if let Some(published) = Published::<T>::get().last() {
                     for s in published.statements.iter() {
                         let account = &s.account;
-                        let missed = T::Currency::repatriate_reserved(
+                        let missed = T::Hold::transfer_on_hold(
+                            &HoldReason::Aggregation.into(),
                             account,
                             &origin,
                             s.reserve,
-                            BalanceStatus::Free,
+                            Precision::BestEffort,
+                            Restriction::Free,
+                            Fortitude::Polite,
                         )
                         .expect("Call user should exists. qed");
                         if missed > 0_u32.into() {
@@ -468,18 +591,27 @@ pub mod pallet {
             queue_size: Option<u32>,
         ) -> DispatchResultWithPostInfo {
             let id = Self::next_domain_id();
-            let owner = ensure_signed(origin)?;
+            let owner = User::<T::AccountId>::from_origin::<T>(origin)?;
+            let queue_size = queue_size.unwrap_or(T::MaxPendingPublishQueueSize::get());
+            Self::ensure_domain_params(aggregation_size, queue_size)?;
+
+            // T::Consideration::new()
             Self::deposit_event(Event::NewDomain { id });
-            Domains::<T>::insert(
-                id,
-                Domain::<T>::create(
-                    id,
-                    owner,
-                    1,
-                    aggregation_size,
-                    queue_size.unwrap_or_else(|| T::MaxPendingPublishQueueSize::get()),
-                ),
-            );
+            let ticket = owner
+                .owner()
+                .map(|a| {
+                    T::Consideration::new(
+                        a,
+                        Footprint::from_parts(
+                            1,
+                            Domain::<T>::encoded_size(aggregation_size, queue_size),
+                        ),
+                    )
+                })
+                .transpose()?;
+            let domain =
+                Domain::<T>::create(id, owner.clone(), 1, aggregation_size, queue_size, ticket);
+            Domains::<T>::insert(id, domain);
             NextDomainId::<T>::put(id + 1);
 
             Ok(().into())
@@ -493,24 +625,41 @@ pub mod pallet {
             let owner = User::<T::AccountId>::from_origin::<T>(origin)?;
             Domains::<T>::try_mutate_exists(domain_id, |domain| {
                 *domain = match domain {
-                    Some(domain) if owner.can_remove_domain::<T>(&domain) => None,
+                    Some(domain) if owner.can_remove_domain::<T>(&domain) => {
+                        clean_domain::<T>(domain);
+                        match (owner.owner(), domain.ticket.take()) {
+                            (Some(o), Some(t)) => {
+                                let _ =
+                                    t.drop(o).defensive_proof("Drop should always succeed: qed");
+                            }
+                            _ => {}
+                        };
+                        None
+                    }
                     Some(_) => Err(BadOrigin)?,
                     None => Err(Error::<T>::UnknownDomainId)?,
                 };
                 Ok::<_, DispatchError>(())
             })?;
+
             Ok(().into())
         }
     }
 
-    #[derive(Debug)]
-    enum User<A> {
+    #[derive(Encode, Decode, TypeInfo, MaxEncodedLen, Debug, PartialEq, Clone)]
+    pub enum User<A> {
         Owner(A),
         Manager,
     }
 
+    impl<A> From<A> for User<A> {
+        fn from(value: A) -> Self {
+            User::Owner(value)
+        }
+    }
+
     impl<A: PartialEq> User<A> {
-        pub fn from_origin<T: Config<AccountId = A>>(
+        pub(crate) fn from_origin<T: Config<AccountId = A>>(
             origin: OriginFor<T>,
         ) -> Result<Self, BadOrigin> {
             match T::ManagerOrigin::ensure_origin(origin.clone()) {
@@ -519,10 +668,20 @@ pub mod pallet {
             }
         }
 
-        pub fn can_remove_domain<T: Config<AccountId = A>>(&self, domain: &Domain<T>) -> bool {
+        pub(crate) fn can_remove_domain<T: Config<AccountId = A>>(
+            &self,
+            domain: &Domain<T>,
+        ) -> bool {
             match self {
-                User::Owner(owner) => &domain.owner == owner,
+                User::Owner(_) => &domain.owner == self,
                 User::Manager => true,
+            }
+        }
+
+        pub(crate) fn owner(&self) -> Option<&A> {
+            match self {
+                User::Owner(owner) => Some(owner),
+                _ => None,
             }
         }
     }

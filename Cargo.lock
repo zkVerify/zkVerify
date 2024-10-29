@@ -94,6 +94,7 @@ dependencies = [
  "log",
  "pallet-balances",
  "parity-scale-codec",
+ "rstest",
  "scale-info",
  "sp-core",
  "sp-io",

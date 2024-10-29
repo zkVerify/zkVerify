@@ -14,10 +14,15 @@
 // limitations under the License.
 #![cfg(test)]
 
-use frame_support::traits::EnsureOrigin;
+use core::cell::RefCell;
+use std::collections::VecDeque;
+
+use codec::{Decode, Encode, MaxEncodedLen};
+use frame_support::traits::{Consideration, EnsureOrigin};
 use frame_support::weights::RuntimeDbWeight;
 use frame_support::{derive_impl, parameter_types};
 use frame_system::RawOrigin;
+use scale_info::TypeInfo;
 use sp_core::{ConstU128, ConstU32};
 use sp_runtime::{traits::IdentityLookup, BuildStorage, Perbill};
 
@@ -37,6 +42,7 @@ pub const ESTIMATED_FEE_CORRECTED: u32 = FEE_PER_STATEMENT_CORRECTED * Attestati
 
 pub type Balance = u128;
 pub type AccountId = u64;
+pub type Origin = RawOrigin<AccountId>;
 
 pub const DOMAIN_ID: u32 = 51;
 pub const DOMAIN: Option<u32> = Some(DOMAIN_ID);
@@ -49,6 +55,8 @@ pub const USER_1: AccountId = 42;
 pub const USER_2: AccountId = 24;
 pub const USER_DOMAIN_1: AccountId = 42_000;
 pub const USER_DOMAIN_2: AccountId = 24_000;
+pub const USER_DOMAIN_ERROR_NEW: AccountId = 99_000;
+pub const USER_DOMAIN_ERROR_DROP: AccountId = 100_000;
 pub const ROOT_USER: AccountId = 666;
 
 pub static USERS: [(AccountId, Balance); NUM_TEST_ACCOUNTS] = [
@@ -115,15 +123,73 @@ impl<O: Into<Result<RawOrigin<AccountId>, O>> + From<RawOrigin<AccountId>>> Ensu
     }
 }
 
+#[derive(Debug, PartialEq, Eq, Clone, Encode, Decode, MaxEncodedLen, TypeInfo)]
+pub struct MockConsideration {
+    pub who: AccountId,
+    pub count: u64,
+    pub size: u64,
+}
+
+impl MockConsideration {
+    thread_local! {
+        pub static QUEUE: RefCell<VecDeque<(AccountId, MockConsideration)>> = RefCell::new(Default::default());
+    }
+
+    fn push(self, id: AccountId) {
+        Self::QUEUE.with_borrow_mut(|q| q.push_back((id, self)));
+    }
+
+    pub fn pop() -> Option<(AccountId, Self)> {
+        Self::QUEUE.with_borrow_mut(|q| q.pop_front())
+    }
+}
+
+impl Consideration<AccountId> for MockConsideration {
+    fn new(
+        who: &AccountId,
+        new: frame_support::traits::Footprint,
+    ) -> Result<Self, sp_runtime::DispatchError> {
+        if who == &USER_DOMAIN_ERROR_NEW {
+            Err(sp_runtime::DispatchError::from("User Domain Error New"))?
+        }
+        Ok(Self {
+            who: *who,
+            count: new.count,
+            size: new.size,
+        })
+    }
+
+    fn update(
+        self,
+        _who: &AccountId,
+        _new: frame_support::traits::Footprint,
+    ) -> Result<Self, sp_runtime::DispatchError> {
+        unimplemented!("We don't support it by now")
+    }
+
+    fn drop(self, who: &AccountId) -> Result<(), sp_runtime::DispatchError> {
+        Self::push(self, who.clone());
+        if who == &USER_DOMAIN_ERROR_DROP {
+            Err(sp_runtime::DispatchError::from("User Domain Error Drop"))?
+        }
+        Ok(())
+    }
+}
+
 impl crate::Config for Test {
     type RuntimeEvent = RuntimeEvent;
+
+    type RuntimeHoldReason = RuntimeHoldReason;
+
     type WeightInfo = MockWeightInfo;
 
     type AggregationSize = AttestationSize;
 
     type MaxPendingPublishQueueSize = MaxPendingPublishQueueSize;
 
-    type Currency = Balances;
+    type Hold = Balances;
+
+    type Consideration = MockConsideration;
 
     type EstimateCallFee = frame_support::traits::ConstU32<ESTIMATED_FEE>;
 
@@ -188,10 +254,11 @@ pub fn test() -> sp_io::TestExternalities {
             DOMAIN_ID,
             crate::Domain::<Test>::create(
                 DOMAIN_ID,
-                USER_DOMAIN_1,
+                USER_DOMAIN_1.into(),
                 1,
                 <Test as crate::Config>::AggregationSize::get(),
                 <Test as crate::Config>::MaxPendingPublishQueueSize::get(),
+                None,
             ),
         );
     });

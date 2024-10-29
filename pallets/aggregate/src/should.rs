@@ -18,7 +18,6 @@
 use super::*;
 use crate::mock::{self, *};
 use frame_support::{assert_err, assert_ok, traits::Hooks};
-use frame_system::RawOrigin;
 use hp_poe::OnProofVerified;
 use sp_core::H256;
 use sp_runtime::SaturatedConversion;
@@ -26,10 +25,10 @@ use utility::*;
 
 mod utility;
 
-#[test]
-fn test_should_use_value_defined_in_domains_and_not_the_configured_traits() {
-    todo!()
-}
+// #[test]
+// fn test_should_use_value_defined_in_domains_and_not_the_configured_traits() {
+//     todo!()
+// }
 
 #[test]
 fn add_a_proof() {
@@ -213,7 +212,7 @@ mod check_if_no_room_for_new_statements_in_should_published_set_and {
     #[test]
     fn free_room_for_new_aggregations_when_old_aggregated() {
         test().execute_with(|| {
-            Aggregate::aggregate(RawOrigin::Signed(33).into(), DOMAIN_ID, 1).unwrap();
+            Aggregate::aggregate(Origin::Signed(33).into(), DOMAIN_ID, 1).unwrap();
             mock::System::events().clear();
 
             let statement = H256::from_low_u64_be(123);
@@ -234,9 +233,9 @@ mod check_if_no_room_for_new_statements_in_should_published_set_and {
     #[test]
     fn free_room_for_aggregation_when_olds_aggregated_more_than_once() {
         test().execute_with(|| {
-            Aggregate::aggregate(RawOrigin::Signed(33).into(), DOMAIN_ID, 1).unwrap();
-            Aggregate::aggregate(RawOrigin::Signed(33).into(), DOMAIN_ID, 3).unwrap();
-            Aggregate::aggregate(RawOrigin::Signed(33).into(), DOMAIN_ID, 5).unwrap();
+            Aggregate::aggregate(Origin::Signed(33).into(), DOMAIN_ID, 1).unwrap();
+            Aggregate::aggregate(Origin::Signed(33).into(), DOMAIN_ID, 3).unwrap();
+            Aggregate::aggregate(Origin::Signed(33).into(), DOMAIN_ID, 5).unwrap();
             mock::System::events().clear();
 
             let statement = H256::from_low_u64_be(123);
@@ -367,7 +366,7 @@ mod aggregate {
             }
 
             assert_ok!(Aggregate::aggregate(
-                RawOrigin::Signed(USER_1).into(),
+                Origin::Signed(USER_1).into(),
                 DOMAIN_ID,
                 1
             ));
@@ -394,7 +393,7 @@ mod aggregate {
                 Balances::free_balance(PUBLISHER_USER) + ESTIMATED_FEE_CORRECTED as u128;
 
             assert_ok!(Aggregate::aggregate(
-                RawOrigin::Signed(PUBLISHER_USER).into(),
+                Origin::Signed(PUBLISHER_USER).into(),
                 DOMAIN_ID,
                 1
             ));
@@ -407,11 +406,7 @@ mod aggregate {
     fn raise_error_if_invalid_domain_is_used() {
         test().execute_with(|| {
             assert_err!(
-                Aggregate::aggregate(
-                    RawOrigin::Signed(USER_1).into(),
-                    NOT_REGISTERED_DOMAIN_ID,
-                    1
-                ),
+                Aggregate::aggregate(Origin::Signed(USER_1).into(), NOT_REGISTERED_DOMAIN_ID, 1),
                 Error::<Test>::UnknownDomainId
             );
         })
@@ -425,7 +420,7 @@ mod register_domain {
     fn add_a_domain_with_the_given_values() {
         test().execute_with(|| {
             assert_ok!(Aggregate::register_domain(
-                RawOrigin::Signed(USER_DOMAIN_1).into(),
+                Origin::Signed(USER_DOMAIN_1).into(),
                 16,
                 Some(8)
             ));
@@ -446,17 +441,17 @@ mod register_domain {
         test().execute_with(|| {
             let values = [(8, Some(4)), (16, None), (32, Some(8))];
             assert_ok!(Aggregate::register_domain(
-                RawOrigin::Signed(USER_DOMAIN_1).into(),
+                Origin::Signed(USER_DOMAIN_1).into(),
                 values[0].0,
                 values[0].1
             ));
             assert_ok!(Aggregate::register_domain(
-                RawOrigin::Signed(USER_DOMAIN_1).into(),
+                Origin::Signed(USER_DOMAIN_1).into(),
                 values[1].0,
                 values[1].1
             ));
             assert_ok!(Aggregate::register_domain(
-                RawOrigin::Signed(USER_DOMAIN_1).into(),
+                Origin::Signed(USER_DOMAIN_1).into(),
                 values[2].0,
                 values[2].1
             ));
@@ -488,32 +483,116 @@ mod register_domain {
 
     #[test]
     fn fail_if_wrong_configuration_params() {
-        todo!()
+        test().execute_with(|| {
+            // Sanity check
+            assert_ok!(Aggregate::register_domain(
+                Origin::Signed(USER_DOMAIN_1).into(),
+                AttestationSize::get(),
+                Some(MaxPendingPublishQueueSize::get())
+            ));
+
+            assert_err!(
+                Aggregate::register_domain(
+                    Origin::Signed(USER_DOMAIN_1).into(),
+                    AttestationSize::get() + 1,
+                    Some(MaxPendingPublishQueueSize::get())
+                ),
+                Error::<Test>::InvalidDomainParams
+            );
+            assert_err!(
+                Aggregate::register_domain(
+                    Origin::Signed(USER_DOMAIN_1).into(),
+                    AttestationSize::get(),
+                    Some(MaxPendingPublishQueueSize::get() + 1)
+                ),
+                Error::<Test>::InvalidDomainParams
+            );
+        })
     }
 
     #[test]
-    fn bond_founds_for_storage_use_if_user() {
-        // Look preimage pallet
-        todo!()
+    fn save_consideration_ticket_if_user_register_a_domain() {
+        test().execute_with(|| {
+            assert_ok!(Aggregate::register_domain(
+                Origin::Signed(USER_DOMAIN_1).into(),
+                16,
+                None
+            ));
+
+            let domain = Domains::<Test>::get(registered_ids()[0]).unwrap();
+
+            assert_eq!(
+                Some(MockConsideration {
+                    who: USER_DOMAIN_1,
+                    count: 1,
+                    size: Domain::<Test>::encoded_size(16, MaxPendingPublishQueueSize::get())
+                        as u64,
+                }),
+                domain.ticket,
+            );
+        });
     }
 
     #[test]
-    fn fails_if_user_has_not_enough_funds() {
-        todo!()
+    fn donst_store_consideration_ticket_if_manager_register_domain() {
+        test().execute_with(|| {
+            assert_ok!(Aggregate::register_domain(
+                Origin::Signed(ROOT_USER).into(),
+                16,
+                None
+            ));
+
+            let domain = Domains::<Test>::get(registered_ids()[0]).unwrap();
+
+            assert_eq!(None, domain.ticket);
+        });
     }
 
     #[test]
-    fn ask_to_pay_regular_user() {
-        todo!()
+    fn not_change_domain_size() {
+        // This test is here to check the you don't changed the domain struct without change `encoded_size`
+        // accordantly
+        use codec::MaxEncodedLen;
+        // Check base: always TRUE
+        assert_eq!(
+            Domain::<Test>::max_encoded_len(),
+            Domain::<Test>::encoded_size(AttestationSize::get(), MaxPendingPublishQueueSize::get())
+        );
+
+        // Fixture max
+        assert_eq!(Domain::<Test>::max_encoded_len(), 30860);
+
+        // Fixtures
+        assert_eq!(
+            1348,
+            Domain::<Test>::encoded_size(1, MaxPendingPublishQueueSize::get())
+        );
+        assert_eq!(
+            3665,
+            Domain::<Test>::encoded_size(AttestationSize::get(), 1)
+        );
+        assert_eq!(
+            8292,
+            Domain::<Test>::encoded_size(
+                AttestationSize::get() / 2,
+                MaxPendingPublishQueueSize::get() / 2
+            )
+        );
     }
 
     #[test]
-    fn not_ask_to_pay_for_manager() {
-        todo!()
+    fn rise_error_on_if_new_consideration_fails() {
+        test().execute_with(|| {
+            assert_err!(
+                Aggregate::register_domain(Origin::Signed(USER_DOMAIN_ERROR_NEW).into(), 16, None),
+                sp_runtime::DispatchError::from("User Domain Error New")
+            );
+        })
     }
 }
 
 mod unregister_domain {
+    use rstest::rstest;
     use sp_runtime::traits::BadOrigin;
 
     use super::*;
@@ -526,24 +605,32 @@ mod unregister_domain {
         ext.execute_with(|| {
             Domains::<Test>::insert(
                 IDS[0],
-                Domain::<Test>::create(IDS[0], USER_DOMAIN_1, 1, 10, 3),
+                Domain::<Test>::create(IDS[0], USER_DOMAIN_1.into(), 1, 10, 3, None),
             );
             Domains::<Test>::insert(
                 IDS[1],
-                Domain::<Test>::create(IDS[1], USER_DOMAIN_1, 1, 5, 4),
+                Domain::<Test>::create(IDS[1], USER_DOMAIN_1.into(), 1, 5, 4, None),
             );
             Domains::<Test>::insert(
                 IDS[2],
-                Domain::<Test>::create(IDS[2], USER_DOMAIN_2, 1, 6, 5),
+                Domain::<Test>::create(IDS[2], USER_DOMAIN_2.into(), 1, 6, 5, None),
             );
             Domains::<Test>::insert(
                 IDS[3],
-                Domain::<Test>::create(IDS[3], USER_DOMAIN_2, 1, 32, 6),
+                Domain::<Test>::create(IDS[3], USER_DOMAIN_2.into(), 1, 32, 6, None),
             );
             NextDomainId::<Test>::put(10_000);
 
             for id in IDS {
                 assert!(Domains::<Test>::get(id).is_some());
+            }
+
+            // On IDS[0] we fill all possible aggregations:
+            let len = 10 * 4 - 1;
+
+            for (p, _) in (0..len).enumerate() {
+                let u = USERS[p % USERS.len()].0;
+                Aggregate::on_proof_verified(Some(u), Some(IDS[0]), Default::default());
             }
         });
         ext
@@ -553,7 +640,7 @@ mod unregister_domain {
     fn remove_the_domain() {
         test().execute_with(|| {
             assert_ok!(Aggregate::unregister_domain(
-                RawOrigin::Signed(USER_DOMAIN_1).into(),
+                Origin::Signed(USER_DOMAIN_1).into(),
                 IDS[1]
             ));
 
@@ -566,7 +653,7 @@ mod unregister_domain {
         test().execute_with(|| {
             assert_err!(
                 Aggregate::unregister_domain(
-                    RawOrigin::Signed(USER_DOMAIN_1).into(),
+                    Origin::Signed(USER_DOMAIN_1).into(),
                     NOT_REGISTERED_DOMAIN_ID
                 ),
                 Error::<Test>::UnknownDomainId
@@ -578,11 +665,11 @@ mod unregister_domain {
     fn raise_error_if_the_issuer_is_not_the_owner() {
         test().execute_with(|| {
             assert_err!(
-                Aggregate::unregister_domain(RawOrigin::Signed(USER_DOMAIN_2).into(), IDS[1]),
+                Aggregate::unregister_domain(Origin::Signed(USER_DOMAIN_2).into(), IDS[1]),
                 BadOrigin
             );
             assert_err!(
-                Aggregate::unregister_domain(RawOrigin::Signed(USER_DOMAIN_1).into(), IDS[2]),
+                Aggregate::unregister_domain(Origin::Signed(USER_DOMAIN_1).into(), IDS[2]),
                 BadOrigin
             );
         })
@@ -593,7 +680,7 @@ mod unregister_domain {
         test().execute_with(|| {
             for id in IDS {
                 assert_ok!(Aggregate::unregister_domain(
-                    RawOrigin::Signed(ROOT_USER).into(),
+                    Origin::Signed(ROOT_USER).into(),
                     id
                 ));
                 assert!(Domains::<Test>::get(id).is_none());
@@ -601,13 +688,70 @@ mod unregister_domain {
         })
     }
 
-    #[test]
-    fn unbound_all_founds_reserved_for_aggregation() {
-        todo!()
+    #[rstest]
+    #[case::user(Origin::Signed(USER_DOMAIN_1))]
+    #[case::manager(Origin::Signed(ROOT_USER))]
+    fn unbound_all_founds_reserved_for_aggregation(#[case] origin: Origin) {
+        test().execute_with(|| {
+            let expected_1 = USERS[0].1;
+            let expected_2 = USERS[1].1;
+            //  Sanity check:
+            assert!(expected_1 > Balances::free_balance(USERS[0].0));
+            assert!(expected_2 > Balances::free_balance(USERS[1].0));
+
+            assert_ok!(Aggregate::unregister_domain(origin.into(), IDS[0]));
+
+            assert_eq!(expected_1, Balances::free_balance(USERS[0].0));
+            assert_eq!(expected_2, Balances::free_balance(USERS[1].0));
+        })
+    }
+
+    #[rstest]
+    #[case::user(Origin::Signed(USER_DOMAIN_1))]
+    #[case::manager(Origin::Signed(ROOT_USER))]
+    fn emit_event_for_each_aggregation_that_announce_it_s_removed(#[case] origin: Origin) {
+        test().execute_with(|| {
+            assert_ok!(Aggregate::unregister_domain(origin.into(), IDS[0]));
+
+            for id in 1..=4 {
+                assert_evt(
+                    Event::<Test>::AggregationRemoved {
+                        domain_id: IDS[0],
+                        aggregation_id: id,
+                    },
+                    "Removed aggregation",
+                );
+            }
+        })
     }
 
     #[test]
-    fn unbound_all_founds_reserved_for_domain() {
-        todo!()
+    fn unregister_domain_drop_consideration_ticket() {
+        let origin = Origin::Signed(USER_DOMAIN_1);
+        test().execute_with(|| {
+            assert_ok!(Aggregate::register_domain(origin.clone().into(), 16, None));
+
+            let id = registered_ids()[0];
+
+            assert_ok!(Aggregate::unregister_domain(origin.into(), id));
+
+            let (id, dropped_consideration) = MockConsideration::pop().unwrap();
+
+            assert_eq!(USER_DOMAIN_1, id);
+            assert_eq!(USER_DOMAIN_1, dropped_consideration.who);
+        })
+    }
+
+    #[test]
+    #[should_panic(expected = "Drop")]
+    fn ignore_error_on_drop_ticket_but_defensive_proof_on_test() {
+        let origin = Origin::Signed(USER_DOMAIN_ERROR_DROP);
+        test().execute_with(|| {
+            assert_ok!(Aggregate::register_domain(origin.clone().into(), 16, None));
+
+            let id = registered_ids()[0];
+
+            let _ = Aggregate::unregister_domain(origin.into(), id);
+        })
     }
 }

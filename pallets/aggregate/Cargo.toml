@@ -26,6 +26,7 @@ hp-poe = { workspace = true }
 pallet-balances = { workspace = true, features = ["std"] }
 sp-core = { workspace = true, features = ["std"] }
 sp-io = { workspace = true, features = ["std"] }
+rstest = { workspace = true }
 
 [features]
 default = ["std"]
