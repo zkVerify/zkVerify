@@ -94,7 +94,7 @@ fn one_tree_per_block() {
     new_test_ext().execute_with(|| {
         for _ in 0..crate::mock::MIN_PROOFS_FOR_ROOT_PUBLISHING * 2 {
             let pid = H256::random();
-            Poe::on_proof_verified(pid);
+            Poe::on_proof_verified(None, None, pid);
             assert_element_evt(0, pid);
         }
         assert_ok!(Poe::publish_attestation(RuntimeOrigin::root()));
@@ -105,7 +105,7 @@ fn one_tree_per_block() {
 fn proof_added() {
     new_test_ext().execute_with(|| {
         let pid = H256(HASHES[0]);
-        Poe::on_proof_verified(pid);
+        Poe::on_proof_verified(None, None, pid);
         assert_element_evt(0, pid);
     })
 }
@@ -115,7 +115,7 @@ fn correct_root() {
     new_test_ext().execute_with(|| {
         for h in HASHES {
             let pid = H256(h);
-            Poe::on_proof_verified(pid);
+            Poe::on_proof_verified(None, None, pid);
             assert_element_evt(0, pid);
         }
 
@@ -135,9 +135,9 @@ fn old_attestations_are_cleared_stepwise() {
         for i in 0..=max_attestations * 2 {
             // Publish proofs and attestation
             let pida = H256(HASHES[0]);
-            Poe::on_proof_verified(pida);
+            Poe::on_proof_verified(None, None, pida);
             let pidb = H256(HASHES[1]);
-            Poe::on_proof_verified(pidb);
+            Poe::on_proof_verified(None, None, pidb);
 
             assert_ok!(Poe::publish_attestation(RuntimeOrigin::root()));
 
@@ -234,7 +234,7 @@ mod should_inherent_call {
                     .into_iter()
                     .take(MIN_PROOFS_FOR_ROOT_PUBLISHING as usize)
                 {
-                    Poe::on_proof_verified(H256(h));
+                    Poe::on_proof_verified(None, None, H256(h));
                 }
                 assert_eq!(
                     Some(Call::publish_attestation {}),
@@ -246,7 +246,7 @@ mod should_inherent_call {
         #[test]
         fn if_timeout_expired() {
             new_test_ext().execute_with(|| {
-                Poe::on_proof_verified(H256(HASHES[0]));
+                Poe::on_proof_verified(None, None, H256(HASHES[0]));
                 // Move timestamp forward and check that root would be published
                 Timestamp::set_timestamp(Timestamp::now() + MILLISECS_PER_PROOF_ROOT_PUBLISHING);
                 assert_eq!(
@@ -267,7 +267,7 @@ mod should_inherent_call {
                     .into_iter()
                     .take((MIN_PROOFS_FOR_ROOT_PUBLISHING - 1) as usize)
                 {
-                    Poe::on_proof_verified(H256(h));
+                    Poe::on_proof_verified(None, None, H256(h));
                 }
                 // Check that without enough elements nothing would be published
                 assert_eq!(None, Poe::create_inherent(&inherent_data()));
@@ -279,7 +279,7 @@ mod should_inherent_call {
             new_test_ext().execute_with(|| {
                 for _ in 0..(MIN_PROOFS_FOR_ROOT_PUBLISHING) as usize {
                     // Keep inserting the same element
-                    Poe::on_proof_verified(H256(HASHES[0]));
+                    Poe::on_proof_verified(None, None, H256(HASHES[0]));
                 }
                 // Check that without enough unique elements nothing would be published
                 assert_eq!(None, Poe::create_inherent(&inherent_data()));
@@ -306,7 +306,7 @@ fn get_proof_from_pallet_proof_not_found() {
             .into_iter()
             .take(MIN_PROOFS_FOR_ROOT_PUBLISHING as usize)
         {
-            Poe::on_proof_verified(H256(h));
+            Poe::on_proof_verified(None, None, H256(h));
         }
         Poe::publish_attestation(RuntimeOrigin::root()).unwrap();
         let attestation_id = 0;
@@ -332,7 +332,7 @@ fn get_proof_from_pallet_invalid_att_id() {
             .into_iter()
             .take(MIN_PROOFS_FOR_ROOT_PUBLISHING as usize)
         {
-            Poe::on_proof_verified(H256(h));
+            Poe::on_proof_verified(None, None, H256(h));
         }
         Poe::publish_attestation(RuntimeOrigin::root()).unwrap();
         let attestation_id = 10;
@@ -350,7 +350,7 @@ fn get_proof_from_pallet_valid_att_id_and_valid_proof() {
             .into_iter()
             .take(MIN_PROOFS_FOR_ROOT_PUBLISHING as usize)
         {
-            Poe::on_proof_verified(H256(h));
+            Poe::on_proof_verified(None, None, H256(h));
         }
         Poe::publish_attestation(RuntimeOrigin::root()).unwrap();
         let attestation_id = 0;

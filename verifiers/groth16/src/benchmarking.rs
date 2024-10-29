@@ -43,6 +43,7 @@ mod benchmarks {
             VkOrHash::from_vk(vk),
             proof.into(),
             inputs.into(),
+            None,
         );
     }
 
@@ -57,6 +58,7 @@ mod benchmarks {
             VkOrHash::from_vk(vk),
             proof.into(),
             inputs.into(),
+            None,
         );
     }
 
@@ -73,6 +75,7 @@ mod benchmarks {
             VkOrHash::from_hash(hash),
             proof.into(),
             inputs.into(),
+            None,
         );
     }
 
@@ -89,6 +92,7 @@ mod benchmarks {
             VkOrHash::from_hash(hash),
             proof.into(),
             inputs.into(),
+            None,
         );
     }
 

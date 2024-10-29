@@ -172,6 +172,11 @@ pub mod pallet {
             /// Verification key hash
             hash: H256,
         },
+        /// The proof has been verified.
+        ProofVerified {
+            /// Proof verified statement
+            statement: H256,
+        },
     }
 
     // Errors inform users that something went wrong.
@@ -234,10 +239,11 @@ pub mod pallet {
                 VkOrHash::Hash(_) => T::WeightInfo::submit_proof_with_vk_hash(proof, pubs),
             })]
         pub fn submit_proof(
-            _origin: OriginFor<T>,
+            origin: OriginFor<T>,
             vk_or_hash: VkOrHash<I::Vk>,
             proof: Box<I::Proof>,
             pubs: Box<I::Pubs>,
+            domain_id: Option<u32>,
         ) -> DispatchResultWithPostInfo
         where
             I: Verifier,
@@ -256,14 +262,11 @@ pub mod pallet {
                     vk.as_ref().clone()
                 }
             };
+            let account = ensure_signed(origin).ok();
+            let statement = compute_hash::<I>(&pubs, &vk_or_hash);
             I::verify_proof(&vk, &proof, &pubs)
-                .map(|_x| {
-                    T::OnProofVerified::on_proof_verified(
-                        None,
-                        None,
-                        compute_hash::<I>(&pubs, &vk_or_hash),
-                    )
-                })
+                .inspect(|_| Self::deposit_event(Event::ProofVerified { statement }))
+                .map(|_x| T::OnProofVerified::on_proof_verified(account, domain_id, statement))
                 .map_err(Error::<T, I>::from)?;
             Ok(().into())
         }

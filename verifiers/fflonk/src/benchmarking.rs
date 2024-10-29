@@ -47,6 +47,7 @@ mod benchmarks {
             VkOrHash::from_vk(vk),
             proof.into(),
             pubs.into(),
+            None,
         );
     }
 
@@ -66,6 +67,7 @@ mod benchmarks {
             VkOrHash::from_hash(hash),
             proof.into(),
             pubs.into(),
+            None,
         );
     }
 

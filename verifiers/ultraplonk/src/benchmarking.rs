@@ -47,6 +47,7 @@ pub mod benchmarks {
             VkOrHash::from_vk(vk),
             proof,
             pubs,
+            None,
         );
     }
 
@@ -64,6 +65,7 @@ pub mod benchmarks {
             VkOrHash::from_vk(vk),
             proof,
             pubs,
+            None,
         );
     }
 
@@ -85,6 +87,7 @@ pub mod benchmarks {
             VkOrHash::from_vk(vk),
             proof,
             pubs.into(),
+            None,
         );
     }
 
@@ -106,6 +109,7 @@ pub mod benchmarks {
             VkOrHash::from_vk(vk),
             proof,
             pubs.into(),
+            None,
         );
     }
 
@@ -127,6 +131,7 @@ pub mod benchmarks {
             VkOrHash::from_vk(vk),
             proof,
             pubs.into(),
+            None,
         );
     }
 
@@ -146,6 +151,7 @@ pub mod benchmarks {
             VkOrHash::from_hash(hash),
             proof,
             pubs.into(),
+            None,
         );
     }
 
@@ -169,6 +175,7 @@ pub mod benchmarks {
             VkOrHash::from_hash(hash),
             proof,
             pubs.into(),
+            None,
         );
     }
 

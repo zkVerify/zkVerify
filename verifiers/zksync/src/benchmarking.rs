@@ -42,7 +42,7 @@ mod benchmarks {
         let pubs = PUBS.into();
 
         #[extrinsic_call]
-        submit_proof(RawOrigin::Signed(caller), vk, proof, pubs);
+        submit_proof(RawOrigin::Signed(caller), vk, proof, pubs, None);
     }
 
     #[benchmark]
@@ -56,7 +56,7 @@ mod benchmarks {
         let vk_or_hash = VkOrHash::from_hash(hash);
 
         #[extrinsic_call]
-        submit_proof(RawOrigin::Signed(caller), vk_or_hash, proof, pubs);
+        submit_proof(RawOrigin::Signed(caller), vk_or_hash, proof, pubs, None);
     }
 
     #[benchmark]
