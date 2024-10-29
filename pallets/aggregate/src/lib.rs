@@ -93,7 +93,9 @@ pub mod pallet {
         type WeightInfo: WeightInfo;
     }
 
-    impl<T: Config> hp_poe::OnProofVerified<<T as frame_system::Config>::AccountId> for Pallet<T> {
+    impl<T: Config> hp_on_proof_verified::OnProofVerified<<T as frame_system::Config>::AccountId>
+        for Pallet<T>
+    {
         fn on_proof_verified(
             account: Option<<T as frame_system::Config>::AccountId>,
             domain_id: Option<u32>,

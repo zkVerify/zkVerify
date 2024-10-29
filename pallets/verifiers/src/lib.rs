@@ -88,7 +88,7 @@ pub mod pallet {
         Identity,
     };
     use frame_system::pallet_prelude::*;
-    use hp_poe::OnProofVerified;
+    use hp_on_proof_verified::OnProofVerified;
     use sp_core::{hexdisplay::AsBytesRef, H256};
     use sp_io::hashing::keccak_256;
     use sp_std::boxed::Box;

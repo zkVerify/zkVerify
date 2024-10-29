@@ -26,6 +26,7 @@ pallet-timestamp = { workspace = true }
 sp-io = { workspace = true }
 sp-runtime = { workspace = true }
 
+hp-on-proof-verified = { workspace = true }
 hp-poe = { workspace = true }
 
 [dev-dependencies]

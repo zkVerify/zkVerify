@@ -16,15 +16,14 @@ sp-core = { workspace = true }
 codec = { default-features = false, workspace = true, features = ["derive"] }
 snafu = { default-features = false, workspace = true }
 async-trait = { workspace = true, optional = true }
-impl-trait-for-tuples = "0.2.2"
 
 [features]
 default = ["std"]
 std = [
     "async-trait",
     "codec/std",
-    "snafu/std",
     "sp-inherents/std",
     "sp-runtime/std",
-    "sp-core/default",
+    "snafu/std",
+    "sp-core/std",
 ]

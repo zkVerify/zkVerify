@@ -24,7 +24,7 @@ use frame_support::inherent::ProvideInherent;
 use frame_support::pallet_prelude::InherentData;
 use frame_system::{EventRecord, Phase};
 use hex_literal::hex;
-use hp_poe::OnProofVerified;
+use hp_on_proof_verified::OnProofVerified;
 use hp_poe::INHERENT_IDENTIFIER;
 use sp_core::H256;
 use sp_runtime::traits::Keccak256;

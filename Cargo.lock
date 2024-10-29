@@ -90,7 +90,7 @@ dependencies = [
  "binary-merkle-tree",
  "frame-support",
  "frame-system",
- "hp-poe",
+ "hp-on-proof-verified",
  "log",
  "pallet-balances",
  "parity-scale-codec",
@@ -4614,11 +4614,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "hp-on-proof-verified"
+version = "0.1.0"
+dependencies = [
+ "impl-trait-for-tuples",
+ "sp-core",
+]
+
+[[package]]
 name = "hp-poe"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "impl-trait-for-tuples",
  "parity-scale-codec",
  "snafu 0.8.5",
  "sp-core",
@@ -7587,6 +7594,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal",
+ "hp-on-proof-verified",
  "hp-poe",
  "log",
  "pallet-timestamp",
@@ -7946,7 +7954,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal",
- "hp-poe",
+ "hp-on-proof-verified",
  "hp-verifiers",
  "log",
  "pallet-verifiers-macros",

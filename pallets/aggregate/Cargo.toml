@@ -20,7 +20,7 @@ frame-system = { workspace = true }
 sp-std = { workspace = true }
 sp-runtime = { workspace = true }
 
-hp-poe = { workspace = true }
+hp-on-proof-verified = { workspace = true }
 
 [dev-dependencies]
 pallet-balances = { workspace = true, features = ["std"] }
@@ -41,6 +41,5 @@ std = [
     "frame-support/std",
     "frame-system/std",
     "binary-merkle-tree/std",
-    "hp-poe/std",
 ]
 try-runtime = ["frame-support/try-runtime", "frame-system/try-runtime"]

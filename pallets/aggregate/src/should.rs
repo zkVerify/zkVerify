@@ -22,7 +22,7 @@ use frame_support::{
     dispatch::{GetDispatchInfo, Pays},
     traits::Hooks,
 };
-use hp_poe::OnProofVerified;
+use hp_on_proof_verified::OnProofVerified;
 use sp_core::H256;
 use sp_runtime::SaturatedConversion;
 use utility::*;

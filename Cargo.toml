@@ -12,6 +12,7 @@ members = [
     "runtime",
     "pallets/proof_of_existence",
     "primitives/hp-proof-of-existence",
+    "primitives/hp-on-proof-verified",
     "native",
     "pallets/aggregate",
     "pallets/verifiers",
@@ -82,6 +83,8 @@ pallet-poe = { path = "pallets/proof_of_existence", default-features = false }
 aggregate-pallet = { path = "pallets/aggregate", default-features = false }
 pallet-verifiers = { path = "pallets/verifiers", default-features = false }
 pallet-verifiers-macros = { path = "pallets/verifiers/macros" }
+hp-on-proof-verified = { default-features = false, path = "primitives/hp-on-proof-verified" }
+hp-poe = { default-features = false, path = "primitives/hp-proof-of-existence" }
 hp-verifiers = { path = "primitives/hp-verifiers", default-features = false }
 hp-groth16 = { path = "primitives/hp-groth16", default-features = false }
 pallet-fflonk-verifier = { path = "verifiers/fflonk", default-features = false }
@@ -176,7 +179,6 @@ serde_json = { version = "1.0.108", default-features = false, features = [
 sp-weights = { default-features = false, version = "31.0.0" }
 sp-genesis-builder = { default-features = false, version = "0.11.0" }
 sp-npos-elections = { default-features = false, version = "30.0.0" }
-hp-poe = { default-features = false, path = "primitives/hp-proof-of-existence" }
 proof-of-existence-rpc = { default-features = false, path = "rpc/proof_of_existence" }
 proof-of-existence-rpc-runtime-api = { default-features = false, path = "rpc/proof_of_existence/runtime-api" }
 
