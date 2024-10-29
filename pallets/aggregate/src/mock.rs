@@ -71,21 +71,25 @@ pub static USERS: [(AccountId, Balance); NUM_TEST_ACCOUNTS] = [
 pub struct MockWeightInfo;
 
 impl MockWeightInfo {
-    pub const REF_TIME: u64 = 42;
-    pub const PROOF_SIZE: u64 = 24;
+    pub const AGG_REF_TIME: u64 = 42;
+    pub const AGG_PROOF_SIZE: u64 = 24;
+    pub const REG_REF_TIME: u64 = 142;
+    pub const REG_PROOF_SIZE: u64 = 124;
+    pub const UNR_REF_TIME: u64 = 242;
+    pub const UNR_PROOF_SIZE: u64 = 224;
 }
 
 impl crate::WeightInfo for MockWeightInfo {
     fn aggregate() -> frame_support::weights::Weight {
-        frame_support::weights::Weight::from_parts(Self::REF_TIME, Self::PROOF_SIZE)
+        frame_support::weights::Weight::from_parts(Self::AGG_REF_TIME, Self::AGG_PROOF_SIZE)
     }
 
     fn register_domain() -> frame_support::weights::Weight {
-        todo!()
+        frame_support::weights::Weight::from_parts(Self::REG_REF_TIME, Self::REG_PROOF_SIZE)
     }
 
     fn unregister_domain() -> frame_support::weights::Weight {
-        todo!()
+        frame_support::weights::Weight::from_parts(Self::UNR_REF_TIME, Self::UNR_PROOF_SIZE)
     }
 }
 

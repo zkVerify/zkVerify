@@ -30,15 +30,21 @@ pub trait WeightInfo {
 #[frame_support::pallet]
 pub mod pallet {
     use super::WeightInfo;
-    use frame_support::traits::fungible::{Inspect, InspectHold, MutateHold};
-    use frame_support::traits::tokens::{Fortitude, Precision, Restriction};
-    use frame_support::traits::{
-        Consideration, Defensive, EstimateCallFee, Footprint, VariantCount,
+    use frame_support::{
+        dispatch::PostDispatchInfo,
+        pallet_prelude::*,
+        sp_runtime::{testing::H256, traits::Keccak256},
+        traits::{
+            fungible::{Inspect, InspectHold, MutateHold},
+            tokens::{Fortitude, Precision, Restriction},
+            Consideration, Defensive, EstimateCallFee, Footprint, VariantCount,
+        },
+        BoundedVec,
     };
-    use frame_support::{pallet_prelude::*, sp_runtime::traits::Keccak256};
-    use frame_support::{sp_runtime::testing::H256, BoundedVec};
-    use frame_system::ensure_signed;
-    use frame_system::pallet_prelude::{BlockNumberFor, OriginFor};
+    use frame_system::{
+        ensure_signed,
+        pallet_prelude::{BlockNumberFor, OriginFor},
+    };
     use sp_runtime::traits::BadOrigin;
 
     pub type AccountOf<T> = <T as frame_system::Config>::AccountId;
@@ -598,6 +604,7 @@ pub mod pallet {
             // T::Consideration::new()
             Self::deposit_event(Event::NewDomain { id });
             let ticket = owner
+                .clone()
                 .owner()
                 .map(|a| {
                     T::Consideration::new(
@@ -614,7 +621,7 @@ pub mod pallet {
             Domains::<T>::insert(id, domain);
             NextDomainId::<T>::put(id + 1);
 
-            Ok(().into())
+            Ok(owner.post_info(None))
         }
 
         #[pallet::call_index(2)]
@@ -642,7 +649,7 @@ pub mod pallet {
                 Ok::<_, DispatchError>(())
             })?;
 
-            Ok(().into())
+            Ok(owner.post_info(None))
         }
     }
 
@@ -682,6 +689,20 @@ pub mod pallet {
             match self {
                 User::Owner(owner) => Some(owner),
                 _ => None,
+            }
+        }
+
+        pub(crate) fn post_info(&self, actual_weight: Option<Weight>) -> PostDispatchInfo {
+            PostDispatchInfo {
+                actual_weight,
+                pays_fee: self.pays(),
+            }
+        }
+
+        pub(crate) fn pays(&self) -> Pays {
+            match self {
+                User::Owner(_owner) => Pays::Yes,
+                _ => Pays::No,
             }
         }
     }

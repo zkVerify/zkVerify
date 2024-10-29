@@ -17,7 +17,11 @@
 
 use super::*;
 use crate::mock::{self, *};
-use frame_support::{assert_err, assert_ok, traits::Hooks};
+use frame_support::{
+    assert_err, assert_ok,
+    dispatch::{GetDispatchInfo, Pays},
+    traits::Hooks,
+};
 use hp_poe::OnProofVerified;
 use sp_core::H256;
 use sp_runtime::SaturatedConversion;
@@ -405,6 +409,18 @@ mod aggregate {
             );
         })
     }
+
+    #[test]
+    fn use_correct_weight() {
+        let info = Call::<Test>::aggregate {
+            domain_id: 2,
+            id: 42,
+        }
+        .get_dispatch_info();
+
+        assert_eq!(info.pays_fee, Pays::Yes);
+        assert_eq!(info.weight, MockWeightInfo::aggregate());
+    }
 }
 
 mod register_domain {
@@ -583,6 +599,42 @@ mod register_domain {
             );
         })
     }
+
+    #[test]
+    fn apply_fee() {
+        test().execute_with(|| {
+            assert_eq!(
+                Aggregate::register_domain(Origin::Signed(USER_DOMAIN_1).into(), 16, None)
+                    .unwrap()
+                    .pays_fee,
+                Pays::Yes
+            );
+        })
+    }
+
+    #[test]
+    fn don_t_apply_fee_to_manager() {
+        test().execute_with(|| {
+            assert_eq!(
+                Aggregate::register_domain(Origin::Signed(ROOT_USER).into(), 16, None)
+                    .unwrap()
+                    .pays_fee,
+                Pays::No
+            );
+        })
+    }
+
+    #[test]
+    fn use_correct_weight() {
+        let info = Call::<Test>::register_domain {
+            aggregation_size: 16,
+            queue_size: Some(8),
+        }
+        .get_dispatch_info();
+
+        assert_eq!(info.pays_fee, Pays::Yes);
+        assert_eq!(info.weight, MockWeightInfo::register_domain());
+    }
 }
 
 mod unregister_domain {
@@ -747,5 +799,37 @@ mod unregister_domain {
 
             let _ = Aggregate::unregister_domain(origin.into(), id);
         })
+    }
+
+    #[test]
+    fn apply_fee() {
+        test().execute_with(|| {
+            assert_eq!(
+                Aggregate::unregister_domain(Origin::Signed(USER_DOMAIN_1).into(), IDS[0])
+                    .unwrap()
+                    .pays_fee,
+                Pays::Yes
+            );
+        })
+    }
+
+    #[test]
+    fn don_t_apply_fee_to_manager() {
+        test().execute_with(|| {
+            assert_eq!(
+                Aggregate::unregister_domain(Origin::Signed(ROOT_USER).into(), IDS[0])
+                    .unwrap()
+                    .pays_fee,
+                Pays::No
+            );
+        })
+    }
+
+    #[test]
+    fn use_correct_weight() {
+        let info = Call::<Test>::unregister_domain { domain_id: 22 }.get_dispatch_info();
+
+        assert_eq!(info.pays_fee, Pays::Yes);
+        assert_eq!(info.weight, MockWeightInfo::unregister_domain());
     }
 }
