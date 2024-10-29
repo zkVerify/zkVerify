@@ -200,6 +200,9 @@ impl crate::Config for Test {
     type ComputeFeeFor = PercentComputeFeeFor;
 
     type ManagerOrigin = MockManager;
+
+    #[cfg(feature = "runtime-benchmarks")]
+    type Currency = Balances;
 }
 
 // Configure a mock runtime to test the pallet.

@@ -22,5 +22,5 @@ use sp_core::H256;
 /// This must be implemented by proof storage pallets (e.g. pallet-poe) to subscribe to proof verification events.
 #[impl_trait_for_tuples::impl_for_tuples(10)]
 pub trait OnProofVerified<A> {
-    fn on_proof_verified(account_id: Option<A>, chain_id: Option<u32>, pubs_hash: H256);
+    fn on_proof_verified(account: Option<A>, domain_id: Option<u32>, pubs_hash: H256);
 }

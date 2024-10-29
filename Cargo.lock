@@ -88,6 +88,7 @@ name = "aggregate-pallet"
 version = "0.1.0"
 dependencies = [
  "binary-merkle-tree",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "hp-on-proof-verified",

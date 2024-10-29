@@ -18,6 +18,7 @@
 use frame_support::weights::Weight;
 pub use pallet::*;
 
+mod benchmarking;
 mod mock;
 mod should;
 
@@ -30,6 +31,8 @@ pub trait WeightInfo {
 #[frame_support::pallet]
 pub mod pallet {
     use super::WeightInfo;
+    #[cfg(feature = "runtime-benchmarks")]
+    use frame_support::traits::ReservableCurrency;
     use frame_support::{
         dispatch::PostDispatchInfo,
         pallet_prelude::*,
@@ -91,6 +94,9 @@ pub mod pallet {
         type ComputeFeeFor: ComputeFeeFor<BalanceOf<Self>>;
         /// The weight definition for this pallet
         type WeightInfo: WeightInfo;
+        /// The weight definition for this pallet
+        #[cfg(feature = "runtime-benchmarks")]
+        type Currency: ReservableCurrency<AccountOf<Self>>;
     }
 
     impl<T: Config> hp_on_proof_verified::OnProofVerified<<T as frame_system::Config>::AccountId>
