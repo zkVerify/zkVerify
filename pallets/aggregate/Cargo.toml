@@ -1,5 +1,5 @@
 [package]
-name = "aggregate-pallet"
+name = "pallet-aggregate"
 version = "0.1.0"
 description = "A pallet to aggregate proof statements based on domain id"
 authors.workspace = true

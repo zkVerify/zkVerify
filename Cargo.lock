@@ -84,26 +84,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "aggregate-pallet"
-version = "0.1.0"
-dependencies = [
- "binary-merkle-tree",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "hp-on-proof-verified",
- "log",
- "pallet-balances",
- "parity-scale-codec",
- "rstest",
- "scale-info",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "ahash"
 version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7048,6 +7028,26 @@ dependencies = [
  "ff_ce",
  "rand 0.4.6",
  "serde",
+]
+
+[[package]]
+name = "pallet-aggregate"
+version = "0.1.0"
+dependencies = [
+ "binary-merkle-tree",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "hp-on-proof-verified",
+ "log",
+ "pallet-balances",
+ "parity-scale-codec",
+ "rstest",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]

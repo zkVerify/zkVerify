@@ -80,7 +80,7 @@ sp-keystore = { version = "0.38.0" }
 
 native = { default-features = false, path = "native" }
 pallet-poe = { path = "pallets/proof_of_existence", default-features = false }
-aggregate-pallet = { path = "pallets/aggregate", default-features = false }
+pallet-aggregate = { path = "pallets/aggregate", default-features = false }
 pallet-verifiers = { path = "pallets/verifiers", default-features = false }
 pallet-verifiers-macros = { path = "pallets/verifiers/macros" }
 hp-on-proof-verified = { default-features = false, path = "primitives/hp-on-proof-verified" }
