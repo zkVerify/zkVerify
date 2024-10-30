@@ -789,7 +789,7 @@ mod unregister_domain {
     }
 
     #[test]
-    #[should_panic(expected = "Drop")]
+    #[cfg_attr(debug_assertions, should_panic(expected = "Drop"))]
     fn ignore_error_on_drop_ticket_but_defensive_proof_on_test() {
         let origin = Origin::Signed(USER_DOMAIN_ERROR_DROP);
         test().execute_with(|| {
@@ -797,7 +797,7 @@ mod unregister_domain {
 
             let id = registered_ids()[0];
 
-            let _ = Aggregate::unregister_domain(origin.into(), id);
+            Aggregate::unregister_domain(origin.into(), id).unwrap();
         })
     }
 
