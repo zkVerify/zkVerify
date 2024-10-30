@@ -36,7 +36,7 @@ pub mod pallet {
     use frame_support::{
         dispatch::PostDispatchInfo,
         pallet_prelude::*,
-        sp_runtime::{testing::H256, traits::Keccak256},
+        sp_runtime::traits::Keccak256,
         traits::{
             fungible::{Inspect, InspectHold, MutateHold},
             tokens::{Fortitude, Precision, Restriction},
@@ -48,7 +48,9 @@ pub mod pallet {
         ensure_signed,
         pallet_prelude::{BlockNumberFor, OriginFor},
     };
+    use sp_core::H256;
     use sp_runtime::traits::BadOrigin;
+    use sp_std::vec::Vec;
 
     pub type AccountOf<T> = <T as frame_system::Config>::AccountId;
     pub type BalanceOf<T> =
@@ -580,7 +582,7 @@ pub mod pallet {
                         .expect("Call user should exists. qed");
                         if missed > 0_u32.into() {
                             log::warn!(
-                                "Cannot refund all founds from {account} to {origin}: missed {missed:?}"
+                                "Cannot refund all founds from {account:?} to {origin:?}: missed {missed:?}"
                             )
                         }
                     }
