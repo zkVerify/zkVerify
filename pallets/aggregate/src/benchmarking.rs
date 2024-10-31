@@ -33,8 +33,15 @@ fn funded_account<T: Config>() -> T::AccountId {
     caller
 }
 
-fn insert_domain<T: Config>(domain_id: u32, account: AccountOf<T>) -> u8 {
-    let aggregation_size = <T as Config>::AggregationSize::get();
+fn insert_domain<T: Config>(
+    domain_id: u32,
+    account: AccountOf<T>,
+    size: Option<u32>,
+) -> AggregationSize {
+    let aggregation_size = size
+        .unwrap_or_else(|| <T as Config>::AggregationSize::get() as u32)
+        .try_into()
+        .unwrap();
     let domain = Domain::<T>::create(
         domain_id,
         account.into(),
@@ -57,13 +64,16 @@ fn fill_aggregation<T: Config>(caller: AccountOf<T>, domain_id: u32) {
 
 #[benchmarks]
 mod benchmarks {
+    use __private::traits::UnfilteredDispatchable;
+    use codec::{Decode, Encode};
+
     use super::*;
 
     #[benchmark]
-    fn aggregate() {
+    fn aggregate(n: Linear<1, <T as Config>::AGGREGATION_SIZE>) {
         let caller: T::AccountId = funded_account::<T>();
         let domain_id = 1;
-        insert_domain::<T>(domain_id, caller.clone());
+        insert_domain::<T>(domain_id, caller.clone(), Some(n));
         fill_aggregation::<T>(caller.clone(), domain_id);
 
         #[extrinsic_call]
@@ -73,6 +83,46 @@ mod benchmarks {
         let domain = Domains::<T>::get(domain_id).unwrap();
         assert!(domain.next.statements.is_empty());
         assert_eq!(domain.next.id, 2);
+    }
+
+    #[benchmark]
+    fn aggregate_on_invalid_domain() {
+        let caller: T::AccountId = funded_account::<T>();
+        let domain_id = 1;
+
+        let call = Call::<T>::aggregate { domain_id, id: 1 };
+        let benchmarked_call_encoded = Encode::encode(&call);
+        #[block]
+        {
+            let call_decoded = <Call<T> as Decode>::decode(&mut &benchmarked_call_encoded[..])
+                .expect("call is encoded above, encoding must be correct");
+            let origin = RawOrigin::Signed(caller).into();
+
+            let _ =
+                <Call<T> as UnfilteredDispatchable>::dispatch_bypass_filter(call_decoded, origin);
+        }
+
+        // Sanity check: domain doesn't exist
+        assert!(Domains::<T>::get(domain_id).is_none());
+    }
+
+    #[benchmark]
+    fn aggregate_on_invalid_id() {
+        let caller: T::AccountId = funded_account::<T>();
+        let domain_id = 1;
+        insert_domain::<T>(domain_id, caller.clone(), None);
+
+        let call = Call::<T>::aggregate { domain_id, id: 1 };
+        let benchmarked_call_encoded = Encode::encode(&call);
+        #[block]
+        {
+            let call_decoded = <Call<T> as Decode>::decode(&mut &benchmarked_call_encoded[..])
+                .expect("call is encoded above, encoding must be correct");
+            let origin = RawOrigin::Signed(caller).into();
+
+            let _ =
+                <Call<T> as UnfilteredDispatchable>::dispatch_bypass_filter(call_decoded, origin);
+        }
     }
 
     #[benchmark]
@@ -91,7 +141,7 @@ mod benchmarks {
     fn unregister_domain() {
         let caller: T::AccountId = funded_account::<T>();
         let domain_id = 1;
-        insert_domain::<T>(domain_id, caller.clone());
+        insert_domain::<T>(domain_id, caller.clone(), None);
 
         for _ in 0..T::MaxPendingPublishQueueSize::get() {
             fill_aggregation::<T>(caller.clone(), domain_id);

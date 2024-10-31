@@ -27,13 +27,14 @@ mod weight;
 
 #[frame_support::pallet]
 pub mod pallet {
-    use crate::data::{AggregationSize, StatementEntry, User};
+    pub use crate::data::AggregationSize;
+    use crate::data::{StatementEntry, User};
 
     use super::WeightInfo;
     #[cfg(feature = "runtime-benchmarks")]
     use frame_support::traits::ReservableCurrency;
     use frame_support::{
-        dispatch::PostDispatchInfo,
+        dispatch::{DispatchErrorWithPostInfo, PostDispatchInfo},
         pallet_prelude::*,
         traits::{
             fungible::{Inspect, InspectHold, MutateHold},
@@ -46,7 +47,7 @@ pub mod pallet {
         pallet_prelude::{BlockNumberFor, OriginFor},
     };
     use sp_core::H256;
-    use sp_runtime::traits::BadOrigin;
+    use sp_runtime::traits::{BadOrigin, Saturating};
     use sp_std::vec::Vec;
 
     pub type AccountOf<T> = <T as frame_system::Config>::AccountId;
@@ -60,6 +61,8 @@ pub mod pallet {
     pub trait ComputeFeeFor<B> {
         fn compute_fee(estimated: B) -> Option<B>;
     }
+
+    pub type CallOf<T> = Call<T>;
 
     #[pallet::config]
     pub trait Config: frame_system::Config {
@@ -93,6 +96,9 @@ pub mod pallet {
         type ComputeFeeFor: ComputeFeeFor<BalanceOf<Self>>;
         /// The weight definition for this pallet
         type WeightInfo: WeightInfo;
+        /// The (max) size of aggregations used in benchmarks. NEED to be equals to AggregationSize::get()
+        #[cfg(feature = "runtime-benchmarks")]
+        const AGGREGATION_SIZE: u32;
         /// The weight definition for this pallet
         #[cfg(feature = "runtime-benchmarks")]
         type Currency: ReservableCurrency<AccountOf<Self>>;
@@ -286,11 +292,11 @@ pub mod pallet {
         domain: &mut Domain<T>,
         account: &AccountOf<T>,
     ) -> Result<BalanceOf<T>, DispatchError> {
-        let estimated = estimate_publish_attestation_fee::<T>();
-        let reserve = (estimated
-            + <T as Config>::ComputeFeeFor::compute_fee(estimated).unwrap_or_default())
-            / domain.next.size.into();
-        T::Hold::hold(&HoldReason::Aggregation.into(), account, reserve).map(|_| reserve)
+        let estimated = estimate_publish_attestation_fee::<T>(domain.max_aggregation_size);
+        let hold = (estimated.saturating_add(
+            <T as Config>::ComputeFeeFor::compute_fee(estimated).unwrap_or_default(),
+        )) / domain.next.size.into();
+        T::Hold::hold(&HoldReason::Aggregation.into(), account, hold).map(|_| hold)
     }
 
     /// Clean Domain
@@ -342,7 +348,8 @@ pub mod pallet {
             aggregation_size: AggregationSize,
             queue_size: u32,
         ) -> Result<(), DispatchError> {
-            if aggregation_size > T::AggregationSize::get()
+            if aggregation_size == 0
+                || aggregation_size > T::AggregationSize::get()
                 || queue_size > T::MaxPendingPublishQueueSize::get()
             {
                 Err(Error::<T>::InvalidDomainParams)?;
@@ -374,6 +381,7 @@ pub mod pallet {
     #[pallet::call(weight(<T as Config>::WeightInfo))]
     impl<T: Config> Pallet<T> {
         /// Publish the aggregation.
+        #[pallet::weight(T::WeightInfo::aggregate(T::AggregationSize::get() as u32))]
         #[pallet::call_index(0)]
         pub fn aggregate(
             origin: OriginFor<T>,
@@ -382,14 +390,22 @@ pub mod pallet {
         ) -> DispatchResultWithPostInfo {
             use frame_support::traits::DefensiveSaturating;
             let origin = ensure_signed(origin)?;
-            let root = Domains::<T>::try_mutate(domain_id, |domain| {
-                let domain = domain.as_mut().ok_or(Error::<T>::UnknownDomainId)?;
-                let aggregation = domain
-                    .should_publish
-                    .remove(&id)
-                    .ok_or(Error::<T>::InvalidAggregationId)?;
+            let (root, size) = Domains::<T>::try_mutate(domain_id, |domain| {
+                let domain = domain.as_mut().ok_or_else(|| {
+                    dispatch_post_error(
+                        T::WeightInfo::aggregate_on_invalid_domain(),
+                        Error::<T>::UnknownDomainId,
+                    )
+                })?;
+                let aggregation = domain.should_publish.remove(&id).ok_or_else(|| {
+                    dispatch_post_error(
+                        T::WeightInfo::aggregate_on_invalid_id(),
+                        Error::<T>::InvalidAggregationId,
+                    )
+                })?;
 
                 let root = aggregation.compute();
+                let size = aggregation.size;
                 Published::<T>::mutate(|published: &mut _| published.push(aggregation));
 
                 if let Some(published) = Published::<T>::get().last() {
@@ -414,22 +430,20 @@ pub mod pallet {
                     }
                 }
 
-                Result::<_, Error<T>>::Ok(Some(root))
+                Result::<_, DispatchErrorWithPostInfo>::Ok((root, size))
             })?;
-            if let Some(root) = root {
-                Self::deposit_event(Event::NewAggregationReceipt {
-                    domain_id,
-                    aggregation_id: id,
-                    receipt: root,
-                });
-            }
-            Ok(().into())
+            Self::deposit_event(Event::NewAggregationReceipt {
+                domain_id,
+                aggregation_id: id,
+                receipt: root,
+            });
+            Ok(Some(T::WeightInfo::aggregate(size as u32)).into())
         }
 
         #[pallet::call_index(1)]
         pub fn register_domain(
             origin: OriginFor<T>,
-            aggregation_size: u8,
+            aggregation_size: AggregationSize,
             queue_size: Option<u32>,
         ) -> DispatchResultWithPostInfo {
             let id = Self::next_domain_id();
@@ -489,6 +503,26 @@ pub mod pallet {
         }
     }
 
+    fn estimate_publish_attestation_fee<T: Config>(size: AggregationSize) -> BalanceOf<T> {
+        T::EstimateCallFee::estimate_call_fee(
+            &Call::aggregate {
+                domain_id: 0,
+                id: 0,
+            },
+            Some(T::WeightInfo::aggregate(size as u32)).into(),
+        )
+    }
+
+    fn dispatch_post_error<T: Config>(
+        weight: Weight,
+        error: Error<T>,
+    ) -> DispatchErrorWithPostInfo {
+        DispatchErrorWithPostInfo {
+            post_info: Some(weight).into(),
+            error: error.into(),
+        }
+    }
+
     impl<A> User<A> {
         pub fn from_origin<T: Config<AccountId = A>>(
             origin: OriginFor<T>,
@@ -522,15 +556,5 @@ pub mod pallet {
                 _ => Pays::No,
             }
         }
-    }
-
-    fn estimate_publish_attestation_fee<T: Config>() -> BalanceOf<T> {
-        T::EstimateCallFee::estimate_call_fee(
-            &Call::aggregate {
-                domain_id: 0,
-                id: 0,
-            },
-            Default::default(),
-        )
     }
 }

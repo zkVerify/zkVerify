@@ -590,6 +590,8 @@ parameter_types! {
     pub const AggregateRegisterHoldReason: RuntimeHoldReason = RuntimeHoldReason::Aggregate(pallet_aggregate::HoldReason::Domain);
     pub const AggregateBaseFee: Balance = 10 * CENTS;
     pub const AggregateLinearFee: Permill = Permill::from_percent(10);
+    pub const AggregateMaxSize: pallet_aggregate::AggregationSize = 128;
+    pub const AggregateQueueSize: u32 = 16;
 }
 
 /// Linear increment.
@@ -607,26 +609,11 @@ where
     }
 }
 
-pub struct FakeAggregateWeightInfo;
-impl pallet_aggregate::WeightInfo for FakeAggregateWeightInfo {
-    fn aggregate() -> Weight {
-        Default::default()
-    }
-
-    fn register_domain() -> Weight {
-        Default::default()
-    }
-
-    fn unregister_domain() -> Weight {
-        Default::default()
-    }
-}
-
 impl pallet_aggregate::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type RuntimeHoldReason = RuntimeHoldReason;
-    type AggregationSize = ConstU8<128>;
-    type MaxPendingPublishQueueSize = ConstU32<16>;
+    type AggregationSize = AggregateMaxSize;
+    type MaxPendingPublishQueueSize = AggregateQueueSize;
     type ManagerOrigin = EnsureRoot<AccountId>;
     type Hold = Balances;
 
@@ -644,11 +631,19 @@ impl pallet_aggregate::Config for Runtime {
 
     type ComputeFeeFor = Linear<AggregateBaseFee, AggregateLinearFee, Balance>;
 
-    type WeightInfo = FakeAggregateWeightInfo;
+    type WeightInfo = ();
+
+    #[cfg(feature = "runtime-benchmarks")]
+    const AGGREGATION_SIZE: u32 = AggregateMaxSize::get() as u32;
 
     #[cfg(feature = "runtime-benchmarks")]
     type Currency = Balances;
 }
+
+static_assertions::const_assert!(
+    <Runtime as pallet_aggregate::Config>::AggregationSize::get() as u32
+        == <Runtime as pallet_aggregate::Config>::AGGREGATION_SIZE,
+);
 
 pub const MILLISECS_PER_PROOF_ROOT_PUBLISHING: u64 = MILLISECS_PER_BLOCK * 10;
 pub const MIN_PROOFS_FOR_ROOT_PUBLISHING: u32 = 16;

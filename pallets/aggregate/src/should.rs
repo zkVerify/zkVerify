@@ -178,7 +178,7 @@ mod check_if_no_room_for_new_statements_in_should_published_set_and {
         }
 
         #[test]
-        fn not_reserve_currency() {
+        fn not_hold_currency() {
             test().execute_with(|| {
                 let statement = H256::from_low_u64_be(123);
 
@@ -187,7 +187,7 @@ mod check_if_no_room_for_new_statements_in_should_published_set_and {
                 assert_eq!(
                     Balances::reserved_balance(USER_1),
                     0,
-                    "Should not reserve any balance"
+                    "Should not hold any balance"
                 );
             })
         }
@@ -297,6 +297,21 @@ fn reserve_at_least_the_publish_proof_price_fraction_when_on_proof_verified() {
 }
 
 #[test]
+fn call_estimate_fee_with_the_correct_post_info_when_on_proof_verified() {
+    test().execute_with(|| {
+        let statement = H256::from_low_u64_be(123);
+        let account = USER_1;
+
+        Aggregate::on_proof_verified(Some(account), DOMAIN, statement);
+
+        assert_eq!(
+            MockEstimateCallFee::pop().unwrap().post_info.actual_weight,
+            Some(<Test as Config>::WeightInfo::aggregate(DOMAIN_SIZE as u32))
+        );
+    })
+}
+
+#[test]
 fn not_fail_but_raise_just_an_event_if_a_user_doesn_t_have_enough_found_to_reserve_on_on_proof_verified(
 ) {
     test().execute_with(|| {
@@ -354,7 +369,17 @@ mod clean_the_published_storage_on_initialize {
 }
 
 mod aggregate {
+    use frame_support::dispatch::DispatchInfo;
+
     use super::*;
+
+    fn dispatch_info() -> DispatchInfo {
+        Call::<Test>::aggregate {
+            domain_id: 2,
+            id: 42,
+        }
+        .get_dispatch_info()
+    }
 
     #[test]
     fn emit_a_new_receipt() {
@@ -376,7 +401,7 @@ mod aggregate {
     fn refound_the_publisher_from_the_reserved_founds() {
         test().execute_with(|| {
             let accounts = [USER_1, USER_2];
-            let elements = (0..(<Test as crate::Config>::AggregationSize::get() as u64))
+            let elements = (0..DOMAIN_SIZE as u64)
                 .map(|i| {
                     (
                         accounts[(i % accounts.len().saturated_into::<u64>()) as usize],
@@ -403,23 +428,86 @@ mod aggregate {
     #[test]
     fn raise_error_if_invalid_domain_is_used() {
         test().execute_with(|| {
-            assert_err!(
-                Aggregate::aggregate(Origin::Signed(USER_1).into(), NOT_REGISTERED_DOMAIN_ID, 1),
-                Error::<Test>::UnknownDomainId
+            let err =
+                Aggregate::aggregate(Origin::Signed(USER_1).into(), NOT_REGISTERED_DOMAIN_ID, 1)
+                    .unwrap_err()
+                    .error;
+            assert_eq!(err, Error::<Test>::UnknownDomainId.into());
+        })
+    }
+
+    #[test]
+    fn dont_pay_for_a_full_proof_if_invalid_domain_is_used() {
+        test().execute_with(|| {
+            let post_info =
+                Aggregate::aggregate(Origin::Signed(USER_1).into(), NOT_REGISTERED_DOMAIN_ID, 1)
+                    .unwrap_err()
+                    .post_info;
+            assert_eq!(
+                post_info,
+                Some(<Test as Config>::WeightInfo::aggregate_on_invalid_domain()).into()
+            );
+        })
+    }
+
+    #[test]
+    fn raise_error_if_invalid_id_is_used() {
+        test().execute_with(|| {
+            for i in 0..<Test as crate::Config>::AggregationSize::get() {
+                Aggregate::on_proof_verified(Some(USER_2), DOMAIN, H256::from_low_u64_be(i.into()));
+            }
+
+            let err = Aggregate::aggregate(Origin::Signed(USER_1).into(), DOMAIN_ID, 1000)
+                .unwrap_err()
+                .error;
+            assert_eq!(err, Error::<Test>::InvalidAggregationId.into());
+        })
+    }
+
+    #[test]
+    fn dont_pay_for_a_full_proof_if_invalid_id_is_used() {
+        test().execute_with(|| {
+            for i in 0..<Test as crate::Config>::AggregationSize::get() {
+                Aggregate::on_proof_verified(Some(USER_2), DOMAIN, H256::from_low_u64_be(i.into()));
+            }
+
+            let post_info = Aggregate::aggregate(Origin::Signed(USER_1).into(), DOMAIN_ID, 1000)
+                .unwrap_err()
+                .post_info;
+            assert_eq!(
+                post_info,
+                Some(<Test as Config>::WeightInfo::aggregate_on_invalid_id()).into()
             );
         })
     }
 
     #[test]
     fn use_correct_weight() {
-        let info = Call::<Test>::aggregate {
-            domain_id: 2,
-            id: 42,
-        }
-        .get_dispatch_info();
+        let info = dispatch_info();
 
         assert_eq!(info.pays_fee, Pays::Yes);
-        assert_eq!(info.weight, MockWeightInfo::aggregate());
+        assert_eq!(
+            info.weight,
+            MockWeightInfo::aggregate(mock::MaxAggregationSize::get() as u32)
+        );
+    }
+
+    #[test]
+    fn should_pay_just_for_the_real_used_weight() {
+        test().execute_with(|| {
+            for _ in 0..DOMAIN_SIZE {
+                Aggregate::on_proof_verified(Some(USER_1), DOMAIN, Default::default());
+            }
+
+            let expected_weight = <Test as Config>::WeightInfo::aggregate(DOMAIN_SIZE as u32);
+
+            assert_eq!(
+                expected_weight,
+                Aggregate::aggregate(Origin::Signed(PUBLISHER_USER).into(), DOMAIN_ID, 1)
+                    .unwrap()
+                    .calc_actual_weight(&dispatch_info())
+            )
+        })
     }
 }
 
@@ -497,14 +585,14 @@ mod register_domain {
             // Sanity check
             assert_ok!(Aggregate::register_domain(
                 Origin::Signed(USER_DOMAIN_1).into(),
-                AttestationSize::get(),
+                MaxAggregationSize::get(),
                 Some(MaxPendingPublishQueueSize::get())
             ));
 
             assert_err!(
                 Aggregate::register_domain(
                     Origin::Signed(USER_DOMAIN_1).into(),
-                    AttestationSize::get() + 1,
+                    0,
                     Some(MaxPendingPublishQueueSize::get())
                 ),
                 Error::<Test>::InvalidDomainParams
@@ -512,7 +600,15 @@ mod register_domain {
             assert_err!(
                 Aggregate::register_domain(
                     Origin::Signed(USER_DOMAIN_1).into(),
-                    AttestationSize::get(),
+                    MaxAggregationSize::get() + 1,
+                    Some(MaxPendingPublishQueueSize::get())
+                ),
+                Error::<Test>::InvalidDomainParams
+            );
+            assert_err!(
+                Aggregate::register_domain(
+                    Origin::Signed(USER_DOMAIN_1).into(),
+                    MaxAggregationSize::get(),
                     Some(MaxPendingPublishQueueSize::get() + 1)
                 ),
                 Error::<Test>::InvalidDomainParams
@@ -566,25 +662,28 @@ mod register_domain {
         // Check base: always TRUE
         assert_eq!(
             Domain::<Test>::max_encoded_len(),
-            Domain::<Test>::encoded_size(AttestationSize::get(), MaxPendingPublishQueueSize::get())
+            Domain::<Test>::encoded_size(
+                MaxAggregationSize::get(),
+                MaxPendingPublishQueueSize::get()
+            )
         );
 
         // Fixture max
-        assert_eq!(Domain::<Test>::max_encoded_len(), 61287);
+        assert_eq!(Domain::<Test>::max_encoded_len(), 61341);
 
         // Fixtures
         assert_eq!(
-            1311,
+            1365,
             Domain::<Test>::encoded_size(1, MaxPendingPublishQueueSize::get())
         );
         assert_eq!(
-            7242,
-            Domain::<Test>::encoded_size(AttestationSize::get(), 1)
+            7251,
+            Domain::<Test>::encoded_size(MaxAggregationSize::get(), 1)
         );
         assert_eq!(
-            16335,
+            16365,
             Domain::<Test>::encoded_size(
-                AttestationSize::get() / 2,
+                MaxAggregationSize::get() / 2,
                 MaxPendingPublishQueueSize::get() / 2
             )
         );

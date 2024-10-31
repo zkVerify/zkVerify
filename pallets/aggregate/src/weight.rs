@@ -53,7 +53,9 @@ use core::marker::PhantomData;
 
 /// Weight functions needed for `pallet_aggregate`.
 pub trait WeightInfo {
-    fn aggregate() -> Weight;
+    fn aggregate(n: u32, ) -> Weight;
+    fn aggregate_on_invalid_domain() -> Weight;
+    fn aggregate_on_invalid_id() -> Weight;
     fn register_domain() -> Weight;
     fn unregister_domain() -> Weight;
 }
@@ -61,45 +63,69 @@ pub trait WeightInfo {
 // For backwards compatibility and tests.
 impl WeightInfo for () {
     /// Storage: `Aggregate::Domains` (r:1 w:1)
-    /// Proof: `Aggregate::Domains` (`max_values`: None, `max_size`: Some(174529), added: 177004, mode: `MaxEncodedLen`)
+    /// Proof: `Aggregate::Domains` (`max_values`: None, `max_size`: Some(174475), added: 176950, mode: `MaxEncodedLen`)
     /// Storage: `Aggregate::Published` (r:1 w:1)
     /// Proof: `Aggregate::Published` (`max_values`: Some(1), `max_size`: None, mode: `Measured`)
     /// Storage: `Balances::Holds` (r:1 w:1)
     /// Proof: `Balances::Holds` (`max_values`: None, `max_size`: Some(103), added: 2578, mode: `MaxEncodedLen`)
-    fn aggregate() -> Weight {
+    /// The range of component `n` is `[1, 128]`.
+    fn aggregate(n: u32, ) -> Weight {
         // Proof Size summary in bytes:
-        //  Measured:  `10535`
-        //  Estimated: `177994`
-        // Minimum execution time: 3_473_449_000 picoseconds.
-        Weight::from_parts(3_528_231_000, 177994)
+        //  Measured:  `284 + n * (80 ±0)`
+        //  Estimated: `177940 + n * (80 ±0)`
+        // Minimum execution time: 55_551_000 picoseconds.
+        Weight::from_parts(53_257_005, 177940)
+            // Standard Error: 52_483
+            .saturating_add(Weight::from_parts(28_966_722, 0).saturating_mul(n.into()))
             .saturating_add(RocksDbWeight::get().reads(3_u64))
             .saturating_add(RocksDbWeight::get().writes(3_u64))
+            .saturating_add(Weight::from_parts(0, 80).saturating_mul(n.into()))
+    }
+    /// Storage: `Aggregate::Domains` (r:1 w:0)
+    /// Proof: `Aggregate::Domains` (`max_values`: None, `max_size`: Some(174475), added: 176950, mode: `MaxEncodedLen`)
+    fn aggregate_on_invalid_domain() -> Weight {
+        // Proof Size summary in bytes:
+        //  Measured:  `109`
+        //  Estimated: `177940`
+        // Minimum execution time: 7_625_000 picoseconds.
+        Weight::from_parts(7_784_000, 177940)
+            .saturating_add(RocksDbWeight::get().reads(1_u64))
+    }
+    /// Storage: `Aggregate::Domains` (r:1 w:0)
+    /// Proof: `Aggregate::Domains` (`max_values`: None, `max_size`: Some(174475), added: 176950, mode: `MaxEncodedLen`)
+    fn aggregate_on_invalid_id() -> Weight {
+        // Proof Size summary in bytes:
+        //  Measured:  `210`
+        //  Estimated: `177940`
+        // Minimum execution time: 8_851_000 picoseconds.
+        Weight::from_parts(9_277_000, 177940)
+            .saturating_add(RocksDbWeight::get().reads(1_u64))
     }
     /// Storage: `Aggregate::NextDomainId` (r:1 w:1)
     /// Proof: `Aggregate::NextDomainId` (`max_values`: Some(1), `max_size`: Some(4), added: 499, mode: `MaxEncodedLen`)
     /// Storage: `Balances::Holds` (r:1 w:1)
     /// Proof: `Balances::Holds` (`max_values`: None, `max_size`: Some(103), added: 2578, mode: `MaxEncodedLen`)
     /// Storage: `Aggregate::Domains` (r:0 w:1)
-    /// Proof: `Aggregate::Domains` (`max_values`: None, `max_size`: Some(174529), added: 177004, mode: `MaxEncodedLen`)
+    /// Proof: `Aggregate::Domains` (`max_values`: None, `max_size`: Some(174475), added: 176950, mode: `MaxEncodedLen`)
     fn register_domain() -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `109`
         //  Estimated: `3568`
-        // Minimum execution time: 47_019_000 picoseconds.
-        Weight::from_parts(47_989_000, 3568)
+        // Minimum execution time: 48_912_000 picoseconds.
+        Weight::from_parts(50_518_000, 3568)
             .saturating_add(RocksDbWeight::get().reads(2_u64))
             .saturating_add(RocksDbWeight::get().writes(3_u64))
     }
     /// Storage: `Aggregate::Domains` (r:1 w:1)
-    /// Proof: `Aggregate::Domains` (`max_values`: None, `max_size`: Some(174529), added: 177004, mode: `MaxEncodedLen`)
+    /// Proof: `Aggregate::Domains` (`max_values`: None, `max_size`: Some(174475), added: 176950, mode: `MaxEncodedLen`)
     /// Storage: `Balances::Holds` (r:1 w:1)
     /// Proof: `Balances::Holds` (`max_values`: None, `max_size`: Some(103), added: 2578, mode: `MaxEncodedLen`)
     fn unregister_domain() -> Weight {
         // Proof Size summary in bytes:
-        //  Measured:  `164467`
-        //  Estimated: `177994`
-        // Minimum execution time: 46_990_554_000 picoseconds.
-        Weight::from_parts(47_213_722_000, 177994)
+        //  Measured:  `164413`
+        //  Estimated: `177940`
+        // Minimum execution time: 49_234_391_000 picoseconds.
+        Weight::from_parts(50_312_764_000, 177940)
             .saturating_add(RocksDbWeight::get().reads(2_u64))
             .saturating_add(RocksDbWeight::get().writes(2_u64))
     }

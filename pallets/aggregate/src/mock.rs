@@ -18,18 +18,22 @@ use core::cell::RefCell;
 use std::collections::VecDeque;
 
 use codec::{Decode, Encode, MaxEncodedLen};
-use frame_support::traits::{Consideration, EnsureOrigin};
-use frame_support::weights::RuntimeDbWeight;
-use frame_support::{derive_impl, parameter_types};
+use frame_support::{
+    derive_impl,
+    dispatch::PostDispatchInfo,
+    parameter_types,
+    traits::{Consideration, EnsureOrigin, EstimateCallFee},
+    weights::RuntimeDbWeight,
+};
 use frame_system::RawOrigin;
 use scale_info::TypeInfo;
 use sp_core::{ConstU128, ConstU32};
 use sp_runtime::{traits::IdentityLookup, BuildStorage, Perbill};
 
-use crate::{ComputeFeeFor, Domains};
+use crate::{AggregationSize, BalanceOf, CallOf, ComputeFeeFor, Domains};
 
 parameter_types! {
-    pub const AttestationSize: u8 = 64;
+    pub const MaxAggregationSize: AggregationSize = 64;
     pub const MaxPendingPublishQueueSize: u32 = 16;
 }
 
@@ -43,7 +47,7 @@ pub type Origin = RawOrigin<AccountId>;
 
 pub const DOMAIN_ID: u32 = 51;
 pub const DOMAIN: Option<u32> = Some(DOMAIN_ID);
-pub const DOMAIN_SIZE: u8 = 32;
+pub const DOMAIN_SIZE: AggregationSize = 32;
 pub const DOMAIN_QUEUE_SIZE: u32 = 16;
 pub const DOMAIN_FEE: Balance = (ESTIMATED_FEE_CORRECTED / DOMAIN_SIZE as u32) as Balance;
 pub const NOT_REGISTERED_DOMAIN_ID: u32 = 911;
@@ -77,11 +81,33 @@ impl MockWeightInfo {
     pub const REG_PROOF_SIZE: u64 = 124;
     pub const UNR_REF_TIME: u64 = 242;
     pub const UNR_PROOF_SIZE: u64 = 224;
+    pub const AGG_NO_DOMAIN_REF_TIME: u64 = 1_000_042;
+    pub const AGG_NO_DOMAIN_PROOF_SIZE: u64 = 1_000_024;
+    pub const AGG_NO_ID_REF_TIME: u64 = 1_001_042;
+    pub const AGG_NO_ID_PROOF_SIZE: u64 = 1_001_024;
 }
 
 impl crate::WeightInfo for MockWeightInfo {
-    fn aggregate() -> frame_support::weights::Weight {
-        frame_support::weights::Weight::from_parts(Self::AGG_REF_TIME, Self::AGG_PROOF_SIZE)
+    fn aggregate(n: u32) -> frame_support::weights::Weight {
+        let variable = 1000 * n as u64;
+        frame_support::weights::Weight::from_parts(
+            Self::AGG_REF_TIME + variable,
+            Self::AGG_PROOF_SIZE + variable,
+        )
+    }
+
+    fn aggregate_on_invalid_domain() -> frame_support::weights::Weight {
+        frame_support::weights::Weight::from_parts(
+            Self::AGG_NO_DOMAIN_REF_TIME,
+            Self::AGG_NO_DOMAIN_PROOF_SIZE,
+        )
+    }
+
+    fn aggregate_on_invalid_id() -> frame_support::weights::Weight {
+        frame_support::weights::Weight::from_parts(
+            Self::AGG_NO_ID_REF_TIME,
+            Self::AGG_NO_ID_PROOF_SIZE,
+        )
     }
 
     fn register_domain() -> frame_support::weights::Weight {
@@ -180,6 +206,43 @@ impl Consideration<AccountId> for MockConsideration {
     }
 }
 
+pub struct MockEstimateCallFeeImpl<const V: u32>;
+
+#[derive(Debug, Clone)]
+pub struct EstimateCallData {
+    pub call: CallOf<Test>,
+    pub post_info: PostDispatchInfo,
+}
+
+impl<const V: u32> MockEstimateCallFeeImpl<V> {
+    thread_local! {
+        pub static QUEUE: RefCell<VecDeque<EstimateCallData>> = RefCell::new(Default::default());
+    }
+
+    fn push(data: EstimateCallData) {
+        Self::QUEUE.with_borrow_mut(|q| q.push_back(data));
+    }
+
+    pub fn pop() -> Option<EstimateCallData> {
+        Self::QUEUE.with_borrow_mut(|q| q.pop_front())
+    }
+}
+
+impl<const V: u32> EstimateCallFee<CallOf<Test>, BalanceOf<Test>> for MockEstimateCallFeeImpl<V> {
+    fn estimate_call_fee(
+        call: &CallOf<Test>,
+        post_info: frame_support::dispatch::PostDispatchInfo,
+    ) -> BalanceOf<Test> {
+        Self::push(EstimateCallData {
+            call: call.clone(),
+            post_info,
+        });
+        V as BalanceOf<Test>
+    }
+}
+
+pub type MockEstimateCallFee = MockEstimateCallFeeImpl<ESTIMATED_FEE>;
+
 impl crate::Config for Test {
     type RuntimeEvent = RuntimeEvent;
 
@@ -187,7 +250,7 @@ impl crate::Config for Test {
 
     type WeightInfo = MockWeightInfo;
 
-    type AggregationSize = AttestationSize;
+    type AggregationSize = MaxAggregationSize;
 
     type MaxPendingPublishQueueSize = MaxPendingPublishQueueSize;
 
@@ -195,12 +258,14 @@ impl crate::Config for Test {
 
     type Consideration = MockConsideration;
 
-    type EstimateCallFee = frame_support::traits::ConstU32<ESTIMATED_FEE>;
+    type EstimateCallFee = MockEstimateCallFee;
 
     type ComputeFeeFor = PercentComputeFeeFor;
 
     type ManagerOrigin = MockManager;
 
+    #[cfg(feature = "runtime-benchmarks")]
+    const AGGREGATION_SIZE: u32 = MaxAggregationSize::get() as u32;
     #[cfg(feature = "runtime-benchmarks")]
     type Currency = Balances;
 }

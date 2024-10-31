@@ -20,7 +20,7 @@ use scale_info::TypeInfo;
 use sp_core::{Get, H256};
 use sp_runtime::{traits::Keccak256, BoundedBTreeMap, BoundedVec};
 
-pub type AggregationSize = u8;
+pub type AggregationSize = u32;
 
 #[derive(Debug, Clone, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
 pub struct StatementEntry<A, B> {
