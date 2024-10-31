@@ -49,7 +49,7 @@ fn add_a_proof() {
 #[test]
 fn emit_domain_full_event_when_publish_queue_is_full() {
     test().execute_with(|| {
-        let statements = DOMAIN_QUEUE_SIZE * DOMAIN_SIZE;
+        let statements = DOMAIN_QUEUE_SIZE * DOMAIN_SIZE as u32;
         let event = Event::DomainFull {
             domain_id: DOMAIN_ID,
         };
@@ -570,19 +570,19 @@ mod register_domain {
         );
 
         // Fixture max
-        assert_eq!(Domain::<Test>::max_encoded_len(), 61341);
+        assert_eq!(Domain::<Test>::max_encoded_len(), 61287);
 
         // Fixtures
         assert_eq!(
-            1365,
+            1311,
             Domain::<Test>::encoded_size(1, MaxPendingPublishQueueSize::get())
         );
         assert_eq!(
-            7251,
+            7242,
             Domain::<Test>::encoded_size(AttestationSize::get(), 1)
         );
         assert_eq!(
-            16365,
+            16335,
             Domain::<Test>::encoded_size(
                 AttestationSize::get() / 2,
                 MaxPendingPublishQueueSize::get() / 2

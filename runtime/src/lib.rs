@@ -27,7 +27,7 @@ use pallet_grandpa::AuthorityId as GrandpaId;
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use proof_of_existence_rpc_runtime_api::MerkleProof;
 use sp_api::impl_runtime_apis;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+use sp_core::{crypto::KeyTypeId, Get, OpaqueMetadata};
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
     traits::{
@@ -584,6 +584,72 @@ impl pallet_child_bounties::Config for Runtime {
     type WeightInfo = weights::pallet_child_bounties::ZKVWeight<Runtime>;
 }
 
+parameter_types! {
+    pub const AggregateBaseDeposit: Balance = deposit(2, 64);
+    pub const AggregateByteDeposit: Balance = deposit(0, 1);
+    pub const AggregateRegisterHoldReason: RuntimeHoldReason = RuntimeHoldReason::Aggregate(pallet_aggregate::HoldReason::Domain);
+    pub const AggregateBaseFee: Balance = 10 * CENTS;
+    pub const AggregateLinearFee: Permill = Permill::from_percent(10);
+}
+
+/// Linear increment.
+pub struct Linear<Base, Slope, Balance>(core::marker::PhantomData<(Base, Slope, Balance)>);
+impl<Base, Slope> pallet_aggregate::ComputeFeeFor<Balance> for Linear<Base, Slope, Balance>
+where
+    Base: Get<Balance>,
+    Slope: Get<Permill>,
+{
+    fn compute_fee(estimated: Balance) -> Option<Balance> {
+        Base::get()
+            .saturating_add(estimated)
+            .saturating_add(Slope::get().mul_floor(estimated))
+            .into()
+    }
+}
+
+pub struct FakeAggregateWeightInfo;
+impl pallet_aggregate::WeightInfo for FakeAggregateWeightInfo {
+    fn aggregate() -> Weight {
+        Default::default()
+    }
+
+    fn register_domain() -> Weight {
+        Default::default()
+    }
+
+    fn unregister_domain() -> Weight {
+        Default::default()
+    }
+}
+
+impl pallet_aggregate::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type RuntimeHoldReason = RuntimeHoldReason;
+    type AggregationSize = ConstU8<128>;
+    type MaxPendingPublishQueueSize = ConstU32<16>;
+    type ManagerOrigin = EnsureRoot<AccountId>;
+    type Hold = Balances;
+
+    type Consideration = frame_support::traits::fungible::HoldConsideration<
+        AccountId,
+        Balances,
+        AggregateRegisterHoldReason,
+        frame_support::traits::LinearStoragePrice<
+            AggregateBaseDeposit,
+            AggregateByteDeposit,
+            Balance,
+        >,
+    >;
+    type EstimateCallFee = TransactionPayment;
+
+    type ComputeFeeFor = Linear<AggregateBaseFee, AggregateLinearFee, Balance>;
+
+    type WeightInfo = FakeAggregateWeightInfo;
+
+    #[cfg(feature = "runtime-benchmarks")]
+    type Currency = Balances;
+}
+
 pub const MILLISECS_PER_PROOF_ROOT_PUBLISHING: u64 = MILLISECS_PER_BLOCK * 10;
 pub const MIN_PROOFS_FOR_ROOT_PUBLISHING: u32 = 16;
 pub const MAX_STORAGE_ATTESTATIONS: u64 = 100_000;
@@ -910,6 +976,7 @@ construct_runtime!(
         Proxy: pallet_proxy,
         CommonVerifiers: pallet_verifiers::common,
         SettlementProofOfSqlPallet: pallet_proofofsql_verifier,
+        Aggregate: pallet_aggregate,
     }
 );
 
@@ -965,6 +1032,7 @@ construct_runtime!(
 
         // Our stuff
         Poe: pallet_poe = 80,
+        Aggregate: pallet_aggregate = 81,
 
         // Parachain pallets. Start indices at 100 to leave room.
         ParachainsOrigin: parachains::parachains_origin = 101,
@@ -1076,6 +1144,7 @@ mod benches {
         [pallet_vesting, Vesting]
         [pallet_referenda, Referenda]
         [pallet_whitelist, Whitelist]
+        [pallet_aggregate, Aggregate]
         [pallet_zksync_verifier, ZksyncVerifierBench::<Runtime>]
         [pallet_fflonk_verifier, FflonkVerifierBench::<Runtime>]
         [pallet_groth16_verifier, Groth16VerifierBench::<Runtime>]
@@ -1112,6 +1181,7 @@ mod benches {
         [pallet_vesting, Vesting]
         [pallet_whitelist, Whitelist]
         [pallet_proxy, Proxy]
+        [pallet_aggregate, Aggregate]
         [pallet_zksync_verifier, ZksyncVerifierBench::<Runtime>]
         [pallet_fflonk_verifier, FflonkVerifierBench::<Runtime>]
         [pallet_groth16_verifier, Groth16VerifierBench::<Runtime>]

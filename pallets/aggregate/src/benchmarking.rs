@@ -33,18 +33,18 @@ fn funded_account<T: Config>() -> T::AccountId {
     caller
 }
 
-fn insert_domain<T: Config>(domain_id: u32, account: AccountOf<T>) -> u32 {
-    let attestation_size = <T as Config>::AggregationSize::get();
+fn insert_domain<T: Config>(domain_id: u32, account: AccountOf<T>) -> u8 {
+    let aggregation_size = <T as Config>::AggregationSize::get();
     let domain = Domain::<T>::create(
         domain_id,
         account.into(),
         1,
-        attestation_size,
+        aggregation_size,
         <T as Config>::MaxPendingPublishQueueSize::get(),
         None,
     );
     Domains::<T>::insert(domain_id, domain);
-    attestation_size
+    aggregation_size
 }
 
 fn fill_aggregation<T: Config>(caller: AccountOf<T>, domain_id: u32) {

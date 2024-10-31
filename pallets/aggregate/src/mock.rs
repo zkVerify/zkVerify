@@ -29,7 +29,7 @@ use sp_runtime::{traits::IdentityLookup, BuildStorage, Perbill};
 use crate::{ComputeFeeFor, Domains};
 
 parameter_types! {
-    pub const AttestationSize: u32 = 64;
+    pub const AttestationSize: u8 = 64;
     pub const MaxPendingPublishQueueSize: u32 = 16;
 }
 
@@ -43,9 +43,9 @@ pub type Origin = RawOrigin<AccountId>;
 
 pub const DOMAIN_ID: u32 = 51;
 pub const DOMAIN: Option<u32> = Some(DOMAIN_ID);
-pub const DOMAIN_SIZE: u32 = 32;
+pub const DOMAIN_SIZE: u8 = 32;
 pub const DOMAIN_QUEUE_SIZE: u32 = 16;
-pub const DOMAIN_FEE: Balance = (ESTIMATED_FEE_CORRECTED / DOMAIN_SIZE) as Balance;
+pub const DOMAIN_FEE: Balance = (ESTIMATED_FEE_CORRECTED / DOMAIN_SIZE as u32) as Balance;
 pub const NOT_REGISTERED_DOMAIN_ID: u32 = 911;
 pub const NOT_REGISTERED_DOMAIN: Option<u32> = Some(NOT_REGISTERED_DOMAIN_ID);
 pub const NUM_TEST_ACCOUNTS: usize = 6;

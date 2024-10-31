@@ -16382,6 +16382,7 @@ dependencies = [
  "hex-literal",
  "hp-verifiers",
  "log",
+ "pallet-aggregate",
  "pallet-authority-discovery",
  "pallet-authorship",
  "pallet-babe",
