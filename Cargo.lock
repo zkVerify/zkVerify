@@ -84,6 +84,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "aggregate-rpc"
+version = "0.1.0"
+dependencies = [
+ "aggregate-rpc-runtime-api",
+ "jsonrpsee",
+ "parity-scale-codec",
+ "sc-rpc-api",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
+ "sp-runtime",
+]
+
+[[package]]
+name = "aggregate-rpc-runtime-api"
+version = "0.1.0"
+dependencies = [
+ "binary-merkle-tree",
+ "pallet-aggregate",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-api",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "ahash"
 version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6149,6 +6178,7 @@ dependencies = [
 name = "mainchain"
 version = "0.6.0"
 dependencies = [
+ "aggregate-rpc",
  "clap 4.5.20",
  "frame-benchmarking",
  "frame-benchmarking-cli",
@@ -16370,6 +16400,7 @@ dependencies = [
 name = "zkv-runtime"
 version = "0.8.0"
 dependencies = [
+ "aggregate-rpc-runtime-api",
  "finality-grandpa",
  "frame-benchmarking",
  "frame-election-provider-support",
@@ -16460,6 +16491,7 @@ dependencies = [
 name = "zkv-service"
 version = "11.0.0"
 dependencies = [
+ "aggregate-rpc",
  "assert_matches",
  "async-trait",
  "env_logger 0.9.3",

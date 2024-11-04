@@ -35,6 +35,10 @@ members = [
     "relay-node/test/runtime/constants",
     "relay-node/test/subsystem-helpers",
     "relay-node/test/substrate/client",
+    "rpc/proof_of_existence",
+    "rpc/proof_of_existence/runtime-api",
+    "rpc/aggregate",
+    "rpc/aggregate/runtime-api",
     "paratest/runtime",
     "paratest/node",
     "paratest/pallets/template",
@@ -181,6 +185,8 @@ sp-genesis-builder = { default-features = false, version = "0.11.0" }
 sp-npos-elections = { default-features = false, version = "30.0.0" }
 proof-of-existence-rpc = { default-features = false, path = "rpc/proof_of_existence" }
 proof-of-existence-rpc-runtime-api = { default-features = false, path = "rpc/proof_of_existence/runtime-api" }
+aggregate-rpc = { default-features = false, path = "rpc/aggregate" }
+aggregate-rpc-runtime-api = { default-features = false, path = "rpc/aggregate/runtime-api" }
 
 # Used for the node template's RPCs
 frame-system-rpc-runtime-api = { default-features = false, version = "30.0.0" }

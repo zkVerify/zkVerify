@@ -47,7 +47,7 @@ pub mod pallet {
         pallet_prelude::{BlockNumberFor, OriginFor},
     };
     use sp_core::H256;
-    use sp_runtime::traits::{BadOrigin, Saturating};
+    use sp_runtime::traits::{BadOrigin, Keccak256, Saturating};
     use sp_std::vec::Vec;
 
     pub type AccountOf<T> = <T as frame_system::Config>::AccountId;
@@ -341,9 +341,39 @@ pub mod pallet {
     #[pallet::unbounded]
     /// Vector of published aggregations. This will stay just in one block because we remove
     /// this vector at the start of every block (on_initialize hook).
-    pub type Published<T: Config> = StorageValue<_, Vec<Aggregation<T>>, ValueQuery>;
+    pub type Published<T: Config> = StorageValue<_, Vec<(u32, Aggregation<T>)>, ValueQuery>;
 
     impl<T: Config> Pallet<T> {
+        pub fn get_statement_path(
+            domain_id: u32,
+            aggregation_id: u64,
+            statement: H256,
+        ) -> Result<binary_merkle_tree::MerkleProof<H256, H256>, PathRequestError> {
+            let published = Self::published();
+            let (_, aggregation) = published
+                .iter()
+                .find(|&(id, a)| id == &domain_id && a.id == aggregation_id)
+                .ok_or(PathRequestError::ReceiptNotPublished(
+                    domain_id,
+                    aggregation_id,
+                ))?;
+            let index = aggregation
+                .statements
+                .iter()
+                .position(|s| s.statement == statement)
+                .ok_or(PathRequestError::NotFound(
+                    domain_id,
+                    aggregation_id,
+                    statement,
+                ))?;
+            let leaves = aggregation.statements.iter().map(|s| s.statement);
+
+            // Evaluate the Merkle proof and return a MerkleProof structure to the caller
+            Ok(binary_merkle_tree::merkle_proof::<Keccak256, _, _>(
+                leaves, index,
+            ))
+        }
+
         fn ensure_domain_params(
             aggregation_size: AggregationSize,
             queue_size: u32,
@@ -406,9 +436,11 @@ pub mod pallet {
 
                 let root = aggregation.compute();
                 let size = aggregation.size;
-                Published::<T>::mutate(|published: &mut _| published.push(aggregation));
+                Published::<T>::mutate(|published: &mut _| {
+                    published.push((domain_id, aggregation))
+                });
 
-                if let Some(published) = Published::<T>::get().last() {
+                if let Some((_, published)) = Published::<T>::get().last() {
                     for s in published.statements.iter() {
                         let account = &s.account;
                         let remain = T::Hold::transfer_on_hold(
@@ -501,6 +533,12 @@ pub mod pallet {
 
             Ok(owner.post_info(None))
         }
+    }
+
+    #[derive(Debug, Clone, PartialEq, Eq, Encode, Decode, TypeInfo)]
+    pub enum PathRequestError {
+        NotFound(u32, u64, sp_core::H256),
+        ReceiptNotPublished(u32, u64),
     }
 
     fn estimate_publish_attestation_fee<T: Config>(size: AggregationSize) -> BalanceOf<T> {

@@ -83,6 +83,7 @@ pallet-aggregate = { workspace = true }
 pallet-poe = { workspace = true }
 static_assertions = "1.1.0"
 proof-of-existence-rpc-runtime-api = { workspace = true }
+aggregate-rpc-runtime-api = { workspace = true }
 
 pallet-verifiers = { workspace = true }
 hp-verifiers = { workspace = true }
@@ -216,6 +217,7 @@ std = [
 	"pallet-aggregate/std",
 	"pallet-poe/std",
 	"proof-of-existence-rpc-runtime-api/std",
+	"aggregate-rpc-runtime-api/std",
 	"scale-info/std",
 	"serde_json/std",
 	"sp-io/std",

@@ -1,0 +1,25 @@
+[package]
+name = "aggregate-rpc"
+version = "0.1.0"
+description = "Add RPC commands to the Aggreagte pallet - node side"
+edition.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+license = "Apache-2.0"
+
+[dependencies]
+codec = { default-features = false, workspace = true }
+jsonrpsee = { workspace = true, features = ["client-core", "server", "macros"] }
+
+aggregate-rpc-runtime-api = { default-features = false, workspace = true }
+sp-api = { default-features = false, workspace = true }
+sp-core = { default-features = false, workspace = true }
+sp-runtime = { default-features = false, workspace = true }
+sp-blockchain = { workspace = true }
+sc-rpc-api = { workspace = true }
+
+
+[features]
+default = ["std"]
+std = ["sp-api/std", "aggregate-rpc-runtime-api/std"]

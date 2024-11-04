@@ -343,8 +343,8 @@ mod clean_the_published_storage_on_initialize {
     fn when_some_aggregations_are_present() {
         test().execute_with(|| {
             Published::<Test>::mutate(|published: &mut _| {
-                published.push(Aggregation::<Test>::create(12, 3));
-                published.push(Aggregation::<Test>::create(13, 3));
+                published.push((1, Aggregation::<Test>::create(12, 3)));
+                published.push((2, Aggregation::<Test>::create(13, 3)));
             });
 
             Aggregate::on_initialize(36);
@@ -356,8 +356,8 @@ mod clean_the_published_storage_on_initialize {
     fn and_return_the_correct_weight() {
         test().execute_with(|| {
             Published::<Test>::mutate(|published: &mut _| {
-                published.push(Aggregation::<Test>::create(12, 3));
-                published.push(Aggregation::<Test>::create(13, 3));
+                published.push((2, Aggregation::<Test>::create(12, 3)));
+                published.push((2, Aggregation::<Test>::create(13, 3)));
             });
 
             let w = Aggregate::on_initialize(36);
@@ -930,5 +930,73 @@ mod unregister_domain {
 
         assert_eq!(info.pays_fee, Pays::Yes);
         assert_eq!(info.weight, MockWeightInfo::unregister_domain());
+    }
+}
+
+mod get_statement_path {
+    use super::*;
+
+    use sp_runtime::traits::Keccak256;
+
+    fn test() -> sp_io::TestExternalities {
+        let mut ext = super::test();
+
+        let mut a = Aggregation::<Test>::create(123, 16);
+        (0..16_u64).for_each(|i| a.add_statement(USER_1, 0, H256::from_low_u64_be(i as u64)));
+
+        ext.execute_with(|| {
+            Published::<Test>::mutate(|p: &mut _| p.push((DOMAIN_ID, a)));
+        });
+        ext
+    }
+
+    #[test]
+    fn return_a_valid_merkle_path_for_a_published_statement() {
+        test().execute_with(|| {
+            for i in 0..16 {
+                let proof =
+                    Aggregate::get_statement_path(DOMAIN_ID, 123, H256::from_low_u64_be(i as u64))
+                        .unwrap();
+
+                assert!(binary_merkle_tree::verify_proof::<Keccak256, _, _>(
+                    &proof.root,
+                    proof.proof,
+                    proof.number_of_leaves,
+                    proof.leaf_index,
+                    &proof.leaf
+                ))
+            }
+        })
+    }
+
+    #[test]
+    fn return_a_receipt_not_published_error_if_wrong_domain_id() {
+        test().execute_with(|| {
+            assert_eq!(
+                PathRequestError::ReceiptNotPublished(939, 123),
+                Aggregate::get_statement_path(939, 123, H256::from_low_u64_be(5)).unwrap_err()
+            );
+        })
+    }
+
+    #[test]
+    fn return_a_receipt_not_published_error_if_wrong_aggregation_id() {
+        test().execute_with(|| {
+            assert_eq!(
+                PathRequestError::ReceiptNotPublished(DOMAIN_ID, 42),
+                Aggregate::get_statement_path(DOMAIN_ID, 42, H256::from_low_u64_be(5)).unwrap_err()
+            );
+        })
+    }
+
+    #[test]
+    fn return_a_not_found_error_if_wrong_statement_requested() {
+        let statement = H256::from_low_u64_be(4323);
+        test().execute_with(|| {
+            assert_eq!(
+                PathRequestError::NotFound(DOMAIN_ID, 123, statement),
+                Aggregate::get_statement_path(DOMAIN_ID, 123, statement).unwrap_err()
+            );
+        })
     }
 }

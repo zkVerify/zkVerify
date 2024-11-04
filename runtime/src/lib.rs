@@ -641,6 +641,7 @@ impl pallet_aggregate::Config for Runtime {
 }
 
 // We should be sure that the benchmark aggregation size matches the runtime configuration.
+#[cfg(feature = "runtime-benchmarks")]
 static_assertions::const_assert!(
     <Runtime as pallet_aggregate::Config>::AggregationSize::get() as u32
         == <Runtime as pallet_aggregate::Config>::AGGREGATION_SIZE,
@@ -1455,6 +1456,16 @@ impl_runtime_apis! {
             proof_hash: sp_core::H256
         ) -> Result<MerkleProof, proof_of_existence_rpc_runtime_api::AttestationPathRequestError> {
             Poe::get_proof_path_from_pallet(attestation_id, proof_hash).map(|c| c.into())
+        }
+    }
+
+    impl aggregate_rpc_runtime_api::AggregateApi<Block> for Runtime {
+        fn get_statement_path(
+            domain_id: u32,
+            aggregation_id: u64,
+            statement: sp_core::H256
+        ) -> Result<aggregate_rpc_runtime_api::MerkleProof, aggregate_rpc_runtime_api::PathRequestError> {
+            Aggregate::get_statement_path(domain_id, aggregation_id, statement).map(|c| c.into())
         }
     }
 
