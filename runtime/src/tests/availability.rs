@@ -332,3 +332,11 @@ fn pallet_bags_list() {
         // just checking code builds, hence the pallet is available to the runtime
     });
 }
+
+#[test]
+fn pallet_aggregate() {
+    test().execute_with(|| {
+        assert!(Aggregate::aggregate(RuntimeOrigin::root(), 42, 24).is_err());
+        // just checking code builds, hence the pallet is available to the runtime
+    });
+}

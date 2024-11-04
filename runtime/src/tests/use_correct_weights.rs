@@ -249,6 +249,16 @@ fn pallet_poe() {
 }
 
 #[test]
+fn pallet_aggregate() {
+    use pallet_aggregate::WeightInfo;
+
+    assert_eq!(
+        <Runtime as pallet_aggregate::Config>::WeightInfo::register_domain(),
+        crate::weights::pallet_aggregate::ZKVWeight::<Runtime>::register_domain()
+    );
+}
+
+#[test]
 fn pallet_staking() {
     use pallet_staking::WeightInfo;
 

@@ -631,7 +631,7 @@ impl pallet_aggregate::Config for Runtime {
 
     type ComputeFeeFor = Linear<AggregateBaseFee, AggregateLinearFee, Balance>;
 
-    type WeightInfo = ();
+    type WeightInfo = weights::pallet_aggregate::ZKVWeight<Runtime>;
 
     #[cfg(feature = "runtime-benchmarks")]
     const AGGREGATION_SIZE: u32 = AggregateMaxSize::get() as u32;
@@ -640,6 +640,7 @@ impl pallet_aggregate::Config for Runtime {
     type Currency = Balances;
 }
 
+// We should be sure that the benchmark aggregation size matches the runtime configuration.
 static_assertions::const_assert!(
     <Runtime as pallet_aggregate::Config>::AggregationSize::get() as u32
         == <Runtime as pallet_aggregate::Config>::AGGREGATION_SIZE,
