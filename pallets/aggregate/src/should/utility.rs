@@ -143,7 +143,7 @@ fn assert_evt_gen(contains: bool, event: Event<Test>, context: &str) {
 fn assert_proof_evt_gen(contains: bool, domain_id: u32, id: u64, value: H256) {
     assert_evt_gen(
         contains,
-        Event::ProofVerified {
+        Event::NewProof {
             domain_id,
             aggregation_id: id,
             statement: value,

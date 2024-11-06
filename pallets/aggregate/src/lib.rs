@@ -171,7 +171,7 @@ pub mod pallet {
                 };
 
                 // We can add the statement and check if we should also move the aggregation in the should publish set
-                Self::deposit_event(Event::<T>::ProofVerified {
+                Self::deposit_event(Event::<T>::NewProof {
                     statement,
                     domain_id,
                     aggregation_id: domain.next.id,
@@ -247,7 +247,7 @@ pub mod pallet {
         NewDomain {
             id: u32,
         },
-        ProofVerified {
+        NewProof {
             statement: H256,
             domain_id: u32,
             aggregation_id: u64,
