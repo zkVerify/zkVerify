@@ -13,6 +13,7 @@ test_release="${TEST_RELEASE:-false}"
 github_ref_name="${GITHUB_REF_NAME:-}"
 common_file_location="${COMMON_FILE_LOCATION:-not-set}"
 docker_file_path='docker/dockerfiles/zkv-node.Dockerfile'
+chain=""
 image_artifact=""
 
 # Requirement
@@ -30,6 +31,10 @@ while [[ $# -gt 0 ]]; do
     --image-artifact)
       echo "Option --image-artifact was triggered with value: $2"
       image_artifact="$2"
+      shift ;;
+    --chain)
+      echo "Option --chain was triggered with value: $2"
+      chain="$2"
       shift ;;
     *) shift ;;
   esac
@@ -49,6 +54,10 @@ if [ -z "${docker_hub_username:-}" ]; then
   fn_die "ERROR: DOCKER_HUB_USERNAME variable is not set. Exiting ..."
 fi
 
+if [ "${chain}" = "relay" ]; then
+  docker_file_path='docker/dockerfiles/zkv-relay.Dockerfile'
+fi
+
 docker_tag_full=""
 if [ "${is_a_release}" = "true" ]; then
   docker_tag_full="${github_ref_name}"
@@ -57,11 +66,11 @@ fi
 # Building and publishing docker image
 if [ -n "${docker_tag_full:-}" ]; then
   if [ -n "${image_artifact:-}" ]; then
-    log_info "=== Using Docker image artifact from upstream 'zkVerify-qa' job ==="
+    log_info "=== Using local Docker image from upstream ==="
     log_info "Using GITHUB_WORKSPACE: ${GITHUB_WORKSPACE}"
     image_name="$(docker load -i "${GITHUB_WORKSPACE}/${image_artifact}.tar" | awk '/Loaded image:/ { print $3 }')"
     log_info "=== Loaded image ${image_name} ==="
-    log_info "=== Renaming image ==="
+    log_info "=== Renaming image to ${docker_hub_org}/${docker_image_build_name}:${docker_tag_full} ==="
     docker tag "${image_name}" "${docker_hub_org}/${docker_image_build_name}:${docker_tag_full}"
   else 
     log_info "=== Building Docker image: ${docker_hub_org}/${docker_image_build_name}:${docker_tag_full} ==="
@@ -83,10 +92,17 @@ if [ -n "${docker_tag_full:-}" ]; then
     publish_tags=("${docker_tag_full}")
   fi
 
+  # Append -relay to tag names for relay chain images
+  if [ "${chain}" = "relay" ]; then
+    for publish_tag in "${!publish_tags[@]}"; do
+      publish_tags[$publish_tag]="${publish_tags[$publish_tag]}-relay"
+    done
+  fi
+
   for publish_tag in "${publish_tags[@]}"; do
     log_info "Publishing docker image: ${docker_image_build_name}:${publish_tag}"
-    docker tag "${docker_hub_org}/${docker_image_build_name}:${docker_tag_full}" "index.docker.io/${docker_hub_org}/${docker_image_build_name}:${publish_tag}"
-    docker push "index.docker.io/${docker_hub_org}/${docker_image_build_name}:${publish_tag}"
+    # docker tag "${docker_hub_org}/${docker_image_build_name}:${docker_tag_full}" "index.docker.io/${docker_hub_org}/${docker_image_build_name}:${publish_tag}"
+    # docker push "index.docker.io/${docker_hub_org}/${docker_image_build_name}:${publish_tag}"
   done
 
   # Extract runtime artifact

@@ -10,98 +10,64 @@ env:
   RUST_BACKTRACE: 1
 
 jobs:
-  execute-system-tests:
-    name: Execute System Tests
-    uses: HorizenLabs/zkVerify-qa/.github/workflows/CI-e2e-tests.yml@main
-    with:
-      zkverify_version: ${{ github.ref_name }}
-    secrets:
-      DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
-      DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
-      QA_SLACK_WEBHOOK_URL: ${{ secrets.QA_SLACK_WEBHOOK_URL }}
-      GH_TOKEN: ${{ secrets.GH_TOKEN }}
-
-  build-and-publish:
-    name: Build and Publish Docker Image
+  build-test-publish:
     runs-on: ubuntu-latest
-    needs: execute-system-tests # Wait for e2e tests to finish
-    steps:
-      - name: Git checkout
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref }}
-          fetch-depth: 0
 
-      - name: Download zkVerify Docker image artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: zkverify-image
-          path: ./
-      
-      - name: Build/Publish Docker image
-        env:
-          RELEASE_BRANCH: release
-          MAINTAINERS_KEYS: ${{ vars.MAINTAINERS_KEYS }}
-          DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
-          DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
-        run: |
-          source "${GITHUB_WORKSPACE}/ci/setup_env.sh"
-          "${GITHUB_WORKSPACE}/ci/docker.sh" --image-artifact zkverify-image
-
-      - name: Upload runtime artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: zkv_runtime.compact.compressed.wasm
-          path: ./zkv_runtime.compact.compressed.wasm
+    strategy:
+      matrix: 
+        chain: ['solo', 'relay']
+    uses: ./.github/workflows/CI-release.yml
+    with:
+      chain: ${{ matrix.chain }}
 
   rustdoc-job:
     uses: ./.github/workflows/CI-rustdoc.yml
     with:
       CACHING_MODE: "CACHE_RESTORE"
 
-  notify-slack:
-    runs-on: ubuntu-latest
-    needs: [build-and-publish, rustdoc-job]
-    if: ${{ always() }}
-    steps:
-      - name: Check previous job status
-        id: job_status
-        run: |
-          if [ "${{ needs.build-and-publish.result }}" == "failure" ] || [ "${{ needs.rustdoc-job.result }}" == "failure" ]; then
-            echo "JOB_STATUS=failed" >> $GITHUB_ENV
-          else
-            echo "JOB_STATUS=success" >> $GITHUB_ENV
-          fi
+  # notify-slack:
+  #   runs-on: ubuntu-latest
+  #   needs: [build-and-publish, rustdoc-job]
+  #   if: ${{ always() }}
+  #   steps:
+  #     - name: Check previous job status
+  #       id: job_status
+  #       run: |
+  #         if [ "${{ needs.build-and-publish.result }}" == "failure" ] || [ "${{ needs.rustdoc-job.result }}" == "failure" ]; then
+  #           echo "JOB_STATUS=failed" >> $GITHUB_ENV
+  #         else
+  #           echo "JOB_STATUS=success" >> $GITHUB_ENV
+  #         fi
 
-      - name: Notify Slack
-        if: ${{ env.JOB_STATUS == 'failed' && !env.ACT }}
-        uses: slackapi/slack-github-action@v1.25.0
-        with:
-          payload: |
-            {
-              "blocks": [
-                {
-                  "type": "header",
-                  "text": {
-                    "type": "plain_text",
-                    "text": "🚨 ALERT - ZkVerify CI/CD Tag Orchestrator Job Failed! 🚨"
-                  }
-                },
-                {
-                  "type": "section",
-                  "fields": [
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Job URL:* <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Job>"
-                    },
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Pull Request:* <${{ github.event.pull_request.html_url || github.event.head_commit.url }}|View PR/Commit>"
-                    }
-                  ]
-                }
-              ]
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+  #     - name: Notify Slack
+  #       if: ${{ env.JOB_STATUS == 'failed' && !env.ACT }}
+  #       uses: slackapi/slack-github-action@v1.25.0
+  #       with:
+  #         payload: |
+  #           {
+  #             "blocks": [
+  #               {
+  #                 "type": "header",
+  #                 "text": {
+  #                   "type": "plain_text",
+  #                   "text": "🚨 ALERT - ZkVerify CI/CD Tag Orchestrator Job Failed! 🚨"
+  #                 }
+  #               },
+  #               {
+  #                 "type": "section",
+  #                 "fields": [
+  #                   {
+  #                     "type": "mrkdwn",
+  #                     "text": "*Job URL:* <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Job>"
+  #                   },
+  #                   {
+  #                     "type": "mrkdwn",
+  #                     "text": "*Pull Request:* <${{ github.event.pull_request.html_url || github.event.head_commit.url }}|View PR/Commit>"
+  #                   }
+  #                 ]
+  #               }
+  #             ]
+  #           }
+  #       env:
+  #         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+  #         SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK

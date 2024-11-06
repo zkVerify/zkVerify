@@ -1,0 +1,125 @@
+name: Build, Test, and Publish Docker Image
+
+on:
+  workflow_call:
+    inputs:
+      chain:
+        description: "Type of chain: solo or relay"
+        required: true
+        type: string
+
+jobs:
+  build-docker-image:
+    runs-on: ubuntu-latest
+
+    outputs:
+      docker_image_name: ${{ steps.setup.outputs.docker_image_name }}
+      artifact_name: ${{ steps.create_tar_file.outputs.tar_file_name }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set Dockerfile path and Docker image name
+        id: setup
+        run: |
+          DOCKER_IMAGE_NAME="horizenlabs/zkverify:${GITHUB_REF##*/}-${{ inputs.chain }}"
+          DOCKERFILE_PATH=""
+
+          if [[ "${{ inputs.chain }}" == "solo" ]]; then
+            DOCKERFILE_PATH=docker/dockerfiles/zkv-node.Dockerfile
+          elif [[ "${{ inputs.chain }}" == "relay" ]]; then
+            DOCKERFILE_PATH=docker/dockerfiles/zkv-relay.Dockerfile
+          fi
+
+          echo "::set-output name=docker_image_name::$DOCKER_IMAGE_NAME"
+          echo "::set-output name=dockerfile_path::$DOCKERFILE_PATH"
+
+      - name: Build the Docker image
+        run: docker build --build-arg PROFILE=production -f "${{ steps.setup.outputs.dockerfile_path }}" -t "${{ steps.setup.outputs.docker_image_name }}" .
+
+      - name: Save the Docker image as a tarball
+        id: create_tar_file
+        run: | 
+          echo "Saving image ${{ steps.setup.outputs.docker_image_name }}"
+          echo "github.workspace is ${{github.workspace}}"
+          TAR_FILE_NAME="zkverify-${GITHUB_REF##*/}-${{ inputs.chain }}"
+          TAR_FILE="${{github.workspace}}/${TAR_FILE_NAME}.tar"
+          echo "::set-output name=tar_file_name::$TAR_FILE_NAME"
+          echo "::set-output name=tar_file::$TAR_FILE"
+          docker save "${{ steps.setup.outputs.docker_image_name }}" -o "${TAR_FILE}"
+        
+      - name: Upload Docker Image Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.create_tar_file.outputs.tar_file_name }}
+          path: ${{ steps.create_tar_file.outputs.tar_file }}
+          if-no-files-found: error
+          retention-days: 0 # Use 0 for act
+          compression-level: 0
+          overwrite: true
+
+  execute-e2e-tests:
+    runs-on: ubuntu-latest
+    name: Execute E2E Tests
+    id: execute-e2e-tests
+    needs: build-docker-image
+    outputs:
+      docker-image-tag: ${{ steps.set-docker-tag.outputs.docker_image_tag }}
+      test-status: ${{ steps.runtest.outputs.test_status }} 
+    steps:
+      - name: E2E
+        run: echo "execute-e2e-tests with ${{ inputs.chain }}"
+
+      - name: Set Docker tag
+        id: set-docker-tag
+        run: |
+          tag=$(echo "${{ needs.build-docker-image.outputs.docker_image_name }}" | sed -n 's/.*:\(.*\)/\1/p')
+          echo "tag ${tag}"
+          echo "::set-output name=docker_image_tag::$tag"
+
+      - name: Run test
+        needs: run-test
+        uses: 'HorizenLabs/zkVerify-qa/.github/actions/e2e-test@main'
+        with:
+          artifact_name: ${{ needs.build-docker-tag.outputs.artifact_name }}
+          zkverify_docker_tag: ${{ steps.set-docker-tag.outputs.docker_image_tag }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+  publish-docker-image:
+    name: Build and Publish Docker Image
+    runs-on: ubuntu-latest
+    needs: [build-docker-image, execute-e2e-tests] # Wait for e2e tests to finish
+    if: ${{ needs.execute-e2e-tests.outputs.test_status == 'success' }}
+    steps:
+      - name: Tag
+        run: echo "publish-docker-image with tag ${{ needs.execute-e2e-tests.outputs.docker-image-tag }}"
+      - name: Docker image
+        run: echo "publish-docker-image with image ${{ needs.build-docker-image.outputs.docker_image_name }}"
+
+      - name: Git checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+
+      - name: Download zkVerify Docker image artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-docker-image.outputs.artifact_name }}
+          path: ./
+      
+      - name: Build/Publish Docker image
+        env:
+          RELEASE_BRANCH: release
+          MAINTAINERS_KEYS: ${{ vars.MAINTAINERS_KEYS }}
+          DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+          DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
+        run: |
+          source "${GITHUB_WORKSPACE}/ci/setup_env.sh"
+          "${GITHUB_WORKSPACE}/ci/docker.sh" --image-artifact ${{ needs.build-docker-image.outputs.artifact_name }} --chain ${{ inputs.chain }}
+
+      - name: Upload runtime artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: zkv_runtime.compact.compressed.wasm
+          path: ./zkv_runtime.compact.compressed.wasm
