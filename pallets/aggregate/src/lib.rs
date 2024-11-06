@@ -25,6 +25,10 @@ mod should;
 mod data;
 mod weight;
 
+// Export the benchmarking utils.
+#[cfg(feature = "runtime-benchmarks")]
+pub use benchmarking::utils::*;
+
 #[frame_support::pallet]
 pub mod pallet {
     pub use crate::data::AggregationSize;
@@ -60,6 +64,12 @@ pub mod pallet {
 
     pub trait ComputeFeeFor<B> {
         fn compute_fee(estimated: B) -> Option<B>;
+    }
+
+    impl<B> ComputeFeeFor<B> for () {
+        fn compute_fee(estimated: B) -> Option<B> {
+            Some(estimated)
+        }
     }
 
     pub type CallOf<T> = Call<T>;

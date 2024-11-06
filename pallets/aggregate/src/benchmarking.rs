@@ -27,31 +27,35 @@ use sp_runtime::traits::Bounded;
 type BalanceOf<T> =
     <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
-fn funded_account<T: Config>() -> T::AccountId {
-    let caller: T::AccountId = whitelisted_caller();
-    T::Currency::make_free_balance_be(&caller, BalanceOf::<T>::max_value() / 2u32.into());
-    caller
-}
+pub mod utils {
+    use super::*;
 
-fn insert_domain<T: Config>(
-    domain_id: u32,
-    account: AccountOf<T>,
-    size: Option<u32>,
-) -> AggregationSize {
-    let aggregation_size = size
-        .unwrap_or_else(|| <T as Config>::AggregationSize::get() as u32)
-        .try_into()
-        .unwrap();
-    let domain = Domain::<T>::create(
-        domain_id,
-        account.into(),
-        1,
-        aggregation_size,
-        <T as Config>::MaxPendingPublishQueueSize::get(),
-        None,
-    );
-    Domains::<T>::insert(domain_id, domain);
-    aggregation_size
+    pub fn funded_account<T: Config>() -> T::AccountId {
+        let caller: T::AccountId = whitelisted_caller();
+        T::Currency::make_free_balance_be(&caller, BalanceOf::<T>::max_value() / 2u32.into());
+        caller
+    }
+
+    pub fn insert_domain<T: Config>(
+        domain_id: u32,
+        account: AccountOf<T>,
+        size: Option<u32>,
+    ) -> AggregationSize {
+        let aggregation_size = size
+            .unwrap_or_else(|| <T as Config>::AggregationSize::get() as u32)
+            .try_into()
+            .unwrap();
+        let domain = Domain::<T>::create(
+            domain_id,
+            account.into(),
+            1,
+            aggregation_size,
+            <T as Config>::MaxPendingPublishQueueSize::get(),
+            None,
+        );
+        Domains::<T>::insert(domain_id, domain);
+        aggregation_size
+    }
 }
 
 fn fill_aggregation<T: Config>(caller: AccountOf<T>, domain_id: u32) {
@@ -67,7 +71,7 @@ mod benchmarks {
     use __private::traits::UnfilteredDispatchable;
     use codec::{Decode, Encode};
 
-    use super::*;
+    use super::{utils::*, *};
 
     #[benchmark]
     fn aggregate(n: Linear<1, <T as Config>::AGGREGATION_SIZE>) {
