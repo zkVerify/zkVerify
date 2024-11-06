@@ -71,7 +71,7 @@ async function run(nodeName, networkInfo, _args) {
     let proofIncludedTimestamp = null;
     let failed = false;
     for (const [index, verifier] of verifiers.entries()) {
-        verifier.events = await submitProof(verifier.pallet, alice, ...verifier.args);
+        verifier.events = (await submitProof(verifier.pallet, alice, ...verifier.args)).events;
         if (index == 0) {
             proofIncludedTimestamp = Date.now();
         }
