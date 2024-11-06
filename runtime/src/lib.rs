@@ -843,14 +843,14 @@ impl pallet_verifiers::common::Config for Runtime {
 
 impl pallet_verifiers::Config<pallet_fflonk_verifier::Fflonk> for Runtime {
     type RuntimeEvent = RuntimeEvent;
-    type OnProofVerified = Poe;
+    type OnProofVerified = (Poe, Aggregate);
     type WeightInfo =
         pallet_fflonk_verifier::FflonkWeight<weights::pallet_fflonk_verifier::ZKVWeight<Runtime>>;
 }
 
 impl pallet_verifiers::Config<pallet_zksync_verifier::Zksync> for Runtime {
     type RuntimeEvent = RuntimeEvent;
-    type OnProofVerified = Poe;
+    type OnProofVerified = (Poe, Aggregate);
     type WeightInfo =
         pallet_zksync_verifier::ZksyncWeight<weights::pallet_zksync_verifier::ZKVWeight<Runtime>>;
 }
@@ -872,7 +872,7 @@ const_assert!(
 
 impl pallet_verifiers::Config<pallet_groth16_verifier::Groth16<Runtime>> for Runtime {
     type RuntimeEvent = RuntimeEvent;
-    type OnProofVerified = Poe;
+    type OnProofVerified = (Poe, Aggregate);
     type WeightInfo = pallet_groth16_verifier::Groth16Weight<
         weights::pallet_groth16_verifier::ZKVWeight<Runtime>,
     >;
@@ -892,7 +892,7 @@ impl pallet_risc0_verifier::Config for Runtime {
 
 impl pallet_verifiers::Config<pallet_risc0_verifier::Risc0<Runtime>> for Runtime {
     type RuntimeEvent = RuntimeEvent;
-    type OnProofVerified = Poe;
+    type OnProofVerified = (Poe, Aggregate);
     type WeightInfo =
         pallet_risc0_verifier::Risc0Weight<weights::pallet_risc0_verifier::ZKVWeight<Runtime>>;
 }
@@ -907,7 +907,7 @@ impl pallet_ultraplonk_verifier::Config for Runtime {
 
 impl pallet_verifiers::Config<pallet_ultraplonk_verifier::Ultraplonk<Runtime>> for Runtime {
     type RuntimeEvent = RuntimeEvent;
-    type OnProofVerified = Poe;
+    type OnProofVerified = (Poe, Aggregate);
     type WeightInfo = pallet_ultraplonk_verifier::UltraplonkWeight<
         weights::pallet_ultraplonk_verifier::ZKVWeight<Runtime>,
     >;
@@ -928,7 +928,7 @@ const_assert!(
 
 impl pallet_verifiers::Config<pallet_proofofsql_verifier::ProofOfSql<Runtime>> for Runtime {
     type RuntimeEvent = RuntimeEvent;
-    type OnProofVerified = Poe;
+    type OnProofVerified = (Poe, Aggregate);
     type WeightInfo = pallet_proofofsql_verifier::ProofOfSqlWeight<
         weights::pallet_proofofsql_verifier::ZKVWeight<Runtime>,
     >;

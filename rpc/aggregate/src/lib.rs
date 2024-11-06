@@ -33,10 +33,10 @@ pub trait AggregateApi<BlockHash, ResponseType> {
     #[method(name = "aggregate_statementPath")]
     fn get_statement_path(
         &self,
+        at: BlockHash,
         domain_id: u32,
         aggregation_id: u64,
         statement: H256,
-        at: BlockHash,
     ) -> RpcResult<ResponseType>;
 }
 
@@ -86,10 +86,10 @@ where
 {
     fn get_statement_path(
         &self,
+        at: Block::Hash,
         domain_id: u32,
         aggregation_id: u64,
         statement: H256,
-        at: Block::Hash,
     ) -> RpcResult<MerkleProof> {
         let api = self.client.runtime_api();
 
