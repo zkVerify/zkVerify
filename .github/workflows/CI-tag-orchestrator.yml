@@ -17,9 +17,12 @@ jobs:
     strategy:
       matrix: 
         chain: [solo, relay]
-    uses: ./.github/workflows/CI-release.yml
-    with:
-      chain: ${{ matrix.chain }}
+    
+    steps:
+      - name: Build, test, and publish
+        uses: ./.github/workflows/CI-release.yml
+        with:
+          chain: ${{ matrix.chain }}
 
   rustdoc-job:
     uses: ./.github/workflows/CI-rustdoc.yml
