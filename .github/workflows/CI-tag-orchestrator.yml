@@ -18,16 +18,14 @@ jobs:
       matrix: 
         chain: [solo, relay]
     
-    steps:
-      - name: Build, test, and publish
-        uses: ./.github/workflows/CI-release.yml
-        with:
-          chain: ${{ matrix.chain }}
+    uses: ./.github/workflows/CI-release.yml
+    # with:
+    #   chain: ${{ matrix.chain }}
 
-  rustdoc-job:
-    uses: ./.github/workflows/CI-rustdoc.yml
-    with:
-      CACHING_MODE: "CACHE_RESTORE"
+  # rustdoc-job:
+  #   uses: ./.github/workflows/CI-rustdoc.yml
+  #   with:
+  #     CACHING_MODE: "CACHE_RESTORE"
 
   # notify-slack:
   #   runs-on: ubuntu-latest
