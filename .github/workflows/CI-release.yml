@@ -18,9 +18,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
-          fetch-depth: 1
 
       - name: Set Dockerfile path and Docker image name
         id: setup
@@ -81,7 +78,7 @@ jobs:
           echo "::set-output name=docker_image_tag::$tag"
 
       - name: Run test
-        needs: run-test
+        id: run-test
         uses: 'HorizenLabs/zkVerify-qa/.github/actions/e2e-test@main'
         with:
           artifact_name: ${{ needs.build-docker-tag.outputs.artifact_name }}
