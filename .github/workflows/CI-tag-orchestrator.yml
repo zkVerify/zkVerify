@@ -17,7 +17,7 @@ jobs:
     strategy:
       matrix: 
         chain: [solo, relay]
-    uses: ./.github/workflows/CI-release.yml
+    uses: ./.github/workflows/CI-release.yml@yuriko/WEB3-1184
     with:
       chain: ${{ matrix.chain }}
 
