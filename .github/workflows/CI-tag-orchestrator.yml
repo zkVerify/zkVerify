@@ -2,6 +2,8 @@ name: Tag-orchestrator
 
 on:
   push:
+    branches:
+      - "yuriko/WEB3-1184"
     tags:
       - "[0-9]+.[0-9]+.[0-9]+-[0-9]+.[0-9]+.[0-9]+*"
   workflow_dispatch:

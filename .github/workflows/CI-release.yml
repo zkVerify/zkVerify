@@ -18,6 +18,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 1
 
       - name: Set Dockerfile path and Docker image name
         id: setup
@@ -54,7 +57,7 @@ jobs:
           name: ${{ steps.create_tar_file.outputs.tar_file_name }}
           path: ${{ steps.create_tar_file.outputs.tar_file }}
           if-no-files-found: error
-          retention-days: 0 # Use 0 for act
+          retention-days: 1
           compression-level: 0
           overwrite: true
 
@@ -64,8 +67,8 @@ jobs:
     id: execute-e2e-tests
     needs: build-docker-image
     outputs:
-      docker-image-tag: ${{ steps.set-docker-tag.outputs.docker_image_tag }}
-      test-status: ${{ steps.runtest.outputs.test_status }} 
+      docker_image_tag: ${{ steps.set-docker-tag.outputs.docker_image_tag }}
+      test_status: ${{ steps.runtest.outputs.test_status }} 
     steps:
       - name: E2E
         run: echo "execute-e2e-tests with ${{ inputs.chain }}"
@@ -92,7 +95,7 @@ jobs:
     if: ${{ needs.execute-e2e-tests.outputs.test_status == 'success' }}
     steps:
       - name: Tag
-        run: echo "publish-docker-image with tag ${{ needs.execute-e2e-tests.outputs.docker-image-tag }}"
+        run: echo "publish-docker-image with tag ${{ needs.execute-e2e-tests.outputs.docker_image_tag }}"
       - name: Docker image
         run: echo "publish-docker-image with image ${{ needs.build-docker-image.outputs.docker_image_name }}"
 

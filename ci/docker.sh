@@ -66,7 +66,7 @@ fi
 # Building and publishing docker image
 if [ -n "${docker_tag_full:-}" ]; then
   if [ -n "${image_artifact:-}" ]; then
-    log_info "=== Using local Docker image from upstream ==="
+    log_info "=== Using Docker image artifact from upstream ==="
     log_info "Using GITHUB_WORKSPACE: ${GITHUB_WORKSPACE}"
     image_name="$(docker load -i "${GITHUB_WORKSPACE}/${image_artifact}.tar" | awk '/Loaded image:/ { print $3 }')"
     log_info "=== Loaded image ${image_name} ==="
