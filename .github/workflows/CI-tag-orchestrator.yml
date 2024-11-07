@@ -13,11 +13,13 @@ env:
 
 jobs:
   build-test-publish:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix: 
+        chain: [solo]
     
     uses: ./.github/workflows/CI-release.yml
     with:
-      chain: solo
+      chain: ${{ matrix.chain }}
 
   # rustdoc-job:
   #   uses: ./.github/workflows/CI-rustdoc.yml
