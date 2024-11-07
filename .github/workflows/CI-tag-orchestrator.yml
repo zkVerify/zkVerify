@@ -20,7 +20,7 @@ jobs:
     
     uses: ./.github/workflows/CI-release.yml
     with:
-      chain: ${{ matrix.chain }}
+      chain: relay
 
   # rustdoc-job:
   #   uses: ./.github/workflows/CI-rustdoc.yml
