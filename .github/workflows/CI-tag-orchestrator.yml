@@ -18,9 +18,9 @@ jobs:
       matrix: 
         chain: [solo, relay]
     
-    uses: ./.github/workflows/CI-release.yml
-    # with:
-    #   chain: ${{ matrix.chain }}
+    uses: ./.github/workflows/CI-rustdoc.yml
+    with:
+      chain: ${{ matrix.chain }}
 
   # rustdoc-job:
   #   uses: ./.github/workflows/CI-rustdoc.yml
