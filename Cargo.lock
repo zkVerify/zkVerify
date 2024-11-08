@@ -18062,6 +18062,7 @@ dependencies = [
  "pallet-message-queue",
  "pallet-multisig",
  "pallet-offences",
+ "pallet-plonky2-verifier",
  "pallet-poe",
  "pallet-preimage",
  "pallet-proofofsql-verifier",
