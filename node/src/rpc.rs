@@ -23,6 +23,8 @@
 use std::sync::Arc;
 
 use jsonrpsee::RpcModule;
+use pallet_ismp_rpc::{IsmpApiServer, IsmpRpcHandler};
+use sc_client_api::{BlockBackend, ProofProvider};
 use sc_consensus_babe::{BabeApi, BabeWorkerHandle};
 use sc_consensus_grandpa::{
     FinalityProofProvider, GrandpaJustificationStream, SharedAuthoritySet, SharedVoterState,
@@ -33,6 +35,7 @@ use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_consensus::SelectChain;
+use sp_core::H256;
 use sp_keystore::KeystorePtr;
 use zkv_runtime::{currency::Balance, opaque::Block, AccountId, BlockNumber, Hash, Nonce};
 
@@ -72,6 +75,8 @@ pub struct FullDeps<C, P, SC, B> {
     pub babe: BabeDeps,
     /// GRANDPA specific dependencies
     pub grandpa: GrandpaDeps<B>,
+    // Backend used by the node.
+    pub backend: Arc<B>,
 }
 
 /// Instantiate all full RPC extensions.
@@ -82,11 +87,14 @@ where
     C: ProvideRuntimeApi<Block>,
     C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError> + 'static,
     C: Send + Sync + 'static,
+    C: BlockBackend<Block>,
+    C: ProofProvider<Block>,
     C::Api: BabeApi<Block>,
     C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
     C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
     C::Api: proof_of_existence_rpc::PoERuntimeApi<Block>,
     C::Api: BlockBuilder<Block>,
+    C::Api: pallet_ismp_runtime_api::IsmpRuntimeApi<Block, H256>,
     P: TransactionPool + 'static,
     SC: SelectChain<Block> + 'static,
     B: sc_client_api::Backend<Block> + Send + Sync + 'static,
@@ -106,6 +114,7 @@ where
         deny_unsafe,
         babe,
         grandpa,
+        backend,
     } = deps;
 
     let BabeDeps {
@@ -143,7 +152,8 @@ where
         )
         .into_rpc(),
     )?;
-    module.merge(PoE::new(client).into_rpc())?;
+    module.merge(PoE::new(client.clone()).into_rpc())?;
+    module.merge(IsmpRpcHandler::new(client, backend.clone())?.into_rpc())?;
 
     // Extend this RPC with a custom API by using the following syntax.
     // `YourRpcStruct` should have a reference to a client, which is needed

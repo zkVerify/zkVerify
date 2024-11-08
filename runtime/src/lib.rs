@@ -27,7 +27,7 @@ use pallet_grandpa::AuthorityId as GrandpaId;
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use proof_of_existence_rpc_runtime_api::MerkleProof;
 use sp_api::impl_runtime_apis;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H256};
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
     traits::{
@@ -67,7 +67,16 @@ pub use frame_support::{
 };
 pub use frame_system::Call as SystemCall;
 use frame_system::EnsureRoot;
+use ismp::consensus::{ConsensusClientId, StateMachineHeight, StateMachineId};
+use ismp::host::StateMachine;
+use ismp::module::IsmpModule;
+use ismp::router::{IsmpRouter, PostRequest, Request, Response, Timeout};
+use ismp::Error;
+use null_currency::NullCurrency;
 pub use pallet_balances::Call as BalancesCall;
+use pallet_hyperbridge::PALLET_HYPERBRIDGE_ID;
+use pallet_ismp::mmr::{Leaf, Proof, ProofKeys};
+use pallet_ismp::NoOpMmrTree;
 use pallet_session::historical as pallet_session_historical;
 pub use pallet_timestamp::Call as TimestampCall;
 use static_assertions::const_assert;
@@ -112,6 +121,7 @@ pub mod xcm_config;
 
 mod bag_thresholds;
 mod migrations;
+mod null_currency;
 mod payout;
 mod proxy;
 #[cfg(test)]
@@ -863,6 +873,67 @@ impl pallet_verifiers::Config<pallet_proofofsql_verifier::ProofOfSql<Runtime>> f
     >;
 }
 
+parameter_types! {
+    pub const Coprocessor: Option<StateMachine> = Some(StateMachine::Kusama(4009));
+    pub const HostStateMachine: StateMachine = StateMachine::Substrate(*b"zkv_");
+}
+
+impl pallet_ismp::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type AdminOrigin = EnsureRoot<AccountId>;
+    type HostStateMachine = HostStateMachine;
+    type TimestampProvider = Timestamp;
+    // TODO: Update to actual currency once stable coin on relayer is established
+    type Currency = NullCurrency;
+    type Balance = Balance;
+    type Router = ModuleRouter;
+    type Coprocessor = Coprocessor;
+    type ConsensusClients = (ismp_grandpa::consensus::GrandpaConsensusClient<Runtime>,);
+    type Mmr = NoOpMmrTree<Runtime>;
+    type WeightProvider = ();
+}
+
+impl ismp_grandpa::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type IsmpHost = Ismp;
+}
+
+impl pallet_hyperbridge::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type IsmpHost = Ismp;
+}
+
+#[derive(Default)]
+pub struct ModuleRouter;
+impl IsmpRouter for ModuleRouter {
+    fn module_for_id(&self, id: Vec<u8>) -> Result<Box<dyn IsmpModule>, anyhow::Error> {
+        match id.as_slice() {
+            RECEIVING_MESSAGE_MODULE_ID => Ok(Box::new(ReceivingMessageModule::default())),
+            PALLET_HYPERBRIDGE_ID => Ok(Box::new(pallet_hyperbridge::Pallet::<Runtime>::default())),
+            _ => Err(Error::ModuleNotFound(id))?,
+        }
+    }
+}
+
+#[derive(Default)]
+struct ReceivingMessageModule;
+
+pub const RECEIVING_MESSAGE_MODULE_ID: &'static [u8] = b"RECE-FEE";
+
+impl IsmpModule for ReceivingMessageModule {
+    fn on_accept(&self, _request: PostRequest) -> Result<(), anyhow::Error> {
+        Ok(())
+    }
+
+    fn on_response(&self, _response: Response) -> Result<(), anyhow::Error> {
+        Ok(())
+    }
+
+    fn on_timeout(&self, _request: Timeout) -> Result<(), anyhow::Error> {
+        Ok(())
+    }
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 #[cfg(not(feature = "relay"))]
 construct_runtime!(
@@ -887,6 +958,9 @@ construct_runtime!(
         Offences: pallet_offences,
         Historical: pallet_session_historical::{Pallet},
         ImOnline: pallet_im_online,
+        Ismp: pallet_ismp,
+        IsmpGrandpa: ismp_grandpa,
+        Hyperbridge: pallet_hyperbridge,
         SettlementFFlonkPallet: pallet_fflonk_verifier,
         Poe: pallet_poe,
         SettlementZksyncPallet: pallet_zksync_verifier,
@@ -957,6 +1031,11 @@ construct_runtime!(
 
         // Our stuff
         Poe: pallet_poe = 80,
+
+        // ISMP
+        Ismp: pallet_ismp = 90,
+        IsmpGrandpa: ismp_grandpa = 91,
+        Hyperbridge: pallet_hyperbridge = 92,
 
         // Parachain pallets. Start indices at 100 to leave room.
         ParachainsOrigin: parachains::parachains_origin = 101,
@@ -1328,6 +1407,50 @@ impl_runtime_apis! {
     impl frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Nonce> for Runtime {
         fn account_nonce(account: AccountId) -> Nonce {
             System::account_nonce(account)
+        }
+    }
+
+    impl pallet_ismp_runtime_api::IsmpRuntimeApi<Block, <Block as BlockT>::Hash> for Runtime {
+        fn host_state_machine() -> StateMachine {
+            <Runtime as pallet_ismp::Config>::HostStateMachine::get()
+        }
+
+        fn challenge_period(id: StateMachineId) -> Option<u64> {
+            pallet_ismp::Pallet::<Runtime>::challenge_period(id)
+        }
+
+        fn generate_proof(
+            keys: ProofKeys
+        ) -> Result<(Vec<Leaf>, Proof<<Block as BlockT>::Hash>), sp_mmr_primitives::Error> {
+            pallet_ismp::Pallet::<Runtime>::generate_proof(keys)
+        }
+
+        fn block_events() -> Vec<ismp::events::Event> {
+            pallet_ismp::Pallet::<Runtime>::block_events()
+        }
+
+        fn block_events_with_metadata() -> Vec<(ismp::events::Event, Option<u32>)> {
+            pallet_ismp::Pallet::<Runtime>::block_events_with_metadata()
+        }
+
+        fn consensus_state(id: ConsensusClientId) -> Option<Vec<u8>> {
+            pallet_ismp::Pallet::<Runtime>::consensus_states(id)
+        }
+
+        fn state_machine_update_time(height: StateMachineHeight) -> Option<u64> {
+            pallet_ismp::Pallet::<Runtime>::state_machine_update_time(height)
+        }
+
+        fn latest_state_machine_height(id: StateMachineId) -> Option<u64> {
+            pallet_ismp::Pallet::<Runtime>::latest_state_machine_height(id)
+        }
+
+        fn requests(commitments: Vec<H256>) -> Vec<Request> {
+            pallet_ismp::Pallet::<Runtime>::requests(commitments)
+        }
+
+        fn responses(commitments: Vec<H256>) -> Vec<Response> {
+            pallet_ismp::Pallet::<Runtime>::responses(commitments)
         }
     }
 

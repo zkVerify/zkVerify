@@ -259,6 +259,7 @@ pub fn new_full<Network: sc_network::NetworkBackend<Block, <Block as BlockT>::Ha
         let client = client.clone();
         let transaction_pool = transaction_pool.clone();
         let select_chain = select_chain.clone();
+        let backend = backend.clone();
 
         // BABE
         let keystore = keystore_container.keystore();
@@ -290,6 +291,7 @@ pub fn new_full<Network: sc_network::NetworkBackend<Block, <Block as BlockT>::Ha
                         subscription_executor: subscription_executor.clone(),
                         finality_provider: finality_provider.clone(),
                     },
+                    backend: backend.clone(),
                     deny_unsafe,
                 };
                 crate::rpc::create_full(deps).map_err(Into::into)

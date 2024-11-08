@@ -51,6 +51,8 @@ frame-system = { workspace = true, default-features = true }
 pallet-transaction-payment = { workspace = true, default-features = false }
 sp-staking = { workspace = true }
 pallet-im-online = { workspace = true, default-features = false }
+pallet-ismp-rpc = { workspace = true}
+pallet-ismp-runtime-api = { workspace = true}
 
 # These dependencies are used for the node template's RPCs
 jsonrpsee = { workspace = true, features = ["server"] }

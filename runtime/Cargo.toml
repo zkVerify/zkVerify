@@ -13,6 +13,7 @@ license = "GPL-3.0"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
+anyhow = { workspace = true }
 codec = { workspace = true, features = ["derive"] }
 scale-info = { workspace = true, features = ["derive", "serde"] }
 
@@ -36,6 +37,11 @@ pallet-preimage = { workspace = true }
 pallet-referenda = { workspace = true }
 pallet-utility = { workspace = true }
 pallet-vesting = { workspace = true }
+ismp = { workspace = true }
+pallet-ismp = { workspace = true, features = [ "unsigned" ]}
+pallet-hyperbridge = { workspace = true }
+pallet-ismp-runtime-api = { workspace = true }
+ismp-grandpa = { workspace = true }
 pallet-whitelist = { workspace = true }
 pallet-conviction-voting = { workspace = true }
 pallet-treasury = { workspace = true }
@@ -52,6 +58,7 @@ finality-grandpa = { workspace = true }
 sp-consensus-grandpa = { workspace = true, features = ["serde"] }
 sp-core = { workspace = true, features = ["serde"] }
 sp-inherents = { workspace = true }
+sp-mmr-primitives = { workspace = true }
 sp-offchain = { workspace = true }
 sp-npos-elections = { workspace = true }
 sp-runtime = { workspace = true, features = ["serde"] }
@@ -172,6 +179,7 @@ relay = [
 ]
 default = ["std"]
 std = [
+    "anyhow/std",
 	"codec/std",
 	"finality-grandpa/std",
 	"frame-benchmarking?/std",
@@ -203,6 +211,11 @@ std = [
 	"pallet-treasury/std",
 	"pallet-utility/std",
 	"pallet-vesting/std",
+	"pallet-ismp/std",
+	"ismp/std",
+	"pallet-hyperbridge/std",
+	"pallet-ismp-runtime-api/std",
+	"ismp-grandpa/std",
 	"pallet-timestamp/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
 	"pallet-transaction-payment/std",
@@ -270,6 +283,9 @@ try-runtime = [
 	"pallet-referenda/try-runtime",
 	"pallet-utility/try-runtime",
 	"pallet-vesting/try-runtime",
+	"pallet-hyperbridge/try-runtime",
+	"pallet-ismp/try-runtime",
+	"ismp-grandpa/try-runtime",
 	"pallet-whitelist/try-runtime",
 	"pallet-conviction-voting/try-runtime",
 	"pallet-treasury/try-runtime",
