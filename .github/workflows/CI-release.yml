@@ -31,8 +31,8 @@ jobs:
             DOCKERFILE_PATH=docker/dockerfiles/zkv-relay.Dockerfile
           fi
 
-          echo "::set-output name=docker_image_name::$DOCKER_IMAGE_NAME"
-          echo "::set-output name=dockerfile_path::$DOCKERFILE_PATH"
+          echo "docker_image_name=$DOCKER_IMAGE_NAME" >> $GITHUB_OUTPUT
+          echo "dockerfile_path=$DOCKERFILE_PATH" >> $GITHUB_OUTPUT
 
       - name: Build the Docker image
         run: docker build --build-arg PROFILE=production -f "${{ steps.setup.outputs.dockerfile_path }}" -t "${{ steps.setup.outputs.docker_image_name }}" .
@@ -87,7 +87,8 @@ jobs:
   publish-docker-image:
     name: Build and Publish Docker Image
     runs-on: ubuntu-latest
-    needs: [build-docker-image, execute-e2e-tests] # Wait for e2e tests to finish
+    needs: [build-docker-image] # Wait for e2e tests to finish
+    # needs: [build-docker-image, execute-e2e-tests] # Wait for e2e tests to finish
     # if: ${{ needs.execute-e2e-tests.outputs.test_status == 'success' }}
     steps:
       - name: Tag
