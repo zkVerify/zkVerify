@@ -62,12 +62,12 @@ pub mod pallet {
     #[pallet::pallet]
     pub struct Pallet<T>(_);
 
-    pub trait ComputeFeeFor<B> {
-        fn compute_fee(estimated: B) -> Option<B>;
+    pub trait ComputePublisherTip<B> {
+        fn compute_tip(estimated: B) -> Option<B>;
     }
 
-    impl<B> ComputeFeeFor<B> for () {
-        fn compute_fee(estimated: B) -> Option<B> {
+    impl<B> ComputePublisherTip<B> for () {
+        fn compute_tip(estimated: B) -> Option<B> {
             Some(estimated)
         }
     }
@@ -103,7 +103,7 @@ pub mod pallet {
         /// What should we use to estimate publish aggregation cost (pallet-transaction-payment implement it)
         type EstimateCallFee: EstimateCallFee<Call<Self>, BalanceOf<Self>>;
         /// How to compute the fee for publishing an aggregation.
-        type ComputeFeeFor: ComputeFeeFor<BalanceOf<Self>>;
+        type ComputePublisherTip: ComputePublisherTip<BalanceOf<Self>>;
         /// The weight definition for this pallet
         type WeightInfo: WeightInfo;
         /// The (max) size of aggregations used in benchmarks. NEED to be equals to AggregationSize::get()
@@ -304,7 +304,7 @@ pub mod pallet {
     ) -> Result<BalanceOf<T>, DispatchError> {
         let estimated = estimate_publish_attestation_fee::<T>(domain.max_aggregation_size);
         let hold = (estimated.saturating_add(
-            <T as Config>::ComputeFeeFor::compute_fee(estimated).unwrap_or_default(),
+            <T as Config>::ComputePublisherTip::compute_tip(estimated).unwrap_or_default(),
         )) / domain.next.size.into();
         T::Hold::hold(&HoldReason::Aggregation.into(), account, hold).map(|_| hold)
     }

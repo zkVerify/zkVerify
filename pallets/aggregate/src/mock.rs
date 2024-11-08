@@ -30,7 +30,7 @@ use scale_info::TypeInfo;
 use sp_core::{ConstU128, ConstU32};
 use sp_runtime::{traits::IdentityLookup, BuildStorage, Perbill};
 
-use crate::{AggregationSize, BalanceOf, CallOf, ComputeFeeFor, Domains};
+use crate::{AggregationSize, BalanceOf, CallOf, ComputePublisherTip, Domains};
 
 parameter_types! {
     pub const MaxAggregationSize: AggregationSize = 64;
@@ -128,8 +128,8 @@ parameter_types! {
 
 pub struct PercentComputeFeeFor;
 
-impl ComputeFeeFor<Balance> for PercentComputeFeeFor {
-    fn compute_fee(estimated: Balance) -> Option<Balance> {
+impl ComputePublisherTip<Balance> for PercentComputeFeeFor {
+    fn compute_tip(estimated: Balance) -> Option<Balance> {
         Some(Perbill::from_percent(FEE_PERCENT_CORRECTION) * estimated)
     }
 }
@@ -260,7 +260,7 @@ impl crate::Config for Test {
 
     type EstimateCallFee = MockEstimateCallFee;
 
-    type ComputeFeeFor = PercentComputeFeeFor;
+    type ComputePublisherTip = PercentComputeFeeFor;
 
     type ManagerOrigin = MockManager;
 

@@ -161,7 +161,7 @@ mod mock {
         type Hold = Balances;
         type Consideration = ();
         type EstimateCallFee = ConstU32<1_000_000>;
-        type ComputeFeeFor = ();
+        type ComputePublisherTip = ();
         type WeightInfo = ();
         const AGGREGATION_SIZE: u32 = 32;
         type Currency = Balances;

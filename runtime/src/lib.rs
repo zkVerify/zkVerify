@@ -596,14 +596,13 @@ parameter_types! {
 
 /// Linear increment.
 pub struct Linear<Base, Slope, Balance>(core::marker::PhantomData<(Base, Slope, Balance)>);
-impl<Base, Slope> pallet_aggregate::ComputeFeeFor<Balance> for Linear<Base, Slope, Balance>
+impl<Base, Slope> pallet_aggregate::ComputePublisherTip<Balance> for Linear<Base, Slope, Balance>
 where
     Base: Get<Balance>,
     Slope: Get<Permill>,
 {
-    fn compute_fee(estimated: Balance) -> Option<Balance> {
+    fn compute_tip(estimated: Balance) -> Option<Balance> {
         Base::get()
-            .saturating_add(estimated)
             .saturating_add(Slope::get().mul_floor(estimated))
             .into()
     }
@@ -629,7 +628,7 @@ impl pallet_aggregate::Config for Runtime {
     >;
     type EstimateCallFee = TransactionPayment;
 
-    type ComputeFeeFor = Linear<AggregateBaseFee, AggregateLinearFee, Balance>;
+    type ComputePublisherTip = Linear<AggregateBaseFee, AggregateLinearFee, Balance>;
 
     type WeightInfo = weights::pallet_aggregate::ZKVWeight<Runtime>;
 
