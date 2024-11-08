@@ -87,7 +87,7 @@ jobs:
   publish-docker-image:
     name: Build and Publish Docker Image
     runs-on: ubuntu-latest
-    needs: [build-docker-image] # Wait for e2e tests to finish
+    needs: [build-docker-image]
     # needs: [build-docker-image, execute-e2e-tests] # Wait for e2e tests to finish
     # if: ${{ needs.execute-e2e-tests.outputs.test_status == 'success' }}
     steps:
