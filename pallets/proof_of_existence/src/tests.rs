@@ -225,6 +225,7 @@ mod should_inherent_call {
 
     mod publish_attestation {
         use super::*;
+        use frame_support::traits::Time;
 
         #[test]
         fn if_enough_leaves() {
@@ -259,6 +260,7 @@ mod should_inherent_call {
 
     mod not_publish_attestation {
         use super::*;
+        use frame_support::traits::Time;
 
         #[test]
         fn if_not_enough_leaves() {

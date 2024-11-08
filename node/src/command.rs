@@ -185,8 +185,8 @@ pub fn run() -> sc_cli::Result<()> {
                             );
                         }
 
-                        cmd.run::<sp_runtime::traits::HashingFor<Block>, HLNativeHostFunctions>(
-                            config,
+                        cmd.run_with_spec::<sp_runtime::traits::HashingFor<Block>, HLNativeHostFunctions>(
+                            Some(config.chain_spec),
                         )
                     }
                     BenchmarkCmd::Block(cmd) => {
@@ -240,12 +240,6 @@ pub fn run() -> sc_cli::Result<()> {
                 }
             })
         }
-        #[cfg(feature = "try-runtime")]
-        Some(Subcommand::TryRuntime) => Err(try_runtime_cli::DEPRECATION_NOTICE.into()),
-        #[cfg(not(feature = "try-runtime"))]
-        Some(Subcommand::TryRuntime) => Err("TryRuntime wasn't enabled when building the node. \
-				You can enable it with `--features try-runtime`."
-            .into()),
         Some(Subcommand::ChainInfo(cmd)) => {
             let runner = cli.create_runner(cmd)?;
             runner.sync_run(|config| cmd.run::<Block>(&config))
@@ -257,7 +251,8 @@ pub fn run() -> sc_cli::Result<()> {
             ));
 
             runner.run_node_until_exit(|config| async move {
-                service::new_full(config).map_err(sc_cli::Error::Service)
+                service::new_full::<sc_network::NetworkWorker<_, _>>(config)
+                    .map_err(sc_cli::Error::Service)
             })
         }
     }

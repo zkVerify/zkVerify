@@ -31,7 +31,6 @@ sp-keyring = { workspace = true }
 sp-runtime = { workspace = true }
 sp-maybe-compressed-blob = { workspace = true }
 frame-benchmarking-cli = { workspace = true, optional = true }
-try-runtime-cli = { workspace = true, optional = true }
 sc-cli = { workspace = true, optional = true }
 sc-service = { workspace = true, optional = true }
 polkadot-node-metrics = { workspace = true }
@@ -58,7 +57,6 @@ cli = [
 	"sc-service",
 	"sc-tracing",
 	"service",
-	"try-runtime-cli",
 ]
 runtime-benchmarks = [
 	"frame-benchmarking-cli?/runtime-benchmarks",
@@ -67,7 +65,7 @@ runtime-benchmarks = [
 	"service/runtime-benchmarks",
 ]
 full-node = ["service/full-node"]
-try-runtime = ["service/try-runtime", "try-runtime-cli/try-runtime"]
+try-runtime = ["service/try-runtime"]
 fast-runtime = ["service/fast-runtime"]
 pyroscope = ["pyro", "pyroscope_pprofrs"]
 

@@ -31,4 +31,4 @@ sp-keyring = { workspace = true }
 sp-keystore = { workspace = true }
 sp-runtime = { workspace = true }
 sp-state-machine = { workspace = true }
-tokio = { version = "1.22.0", features = ["sync"] }
+tokio = { workspace = true, features = ["sync"] }

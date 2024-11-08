@@ -155,4 +155,20 @@ impl<T: frame_system::Config> pallet_balances::WeightInfo for ZKVWeight<T> {
         // Minimum execution time: 4_439_000 picoseconds.
         Weight::from_parts(4_839_000, 0)
     }
+    fn burn_allow_death() -> Weight {
+        // Proof Size summary in bytes:
+        //  Measured:  `0`
+        //  Estimated: `0`
+        // Minimum execution time: 27_328_000 picoseconds.
+        Weight::from_parts(27_785_000, 0)
+            .saturating_add(Weight::from_parts(0, 0))
+    }
+    fn burn_keep_alive() -> Weight {
+        // Proof Size summary in bytes:
+        //  Measured:  `0`
+        //  Estimated: `0`
+        // Minimum execution time: 17_797_000 picoseconds.
+        Weight::from_parts(18_103_000, 0)
+            .saturating_add(Weight::from_parts(0, 0))
+    }
 }

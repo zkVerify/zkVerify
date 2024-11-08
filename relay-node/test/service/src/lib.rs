@@ -81,7 +81,7 @@ pub fn new_full(
 ) -> Result<NewFull, Error> {
     let workers_path = Some(workers_path.unwrap_or_else(get_relative_workers_path_for_test));
 
-    service::new_full(
+    service::new_full::<_, sc_network::NetworkWorker<_, _>>(
         config,
         service::NewFullParams {
             is_parachain_node,
@@ -96,6 +96,9 @@ pub fn new_full(
             overseer_message_channel_capacity_override: None,
             malus_finality_delay: None,
             hwbench: None,
+            execute_workers_max_num: None,
+            prepare_workers_hard_max_num: None,
+            prepare_workers_soft_max_num: None,
         },
     )
 }
@@ -199,6 +202,8 @@ pub fn node_config(
         rpc_batch_config: sc_service::config::RpcBatchRequestConfig::Limit(999), // TODO: check these 999
         rpc_message_buffer_capacity: 999,
         rpc_rate_limit: std::num::NonZeroU32::new(999),
+        rpc_rate_limit_whitelisted_ips: Default::default(),
+        rpc_rate_limit_trust_proxy_headers: Default::default(),
         prometheus_config: None,
         telemetry_endpoints: None,
         default_heap_pages: None,

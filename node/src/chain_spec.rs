@@ -21,10 +21,7 @@ use sp_consensus_grandpa::AuthorityId as GrandpaId;
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use zkv_runtime::currency::{Balance, ACME};
-use zkv_runtime::{
-    currency, AccountId, RuntimeGenesisConfig, SessionKeysBase as SessionKeys, Signature,
-    WASM_BINARY,
-};
+use zkv_runtime::{currency, AccountId, SessionKeysBase, Signature, WASM_BINARY};
 
 // The connection strings for bootnodes
 const BOOTNODE_1_DNS: &str = "bootnode-tn-1.zkverify.io";
@@ -36,7 +33,8 @@ const BOOTNODE_2_PEER_ID: &str = "12D3KooWEjVadU1YWyfDGvyRXPbCq2rXhzJtXaG4RxJZBk
 const STAGING_TELEMETRY_URL: &str = "wss://testnet-telemetry.zkverify.io/submit/";
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
-pub type ChainSpec = sc_service::GenericChainSpec<RuntimeGenesisConfig>;
+type Extensions = Option<()>;
+pub type ChainSpec = sc_service::GenericChainSpec<Extensions>;
 
 const ENDOWMENT: Balance = 1_000_000 * ACME;
 const STASH_BOND: Balance = ENDOWMENT / 100;
@@ -66,8 +64,8 @@ fn from_ss58check<T: sp_core::crypto::Ss58Codec>(
     <T as sp_core::crypto::Ss58Codec>::from_ss58check(key)
 }
 
-fn session_keys(babe: BabeId, grandpa: GrandpaId, im_online: ImOnlineId) -> SessionKeys {
-    SessionKeys {
+fn session_keys(babe: BabeId, grandpa: GrandpaId, im_online: ImOnlineId) -> SessionKeysBase {
+    SessionKeysBase {
         babe,
         grandpa,
         im_online,

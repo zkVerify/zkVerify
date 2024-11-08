@@ -8,7 +8,7 @@
 
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
@@ -33,7 +33,7 @@ use std::{
     convert::Infallible,
     future::Future,
     pin::Pin,
-    sync::Arc,
+    sync::{atomic::AtomicUsize, Arc},
     task::{Context, Poll, Waker},
     time::Duration,
 };
@@ -164,12 +164,19 @@ pub fn single_item_sink<T>() -> (SingleItemSink<T>, SingleItemStream<T>) {
 #[derive(Clone)]
 pub struct TestSubsystemSender {
     tx: mpsc::UnboundedSender<AllMessages>,
+    message_counter: MessageCounter,
 }
 
 /// Construct a sender/receiver pair.
 pub fn sender_receiver() -> (TestSubsystemSender, mpsc::UnboundedReceiver<AllMessages>) {
     let (tx, rx) = mpsc::unbounded();
-    (TestSubsystemSender { tx }, rx)
+    (
+        TestSubsystemSender {
+            tx,
+            message_counter: MessageCounter::default(),
+        },
+        rx,
+    )
 }
 
 #[async_trait::async_trait]
@@ -179,6 +186,12 @@ where
     OutgoingMessage: Send + 'static,
 {
     async fn send_message(&mut self, msg: OutgoingMessage) {
+        self.send_message_with_priority::<overseer::NormalPriority>(msg)
+            .await;
+    }
+
+    async fn send_message_with_priority<P: overseer::Priority>(&mut self, msg: OutgoingMessage) {
+        self.message_counter.increment(P::priority());
         self.tx
             .send(msg.into())
             .await
@@ -189,6 +202,14 @@ where
         &mut self,
         msg: OutgoingMessage,
     ) -> Result<(), TrySendError<OutgoingMessage>> {
+        self.try_send_message_with_priority::<overseer::NormalPriority>(msg)
+    }
+
+    fn try_send_message_with_priority<P: overseer::Priority>(
+        &mut self,
+        msg: OutgoingMessage,
+    ) -> Result<(), TrySendError<OutgoingMessage>> {
+        self.message_counter.increment(P::priority());
         self.tx
             .unbounded_send(msg.into())
             .expect("test overseer no longer live");
@@ -298,6 +319,9 @@ pub struct TestSubsystemContextHandle<M> {
 
     /// Direct access to the receiver.
     pub rx: mpsc::UnboundedReceiver<AllMessages>,
+
+    /// Message counter over subsystems.
+    pub message_counter: MessageCounter,
 }
 
 impl<M> TestSubsystemContextHandle<M> {
@@ -346,6 +370,37 @@ pub fn make_subsystem_context<M, S>(
     make_buffered_subsystem_context(spawner, 0)
 }
 
+/// Message counter over subsystems.
+#[derive(Default, Clone)]
+pub struct MessageCounter {
+    total: Arc<AtomicUsize>,
+    with_high_priority: Arc<AtomicUsize>,
+}
+
+impl MessageCounter {
+    /// Increment the message counter.
+    pub fn increment(&mut self, priority_level: overseer::PriorityLevel) {
+        self.total.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        if matches!(priority_level, overseer::PriorityLevel::High) {
+            self.with_high_priority
+                .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        }
+    }
+
+    /// Reset the message counter.
+    pub fn reset(&mut self) {
+        self.total.store(0, std::sync::atomic::Ordering::SeqCst);
+        self.with_high_priority
+            .store(0, std::sync::atomic::Ordering::SeqCst);
+    }
+
+    /// Get the messages with high priority count.
+    pub fn with_high_priority(&self) -> usize {
+        self.with_high_priority
+            .load(std::sync::atomic::Ordering::SeqCst)
+    }
+}
+
 /// Make a test subsystem context with buffered overseer channel. Some tests (e.g.
 /// `dispute-coordinator`) create too many parallel operations and deadlock unless
 /// the channel is buffered. Usually `buffer_size=1` is enough.
@@ -358,11 +413,13 @@ pub fn make_buffered_subsystem_context<M, S>(
 ) {
     let (overseer_tx, overseer_rx) = mpsc::channel(buffer_size);
     let (all_messages_tx, all_messages_rx) = mpsc::unbounded();
+    let message_counter = MessageCounter::default();
 
     (
         TestSubsystemContext {
             tx: TestSubsystemSender {
                 tx: all_messages_tx,
+                message_counter: message_counter.clone(),
             },
             rx: overseer_rx,
             spawn: SpawnGlue(spawner),
@@ -371,6 +428,7 @@ pub fn make_buffered_subsystem_context<M, S>(
         TestSubsystemContextHandle {
             tx: overseer_tx,
             rx: all_messages_rx,
+            message_counter: message_counter.clone(),
         },
     )
 }

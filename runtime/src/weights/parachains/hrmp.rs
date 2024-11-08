@@ -55,6 +55,9 @@ use core::marker::PhantomData;
 pub struct ZKVWeight<T>(PhantomData<T>);
 
 impl<T: frame_system::Config> crate::parachains::hrmp::WeightInfo for ZKVWeight<T> {
+    fn establish_channel_with_system() -> Weight {
+        Default::default()
+    }
     /// Storage: `Paras::ParaLifecycles` (r:1 w:0)
     /// Proof: `Paras::ParaLifecycles` (`max_values`: None, `max_size`: None, mode: `Measured`)
     /// Storage: `Hrmp::HrmpOpenChannelRequests` (r:1 w:1)

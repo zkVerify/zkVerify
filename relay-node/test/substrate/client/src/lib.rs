@@ -23,7 +23,7 @@ pub mod client_ext;
 pub use self::client_ext::{BlockOrigin, ClientBlockImportExt, ClientExt};
 pub use sc_client_api::{execution_extensions::ExecutionExtensions, BadBlocks, ForkBlocks};
 pub use sc_client_db::{self, Backend, BlocksPruning};
-pub use sc_executor::{self, NativeElseWasmExecutor, WasmExecutionMethod, WasmExecutor};
+pub use sc_executor::{self, WasmExecutionMethod, WasmExecutor};
 pub use sc_service::{client, RpcHandlers};
 pub use sp_consensus;
 pub use sp_keyring::{
@@ -244,12 +244,7 @@ impl<Block: BlockT, ExecutorDispatch, Backend, G: GenesisInit>
 }
 
 impl<Block: BlockT, D, Backend, G: GenesisInit>
-    TestClientBuilder<
-        Block,
-        client::LocalCallExecutor<Block, Backend, NativeElseWasmExecutor<D>>,
-        Backend,
-        G,
-    >
+    TestClientBuilder<Block, client::LocalCallExecutor<Block, Backend, WasmExecutor<D>>, Backend, G>
 where
     D: sc_executor::NativeExecutionDispatch,
 {
@@ -261,21 +256,20 @@ where
     ) -> (
         client::Client<
             Backend,
-            client::LocalCallExecutor<Block, Backend, NativeElseWasmExecutor<D>>,
+            client::LocalCallExecutor<Block, Backend, WasmExecutor<D>>,
             Block,
             RuntimeApi,
         >,
         sc_consensus::LongestChain<Backend, Block>,
     )
     where
-        I: Into<Option<NativeElseWasmExecutor<D>>>,
-        D: sc_executor::NativeExecutionDispatch + 'static,
+        I: Into<Option<WasmExecutor<D>>>,
+        D: sc_executor::HostFunctions,
         Backend: sc_client_api::backend::Backend<Block> + 'static,
     {
-        let mut executor = executor.into().unwrap_or_else(|| {
-            NativeElseWasmExecutor::new_with_wasm_executor(WasmExecutor::builder().build())
-        });
-        executor.disable_use_native();
+        let executor = executor
+            .into()
+            .unwrap_or_else(|| WasmExecutor::<D>::builder().build());
         let executor = LocalCallExecutor::new(
             self.backend.clone(),
             executor.clone(),

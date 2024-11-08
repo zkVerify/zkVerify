@@ -20,7 +20,6 @@
 
 use std::sync::Arc;
 
-use consensus_common as sp_consensus;
 use jsonrpsee::RpcModule;
 use polkadot_primitives::{AccountId, Balance, Block, BlockNumber, Hash, Nonce};
 use sc_client_api::AuxStore;

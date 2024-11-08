@@ -389,7 +389,7 @@ mod offences {
 mod staking {
     use super::*;
     use sp_staking::{
-        offence::{DisableStrategy, OffenceDetails, OnOffenceHandler},
+        offence::{OffenceDetails, OnOffenceHandler},
         Exposure,
     };
 
@@ -419,7 +419,6 @@ mod staking {
                 }],
                 &[Perbill::from_percent(100)],
                 0,
-                DisableStrategy::WhenSlashed,
             );
 
             // Check that treasury balance increased

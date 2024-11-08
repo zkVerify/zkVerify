@@ -1,38 +1,47 @@
 [package]
 authors.workspace = true
 name = "cumulus-relay-chain-inprocess-interface"
-version = "0.11.0"
+version = "0.17.0"
 edition.workspace = true
-description = "Implementation of the RelayChainInterface trait for Polkadot full-nodes. (polkadot v1.10.0)"
+description = "Implementation of the RelayChainInterface trait for Polkadot full-nodes. (polkadot v1.15.0)"
 license = "GPL-3.0-or-later WITH Classpath-exception-2.0"
 
 [dependencies]
-async-trait = "0.1.79"
-futures = "0.3.28"
-futures-timer = "3.0.2"
-sc-cli = { workspace = true }
-sc-client-api = { workspace = true }
-sc-telemetry = { workspace = true }
-sc-tracing = { workspace = true }
-sc-sysinfo = { workspace = true }
-sp-api = { workspace = true }
-sp-consensus = { workspace = true }
-sp-core = { workspace = true }
-sp-runtime = { workspace = true }
-sp-state-machine = { workspace = true }
-
-# Polkadot
+async-trait = { workspace = true }
+futures = { workspace = true }
+futures-timer = { workspace = true }
+sc-cli.workspace = true
+sc-cli.default-features = true
+sc-client-api.workspace = true
+sc-client-api.default-features = true
+sc-telemetry.workspace = true
+sc-telemetry.default-features = true
+sc-tracing.workspace = true
+sc-tracing.default-features = true
+sc-sysinfo.workspace = true
+sc-sysinfo.default-features = true
+sp-api.workspace = true
+sp-api.default-features = true
+sp-consensus.workspace = true
+sp-consensus.default-features = true
+sp-core.workspace = true
+sp-core.default-features = true
+sp-runtime.workspace = true
+sp-runtime.default-features = true
+sp-state-machine.workspace = true
+sp-state-machine.default-features = true
 zkv-cli = { workspace = true, default-features = false, features = ["cli"] }
-
 service = { workspace = true }
-cumulus-primitives-core = { workspace = true }
-cumulus-relay-chain-interface = { workspace = true }
+cumulus-primitives-core.workspace = true
+cumulus-primitives-core.default-features = true
+cumulus-relay-chain-interface.workspace = true
+cumulus-relay-chain-interface.default-features = true
 
 [dev-dependencies]
 sp-keyring = { workspace = true }
 polkadot-primitives = { workspace = true, default-features = true }
 test-client = { path = "../../../../relay-node/test/client" }
-metered = { package = "prioritized-metered-channel", version = "0.5.1", default-features = false, features = [
-    "futures_channel",
-] }
-# cumulus-test-service = { path = "../../test/service" }
+metered = { features = ["futures_channel"], workspace = true }
+
+# Cumulus
+cumulus-test-service = { path = "../../test/service" }

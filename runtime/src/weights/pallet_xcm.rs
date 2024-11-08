@@ -66,15 +66,6 @@ impl<T: frame_system::Config> pallet_xcm::WeightInfo for ZKVWeight<T> {
     }
     /// Storage: `Benchmark::Override` (r:0 w:0)
     /// Proof: `Benchmark::Override` (`max_values`: None, `max_size`: None, mode: `Measured`)
-    fn send_blob() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 18_446_744_073_709_551_000 picoseconds.
-        Weight::from_parts(18_446_744_073_709_551_000, 0)
-    }
-    /// Storage: `Benchmark::Override` (r:0 w:0)
-    /// Proof: `Benchmark::Override` (`max_values`: None, `max_size`: None, mode: `Measured`)
     fn teleport_assets() -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `0`
@@ -106,13 +97,6 @@ impl<T: frame_system::Config> pallet_xcm::WeightInfo for ZKVWeight<T> {
         //  Estimated: `0`
         // Minimum execution time: 7_086_000 picoseconds.
         Weight::from_parts(7_342_000, 0)
-    }
-    fn execute_blob() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 7_464_000 picoseconds.
-        Weight::from_parts(7_628_000, 0)
     }
     /// Storage: `Benchmark::Override` (r:0 w:0)
     /// Proof: `Benchmark::Override` (`max_values`: None, `max_size`: None, mode: `Measured`)

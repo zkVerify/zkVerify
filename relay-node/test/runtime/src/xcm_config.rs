@@ -132,6 +132,7 @@ pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {
     type RuntimeCall = super::RuntimeCall;
     type XcmSender = XcmRouter;
+    type XcmRecorder = ();
     type AssetTransactor = DummyAssetTransactor;
     type OriginConverter = OriginConverter;
     type IsReserve = ();

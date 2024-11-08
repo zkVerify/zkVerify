@@ -36,7 +36,6 @@ sc-sysinfo = { workspace = true }
 sc-service = { workspace = true }
 telemetry = { workspace = true }
 sp-authority-discovery = { workspace = true }
-consensus_common = { workspace = true }
 sp-inherents = { workspace = true }
 sp-keyring = { workspace = true }
 sp-api = { workspace = true }
@@ -52,6 +51,7 @@ sp-storage = { workspace = true }
 sp-transaction-pool = { workspace = true }
 pallet-transaction-payment = { workspace = true }
 sp-timestamp = { workspace = true }
+sp-consensus = { workspace = true }
 sp-consensus-babe = { workspace = true }
 sp-consensus-grandpa = { workspace = true }
 sp-state-machine = { workspace = true }

@@ -29,10 +29,7 @@ use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use telemetry::TelemetryEndpoints;
 use zkv_runtime::currency::{Balance, ACME};
-use zkv_runtime::{
-    currency, AccountId, RuntimeGenesisConfig, SessionKeysRelay as SessionKeys, Signature,
-    WASM_BINARY,
-};
+use zkv_runtime::{currency, AccountId, SessionKeysRelay as SessionKeys, Signature, WASM_BINARY};
 
 /// The extensions for the [`ChainSpec`].
 #[derive(Default, Clone, Serialize, Deserialize, ChainSpecExtension)]
@@ -50,7 +47,7 @@ const BOOTNODE_2_PEER_ID: &str = "12D3KooWEjVadU1YWyfDGvyRXPbCq2rXhzJtXaG4RxJZBk
 const STAGING_TELEMETRY_URL: &str = "wss://testnet-telemetry.zkverify.io/submit/";
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
-pub type ChainSpec = sc_service::GenericChainSpec<RuntimeGenesisConfig, Extensions>;
+pub type ChainSpec = sc_service::GenericChainSpec<Extensions>;
 
 const ENDOWMENT: Balance = 1_000_000 * ACME;
 const STASH_BOND: Balance = ENDOWMENT / 100;

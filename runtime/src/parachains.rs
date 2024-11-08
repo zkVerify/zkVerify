@@ -26,7 +26,9 @@ use polkadot_primitives::ValidatorId;
 use xcm::opaque::lts::Junction;
 
 pub use polkadot_runtime_parachains::{
-    assigner_parachains as parachains_assigner_parachains, configuration, disputes,
+    assigner_parachains as parachains_assigner_parachains, configuration,
+    configuration::ActiveConfigHrmpChannelSizeAndCapacityRatio,
+    disputes,
     disputes::slashing,
     dmp as parachains_dmp, hrmp, inclusion, initializer, origin as parachains_origin, paras,
     paras_inherent, reward_points as parachains_reward_points,
@@ -48,9 +50,10 @@ use super::{
 };
 use sp_runtime::transaction_validity::TransactionPriority;
 
+use crate::XcmPallet;
 use inclusion::AggregateMessageOrigin;
 use sp_core::parameter_types;
-use sp_runtime::FixedU128;
+use sp_runtime::{FixedU128, Percent};
 
 parameter_types! {
     pub const OnDemandTrafficDefaultValue: FixedU128 = FixedU128::from_u32(1);
@@ -89,12 +92,24 @@ impl slashing::Config for Runtime {
 
 impl parachains_dmp::Config for Runtime {}
 
+parameter_types! {
+        pub const HrmpChannelSizeAndCapacityWithSystemRatio: Percent = Percent::from_percent(100);
+}
+
 impl hrmp::Config for Runtime {
     type RuntimeOrigin = RuntimeOrigin;
     type RuntimeEvent = RuntimeEvent;
     type ChannelManager = EnsureRoot<AccountId>;
     type Currency = Balances;
     type WeightInfo = weights::parachains::hrmp::ZKVWeight<Runtime>;
+    // Use the `HrmpChannelSizeAndCapacityWithSystemRatio` ratio from the actual active
+    // `HostConfiguration` configuration for `hrmp_channel_max_message_size` and
+    // `hrmp_channel_max_capacity`.
+    type DefaultChannelSizeAndCapacityWithSystem = ActiveConfigHrmpChannelSizeAndCapacityRatio<
+        Runtime,
+        HrmpChannelSizeAndCapacityWithSystemRatio,
+    >;
+    type VersionWrapper = XcmPallet;
 }
 
 impl paras_inherent::Config for Runtime {

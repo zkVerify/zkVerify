@@ -15,13 +15,13 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use crate::polkadot_rpc::{BabeDeps, FullDeps, GrandpaDeps, RpcExtension};
-use consensus_common::SelectChain;
 use jsonrpsee::RpcModule;
 use polkadot_primitives::{AccountId, Balance, Block, Nonce};
 use sc_client_api::AuxStore;
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
+use sp_consensus::SelectChain;
 use sp_consensus_babe::BabeApi;
 use substrate_frame_rpc_system as frame_rpc_system;
 
