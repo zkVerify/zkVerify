@@ -50,6 +50,10 @@ pub fn assert_cannot_aggregate_evt(statement: H256, cause: CannotAggregateCause)
     assert_cannot_aggregate_evt_gen(true, statement, cause);
 }
 
+pub fn assert_no_cannot_aggregate_evt() {
+    assert!(cannot_aggregate_events().is_empty());
+}
+
 pub fn assert_new_receipt(domain: u32, id: u64, expected_receipt: Option<H256>) {
     let matched = mock::System::events()
     .iter()
@@ -119,6 +123,16 @@ pub fn registered_ids() -> Vec<u32> {
         .iter()
         .filter_map(|record| match record.event {
             TestEvent::Aggregate(Event::<Test>::NewDomain { id, .. }) => Some(id),
+            _ => None,
+        })
+        .collect()
+}
+
+pub fn cannot_aggregate_events() -> Vec<Event<Test>> {
+    mock::System::events()
+        .into_iter()
+        .filter_map(|record| match record.event {
+            TestEvent::Aggregate(ev @ Event::<Test>::CannotAggregate { .. }) => Some(ev),
             _ => None,
         })
         .collect()

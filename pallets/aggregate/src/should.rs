@@ -75,7 +75,7 @@ mod not_add_the_statement_to_any_domain_if {
 
             Aggregate::on_proof_verified(Some(USER_1), None, statement);
 
-            assert_cannot_aggregate_evt(statement, CannotAggregateCause::NoDomain);
+            assert_no_cannot_aggregate_evt();
 
             assert_eq!(0, count_all_statements());
         })

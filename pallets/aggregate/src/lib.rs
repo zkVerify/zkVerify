@@ -136,12 +136,7 @@ pub mod pallet {
                 return;
             };
             let Some(domain_id) = domain_id else {
-                log::debug!("No domain, skip");
-                Self::deposit_event(Event::<T>::CannotAggregate {
-                    statement,
-                    cause: CannotAggregateCause::NoDomain,
-                });
-
+                log::trace!("No domain, skip");
                 return;
             };
             Domains::<T>::mutate(domain_id, |domain| {
@@ -245,7 +240,6 @@ pub mod pallet {
     #[derive(Debug, Clone, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
     pub enum CannotAggregateCause {
         NoAccount,
-        NoDomain,
         DomainNotRegistered { domain_id: u32 },
         DomainStorageFull { domain_id: u32 },
         InsufficientFound,
