@@ -37,6 +37,7 @@ fn pallet_fflonk() {
             VkOrHash::from_hash(H256::zero()),
             dummy_proof.into(),
             dummy_pubs.into(),
+            None,
         )
         .is_err());
         // just checking code builds, hence the pallet is available to the runtime
@@ -229,6 +230,7 @@ fn pallet_zksync() {
             VkOrHash::from_hash(H256::zero()),
             dummy_proof.into(),
             dummy_pubs.into(),
+            None,
         )
         .is_err());
         // just checking code builds, hence the pallet is available to the runtime
@@ -244,6 +246,7 @@ fn pallet_groth16() {
             VkOrHash::from_hash(H256::zero()),
             pallet_groth16_verifier::Proof::default().into(),
             Box::new(Vec::new()),
+            None,
         )
         .is_err());
         // just checking code builds, hence the pallet is available to the runtime
@@ -263,7 +266,8 @@ fn pallet_risc0() {
             RuntimeOrigin::signed(dummy_origin),
             VkOrHash::Vk(dummy_vk.into()),
             dummy_proof.into(),
-            dummy_pubs.into()
+            dummy_pubs.into(),
+            None,
         )
         .is_err());
         // just checking code builds, hence the pallet is available to the runtime
@@ -283,7 +287,8 @@ fn pallet_ultraplonk() {
             RuntimeOrigin::signed(dummy_origin),
             VkOrHash::Vk(dummy_vk.into()),
             dummy_proof.into(),
-            dummy_pubs.into()
+            dummy_pubs.into(),
+            None,
         )
         .is_err());
         // just checking code builds, hence the pallet is available to the runtime
@@ -303,7 +308,8 @@ fn pallet_proofofsql_availability() {
             RuntimeOrigin::signed(dummy_origin),
             VkOrHash::Vk(Box::new(dummy_vk.into())),
             dummy_proof.into(),
-            dummy_pubs.into()
+            dummy_pubs.into(),
+            None,
         )
         .is_err());
         // just checking code builds, hence the pallet is available to the runtime
@@ -323,6 +329,14 @@ fn pallet_poe() {
 fn pallet_bags_list() {
     test().execute_with(|| {
         assert!(VoterList::list_bags_get(12).is_none());
+        // just checking code builds, hence the pallet is available to the runtime
+    });
+}
+
+#[test]
+fn pallet_aggregate() {
+    test().execute_with(|| {
+        assert!(Aggregate::aggregate(RuntimeOrigin::root(), 42, 24).is_err());
         // just checking code builds, hence the pallet is available to the runtime
     });
 }

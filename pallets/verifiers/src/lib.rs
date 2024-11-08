@@ -88,7 +88,7 @@ pub mod pallet {
         Identity,
     };
     use frame_system::pallet_prelude::*;
-    use hp_poe::OnProofVerified;
+    use hp_on_proof_verified::OnProofVerified;
     use sp_core::{hexdisplay::AsBytesRef, H256};
     use sp_io::hashing::keccak_256;
     use sp_std::boxed::Box;
@@ -136,7 +136,7 @@ pub mod pallet {
         type RuntimeEvent: From<Event<Self, I>>
             + IsType<<Self as frame_system::Config>::RuntimeEvent>;
         /// Proof verified call back
-        type OnProofVerified: OnProofVerified;
+        type OnProofVerified: OnProofVerified<Self::AccountId>;
         /// Weights
         type WeightInfo: hp_verifiers::WeightInfo<I>;
     }
@@ -171,6 +171,11 @@ pub mod pallet {
         VkRegistered {
             /// Verification key hash
             hash: H256,
+        },
+        /// The proof has been verified.
+        ProofVerified {
+            /// Proof verified statement
+            statement: H256,
         },
     }
 
@@ -234,10 +239,11 @@ pub mod pallet {
                 VkOrHash::Hash(_) => T::WeightInfo::submit_proof_with_vk_hash(proof, pubs),
             })]
         pub fn submit_proof(
-            _origin: OriginFor<T>,
+            origin: OriginFor<T>,
             vk_or_hash: VkOrHash<I::Vk>,
             proof: Box<I::Proof>,
             pubs: Box<I::Pubs>,
+            domain_id: Option<u32>,
         ) -> DispatchResultWithPostInfo
         where
             I: Verifier,
@@ -256,10 +262,11 @@ pub mod pallet {
                     vk.as_ref().clone()
                 }
             };
+            let account = ensure_signed(origin).ok();
+            let statement = compute_hash::<I>(&pubs, &vk_or_hash);
             I::verify_proof(&vk, &proof, &pubs)
-                .map(|_x| {
-                    T::OnProofVerified::on_proof_verified(compute_hash::<I>(&pubs, &vk_or_hash))
-                })
+                .inspect(|_| Self::deposit_event(Event::ProofVerified { statement }))
+                .map(|_x| T::OnProofVerified::on_proof_verified(account, domain_id, statement))
                 .map_err(Error::<T, I>::from)?;
             Ok(().into())
         }

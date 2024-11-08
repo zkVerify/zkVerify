@@ -21,9 +21,16 @@ sp-std = { workspace = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
 frame-benchmarking = { workspace = true, optional = true }
+pallet-aggregate = { workspace = true, optional = true, default-features = false, features = [
+    "runtime-benchmarks",
+] }
 
 [dev-dependencies]
+codec = { workspace = true, features = ["std"] }
+scale-info = { workspace = true, features = ["std"] }
+sp-io = { workspace = true, features = ["std"] }
 hex-literal = { workspace = true }
+pallet-balances = { workspace = true, features = ["std", "runtime-benchmarks"] }
 
 [features]
 std = [
@@ -39,6 +46,7 @@ default = ["std"]
 runtime-benchmarks = [
     "dep:hex-literal",
     "dep:frame-benchmarking",
+    "dep:pallet-aggregate",
     "pallet-verifiers/runtime-benchmarks",
     "frame-support/runtime-benchmarks",
 ]

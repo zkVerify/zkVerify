@@ -1,0 +1,12 @@
+[package]
+name = "hp-on-proof-verified"
+version = "0.1.0"
+authors.workspace = true
+edition.workspace = true
+repository.workspace = true
+description = "On proof verifier trait definition"
+license = "Apache-2.0"
+
+[dependencies]
+sp-core = { workspace = true }
+impl-trait-for-tuples = "0.2.2"

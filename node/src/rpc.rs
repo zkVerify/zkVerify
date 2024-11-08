@@ -86,12 +86,14 @@ where
     C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
     C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
     C::Api: proof_of_existence_rpc::PoERuntimeApi<Block>,
+    C::Api: aggregate_rpc::AggregateRuntimeApi<Block>,
     C::Api: BlockBuilder<Block>,
     P: TransactionPool + 'static,
     SC: SelectChain<Block> + 'static,
     B: sc_client_api::Backend<Block> + Send + Sync + 'static,
     B::State: sc_client_api::backend::StateBackend<sp_runtime::traits::HashingFor<Block>>,
 {
+    use aggregate_rpc::{Aggregate, AggregateApiServer};
     use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
     use proof_of_existence_rpc::{PoE, PoEApiServer};
     use sc_consensus_babe_rpc::{Babe, BabeApiServer};
@@ -143,7 +145,8 @@ where
         )
         .into_rpc(),
     )?;
-    module.merge(PoE::new(client).into_rpc())?;
+    module.merge(PoE::new(client.clone()).into_rpc())?;
+    module.merge(Aggregate::new(client).into_rpc())?;
 
     // Extend this RPC with a custom API by using the following syntax.
     // `YourRpcStruct` should have a reference to a client, which is needed

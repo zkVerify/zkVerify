@@ -19,6 +19,7 @@ use super::ProofOfSql;
 use frame_benchmarking::v2::*;
 use frame_system::RawOrigin;
 use hp_verifiers::Verifier;
+use pallet_aggregate::{funded_account, insert_domain};
 use pallet_verifiers::{VkOrHash, Vks};
 
 pub struct Pallet<T: Config>(crate::Pallet<T>);
@@ -27,7 +28,14 @@ pub trait Config: crate::Config {}
 impl<T: crate::Config> Config for T {}
 pub type Call<T> = pallet_verifiers::Call<T, ProofOfSql<T>>;
 
-#[benchmarks(where T: pallet_verifiers::Config<ProofOfSql<T>>)]
+fn init<T: pallet_aggregate::Config>() -> (T::AccountId, u32) {
+    let caller: T::AccountId = funded_account::<T>();
+    let domain_id = 1;
+    insert_domain::<T>(domain_id, caller.clone(), Some(1));
+    (caller, domain_id)
+}
+
+#[benchmarks(where T: pallet_verifiers::Config<ProofOfSql<T>> + pallet_aggregate::Config)]
 mod benchmarks {
 
     use super::*;
@@ -35,7 +43,8 @@ mod benchmarks {
     #[benchmark]
     fn submit_proof() {
         // setup code
-        let caller = whitelisted_caller();
+        let (caller, domain_id) = init::<T>();
+
         let vk = include_bytes!("resources/VALID_VK_MAX_NU_8.bin").to_vec();
         let proof = include_bytes!("resources/VALID_PROOF_MAX_NU_8.bin").to_vec();
         let pubs = include_bytes!("resources/VALID_PUBS_MAX_NU_8.bin").to_vec();
@@ -46,13 +55,15 @@ mod benchmarks {
             VkOrHash::from_vk(vk.into()),
             proof.into(),
             pubs.into(),
+            Some(domain_id),
         );
     }
 
     #[benchmark]
     fn submit_proof_with_vk_hash() {
         // setup code
-        let caller = whitelisted_caller();
+        let (caller, domain_id) = init::<T>();
+
         let vk_hash = sp_core::H256::repeat_byte(2);
         let vk: crate::Vk<T> = include_bytes!("resources/VALID_VK_MAX_NU_8.bin")
             .to_vec()
@@ -67,6 +78,7 @@ mod benchmarks {
             VkOrHash::from_hash(vk_hash),
             proof.into(),
             pubs.into(),
+            Some(domain_id),
         );
     }
 
@@ -93,8 +105,9 @@ mod mock {
     use frame_support::{
         derive_impl,
         sp_runtime::{traits::IdentityLookup, BuildStorage},
+        traits::EnsureOrigin,
     };
-    use sp_core::ConstU32;
+    use sp_core::{ConstU32, ConstU64};
 
     // Configure a mock runtime to test the pallet.
     frame_support::construct_runtime!(
@@ -102,8 +115,12 @@ mod mock {
         {
             System: frame_system,
             VerifierPallet: crate,
+            Balances: pallet_balances,
+            Aggregate: pallet_aggregate,
         }
     );
+
+    type Balance = u64;
 
     impl crate::Config for Test {
         type LargestMaxNu = ConstU32<8>;
@@ -113,17 +130,62 @@ mod mock {
     impl frame_system::Config for Test {
         type Block = frame_system::mocking::MockBlockU32<Test>;
         type AccountId = u64;
+        type AccountData = pallet_balances::AccountData<Balance>;
         type Lookup = IdentityLookup<Self::AccountId>;
     }
 
     impl pallet_verifiers::Config<crate::ProofOfSql<Test>> for Test {
         type RuntimeEvent = RuntimeEvent;
-        type OnProofVerified = ();
+        type OnProofVerified = Aggregate;
         type WeightInfo = crate::ProofOfSqlWeight<()>;
     }
 
     impl pallet_verifiers::common::Config for Test {
         type CommonWeightInfo = Test;
+    }
+
+    pub struct NoManager;
+    impl EnsureOrigin<RuntimeOrigin> for NoManager {
+        type Success = ();
+
+        fn try_origin(o: RuntimeOrigin) -> Result<Self::Success, RuntimeOrigin> {
+            Err(o)
+        }
+
+        fn try_successful_origin() -> Result<RuntimeOrigin, ()> {
+            Err(())
+        }
+    }
+
+    impl pallet_aggregate::Config for Test {
+        type RuntimeEvent = RuntimeEvent;
+        type RuntimeHoldReason = RuntimeHoldReason;
+        type AggregationSize = ConstU32<32>;
+        type MaxPendingPublishQueueSize = ConstU32<16>;
+        type ManagerOrigin = NoManager;
+        type Hold = Balances;
+        type Consideration = ();
+        type EstimateCallFee = ConstU32<1_000_000>;
+        type ComputeFeeFor = ();
+        type WeightInfo = ();
+        const AGGREGATION_SIZE: u32 = 32;
+        type Currency = Balances;
+    }
+
+    impl pallet_balances::Config for Test {
+        type RuntimeEvent = RuntimeEvent;
+        type RuntimeHoldReason = RuntimeHoldReason;
+        type RuntimeFreezeReason = RuntimeFreezeReason;
+        type WeightInfo = ();
+        type Balance = Balance;
+        type DustRemoval = ();
+        type ExistentialDeposit = ConstU64<1>;
+        type AccountStore = System;
+        type ReserveIdentifier = [u8; 8];
+        type FreezeIdentifier = RuntimeFreezeReason;
+        type MaxLocks = ConstU32<10>;
+        type MaxReserves = ConstU32<10>;
+        type MaxFreezes = ConstU32<10>;
     }
 
     /// Build genesis storage according to the mock runtime.

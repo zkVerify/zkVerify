@@ -505,6 +505,7 @@ mod scheduler {
                     VkOrHash::from_hash(H256::zero()),
                     [0; pallet_fflonk_verifier::PROOF_SIZE].into(),
                     [0; pallet_fflonk_verifier::PUBS_SIZE].into(),
+                    None,
                 )),
             );
             let call_hash = <Runtime as frame_system::Config>::Hashing::hash_of(&call);

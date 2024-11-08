@@ -19,6 +19,7 @@ use crate::Ultraplonk;
 use frame_benchmarking::v2::*;
 use frame_system::RawOrigin;
 use hp_verifiers::Verifier;
+use pallet_aggregate::{funded_account, insert_domain};
 use pallet_verifiers::{VkOrHash, Vks};
 use sp_std::{vec, vec::Vec};
 pub struct Pallet<T: Config>(crate::Pallet<T>);
@@ -28,7 +29,14 @@ pub type Call<T> = pallet_verifiers::Call<T, Ultraplonk<T>>;
 
 include!("resources.rs");
 
-#[benchmarks(where T: pallet_verifiers::Config<Ultraplonk<T>>)]
+fn init<T: pallet_aggregate::Config>() -> (T::AccountId, u32) {
+    let caller: T::AccountId = funded_account::<T>();
+    let domain_id = 1;
+    insert_domain::<T>(domain_id, caller.clone(), Some(1));
+    (caller, domain_id)
+}
+
+#[benchmarks(where T: pallet_verifiers::Config<Ultraplonk<T>> + pallet_aggregate::Config)]
 pub mod benchmarks {
 
     use super::*;
@@ -36,7 +44,8 @@ pub mod benchmarks {
     #[benchmark]
     fn submit_proof() {
         // setup code
-        let caller = whitelisted_caller();
+        let (caller, domain_id) = init::<T>();
+
         let proof = VALID_PROOF.to_vec().into();
         let pubs = public_input().into();
         let vk = VALID_VK;
@@ -47,13 +56,15 @@ pub mod benchmarks {
             VkOrHash::from_vk(vk),
             proof,
             pubs,
+            Some(domain_id),
         );
     }
 
     #[benchmark]
     fn submit_proof_1() {
         // setup code
-        let caller = whitelisted_caller();
+        let (caller, domain_id) = init::<T>();
+
         let proof = include_bytes!("resources/01_proof").to_vec().into();
         let pubs = vec![*include_bytes!("resources/01_pubs")].into();
         let vk = *include_bytes!("resources/01_vk");
@@ -64,13 +75,15 @@ pub mod benchmarks {
             VkOrHash::from_vk(vk),
             proof,
             pubs,
+            Some(domain_id),
         );
     }
 
     #[benchmark]
     fn submit_proof_8() {
         // setup code
-        let caller = whitelisted_caller();
+        let (caller, domain_id) = init::<T>();
+
         let proof = include_bytes!("resources/08_proof").to_vec().into();
         let pubs: Vec<_> = include_bytes!("resources/08_pubs")
             .chunks_exact(crate::PUBS_SIZE)
@@ -85,13 +98,15 @@ pub mod benchmarks {
             VkOrHash::from_vk(vk),
             proof,
             pubs.into(),
+            Some(domain_id),
         );
     }
 
     #[benchmark]
     fn submit_proof_16() {
         // setup code
-        let caller = whitelisted_caller();
+        let (caller, domain_id) = init::<T>();
+
         let proof = include_bytes!("resources/16_proof").to_vec().into();
         let pubs: Vec<_> = include_bytes!("resources/16_pubs")
             .chunks_exact(crate::PUBS_SIZE)
@@ -106,13 +121,15 @@ pub mod benchmarks {
             VkOrHash::from_vk(vk),
             proof,
             pubs.into(),
+            Some(domain_id),
         );
     }
 
     #[benchmark]
     fn submit_proof_32() {
         // setup code
-        let caller = whitelisted_caller();
+        let (caller, domain_id) = init::<T>();
+
         let proof = include_bytes!("resources/32_proof").to_vec().into();
         let pubs: Vec<_> = include_bytes!("resources/32_pubs")
             .chunks_exact(crate::PUBS_SIZE)
@@ -127,13 +144,15 @@ pub mod benchmarks {
             VkOrHash::from_vk(vk),
             proof,
             pubs.into(),
+            Some(domain_id),
         );
     }
 
     #[benchmark]
     fn submit_proof_with_vk_hash() {
         // setup code
-        let caller = whitelisted_caller();
+        let (caller, domain_id) = init::<T>();
+
         let proof = VALID_PROOF.to_vec().into();
         let pubs = public_input();
         let vk = VALID_VK;
@@ -146,13 +165,15 @@ pub mod benchmarks {
             VkOrHash::from_hash(hash),
             proof,
             pubs.into(),
+            Some(domain_id),
         );
     }
 
     #[benchmark]
     fn submit_proof_32_with_vk_hash() {
         // setup code
-        let caller = whitelisted_caller();
+        let (caller, domain_id) = init::<T>();
+
         let proof = include_bytes!("resources/32_proof").to_vec().into();
         let pubs: Vec<_> = include_bytes!("resources/32_pubs")
             .chunks_exact(crate::PUBS_SIZE)
@@ -169,6 +190,7 @@ pub mod benchmarks {
             VkOrHash::from_hash(hash),
             proof,
             pubs.into(),
+            Some(domain_id),
         );
     }
 
@@ -185,9 +207,7 @@ pub mod benchmarks {
         assert!(Vks::<T, Ultraplonk<T>>::get(Ultraplonk::<T>::vk_hash(&vk)).is_some());
     }
 
-    // WE CANNOT IMPLEMENT TESTS FOR BENCHMARKS FOR THIS PALLET
-    // That's because thie pallet need that the tests are not run in parallel
-    // (we use `serial_test` crate to achieve this) but using this macro doesn't
-    // give a way to achieve this. When we'll write our own maybe we'll can do it.
+    // We cannot implement testing benchmarck for ultraplonk verifier due there is no way to make them
+    // thread safe.
     // impl_benchmark_test_suite!(Pallet, super::mock::test_ext(), super::mock::Test);
 }

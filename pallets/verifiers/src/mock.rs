@@ -29,7 +29,7 @@ pub mod on_proof_verified {
         use frame_support::pallet_prelude::*;
         use sp_core::H256;
 
-        use hp_poe::OnProofVerified;
+        use hp_on_proof_verified::OnProofVerified;
 
         #[pallet::pallet]
         pub struct Pallet<T>(_);
@@ -40,20 +40,38 @@ pub mod on_proof_verified {
                 + IsType<<Self as frame_system::Config>::RuntimeEvent>;
         }
 
+        type AccountOf<T> = <T as frame_system::Config>::AccountId;
+
         #[pallet::event]
         #[pallet::generate_deposit(pub(super) fn deposit_event)]
         pub enum Event<T: Config> {
-            NewProof { value: H256 },
+            NewProof {
+                account: Option<AccountOf<T>>,
+                domain_id: Option<u32>,
+                value: H256,
+            },
         }
 
-        impl<T: Config> OnProofVerified for Pallet<T> {
-            fn on_proof_verified(value: H256) {
-                Self::deposit_event(Event::NewProof { value });
+        impl<A, T: Config<AccountId = A>> OnProofVerified<A> for Pallet<T> {
+            fn on_proof_verified(account: Option<A>, domain_id: Option<u32>, value: H256) {
+                Self::deposit_event(Event::NewProof {
+                    account,
+                    domain_id,
+                    value,
+                });
             }
         }
 
-        pub fn new_proof_event<T: Config>(h: H256) -> Event<T> {
-            Event::NewProof { value: h }
+        pub fn new_proof_event<A, T: Config<AccountId = A>>(
+            account: Option<A>,
+            domain_id: Option<u32>,
+            h: H256,
+        ) -> Event<T> {
+            Event::NewProof {
+                account,
+                domain_id,
+                value: h,
+            }
         }
     }
 }

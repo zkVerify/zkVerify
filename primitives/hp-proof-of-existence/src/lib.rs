@@ -15,7 +15,6 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 use codec::{Decode, Encode};
-use sp_core::H256;
 use sp_inherents::{InherentIdentifier, IsFatalError};
 
 /// The identifier for the `proof-of-existence0` inherent.
@@ -85,14 +84,6 @@ impl sp_inherents::InherentDataProvider for InherentDataProvider {
             InherentError::try_from(identifier, error)?,
         ))))
     }
-}
-
-/// Trait used by proof verifier pallets (e.g. pallet-settlement-fflonk) to signal that a successful proof verification
-/// happened.
-/// This must be implemented by proof storage pallets (e.g. pallet-poe) to subscribe to proof verification events.
-#[impl_trait_for_tuples::impl_for_tuples(10)]
-pub trait OnProofVerified {
-    fn on_proof_verified(pubs_hash: H256);
 }
 
 /// Wrapper around u64 for MaxStorageAttestations

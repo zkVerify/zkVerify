@@ -23,16 +23,19 @@ sp-std = { workspace = true }
 sp-core = { workspace = true }
 frame-system = { workspace = true }
 frame-benchmarking = { workspace = true, optional = true }
-sp-runtime = { workspace = true, optional = true }
 sp-io = { workspace = true, optional = true }
 hp-groth16 = { workspace = true }
 native = { workspace = true }
+pallet-aggregate = { workspace = true, optional = true, default-features = false, features = [
+    "runtime-benchmarks",
+] }
 
 [dev-dependencies]
 rstest = { workspace = true }
 rstest_reuse = { workspace = true }
 hex-literal = { workspace = true }
 hp-groth16 = { workspace = true, features = ["dummy-circuit"] }
+pallet-balances = { workspace = true, features = ["std", "runtime-benchmarks"] }
 
 [features]
 std = [
@@ -50,7 +53,7 @@ default = ["std"]
 runtime-benchmarks = [
     "dep:frame-benchmarking",
     "dep:sp-io",
-    "dep:sp-runtime",
+    "dep:pallet-aggregate",
     "pallet-verifiers/runtime-benchmarks",
     "frame-support/runtime-benchmarks",
     "hp-groth16/dummy-circuit",

@@ -1,0 +1,10 @@
+Description: Testing the RPC command for retrieving the Merkle path, given a aggregation_id and a statement for a given aggregation domain
+Network: ./network_defs/single_node.toml
+Creds: config
+
+alice: is up
+
+alice: reports node_roles is 4
+
+### Javascript test invocation
+alice: js-script ./js_scripts/0012-aggregate_proofs.js return is equal to 1 within 200 seconds

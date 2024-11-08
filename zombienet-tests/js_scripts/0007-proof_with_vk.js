@@ -20,7 +20,7 @@ async function run(nodeName, networkInfo, _args) {
     const alice = keyring.addFromUri('//Alice');
 
     // Should accept proof with valid VK
-    let events = await submitProof(api.tx.settlementFFlonkPallet, alice, { 'Vk': VK_FFLONK }, FFLONK_PROOF, FFLONK_PUBS)
+    let events = (await submitProof(api.tx.settlementFFlonkPallet, alice, { 'Vk': VK_FFLONK }, FFLONK_PROOF, FFLONK_PUBS)).events;
     if (!receivedEvents(events)) {
         return ReturnCode.ErrProofVerificationFailed;
     };
@@ -34,7 +34,7 @@ async function run(nodeName, networkInfo, _args) {
         return ReturnCode.ErrAcceptAnUnregisteredHash;
     };
 
-    events = await registerVk(api.tx.settlementFFlonkPallet, alice, VK_FFLONK);
+    events = (await registerVk(api.tx.settlementFFlonkPallet, alice, VK_FFLONK)).events;
     if (!receivedEvents(events)) {
         return ReturnCode.ErrVkRegistrationFailed;
     };
@@ -43,7 +43,7 @@ async function run(nodeName, networkInfo, _args) {
         return ReturnCode.ErrWrongKeyHash;
     }
 
-    events = await submitProof(api.tx.settlementFFlonkPallet, alice, { 'Hash': FFLONK_VKEY_HASH }, FFLONK_PROOF, FFLONK_PUBS)
+    events = (await submitProof(api.tx.settlementFFlonkPallet, alice, { 'Hash': FFLONK_VKEY_HASH }, FFLONK_PROOF, FFLONK_PUBS)).events;
     if (!receivedEvents(events)) {
         return ReturnCode.ErrProofVerificationHashFailed;
     };

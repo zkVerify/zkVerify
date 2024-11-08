@@ -25,7 +25,7 @@ sp-io = { workspace = true }
 sp-runtime = { workspace = true }
 sp-std = { workspace = true }
 
-hp-poe = { workspace = true }
+hp-on-proof-verified = { workspace = true }
 hp-verifiers = { workspace = true }
 pallet-verifiers-macros = { workspace = true }
 
@@ -46,7 +46,6 @@ std = [
     "sp-runtime/std",
     "sp-io/std",
     "hp-verifiers/std",
-    "hp-poe/std",
 ]
 
 try-runtime = ["frame-support/try-runtime", "frame-system/try-runtime"]

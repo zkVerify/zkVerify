@@ -50,6 +50,8 @@ pub mod pallet {
         AttestationIdNotPublished(u64),
     }
 
+    type AccountOf<T> = <T as frame_system::Config>::AccountId;
+
     #[pallet::config]
     pub trait Config: frame_system::Config + timestamp::Config {
         /// Because this pallet emits events, it depends on the runtime's definition of an event.
@@ -64,8 +66,12 @@ pub mod pallet {
         type WeightInfo: WeightInfo;
     }
 
-    impl<T: Config> hp_poe::OnProofVerified for Pallet<T> {
-        fn on_proof_verified(pubs_hash: H256) {
+    impl<T: Config> hp_on_proof_verified::OnProofVerified<AccountOf<T>> for Pallet<T> {
+        fn on_proof_verified(
+            _account_id: Option<AccountOf<T>>,
+            _chain_id: Option<u32>,
+            pubs_hash: H256,
+        ) {
             Self::insert(pubs_hash);
         }
     }
