@@ -14,6 +14,13 @@
 // limitations under the License.
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![deny(missing_docs)]
+
+//! This pallet provides a mechanism for tracking and aggregating statements from users.
+//! It is possible to define different aggregation sizes and thresholds for deferent domains.
+//!
+//! Every proof should indicate in which domain should be aggregated. The publish extrinsic
+//! `aggregate` is permission-less call and there is a tip the the user that call it can earn.
 
 pub use pallet::*;
 pub use weight::WeightInfo;
@@ -54,15 +61,23 @@ pub mod pallet {
     use sp_runtime::traits::{BadOrigin, Keccak256, Saturating};
     use sp_std::vec::Vec;
 
+    /// Given a `Configuration` return the Account type.
     pub type AccountOf<T> = <T as frame_system::Config>::AccountId;
+    /// Given a `Configuration` return the Balance type.
     pub type BalanceOf<T> =
         <<T as Config>::Hold as Inspect<<T as frame_system::Config>::AccountId>>::Balance;
+    /// Return the call (extrinsic) type for that pallet.
+    pub type CallOf<T> = Call<T>;
+
     type TicketOf<T> = <T as Config>::Consideration;
 
     #[pallet::pallet]
     pub struct Pallet<T>(_);
 
+    /// This trait define how the pallet should compute the tip for the publisher.
+    /// This tip will be added to the estimation of the total cost of the transaction.
     pub trait ComputePublisherTip<B> {
+        /// Given an estimated cost of a transaction, return an optional tip for the publisher.
         fn compute_tip(estimated: B) -> Option<B>;
     }
 
@@ -71,8 +86,6 @@ pub mod pallet {
             Some(estimated)
         }
     }
-
-    pub type CallOf<T> = Call<T>;
 
     #[pallet::config]
     pub trait Config: frame_system::Config {
@@ -100,7 +113,7 @@ pub mod pallet {
             + InspectHold<Self::AccountId, Reason = Self::RuntimeHoldReason>;
         /// A means of providing some cost while data is stored on-chain.
         type Consideration: Consideration<Self::AccountId>;
-        /// What should we use to estimate publish aggregation cost (pallet-transaction-payment implement it)
+        /// What should we use to estimate aggregate cost (pallet-transaction-payment implement it)
         type EstimateCallFee: EstimateCallFee<Call<Self>, BalanceOf<Self>>;
         /// How to compute the fee for publishing an aggregation.
         type ComputePublisherTip: ComputePublisherTip<BalanceOf<Self>>;
@@ -238,42 +251,76 @@ pub mod pallet {
     }
 
     #[derive(Debug, Clone, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
+    /// The cause of a missed aggregation.
     pub enum CannotAggregateCause {
+        /// No account
         NoAccount,
-        DomainNotRegistered { domain_id: u32 },
-        DomainStorageFull { domain_id: u32 },
+        /// The requested domain doesn't exist.
+        DomainNotRegistered {
+            /// The domain identifier.
+            domain_id: u32,
+        },
+        /// The domain's should publish queue is full.
+        DomainStorageFull {
+            /// The domain identifier.
+            domain_id: u32,
+        },
+        /// The user doesn't have enough founds to hold balance for publication.
         InsufficientFound,
     }
 
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
+    /// The emitted events.
     pub enum Event<T: Config> {
+        /// A new domain has been registered.
         NewDomain {
+            /// The domain identifier.
             id: u32,
         },
+        /// A new proof has been received.
         NewProof {
+            /// The statement hash that describe the proof.
             statement: H256,
+            /// The domain identifier.
             domain_id: u32,
+            /// The identifier of the aggregation .
             aggregation_id: u64,
         },
+        /// A new aggregation has been added to the queue and can be published.
         ReadyToAggregate {
+            /// The domain identifier.
             domain_id: u32,
+            /// The identifier of the aggregation .
             aggregation_id: u64,
         },
+        /// A new aggregation receipt has been emitted.
         NewAggregationReceipt {
+            /// The domain identifier.
             domain_id: u32,
+            /// The identifier of the aggregation .
             aggregation_id: u64,
+            /// The aggregation receipt hash.
             receipt: H256,
         },
+        /// An aggregation has been removed from the queue: this can occur is a domain was removed.
         AggregationRemoved {
+            /// The domain identifier.
             domain_id: u32,
+            /// The identifier of the aggregation .
             aggregation_id: u64,
         },
+        /// Some error occurred in [`on_proof_verify`] execution.
         CannotAggregate {
+            /// The statement hash that describe the proof.
             statement: H256,
+            /// The cause of the error.
             cause: CannotAggregateCause,
         },
+        /// A domain should published queue is full: you cannot add any other proof to this domain till
+        /// at least on proof is aggregated on this domain.
         DomainFull {
+            /// The domain identifier.
             domain_id: u32,
         },
     }
@@ -312,7 +359,7 @@ pub mod pallet {
                 sp_std::mem::take(&mut domain.next),
             )))
             .for_each(|(id, aggregation)| {
-                Pallet::<T>::release_aggregation_founds(&aggregation);
+                Pallet::<T>::release_aggregation_funds(&aggregation);
                 Pallet::<T>::deposit_event(Event::AggregationRemoved {
                     domain_id: domain.id,
                     aggregation_id: id,
@@ -347,7 +394,20 @@ pub mod pallet {
     /// this vector at the start of every block (on_initialize hook).
     pub type Published<T: Config> = StorageValue<_, Vec<(u32, Aggregation<T>)>, ValueQuery>;
 
+    #[derive(Debug, Clone, PartialEq, Eq, Encode, Decode, TypeInfo)]
+    /// Cannot generate the proof of the aggregated statement.
+    pub enum PathRequestError {
+        /// The statement is not found in the aggregation.
+        NotFound(u32, u64, sp_core::H256),
+        /// The receipt is not published for the given domain and aggregation.
+        ReceiptNotPublished(u32, u64),
+    }
+
     impl<T: Config> Pallet<T> {
+        /// Compute the statement Merkle path giving a proof of the aggregated statement.
+        /// - domain_id: The domain identifier.
+        /// - aggregation_id: The identifier of the aggregation.
+        /// - statement: The statement hash that describe the proof for which we would provide a proof.
         pub fn get_statement_path(
             domain_id: u32,
             aggregation_id: u64,
@@ -391,7 +451,7 @@ pub mod pallet {
             Ok(())
         }
 
-        fn release_aggregation_founds(aggregation: &Aggregation<T>) {
+        fn release_aggregation_funds(aggregation: &Aggregation<T>) {
             for s in &aggregation.statements {
                 let _ = T::Hold::release(
                     &HoldReason::Aggregation.into(),
@@ -414,7 +474,17 @@ pub mod pallet {
 
     #[pallet::call(weight(<T as Config>::WeightInfo))]
     impl<T: Config> Pallet<T> {
-        /// Publish the aggregation.
+        /// Publish the aggregation. This call is used to publish a new aggregation that is in
+        /// the domain to be published queue. Can be called *just by signed account* and if everything is fine,
+        /// move the holden funds for this publication to the caller account. If the attestation is not in the
+        /// _to be published_ queue, the call will fail but the weight cost will be still the one needed to do the
+        /// check.
+        ///
+        /// If everything is fine a `Event::NewAggregationReceipt` is emitted.
+        ///
+        /// Arguments:
+        /// - domain_id: The domain identifier.
+        /// - id: The identifier of the aggregation.
         #[pallet::weight(T::WeightInfo::aggregate(T::AggregationSize::get() as u32))]
         #[pallet::call_index(0)]
         pub fn aggregate(
@@ -477,6 +547,12 @@ pub mod pallet {
         }
 
         #[pallet::call_index(1)]
+        /// Register a new domain. It holds a deposit for all the storage that the domain need. The account that
+        /// requested this domain will be the owner and is the only one that can unregister it. Unregister the domain
+        /// will unlock the deposit and remove the domain from the system.
+        ///
+        /// - aggregation_size: The size of the aggregation, in other words how many statements any aggregation have.
+        /// - queue_size: The maximum number of aggregations that can be in the queue for this domain.
         pub fn register_domain(
             origin: OriginFor<T>,
             aggregation_size: AggregationSize,
@@ -487,7 +563,6 @@ pub mod pallet {
             let queue_size = queue_size.unwrap_or(T::MaxPendingPublishQueueSize::get());
             Self::ensure_domain_params(aggregation_size, queue_size)?;
 
-            // T::Consideration::new()
             Self::deposit_event(Event::NewDomain { id });
             let ticket = owner
                 .clone()
@@ -511,6 +586,12 @@ pub mod pallet {
         }
 
         #[pallet::call_index(2)]
+        /// Unregister a domain. Only the domain owner and the manager can do it. This will remove the domain from the system and
+        /// unhold all the funds that are on hold for both the registration and aggregation stored in this domain.
+        ///
+        /// For every aggregation cancelled a `AggregationRemoved` event is emitted.
+        ///
+        /// - domain_id: The domain identifier.
         pub fn unregister_domain(
             origin: OriginFor<T>,
             domain_id: u32,
@@ -537,12 +618,6 @@ pub mod pallet {
 
             Ok(owner.post_info(None))
         }
-    }
-
-    #[derive(Debug, Clone, PartialEq, Eq, Encode, Decode, TypeInfo)]
-    pub enum PathRequestError {
-        NotFound(u32, u64, sp_core::H256),
-        ReceiptNotPublished(u32, u64),
     }
 
     fn estimate_publish_attestation_fee<T: Config>(size: AggregationSize) -> BalanceOf<T> {

@@ -30,12 +30,14 @@ type BalanceOf<T> =
 pub mod utils {
     use super::*;
 
+    /// Return a whitelisted account with enough founds to do anything.
     pub fn funded_account<T: Config>() -> T::AccountId {
         let caller: T::AccountId = whitelisted_caller();
         T::Currency::make_free_balance_be(&caller, BalanceOf::<T>::max_value() / 2u32.into());
         caller
     }
 
+    /// Insert a domain into the system.
     pub fn insert_domain<T: Config>(
         domain_id: u32,
         account: AccountOf<T>,
