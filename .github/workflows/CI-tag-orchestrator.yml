@@ -2,8 +2,8 @@ name: Tag-orchestrator
 
 on:
   push:
-    branches:
-      - "yuriko/WEB3-1184"
+    # branches:
+    #   - "yuriko/WEB3-1184"
     tags:
       - "[0-9]+.[0-9]+.[0-9]+-[0-9]+.[0-9]+.[0-9]+*"
   workflow_dispatch:
@@ -12,14 +12,74 @@ env:
   RUST_BACKTRACE: 1
 
 jobs:
-  build-test-publish:
+  build:
+    outputs:
+      artifact_name_solo: ${{ steps.save-image-names.docker_image_solo }}
+      artifact_name_relay: ${{ steps.save-image-names.docker_image_relay }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Build solo and relay chain configured images
+        id: build_images
+        run: |
+          "${GITHUB_WORKSPACE}/docker/scripts/bootstrap.sh"
+
+      - name: Set Docker image names as output
+        id: save-image-names
+        run: |
+          echo "docker_image_solo=horizenlabs/zkv-relay:latest" >> $GITHUB_OUTPUT
+          echo "docker_image_relay=docker.io/horizenlabs/zkverify:latest" >> $GITHUB_OUTPUT
+
+      - name: Save the Docker image as a tarball
+        id: create-tar-file
+        run: | 
+          echo "Saving image ${{ steps.setup.outputs.docker_image_name }}"
+          echo "github.workspace is ${{github.workspace}}"
+          
+          TAR_FILE_NAME_SOLO="zkverify-${GITHUB_REF##*/}-solo"
+          TAR_FILE_SOLO="${{github.workspace}}/${TAR_FILE_NAME_SOLO}.tar"
+
+          TAR_FILE_NAME_RELAY="zkverify-${GITHUB_REF##*/}-relay"
+          TAR_FILE_RELAY="${{github.workspace}}/${TAR_FILE_NAME_RELAY}.tar"
+
+          echo "tar_file_name_solo=$TAR_FILE_NAME_SOLO" >> $GITHUB_OUTPUT
+          echo "tar_file_solo=$TAR_FILE_SOLO" >> $GITHUB_OUTPUT
+
+          echo "tar_file_name_solo=$TAR_FILE_NAME_RELAY" >> $GITHUB_OUTPUT
+          echo "tar_file_solo=$TAR_FILE_RELAY" >> $GITHUB_OUTPUT
+
+          docker save "${{ steps.setup.save-image-names.docker_image_solo }}" -o "${TAR_FILE_SOLO}"
+          docker save "${{ steps.setup.save-image-names.docker_image_relay }}" -o "${TAR_FILE_RELAY}"
+        
+      - name: Upload Docker Image Artifact (solo chain)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.create-tar-file.outputs.tar_file_name_solo }}
+          path: ${{ steps.create-tar-file.outputs.tar_file_solo }}
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
+          overwrite: true
+
+      - name: Upload Docker Image Artifact (relay chain)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.create_tar_file.outputs.tar_file_name_relay }}
+          path: ${{ steps.create_tar_file.outputs.tar_file_relay }}
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
+          overwrite: true
+
+  test-publish:
+    needs: build
     strategy:
       matrix: 
-        chain: [solo, relay]
+        artifact_name: [${{ needs.build.outputs.artifact_name_solo }}, ${{ needs.build.outputs.artifact_name_relay }}]
     
-    uses: ./.github/workflows/CI-release.yml
+    uses: ./.github/workflows/CI-test-publish.yml
     with:
-      chain: ${{ matrix.chain }}
+      artifact_name: ${{ matrix.artifact_name }}
 
   # rustdoc-job:
   #   uses: ./.github/workflows/CI-rustdoc.yml
