@@ -906,11 +906,11 @@ impl pallet_hyperbridge::Config for Runtime {
 #[derive(Default)]
 pub struct ModuleRouter;
 impl IsmpRouter for ModuleRouter {
-    fn module_for_id(&self, id: Vec<u8>) -> Result<Box<dyn IsmpModule>, Error> {
+    fn module_for_id(&self, id: Vec<u8>) -> Result<Box<dyn IsmpModule>, anyhow::Error> {
         match id.as_slice() {
             RECEIVING_MESSAGE_MODULE_ID => Ok(Box::new(ReceivingMessageModule::default())),
             PALLET_HYPERBRIDGE_ID => Ok(Box::new(pallet_hyperbridge::Pallet::<Runtime>::default())),
-            _ => Err(Error::ModuleNotFound(id)),
+            _ => Err(Error::ModuleNotFound(id))?,
         }
     }
 }
@@ -921,15 +921,15 @@ struct ReceivingMessageModule;
 pub const RECEIVING_MESSAGE_MODULE_ID: &'static [u8] = b"RECE-FEE";
 
 impl IsmpModule for ReceivingMessageModule {
-    fn on_accept(&self, _request: PostRequest) -> Result<(), Error> {
+    fn on_accept(&self, _request: PostRequest) -> Result<(), anyhow::Error> {
         Ok(())
     }
 
-    fn on_response(&self, _response: Response) -> Result<(), Error> {
+    fn on_response(&self, _response: Response) -> Result<(), anyhow::Error> {
         Ok(())
     }
 
-    fn on_timeout(&self, _request: Timeout) -> Result<(), Error> {
+    fn on_timeout(&self, _request: Timeout) -> Result<(), anyhow::Error> {
         Ok(())
     }
 }

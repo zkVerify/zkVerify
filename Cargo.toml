@@ -44,6 +44,7 @@ exclude = [
 # default-members = ["node"]
 
 [workspace.dependencies]
+anyhow = { version = "1.0", default-features = false }
 clap = { version = "4.4.10", features = ["derive"] }
 futures = { version = "0.3.21", features = ["thread-pool"] }
 futures-timer = { version = "3.0.2" }
@@ -137,12 +138,6 @@ pallet-preimage = { default-features = false, version = "37.0.0" }
 pallet-referenda = { default-features = false, version = "37.0.0" }
 pallet-utility = { default-features = false, version = "37.0.0" }
 pallet-vesting = { default-features = false, version = "37.0.0" }
-ismp = { default-features = false, version = "=0.2.0" }
-ismp-grandpa = { default-features = false, version = "1.15.0" }
-pallet-hyperbridge = { default-features = false, version = "1.15.0" }
-pallet-ismp-rpc = { default-features = false, version = "1.15.0" }
-pallet-ismp = { default-features = false, version = "1.15.0" }
-pallet-ismp-runtime-api = { default-features = false, version = "1.15.0" }
 sp-mmr-primitives = { default-features = false, version = "34.1.0" }
 pallet-whitelist = { default-features = false, version = "36.0.0" }
 pallet-conviction-voting = { default-features = false, version = "37.0.0" }
@@ -188,6 +183,14 @@ sp-npos-elections = { default-features = false, version = "34.0.0" }
 hp-poe = { default-features = false, path = "primitives/hp-proof-of-existence" }
 proof-of-existence-rpc = { default-features = false, path = "rpc/proof_of_existence" }
 proof-of-existence-rpc-runtime-api = { default-features = false, path = "rpc/proof_of_existence/runtime-api" }
+
+# Hyperbridge dependencies
+ismp = { default-features = false, version = "0.2.2" }
+pallet-ismp = { default-features = false, version = "1.15.1" }
+pallet-ismp-rpc = { default-features = false, version = "1.15.1" }
+pallet-ismp-runtime-api = { default-features = false, version = "1.15.1" }
+pallet-hyperbridge = { default-features = false, version = "1.15.1" }
+ismp-grandpa = { default-features = false, version = "1.15.1" }
 
 # Used for the node template's RPCs
 frame-system-rpc-runtime-api = { default-features = false, version = "34.0.0" }
