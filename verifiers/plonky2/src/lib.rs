@@ -3,20 +3,25 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 use core::marker::PhantomData;
+use frame_support::traits::ConstU32;
 use frame_support::weights::Weight;
+use frame_support::BoundedVec;
+use hp_verifiers::{Cow, Verifier, VerifyError};
 use plonky2_verifier::validate::validate_vk_default_poseidon;
 use plonky2_verifier::verify_default_poseidon;
-use hp_verifiers::{Cow, Verifier, VerifyError};
 
 pub mod benchmarking;
-mod verifier_should;
+mod resources;
+pub(crate) mod verifier_should;
 mod weight;
 
 pub use weight::WeightInfo;
 
+pub const MAX_VK_SIZE: u32 = 262_144; // 256 KB in bytes
+
 pub type Pubs = Vec<u8>;
 pub type Proof = Vec<u8>;
-pub type Vk = Vec<u8>;
+pub type Vk = BoundedVec<u8, ConstU32<MAX_VK_SIZE>>;
 
 #[pallet_verifiers::verifier]
 pub struct Plonky2;
@@ -43,9 +48,9 @@ impl Verifier for Plonky2 {
     }
 
     fn validate_vk(vk: &Self::Vk) -> Result<(), VerifyError> {
-       validate_vk_default_poseidon(vk)
-           .map_err(|e| log::debug!("VK validation failed: {:?}", e))
-           .map_err(|_| VerifyError::InvalidVerificationKey)
+        validate_vk_default_poseidon(vk)
+            .map_err(|e| log::debug!("VK validation failed: {:?}", e))
+            .map_err(|_| VerifyError::InvalidVerificationKey)
     }
 
     fn pubs_bytes(pubs: &Self::Pubs) -> Cow<[u8]> {

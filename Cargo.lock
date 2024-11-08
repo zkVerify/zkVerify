@@ -8451,6 +8451,7 @@ dependencies = [
  "pallet-verifiers",
  "parity-scale-codec",
  "plonky2-verifier",
+ "rstest",
  "scale-info",
  "serde_json",
  "sp-core",
