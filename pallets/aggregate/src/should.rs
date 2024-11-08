@@ -376,7 +376,7 @@ mod aggregate {
     fn dispatch_info() -> DispatchInfo {
         Call::<Test>::aggregate {
             domain_id: 2,
-            id: 42,
+            aggregation_id: 42,
         }
         .get_dispatch_info()
     }
@@ -631,8 +631,10 @@ mod register_domain {
                 Some(MockConsideration {
                     who: USER_DOMAIN_1,
                     count: 1,
-                    size: Domain::<Test>::encoded_size(16, MaxPendingPublishQueueSize::get())
-                        as u64,
+                    size: Domain::<Test>::compute_encoded_size(
+                        16,
+                        MaxPendingPublishQueueSize::get()
+                    ) as u64,
                 }),
                 domain.ticket,
             );
@@ -656,13 +658,13 @@ mod register_domain {
 
     #[test]
     fn not_change_domain_encoded_size() {
-        // This test is here to check the you don't changed the domain struct without change `encoded_size`
+        // This test is here to check the you don't changed the domain struct without change `compute_encoded_size`
         // accordantly
         use codec::MaxEncodedLen;
         // Check base: always TRUE
         assert_eq!(
             Domain::<Test>::max_encoded_len(),
-            Domain::<Test>::encoded_size(
+            Domain::<Test>::compute_encoded_size(
                 MaxAggregationSize::get(),
                 MaxPendingPublishQueueSize::get()
             )
@@ -674,15 +676,15 @@ mod register_domain {
         // Fixtures
         assert_eq!(
             1365,
-            Domain::<Test>::encoded_size(1, MaxPendingPublishQueueSize::get())
+            Domain::<Test>::compute_encoded_size(1, MaxPendingPublishQueueSize::get())
         );
         assert_eq!(
             7251,
-            Domain::<Test>::encoded_size(MaxAggregationSize::get(), 1)
+            Domain::<Test>::compute_encoded_size(MaxAggregationSize::get(), 1)
         );
         assert_eq!(
             16365,
-            Domain::<Test>::encoded_size(
+            Domain::<Test>::compute_encoded_size(
                 MaxAggregationSize::get() / 2,
                 MaxPendingPublishQueueSize::get() / 2
             )

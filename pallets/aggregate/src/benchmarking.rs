@@ -47,14 +47,15 @@ pub mod utils {
             .unwrap_or_else(|| <T as Config>::AggregationSize::get() as u32)
             .try_into()
             .unwrap();
-        let domain = Domain::<T>::create(
+        let domain = Domain::<T>::try_create(
             domain_id,
             account.into(),
             1,
             aggregation_size,
             <T as Config>::MaxPendingPublishQueueSize::get(),
             None,
-        );
+        )
+        .unwrap();
         Domains::<T>::insert(domain_id, domain);
         aggregation_size
     }
@@ -96,7 +97,10 @@ mod benchmarks {
         let caller: T::AccountId = funded_account::<T>();
         let domain_id = 1;
 
-        let call = Call::<T>::aggregate { domain_id, id: 1 };
+        let call = Call::<T>::aggregate {
+            domain_id,
+            aggregation_id: 1,
+        };
         let benchmarked_call_encoded = Encode::encode(&call);
         #[block]
         {
@@ -118,7 +122,10 @@ mod benchmarks {
         let domain_id = 1;
         insert_domain::<T>(domain_id, caller.clone(), None);
 
-        let call = Call::<T>::aggregate { domain_id, id: 1 };
+        let call = Call::<T>::aggregate {
+            domain_id,
+            aggregation_id: 1,
+        };
         let benchmarked_call_encoded = Encode::encode(&call);
         #[block]
         {

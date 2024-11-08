@@ -307,6 +307,27 @@ impl pallet_balances::Config for Test {
     type RuntimeFreezeReason = ();
 }
 
+impl crate::Domain<Test> {
+    pub(crate) fn create(
+        id: u32,
+        owner: crate::data::User<crate::AccountOf<Test>>,
+        next_attestation_id: u64,
+        max_attestation_size: AggregationSize,
+        publish_queue_size: u32,
+        ticket: Option<crate::TicketOf<Test>>,
+    ) -> Self {
+        Self::try_create(
+            id,
+            owner,
+            next_attestation_id,
+            max_attestation_size,
+            publish_queue_size,
+            ticket,
+        )
+        .unwrap()
+    }
+}
+
 // Build genesis storage according to the mock runtime.
 pub fn test() -> sp_io::TestExternalities {
     let mut t = frame_system::GenesisConfig::<Test>::default()

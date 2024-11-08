@@ -128,7 +128,7 @@ impl<A, B, S: Get<AggregationSize>> AggregationEntry<A, B, S> {
         )
     }
 
-    fn encoded_size(size: AggregationSize) -> usize
+    pub(crate) fn compute_encoded_size(size: AggregationSize) -> usize
     where
         Self: MaxEncodedLen,
         BoundedVec<StatementEntry<A, B>, VecSize<S>>: MaxEncodedLen,
@@ -234,7 +234,10 @@ impl<
     ///
     /// - `max_attestation_size`: The maximum size of the aggregations for this domain.
     /// - `publish_queue_size`: the publish queue size for this domain.
-    pub fn encoded_size(max_attestation_size: AggregationSize, publish_queue_size: u32) -> usize
+    pub fn compute_encoded_size(
+        max_attestation_size: AggregationSize,
+        publish_queue_size: u32,
+    ) -> usize
     where
         AggregationEntry<A, B, S>: MaxEncodedLen,
         Self: MaxEncodedLen,
@@ -242,7 +245,8 @@ impl<
         StatementEntry<A, B>: MaxEncodedLen,
     {
         let upper = Self::max_encoded_len();
-        let aggregation_size = AggregationEntry::<A, B, S>::encoded_size(max_attestation_size);
+        let aggregation_size =
+            AggregationEntry::<A, B, S>::compute_encoded_size(max_attestation_size);
         upper
             .saturating_sub(AggregationEntry::<A, B, S>::max_encoded_len())
             .saturating_sub(BoundedBTreeMap::<u64, AggregationEntry<A, B, S>, M>::max_encoded_len())

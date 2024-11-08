@@ -38,6 +38,8 @@ pub use benchmarking::utils::*;
 
 #[frame_support::pallet]
 pub mod pallet {
+    use core::ops::Deref;
+
     pub use crate::data::AggregationSize;
     use crate::data::{StatementEntry, User};
 
@@ -69,7 +71,7 @@ pub mod pallet {
     /// Return the call (extrinsic) type for that pallet.
     pub type CallOf<T> = Call<T>;
 
-    type TicketOf<T> = <T as Config>::Consideration;
+    pub(crate) type TicketOf<T> = <T as Config>::Consideration;
 
     #[pallet::pallet]
     pub struct Pallet<T>(_);
@@ -175,7 +177,8 @@ pub mod pallet {
                 }
 
                 // Reserve balance for publication: if not raise a fail event
-                let Ok(reserve) = reserve_currency_for_publication::<T>(domain, &account)
+                let Ok(reserve) = domain
+                    .reserve_currency_for_publication(&account)
                     .inspect_err(|err| {
                         Self::deposit_event(Event::<T>::CannotAggregate {
                             statement,
@@ -194,47 +197,10 @@ pub mod pallet {
                     domain_id,
                     aggregation_id: domain.next.id,
                 });
-                let to_publish = append_statement::<T>(domain, account.clone(), reserve, statement);
+                let to_publish = domain.append_statement(account.clone(), reserve, statement);
                 if let Some(aggregation) = to_publish {
-                    available_aggregation::<T>(domain, aggregation);
+                    domain.available_aggregation(aggregation);
                 }
-            });
-        }
-    }
-
-    fn append_statement<T: Config>(
-        domain: &mut Domain<T>,
-        account: T::AccountId,
-        reserve: BalanceOf<T>,
-        statement: H256,
-    ) -> Option<Aggregation<T>> {
-        let aggregation = &mut domain.next;
-        aggregation
-            .statements
-            .force_push(StatementEntry::new(account.clone(), reserve, statement));
-        if aggregation.size as usize <= aggregation.statements.len() {
-            Some(sp_std::mem::replace(
-                aggregation,
-                aggregation.create_next(aggregation.size),
-            ))
-        } else {
-            None
-        }
-    }
-
-    fn available_aggregation<T: Config>(domain: &mut Domain<T>, aggregation: Aggregation<T>) {
-        Pallet::<T>::deposit_event(Event::<T>::ReadyToAggregate {
-            domain_id: domain.id,
-            aggregation_id: aggregation.id,
-        });
-        domain
-            .should_publish
-            .try_insert(aggregation.id, aggregation)
-            .expect("Should not publish aggregation if it's not possible: qed");
-        // If is full send an alert event
-        if domain.should_publish.len() >= domain.publish_queue_size as usize {
-            Pallet::<T>::deposit_event(Event::<T>::DomainFull {
-                domain_id: domain.id,
             });
         }
     }
@@ -329,8 +295,7 @@ pub mod pallet {
     pub type Aggregation<T> =
         crate::data::AggregationEntry<AccountOf<T>, BalanceOf<T>, <T as Config>::AggregationSize>;
 
-    /// Shortcut to get the Domain type from config.
-    pub(crate) type Domain<T> = crate::data::DomainEntry<
+    type DomainType<T> = crate::data::DomainEntry<
         AccountOf<T>,
         BalanceOf<T>,
         <T as Config>::AggregationSize,
@@ -338,36 +303,128 @@ pub mod pallet {
         TicketOf<T>,
     >;
 
-    /// Compute and reserve the currency for further publication
-    fn reserve_currency_for_publication<T: Config>(
-        domain: &mut Domain<T>,
-        account: &AccountOf<T>,
-    ) -> Result<BalanceOf<T>, DispatchError> {
-        let estimated = estimate_publish_attestation_fee::<T>(domain.max_aggregation_size);
-        let hold = (estimated.saturating_add(
-            <T as Config>::ComputePublisherTip::compute_tip(estimated).unwrap_or_default(),
-        )) / domain.next.size.into();
-        T::Hold::hold(&HoldReason::Aggregation.into(), account, hold).map(|_| hold)
-    }
+    /// Shortcut to get the Domain type from config.
+    #[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
+    #[scale_info(skip_type_params(T))]
+    pub(crate) struct Domain<T: Config>(DomainType<T>);
 
-    /// Clean Domain
-    fn clean_domain<T: Config>(domain: &mut Domain<T>) {
-        sp_std::mem::take(&mut domain.should_publish)
-            .into_iter()
-            .chain(sp_std::iter::once((
-                domain.next.id,
-                sp_std::mem::take(&mut domain.next),
-            )))
-            .for_each(|(id, aggregation)| {
-                Pallet::<T>::release_aggregation_funds(&aggregation);
-                Pallet::<T>::deposit_event(Event::AggregationRemoved {
-                    domain_id: domain.id,
-                    aggregation_id: id,
+    impl<T: Config> Domain<T> {
+        pub fn try_create(
+            id: u32,
+            owner: User<AccountOf<T>>,
+            next_attestation_id: u64,
+            max_attestation_size: AggregationSize,
+            publish_queue_size: u32,
+            ticket: Option<TicketOf<T>>,
+        ) -> Result<Self, Error<T>> {
+            if max_attestation_size == 0
+                || publish_queue_size == 0
+                || max_attestation_size > T::AggregationSize::get()
+                || publish_queue_size > T::MaxPendingPublishQueueSize::get()
+            {
+                Err(Error::<T>::InvalidDomainParams)
+            } else {
+                Ok(Self(crate::data::DomainEntry::create(
+                    id,
+                    owner,
+                    next_attestation_id,
+                    max_attestation_size,
+                    publish_queue_size,
+                    ticket,
+                )))
+            }
+        }
+
+        /// Compute and reserve the currency for further publication
+        fn reserve_currency_for_publication(
+            &self,
+            account: &AccountOf<T>,
+        ) -> Result<BalanceOf<T>, DispatchError> {
+            let estimated = estimate_publish_attestation_fee::<T>(self.max_aggregation_size);
+            let hold = (estimated.saturating_add(
+                <T as Config>::ComputePublisherTip::compute_tip(estimated).unwrap_or_default(),
+            )) / self.next.size.into();
+            T::Hold::hold(&HoldReason::Aggregation.into(), account, hold).map(|_| hold)
+        }
+
+        fn clean(&mut self) {
+            sp_std::mem::take(&mut self.should_publish)
+                .into_iter()
+                .chain(sp_std::iter::once((
+                    self.next.id,
+                    sp_std::mem::take(&mut self.next),
+                )))
+                .for_each(|(id, aggregation)| {
+                    Pallet::<T>::release_aggregation_funds(&aggregation);
+                    Pallet::<T>::deposit_event(Event::AggregationRemoved {
+                        domain_id: self.id,
+                        aggregation_id: id,
+                    });
                 });
+            self.next = self.next.create_next(self.max_aggregation_size);
+        }
+
+        /// Return the size in bytes for this domain that should be reserved in the storage.
+        ///
+        /// - `max_attestation_size`: The maximum size of the aggregations for this domain.
+        /// - `publish_queue_size`: the publish queue size for this domain.
+        pub fn compute_encoded_size(
+            max_attestation_size: AggregationSize,
+            publish_queue_size: u32,
+        ) -> usize {
+            DomainType::<T>::compute_encoded_size(max_attestation_size, publish_queue_size)
+        }
+
+        fn append_statement(
+            &mut self,
+            account: T::AccountId,
+            reserve: BalanceOf<T>,
+            statement: H256,
+        ) -> Option<Aggregation<T>> {
+            let aggregation = &mut self.next;
+            aggregation.statements.force_push(StatementEntry::new(
+                account.clone(),
+                reserve,
+                statement,
+            ));
+            if aggregation.size as usize <= aggregation.statements.len() {
+                Some(sp_std::mem::replace(
+                    aggregation,
+                    aggregation.create_next(aggregation.size),
+                ))
+            } else {
+                None
+            }
+        }
+
+        fn available_aggregation(&mut self, aggregation: Aggregation<T>) {
+            Pallet::<T>::deposit_event(Event::<T>::ReadyToAggregate {
+                domain_id: self.id,
+                aggregation_id: aggregation.id,
             });
-        domain.next = domain.next.create_next(domain.max_aggregation_size);
+            self.should_publish
+                .try_insert(aggregation.id, aggregation)
+                .expect("Should not publish aggregation if it's not possible: qed");
+            // If is full send an alert event
+            if self.should_publish.len() >= self.publish_queue_size as usize {
+                Pallet::<T>::deposit_event(Event::<T>::DomainFull { domain_id: self.id });
+            }
+        }
     }
 
+    impl<T: Config> Deref for Domain<T> {
+        type Target = DomainType<T>;
+
+        fn deref(&self) -> &Self::Target {
+            &self.0
+        }
+    }
+
+    impl<T: Config> sp_std::ops::DerefMut for Domain<T> {
+        fn deref_mut(&mut self) -> &mut Self::Target {
+            &mut self.0
+        }
+    }
     /// A reason for this pallet placing a hold on funds.
     #[pallet::composite_enum]
     pub enum HoldReason {
@@ -438,19 +495,6 @@ pub mod pallet {
             ))
         }
 
-        fn ensure_domain_params(
-            aggregation_size: AggregationSize,
-            queue_size: u32,
-        ) -> Result<(), DispatchError> {
-            if aggregation_size == 0
-                || aggregation_size > T::AggregationSize::get()
-                || queue_size > T::MaxPendingPublishQueueSize::get()
-            {
-                Err(Error::<T>::InvalidDomainParams)?;
-            }
-            Ok(())
-        }
-
         fn release_aggregation_funds(aggregation: &Aggregation<T>) {
             for s in &aggregation.statements {
                 let _ = T::Hold::release(
@@ -490,7 +534,7 @@ pub mod pallet {
         pub fn aggregate(
             origin: OriginFor<T>,
             domain_id: u32,
-            id: u64,
+            aggregation_id: u64,
         ) -> DispatchResultWithPostInfo {
             use frame_support::traits::DefensiveSaturating;
             let origin = ensure_signed(origin)?;
@@ -501,12 +545,16 @@ pub mod pallet {
                         Error::<T>::UnknownDomainId,
                     )
                 })?;
-                let aggregation = domain.should_publish.remove(&id).ok_or_else(|| {
-                    dispatch_post_error(
-                        T::WeightInfo::aggregate_on_invalid_id(),
-                        Error::<T>::InvalidAggregationId,
-                    )
-                })?;
+                let aggregation =
+                    domain
+                        .should_publish
+                        .remove(&aggregation_id)
+                        .ok_or_else(|| {
+                            dispatch_post_error(
+                                T::WeightInfo::aggregate_on_invalid_id(),
+                                Error::<T>::InvalidAggregationId,
+                            )
+                        })?;
 
                 let root = aggregation.compute();
                 let size = aggregation.size;
@@ -540,7 +588,7 @@ pub mod pallet {
             })?;
             Self::deposit_event(Event::NewAggregationReceipt {
                 domain_id,
-                aggregation_id: id,
+                aggregation_id,
                 receipt: root,
             });
             Ok(Some(T::WeightInfo::aggregate(size as u32)).into())
@@ -561,7 +609,6 @@ pub mod pallet {
             let id = Self::next_domain_id();
             let owner = User::<T::AccountId>::from_origin::<T>(origin)?;
             let queue_size = queue_size.unwrap_or(T::MaxPendingPublishQueueSize::get());
-            Self::ensure_domain_params(aggregation_size, queue_size)?;
 
             Self::deposit_event(Event::NewDomain { id });
             let ticket = owner
@@ -572,13 +619,19 @@ pub mod pallet {
                         a,
                         Footprint::from_parts(
                             1,
-                            Domain::<T>::encoded_size(aggregation_size, queue_size),
+                            Domain::<T>::compute_encoded_size(aggregation_size, queue_size),
                         ),
                     )
                 })
                 .transpose()?;
-            let domain =
-                Domain::<T>::create(id, owner.clone(), 1, aggregation_size, queue_size, ticket);
+            let domain = Domain::<T>::try_create(
+                id,
+                owner.clone(),
+                1,
+                aggregation_size,
+                queue_size,
+                ticket,
+            )?;
             Domains::<T>::insert(id, domain);
             NextDomainId::<T>::put(id + 1);
 
@@ -600,7 +653,7 @@ pub mod pallet {
             Domains::<T>::try_mutate_exists(domain_id, |domain| {
                 *domain = match domain {
                     Some(domain) if owner.can_remove_domain::<T>(&domain) => {
-                        clean_domain::<T>(domain);
+                        domain.clean();
                         match (owner.owner(), domain.ticket.take()) {
                             (Some(o), Some(t)) => {
                                 let _ =
@@ -624,7 +677,7 @@ pub mod pallet {
         T::EstimateCallFee::estimate_call_fee(
             &Call::aggregate {
                 domain_id: 0,
-                id: 0,
+                aggregation_id: 0,
             },
             Some(T::WeightInfo::aggregate(size as u32)).into(),
         )
