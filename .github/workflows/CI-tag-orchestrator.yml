@@ -15,7 +15,7 @@ jobs:
   build-test-publish:
     strategy:
       matrix: 
-        chain: [solo]
+        chain: [solo, relay]
     
     uses: ./.github/workflows/CI-release.yml
     with:
