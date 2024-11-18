@@ -25,6 +25,7 @@ const { PROOF: RISC0_V1_0_PROOF, PUBS: RISC0_V1_0_PUBS, VK: RISC0_V1_0_VK } = re
 const { PROOF: RISC0_V1_2_PROOF, PUBS: RISC0_V1_2_PUBS, VK: RISC0_V1_2_VK } = require('./risc0_v1_2_data.js')
 const { PROOF: ULTRAPLONK_PROOF, PUBS: ULTRAPLONK_PUBS, VK: ULTRAPLONK_VK } = require('./ultraplonk_data.js');
 const { PROOF: PROOFOFSQL_PROOF, PUBS: PROOFOFSQL_PUBS, VK: PROOFOFSQL_VK } = require('./proofofsql_data.js');
+const { PROOF: PLONKY2_PROOF, PUBS: PLONKY2_PUBS, VK: PLONKY2_VK } = require('./plonky2_data.js');
 
 async function run(nodeName, networkInfo, _args) {
     const api = await init_api(zombie, nodeName, networkInfo);
@@ -71,6 +72,11 @@ async function run(nodeName, networkInfo, _args) {
             name: "Proofofsql",
             pallet: api.tx.settlementProofOfSqlPallet,
             args: [{ 'Vk': PROOFOFSQL_VK }, PROOFOFSQL_PROOF, PROOFOFSQL_PUBS],
+        },
+        {
+            name: "Plonky2",
+            pallet: api.tx.settlementProofOfSqlPallet,
+            args: [{ 'Vk': PLONKY2_VK }, PLONKY2_PROOF, PLONKY2_PUBS],
         }
     ];
 
