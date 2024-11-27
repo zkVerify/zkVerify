@@ -8448,6 +8448,8 @@ dependencies = [
  "hex-literal 0.4.1",
  "hp-verifiers",
  "log",
+ "pallet-aggregate",
+ "pallet-balances",
  "pallet-verifiers",
  "parity-scale-codec",
  "plonky2-verifier",
@@ -9420,7 +9422,6 @@ dependencies = [
 [[package]]
 name = "plonky2-verifier"
 version = "0.1.0"
-source = "git+https://github.com/distributed-lab/plonky2-verifier#bdfdafa8dc865d334edc0c3a4175779a13d72479"
 dependencies = [
  "plonky2",
  "snafu 0.8.5",

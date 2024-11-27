@@ -26,10 +26,15 @@ serde_json = { version = "1.0.117", optional = true, default-features = false }
 sp-runtime = { workspace = true, optional = true }
 sp-io = { workspace = true, optional = true }
 frame-support = { workspace = true }
-plonky2-verifier = {git = "https://github.com/distributed-lab/plonky2-verifier"}
+#plonky2-verifier = {git = "https://github.com/distributed-lab/plonky2-verifier"}
+plonky2-verifier = {path = "./../../../plonky2-verifier"}
+pallet-aggregate = { workspace = true, optional = true, default-features = false, features = [
+    "runtime-benchmarks",
+] }
 
 [dev-dependencies]
 rstest = { workspace = true }
+pallet-balances = { workspace = true, features = ["std", "runtime-benchmarks"] }
 
 [features]
 default = ["std"]
@@ -51,5 +56,6 @@ runtime-benchmarks = [
     "dep:hex-literal",
     "dep:serde_json",
     "dep:sp-io",
+    "dep:pallet-aggregate",
     "dep:sp-runtime",
 ]
