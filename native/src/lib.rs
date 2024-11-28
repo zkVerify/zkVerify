@@ -18,6 +18,7 @@
 use codec::{Decode, Encode};
 use sp_runtime_interface::pass_by::PassByCodec;
 
+mod accelerated_bn;
 mod groth16;
 mod risc0;
 mod ultraplonk;
@@ -73,6 +74,10 @@ pub use groth16::groth_16_bn_254_verify;
 #[cfg(feature = "std")]
 pub use groth16::groth_16_bn_254_verify::HostFunctions as Groth16Bn254VerifierHostFunctions;
 
+pub use accelerated_bn::bn254;
+#[cfg(feature = "std")]
+pub use accelerated_bn::bn254::host_calls::HostFunctions as AcceleratedBn254HostFunctions;
+
 #[cfg(feature = "std")]
 pub type HLNativeHostFunctions = (
     ZksyncVerifierHostFunctions,
@@ -81,4 +86,5 @@ pub type HLNativeHostFunctions = (
     UltraplonkVerifierHostFunctions,
     Groth16Bn254VerifierHostFunctions,
     Groth16Bls12VerifierHostFunctions,
+    AcceleratedBn254HostFunctions,
 );
