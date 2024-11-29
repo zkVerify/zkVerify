@@ -98,10 +98,11 @@ mod benchmarks {
 
 #[cfg(test)]
 mod mock {
+    // use super::*;
     use frame_support::{traits::EnsureOrigin, derive_impl, parameter_types};
     use frame_support::traits::fungible::HoldConsideration;
     use frame_support::traits::LinearStoragePrice;
-    use sp_runtime::{traits::IdentityLookup, BuildStorage};
+    use frame_support::sp_runtime::{traits::IdentityLookup, BuildStorage};
     use sp_core::{ConstU32, ConstU64};
 
     // Configure a mock runtime to test the pallet.
