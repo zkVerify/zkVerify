@@ -10,6 +10,7 @@ pub trait WeightInfo {
     fn submit_proof() -> Weight;
     fn submit_proof_with_vk_hash() -> Weight;
     fn register_vk() -> Weight;
+    fn unregister_vk() -> Weight;
 }
 
 impl WeightInfo for () {
@@ -26,5 +27,11 @@ impl WeightInfo for () {
     fn register_vk() -> Weight {
         Weight::from_parts(1_000_000, 0)
             .saturating_add(RocksDbWeight::get().writes(1_u64))
+    }
+
+    fn unregister_vk() -> Weight {
+        Weight::from_parts(1_000_000, 0)
+            .saturating_add(RocksDbWeight::get().reads(3_u64))
+            .saturating_add(RocksDbWeight::get().writes(3_u64))
     }
 }
