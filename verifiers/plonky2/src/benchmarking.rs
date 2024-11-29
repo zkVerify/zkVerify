@@ -3,8 +3,9 @@
 use crate::Plonky2;
 use frame_benchmarking::v2::*;
 use frame_system::RawOrigin;
+use frame_support::traits::{Consideration, Footprint};
 use hp_verifiers::Verifier;
-use pallet_verifiers::{VkOrHash, Vks};
+use pallet_verifiers::{Tickets, VkEntry, VkOrHash, Vks};
 use pallet_aggregate::{funded_account, insert_domain};
 
 pub struct Pallet<T: Config>(crate::Pallet<T>);
@@ -48,8 +49,9 @@ mod benchmarks {
         let (caller, domain_id) = init::<T>();
 
         let TestData { vk, proof, pubs } = get_valid_test_data();
+        let vk_entry = VkEntry::new(vk);
         let hash = sp_core::H256::repeat_byte(2);
-        Vks::<T, Plonky2>::insert(hash, vk);
+        Vks::<T, Plonky2>::insert(hash, vk_entry);
 
         #[extrinsic_call]
         submit_proof(
@@ -64,7 +66,7 @@ mod benchmarks {
     #[benchmark]
     fn register_vk() {
         // setup code
-        let caller = whitelisted_caller();
+        let caller: T::AccountId = funded_account::<T>();
         let vk = get_valid_test_data().vk;
 
         #[extrinsic_call]
@@ -74,12 +76,31 @@ mod benchmarks {
         assert!(Vks::<T, Plonky2>::get(Plonky2::vk_hash(&vk)).is_some());
     }
 
+    #[benchmark]
+    fn unregister_vk() {
+        // setup code
+        let caller: T::AccountId = funded_account::<T>();
+        let hash = sp_core::H256::repeat_byte(2);
+        let vk = get_valid_test_data().vk;
+        let vk_entry = VkEntry::new(vk.clone());
+        let footprint = Footprint::from_encodable(&vk);
+        let ticket = T::Ticket::new(&caller, footprint).unwrap();
+
+        Vks::<T, Plonky2>::insert(hash, vk_entry);
+        Tickets::<T, Plonky2>::insert((caller.clone(), hash), ticket);
+
+        #[extrinsic_call]
+        unregister_vk(RawOrigin::Signed(caller), hash);
+    }
+
     impl_benchmark_test_suite!(Pallet, super::mock::test_ext(), super::mock::Test);
 }
 
 #[cfg(test)]
 mod mock {
-    use frame_support::{traits::EnsureOrigin, derive_impl};
+    use frame_support::{traits::EnsureOrigin, derive_impl, parameter_types};
+    use frame_support::traits::fungible::HoldConsideration;
+    use frame_support::traits::LinearStoragePrice;
     use sp_runtime::{traits::IdentityLookup, BuildStorage};
     use sp_core::{ConstU32, ConstU64};
 
@@ -90,18 +111,26 @@ mod mock {
             System: frame_system,
             VerifierPallet: crate,
             Balances: pallet_balances,
+            CommonVerifiersPallet: pallet_verifiers::common,
             Aggregate: pallet_aggregate,
         }
     );
 
     type Balance = u64;
+    type AccountId = u64;
 
     #[derive_impl(frame_system::config_preludes::SolochainDefaultConfig as frame_system::DefaultConfig)]
     impl frame_system::Config for Test {
         type Block = frame_system::mocking::MockBlockU32<Test>;
-        type AccountId = u64;
+        type AccountId = AccountId;
         type AccountData = pallet_balances::AccountData<Balance>;
         type Lookup = IdentityLookup<Self::AccountId>;
+    }
+
+    parameter_types! {
+        pub const BaseDeposit: Balance = 1;
+        pub const PerByteDeposit: Balance = 2;
+        pub const HoldReasonVkRegistration: RuntimeHoldReason = RuntimeHoldReason::CommonVerifiersPallet(pallet_verifiers::common::HoldReason::VkRegistration);
     }
 
     pub struct NoManager;
@@ -150,8 +179,15 @@ mod mock {
 
     impl pallet_verifiers::Config<crate::Plonky2> for Test {
         type RuntimeEvent = RuntimeEvent;
-        type OnProofVerified = ();
+        type OnProofVerified = Aggregate;
         type WeightInfo = crate::Plonky2Weight<()>;
+        type Ticket = HoldConsideration<
+            AccountId,
+            Balances,
+            HoldReasonVkRegistration,
+            LinearStoragePrice<BaseDeposit, PerByteDeposit, Balance>,
+        >;
+        type Currency = Balances;
     }
 
     impl pallet_verifiers::common::Config for Test {

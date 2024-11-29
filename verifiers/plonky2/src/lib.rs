@@ -78,4 +78,7 @@ impl<W: weight::WeightInfo> pallet_verifiers::WeightInfo<Plonky2> for Plonky2Wei
     fn register_vk(_vk: &<Plonky2 as hp_verifiers::Verifier>::Vk) -> Weight {
         W::register_vk()
     }
+    fn unregister_vk() -> Weight {
+        W::unregister_vk()
+    }
 }
