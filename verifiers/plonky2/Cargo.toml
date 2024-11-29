@@ -21,13 +21,9 @@ hex-literal = { workspace = true, optional = true }
 frame-system = { workspace = true }
 frame-benchmarking = { workspace = true, optional = true }
 pallet-verifiers = { workspace = true }
-substrate-bn = "0.6.0"
-serde_json = { version = "1.0.117", optional = true, default-features = false }
-sp-runtime = { workspace = true, optional = true }
 sp-io = { workspace = true, optional = true }
 frame-support = { workspace = true }
-#plonky2-verifier = {git = "https://github.com/distributed-lab/plonky2-verifier"}
-plonky2-verifier = {path = "./../../../plonky2-verifier"}
+plonky2-verifier = {git = "https://github.com/distributed-lab/plonky2-verifier", default-features = false}
 pallet-aggregate = { workspace = true, optional = true, default-features = false, features = [
     "runtime-benchmarks",
 ] }
@@ -46,6 +42,8 @@ std = [
     "frame-system/std",
     "hp-verifiers/std",
     "pallet-verifiers/std",
+    "pallet-balances/std",
+    "plonky2-verifier/std"
 ]
 runtime-benchmarks = [
     "frame-benchmarking/runtime-benchmarks",
@@ -54,8 +52,6 @@ runtime-benchmarks = [
     "pallet-verifiers/runtime-benchmarks",
     "frame-benchmarking",
     "dep:hex-literal",
-    "dep:serde_json",
     "dep:sp-io",
     "dep:pallet-aggregate",
-    "dep:sp-runtime",
 ]
