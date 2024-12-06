@@ -75,7 +75,7 @@ async function run(nodeName, networkInfo, _args) {
         },
         {
             name: "Plonky2",
-            pallet: api.tx.settlementProofOfSqlPallet,
+            pallet: api.tx.settlementPlonky2Pallet,
             args: [{ 'Vk': PLONKY2_VK }, PLONKY2_PROOF, PLONKY2_PUBS],
         }
     ];
