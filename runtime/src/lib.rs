@@ -1024,12 +1024,15 @@ impl IsmpRouter for ModuleRouter {
     }
 }
 
-impl pallet_verifiers::Config<pallet_plonky2_verifier::Plonky2<Runtime>> for Runtime {
+impl pallet_verifiers::Config<pallet_plonky2_verifier::Plonky2> for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type OnProofVerified = Poe;
+    type Ticket = VkRegistrationHoldConsideration;
     type WeightInfo = pallet_plonky2_verifier::Plonky2Weight<
         weights::pallet_plonky2_verifier::ZKVWeight<Runtime>,
     >;
+    #[cfg(feature = "runtime-benchmarks")]
+    type Currency = Balances;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
