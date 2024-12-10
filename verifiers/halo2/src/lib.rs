@@ -1,12 +1,16 @@
-
 #![cfg_attr(not(feature = "std"), no_std)]
 
-mod vk;
-
+use core::marker::PhantomData;
 use frame_support::weights::Weight;
 use hp_verifiers::{Cow, Verifier, VerifyError};
 use halo2_proofs::plonk::verify_proof;
 
+mod vk;
+
+pub mod benchmarking;
+mod verifier_should;
+mod weight;
+pub use weight::WeightInfo;
 
 #[pallet_verifiers::verifier]
 pub struct Halo2;

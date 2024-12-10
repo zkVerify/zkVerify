@@ -12,29 +12,36 @@ license = "GPL-3.0"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
+log = "0.4.21"
+hex-literal = { version = "0.4.1", optional = true }
 codec = { workspace = true }
 scale-info = { workspace = true }
-sp-core = { workspace = true }
+
 hp-verifiers = { workspace = true }
-log = "0.4.20"
-hex-literal = { workspace = true, optional = true }
+pallet-verifiers = { workspace = true }
+
 frame-support = { workspace = true }
 frame-system = { workspace = true }
 frame-benchmarking = { workspace = true, optional = true }
-pallet-verifiers = { workspace = true }
+sp-core = { workspace = true }
+
 substrate-bn = "0.6.0"
 serde_json = { version = "1.0.117", optional = true, default-features = false }
 sp-io = { workspace = true, optional = true }
 pallet-aggregate = { workspace = true, optional = true, default-features = false, features = [
     "runtime-benchmarks",
 ] }
+
 halo2_proofs = { git = "https://github.com/cryptape/ckb-bf-zkvm" }
 
 [dev-dependencies]
-hex-literal = { workspace = true }
+hex-literal = { version = "0.4.1" }
+
+
+
 serde_json = { version = "1.0.117" }
 pallet-balances = { workspace = true, features = ["std", "runtime-benchmarks"] }
-halo2_proofs = { git = "https://github.com/cryptape/ckb-bf-zkvm" }
+
 
 
 [features]
@@ -58,5 +65,5 @@ runtime-benchmarks = [
     "dep:hex-literal",
     "dep:serde_json",
     "dep:sp-io",
-    "dep:pallet-aggregate",
+    "dep:pallet-aggregate", 
 ]
