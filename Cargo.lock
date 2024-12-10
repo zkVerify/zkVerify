@@ -108,6 +108,12 @@ dependencies = [
 
 [[package]]
 name = "ahash"
+version = "0.4.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0453232ace82dee0dd0b4c87a59bd90f7b53b314f3e0f61fe2ee7c8a16482289"
+
+[[package]]
+name = "ahash"
 version = "0.8.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e89da841a80418a9b391ebaea17f5c112ffaaa96f621d2c285b5174da76b9011"
@@ -184,7 +190,7 @@ dependencies = [
  "ruint",
  "rustc-hash 2.1.0",
  "serde",
- "sha3",
+ "sha3 0.10.8",
  "tiny-keccak 2.0.2",
 ]
 
@@ -1371,6 +1377,7 @@ version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4152116fd6e9dadb291ae18fc1ec3575ed6d84c29642d97890f4b4a3417297e4"
 dependencies = [
+ "block-padding",
  "generic-array 0.14.7",
 ]
 
@@ -1382,6 +1389,12 @@ checksum = "3078c7629b62d3f0439517fa394996acacc5cbc91c5a20d8c658e77abd503a71"
 dependencies = [
  "generic-array 0.14.7",
 ]
+
+[[package]]
+name = "block-padding"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8d696c370c750c948ada61c69a0ee2cbbb9c50b1019ddb86d9317157a99c2cae"
 
 [[package]]
 name = "blocking"
@@ -3533,9 +3546,9 @@ dependencies = [
  "base16ct",
  "crypto-bigint",
  "digest 0.10.7",
- "ff",
+ "ff 0.13.0",
  "generic-array 0.14.7",
- "group",
+ "group 0.13.0",
  "pkcs8",
  "rand_core 0.6.4",
  "sec1",
@@ -3858,6 +3871,17 @@ dependencies = [
 
 [[package]]
 name = "ff"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d013fc25338cc558c5c2cfbad646908fb23591e2404481826742b651c9af7160"
+dependencies = [
+ "bitvec",
+ "rand_core 0.6.4",
+ "subtle 2.6.1",
+]
+
+[[package]]
+name = "ff"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ded41244b729663b1e574f1b4fb731469f69f79c17667b5d776b16cda0479449"
@@ -3902,7 +3926,7 @@ dependencies = [
  "digest 0.10.7",
  "ethnum",
  "serde",
- "sha3",
+ "sha3 0.10.8",
  "snafu 0.7.5",
  "substrate-bn",
 ]
@@ -4717,11 +4741,22 @@ dependencies = [
 
 [[package]]
 name = "group"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5dfbfb3a6cfbd390d5c9564ab283a0349b9b9fcd46a706c1eb10e0db70bfbac7"
+dependencies = [
+ "ff 0.12.1",
+ "rand_core 0.6.4",
+ "subtle 2.6.1",
+]
+
+[[package]]
+name = "group"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f0f9ef7462f7c099f518d754361858f86d8a07af53ba9af0fe635bbccb151a63"
 dependencies = [
- "ff",
+ "ff 0.13.0",
  "rand_core 0.6.4",
  "subtle 2.6.1",
 ]
@@ -4775,6 +4810,40 @@ dependencies = [
 ]
 
 [[package]]
+name = "halo2_proofs"
+version = "0.2.0"
+source = "git+https://github.com/cryptape/ckb-bf-zkvm#623d10af1b3880a372759cd27be997136ba941e7"
+dependencies = [
+ "blake2b_simd",
+ "cfg-if 0.1.10",
+ "ff 0.12.1",
+ "group 0.12.1",
+ "halo2curves",
+ "hashbrown 0.9.1",
+ "num-bigint",
+ "num-integer",
+ "poseidon",
+ "rand_chacha",
+ "rand_core 0.6.4",
+ "scapegoat",
+ "sha3 0.9.1",
+ "subtle 2.6.1",
+]
+
+[[package]]
+name = "halo2curves"
+version = "0.3.1"
+source = "git+https://github.com/cryptape/ckb-bf-zkvm#623d10af1b3880a372759cd27be997136ba941e7"
+dependencies = [
+ "ff 0.12.1",
+ "group 0.12.1",
+ "pasta_curves",
+ "rand 0.8.5",
+ "rand_core 0.6.4",
+ "subtle 2.6.1",
+]
+
+[[package]]
 name = "handlebars"
 version = "5.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4814,6 +4883,15 @@ dependencies = [
 
 [[package]]
 name = "hashbrown"
+version = "0.9.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d7afe4a420e3fe79967a00898cc1f4db7c8a49a9333a29f8a4bd76a253d5cd04"
+dependencies = [
+ "ahash 0.4.8",
+]
+
+[[package]]
+name = "hashbrown"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8a9ee70c43aaf417c914396645a0fa852624801b24ebb7ae78fe8272889ac888"
@@ -4824,7 +4902,7 @@ version = "0.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "43a3c133739dddd0d2990f9a4bdf8eb4b21ef50e4851ca85ab661199821d510e"
 dependencies = [
- "ahash",
+ "ahash 0.8.11",
 ]
 
 [[package]]
@@ -4833,7 +4911,7 @@ version = "0.14.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e5274423e17b7c9fc20b6e7e208532f9b19825d82dfd615708b70edd83df41f1"
 dependencies = [
- "ahash",
+ "ahash 0.8.11",
  "allocator-api2",
  "serde",
 ]
@@ -5962,7 +6040,7 @@ dependencies = [
  "pico-args",
  "regex",
  "regex-syntax 0.8.5",
- "sha3",
+ "sha3 0.10.8",
  "string_cache",
  "term",
  "unicode-xid",
@@ -6987,6 +7065,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "micromath"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c3c8dda44ff03a2f238717214da50f65d5a53b45cd213a7370424ffdb6fae815"
+
+[[package]]
 name = "mime"
 version = "0.3.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7179,7 +7263,7 @@ dependencies = [
  "digest 0.10.7",
  "multihash-derive",
  "sha2 0.10.8",
- "sha3",
+ "sha3 0.10.8",
  "unsigned-varint 0.7.2",
 ]
 
@@ -7196,7 +7280,7 @@ dependencies = [
  "digest 0.10.7",
  "multihash-derive",
  "sha2 0.10.8",
- "sha3",
+ "sha3 0.10.8",
  "unsigned-varint 0.7.2",
 ]
 
@@ -8192,6 +8276,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-halo2-verifier"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "halo2_proofs",
+ "hex-literal 0.4.1",
+ "hp-verifiers",
+ "log",
+ "pallet-aggregate",
+ "pallet-balances",
+ "pallet-verifiers",
+ "parity-scale-codec",
+ "scale-info",
+ "serde_json",
+ "sp-core",
+ "sp-io",
+ "substrate-bn",
+]
+
+[[package]]
 name = "pallet-hyperbridge-aggregations"
 version = "0.1.0"
 dependencies = [
@@ -9178,6 +9284,20 @@ checksum = "346f04948ba92c43e8469c1ee6736c7563d71012b17d40745260fe106aac2166"
 dependencies = [
  "base64ct",
  "rand_core 0.6.4",
+ "subtle 2.6.1",
+]
+
+[[package]]
+name = "pasta_curves"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5cc65faf8e7313b4b1fbaa9f7ca917a0eed499a9663be71477f87993604341d8"
+dependencies = [
+ "blake2b_simd",
+ "ff 0.12.1",
+ "group 0.12.1",
+ "rand 0.8.5",
+ "static_assertions",
  "subtle 2.6.1",
 ]
 
@@ -10468,6 +10588,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cc9c68a3f6da06753e9335d63e27f6b9754dd1920d941135b7ea8224f141adb2"
 
 [[package]]
+name = "poseidon"
+version = "0.2.0"
+source = "git+https://github.com/cryptape/ckb-bf-zkvm#623d10af1b3880a372759cd27be997136ba941e7"
+dependencies = [
+ "group 0.12.1",
+ "halo2curves",
+ "subtle 2.6.1",
+]
+
+[[package]]
 name = "postcard"
 version = "1.0.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -10789,7 +10919,7 @@ version = "0.28.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ebb98863a7bf22a17fa8b6f3ad19b9bfc484921ea7d7bb522b262732acd00c1"
 dependencies = [
- "ahash",
+ "ahash 0.8.11",
  "ark-bls12-381",
  "ark-curve25519",
  "ark-ec",
@@ -10840,7 +10970,7 @@ name = "proof-of-sql-verifier"
 version = "0.1.0"
 source = "git+https://github.com/HorizenLabs/proof-of-sql-verifier.git?tag=v0.2.0#d499c6d64915954c033d14dbd2ec937434b8b564"
 dependencies = [
- "ahash",
+ "ahash 0.8.11",
  "ark-bls12-381",
  "ark-ec",
  "ark-serialize 0.4.2",
@@ -12479,7 +12609,7 @@ version = "0.29.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "197e67ed725bcad27563c4418254e89e56eb79491cebb278e9926760a1fc16d4"
 dependencies = [
- "ahash",
+ "ahash 0.8.11",
  "array-bytes",
  "async-trait",
  "dyn-clone",
@@ -12772,7 +12902,7 @@ version = "0.44.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2dc2ff366c09b8aba9b0bfd04b991508788203a28da0c66a32625cda7ae8015d"
 dependencies = [
- "ahash",
+ "ahash 0.8.11",
  "futures",
  "futures-timer",
  "log",
@@ -13323,6 +13453,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "scapegoat"
+version = "2.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6bf8e98628e0f8e55bfbdc3adb03da88cc20a3816c9dbc8783e1b0146f6e18a4"
+dependencies = [
+ "micromath",
+ "smallnum",
+ "tinyvec",
+]
+
+[[package]]
 name = "scc"
 version = "2.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -13346,7 +13487,7 @@ version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c9a8ef13a93c54d20580de1e5c413e624e53121d42fc7e2c11d10ef7f8b02367"
 dependencies = [
- "ahash",
+ "ahash 0.8.11",
  "cfg-if 1.0.0",
  "hashbrown 0.13.2",
 ]
@@ -13761,6 +13902,18 @@ dependencies = [
 
 [[package]]
 name = "sha3"
+version = "0.9.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f81199417d4e5de3f04b1e871023acea7389672c4135918f05aa9cbf2f2fa809"
+dependencies = [
+ "block-buffer 0.9.0",
+ "digest 0.9.0",
+ "keccak",
+ "opaque-debug 0.3.1",
+]
+
+[[package]]
+name = "sha3"
 version = "0.10.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "75872d278a8f37ef87fa0ddbda7802605cb18344497949862c0d4dcb291eba60"
@@ -13884,6 +14037,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "smallnum"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "adb49cee96b087232a59514b3a60fc9e2c79140ee3eeb5bbc2398a7ae38defc9"
+
+[[package]]
 name = "smallvec"
 version = "1.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -13949,7 +14108,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2 0.10.8",
- "sha3",
+ "sha3 0.10.8",
  "siphasher",
  "slab",
  "smallvec",
@@ -14363,7 +14522,7 @@ dependencies = [
  "byteorder",
  "digest 0.10.7",
  "sha2 0.10.8",
- "sha3",
+ "sha3 0.10.8",
  "twox-hash",
 ]
 
@@ -14796,7 +14955,7 @@ version = "37.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6282aef9f4b6ecd95a67a45bcdb67a71f4a4155c09a53c10add4ffe823db18cd"
 dependencies = [
- "ahash",
+ "ahash 0.8.11",
  "hash-db",
  "lazy_static",
  "memory-db",
@@ -16485,7 +16644,7 @@ dependencies = [
  "rand_chacha",
  "rand_core 0.6.4",
  "sha2 0.10.8",
- "sha3",
+ "sha3 0.10.8",
  "thiserror 1.0.68",
  "zeroize",
 ]

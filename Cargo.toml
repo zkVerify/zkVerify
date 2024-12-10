@@ -43,7 +43,7 @@ members = [
     "paratest/node",
     "paratest/pallets/template",
     "patches/cumulus/client/relay-chain-inprocess-interface",
-    "patches/cumulus/client/relay-chain-minimal-node/",
+    "patches/cumulus/client/relay-chain-minimal-node/", "verifiers/halo2",
 ]
 
 exclude = ["utils/generate-bags/node-runtime"]
