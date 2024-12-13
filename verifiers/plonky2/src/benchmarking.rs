@@ -2,11 +2,11 @@
 
 use crate::Plonky2;
 use frame_benchmarking::v2::*;
-use frame_system::RawOrigin;
 use frame_support::traits::{Consideration, Footprint};
+use frame_system::RawOrigin;
 use hp_verifiers::Verifier;
-use pallet_verifiers::{Tickets, VkEntry, VkOrHash, Vks};
 use pallet_aggregate::{funded_account, insert_domain};
+use pallet_verifiers::{Tickets, VkEntry, VkOrHash, Vks};
 
 pub struct Pallet<T: Config>(crate::Pallet<T>);
 pub trait Config: pallet_verifiers::Config<Plonky2> {}
@@ -99,10 +99,10 @@ mod benchmarks {
 #[cfg(test)]
 mod mock {
     // use super::*;
-    use frame_support::{traits::EnsureOrigin, derive_impl, parameter_types};
+    use frame_support::sp_runtime::{traits::IdentityLookup, BuildStorage};
     use frame_support::traits::fungible::HoldConsideration;
     use frame_support::traits::LinearStoragePrice;
-    use frame_support::sp_runtime::{traits::IdentityLookup, BuildStorage};
+    use frame_support::{derive_impl, parameter_types, traits::EnsureOrigin};
     use sp_core::{ConstU32, ConstU64};
 
     // Configure a mock runtime to test the pallet.
