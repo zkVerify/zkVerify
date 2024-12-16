@@ -4812,7 +4812,6 @@ dependencies = [
 [[package]]
 name = "halo2_proofs"
 version = "0.2.0"
-source = "git+https://github.com/cryptape/ckb-bf-zkvm#623d10af1b3880a372759cd27be997136ba941e7"
 dependencies = [
  "blake2b_simd",
  "cfg-if 0.1.10",
@@ -4833,7 +4832,6 @@ dependencies = [
 [[package]]
 name = "halo2curves"
 version = "0.3.1"
-source = "git+https://github.com/cryptape/ckb-bf-zkvm#623d10af1b3880a372759cd27be997136ba941e7"
 dependencies = [
  "ff 0.12.1",
  "group 0.12.1",
@@ -8279,6 +8277,7 @@ dependencies = [
 name = "pallet-halo2-verifier"
 version = "0.1.0"
 dependencies = [
+ "ff 0.12.1",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -10590,7 +10589,6 @@ checksum = "cc9c68a3f6da06753e9335d63e27f6b9754dd1920d941135b7ea8224f141adb2"
 [[package]]
 name = "poseidon"
 version = "0.2.0"
-source = "git+https://github.com/cryptape/ckb-bf-zkvm#623d10af1b3880a372759cd27be997136ba941e7"
 dependencies = [
  "group 0.12.1",
  "halo2curves",
