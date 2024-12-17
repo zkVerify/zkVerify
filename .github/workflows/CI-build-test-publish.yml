@@ -26,7 +26,7 @@ env:
 jobs:
   build:
     runs-on:
-      group: zkVerify
+      group: ${{ vars.RUNNER_GROUP }}
     name: Build Docker image
     outputs:
       artifact_name: ${{ steps.create-tar-file.outputs.artifact_name }}
@@ -70,7 +70,7 @@ jobs:
   
   # execute-e2e-tests:
   #   runs-on:
-  #     group: zkVerify
+  #     group: ${{ vars.RUNNER_GROUP }}
   #   needs: build
   #   name: Execute E2E Tests
   #   outputs:
