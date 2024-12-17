@@ -1,10 +1,9 @@
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::pallet_prelude::TypeInfo;
 use halo2_proofs::halo2curves::bn256::Bn256;
-use halo2_proofs::halo2curves::pairing::Engine;
-use crate::vk::{G1Affine, G2Affine};
+use crate::vk::{ConvertError, G1Affine, G2Affine};
 
-#[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, )] // MaxEncodedLen
+#[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)] // MaxEncodedLen
 pub struct ParamsKZG {
     pub k: u32,
     pub n: u64,
@@ -14,15 +13,18 @@ pub struct ParamsKZG {
     pub s_g2: G2Affine,
 }
 
-impl<E: Engine> From<ParamsKZG> for halo2_proofs::poly::kzg::commitment::ParamsKZG<Bn256> {
-    fn from(params: ParamsKZG) -> Self {
-        Self {
+impl TryFrom<ParamsKZG> for halo2_proofs::poly::kzg::commitment::ParamsKZG<Bn256> {
+    type Error = ConvertError;
+
+    fn try_from(params: ParamsKZG) -> Result<Self, Self::Error> {
+        let g = params.g.try_into()?;
+        Ok(Self {
             k: params.k,
             n: params.n,
-            g: vec![params.g], // only g[0] is used in Shplonk and GWC
+            g: vec![g], // only g[0] is used in Shplonk and GWC
             g_lagrange: vec![], // not used in Shplonk and GWC
-            g2: params.g2,
-            s_g2: params.s_g2,
-        }
+            g2: params.g2.try_into()?,
+            s_g2: params.s_g2.try_into()?,
+        })
     }
 }

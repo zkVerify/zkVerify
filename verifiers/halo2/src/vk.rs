@@ -33,25 +33,29 @@ pub(crate) struct G1Affine(Fq, Fq);
 #[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
 pub(crate) struct G2Affine(Fq2, Fq2);
 
-#[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, )] // MaxEncodedLen
+#[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo)] // MaxEncodedLen
 pub struct Vk {
     k: u32,
     degree: u32,
     fixed_commitments: Vec<G1Affine>,
     permutation_commitments: Vec<G1Affine>,
     cs: CircuitInfo<G1Affine, Fr>,
-    /// Cached maximum degree of `cs` (which doesn't change after construction).
-    // cs_degree: usize,
     /// The representative of this `VerifyingKey` in transcripts.
     transcript_repr: Fr,
     selector_assignments: Vec<SelectorAssignment<Fr>>,
 }
 
+impl MaxEncodedLen for Vk {
+    fn max_encoded_len() -> usize {
+        unimplemented!()
+    }
+}
+
 #[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
 pub struct SelectorAssignment<F> {
-    pub selector: usize,
+    pub selector: u64,
 
-    pub combination_index: usize,
+    pub combination_index: u64,
 
     pub expression: Expression<F>,
 }
@@ -59,8 +63,8 @@ pub struct SelectorAssignment<F> {
 impl From<SelectorAssignment<Fr>> for halo2_proofs::plonk::SelectorAssignment<bn256::Fr> {
     fn from(value: SelectorAssignment<Fr>) -> Self {
         Self {
-            selector: value.selector,
-            combination_index: value.combination_index,
+            selector: value.selector as usize,
+            combination_index: value.combination_index as usize,
             expression: value.expression.into(),
         }
     }

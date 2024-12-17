@@ -6,20 +6,20 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::pallet_prelude::TypeInfo;
 use halo2_proofs::arithmetic::{CurveAffine, Field};
 use halo2_proofs::halo2curves::bn256;
-use halo2_proofs::plonk::{keygen_vk, Advice, Any, Circuit, ConstraintSystem, Error, Expression, Fixed, Instance};
+use halo2_proofs::halo2curves::bn256::Bn256;
+use halo2_proofs::plonk::{keygen_vk, Advice, AdviceQuery, Any, Challenge, Circuit, ConstraintSystem, Error, Fixed, FixedQuery, Instance, InstanceQuery};
 use halo2_proofs::poly::commitment::Params;
 use halo2_proofs::poly::Rotation as Halo2Rotation;
 use crate::vk::{ConvertError, Fr, G1Affine};
 
-#[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
+#[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo)]
 pub struct CircuitInfo<C, F> {
-    vk_transcript_repr: F,
     fixed_commitments: Vec<C>,
     permutation_commitments: Vec<C>,
 
-    num_fixed_columns: usize,
-    num_instance_columns: usize,
-    pub num_advice_columns: usize,
+    num_fixed_columns: u64,
+    num_instance_columns: u64,
+    pub num_advice_columns: u64,
 
     k: u8,
     max_num_query_of_advice_column: u32,
@@ -38,13 +38,13 @@ pub struct CircuitInfo<C, F> {
 
 #[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
 pub struct ColumnQuery {
-    name: &'static str,
+    // name: &'static str,
     pub column: Column,
     pub rotation: Rotation,
 }
 #[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
 pub struct Column {
-    name: &'static str,
+    // name: String,
     pub index: u32,
     pub column_type: u8,
 }
@@ -52,20 +52,66 @@ pub struct Column {
 // #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 // pub struct Selector(pub(crate) usize, bool);
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
 pub struct VirtualCell {
-    // pub(crate) column: Column<Any>,
-    // pub(crate) rotation: Rotation,
+    pub(crate) column: Column,
+    pub(crate) rotation: Rotation,
 }
 
+#[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo)]
 pub struct Gate<F> {
-    pub name: &'static str,
-    pub constraint_names: Vec<&'static str>,
+    // pub name: String,
+    pub constraint_names: Vec<String>,
     pub polys: Vec<Expression<F>>,
     /// We track queried selectors separately from other cells, so that we can use them to
     /// trigger debug checks on gates.
-    pub queried_selectors: Vec<halo2_proofs::plonk::Selector>,
+    pub queried_selectors: Vec<Selector>,
     pubqueried_cells: Vec<VirtualCell>,
+}
+
+#[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
+pub struct Selector(pub(crate) u64, bool);
+
+impl From<Selector> for halo2_proofs::plonk::Selector {
+    fn from(value: Selector) -> Self {
+        Self::new(value.0 as usize, value.1)
+    }
+}
+
+#[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
+pub enum Expression<F> {
+    /// This is a constant polynomial
+    Constant(F),
+    /// This is a virtual selector
+    Selector(Selector),
+    // /// This is a fixed column queried at a certain relative location
+    // Fixed(FixedQuery),
+    // /// This is an advice (witness) column queried at a certain relative location
+    // Advice(AdviceQuery),
+    // /// This is an instance (external) column queried at a certain relative location
+    // Instance(InstanceQuery),
+    // /// This is a challenge
+    // Challenge(Challenge),
+    // /// This is a negated polynomial
+    // Negated(Box<halo2_proofs::plonk::Expression<F>>),
+    // /// This is the sum of two polynomials
+    // Sum(Box<Expression<F>>, Box<Expression<F>>),
+    // /// This is the product of two polynomials
+    // Product(Box<Expression<F>>, Box<Expression<F>>),
+    // /// This is a scaled polynomial
+    // Scaled(Box<Expression<F>>, F),
+}
+
+impl From<Expression<Fr>> for halo2_proofs::plonk::Expression<bn256::Fr> {
+    fn from(value: Expression<Fr>) -> Self {
+        unimplemented!()
+    }
+}
+
+impl From<&halo2_proofs::plonk::Expression<bn256::Fr>> for Expression<Fr> {
+    fn from(value: &halo2_proofs::plonk::Expression<bn256::Fr>) -> Self {
+        unimplemented!()
+    }
 }
 
 impl From<halo2_proofs::plonk::Column<Any>> for Column {
@@ -76,7 +122,6 @@ impl From<halo2_proofs::plonk::Column<Any>> for Column {
             Any::Instance => 244,
         };
         Column {
-            name: "TODO",
             index: value.index() as u32,
             column_type,
         }
@@ -99,7 +144,7 @@ impl From<&Column> for halo2_proofs::plonk::Column<Any> {
     }
 }
 
-#[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, )]
+#[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
 pub struct Rotation {
     pub rotation: u32,
     pub next: bool,
@@ -120,220 +165,175 @@ impl From<halo2_proofs::poly::Rotation> for Rotation {
         }
     }
 }
-#[derive(Debug)]
+
+impl From<&Rotation> for halo2_proofs::poly::Rotation {
+    fn from(value: &Rotation) -> Self {
+        if value.next {
+            halo2_proofs::poly::Rotation(value.rotation as i32)
+        } else {
+            halo2_proofs::poly::Rotation(-(value.rotation as i32))
+        }
+    }
+}
+
+#[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
 pub struct Lookup<F> {
     pub input_exprs: Vec<Expression<F>>,
     pub table_exprs: Vec<Expression<F>>,
 }
-#[derive(Debug)]
+#[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
 pub struct Shuffle<F> {
     pub input_exprs: Vec<Expression<F>>,
     pub shuffle_exprs: Vec<Expression<F>>,
 }
 
-// pub fn generate_circuit_info<'params, C, P, ConcreteCircuit>(
-//     params: &P,
-//     circuit: &ConcreteCircuit,
-// ) -> Result<CircuitInfo<C>, Error>
-// where
-//     C: CurveAffine,
-//     P: Params<'params, C>,
-//     ConcreteCircuit: Circuit<C::Scalar>,
-//     C::Scalar: FromUniformBytes<64>,
-//     C::ScalarExt: FromUniformBytes<64>,
-// {
-//     let vk = keygen_vk(params, circuit)?;
-//     let cs = vk.cs();
-//     // as halo2 dones'nt expose vk's transcript_repr,
-//     // we had to copy the code here.
-//     let vk_repr = {
-//         let mut hasher = blake2b_simd::Params::new()
-//             .hash_length(64)
-//             .personal(b"Halo2-Verify-Key")
-//             .to_state();
-//
-//         let s = format!("{:?}", vk.pinned());
-//
-//         hasher.update(&(s.len() as u64).to_le_bytes());
-//         hasher.update(s.as_bytes());
-//
-//         // Hash in final Blake2bState
-//         C::Scalar::from_uniform_bytes(hasher.finalize().as_array())
-//     };
-//
-//     let info = CircuitInfo {
-//         vk_transcript_repr: vk_repr,
-//         fixed_commitments: vk.fixed_commitments().clone(),
-//         permutation_commitments: vk.permutation().commitments().clone(),
-//         k: (params.k() as u8), // we expect k would not be too large.
-//         cs_degree: cs.degree() as u32,
-//         num_fixed_columns: cs.num_fixed_columns() as u64,
-//         num_instance_columns: cs.num_instance_columns() as u64,
-//         advice_column_phase: cs.advice_column_phase(),
-//         challenge_phase: cs.challenge_phase(),
-//
-//         advice_queries: cs
-//             .advice_queries()
-//             .iter()
-//             .map(|(c, r)| ColumnQuery {
-//                 column: halo2_proofs::plonk::Column::<Any>::from(*c).into(),
-//                 rotation: From::from(*r),
-//             })
-//             .collect(),
-//         instance_queries: cs
-//             .instance_queries()
-//             .iter()
-//             .map(|(c, r)| ColumnQuery {
-//                 column: halo2_proofs::plonk::Column::<Any>::from(*c).into(),
-//                 rotation: From::from(*r),
-//             })
-//             .collect(),
-//         fixed_queries: cs
-//             .fixed_queries()
-//             .iter()
-//             .map(|(c, r)| ColumnQuery {
-//                 column: halo2_proofs::plonk::Column::<Any>::from(*c).into(),
-//                 rotation: From::from(*r),
-//             })
-//             .collect(),
-//         permutation_columns: cs
-//             .permutation()
-//             .get_columns()
-//             .iter()
-//             .map(|c| From::from(*c))
-//             .collect(),
-//         lookups: cs
-//             .lookups()
-//             .iter()
-//             .map(|l| Lookup {
-//                 input_exprs: l
-//                     .input_expressions()
-//                     .iter()
-//                     .map(|e| {
-//                         expression_transform(
-//                             cs,
-//                             e,
-//                             cs.advice_queries().len(),
-//                             cs.fixed_queries().len(),
-//                             cs.instance_queries().len(),
-//                             cs.challenge_phase().len(),
-//                         )
-//                     })
-//                     .collect(),
-//                 table_exprs: l
-//                     .table_expressions(),
-//                 // .iter()
-//                 // .map(|e| {
-//                 //     expression_transform(
-//                 //         cs,
-//                 //         e,
-//                 //         cs.advice_queries().len(),
-//                 //         cs.fixed_queries().len(),
-//                 //         cs.instance_queries().len(),
-//                 //         cs.challenge_phase().len(),
-//                 //     )
-//                 // })
-//                 // .collect(),
-//             })
-//             .collect(),
-//         shuffles: cs
-//             .shuffles()
-//             .iter()
-//             .map(|s| Shuffle {
-//                 input_exprs: s
-//                     .input_expressions(),
-//                 // .iter()
-//                 // .map(|e| {
-//                 //     expression_transform(
-//                 //         cs,
-//                 //         e,
-//                 //         cs.advice_queries().len(),
-//                 //         cs.fixed_queries().len(),
-//                 //         cs.instance_queries().len(),
-//                 //         cs.challenge_phase().len(),
-//                 //     )
-//                 // })
-//                 // .collect(),
-//                 shuffle_exprs: s
-//                     .shuffle_expressions(),
-//                 // .iter()
-//                 // .map(|e| {
-//                 //     expression_transform(
-//                 //         cs,
-//                 //         e,
-//                 //         cs.advice_queries().len(),
-//                 //         cs.fixed_queries().len(),
-//                 //         cs.instance_queries().len(),
-//                 //         cs.challenge_phase().len(),
-//                 //     )
-//                 // })
-//                 // .collect(),
-//             })
-//             .collect(),
-//         max_num_query_of_advice_column: cs
-//             .advice_queries()
-//             .iter()
-//             .fold(BTreeMap::default(), |mut m, (c, _r)| {
-//                 if let std::collections::btree_map::Entry::Vacant(e) = m.entry(c.index()) {
-//                     e.insert(1u32);
-//                 } else {
-//                     *m.get_mut(&c.index()).unwrap() += 1;
-//                 }
-//                 m
-//             })
-//             .values()
-//             .max()
-//             .cloned()
-//             .unwrap_or_default(),
-//
-//         gates: cs
-//             .gates(),
-//         // .iter()
-//         // .map(|g| {
-//         //     g.polynomials()
-//         //         // .iter()
-//         //         // .map(|e| {
-//         //         //     expression_transform(
-//         //         //         cs,
-//         //         //         e,
-//         //         //         cs.advice_queries().len(),
-//         //         //         cs.fixed_queries().len(),
-//         //         //         cs.instance_queries().len(),
-//         //         //         cs.challenge_phase().len(),
-//         //         //     )
-//         //         // })
-//         //         // .collect()
-//         // })
-//         // .collect(),
-//     };
-//     Ok(info)
-// }
+pub fn generate_circuit_info<'params, ConcreteCircuit>(
+    params: &halo2_proofs::poly::kzg::commitment::ParamsKZG<Bn256>,
+    circuit: &ConcreteCircuit,
+) -> Result<CircuitInfo<G1Affine, Fr>, Error>
+where
+    ConcreteCircuit: Circuit<bn256::G1Affine>,
+{
+    let vk = keygen_vk(params, circuit)?;
+    let cs = vk.cs();
+
+    let info = CircuitInfo {
+        fixed_commitments: vk.fixed_commitments().clone(),
+        permutation_commitments: vk.permutation().commitments().clone(),
+        k: (params.k() as u8), // we expect k would not be too large.
+        cs_degree: cs.degree() as u32,
+        num_fixed_columns: cs.num_fixed_columns() as u64,
+        num_advice_columns: cs.num_advice_columns() as u64,
+        num_instance_columns: cs.num_instance_columns() as u64,
+        advice_column_phase: cs.advice_column_phase(),
+        challenge_phase: cs.challenge_phase(),
+
+        advice_queries: cs
+            .advice_queries()
+            .iter()
+            .map(|(c, r)| ColumnQuery {
+                column: halo2_proofs::plonk::Column::<Any>::from(*c).into(),
+                rotation: From::from(*r),
+            })
+            .collect(),
+        instance_queries: cs
+            .instance_queries()
+            .iter()
+            .map(|(c, r)| ColumnQuery {
+                column: halo2_proofs::plonk::Column::<Any>::from(*c).into(),
+                rotation: From::from(*r),
+            })
+            .collect(),
+        fixed_queries: cs
+            .fixed_queries()
+            .iter()
+            .map(|(c, r)| ColumnQuery {
+                column: halo2_proofs::plonk::Column::<Any>::from(*c).into(),
+                rotation: From::from(*r),
+            })
+            .collect(),
+        permutation_columns: cs
+            .permutation()
+            .get_columns()
+            .iter()
+            .map(|c| From::from(*c))
+            .collect(),
+        lookups: cs
+            .lookups()
+            .iter()
+            .map(|l| Lookup {
+                input_exprs: l
+                    .input_expressions().iter()
+                    .map(|e| {
+                        e.into()
+                    })
+                    .collect(),
+                table_exprs: l
+                    .table_expressions()
+                    .iter()
+                    .map(|e| {
+                        e.into()
+                    })
+                    .collect(),
+            })
+            .collect(),
+        shuffles: cs
+            .shuffles()
+            .iter()
+            .map(|s| Shuffle {
+                input_exprs: s
+                    .input_expressions()
+                    .iter()
+                    .map(|e| {
+                        e.into()
+                    })
+                    .collect(),
+                shuffle_exprs: s
+                    .shuffle_expressions()
+                    .iter()
+                    .map(|e| {
+                        e.into()
+                    })
+                    .collect(),
+            })
+            .collect(),
+        max_num_query_of_advice_column: cs
+            .advice_queries()
+            .iter()
+            .fold(BTreeMap::default(), |mut m, (c, _r)| {
+                if let std::collections::btree_map::Entry::Vacant(e) = m.entry(c.index()) {
+                    e.insert(1u32);
+                } else {
+                    *m.get_mut(&c.index()).unwrap() += 1;
+                }
+                m
+            })
+            .values()
+            .max()
+            .cloned()
+            .unwrap_or_default(),
+
+        gates: cs
+            .gates()
+            .iter()
+            .map(|g| {
+                g.polynomials()
+                    .iter()
+                    .map(|e| {
+                        e.into()
+                    })
+                    .collect()
+            })
+            .collect(),
+    };
+    Ok(info)
+}
 
 impl TryFrom<CircuitInfo<G1Affine, Fr>> for ConstraintSystem<bn256::Fr> {
     type Error = ConvertError;
 
     fn try_from(value: CircuitInfo<G1Affine, Fr>) -> Result<Self, Self::Error> {
         let mut cs = ConstraintSystem::default();
-        cs.num_fixed_columns = value.num_fixed_columns;
-        cs.num_advice_columns = value.num_advice_columns;
-        cs.num_instance_columns = value.num_instance_columns;
+        cs.num_fixed_columns = value.num_fixed_columns as usize;
+        cs.num_advice_columns = value.num_advice_columns as usize;
+        cs.num_instance_columns = value.num_instance_columns as usize;
 
         cs.advice_column_phase = value.advice_column_phase.iter().map(|x| match x {
-            0 => halo2_proofs::plonk::FirstPhase.to_sealed(),
-            1 => halo2_proofs::plonk::SecondPhase.to_sealed(),
-            2 => halo2_proofs::plonk::ThirdPhase.to_sealed(),
+            0 => halo2_proofs::plonk::FirstPhase::sealed(),
+            1 => halo2_proofs::plonk::SecondPhase::sealed(),
+            2 => halo2_proofs::plonk::ThirdPhase::sealed(),
             _ => unreachable!(),
         }).collect();
 
         cs.challenge_phase = value.challenge_phase.iter().map(|x| match x {
-            0 => halo2_proofs::plonk::FirstPhase.to_sealed(),
-            1 => halo2_proofs::plonk::SecondPhase.to_sealed(),
-            2 => halo2_proofs::plonk::ThirdPhase.to_sealed(),
+            0 => halo2_proofs::plonk::FirstPhase::sealed(),
+            1 => halo2_proofs::plonk::SecondPhase::sealed(),
+            2 => halo2_proofs::plonk::ThirdPhase::sealed(),
             _ => unreachable!(),
         }).collect();
 
         for gate in value.gates {
-            cs.create_gate(gate.name, |cs| {
+            cs.create_gate("", |cs| {
                 let mut polys = Vec::new();
                 for poly in gate.polys {
                     let mut terms = Vec::new();
@@ -349,7 +349,7 @@ impl TryFrom<CircuitInfo<G1Affine, Fr>> for ConstraintSystem<bn256::Fr> {
                     polys.push(cs.poly(terms));
                 }
                 gate.queried_selectors.iter().for_each(|selector| {
-                    cs.query_selector(*selector);
+                    cs.query_selector(selector.clone().into());
                 });
                 polys
             });
@@ -380,3 +380,4 @@ impl TryFrom<CircuitInfo<G1Affine, Fr>> for ConstraintSystem<bn256::Fr> {
         Ok(cs)
     }
 }
+
