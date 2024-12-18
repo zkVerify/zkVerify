@@ -87,6 +87,7 @@ frame-system-benchmarking = { workspace = true, optional = true }
 
 # Custom logic
 pallet-aggregate = { workspace = true }
+pallet-claim = { workspace = true }
 pallet-hyperbridge-aggregations = { workspace = true }
 pallet-poe = { workspace = true }
 static_assertions = "1.1.0"
@@ -150,6 +151,7 @@ runtime-benchmarks = [
 	"pallet-utility/runtime-benchmarks",
 	"pallet-vesting/runtime-benchmarks",
 	"pallet-aggregate/runtime-benchmarks",
+	"pallet-claim/runtime-benchmarks",
 	"pallet-hyperbridge-aggregations/runtime-benchmarks",
 	"ismp-grandpa/runtime-benchmarks",
 	"pallet-poe/runtime-benchmarks",
@@ -238,6 +240,7 @@ std = [
 	"pallet-proxy/std",
 	"pallet-verifiers/std",
 	"pallet-aggregate/std",
+	"pallet-claim/std",
 	"pallet-poe/std",
 	"proof-of-existence-rpc-runtime-api/std",
 	"aggregate-rpc-runtime-api/std",
@@ -318,6 +321,7 @@ try-runtime = [
 	"pallet-proxy/try-runtime",
 	"pallet-verifiers/try-runtime",
 	"pallet-aggregate/try-runtime",
+	"pallet-claim/try-runtime",
 	"pallet-poe/try-runtime",
 	"sp-runtime/try-runtime",
 	"pallet-verifiers/try-runtime",
