@@ -19,6 +19,7 @@ use core::marker::PhantomData;
 
 use frame_support::{ensure, weights::Weight};
 use hp_verifiers::Verifier;
+use risc0_verifier::{Journal, VerifierContext};
 use sp_core::{Get, H256};
 use sp_std::vec::Vec;
 
@@ -75,7 +76,14 @@ impl<T: Config> Verifier for Risc0<T> {
             hp_verifiers::VerifyError::InvalidInput
         );
         log::trace!("Verifying (native)");
-        native::risc_0_verify::verify((*vk).into(), proof, pubs).map_err(Into::into)
+        let proof = bincode::deserialize(proof)
+            .map(risc0_verifier::Proof::new)
+            .map_err(|_| hp_verifiers::VerifyError::InvalidProofData)?;
+        let pubs: Journal =
+            bincode::deserialize(pubs).map_err(|_| hp_verifiers::VerifyError::InvalidInput)?;
+        risc0_verifier::verify(&VerifierContext::v1_0(), vk.0.into(), proof, pubs)
+            .inspect_err(|e| log::debug!("Cannot verify proof: {:?}", e))
+            .map_err(|_| hp_verifiers::VerifyError::VerifyError)
     }
 
     fn pubs_bytes(pubs: &Self::Pubs) -> hp_verifiers::Cow<[u8]> {

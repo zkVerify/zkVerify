@@ -11,7 +11,6 @@ homepage.workspace = true
 [dependencies]
 zksync-era-verifier = { git = "https://github.com/HorizenLabs/zksync-era-verifier.git", tag = "v0.1.0", optional = true }
 zksync-era-verifier-deserialize = { git = "https://github.com/HorizenLabs/zksync-era-verifier.git", tag = "v0.1.0", optional = true }
-risc0-verifier = { git = "https://github.com/HorizenLabs/risc0-verifier.git", tag = "v0.2.0", optional = true }
 ultraplonk_verifier = { git = "https://github.com/HorizenLabs/ultraplonk_verifier.git", tag = "v0.2.0", optional = true }
 sp-runtime-interface = { workspace = true }
 codec = { workspace = true }
@@ -32,6 +31,5 @@ std = [
     "hp-groth16/std",
     "dep:zksync-era-verifier",
     "dep:zksync-era-verifier-deserialize",
-    "dep:risc0-verifier",
     "dep:ultraplonk_verifier",
 ]
