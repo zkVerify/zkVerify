@@ -8129,15 +8129,12 @@ dependencies = [
 name = "pallet-claim"
 version = "0.1.0"
 dependencies = [
- "binary-merkle-tree",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "hp-on-proof-verified",
  "log",
  "pallet-balances",
  "parity-scale-codec",
- "rstest",
  "scale-info",
  "sp-core",
  "sp-io",

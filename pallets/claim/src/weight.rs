@@ -53,17 +53,22 @@ use core::marker::PhantomData;
 
 /// Weight functions needed for `pallet_claim`.
 pub trait WeightInfo {
-    fn begin_airdrop() -> Weight;
+    fn begin_airdrop_empty_beneficiaries() -> Weight;
+    fn begin_airdrop_with_beneficiaries(n: u32, ) -> Weight;
     fn claim() -> Weight;
     fn claim_for() -> Weight;
-    fn add_beneficiaries() -> Weight;
-    fn remove_beneficiaries() -> Weight;
+    fn add_beneficiaries(n: u32, ) -> Weight;
+    fn remove_beneficiaries(n: u32, ) -> Weight;
     fn end_airdrop() -> Weight;
 }
 
 // For backwards compatibility and tests.
 impl WeightInfo for () {
-    fn begin_airdrop() -> Weight {
+    fn begin_airdrop_empty_beneficiaries() -> Weight {
+        todo!()
+    }
+
+    fn begin_airdrop_with_beneficiaries(n: u32, ) -> Weight {
         todo!()
     }
 
@@ -75,11 +80,11 @@ impl WeightInfo for () {
         todo!()
     }
 
-    fn add_beneficiaries() -> Weight {
+    fn add_beneficiaries(n: u32, ) -> Weight {
         todo!()
     }
 
-    fn remove_beneficiaries() -> Weight {
+    fn remove_beneficiaries(n: u32, ) -> Weight {
         todo!()
     }
 

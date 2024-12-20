@@ -15,7 +15,8 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 // #![deny(missing_docs)]
-// mod benchmarking;
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
@@ -25,11 +26,11 @@ use core::marker::PhantomData;
 
 extern crate alloc;
 
-use alloc::collections::btree_map::BTreeMap;
+use alloc::collections::{btree_map::BTreeMap, btree_set::BTreeSet};
 use sp_runtime::traits::{AccountIdConversion, Saturating, Zero};
 
 use frame_support::{
-    dispatch::DispatchResult,
+    dispatch::{DispatchResult, PostDispatchInfo},
     traits::{tokens::Pay, Currency, ExistenceRequirement, Get, OnUnbalanced, WithdrawReasons},
     PalletId,
 };
@@ -45,7 +46,6 @@ pub use weight::WeightInfo;
 
 #[frame_support::pallet]
 pub mod pallet {
-    use std::collections::BTreeSet;
 
     use super::*;
     use frame_support::pallet_prelude::*;
@@ -165,148 +165,8 @@ pub mod pallet {
         NotEligible,
         /// There was some issue with the mechanism of payment.
         PayoutError,
-        /// Airdrop is not in a correct status to perform a given action.
-        CannotClaim,
-        /// Attempt to end an already ended airdop
+        /// Attempt to perform an action implying an open airdrop, while it has already ended
         AlreadyEnded,
-    }
-
-    #[pallet::call]
-    impl<T: Config> Pallet<T> {
-        /// Declare the beginning of a new aidrop and start adding beneficiaries (if specified).
-        /// Raise an Error if:
-        /// - There is an already active airdrop
-        /// - There isn't enough balance in the pallets' account to cover for the claim of the supplied beneficiaries (if specified)
-        /// This is an atomic operation. If there isn't enough balance to cover for all the beneficiaries, then none will be added.
-        /// Origin must be the ManagerOrigin.
-        #[pallet::call_index(0)]
-        #[pallet::weight(T::WeightInfo::begin_airdrop())]
-        pub fn begin_airdrop(
-            origin: OriginFor<T>,
-            beneficiaries: Option<BTreeMap<T::AccountId, BalanceOf<T>>>,
-        ) -> DispatchResult {
-            T::ManagerOrigin::ensure_origin(origin)?;
-
-            // Set airdrop as active
-            AirdropActive::<T>::try_mutate(|is_active| {
-                if *is_active {
-                    Err(Error::<T>::AlreadyStarted)?
-                } else {
-                    *is_active = true;
-                    Ok::<_, DispatchError>(())
-                }
-            })?;
-
-            // Start adding beneficiaries if specified
-            if let Some(beneficiaries) = beneficiaries {
-                Self::do_add_beneficiaries(beneficiaries)?;
-            }
-
-            // Increase airdrop id
-            AirdropId::<T>::mutate(|id| {
-                let airdrop_id = id.map_or(0, |v| v + 1);
-                *id = Some(airdrop_id);
-                Self::deposit_event(Event::<T>::AirdropStarted { airdrop_id });
-            });
-
-            Ok(())
-        }
-
-        /// Claim token airdrop for 'origin' or 'dest' (if specified).
-        /// Fails if 'origin' or 'dest' are not entitled to any airdrop.
-        /// 'origin' must be signed.
-        #[pallet::call_index(1)]
-        #[pallet::weight(T::WeightInfo::claim())]
-        pub fn claim(origin: OriginFor<T>, dest: Option<T::AccountId>) -> DispatchResult {
-            let origin_account = ensure_signed(origin)?;
-            Self::check_airdrop_status()?;
-            Self::do_claim(origin_account, dest)
-        }
-
-        /// Claim token airdrop for 'origin' or 'dest' (if specified).
-        /// Fails if 'origin' or 'dest' are not entitled to any airdrop.
-        /// 'origin' must be signed.
-        #[pallet::call_index(2)]
-        #[pallet::weight(T::WeightInfo::claim_for())]
-        pub fn claim_for(_origin: OriginFor<T>, dest: T::AccountId) -> DispatchResult {
-            Self::check_airdrop_status()?;
-            Self::do_claim(dest, None)
-        }
-
-        /// Add beneficiaries.
-        /// Raise an Error if:
-        /// - There isn't enough balance in the pallets' account to cover for the claim of the supplied beneficiaries (if specified)
-        /// This is an atomic operation. If there isn't enough balance to cover for all the beneficiaries, then none will be added.
-        /// Origin must be the ManagerOrigin.
-        #[pallet::call_index(3)]
-        #[pallet::weight(T::WeightInfo::add_beneficiaries())]
-        pub fn add_beneficiaries(
-            origin: OriginFor<T>,
-            beneficiaries: BTreeMap<T::AccountId, BalanceOf<T>>,
-        ) -> DispatchResult {
-            Self::check_airdrop_status()?;
-            T::ManagerOrigin::ensure_origin(origin)?;
-            Self::do_add_beneficiaries(beneficiaries)?;
-
-            Ok(())
-        }
-
-        /// Remove beneficiaries from the storage.
-        /// Origin must be the ManagerOrigin.
-        #[pallet::call_index(4)]
-        #[pallet::weight(T::WeightInfo::remove_beneficiaries())]
-        pub fn remove_beneficiaries(
-            origin: OriginFor<T>,
-            beneficiaries: BTreeSet<T::AccountId>,
-        ) -> DispatchResult {
-            Self::check_airdrop_status()?;
-            T::ManagerOrigin::ensure_origin(origin)?;
-            Self::do_remove_beneficiaries(beneficiaries);
-
-            Ok(())
-        }
-
-        /// End an airdrop. Storage variables will be cleared.
-        /// Any unclaimed balance will be sent to the destination specified as per 'UnclaimedDestination'.
-        /// Raise an Error if attempting to end an already ended airdrop.
-        /// Origin must be 'ManagerOrigin'.
-        #[pallet::call_index(5)]
-        #[pallet::weight(T::WeightInfo::end_airdrop())]
-        pub fn end_airdrop(origin: OriginFor<T>) -> DispatchResult {
-            T::ManagerOrigin::ensure_origin(origin)?;
-
-            // Set airdrop as inactive
-            AirdropActive::<T>::try_mutate(|is_active| {
-                if !*is_active {
-                    Err(Error::<T>::AlreadyEnded)?
-                } else {
-                    *is_active = false;
-                    Ok::<_, DispatchError>(())
-                }
-            })?;
-
-            // Remove all beneficiaries entries
-            let _ = Beneficiaries::<T>::clear(u32::MAX, None);
-
-            // Deal with any remaining balance in the pallet's account
-            let unclaimed_funds = T::Currency::withdraw(
-                &Self::account_id(),
-                Self::pot(),
-                WithdrawReasons::TRANSFER,
-                ExistenceRequirement::KeepAlive,
-            )?;
-            T::UnclaimedDestination::on_unbalanced(unclaimed_funds);
-
-            // Set total claimable to 0
-            TotalClaimable::<T>::put(BalanceOf::<T>::zero());
-
-            // End airdrop
-            Self::deposit_event(Event::<T>::AirdropEnded {
-                airdrop_id: AirdropId::<T>::get().unwrap(),
-            });
-
-            Ok(())
-        }
     }
 
     impl<T: Config> Pallet<T> {
@@ -366,38 +226,39 @@ pub mod pallet {
             let available_amount = Self::pot();
             let mut required_amount = TotalClaimable::<T>::get();
 
-            beneficiaries.iter().for_each(|(account, amount)| {
-                // Account already exists
-                if let Some(old_amount) = Beneficiaries::<T>::get(account.clone()) {
-                    // We're giving the account less token compared to before
-                    if old_amount > *amount {
-                        // Subtract the difference from the required balance this pallet's account should have
-                        required_amount =
-                            required_amount.saturating_sub(old_amount.saturating_sub(*amount));
+            beneficiaries
+                .iter()
+                .try_for_each::<_, DispatchResult>(|(account, amount)| {
+                    // Account already exists
+                    if let Some(old_amount) = Beneficiaries::<T>::get(account.clone()) {
+                        // We're giving the account less token compared to before
+                        if old_amount > *amount {
+                            // Subtract the difference from the required balance this pallet's account should have
+                            required_amount =
+                                required_amount.saturating_sub(old_amount.saturating_sub(*amount));
+                        } else {
+                            // We're giving the account more tokens compared to before
+                            // Add the difference to the required balance this pallet's account should have
+                            required_amount =
+                                required_amount.saturating_add(amount.saturating_sub(old_amount));
+                        }
                     } else {
-                        // We're giving the account more tokens compared to before
-                        // Add the difference to the required balance this pallet's account should have
-                        required_amount =
-                            required_amount.saturating_add(amount.saturating_sub(old_amount));
+                        // Account doesn't exist. Add its token amount to the required amount this pallet's account should have
+                        required_amount = required_amount.saturating_add(*amount);
                     }
-                } else {
-                    // Account doesn't exist. Add its token amount to the required amount this pallet's account should have
-                    required_amount = required_amount.saturating_add(*amount);
-                }
-            });
 
-            // Cannot cover for all the tokens, raise an error
-            if required_amount > available_amount {
-                Err(Error::<T>::NotEnoughFunds)?;
-            }
+                    // Cannot cover for all the tokens, raise an error
+                    if required_amount > available_amount {
+                        Err(Error::<T>::NotEnoughFunds)?;
+                    }
+
+                    Beneficiaries::<T>::insert(account, amount);
+
+                    Ok(())
+                })?;
 
             // Update total claimable
             TotalClaimable::<T>::put(required_amount);
-
-            // Add beneficiaries
-            beneficiaries
-                .into_iter()
-                .for_each(|(account, amount)| Beneficiaries::<T>::insert(account, amount));
 
             Ok(())
         }
@@ -416,9 +277,173 @@ pub mod pallet {
 
         fn check_airdrop_status() -> DispatchResult {
             if !AirdropActive::<T>::get() {
-                Err(Error::<T>::CannotClaim)?;
+                Err(Error::<T>::AlreadyEnded)?;
             }
             Ok(())
+        }
+    }
+
+    #[pallet::call]
+    impl<T: Config> Pallet<T> {
+        /// Declare the beginning of a new aidrop and start adding beneficiaries (if specified).
+        /// Raise an Error if:
+        /// - There is an already active airdrop
+        /// - There isn't enough balance in the pallets' account to cover for the claim of the supplied beneficiaries (if specified)
+        /// This is an atomic operation. If there isn't enough balance to cover for all the beneficiaries, then none will be added.
+        /// Origin must be the ManagerOrigin.
+        #[pallet::call_index(0)]
+        #[pallet::weight(match &beneficiaries {
+            Some(beneficiaries) => T::WeightInfo::begin_airdrop_with_beneficiaries(beneficiaries.len() as u32),
+            None => T::WeightInfo::begin_airdrop_empty_beneficiaries(),
+        })]
+        pub fn begin_airdrop(
+            origin: OriginFor<T>,
+            beneficiaries: Option<BTreeMap<T::AccountId, BalanceOf<T>>>,
+        ) -> DispatchResultWithPostInfo {
+            T::ManagerOrigin::ensure_origin(origin)?;
+
+            // Set airdrop as active
+            AirdropActive::<T>::try_mutate(|is_active| {
+                if *is_active {
+                    Err(Error::<T>::AlreadyStarted)?
+                } else {
+                    *is_active = true;
+                    Ok::<_, DispatchError>(())
+                }
+            })?;
+
+            // Start adding beneficiaries if specified
+            if let Some(beneficiaries) = beneficiaries {
+                Self::do_add_beneficiaries(beneficiaries)?;
+            }
+
+            // Increase airdrop id
+            AirdropId::<T>::mutate(|id| {
+                let airdrop_id = id.map_or(0, |v| v + 1);
+                *id = Some(airdrop_id);
+                Self::deposit_event(Event::<T>::AirdropStarted { airdrop_id });
+            });
+
+            Ok(PostDispatchInfo {
+                actual_weight: None,
+                pays_fee: Pays::No,
+            })
+        }
+
+        /// Claim token airdrop for 'origin' or 'dest' (if specified).
+        /// Fails if 'origin' or 'dest' are not entitled to any airdrop.
+        /// 'origin' must be signed.
+        #[pallet::call_index(1)]
+        #[pallet::weight(T::WeightInfo::claim())]
+        pub fn claim(
+            origin: OriginFor<T>,
+            dest: Option<T::AccountId>,
+        ) -> DispatchResultWithPostInfo {
+            let origin_account = ensure_signed(origin)?;
+            Self::check_airdrop_status()?;
+            Self::do_claim(origin_account, dest)?;
+            Ok(PostDispatchInfo {
+                actual_weight: None,
+                pays_fee: Pays::No,
+            })
+        }
+
+        /// Claim token airdrop for 'origin' or 'dest' (if specified).
+        /// Fails if 'origin' or 'dest' are not entitled to any airdrop.
+        /// 'origin' must be signed.
+        #[pallet::call_index(2)]
+        #[pallet::weight(T::WeightInfo::claim_for())]
+        pub fn claim_for(_origin: OriginFor<T>, dest: T::AccountId) -> DispatchResultWithPostInfo {
+            Self::check_airdrop_status()?;
+            Self::do_claim(dest, None)?;
+            Ok(PostDispatchInfo {
+                actual_weight: None,
+                pays_fee: Pays::No,
+            })
+        }
+
+        /// Add beneficiaries.
+        /// Raise an Error if:
+        /// - There isn't enough balance in the pallets' account to cover for the claim of the supplied beneficiaries (if specified)
+        /// This is an atomic operation. If there isn't enough balance to cover for all the beneficiaries, then none will be added.
+        /// Origin must be the ManagerOrigin.
+        #[pallet::call_index(3)]
+        #[pallet::weight(T::WeightInfo::add_beneficiaries(beneficiaries.len() as u32))]
+        pub fn add_beneficiaries(
+            origin: OriginFor<T>,
+            beneficiaries: BTreeMap<T::AccountId, BalanceOf<T>>,
+        ) -> DispatchResultWithPostInfo {
+            Self::check_airdrop_status()?;
+            T::ManagerOrigin::ensure_origin(origin)?;
+            Self::do_add_beneficiaries(beneficiaries)?;
+
+            Ok(PostDispatchInfo {
+                actual_weight: None,
+                pays_fee: Pays::No,
+            })
+        }
+
+        /// Remove beneficiaries from the storage.
+        /// Origin must be the ManagerOrigin.
+        #[pallet::call_index(4)]
+        #[pallet::weight(T::WeightInfo::remove_beneficiaries(beneficiaries.len() as u32))]
+        pub fn remove_beneficiaries(
+            origin: OriginFor<T>,
+            beneficiaries: BTreeSet<T::AccountId>,
+        ) -> DispatchResultWithPostInfo {
+            Self::check_airdrop_status()?;
+            T::ManagerOrigin::ensure_origin(origin)?;
+            Self::do_remove_beneficiaries(beneficiaries);
+
+            Ok(PostDispatchInfo {
+                actual_weight: None,
+                pays_fee: Pays::No,
+            })
+        }
+
+        /// End an airdrop. Storage variables will be cleared.
+        /// Any unclaimed balance will be sent to the destination specified as per 'UnclaimedDestination'.
+        /// Raise an Error if attempting to end an already ended airdrop.
+        /// Origin must be 'ManagerOrigin'.
+        #[pallet::call_index(5)]
+        #[pallet::weight(T::WeightInfo::end_airdrop())]
+        pub fn end_airdrop(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+            T::ManagerOrigin::ensure_origin(origin)?;
+
+            // Set airdrop as inactive
+            AirdropActive::<T>::try_mutate(|is_active| {
+                if !*is_active {
+                    Err(Error::<T>::AlreadyEnded)?
+                } else {
+                    *is_active = false;
+                    Ok::<_, DispatchError>(())
+                }
+            })?;
+
+            // Remove all beneficiaries entries
+            let _ = Beneficiaries::<T>::clear(u32::MAX, None);
+
+            // Deal with any remaining balance in the pallet's account
+            let unclaimed_funds = T::Currency::withdraw(
+                &Self::account_id(),
+                Self::pot(),
+                WithdrawReasons::TRANSFER,
+                ExistenceRequirement::KeepAlive,
+            )?;
+            T::UnclaimedDestination::on_unbalanced(unclaimed_funds);
+
+            // Set total claimable to 0
+            TotalClaimable::<T>::put(BalanceOf::<T>::zero());
+
+            // End airdrop
+            Self::deposit_event(Event::<T>::AirdropEnded {
+                airdrop_id: AirdropId::<T>::get().unwrap(),
+            });
+
+            Ok(PostDispatchInfo {
+                actual_weight: None,
+                pays_fee: Pays::No,
+            })
         }
     }
 }

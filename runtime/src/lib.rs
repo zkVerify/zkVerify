@@ -640,6 +640,7 @@ impl pallet_aggregate::Config for Runtime {
     type Currency = Balances;
 }
 
+
 // We should be sure that the benchmark aggregation size matches the runtime configuration.
 #[cfg(feature = "runtime-benchmarks")]
 static_assertions::const_assert!(
