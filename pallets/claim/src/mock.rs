@@ -13,15 +13,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::{collections::BTreeMap, sync::LazyLock};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    sync::LazyLock,
+};
 
 use frame_support::{
     derive_impl, parameter_types,
-    traits::{tokens::PayFromAccount, EnsureOrigin, Imbalance, OnUnbalanced},
+    traits::{tokens::PayFromAccount, EitherOfDiverse, EnsureOrigin, Imbalance, OnUnbalanced},
     weights::RuntimeDbWeight,
     PalletId,
 };
-use frame_system::RawOrigin;
+use frame_system::{EnsureRoot, RawOrigin};
 use sp_core::ConstU128;
 use sp_runtime::{traits::IdentityLookup, BuildStorage};
 
@@ -33,35 +36,66 @@ pub type Origin = RawOrigin<AccountId>;
 
 pub const EXISTENTIAL_DEPOSIT: Balance = 1;
 
-pub const NUM_TEST_ACCOUNTS: usize = 5;
 pub const USER_1: AccountId = 42;
 pub const USER_1_AMOUNT: Balance = 42_000_000_000;
+pub const USER_1_MODIFIED_AMOUNT: Balance = 20_000_000_000;
 pub const USER_2: AccountId = 24;
 pub const USER_2_AMOUNT: Balance = 24_000_000_000;
 pub const USER_3: AccountId = 42_000;
 pub const USER_3_AMOUNT: Balance = 100_000_000_000;
+pub const USER_3_MODIFIED_AMOUNT: Balance = 600_000_000_000;
 pub const USER_4: AccountId = 24_000;
 pub const USER_4_AMOUNT: Balance = 200_000_000_000;
 pub const USER_5: AccountId = 99_000;
 pub const USER_5_AMOUNT: Balance = 300_000_000;
-
+pub const USER_6: AccountId = 33_333;
+pub const USER_6_AMOUNT: Balance = 50_000_000_000;
 pub const NON_BENEFICIARY: AccountId = 6;
 
 pub const MANAGER_USER: AccountId = 666;
 
-pub static BENEFICIARIES: [(AccountId, Balance); NUM_TEST_ACCOUNTS] = [
+pub static GENESIS_BENEFICIARIES: [(AccountId, Balance); 3] = [
     (USER_1, USER_1_AMOUNT),
     (USER_2, USER_2_AMOUNT),
     (USER_3, USER_3_AMOUNT),
-    (USER_4, USER_4_AMOUNT),
-    (USER_5, USER_5_AMOUNT),
 ];
 
-pub static BENEFICIARIES_MAP: LazyLock<BTreeMap<AccountId, Balance>> =
-    LazyLock::new(|| BENEFICIARIES.into_iter().collect());
+pub static GENESIS_BENEFICIARIES_MAP: LazyLock<BTreeMap<AccountId, Balance>> =
+    LazyLock::new(|| GENESIS_BENEFICIARIES.into_iter().collect());
 
-pub const SUFFICIENT_GENESIS_BALANCE: Balance = 366_300_000_000;
-pub const INSUFFICIENT_GENESIS_BALANCE: Balance = 100_000_000;
+pub static GENESIS_BENEFICIARIES_SET: LazyLock<BTreeSet<AccountId>> = LazyLock::new(|| {
+    GENESIS_BENEFICIARIES
+        .into_iter()
+        .map(|(account, _)| account)
+        .collect()
+});
+
+pub static SUFFICIENT_GENESIS_BALANCE: Balance = USER_1_AMOUNT + USER_2_AMOUNT + USER_3_AMOUNT;
+pub const INSUFFICIENT_GENESIS_BALANCE: Balance = USER_5_AMOUNT;
+
+pub static NEW_BENEFICIARIES: [(AccountId, Balance); 3] = [
+    (USER_4, USER_4_AMOUNT),
+    (USER_5, USER_5_AMOUNT),
+    (USER_6, USER_6_AMOUNT),
+];
+
+pub static NEW_BENEFICIARIES_MAP: LazyLock<BTreeMap<AccountId, Balance>> =
+    LazyLock::new(|| NEW_BENEFICIARIES.into_iter().collect());
+
+pub static NEW_SUFFICIENT_BALANCE: Balance = USER_4_AMOUNT + USER_5_AMOUNT + USER_6_AMOUNT;
+
+pub static MODIFIED_BENEFICIARIES: [(AccountId, Balance); 3] = [
+    (USER_1, USER_1_MODIFIED_AMOUNT),
+    (USER_3, USER_3_MODIFIED_AMOUNT),
+    (USER_6, USER_6_AMOUNT),
+];
+
+pub static MODIFIED_BENEFICIARIES_MAP: LazyLock<BTreeMap<AccountId, Balance>> =
+    LazyLock::new(|| MODIFIED_BENEFICIARIES.into_iter().collect());
+
+pub static MODIFIED_SUFFICIENT_BALANCE: Balance = (USER_3_MODIFIED_AMOUNT - USER_3_AMOUNT)
+    - (USER_1_AMOUNT - USER_1_MODIFIED_AMOUNT)
+    + USER_6_AMOUNT;
 
 pub struct MockWeightInfo;
 
@@ -71,7 +105,11 @@ impl MockWeightInfo {
 }
 
 impl crate::WeightInfo for MockWeightInfo {
-    fn begin_airdrop() -> frame_support::weights::Weight {
+    fn begin_airdrop_empty_beneficiaries() -> frame_support::weights::Weight {
+        frame_support::weights::Weight::from_parts(Self::REF_TIME, Self::PROOF_SIZE)
+    }
+
+    fn begin_airdrop_with_beneficiaries(n: u32, ) -> frame_support::weights::Weight {
         frame_support::weights::Weight::from_parts(Self::REF_TIME, Self::PROOF_SIZE)
     }
 
@@ -83,11 +121,11 @@ impl crate::WeightInfo for MockWeightInfo {
         frame_support::weights::Weight::from_parts(Self::REF_TIME, Self::PROOF_SIZE)
     }
 
-    fn add_beneficiaries() -> frame_support::weights::Weight {
+    fn add_beneficiaries(n: u32, ) -> frame_support::weights::Weight {
         frame_support::weights::Weight::from_parts(Self::REF_TIME, Self::PROOF_SIZE)
     }
 
-    fn remove_beneficiaries() -> frame_support::weights::Weight {
+    fn remove_beneficiaries(n: u32, ) -> frame_support::weights::Weight {
         frame_support::weights::Weight::from_parts(Self::REF_TIME, Self::PROOF_SIZE)
     }
 
@@ -145,7 +183,7 @@ parameter_types! {
 impl crate::Config for Test {
     type RuntimeEvent = RuntimeEvent;
     type PalletId = ClaimPalletId;
-    type ManagerOrigin = MockManager;
+    type ManagerOrigin = EitherOfDiverse<EnsureRoot<AccountId>, MockManager>;
     type Paymaster = PayFromAccount<Balances, ClaimAccount>;
     type Currency = Balances;
     type UnclaimedDestination = UnclaimedDestinationMock;
@@ -207,7 +245,7 @@ pub fn test_with_configs(
 
     crate::GenesisConfig::<Test> {
         beneficiaries: match with_genesis_beneficiaries {
-            WithGenesisBeneficiaries::Yes => BENEFICIARIES.to_vec(),
+            WithGenesisBeneficiaries::Yes => GENESIS_BENEFICIARIES.to_vec(),
             WithGenesisBeneficiaries::No => vec![],
         },
         genesis_balance: match genesis_claim_balance {

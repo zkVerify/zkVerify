@@ -64,7 +64,7 @@ fn genesis_build_sufficient_balance() {
     .execute_with(|| {
         assert_eq!(
             Beneficiaries::<Test>::iter().collect::<BTreeMap<_, _>>(),
-            BENEFICIARIES_MAP.clone()
+            GENESIS_BENEFICIARIES_MAP.clone()
         );
         assert_eq!(TotalClaimable::<Test>::get(), SUFFICIENT_GENESIS_BALANCE);
         assert!(AirdropActive::<Test>::get());
@@ -117,12 +117,12 @@ fn new_airdrop_sufficient_funds() {
     .execute_with(|| {
         assert_ok!(Claim::begin_airdrop(
             Origin::Signed(MANAGER_USER).into(),
-            Some(BENEFICIARIES_MAP.clone())
+            Some(GENESIS_BENEFICIARIES_MAP.clone())
         ));
         assert_evt(Event::AirdropStarted { airdrop_id: 0 }, "New airdrop");
         assert_eq!(
             Beneficiaries::<Test>::iter().collect::<BTreeMap<_, _>>(),
-            BENEFICIARIES_MAP.clone()
+            GENESIS_BENEFICIARIES_MAP.clone()
         );
         assert_eq!(TotalClaimable::<Test>::get(), SUFFICIENT_GENESIS_BALANCE);
         assert!(AirdropActive::<Test>::get());
@@ -140,7 +140,7 @@ fn new_aidrop_insufficient_funds() {
         assert_err!(
             Claim::begin_airdrop(
                 Origin::Signed(MANAGER_USER).into(),
-                Some(BENEFICIARIES_MAP.clone())
+                Some(GENESIS_BENEFICIARIES_MAP.clone())
             ),
             Error::<Test>::NotEnoughFunds
         );
@@ -170,7 +170,7 @@ fn cannot_start_new_aidrop_if_one_already_in_progress() {
         assert_err!(
             Claim::begin_airdrop(
                 Origin::Signed(MANAGER_USER).into(),
-                Some(BENEFICIARIES_MAP.clone())
+                Some(GENESIS_BENEFICIARIES_MAP.clone())
             ),
             Error::<Test>::AlreadyStarted
         );
@@ -254,7 +254,7 @@ fn claim_wrong_beneficiary() {
         assert_eq!(TotalClaimable::<Test>::get(), SUFFICIENT_GENESIS_BALANCE);
         assert_eq!(
             Beneficiaries::<Test>::iter().collect::<BTreeMap<_, _>>(),
-            BENEFICIARIES_MAP.clone()
+            GENESIS_BENEFICIARIES_MAP.clone()
         );
     });
 }
@@ -288,7 +288,7 @@ fn cannot_claim_while_airdrop_inactive() {
     test().execute_with(|| {
         assert_err!(
             Claim::claim(Origin::Signed(USER_1).into(), None),
-            Error::<Test>::CannotClaim
+            Error::<Test>::AlreadyEnded
         );
     })
 }
@@ -366,7 +366,7 @@ fn claim_for_wrong_beneficiary() {
         assert_eq!(TotalClaimable::<Test>::get(), SUFFICIENT_GENESIS_BALANCE);
         assert_eq!(
             Beneficiaries::<Test>::iter().collect::<BTreeMap<_, _>>(),
-            BENEFICIARIES_MAP.clone()
+            GENESIS_BENEFICIARIES_MAP.clone()
         );
     });
 }
@@ -376,7 +376,34 @@ fn cannot_claim_for_while_airdrop_inactive() {
     test().execute_with(|| {
         assert_err!(
             Claim::claim_for(Origin::None.into(), USER_1),
-            Error::<Test>::CannotClaim
+            Error::<Test>::AlreadyEnded
+        );
+    })
+}
+
+#[test]
+fn add_beneficiaries_wrong_origin() {
+    test_with_configs(
+        WithGenesisBeneficiaries::Yes,
+        GenesisClaimBalance::Sufficient,
+    )
+    .execute_with(|| {
+        assert_err!(
+            Claim::add_beneficiaries(Origin::Signed(USER_1).into(), NEW_BENEFICIARIES_MAP.clone()),
+            BadOrigin
+        );
+    })
+}
+
+#[test]
+fn cannot_add_beneficiaries_while_airdrop_inactive() {
+    test().execute_with(|| {
+        assert_err!(
+            Claim::add_beneficiaries(
+                Origin::Signed(MANAGER_USER).into(),
+                NEW_BENEFICIARIES_MAP.clone()
+            ),
+            Error::<Test>::AlreadyEnded
         );
     })
 }
@@ -387,29 +414,196 @@ fn add_beneficiaries_sufficient_funds() {
         WithGenesisBeneficiaries::Yes,
         GenesisClaimBalance::Sufficient,
     )
-    .execute_with(|| {})
+    .execute_with(|| {
+        let _ =
+            Balances::deposit_into_existing(&Claim::account_id(), NEW_SUFFICIENT_BALANCE).unwrap();
+        assert_ok!(Claim::add_beneficiaries(
+            Origin::Signed(MANAGER_USER).into(),
+            NEW_BENEFICIARIES_MAP.clone()
+        ));
+        assert_eq!(
+            Claim::pot(),
+            SUFFICIENT_GENESIS_BALANCE + NEW_SUFFICIENT_BALANCE
+        );
+        assert_eq!(
+            TotalClaimable::<Test>::get(),
+            SUFFICIENT_GENESIS_BALANCE + NEW_SUFFICIENT_BALANCE
+        );
+        assert_eq!(
+            Beneficiaries::<Test>::iter().collect::<BTreeMap<_, _>>(),
+            GENESIS_BENEFICIARIES_MAP
+                .clone()
+                .into_iter()
+                .chain(NEW_BENEFICIARIES_MAP.clone().into_iter())
+                .collect::<BTreeMap<_, _>>()
+        );
+    })
 }
 
 #[test]
-fn add_beneficiaries_insufficient_funds() {}
+fn add_beneficiaries_insufficient_funds() {
+    test_with_configs(
+        WithGenesisBeneficiaries::Yes,
+        GenesisClaimBalance::Sufficient,
+    )
+    .execute_with(|| {
+        // Just add enough funds to cover for first insertions but not all
+        let _ =
+            Balances::deposit_into_existing(&Claim::account_id(), USER_4_AMOUNT + USER_5_AMOUNT)
+                .unwrap();
+
+        assert_err!(
+            Claim::add_beneficiaries(
+                Origin::Signed(MANAGER_USER).into(),
+                NEW_BENEFICIARIES_MAP.clone()
+            ),
+            Error::<Test>::NotEnoughFunds
+        );
+
+        // Atomic operation: state is untouched
+        assert_eq!(
+            Claim::pot(),
+            SUFFICIENT_GENESIS_BALANCE + USER_4_AMOUNT + USER_5_AMOUNT
+        );
+        assert_eq!(TotalClaimable::<Test>::get(), SUFFICIENT_GENESIS_BALANCE);
+        assert_eq!(
+            Beneficiaries::<Test>::iter().collect::<BTreeMap<_, _>>(),
+            GENESIS_BENEFICIARIES_MAP.clone()
+        );
+    })
+}
 
 #[test]
-fn add_new_disjoint_beneficiaries_modify_total_claimable_success() {}
+fn add_new_mixed_beneficiaries_modify_total_claimable_success() {
+    test_with_configs(
+        WithGenesisBeneficiaries::Yes,
+        GenesisClaimBalance::Sufficient,
+    )
+    .execute_with(|| {
+        let _ = Balances::deposit_into_existing(&Claim::account_id(), MODIFIED_SUFFICIENT_BALANCE)
+            .unwrap();
+        assert_ok!(Claim::add_beneficiaries(
+            Origin::Signed(MANAGER_USER).into(),
+            MODIFIED_BENEFICIARIES_MAP.clone()
+        ));
+        assert_eq!(
+            Claim::pot(),
+            SUFFICIENT_GENESIS_BALANCE + MODIFIED_SUFFICIENT_BALANCE
+        );
+        assert_eq!(
+            TotalClaimable::<Test>::get(),
+            SUFFICIENT_GENESIS_BALANCE + MODIFIED_SUFFICIENT_BALANCE
+        );
+        assert_eq!(
+            Beneficiaries::<Test>::get(USER_1),
+            Some(USER_1_MODIFIED_AMOUNT)
+        );
+        assert_eq!(
+            Beneficiaries::<Test>::get(USER_3),
+            Some(USER_3_MODIFIED_AMOUNT)
+        );
+        assert_eq!(Beneficiaries::<Test>::get(USER_6), Some(USER_6_AMOUNT));
+    })
+}
 
 #[test]
-fn add_new_disjoint_beneficiaries_modify_total_claimable_failure() {}
+fn add_new_mixed_beneficiaries_modify_total_claimable_failure() {
+    test_with_configs(
+        WithGenesisBeneficiaries::Yes,
+        GenesisClaimBalance::Sufficient,
+    )
+    .execute_with(|| {
+        let _ = Balances::deposit_into_existing(&Claim::account_id(), USER_6_AMOUNT).unwrap();
+        assert_err!(
+            Claim::add_beneficiaries(
+                Origin::Signed(MANAGER_USER).into(),
+                MODIFIED_BENEFICIARIES_MAP.clone()
+            ),
+            Error::<Test>::NotEnoughFunds
+        );
+        // Atomic operation: state is untouched
+        assert_eq!(Claim::pot(), SUFFICIENT_GENESIS_BALANCE + USER_6_AMOUNT);
+        assert_eq!(TotalClaimable::<Test>::get(), SUFFICIENT_GENESIS_BALANCE);
+        assert_eq!(
+            Beneficiaries::<Test>::iter().collect::<BTreeMap<_, _>>(),
+            GENESIS_BENEFICIARIES_MAP.clone()
+        );
+    })
+}
 
 #[test]
-fn add_new_mixed_beneficiaries_modify_total_claimable_success() {}
+fn remove_beneficiaries_wrong_origin() {
+    test_with_configs(
+        WithGenesisBeneficiaries::Yes,
+        GenesisClaimBalance::Sufficient,
+    )
+    .execute_with(|| {
+        assert_err!(
+            Claim::remove_beneficiaries(
+                Origin::Signed(USER_1).into(),
+                GENESIS_BENEFICIARIES_SET.clone()
+            ),
+            BadOrigin
+        );
+    })
+}
 
 #[test]
-fn add_new_mixed_beneficiaries_modify_total_claimable_failure() {}
+fn cannot_remove_beneficiaries_while_airdrop_inactive() {
+    test().execute_with(|| {
+        assert_err!(
+            Claim::remove_beneficiaries(
+                Origin::Signed(MANAGER_USER).into(),
+                GENESIS_BENEFICIARIES_SET.clone()
+            ),
+            Error::<Test>::AlreadyEnded
+        );
+    })
+}
 
 #[test]
-fn remove_beneficiaries_modify_total_claimable() {}
+fn remove_beneficiaries_modify_total_claimable() {
+    test_with_configs(
+        WithGenesisBeneficiaries::Yes,
+        GenesisClaimBalance::Sufficient,
+    )
+    .execute_with(|| {
+        let mut beneficiaries_to_remove = GENESIS_BENEFICIARIES_SET.clone();
+        let _ = beneficiaries_to_remove.take(&USER_3);
+
+        assert_ok!(Claim::remove_beneficiaries(
+            Origin::Signed(MANAGER_USER).into(),
+            beneficiaries_to_remove
+        ));
+
+        assert_eq!(Claim::pot(), SUFFICIENT_GENESIS_BALANCE);
+        assert_eq!(
+            TotalClaimable::<Test>::get(),
+            SUFFICIENT_GENESIS_BALANCE - USER_1_AMOUNT - USER_2_AMOUNT
+        );
+        assert_eq!(
+            Beneficiaries::<Test>::iter().collect::<Vec<(_, _)>>(),
+            vec![(USER_3, USER_3_AMOUNT)]
+        );
+    })
+}
 
 #[test]
-fn remove_beneficiaries_not_existing() {}
+fn remove_beneficiaries_not_existing_is_ok() {
+    test_with_configs(
+        WithGenesisBeneficiaries::Yes,
+        GenesisClaimBalance::Sufficient,
+    )
+    .execute_with(|| {
+        let mut beneficiaries_to_remove = GENESIS_BENEFICIARIES_SET.clone();
+        beneficiaries_to_remove.insert(USER_4);
+        assert_ok!(Claim::remove_beneficiaries(
+            Origin::Signed(MANAGER_USER).into(),
+            beneficiaries_to_remove
+        ));
+        assert!(Beneficiaries::<Test>::iter().next().is_none());
+    })
+}
 
 #[test]
 fn end_airdrop() {
@@ -477,7 +671,7 @@ fn end_airdrop_new_airdrop() {
         assert!(Beneficiaries::<Test>::iter().next().is_none());
         assert_eq!(TotalClaimable::<Test>::get(), BalanceOf::<Test>::zero());
         assert!(AirdropActive::<Test>::get());
-        assert_eq!(AirdropId::<Test>::get().unwrap(), 1);
+        assert_eq!(AirdropId::<Test>::get(), Some(1));
         assert_eq!(
             Balances::free_balance(ClaimAccount::get()),
             EXISTENTIAL_DEPOSIT
