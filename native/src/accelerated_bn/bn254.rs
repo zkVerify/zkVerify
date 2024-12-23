@@ -130,7 +130,6 @@ impl CurveHooks for HostHooks {
 ///
 /// `ArkScale`'s `Usage` generic parameter is expected to be set to "not-validated"
 /// and "not-compressed".
-// #[allow(clippy::result_unit_err)]
 #[runtime_interface]
 pub trait HostCalls {
     /// Pairing multi Miller loop for *BN254*.
