@@ -68,12 +68,13 @@ impl CurveHooks for HostHooks {
         g1: impl Iterator<Item = <Bn254 as Pairing>::G1Prepared>,
         g2: impl Iterator<Item = <Bn254 as Pairing>::G2Prepared>,
     ) -> Result<<Bn254 as Pairing>::TargetField, ()> {
-        let g1 = utils::encode(g1.collect::<Vec<_>>());
-        let g2 = utils::encode(g2.collect::<Vec<_>>());
+        let g1 = utils::encode(g1.collect::<Vec<_>>()).as_slice();
+        let g2 = utils::encode(g2.collect::<Vec<_>>()).as_slice();
+        let res = host_calls::bn254_multi_miller_loop(g1, g2)
+            .unwrap_or_default()
+            .as_slice();
+        utils::decode(res).map_err(|_| ());
         let res = host_calls::bn254_multi_miller_loop(g1, g2).unwrap_or_default();
-        utils::decode(res).map_err(|_| ())
-        let res =
-            host_calls::bn254_multi_miller_loop(g1.as_slice(), g2.as_slice()).unwrap_or_default();
         utils::decode(res.as_slice()).map_err(|_| ())
     }
 
@@ -82,9 +83,10 @@ impl CurveHooks for HostHooks {
     ) -> Result<<Bn254 as Pairing>::TargetField, ()> {
         let target = utils::encode(target);
         let res = host_calls::bn254_final_exponentiation(target).unwrap_or_default();
-        utils::decode(res).map_err(|_| ())
+        utils::decode(res).map_err(|_| ());
         let res = host_calls::bn254_final_exponentiation(target.as_slice()).unwrap_or_default();
         utils::decode(res.as_slice()).map_err(|_| ())
+    }
 
     fn bn254_msm_g1(
         bases: &[G1Affine],
@@ -93,9 +95,11 @@ impl CurveHooks for HostHooks {
         let bases = utils::encode(bases);
         let scalars = utils::encode(scalars);
         let res = host_calls::bn254_msm_g1(bases, scalars).unwrap_or_default();
-        utils::decode_proj_sw(res).map_err(|_| ())
-        let res = host_calls::bn254_msm_g1(bases.as_slice(), scalars.as_slice()).unwrap_or_default();
+        utils::decode_proj_sw(res).map_err(|_| ());
+        let res =
+            host_calls::bn254_msm_g1(bases.as_slice(), scalars.as_slice()).unwrap_or_default();
         utils::decode_proj_sw(res.as_slice()).map_err(|_| ())
+    }
 
     fn bn254_msm_g2(
         bases: &[G2Affine],
@@ -104,8 +108,9 @@ impl CurveHooks for HostHooks {
         let bases = utils::encode(bases);
         let scalars = utils::encode(scalars);
         let res = host_calls::bn254_msm_g2(bases, scalars).unwrap_or_default();
-        utils::decode_proj_sw(res).map_err(|_| ())
-        let res = host_calls::bn254_msm_g2(bases.as_slice(), scalars.as_slice()).unwrap_or_default();
+        utils::decode_proj_sw(res).map_err(|_| ());
+        let res =
+            host_calls::bn254_msm_g2(bases.as_slice(), scalars.as_slice()).unwrap_or_default();
         utils::decode_proj_sw(res.as_slice()).map_err(|_| ())
     }
 
@@ -113,17 +118,21 @@ impl CurveHooks for HostHooks {
         let base = utils::encode_proj_sw(base);
         let scalar = utils::encode(scalar);
         let res = host_calls::bn254_mul_projective_g1(base, scalar).unwrap_or_default();
-        utils::decode_proj_sw(res).map_err(|_| ())
-        let res = host_calls::bn254_mul_projective_g1(base.as_slice(), scalar.as_slice()).unwrap_or_default();
+        utils::decode_proj_sw(res).map_err(|_| ());
+        let res = host_calls::bn254_mul_projective_g1(base.as_slice(), scalar.as_slice())
+            .unwrap_or_default();
         utils::decode_proj_sw(res.as_slice()).map_err(|_| ())
+    }
 
     fn bn254_mul_projective_g2(base: &G2Projective, scalar: &[u64]) -> Result<G2Projective, ()> {
         let base = utils::encode_proj_sw(base);
         let scalar = utils::encode(scalar);
         let res = host_calls::bn254_mul_projective_g2(base, scalar).unwrap_or_default();
-        utils::decode_proj_sw(res).map_err(|_| ())
-        let res = host_calls::bn254_mul_projective_g2(base.as_slice(), scalar.as_slice()).unwrap_or_default();
+        utils::decode_proj_sw(res).map_err(|_| ());
+        let res = host_calls::bn254_mul_projective_g2(base.as_slice(), scalar.as_slice())
+            .unwrap_or_default();
         utils::decode_proj_sw(res.as_slice()).map_err(|_| ())
+    }
 }
 
 /// Interfaces for working with *Arkworks* *BN254* elliptic curve related types
@@ -134,7 +143,7 @@ impl CurveHooks for HostHooks {
 ///
 /// `ArkScale`'s `Usage` generic parameter is expected to be set to "not-validated"
 /// and "not-compressed".
-#[allow(clippy::result_unit_err)]
+// #[allow(clippy::result_unit_err)]
 #[runtime_interface]
 pub trait HostCalls {
     /// Pairing multi Miller loop for *BN254*.
@@ -145,7 +154,7 @@ pub trait HostCalls {
     /// - Returns encoded:  `ArkScale<Bn254::TargetField>`.
     #[allow(clippy::result_unit_err)]
     fn bn254_multi_miller_loop(a: &[u8], b: &[u8]) -> Result<Vec<u8>, ()> {
-        utils::multi_miller_loop::<ark_bn254::Bn254>(a, b)
+        utils::native::multi_miller_loop::<ark_bn254::Bn254>(a, b)
     }
 
     /// Pairing final exponentiation for *BN254*.
@@ -154,7 +163,7 @@ pub trait HostCalls {
     /// - Returns encoded:  `ArkScale<Bn254::TargetField>`.
     #[allow(clippy::result_unit_err)]
     fn bn254_final_exponentiation(f: &[u8]) -> Result<Vec<u8>, ()> {
-        utils::final_exponentiation::<ark_bn254::Bn254>(f)
+        utils::native::final_exponentiation::<ark_bn254::Bn254>(f)
     }
 
     /// Multi scalar multiplication on *G1* for *BN254*.
@@ -165,7 +174,7 @@ pub trait HostCalls {
     /// - Returns encoded: `ArkScaleProjective<G1Projective>`.
     #[allow(clippy::result_unit_err)]
     fn bn254_msm_g1(bases: &[u8], scalars: &[u8]) -> Result<Vec<u8>, ()> {
-        utils::msm_sw::<ark_bn254::g1::Config>(bases, scalars)
+        utils::native::msm_sw::<ark_bn254::g1::Config>(bases, scalars)
     }
 
     /// Multi scalar multiplication on *G2* for *BN254*.
@@ -176,7 +185,7 @@ pub trait HostCalls {
     /// - Returns encoded: `ArkScaleProjective<G2Projective>`.
     #[allow(clippy::result_unit_err)]
     fn bn254_msm_g2(bases: &[u8], scalars: &[u8]) -> Result<Vec<u8>, ()> {
-        utils::msm_sw::<ark_bn254::g2::Config>(bases, scalars)
+        utils::native::msm_sw::<ark_bn254::g2::Config>(bases, scalars)
     }
 
     /// Projective multiplication on *G1* for *BN254*.
@@ -187,7 +196,7 @@ pub trait HostCalls {
     /// - Returns encoded: `ArkScaleProjective<G1Projective>`.
     #[allow(clippy::result_unit_err)]
     fn bn254_mul_projective_g1(base: &[u8], scalar: &[u8]) -> Result<Vec<u8>, ()> {
-        utils::mul_projective_sw::<ark_bn254::g1::Config>(base, scalar)
+        utils::native::mul_projective_sw::<ark_bn254::g1::Config>(base, scalar)
     }
 
     /// Projective multiplication on *G2* for *BN254*.
@@ -198,19 +207,18 @@ pub trait HostCalls {
     /// - Returns encoded: `ArkScaleProjective<ark_bn254::G2Projective>`.
     #[allow(clippy::result_unit_err)]
     fn bn254_mul_projective_g2(base: &[u8], scalar: &[u8]) -> Result<Vec<u8>, ()> {
-        utils::mul_projective_sw::<ark_bn254::g2::Config>(base, scalar)
+        utils::native::mul_projective_sw::<ark_bn254::g2::Config>(base, scalar)
     }
 }
 
 #[cfg(test)]
 mod check_against_arkworks {
     use crate::accelerated_bn::test_utils::*;
-    use crate::bn254 as opt_bn254;
 
     #[test]
     pub fn pairing() {
         assert_eq!(
-            multi_pairing::<opt_bn254::Bn254>(),
+            multi_pairing::<crate::bn254::Bn254>(),
             multi_pairing::<ark_bn254::Bn254>()
         );
     }
@@ -218,7 +226,7 @@ mod check_against_arkworks {
     #[test]
     pub fn msm_g1() {
         assert_eq!(
-            msm::<opt_bn254::g1::Config>(),
+            msm::<crate::bn254::g1::Config>(),
             msm::<ark_bn254::g1::Config>()
         );
     }
@@ -226,7 +234,7 @@ mod check_against_arkworks {
     #[test]
     pub fn msm_g2() {
         assert_eq!(
-            msm::<opt_bn254::g2::Config>(),
+            msm::<crate::bn254::g2::Config>(),
             msm::<ark_bn254::g2::Config>()
         );
     }
@@ -234,7 +242,7 @@ mod check_against_arkworks {
     #[test]
     pub fn mul_projective_g1() {
         assert_eq!(
-            mul_projective::<opt_bn254::g1::Config>(),
+            mul_projective::<crate::bn254::g1::Config>(),
             mul_projective::<ark_bn254::g1::Config>()
         );
     }
@@ -242,7 +250,7 @@ mod check_against_arkworks {
     #[test]
     pub fn mul_projective_g2() {
         assert_eq!(
-            mul_projective::<opt_bn254::g2::Config>(),
+            mul_projective::<crate::bn254::g2::Config>(),
             mul_projective::<ark_bn254::g2::Config>()
         );
     }
@@ -250,7 +258,7 @@ mod check_against_arkworks {
     #[test]
     pub fn mul_affine_g1() {
         assert_eq!(
-            mul_affine::<opt_bn254::g1::Config>(),
+            mul_affine::<crate::bn254::g1::Config>(),
             mul_affine::<ark_bn254::g1::Config>()
         );
     }
@@ -258,7 +266,7 @@ mod check_against_arkworks {
     #[test]
     pub fn mul_affine_g2() {
         assert_eq!(
-            mul_affine::<opt_bn254::g2::Config>(),
+            mul_affine::<crate::bn254::g2::Config>(),
             mul_affine::<ark_bn254::g2::Config>()
         );
     }
