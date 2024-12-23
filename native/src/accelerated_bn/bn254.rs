@@ -200,35 +200,30 @@ pub trait HostCalls {
 #[cfg(test)]
 mod check_against_arkworks {
     use crate::accelerated_bn::test_utils::*;
+    use crate::bn254;
 
     #[test]
     pub fn pairing() {
         assert_eq!(
-            multi_pairing::<crate::bn254::Bn254>(),
+            multi_pairing::<bn254::Bn254>(),
             multi_pairing::<ark_bn254::Bn254>()
         );
     }
 
     #[test]
     pub fn msm_g1() {
-        assert_eq!(
-            msm::<crate::bn254::g1::Config>(),
-            msm::<ark_bn254::g1::Config>()
-        );
+        assert_eq!(msm::<bn254::g1::Config>(), msm::<ark_bn254::g1::Config>());
     }
 
     #[test]
     pub fn msm_g2() {
-        assert_eq!(
-            msm::<crate::bn254::g2::Config>(),
-            msm::<ark_bn254::g2::Config>()
-        );
+        assert_eq!(msm::<bn254::g2::Config>(), msm::<ark_bn254::g2::Config>());
     }
 
     #[test]
     pub fn mul_projective_g1() {
         assert_eq!(
-            mul_projective::<crate::bn254::g1::Config>(),
+            mul_projective::<bn254::g1::Config>(),
             mul_projective::<ark_bn254::g1::Config>()
         );
     }
@@ -236,7 +231,7 @@ mod check_against_arkworks {
     #[test]
     pub fn mul_projective_g2() {
         assert_eq!(
-            mul_projective::<crate::bn254::g2::Config>(),
+            mul_projective::<bn254::g2::Config>(),
             mul_projective::<ark_bn254::g2::Config>()
         );
     }
@@ -244,7 +239,7 @@ mod check_against_arkworks {
     #[test]
     pub fn mul_affine_g1() {
         assert_eq!(
-            mul_affine::<crate::bn254::g1::Config>(),
+            mul_affine::<bn254::g1::Config>(),
             mul_affine::<ark_bn254::g1::Config>()
         );
     }
@@ -252,7 +247,7 @@ mod check_against_arkworks {
     #[test]
     pub fn mul_affine_g2() {
         assert_eq!(
-            mul_affine::<crate::bn254::g2::Config>(),
+            mul_affine::<bn254::g2::Config>(),
             mul_affine::<ark_bn254::g2::Config>()
         );
     }
