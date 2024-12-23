@@ -135,7 +135,7 @@ pub trait HostCalls {
     ///   - `b`: `ArkScale<Vec<G2Affine>>`.
     /// - Returns encoded:  `ArkScale<Bn254::TargetField>`.
     #[allow(clippy::result_unit_err)]
-    fn bn254_multi_miller_loop(a: Vec<u8>, b: Vec<u8>) -> Result<Vec<u8>, ()> {
+    fn bn254_multi_miller_loop(a: &[u8], b: &[u8]) -> Result<Vec<u8>, ()> {
         utils::multi_miller_loop::<ark_bn254::Bn254>(a, b)
     }
 
