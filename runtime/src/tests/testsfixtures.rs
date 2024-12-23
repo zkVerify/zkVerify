@@ -14,6 +14,7 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use sp_core::{Pair, Public};
+use sp_std::sync::LazyLock;
 
 use crate::{currency, Balance, EXISTENTIAL_DEPOSIT};
 
@@ -132,6 +133,17 @@ pub fn test() -> sp_io::TestExternalities {
     .assimilate_storage(&mut t)
     .unwrap();
 
+    pallet_claim::GenesisConfig::<super::Runtime> {
+        beneficiaries: SAMPLE_USERS
+            .iter()
+            .cloned()
+            .map(|user| (user.raw_account.into(), user.starting_balance))
+            .collect(),
+        genesis_balance: TOTAL_BALANCE.clone(),
+    }
+    .assimilate_storage(&mut t)
+    .unwrap();
+
     let mut ext = sp_io::TestExternalities::from(t);
 
     ext.execute_with(|| System::set_block_number(1));
@@ -182,3 +194,10 @@ pub static SAMPLE_USERS: [SampleAccount; NUM_TEST_ACCOUNTS as usize] = [
         session_key_seed: 4,
     },
 ];
+
+pub static TOTAL_BALANCE: LazyLock<Balance> = LazyLock::new(|| {
+    SAMPLE_USERS
+        .iter()
+        .map(|account| account.starting_balance)
+        .sum()
+});

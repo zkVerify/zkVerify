@@ -205,6 +205,7 @@ impl crate::Config for Test {
     type Currency = Balances;
     type UnclaimedDestination = UnclaimedDestinationMock;
     type WeightInfo = MockWeightInfo;
+    #[cfg(feature = "runtime-benchmarks")]
     const MAX_BENEFICIARIES: u32 = MaxBeneficiaries::get();
 }
 

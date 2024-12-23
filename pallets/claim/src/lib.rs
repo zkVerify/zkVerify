@@ -457,6 +457,8 @@ pub mod pallet {
             let _ = Beneficiaries::<T>::clear(u32::MAX, None);
 
             // Deal with any remaining balance in the pallet's account
+            // TODO: Shall we want to withdraw all the balance in the pallet's account or only up to
+            // TotalClaimable ?
             let remaining_funds = Self::pot();
             let unclaimed_funds = T::Currency::withdraw(
                 &Self::account_id(),
@@ -498,6 +500,6 @@ where
 impl<T: Config> OnUnbalanced<NegativeImbalanceOf<T>> for Pallet<T> {
     fn on_nonzero_unbalanced(amount: NegativeImbalanceOf<T>) {
         // Must resolve into existing but better to be safe.
-        let _ = T::Currency::resolve_creating(&Self::account_id(), amount);
+        T::Currency::resolve_creating(&Self::account_id(), amount);
     }
 }
