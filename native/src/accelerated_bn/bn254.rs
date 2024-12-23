@@ -166,7 +166,7 @@ pub trait HostCalls {
     ///   - `scalars`: `ArkScale<Vec<G2Config::ScalarField>>`.
     /// - Returns encoded: `ArkScaleProjective<G2Projective>`.
     #[allow(clippy::result_unit_err)]
-    fn bn254_msm_g2(bases: Vec<u8>, scalars: Vec<u8>) -> Result<Vec<u8>, ()> {
+    fn bn254_msm_g2(bases: &[u8], scalars: &[u8]) -> Result<Vec<u8>, ()> {
         utils::msm_sw::<ark_bn254::g2::Config>(bases, scalars)
     }
 
