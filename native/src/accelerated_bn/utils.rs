@@ -43,10 +43,8 @@ pub fn encode<T: CanonicalSerialize>(val: T) -> Vec<u8> {
 }
 
 #[inline(always)]
-pub fn decode<T: CanonicalDeserialize>(buf: Vec<u8>) -> Result<T, ()> {
-    ArkScale::<T>::decode(&mut &buf[..])
-        .map_err(|_| ())
-        .map(|v| v.0)
+pub fn decode<T: CanonicalDeserialize>(mut buf: &[u8]) -> Result<T, ()> {
+    ArkScale::<T>::decode(&mut buf).map_err(|_| ()).map(|v| v.0)
 }
 
 #[inline(always)]
