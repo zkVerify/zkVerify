@@ -62,7 +62,7 @@ pub fn decode_proj_sw<T: SWCurveConfig>(mut buf: &[u8]) -> Result<SWProjective<T
 }
 
 #[allow(unused)]
-pub fn multi_miller_loop<T: Pairing>(g1: Vec<u8>, g2: Vec<u8>) -> Result<Vec<u8>, ()> {
+pub fn multi_miller_loop<T: Pairing>(g1: &[u8], g2: &[u8]) -> Result<Vec<u8>, ()> {
     let g1 = decode::<Vec<<T as Pairing>::G1Affine>>(g1)?;
     let g2 = decode::<Vec<<T as Pairing>::G2Affine>>(g2)?;
     let res = T::multi_miller_loop(g1, g2);
