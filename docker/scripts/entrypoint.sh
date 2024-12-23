@@ -209,6 +209,16 @@ if [ -f "${ZKV_SECRET_PHRASE_PATH}" ]; then
     --scheme Sr25519 \
     --suri "${ZKV_SECRET_PHRASE_PATH}" \
     --key-type imon
+  echo "Injecting key (Parachain)"
+  ${ZKV_NODE} key insert "${injection_args[@]}" \
+    --scheme Sr25519 \
+    --suri "${ZKV_SECRET_PHRASE_PATH}" \
+    --key-type para
+  echo "Injecting key (Authorities Discovery)"
+  ${ZKV_NODE} key insert "${injection_args[@]}" \
+    --scheme Sr25519 \
+    --suri "${ZKV_SECRET_PHRASE_PATH}" \
+    --key-type audi
 fi
 
 # Node-key handling
