@@ -85,7 +85,7 @@ pub fn msm_sw<T: SWCurveConfig>(bases: Vec<u8>, scalars: Vec<u8>) -> Result<Vec<
 }
 
 #[allow(unused)]
-pub fn mul_projective_sw<T: SWCurveConfig>(base: Vec<u8>, scalar: Vec<u8>) -> Result<Vec<u8>, ()> {
+pub fn mul_projective_sw<T: SWCurveConfig>(base: &[u8], scalar: &[u8]) -> Result<Vec<u8>, ()> {
     let base = decode_proj_sw::<T>(base)?;
     let scalar = decode::<Vec<u64>>(scalar)?;
     let res = <T as SWCurveConfig>::mul_projective(&base, &scalar);
