@@ -17,9 +17,9 @@
 
 use core::marker::PhantomData;
 
-use frame_support::{ensure, weights::Weight};
+use frame_support::{ensure, pallet_prelude::*, weights::Weight};
 use hp_verifiers::Verifier;
-use risc0_verifier::{Journal, VerifierContext};
+use risc0_verifier::{CircuitCoreDef, Journal, VerifierContext, Vk as Risc0Vk};
 use sp_core::{Get, H256};
 use sp_std::vec::Vec;
 
@@ -46,9 +46,62 @@ pub trait Config: 'static {
 pub struct Risc0<T>;
 pub use weight::WeightInfo;
 
-pub type Proof = Vec<u8>;
+#[derive(Clone, Debug, PartialEq, Encode, Decode, TypeInfo)]
+pub enum Proof {
+    V1_0(Vec<u8>),
+    V1_1(Vec<u8>),
+    V1_2(Vec<u8>),
+}
+
 pub type Pubs = Vec<u8>;
 pub type Vk = H256;
+
+fn deserialize_and_verify_proof<SC: CircuitCoreDef, RC: CircuitCoreDef>(
+    ctx: &VerifierContext<SC, RC>,
+    vk: Risc0Vk,
+    proof: &[u8],
+    pubs: Journal,
+) -> Result<(), hp_verifiers::VerifyError> {
+    let risc0_proof = bincode::deserialize(proof)
+        .map(risc0_verifier::Proof::new)
+        .map_err(|_| hp_verifiers::VerifyError::InvalidProofData)?;
+    risc0_verifier::verify(ctx, vk, risc0_proof, pubs)
+        .inspect_err(|e| log::debug!("Cannot verify proof: {:?}", e))
+        .map_err(|_| hp_verifiers::VerifyError::VerifyError)
+}
+
+impl Proof {
+    fn verify(&self, vk: &Vk, journal: Journal) -> Result<(), hp_verifiers::VerifyError> {
+        match self {
+            Proof::V1_0(proof_bytes) => deserialize_and_verify_proof(
+                &VerifierContext::v1_0(),
+                vk.0.into(),
+                proof_bytes,
+                journal,
+            ),
+            Proof::V1_1(proof_bytes) => deserialize_and_verify_proof(
+                &VerifierContext::v1_1(),
+                vk.0.into(),
+                proof_bytes,
+                journal,
+            ),
+            Proof::V1_2(proof_bytes) => deserialize_and_verify_proof(
+                &VerifierContext::v1_2(),
+                vk.0.into(),
+                proof_bytes,
+                journal,
+            ),
+        }
+    }
+
+    fn len(&self) -> usize {
+        match self {
+            Proof::V1_0(proof_bytes) => proof_bytes.len(),
+            Proof::V1_1(proof_bytes) => proof_bytes.len(),
+            Proof::V1_2(proof_bytes) => proof_bytes.len(),
+        }
+    }
+}
 
 impl<T: Config> Verifier for Risc0<T> {
     type Proof = Proof;
@@ -76,14 +129,9 @@ impl<T: Config> Verifier for Risc0<T> {
             hp_verifiers::VerifyError::InvalidInput
         );
         log::trace!("Verifying (native)");
-        let proof = bincode::deserialize(proof)
-            .map(risc0_verifier::Proof::new)
-            .map_err(|_| hp_verifiers::VerifyError::InvalidProofData)?;
-        let pubs: Journal =
+        let journal =
             bincode::deserialize(pubs).map_err(|_| hp_verifiers::VerifyError::InvalidInput)?;
-        risc0_verifier::verify(&VerifierContext::v1_0(), vk.0.into(), proof, pubs)
-            .inspect_err(|e| log::debug!("Cannot verify proof: {:?}", e))
-            .map_err(|_| hp_verifiers::VerifyError::VerifyError)
+        proof.verify(vk, journal)
     }
 
     fn pubs_bytes(pubs: &Self::Pubs) -> hp_verifiers::Cow<[u8]> {

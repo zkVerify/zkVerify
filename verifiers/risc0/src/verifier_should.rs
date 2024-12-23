@@ -30,9 +30,8 @@ include!("resources.rs");
 
 #[test]
 fn verify_valid_proof() {
-    assert!(
-        Risc0::<Mock>::verify_proof(&VALID_VK, &VALID_PROOF.to_vec(), &VALID_PUBS.to_vec()).is_ok()
-    );
+    let proof = Proof::V1_0(VALID_PROOF.to_vec());
+    assert!(Risc0::<Mock>::verify_proof(&VALID_VK, &proof, &VALID_PUBS.to_vec()).is_ok());
 }
 
 mod reject {
@@ -44,9 +43,9 @@ mod reject {
     fn invalid_proof() {
         let mut invalid_pubs = VALID_PUBS.clone();
         invalid_pubs[invalid_pubs.len() - 1] = invalid_pubs[invalid_pubs.len() - 1].wrapping_add(1);
-
+        let proof = Proof::V1_0(VALID_PROOF.to_vec());
         assert_eq!(
-            Risc0::<Mock>::verify_proof(&VALID_VK, &VALID_PROOF.to_vec(), &invalid_pubs.to_vec()),
+            Risc0::<Mock>::verify_proof(&VALID_VK, &proof, &invalid_pubs.to_vec()),
             Err(VerifyError::VerifyError)
         )
     }
@@ -55,9 +54,9 @@ mod reject {
     fn undeserializable_proof() {
         let mut malformed_proof = VALID_PROOF.clone();
         malformed_proof[0] = malformed_proof[0].wrapping_add(1);
-
+        let proof = Proof::V1_0(malformed_proof.to_vec());
         assert_eq!(
-            Risc0::<Mock>::verify_proof(&VALID_VK, &malformed_proof.to_vec(), &VALID_PUBS.to_vec()),
+            Risc0::<Mock>::verify_proof(&VALID_VK, &proof, &VALID_PUBS.to_vec()),
             Err(VerifyError::InvalidProofData)
         )
     }
@@ -66,9 +65,9 @@ mod reject {
     fn undeserializable_pubs() {
         let mut malformed_pubs = VALID_PUBS.clone();
         malformed_pubs[0] = malformed_pubs[0].wrapping_add(1);
-
+        let proof = Proof::V1_0(VALID_PROOF.to_vec());
         assert_eq!(
-            Risc0::<Mock>::verify_proof(&VALID_VK, &VALID_PROOF.to_vec(), &malformed_pubs.to_vec()),
+            Risc0::<Mock>::verify_proof(&VALID_VK, &proof, &malformed_pubs.to_vec()),
             Err(VerifyError::InvalidInput)
         )
     }
@@ -76,9 +75,9 @@ mod reject {
     #[test]
     fn too_big_proof() {
         let too_big_proof = vec![0; Mock::max_proof_size() as usize + 1];
-
+        let proof = Proof::V1_0(too_big_proof);
         assert_eq!(
-            Risc0::<Mock>::verify_proof(&VALID_VK, &too_big_proof, &VALID_PUBS.to_vec()),
+            Risc0::<Mock>::verify_proof(&VALID_VK, &proof, &VALID_PUBS.to_vec()),
             Err(VerifyError::InvalidProofData)
         )
     }
@@ -86,9 +85,9 @@ mod reject {
     #[test]
     fn too_big_pubs() {
         let too_big_pubs = vec![0; Mock::max_pubs_size() as usize + 1];
-
+        let proof = Proof::V1_0(VALID_PROOF.to_vec());
         assert_eq!(
-            Risc0::<Mock>::verify_proof(&VALID_VK, &VALID_PROOF.to_vec(), &too_big_pubs),
+            Risc0::<Mock>::verify_proof(&VALID_VK, &proof, &too_big_pubs),
             Err(VerifyError::InvalidInput)
         )
     }

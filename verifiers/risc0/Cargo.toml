@@ -17,6 +17,8 @@ bincode = { version = "1.3.3", default-features = false }
 hp-verifiers = { workspace = true }
 pallet-verifiers = { workspace = true }
 
+codec = { workspace = true }
+scale-info = { workspace = true }
 sp-core = { workspace = true }
 sp-std = { workspace = true }
 frame-support = { workspace = true }
