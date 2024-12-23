@@ -612,6 +612,9 @@ fn end_airdrop() {
         GenesisClaimBalance::Sufficient,
     )
     .execute_with(|| {
+        // Give other balance. Now Self::pot() == SUFFICIENT_GENESIS_BALANCE * 2
+        let _ = Balances::deposit_into_existing(&Claim::account_id(), SUFFICIENT_GENESIS_BALANCE)
+            .unwrap();
         assert_ok!(Claim::end_airdrop(Origin::Signed(MANAGER_USER).into()));
         assert!(!AirdropActive::<Test>::get());
         assert!(Beneficiaries::<Test>::iter().next().is_none());
@@ -623,7 +626,7 @@ fn end_airdrop() {
         assert_eq!(TotalClaimable::<Test>::get(), 0);
         assert_eq!(
             UnclaimedDestinationUnbalanced::get(),
-            SUFFICIENT_GENESIS_BALANCE
+            SUFFICIENT_GENESIS_BALANCE * 2
         );
     });
 }
