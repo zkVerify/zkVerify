@@ -177,7 +177,7 @@ pub trait HostCalls {
     ///   - `scalar`: `ArkScale<Vec<u64>>`.
     /// - Returns encoded: `ArkScaleProjective<G1Projective>`.
     #[allow(clippy::result_unit_err)]
-    fn bn254_mul_projective_g1(base: Vec<u8>, scalar: Vec<u8>) -> Result<Vec<u8>, ()> {
+    fn bn254_mul_projective_g1(base: &[u8], scalar: &[u8]) -> Result<Vec<u8>, ()> {
         utils::mul_projective_sw::<ark_bn254::g1::Config>(base, scalar)
     }
 
