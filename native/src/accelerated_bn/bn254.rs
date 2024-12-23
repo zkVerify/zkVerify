@@ -122,7 +122,8 @@ impl CurveHooks for HostHooks {
         let scalar = utils::encode(scalar);
         let res = host_calls::bn254_mul_projective_g2(base, scalar).unwrap_or_default();
         utils::decode_proj_sw(res).map_err(|_| ())
-    }
+        let res = host_calls::bn254_mul_projective_g2(base.as_slice(), scalar.as_slice()).unwrap_or_default();
+        utils::decode_proj_sw(res.as_slice()).map_err(|_| ())
 }
 
 /// Interfaces for working with *Arkworks* *BN254* elliptic curve related types
