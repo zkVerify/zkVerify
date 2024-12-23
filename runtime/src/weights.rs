@@ -57,4 +57,5 @@ pub mod pallet_zksync_verifier;
 pub mod xcm;
 
 pub mod pallet_hyperbridge_aggregations;
+pub mod pallet_claim;
 pub mod parachains;

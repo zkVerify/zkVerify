@@ -51,19 +51,10 @@
 use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use core::marker::PhantomData;
 
-/// Weight functions needed for `pallet_claim`.
-pub trait WeightInfo {
-    fn begin_airdrop_empty_beneficiaries() -> Weight;
-    fn begin_airdrop_with_beneficiaries(n: u32, ) -> Weight;
-    fn claim() -> Weight;
-    fn claim_for() -> Weight;
-    fn add_beneficiaries(n: u32, ) -> Weight;
-    fn remove_beneficiaries(n: u32, ) -> Weight;
-    fn end_airdrop(n: u32, ) -> Weight;
-}
+/// Weights for `pallet_balances` using the zkVerify node and recommended hardware.
+pub struct ZKVWeight<T>(PhantomData<T>);
 
-// For backwards compatibility and tests.
-impl WeightInfo for () {
+impl<T: frame_system::Config> pallet_claim::WeightInfo for ZKVWeight<T> {
     /// Storage: `Claim::AirdropActive` (r:1 w:1)
     /// Proof: `Claim::AirdropActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
     /// Storage: `Claim::AirdropId` (r:1 w:1)
