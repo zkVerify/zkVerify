@@ -72,6 +72,9 @@ impl CurveHooks for HostHooks {
         let g2 = utils::encode(g2.collect::<Vec<_>>());
         let res = host_calls::bn254_multi_miller_loop(g1, g2).unwrap_or_default();
         utils::decode(res).map_err(|_| ())
+        let res =
+            host_calls::bn254_multi_miller_loop(g1.as_slice(), g2.as_slice()).unwrap_or_default();
+        utils::decode(res.as_slice()).map_err(|_| ())
     }
 
     fn bn254_final_exponentiation(
