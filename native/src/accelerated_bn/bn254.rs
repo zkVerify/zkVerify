@@ -144,7 +144,7 @@ pub trait HostCalls {
     /// - Receives encoded: `ArkScale<Bn254::TargetField>`.
     /// - Returns encoded:  `ArkScale<Bn254::TargetField>`.
     #[allow(clippy::result_unit_err)]
-    fn bn254_final_exponentiation(f: Vec<u8>) -> Result<Vec<u8>, ()> {
+    fn bn254_final_exponentiation(f: &[u8]) -> Result<Vec<u8>, ()> {
         utils::final_exponentiation::<ark_bn254::Bn254>(f)
     }
 
