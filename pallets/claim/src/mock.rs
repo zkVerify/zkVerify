@@ -109,8 +109,12 @@ impl crate::WeightInfo for MockWeightInfo {
         frame_support::weights::Weight::from_parts(Self::REF_TIME, Self::PROOF_SIZE)
     }
 
-    fn begin_airdrop_with_beneficiaries(n: u32, ) -> frame_support::weights::Weight {
-        frame_support::weights::Weight::from_parts(Self::REF_TIME, Self::PROOF_SIZE)
+    fn begin_airdrop_with_beneficiaries(n: u32) -> frame_support::weights::Weight {
+        let variable = 1000 * n as u64;
+        frame_support::weights::Weight::from_parts(
+            Self::REF_TIME + variable,
+            Self::PROOF_SIZE + variable,
+        )
     }
 
     fn claim() -> frame_support::weights::Weight {
@@ -121,16 +125,28 @@ impl crate::WeightInfo for MockWeightInfo {
         frame_support::weights::Weight::from_parts(Self::REF_TIME, Self::PROOF_SIZE)
     }
 
-    fn add_beneficiaries(n: u32, ) -> frame_support::weights::Weight {
-        frame_support::weights::Weight::from_parts(Self::REF_TIME, Self::PROOF_SIZE)
+    fn add_beneficiaries(n: u32) -> frame_support::weights::Weight {
+        let variable = 1000 * n as u64;
+        frame_support::weights::Weight::from_parts(
+            Self::REF_TIME + variable,
+            Self::PROOF_SIZE + variable,
+        )
     }
 
-    fn remove_beneficiaries(n: u32, ) -> frame_support::weights::Weight {
-        frame_support::weights::Weight::from_parts(Self::REF_TIME, Self::PROOF_SIZE)
+    fn remove_beneficiaries(n: u32) -> frame_support::weights::Weight {
+        let variable = 1000 * n as u64;
+        frame_support::weights::Weight::from_parts(
+            Self::REF_TIME + variable,
+            Self::PROOF_SIZE + variable,
+        )
     }
 
-    fn end_airdrop() -> frame_support::weights::Weight {
-        frame_support::weights::Weight::from_parts(Self::REF_TIME, Self::PROOF_SIZE)
+    fn end_airdrop(n: u32) -> frame_support::weights::Weight {
+        let variable = 1000 * n as u64;
+        frame_support::weights::Weight::from_parts(
+            Self::REF_TIME + variable,
+            Self::PROOF_SIZE + variable,
+        )
     }
 }
 
@@ -178,6 +194,7 @@ impl OnUnbalanced<NegativeImbalanceOf<Test>> for UnclaimedDestinationMock {
 parameter_types! {
     pub const ClaimPalletId: PalletId = PalletId(*b"zkvt/clm");
     pub ClaimAccount: AccountId = Claim::account_id();
+    pub const MaxBeneficiaries: u32 = 100;
 }
 
 impl crate::Config for Test {
@@ -188,6 +205,7 @@ impl crate::Config for Test {
     type Currency = Balances;
     type UnclaimedDestination = UnclaimedDestinationMock;
     type WeightInfo = MockWeightInfo;
+    const MAX_BENEFICIARIES: u32 = MaxBeneficiaries::get();
 }
 
 // Configure a mock runtime to test the pallet.

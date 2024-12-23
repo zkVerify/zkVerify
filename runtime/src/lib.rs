@@ -640,6 +640,23 @@ impl pallet_aggregate::Config for Runtime {
     type Currency = Balances;
 }
 
+parameter_types! {
+    pub const ClaimPalletId: PalletId = PalletId(*b"zkv/pclm");
+    pub ZKVerifyClaimAccount: AccountId = ClaimPalletId::get().into_account_truncating();
+    pub const MaxBeneficiaries: u32 = 1_000;
+}
+
+impl pallet_claim::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type PalletId = ClaimPalletId;
+    type ManagerOrigin = EitherOfDiverse<EnsureRoot<AccountId>, Treasurer>;
+    type Paymaster = PayFromAccount<Balances, ZKVerifyClaimAccount>;
+    type Currency = Balances;
+    type UnclaimedDestination = Treasury;
+    type WeightInfo = weights::pallet_claim::ZKVWeight<Runtime>;
+    #[cfg(feature = "runtime-benchmarks")]
+    const MAX_BENEFICIARIES: u32 = MaxBeneficiaries::get();
+}
 
 // We should be sure that the benchmark aggregation size matches the runtime configuration.
 #[cfg(feature = "runtime-benchmarks")]
@@ -1068,6 +1085,7 @@ construct_runtime!(
         Ismp: pallet_ismp,
         IsmpGrandpa: ismp_grandpa,
         HyperbridgeAggregations: pallet_hyperbridge_aggregations,
+        Claim: pallet_claim,
     }
 );
 
@@ -1124,6 +1142,7 @@ construct_runtime!(
         // Our stuff
         Poe: pallet_poe = 80,
         Aggregate: pallet_aggregate = 81,
+        Claim: pallet_claim = 82,
 
         // ISMP
         Ismp: pallet_ismp = 90,
@@ -1245,6 +1264,7 @@ mod benches {
         [pallet_aggregate, Aggregate]
         [pallet_hyperbridge_aggregations, HyperbridgeAggregations]
         [ismp_grandpa, IsmpGrandpa]
+        [pallet_claim, Claim]
         [pallet_zksync_verifier, ZksyncVerifierBench::<Runtime>]
         [pallet_fflonk_verifier, FflonkVerifierBench::<Runtime>]
         [pallet_groth16_verifier, Groth16VerifierBench::<Runtime>]
@@ -1284,7 +1304,11 @@ mod benches {
         [pallet_proxy, Proxy]
         [pallet_aggregate, Aggregate]
         [pallet_hyperbridge_aggregations, HyperbridgeAggregations]
+<<<<<<< HEAD
         [ismp_grandpa, IsmpGrandpa]
+=======
+        [pallet_claim, Claim]
+>>>>>>> af8ebb9 (Add benches and logs)
         [pallet_zksync_verifier, ZksyncVerifierBench::<Runtime>]
         [pallet_fflonk_verifier, FflonkVerifierBench::<Runtime>]
         [pallet_groth16_verifier, Groth16VerifierBench::<Runtime>]

@@ -18,10 +18,8 @@
 use super::*;
 
 use frame_benchmarking::v2::*;
-use frame_support::traits::fungible::{Inspect, Mutate};
 use frame_system::RawOrigin;
 
-const MAX_BENEFICIARIES: u32 = 100;
 const AMOUNT_OFFSET: u32 = 10;
 
 fn get_beneficiaries_map<T: Config>(
@@ -83,7 +81,7 @@ mod benchmarks {
     }
 
     #[benchmark]
-    fn begin_airdrop_with_beneficiaries(n: Linear<1, MAX_BENEFICIARIES>) {
+    fn begin_airdrop_with_beneficiaries(n: Linear<1, <T as Config>::MAX_BENEFICIARIES>) {
         let beneficiaries = init_airdrop_state::<T>(n, false);
 
         #[extrinsic_call]
@@ -121,7 +119,7 @@ mod benchmarks {
     }
 
     #[benchmark]
-    fn add_beneficiaries(n: Linear<1, MAX_BENEFICIARIES>) {
+    fn add_beneficiaries(n: Linear<1, <T as Config>::MAX_BENEFICIARIES>) {
         let mut beneficiaries = init_airdrop_state::<T>(n, true);
 
         mutate_beneficiaries_map::<T>(&mut beneficiaries);
@@ -132,16 +130,16 @@ mod benchmarks {
     }
 
     #[benchmark]
-    fn remove_beneficiaries(n: Linear<1, MAX_BENEFICIARIES>) {
+    fn remove_beneficiaries(n: Linear<1, <T as Config>::MAX_BENEFICIARIES>) {
         let beneficiaries = init_airdrop_state::<T>(n, true);
 
         #[extrinsic_call]
-        remove_beneficiaries(RawOrigin::Root, beneficiaries.keys().cloned().collect());
+        remove_beneficiaries(RawOrigin::Root, beneficiaries.into_keys().collect());
     }
 
     #[benchmark]
-    fn end_airdrop() {
-        let _ = init_airdrop_state::<T>(100, true);
+    fn end_airdrop(n: Linear<1, <T as Config>::MAX_BENEFICIARIES>) {
+        let _ = init_airdrop_state::<T>(n, true);
 
         #[extrinsic_call]
         end_airdrop(RawOrigin::Root);
