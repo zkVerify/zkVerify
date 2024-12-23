@@ -83,7 +83,8 @@ impl CurveHooks for HostHooks {
         let target = utils::encode(target);
         let res = host_calls::bn254_final_exponentiation(target).unwrap_or_default();
         utils::decode(res).map_err(|_| ())
-    }
+        let res = host_calls::bn254_final_exponentiation(target.as_slice()).unwrap_or_default();
+        utils::decode(res.as_slice()).map_err(|_| ())
 
     fn bn254_msm_g1(
         bases: &[G1Affine],
