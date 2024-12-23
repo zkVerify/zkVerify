@@ -70,7 +70,7 @@ pub fn multi_miller_loop<T: Pairing>(g1: Vec<u8>, g2: Vec<u8>) -> Result<Vec<u8>
 }
 
 #[allow(unused)]
-pub fn final_exponentiation<T: Pairing>(target: Vec<u8>) -> Result<Vec<u8>, ()> {
+pub fn final_exponentiation<T: Pairing>(target: &[u8]) -> Result<Vec<u8>, ()> {
     let target = decode::<<T as Pairing>::TargetField>(target)?;
     let res = T::final_exponentiation(MillerLoopOutput(target)).ok_or(())?;
     Ok(encode(res.0))
