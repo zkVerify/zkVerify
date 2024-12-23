@@ -55,8 +55,8 @@ pub fn encode_proj_sw<T: SWCurveConfig>(val: &SWProjective<T>) -> Vec<u8> {
 }
 
 #[inline(always)]
-pub fn decode_proj_sw<T: SWCurveConfig>(buf: Vec<u8>) -> Result<SWProjective<T>, ()> {
-    ArkScaleProjective::decode(&mut &buf[..])
+pub fn decode_proj_sw<T: SWCurveConfig>(mut buf: &[u8]) -> Result<SWProjective<T>, ()> {
+    ArkScaleProjective::decode(&mut buf)
         .map_err(|_| ())
         .map(|v| v.0)
 }
