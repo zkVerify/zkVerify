@@ -105,6 +105,8 @@ impl CurveHooks for HostHooks {
         let scalars = utils::encode(scalars);
         let res = host_calls::bn254_msm_g2(bases, scalars).unwrap_or_default();
         utils::decode_proj_sw(res).map_err(|_| ())
+        let res = host_calls::bn254_msm_g2(bases.as_slice(), scalars.as_slice()).unwrap_or_default();
+        utils::decode_proj_sw(res.as_slice()).map_err(|_| ())
     }
 
     fn bn254_mul_projective_g1(base: &G1Projective, scalar: &[u64]) -> Result<G1Projective, ()> {
