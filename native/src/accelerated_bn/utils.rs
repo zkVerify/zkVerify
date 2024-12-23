@@ -63,7 +63,6 @@ pub fn decode_proj_sw<T: SWCurveConfig>(mut buf: &[u8]) -> Result<SWProjective<T
 pub mod native {
     use super::*;
 
-    #[allow(unused)]
     pub fn multi_miller_loop<T: Pairing>(g1: &[u8], g2: &[u8]) -> Result<Vec<u8>, ()> {
         let g1 = decode::<Vec<<T as Pairing>::G1Affine>>(g1)?;
         let g2 = decode::<Vec<<T as Pairing>::G2Affine>>(g2)?;
@@ -71,14 +70,12 @@ pub mod native {
         Ok(encode(res.0))
     }
 
-    #[allow(unused)]
     pub fn final_exponentiation<T: Pairing>(target: &[u8]) -> Result<Vec<u8>, ()> {
         let target = decode::<<T as Pairing>::TargetField>(target)?;
         let res = T::final_exponentiation(MillerLoopOutput(target)).ok_or(())?;
         Ok(encode(res.0))
     }
 
-    #[allow(unused)]
     pub fn msm_sw<T: SWCurveConfig>(bases: &[u8], scalars: &[u8]) -> Result<Vec<u8>, ()> {
         let bases = decode::<Vec<SWAffine<T>>>(bases)?;
         let scalars = decode::<Vec<<T as CurveConfig>::ScalarField>>(scalars)?;
@@ -86,7 +83,6 @@ pub mod native {
         Ok(encode_proj_sw(&res))
     }
 
-    #[allow(unused)]
     pub fn mul_projective_sw<T: SWCurveConfig>(base: &[u8], scalar: &[u8]) -> Result<Vec<u8>, ()> {
         let base = decode_proj_sw::<T>(base)?;
         let scalar = decode::<Vec<u64>>(scalar)?;
