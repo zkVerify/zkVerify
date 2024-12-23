@@ -16,11 +16,13 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![deny(missing_docs)]
 
-//! A pallet implementing the possibility of making airdrops on-chain and letting beneficiaries
+//! A pallet implementing the possibility of making airdrops on-chain and letting **Beneficiaries**
 //! manually claim the amount of tokens they have right to.
-//! Only a pre-specified origin is able to start and end airdrops, as well as adding and removing
+//! Only **ManagerOrigin** is able to start and end airdrops, as well as adding and removing
 //! beneficiaries with their rightful balance.
 //! Currently it possible only to held one airdrop at a time.
+//! When airdrop ends, all the funds still available in the pallet's associated account
+//! are transferred to **UnclaimedDestination**.
 //!
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
@@ -83,9 +85,11 @@ pub mod pallet {
             Balance = BalanceOf<Self>,
         >;
 
+        // TODO: Switch to Fungible trait
         /// The staking balance.
         type Currency: Currency<Self::AccountId>;
 
+        // TODO: Switch to Fungible trait
         /// Handler for the unbalanced decrease when dealing with unclaimed assets.
         type UnclaimedDestination: OnUnbalanced<NegativeImbalanceOf<Self>>;
 
