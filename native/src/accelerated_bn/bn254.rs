@@ -68,13 +68,10 @@ impl CurveHooks for HostHooks {
         g1: impl Iterator<Item = <Bn254 as Pairing>::G1Prepared>,
         g2: impl Iterator<Item = <Bn254 as Pairing>::G2Prepared>,
     ) -> Result<<Bn254 as Pairing>::TargetField, ()> {
-        let g1 = utils::encode(g1.collect::<Vec<_>>()).as_slice();
-        let g2 = utils::encode(g2.collect::<Vec<_>>()).as_slice();
-        let res = host_calls::bn254_multi_miller_loop(g1, g2)
-            .unwrap_or_default()
-            .as_slice();
-        utils::decode(res).map_err(|_| ());
-        let res = host_calls::bn254_multi_miller_loop(g1, g2).unwrap_or_default();
+        let g1 = utils::encode(g1.collect::<Vec<_>>());
+        let g2 = utils::encode(g2.collect::<Vec<_>>());
+        let res =
+            host_calls::bn254_multi_miller_loop(g1.as_slice(), g2.as_slice()).unwrap_or_default();
         utils::decode(res.as_slice()).map_err(|_| ())
     }
 
@@ -82,8 +79,6 @@ impl CurveHooks for HostHooks {
         target: <Bn254 as Pairing>::TargetField,
     ) -> Result<<Bn254 as Pairing>::TargetField, ()> {
         let target = utils::encode(target);
-        let res = host_calls::bn254_final_exponentiation(target).unwrap_or_default();
-        utils::decode(res).map_err(|_| ());
         let res = host_calls::bn254_final_exponentiation(target.as_slice()).unwrap_or_default();
         utils::decode(res.as_slice()).map_err(|_| ())
     }
@@ -94,8 +89,6 @@ impl CurveHooks for HostHooks {
     ) -> Result<G1Projective, ()> {
         let bases = utils::encode(bases);
         let scalars = utils::encode(scalars);
-        let res = host_calls::bn254_msm_g1(bases, scalars).unwrap_or_default();
-        utils::decode_proj_sw(res).map_err(|_| ());
         let res =
             host_calls::bn254_msm_g1(bases.as_slice(), scalars.as_slice()).unwrap_or_default();
         utils::decode_proj_sw(res.as_slice()).map_err(|_| ())
@@ -107,8 +100,6 @@ impl CurveHooks for HostHooks {
     ) -> Result<G2Projective, ()> {
         let bases = utils::encode(bases);
         let scalars = utils::encode(scalars);
-        let res = host_calls::bn254_msm_g2(bases, scalars).unwrap_or_default();
-        utils::decode_proj_sw(res).map_err(|_| ());
         let res =
             host_calls::bn254_msm_g2(bases.as_slice(), scalars.as_slice()).unwrap_or_default();
         utils::decode_proj_sw(res.as_slice()).map_err(|_| ())
@@ -117,8 +108,6 @@ impl CurveHooks for HostHooks {
     fn bn254_mul_projective_g1(base: &G1Projective, scalar: &[u64]) -> Result<G1Projective, ()> {
         let base = utils::encode_proj_sw(base);
         let scalar = utils::encode(scalar);
-        let res = host_calls::bn254_mul_projective_g1(base, scalar).unwrap_or_default();
-        utils::decode_proj_sw(res).map_err(|_| ());
         let res = host_calls::bn254_mul_projective_g1(base.as_slice(), scalar.as_slice())
             .unwrap_or_default();
         utils::decode_proj_sw(res.as_slice()).map_err(|_| ())
@@ -127,8 +116,6 @@ impl CurveHooks for HostHooks {
     fn bn254_mul_projective_g2(base: &G2Projective, scalar: &[u64]) -> Result<G2Projective, ()> {
         let base = utils::encode_proj_sw(base);
         let scalar = utils::encode(scalar);
-        let res = host_calls::bn254_mul_projective_g2(base, scalar).unwrap_or_default();
-        utils::decode_proj_sw(res).map_err(|_| ());
         let res = host_calls::bn254_mul_projective_g2(base.as_slice(), scalar.as_slice())
             .unwrap_or_default();
         utils::decode_proj_sw(res.as_slice()).map_err(|_| ())
