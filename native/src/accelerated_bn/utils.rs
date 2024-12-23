@@ -77,7 +77,7 @@ pub fn final_exponentiation<T: Pairing>(target: &[u8]) -> Result<Vec<u8>, ()> {
 }
 
 #[allow(unused)]
-pub fn msm_sw<T: SWCurveConfig>(bases: Vec<u8>, scalars: Vec<u8>) -> Result<Vec<u8>, ()> {
+pub fn msm_sw<T: SWCurveConfig>(bases: &[u8], scalars: &[u8]) -> Result<Vec<u8>, ()> {
     let bases = decode::<Vec<SWAffine<T>>>(bases)?;
     let scalars = decode::<Vec<<T as CurveConfig>::ScalarField>>(scalars)?;
     let res = <SWProjective<T> as VariableBaseMSM>::msm(&bases, &scalars).map_err(|_| ())?;
