@@ -9,9 +9,9 @@ use pallet_aggregate::{funded_account, insert_domain};
 use pallet_verifiers::{Tickets, VkEntry, VkOrHash, Vks};
 
 pub struct Pallet<T: Config>(crate::Pallet<T>);
-pub trait Config: pallet_verifiers::Config<Plonky2> {}
-impl<T: pallet_verifiers::Config<Plonky2>> Config for T {}
-pub type Call<T> = pallet_verifiers::Call<T, Plonky2>;
+pub trait Config: crate::Config {}
+impl<T: crate::Config> Config for T {}
+pub type Call<T> = pallet_verifiers::Call<T, Plonky2<T>>;
 
 include!("resources.rs");
 
@@ -22,7 +22,7 @@ fn init<T: pallet_aggregate::Config>() -> (T::AccountId, u32) {
     (caller, domain_id)
 }
 
-#[benchmarks(where T: pallet_aggregate::Config)]
+#[benchmarks(where T: pallet_verifiers::Config<Plonky2<T>> + pallet_aggregate::Config)]
 mod benchmarks {
 
     use super::*;
@@ -51,7 +51,7 @@ mod benchmarks {
         let TestData { vk, proof, pubs } = get_valid_test_data();
         let vk_entry = VkEntry::new(vk);
         let hash = sp_core::H256::repeat_byte(2);
-        Vks::<T, Plonky2>::insert(hash, vk_entry);
+        Vks::<T, Plonky2<T>>::insert(hash, vk_entry);
 
         #[extrinsic_call]
         submit_proof(
@@ -73,7 +73,7 @@ mod benchmarks {
         register_vk(RawOrigin::Signed(caller), vk.clone().into());
 
         // Verify
-        assert!(Vks::<T, Plonky2>::get(Plonky2::vk_hash(&vk)).is_some());
+        assert!(Vks::<T, Plonky2<T>>::get(Plonky2::<T>::vk_hash(&vk)).is_some());
     }
 
     #[benchmark]
@@ -86,8 +86,8 @@ mod benchmarks {
         let footprint = Footprint::from_encodable(&vk);
         let ticket = T::Ticket::new(&caller, footprint).unwrap();
 
-        Vks::<T, Plonky2>::insert(hash, vk_entry);
-        Tickets::<T, Plonky2>::insert((caller.clone(), hash), ticket);
+        Vks::<T, Plonky2<T>>::insert(hash, vk_entry);
+        Tickets::<T, Plonky2<T>>::insert((caller.clone(), hash), ticket);
 
         #[extrinsic_call]
         unregister_vk(RawOrigin::Signed(caller), hash);
@@ -98,7 +98,6 @@ mod benchmarks {
 
 #[cfg(test)]
 mod mock {
-    // use super::*;
     use frame_support::sp_runtime::{traits::IdentityLookup, BuildStorage};
     use frame_support::traits::fungible::HoldConsideration;
     use frame_support::traits::LinearStoragePrice;
@@ -178,7 +177,13 @@ mod mock {
         type MaxFreezes = ConstU32<10>;
     }
 
-    impl pallet_verifiers::Config<crate::Plonky2> for Test {
+    impl crate::Config for Test {
+        type MaxProofSize = ConstU32<1000000>;
+        type MaxPubsSize = ConstU32<1000000>;
+        type MaxVkSize = ConstU32<1000000>;
+    }
+
+    impl pallet_verifiers::Config<crate::Plonky2<Test>> for Test {
         type RuntimeEvent = RuntimeEvent;
         type OnProofVerified = Aggregate;
         type WeightInfo = crate::Plonky2Weight<()>;

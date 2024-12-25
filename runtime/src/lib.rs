@@ -1026,9 +1026,21 @@ impl IsmpRouter for ModuleRouter {
     }
 }
 
-impl pallet_verifiers::Config<pallet_plonky2_verifier::Plonky2> for Runtime {
+parameter_types! {
+    pub const Plonky2MaxPubsSize: u32 = 262_144;
+    pub const Plonky2MaxProofSize: u32 = 262_144;
+    pub const Plonky2MaxVkSize: u32 = 262_144;
+}
+
+impl pallet_plonky2_verifier::Config for Runtime {
+    type MaxProofSize = Plonky2MaxPubsSize;
+    type MaxPubsSize = Plonky2MaxProofSize;
+    type MaxVkSize = Plonky2MaxVkSize;
+}
+
+impl pallet_verifiers::Config<pallet_plonky2_verifier::Plonky2<Runtime>> for Runtime {
     type RuntimeEvent = RuntimeEvent;
-    type OnProofVerified = Poe;
+    type OnProofVerified = (Poe, Aggregate);
     type Ticket = VkRegistrationHoldConsideration;
     type WeightInfo = pallet_plonky2_verifier::Plonky2Weight<
         weights::pallet_plonky2_verifier::ZKVWeight<Runtime>,
