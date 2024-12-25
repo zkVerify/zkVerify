@@ -8577,6 +8577,7 @@ dependencies = [
 name = "pallet-plonky2-verifier"
 version = "0.1.0"
 dependencies = [
+ "educe",
  "frame-benchmarking",
  "frame-support",
  "frame-system",

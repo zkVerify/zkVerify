@@ -6,7 +6,7 @@ homepage.workspace = true
 edition.workspace = true
 authors.workspace = true
 repository.workspace = true
-license = "GPL-3.0"
+license = "Apache-2.0"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
@@ -26,6 +26,11 @@ frame-support = { workspace = true }
 plonky2-verifier = {git = "https://github.com/distributed-lab/plonky2-verifier", default-features = false}
 pallet-aggregate = { workspace = true, optional = true, default-features = false, features = [
     "runtime-benchmarks",
+] }
+educe = { version = "0.6.0", default-features = false, features = [
+    "Clone",
+    "Debug",
+    "PartialEq",
 ] }
 
 [dev-dependencies]

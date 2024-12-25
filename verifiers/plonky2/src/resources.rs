@@ -1,17 +1,25 @@
 #[allow(unused_imports)]
 use super::*;
 
+struct MockConfig;
+
+impl crate::Config for MockConfig {
+    type MaxProofSize = ConstU32<1000000>;
+    type MaxPubsSize = ConstU32<1000000>;
+    type MaxVkSize = ConstU32<1000000>;
+}
+
 #[allow(dead_code)]
-struct TestData {
-    pub(crate) vk: Vk,
+struct TestData<T: Config> {
+    pub(crate) vk: Vk<T>,
     proof: Proof,
     pubs: Pubs,
 }
 
 #[allow(dead_code)]
-fn get_valid_test_data() -> TestData {
+fn get_valid_test_data<T: Config>() -> TestData<T> {
     let vk = include_bytes!("resources/vk.bin");
-    let vk = BoundedVec::try_from(vk.to_vec()).unwrap();
+    let vk = Vk::<T>(vk.to_vec(), PhantomData);
 
     TestData {
         vk,
