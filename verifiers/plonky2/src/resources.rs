@@ -18,11 +18,8 @@ struct TestData<T: Config> {
 
 #[allow(dead_code)]
 fn get_valid_test_data<T: Config>() -> TestData<T> {
-    let vk = include_bytes!("resources/vk.bin");
-    let vk = Vk::<T>(vk.to_vec(), PhantomData);
-
     TestData {
-        vk,
+        vk: include_bytes!("resources/vk.bin").to_vec().into(),
         proof: include_bytes!("resources/proof.bin").to_vec(),
         pubs: include_bytes!("resources/pubs.bin").to_vec(),
     }
