@@ -324,13 +324,13 @@ fn pallet_plonky2_availability() {
     test().execute_with(|| {
         let dummy_origin = AccountId32::new([0; 32]);
 
-        let dummy_vk = Vec::new();
+        let dummy_vk = pallet_plonky2_verifier::VerificationKeyWithSystemConfig::default();
         let dummy_proof = Vec::new();
         let dummy_pubs = Vec::new();
 
         assert!(SettlementPlonky2Pallet::submit_proof(
             RuntimeOrigin::signed(dummy_origin),
-            VkOrHash::Vk(Box::new(dummy_vk.into())),
+            VkOrHash::Vk(Box::new(dummy_vk)),
             dummy_proof.into(),
             dummy_pubs.into(),
             None,
