@@ -9101,7 +9101,7 @@ checksum = "4e69bf016dc406eff7d53a7d3f7cf1c2e72c82b9088aac1118591e36dd2cd3e9"
 dependencies = [
  "bitcoin_hashes",
  "rand 0.8.5",
- "rand_core 0.6.4",
+ "rand_core 0.4.2",
  "serde",
  "unicode-normalization",
 ]
@@ -9400,7 +9400,7 @@ checksum = "953ec861398dccce10c670dfeaf3ec4911ca479e9c02154b3a215178c5f566f2"
 [[package]]
 name = "plonky2"
 version = "1.0.0"
-source = "git+https://github.com/distributed-lab/plonky2?branch=stable#4f4d41be1c7208eb45824ad7106e119708651560"
+source = "git+https://github.com/distributed-lab/plonky2?branch=stable#f559fa7eb81dd9b5c990494e1740ef54c38362e0"
 dependencies = [
  "anyhow",
  "hashbrown 0.15.2",
@@ -9420,7 +9420,7 @@ dependencies = [
 [[package]]
 name = "plonky2-verifier"
 version = "0.1.0"
-source = "git+https://github.com/distributed-lab/plonky2-verifier#bdfdafa8dc865d334edc0c3a4175779a13d72479"
+source = "git+https://github.com/distributed-lab/plonky2-verifier#66cd35b7d65301f4a8ddb5a3d03b43f8bf3713c7"
 dependencies = [
  "plonky2",
  "snafu 0.8.5",
@@ -9429,7 +9429,7 @@ dependencies = [
 [[package]]
 name = "plonky2_field"
 version = "1.0.0"
-source = "git+https://github.com/distributed-lab/plonky2?branch=stable#4f4d41be1c7208eb45824ad7106e119708651560"
+source = "git+https://github.com/distributed-lab/plonky2?branch=stable#f559fa7eb81dd9b5c990494e1740ef54c38362e0"
 dependencies = [
  "anyhow",
  "itertools 0.11.0",
@@ -9445,12 +9445,12 @@ dependencies = [
 [[package]]
 name = "plonky2_maybe_rayon"
 version = "1.0.0"
-source = "git+https://github.com/distributed-lab/plonky2?branch=stable#4f4d41be1c7208eb45824ad7106e119708651560"
+source = "git+https://github.com/distributed-lab/plonky2?branch=stable#f559fa7eb81dd9b5c990494e1740ef54c38362e0"
 
 [[package]]
 name = "plonky2_util"
 version = "1.0.0"
-source = "git+https://github.com/distributed-lab/plonky2?branch=stable#4f4d41be1c7208eb45824ad7106e119708651560"
+source = "git+https://github.com/distributed-lab/plonky2?branch=stable#f559fa7eb81dd9b5c990494e1740ef54c38362e0"
 
 [[package]]
 name = "polkadot-approval-distribution"
@@ -11037,7 +11037,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "22505a5c94da8e3b7c2996394d1c933236c4d743e81a410bcca4e6989fc066a4"
 dependencies = [
  "bytes",
- "heck 0.5.0",
+ "heck 0.4.1",
  "itertools 0.12.1",
  "log",
  "multimap 0.10.0",
@@ -14208,7 +14208,7 @@ version = "0.8.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "03c3c6b7927ffe7ecaa769ee0e3994da3b8cafc8f444578982c83ecb161af917"
 dependencies = [
- "heck 0.5.0",
+ "heck 0.4.1",
  "proc-macro2",
  "quote",
  "syn 2.0.90",
@@ -16438,9 +16438,9 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "digest 0.10.7",
- "rand 0.8.5",
+ "rand 0.4.6",
  "static_assertions",
 ]
 
