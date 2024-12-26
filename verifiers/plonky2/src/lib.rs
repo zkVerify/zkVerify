@@ -1,54 +1,35 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 extern crate alloc;
 
+pub use crate::vk::{Plonky2SystemConfig, VerificationKeyWithSystemConfig};
 use alloc::vec::Vec;
-use codec::{Decode, Encode, MaxEncodedLen};
 use core::marker::PhantomData;
-use educe::Educe;
 use frame_support::__private::Get;
 use frame_support::ensure;
 use frame_support::traits::ConstU32;
 use frame_support::weights::Weight;
 use hp_verifiers::{Cow, Verifier, VerifyError};
-use plonky2_verifier::validate::validate_vk_default_poseidon;
-use plonky2_verifier::verify_default_poseidon;
-use scale_info::TypeInfo;
+use plonky2_verifier::validate::{validate_vk_default_keccak, validate_vk_default_poseidon};
+use plonky2_verifier::{verify_default_keccak, verify_default_poseidon};
 
 pub mod benchmarking;
 mod resources;
 pub(crate) mod verifier_should;
+mod vk;
 mod weight;
 
 pub use weight::WeightInfo;
 
 pub type Pubs = Vec<u8>;
 pub type Proof = Vec<u8>;
-
-// Here educe is used for Clone, Debug, and PartialEq to work around
-// a long-standing compiler bug https://github.com/rust-lang/rust/issues/26925
-#[derive(Educe, Encode, Decode, TypeInfo)]
-#[educe(Clone, Debug, PartialEq)]
-#[scale_info(skip_type_params(T))]
-pub struct Vk<T>(Vec<u8>, PhantomData<T>);
-
-impl<T> From<Vec<u8>> for Vk<T> {
-    fn from(value: Vec<u8>) -> Self {
-        Self(value, PhantomData)
-    }
-}
+pub type Vk<T> = VerificationKeyWithSystemConfig<T>;
 
 impl<T: Config> Vk<T> {
     pub fn validate_size(&self) -> Result<(), VerifyError> {
-        match self.0.len() < T::max_vk_size() as usize {
+        match self.vk_serialized.len() < T::max_vk_size() as usize {
             true => Ok(()),
             false => Err(VerifyError::InvalidVerificationKey),
         }
-    }
-}
-
-impl<T: Config> MaxEncodedLen for Vk<T> {
-    fn max_encoded_len() -> usize {
-        T::max_vk_size() as usize
     }
 }
 
@@ -101,16 +82,26 @@ impl<T: Config> Verifier for Plonky2<T> {
             hp_verifiers::VerifyError::InvalidInput
         );
         vk.validate_size()?;
-        verify_default_poseidon(&vk.0, raw_proof, raw_pubs)
-            .map_err(|e| log::debug!("Proof verification failed: {:?}", e))
-            .map_err(|_| VerifyError::VerifyError)
+        match vk.system_config {
+            Plonky2SystemConfig::Keccak => {
+                verify_default_keccak(&vk.vk_serialized, raw_proof, raw_pubs)
+            }
+            Plonky2SystemConfig::Poseidon => {
+                verify_default_poseidon(&vk.vk_serialized, raw_proof, raw_pubs)
+            }
+        }
+        .map_err(|e| log::debug!("Proof verification failed: {:?}", e))
+        .map_err(|_| VerifyError::VerifyError)
     }
 
     fn validate_vk(vk: &Self::Vk) -> Result<(), VerifyError> {
         vk.validate_size()?;
-        validate_vk_default_poseidon(&vk.0)
-            .map_err(|e| log::debug!("VK validation failed: {:?}", e))
-            .map_err(|_| VerifyError::InvalidVerificationKey)
+        match vk.system_config {
+            Plonky2SystemConfig::Keccak => validate_vk_default_keccak(&vk.vk_serialized),
+            Plonky2SystemConfig::Poseidon => validate_vk_default_poseidon(&vk.vk_serialized),
+        }
+        .map_err(|e| log::debug!("VK validation failed: {:?}", e))
+        .map_err(|_| VerifyError::InvalidVerificationKey)
     }
 
     fn pubs_bytes(pubs: &Self::Pubs) -> Cow<[u8]> {

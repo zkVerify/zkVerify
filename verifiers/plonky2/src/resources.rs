@@ -19,7 +19,9 @@ struct TestData<T: Config> {
 #[allow(dead_code)]
 fn get_valid_test_data<T: Config>() -> TestData<T> {
     TestData {
-        vk: include_bytes!("resources/vk.bin").to_vec().into(),
+        vk: VerificationKeyWithSystemConfig::from_default_with_bytes(
+            include_bytes!("resources/vk.bin").to_vec(),
+        ),
         proof: include_bytes!("resources/proof.bin").to_vec(),
         pubs: include_bytes!("resources/pubs.bin").to_vec(),
     }
