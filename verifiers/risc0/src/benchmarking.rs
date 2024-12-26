@@ -490,8 +490,8 @@ mod mock {
     );
 
     impl crate::Config for Test {
-        type MaxProofSize = ConstU32<2455714>;
-        type MaxPubsSize = ConstU32<2060>;
+        type MaxProofSize = ConstU32<1000000>;
+        type MaxPubsSize = ConstU32<1000000>;
     }
 
     #[derive_impl(frame_system::config_preludes::SolochainDefaultConfig as frame_system::DefaultConfig)]
