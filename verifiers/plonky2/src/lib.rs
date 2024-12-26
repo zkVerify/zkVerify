@@ -31,6 +31,12 @@ pub type Proof = Vec<u8>;
 #[scale_info(skip_type_params(T))]
 pub struct Vk<T>(Vec<u8>, PhantomData<T>);
 
+impl<T> From<Vec<u8>> for Vk<T> {
+    fn from(value: Vec<u8>) -> Self {
+        Self(value, PhantomData)
+    }
+}
+
 impl<T: Config> Vk<T> {
     pub fn validate_size(&self) -> Result<(), VerifyError> {
         match self.0.len() < T::max_vk_size() as usize {
