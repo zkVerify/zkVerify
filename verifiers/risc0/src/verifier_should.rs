@@ -31,6 +31,7 @@ include!("resources.rs");
 #[test]
 fn verify_valid_proof() {
     let proof = Proof::V1_0(VALID_PROOF.to_vec());
+    Risc0::<Mock>::verify_proof(&VALID_VK, &proof, &VALID_PUBS.to_vec()).unwrap();
     assert!(Risc0::<Mock>::verify_proof(&VALID_VK, &proof, &VALID_PUBS.to_vec()).is_ok());
 }
 
@@ -58,17 +59,6 @@ mod reject {
         assert_eq!(
             Risc0::<Mock>::verify_proof(&VALID_VK, &proof, &VALID_PUBS.to_vec()),
             Err(VerifyError::InvalidProofData)
-        )
-    }
-
-    #[test]
-    fn undeserializable_pubs() {
-        let mut malformed_pubs = VALID_PUBS.clone();
-        malformed_pubs[0] = malformed_pubs[0].wrapping_add(1);
-        let proof = Proof::V1_0(VALID_PROOF.to_vec());
-        assert_eq!(
-            Risc0::<Mock>::verify_proof(&VALID_VK, &proof, &malformed_pubs.to_vec()),
-            Err(VerifyError::InvalidInput)
         )
     }
 

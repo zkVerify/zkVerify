@@ -491,7 +491,7 @@ mod mock {
     );
 
     impl crate::Config for Test {
-        type MaxProofSize = ConstU32<2455714>;
+        type MaxProofSize = ConstU32<3067823>;
         type MaxPubsSize = ConstU32<2060>;
     }
 

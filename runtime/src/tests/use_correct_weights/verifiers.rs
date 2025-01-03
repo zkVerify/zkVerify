@@ -74,7 +74,7 @@ fn pallet_settlement_risc0() {
         <<Runtime as pallet_verifiers::Config<Risc0<Runtime>>>::WeightInfo as
             pallet_verifiers::WeightInfo<Risc0<Runtime>>>
             ::submit_proof(
-            &Vec::new(),
+            &pallet_risc0_verifier::Proof::V1_1(Vec::new()),
             &Vec::new()
         ),
         crate::weights::pallet_risc0_verifier::ZKVWeight::<Runtime>::submit_proof_cycle_2_pow_13()

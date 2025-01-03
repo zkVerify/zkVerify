@@ -62,9 +62,8 @@ fn deserialize_and_verify_proof<SC: CircuitCoreDef, RC: CircuitCoreDef>(
     proof: &[u8],
     pubs: Journal,
 ) -> Result<(), hp_verifiers::VerifyError> {
-    let risc0_proof = bincode::deserialize(proof)
-        .map(risc0_verifier::Proof::new)
-        .map_err(|_| hp_verifiers::VerifyError::InvalidProofData)?;
+    let risc0_proof =
+        ciborium::from_reader(proof).map_err(|_| hp_verifiers::VerifyError::InvalidProofData)?;
     risc0_verifier::verify(ctx, vk, risc0_proof, pubs)
         .inspect_err(|e| log::debug!("Cannot verify proof: {:?}", e))
         .map_err(|_| hp_verifiers::VerifyError::VerifyError)
@@ -129,8 +128,7 @@ impl<T: Config> Verifier for Risc0<T> {
             hp_verifiers::VerifyError::InvalidInput
         );
         log::trace!("Verifying (native)");
-        let journal =
-            bincode::deserialize(pubs).map_err(|_| hp_verifiers::VerifyError::InvalidInput)?;
+        let journal = Journal::new(pubs.to_vec());
         proof.verify(vk, journal)
     }
 
