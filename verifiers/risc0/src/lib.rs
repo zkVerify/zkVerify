@@ -143,6 +143,15 @@ impl<T: Config> Verifier for Risc0<T> {
     fn vk_bytes(_vk: &Self::Vk) -> hp_verifiers::Cow<[u8]> {
         panic!("Risc0 vk is already hashed and we cannot know its preimage: use vk_hash() instead")
     }
+
+    fn verifier_version_hash(proof: &Self::Proof) -> Option<H256> {
+        let h = match proof {
+            Proof::V1_0(_) => sp_io::hashing::sha2_256(b"risc0:v1.0"),
+            Proof::V1_1(_) => sp_io::hashing::sha2_256(b"risc0:v1.1"),
+            Proof::V1_2(_) => sp_io::hashing::sha2_256(b"risc0:v1.2"),
+        };
+        H256(h).into()
+    }
 }
 
 /// The struct to use in runtime pallet configuration to map the weight computed by this crate

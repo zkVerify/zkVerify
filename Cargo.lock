@@ -8615,6 +8615,7 @@ dependencies = [
  "pallet-verifiers",
  "parity-scale-codec",
  "risc0-verifier",
+ "rstest",
  "scale-info",
  "sp-core",
  "sp-io",
