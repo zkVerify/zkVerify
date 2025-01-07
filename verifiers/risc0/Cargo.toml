@@ -11,7 +11,7 @@ license = "Apache-2.0"
 [dependencies]
 log = "0.4.21"
 hex-literal = { workspace = true, optional = true }
-risc0-verifier = { git = "https://github.com/HorizenLabs/risc0-verifier.git", branch = "md/no_std" }
+risc0-verifier = { workspace = true }
 ciborium = { version = "0.2.2", default-features = false }
 
 hp-verifiers = { workspace = true }

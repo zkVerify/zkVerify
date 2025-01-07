@@ -7381,11 +7381,13 @@ checksum = "6a51313c5820b0b02bd422f4b44776fbf47961755c74ce64afc73bfad10226c3"
 name = "native"
 version = "0.3.0"
 dependencies = [
+ "bincode",
  "hp-groth16",
  "hp-verifiers",
  "log",
  "native-cache",
  "parity-scale-codec",
+ "risc0-verifier",
  "sp-runtime-interface",
  "ultraplonk_verifier",
  "zksync-era-verifier",
@@ -11736,7 +11738,7 @@ dependencies = [
 [[package]]
 name = "risc0-verifier"
 version = "0.3.0"
-source = "git+https://github.com/HorizenLabs/risc0-verifier.git?branch=md/no_std#8e1ee87e527141a6a174d8ca4479a63a8b49004a"
+source = "git+https://github.com/HorizenLabs/risc0-verifier.git?tag=v0.3.0#19bac274a2b18508bb7907311064220d57f441b3"
 dependencies = [
  "anyhow",
  "bytemuck",
