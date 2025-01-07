@@ -90,6 +90,8 @@ pub mod on_proof_verified {
 pub mod fake_pallet {
     use super::*;
 
+    pub const PROOF_WITH_FAKE_VERSION_LOWER_BOUND: u64 = 1000;
+
     /// - Accept Proof iff proof == pubs and vk != 0.
     /// - If vk == 0 the vk is invalid and raise InvalidVerificationKey
     /// - If proof == 0 the proof is invalid and raise InvalidProofData
@@ -146,8 +148,16 @@ pub mod fake_pallet {
                 Ok(())
             }
         }
+
         fn pubs_bytes(pubs: &Self::Pubs) -> sp_std::borrow::Cow<[u8]> {
             sp_std::borrow::Cow::Owned(pubs.to_be_bytes().into())
+        }
+
+        fn verifier_version_hash(proof: &Self::Proof) -> Option<sp_core::H256> {
+            match *proof {
+                n if n >= PROOF_WITH_FAKE_VERSION_LOWER_BOUND => Some(sp_core::H256::from_low_u64_be(n)),
+                _ => None,
+            }
         }
     }
 }

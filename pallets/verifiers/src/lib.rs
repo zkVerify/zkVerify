@@ -174,14 +174,21 @@ pub mod pallet {
         }
     }
 
-    fn statement_hash(ctx: &[u8], vk_hash: &H256, pubs: &[u8]) -> H256 {
+    fn statement_hash(ctx: &[u8], vk_hash: &H256, version_hash: Option<H256>, pubs: &[u8]) -> H256 {
         let mut data_to_hash = keccak_256(ctx).to_vec();
         data_to_hash.extend_from_slice(vk_hash.as_bytes());
+        if let Some(h) = version_hash {
+            data_to_hash.extend_from_slice(h.as_bytes());
+        }
         data_to_hash.extend_from_slice(keccak_256(pubs).as_bytes_ref());
         H256(keccak_256(data_to_hash.as_slice()))
     }
 
-    fn compute_hash<I: Verifier>(pubs: &I::Pubs, vk_or_hash: &VkOrHash<I::Vk>) -> H256 {
+    fn compute_hash<I: Verifier>(
+        version_hash: Option<H256>,
+        pubs: &I::Pubs,
+        vk_or_hash: &VkOrHash<I::Vk>,
+    ) -> H256 {
         let hash = match vk_or_hash {
             VkOrHash::Hash(h) => sp_std::borrow::Cow::Borrowed(h),
             VkOrHash::Vk(vk) => sp_std::borrow::Cow::Owned(I::vk_hash(vk)),
@@ -189,6 +196,7 @@ pub mod pallet {
         statement_hash(
             I::hash_context_data(),
             hash.as_ref(),
+            version_hash,
             I::pubs_bytes(pubs).as_ref(),
         )
     }
@@ -310,7 +318,7 @@ pub mod pallet {
                 }
             };
             let account = ensure_signed(origin).ok();
-            let statement = compute_hash::<I>(&pubs, &vk_or_hash);
+            let statement = compute_hash::<I>(I::verifier_version_hash(&proof), &pubs, &vk_or_hash);
             I::verify_proof(&vk, &proof, &pubs)
                 .inspect(|_| Self::deposit_event(Event::ProofVerified { statement }))
                 .map(|_x| T::OnProofVerified::on_proof_verified(account, domain_id, statement))
@@ -453,18 +461,34 @@ pub mod pallet {
         #[rstest]
         #[case::vk_and_pubs_used_in_test(
             PhantomData::<FakeVerifier>,
+            None,
             42,
             VkOrHash::from_vk(REGISTERED_VK),
             VALID_HASH_REGISTERED_VK
         )]
         #[case::same_from_vk_hash(
             PhantomData::<FakeVerifier>,
+            None,
             42,
             VkOrHash::from_hash(REGISTERED_VK_HASH),
             VALID_HASH_REGISTERED_VK
         )]
         #[case::hash_as_documented(
             PhantomData::<FakeVerifier>,
+            Some(H256::from_low_u64_be(24)),
+            42,
+            VkOrHash::from_vk(REGISTERED_VK),
+            {
+                let mut data_to_hash = keccak_256(b"fake").to_vec();
+                data_to_hash.extend_from_slice(REGISTERED_VK_HASH.as_bytes());
+                data_to_hash.extend_from_slice(H256::from_low_u64_be(24).as_bytes());
+                data_to_hash.extend_from_slice(&keccak_256(42_u64.to_be_bytes().as_ref()));
+                H256(keccak_256(data_to_hash.as_slice()))
+            }
+        )]
+        #[case::hash_as_documented(
+            PhantomData::<FakeVerifier>,
+            None,
             42,
             VkOrHash::from_vk(REGISTERED_VK),
             {
@@ -477,6 +501,7 @@ pub mod pallet {
         #[should_panic]
         #[case::should_take_care_of_pubs(
             PhantomData::<FakeVerifier>,
+            None,
             24,
             VkOrHash::from_vk(REGISTERED_VK),
             VALID_HASH_REGISTERED_VK
@@ -484,6 +509,7 @@ pub mod pallet {
         #[should_panic]
         #[case::should_take_care_of_context_data(
             PhantomData::<OtherVerifier>,
+            None,
             42,
             VkOrHash::from_vk(REGISTERED_VK),
             VALID_HASH_REGISTERED_VK
@@ -491,17 +517,27 @@ pub mod pallet {
         #[should_panic]
         #[case::should_take_care_of_vk(
             PhantomData::<FakeVerifier>,
+            None,
             42,
             VkOrHash::from_vk(24),
             VALID_HASH_REGISTERED_VK
         )]
+        #[should_panic]
+        #[case::should_take_care_of_verification_version(
+            PhantomData::<FakeVerifier>,
+            Some(H256::from_low_u64_be(100)),
+            42,
+            VkOrHash::from_vk(REGISTERED_VK),
+            VALID_HASH_REGISTERED_VK
+        )]
         fn hash_statement_as_expected<V: Verifier>(
             #[case] _verifier: PhantomData<V>,
+            #[case] version_hash: Option<H256>,
             #[case] pubs: V::Pubs,
             #[case] vk_or_hash: VkOrHash<V::Vk>,
             #[case] expected: H256,
         ) {
-            let hash = compute_hash::<V>(&pubs, &vk_or_hash);
+            let hash = compute_hash::<V>(version_hash, &pubs, &vk_or_hash);
 
             assert_eq!(hash, expected);
         }

@@ -87,6 +87,12 @@ pub trait Verifier: 'static {
     /// A public inputs byte serialization used to compute the statement hash. There isn't any
     /// default implementation: you should implement it.
     fn pubs_bytes(pubs: &Self::Pubs) -> Cow<[u8]>;
+
+    /// Return an hash that represent the verifier version used to verify the proof.
+    /// If any this hash will be used on computing the statement hash.
+    fn verifier_version_hash(_proof: &Self::Proof) -> Option<H256> {
+        None
+    }
 }
 
 /// The trait used to map the `pallet-verifiers` extrinsic in you verifier implementation
