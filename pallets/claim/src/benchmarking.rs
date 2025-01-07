@@ -57,7 +57,7 @@ fn init_airdrop_state<T: Config>(
     begin_airdrop: bool,
 ) -> BTreeMap<T::AccountId, BalanceOf<T>> {
     let (beneficiaries, total_amount) = get_beneficiaries_map::<T>(n);
-    let _ = T::Currency::deposit_into_existing(
+    let _ = T::Currency::mint_into(
         &Pallet::<T>::account_id(),
         total_amount.saturating_mul(2u32.into()), // Just to be extra safe
     )

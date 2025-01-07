@@ -20,15 +20,13 @@ use std::{
 
 use frame_support::{
     derive_impl, parameter_types,
-    traits::{tokens::PayFromAccount, EitherOfDiverse, EnsureOrigin, Imbalance, OnUnbalanced},
+    traits::{tokens::PayFromAccount, EitherOfDiverse, EnsureOrigin},
     weights::RuntimeDbWeight,
     PalletId,
 };
 use frame_system::{EnsureRoot, RawOrigin};
 use sp_core::ConstU128;
 use sp_runtime::{traits::IdentityLookup, BuildStorage};
-
-use crate::NegativeImbalanceOf;
 
 pub type Balance = u128;
 pub type AccountId = u64;
@@ -177,24 +175,10 @@ impl<O: Into<Result<RawOrigin<AccountId>, O>> + From<RawOrigin<AccountId>>> Ensu
 }
 
 parameter_types! {
-    pub static UnclaimedDestinationUnbalanced: u128 = 0;
-}
-
-pub struct UnclaimedDestinationMock;
-
-impl OnUnbalanced<NegativeImbalanceOf<Test>> for UnclaimedDestinationMock {
-    fn on_nonzero_unbalanced(amount: NegativeImbalanceOf<Test>) {
-        UnclaimedDestinationUnbalanced::mutate(|v| {
-            *v += amount.peek();
-        });
-        drop(amount);
-    }
-}
-
-parameter_types! {
     pub const ClaimPalletId: PalletId = PalletId(*b"zkvt/clm");
     pub ClaimAccount: AccountId = Claim::account_id();
     pub const MaxBeneficiaries: u32 = 100;
+    pub UnclaimedDestinationMockAccount: AccountId = 111;
 }
 
 impl crate::Config for Test {
@@ -203,7 +187,7 @@ impl crate::Config for Test {
     type ManagerOrigin = EitherOfDiverse<EnsureRoot<AccountId>, MockManager>;
     type Paymaster = PayFromAccount<Balances, ClaimAccount>;
     type Currency = Balances;
-    type UnclaimedDestination = UnclaimedDestinationMock;
+    type UnclaimedDestination = UnclaimedDestinationMockAccount;
     type WeightInfo = MockWeightInfo;
     #[cfg(feature = "runtime-benchmarks")]
     const MAX_BENEFICIARIES: u32 = MaxBeneficiaries::get();

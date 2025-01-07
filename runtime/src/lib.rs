@@ -652,7 +652,7 @@ impl pallet_claim::Config for Runtime {
     type ManagerOrigin = EitherOfDiverse<EnsureRoot<AccountId>, Treasurer>;
     type Paymaster = PayFromAccount<Balances, ZKVerifyClaimAccount>;
     type Currency = Balances;
-    type UnclaimedDestination = Treasury;
+    type UnclaimedDestination = ZKVerifyTreasuryAccount;
     type WeightInfo = weights::pallet_claim::ZKVWeight<Runtime>;
     #[cfg(feature = "runtime-benchmarks")]
     const MAX_BENEFICIARIES: u32 = MaxBeneficiaries::get();

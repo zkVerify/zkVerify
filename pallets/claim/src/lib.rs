@@ -43,15 +43,16 @@ use sp_runtime::traits::{AccountIdConversion, Saturating, Zero};
 
 use frame_support::{
     dispatch::{DispatchResult, PostDispatchInfo},
-    traits::{tokens::Pay, Currency, ExistenceRequirement, Get, OnUnbalanced, WithdrawReasons},
+    traits::{
+        fungible::{Inspect, Mutate},
+        tokens::{Fortitude, Pay, Preservation},
+        Get,
+    },
     PalletId,
 };
 
 pub(crate) type BalanceOf<T> =
-    <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
-pub(crate) type NegativeImbalanceOf<T> = <<T as Config>::Currency as Currency<
-    <T as frame_system::Config>::AccountId,
->>::NegativeImbalance;
+    <<T as Config>::Currency as Inspect<<T as frame_system::Config>::AccountId>>::Balance;
 
 pub use pallet::*;
 pub use weight::WeightInfo;
@@ -85,13 +86,11 @@ pub mod pallet {
             Balance = BalanceOf<Self>,
         >;
 
-        // TODO: Switch to Fungible trait
         /// The staking balance.
-        type Currency: Currency<Self::AccountId>;
+        type Currency: Mutate<Self::AccountId>;
 
-        // TODO: Switch to Fungible trait
-        /// Handler for the unbalanced decrease when dealing with unclaimed assets.
-        type UnclaimedDestination: OnUnbalanced<NegativeImbalanceOf<Self>>;
+        /// Destination for unclaimed assets
+        type UnclaimedDestination: Get<Self::AccountId>;
 
         /// Weight information for extrinsics in this pallet.
         type WeightInfo: WeightInfo;
@@ -141,10 +140,7 @@ pub mod pallet {
 
             // Fill account with genesis balance
             let min = T::Currency::minimum_balance();
-            let _ = T::Currency::make_free_balance_be(
-                &account_id,
-                min.saturating_add(self.genesis_balance),
-            );
+            let _ = T::Currency::mint_into(&account_id, min.saturating_add(self.genesis_balance));
 
             TotalClaimable::<T>::put(BalanceOf::<T>::zero());
 
@@ -212,9 +208,11 @@ pub mod pallet {
         /// Return the amount of money in the pot.
         /// The existential deposit is not part of the pot so treasury account never gets deleted.
         pub fn pot() -> BalanceOf<T> {
-            T::Currency::free_balance(&Self::account_id())
-                // Must never be less than 0 but better be safe.
-                .saturating_sub(T::Currency::minimum_balance())
+            T::Currency::reducible_balance(
+                &Self::account_id(),
+                Preservation::Preserve,
+                Fortitude::Polite,
+            )
         }
 
         fn do_claim(origin: T::AccountId, beneficiary: Option<T::AccountId>) -> DispatchResult {
@@ -463,15 +461,17 @@ pub mod pallet {
             // Deal with any remaining balance in the pallet's account
             // TODO: Shall we want to withdraw all the balance in the pallet's account or only up to
             // TotalClaimable ?
-            let remaining_funds = Self::pot();
-            let unclaimed_funds = T::Currency::withdraw(
-                &Self::account_id(),
-                remaining_funds,
-                WithdrawReasons::TRANSFER,
-                ExistenceRequirement::KeepAlive,
-            )?;
-            T::UnclaimedDestination::on_unbalanced(unclaimed_funds);
-            log::debug!("Sending {remaining_funds:?} to specified destination");
+            let unclaimed_destination = T::UnclaimedDestination::get();
+            if unclaimed_destination != Self::account_id() {
+                let remaining_funds = Self::pot();
+                T::Currency::transfer(
+                    &Self::account_id(),
+                    &T::UnclaimedDestination::get(),
+                    remaining_funds,
+                    Preservation::Preserve,
+                )?;
+                log::debug!("Sending {remaining_funds:?} to specified destination");
+            }
 
             // Set total claimable to 0
             TotalClaimable::<T>::put(BalanceOf::<T>::zero());
@@ -489,7 +489,7 @@ pub mod pallet {
     }
 }
 
-/// TypedGet implementation to get the AccountId of the Treasury.
+/// TypedGet implementation to get the AccountId of the Claim pallet.
 pub struct ClaimAccountId<R>(PhantomData<R>);
 impl<R> sp_runtime::traits::TypedGet for ClaimAccountId<R>
 where
@@ -498,12 +498,5 @@ where
     type Type = <R as frame_system::Config>::AccountId;
     fn get() -> Self::Type {
         <crate::Pallet<R>>::account_id()
-    }
-}
-
-impl<T: Config> OnUnbalanced<NegativeImbalanceOf<T>> for Pallet<T> {
-    fn on_nonzero_unbalanced(amount: NegativeImbalanceOf<T>) {
-        // Must resolve into existing but better to be safe.
-        T::Currency::resolve_creating(&Self::account_id(), amount);
     }
 }

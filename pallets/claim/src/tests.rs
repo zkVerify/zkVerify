@@ -415,8 +415,7 @@ fn add_beneficiaries_sufficient_funds() {
         GenesisClaimBalance::Sufficient,
     )
     .execute_with(|| {
-        let _ =
-            Balances::deposit_into_existing(&Claim::account_id(), NEW_SUFFICIENT_BALANCE).unwrap();
+        let _ = Balances::mint_into(&Claim::account_id(), NEW_SUFFICIENT_BALANCE).unwrap();
         assert_ok!(Claim::add_beneficiaries(
             Origin::Signed(MANAGER_USER).into(),
             NEW_BENEFICIARIES_MAP.clone()
@@ -448,9 +447,7 @@ fn add_beneficiaries_insufficient_funds() {
     )
     .execute_with(|| {
         // Just add enough funds to cover for first insertions but not all
-        let _ =
-            Balances::deposit_into_existing(&Claim::account_id(), USER_4_AMOUNT + USER_5_AMOUNT)
-                .unwrap();
+        let _ = Balances::mint_into(&Claim::account_id(), USER_4_AMOUNT + USER_5_AMOUNT).unwrap();
 
         assert_err!(
             Claim::add_beneficiaries(
@@ -480,8 +477,7 @@ fn add_new_mixed_beneficiaries_modify_total_claimable_success() {
         GenesisClaimBalance::Sufficient,
     )
     .execute_with(|| {
-        let _ = Balances::deposit_into_existing(&Claim::account_id(), MODIFIED_SUFFICIENT_BALANCE)
-            .unwrap();
+        let _ = Balances::mint_into(&Claim::account_id(), MODIFIED_SUFFICIENT_BALANCE).unwrap();
         assert_ok!(Claim::add_beneficiaries(
             Origin::Signed(MANAGER_USER).into(),
             MODIFIED_BENEFICIARIES_MAP.clone()
@@ -513,7 +509,7 @@ fn add_new_mixed_beneficiaries_modify_total_claimable_failure() {
         GenesisClaimBalance::Sufficient,
     )
     .execute_with(|| {
-        let _ = Balances::deposit_into_existing(&Claim::account_id(), USER_6_AMOUNT).unwrap();
+        let _ = Balances::mint_into(&Claim::account_id(), USER_6_AMOUNT).unwrap();
         assert_err!(
             Claim::add_beneficiaries(
                 Origin::Signed(MANAGER_USER).into(),
@@ -613,8 +609,7 @@ fn end_airdrop() {
     )
     .execute_with(|| {
         // Give other balance. Now Self::pot() == SUFFICIENT_GENESIS_BALANCE * 2
-        let _ = Balances::deposit_into_existing(&Claim::account_id(), SUFFICIENT_GENESIS_BALANCE)
-            .unwrap();
+        let _ = Balances::mint_into(&Claim::account_id(), SUFFICIENT_GENESIS_BALANCE).unwrap();
         assert_ok!(Claim::end_airdrop(Origin::Signed(MANAGER_USER).into()));
         assert!(!AirdropActive::<Test>::get());
         assert!(Beneficiaries::<Test>::iter().next().is_none());
@@ -625,7 +620,11 @@ fn end_airdrop() {
         );
         assert_eq!(TotalClaimable::<Test>::get(), 0);
         assert_eq!(
-            UnclaimedDestinationUnbalanced::get(),
+            Balances::reducible_balance(
+                &UnclaimedDestinationMockAccount::get(),
+                Preservation::Expendable,
+                Fortitude::Polite,
+            ),
             SUFFICIENT_GENESIS_BALANCE * 2
         );
     });
