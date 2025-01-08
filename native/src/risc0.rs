@@ -37,8 +37,8 @@ mod legacy_impl {
     pub fn verify(vk: [u8; 32], proof: &[u8], pubs: &[u8]) -> Result<(), VerifyError> {
         use risc0_verifier::Digestible;
 
-        let inner_receipt = deserialize_proof(&proof)?;
-        let journal = deserialize_pubs(&pubs)?;
+        let inner_receipt = deserialize_proof(proof)?;
+        let journal = deserialize_pubs(pubs)?;
 
         let ctx = risc0_verifier::VerifierContext::v1_0();
         let proof = risc0_verifier::Proof::new(inner_receipt);
@@ -49,7 +49,7 @@ mod legacy_impl {
 
     /// Return if the proof is an Fake or Goth16 proof
     fn is_fake_proof(proof: &[u8]) -> bool {
-        return proof.starts_with(&[0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0]);
+        proof.starts_with(&[0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
     }
 }
 

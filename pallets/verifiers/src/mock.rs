@@ -155,7 +155,9 @@ pub mod fake_pallet {
 
         fn verifier_version_hash(proof: &Self::Proof) -> Option<sp_core::H256> {
             match *proof {
-                n if n >= PROOF_WITH_FAKE_VERSION_LOWER_BOUND => Some(sp_core::H256::from_low_u64_be(n)),
+                n if n >= PROOF_WITH_FAKE_VERSION_LOWER_BOUND => {
+                    Some(sp_core::H256::from_low_u64_be(n))
+                }
                 _ => None,
             }
         }
