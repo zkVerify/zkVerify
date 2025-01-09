@@ -15,15 +15,14 @@
 
 use std::fmt::Debug;
 use codec::{Decode, Encode, MaxEncodedLen};
-use frame_support::sp_runtime::traits::CheckedConversion;
+use frame_support::{sp_runtime::traits::CheckedConversion, traits::IsType};
 use scale_info::TypeInfo;
 use sp_core::U256;
-use halo2_proofs::halo2curves::bn256;
-use halo2_proofs::plonk::Expression;
-use crate::circuit_info::CircuitInfo;
+use halo2_proofs::{halo2curves::bn256, plonk::Circuit};
+use crate::circuit_info::{CircuitInfo, Expression};
 
 #[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
-pub(crate) struct Fr(U256);
+pub struct Fr(U256);
 #[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
 struct Fq(U256);
 #[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
@@ -39,7 +38,7 @@ pub struct Vk {
     degree: u32,
     fixed_commitments: Vec<G1Affine>,
     permutation_commitments: Vec<G1Affine>,
-    cs: CircuitInfo<G1Affine, Fr>,
+    cs: CircuitInfo<Fr>,
     /// The representative of this `VerifyingKey` in transcripts.
     transcript_repr: Fr,
     selector_assignments: Vec<SelectorAssignment<Fr>>,
@@ -51,7 +50,7 @@ impl MaxEncodedLen for Vk {
     }
 }
 
-#[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
+#[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo)]
 pub struct SelectorAssignment<F> {
     pub selector: u64,
 
@@ -70,6 +69,15 @@ impl From<SelectorAssignment<Fr>> for halo2_proofs::plonk::SelectorAssignment<bn
     }
 }
 
+impl From<&halo2_proofs::plonk::SelectorAssignment<bn256::Fr>> for SelectorAssignment<Fr> {
+    fn from(value: &halo2_proofs::plonk::SelectorAssignment<bn256::Fr>) -> Self {
+        Self {
+            selector: value.selector as u64,
+            combination_index: value.combination_index as u64,
+            expression: value.expression.into_ref().into(),
+        }
+    }
+}
 
 trait IntoBytes {
     fn into_bytes(self) -> [u8; 32];
@@ -89,11 +97,25 @@ impl From<Fr> for bn256::Fr {
     }
 }
 
+impl From<bn256::Fr> for Fr {
+    fn from(value: bn256::Fr) -> Self {
+        Self(U256::from_big_endian(&value.to_bytes()))
+    }
+}
+
 impl TryInto<bn256::Fq> for Fq {
     type Error = ConvertError;
 
     fn try_into(self) -> Result<bn256::Fq, Self::Error> {
         bn256::Fq::from_bytes(&self.0.into_bytes()).into_option().ok_or(ConvertError::NotAMemberFq)
+    }
+}
+
+impl TryFrom<bn256::Fq> for Fq {
+    type Error = ConvertError;
+
+    fn try_from(value: bn256::Fq) -> Result<Self, Self::Error> {
+        Ok(Self(U256::from_little_endian(&value.to_bytes())))
     }
 }
 
@@ -105,6 +127,14 @@ impl TryInto<bn256::Fq2> for Fq2 {
             self.0.try_into()?,
             self.1.try_into()?,
         ))
+    }
+}
+
+impl TryFrom<bn256::Fq2> for Fq2 {
+    type Error = ConvertError;
+
+    fn try_from(value: bn256::Fq2) -> Result<Self, Self::Error> {
+        Ok(Self(value.c0.try_into()?, value.c1.try_into()?))
     }
 }
 
@@ -124,6 +154,14 @@ impl TryInto<bn256::G1Affine> for G1Affine {
     }
 }
 
+impl TryFrom<bn256::G1Affine> for G1Affine {
+    type Error = ConvertError;
+
+    fn try_from(value: bn256::G1Affine) -> Result<Self, Self::Error> {
+        Ok(Self(value.x.try_into()?, value.y.try_into()?))
+    }
+}
+
 impl TryInto<bn256::G2Affine> for G2Affine {
     type Error = ConvertError;
 
@@ -133,24 +171,48 @@ impl TryInto<bn256::G2Affine> for G2Affine {
     }
 }
 
+impl TryFrom<bn256::G2Affine> for G2Affine {
+    type Error = ConvertError;
+
+    fn try_from(value: bn256::G2Affine) -> Result<Self, Self::Error> {
+        Ok(Self(value.x.try_into()?, value.y.try_into()?))
+    }
+}
+
 impl TryInto<halo2_proofs::plonk::VerifyingKey<bn256::G1Affine>> for Vk {
     type Error = ConvertError;
 
     fn try_into(self) -> Result<halo2_proofs::plonk::VerifyingKey<bn256::G1Affine>, Self::Error> {
-        let cs = self.cs.try_into()?;
+        let cs: halo2_proofs::plonk::ConstraintSystem<bn256::Fr> = self.cs.try_into().unwrap();
         let degree = cs.degree();
         let domain = halo2_proofs::poly::EvaluationDomain::new(degree as u32, self.k);
 
         Ok(halo2_proofs::plonk::VerifyingKey::<bn256::G1Affine> {
             domain,
             cs_degree: degree,
-            fixed_commitments: self.fixed_commitments.into_iter().map(|c| c.try_into()).collect::<Result<Vec<_>, _>>()?,
+            fixed_commitments: self.fixed_commitments.into_iter().map(|c| c.try_into()).collect::<Result<Vec<_>, _>>().unwrap(),
             permutation: halo2_proofs::plonk::permutation::VerifyingKey {
-                commitments: self.permutation_commitments.into_iter().map(|c| c.try_into()).collect::<Result<Vec<_>, _>>()?,
+                commitments: self.permutation_commitments.into_iter().map(|c| c.try_into()).collect::<Result<Vec<_>, _>>().unwrap()
             },
             cs,
             selector_assignments: self.selector_assignments.into_iter().map(|s| s.into()).collect::<Vec<_>>(),
-            transcript_repr: self.transcript_repr.try_into()?,
+            transcript_repr: self.transcript_repr.try_into().unwrap(),
+        })
+    }
+}
+
+impl TryFrom<&halo2_proofs::plonk::VerifyingKey<bn256::G1Affine>> for Vk {
+    type Error = ConvertError;
+
+    fn try_from(vk: &halo2_proofs::plonk::VerifyingKey<bn256::G1Affine>) -> Result<Self, Self::Error> {
+        Ok(Self {
+            k: vk.domain.k(),
+            degree: vk.cs().degree() as u32,
+            fixed_commitments: vk.fixed_commitments().iter().map(|&c| c.try_into()).collect::<Result<Vec<_>, _>>()?,
+            permutation_commitments: vk.permutation().commitments().iter().map(|&c| c.try_into()).collect::<Result<Vec<_>, _>>()?,
+            cs: vk.cs().try_into()?,
+            transcript_repr: vk.transcript_repr.into(),
+            selector_assignments: vk.selector_assignments.iter().map(|s| s.into()).collect::<Vec<_>>(),
         })
     }
 }

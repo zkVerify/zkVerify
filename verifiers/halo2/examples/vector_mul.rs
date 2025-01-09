@@ -1,16 +1,19 @@
-use std::marker::PhantomData;
+use std::{fs::File, io::{BufReader, BufWriter, Read}, marker::PhantomData};
 
+use codec::{Decode, Encode};
 use ff::PrimeField;
 
+use frame_support::traits::IsType;
 use halo2_proofs::{
-    arithmetic::Field,
-    circuit::{AssignedCell, Chip, Layouter, Region, SimpleFloorPlanner, Value},
-    plonk::{Advice, Circuit, Column, ConstraintSystem, Error, Instance, Selector},
-    poly::Rotation,
+    arithmetic::{CurveAffine, Field, FieldExt}, circuit::{AssignedCell, Chip, Layouter, Region, SimpleFloorPlanner, Value}, halo2curves::bn256::{self, Bn256}, plonk::{create_proof, keygen_pk, keygen_vk, verify_proof, Advice, Circuit, Column, ConstraintSystem, Error, Instance, Selector, VerifyingKey}, poly::{commitment::{Params, ParamsProver}, kzg::{commitment::{KZGCommitmentScheme, ParamsKZG}, multiopen::{ProverSHPLONK, VerifierSHPLONK}, strategy::{AccumulatorStrategy, SingleStrategy}}, Rotation, VerificationStrategy}, transcript::{Blake2bRead, Blake2bWrite, Challenge255, TranscriptReadBuffer, TranscriptWriterBuffer}
 };
+use hp_verifiers::Verifier;
+use pallet_halo2_verifier::Halo2;
+use rand::{thread_rng, SeedableRng};
+use rand_chacha::ChaCha20Rng;
 
 // ANCHOR: instructions
-trait NumericInstructions<F: Field>: Chip<F> {
+trait NumericInstructions<F: FieldExt>: Chip<F> {
     /// Variable representing a number.
     type Num;
 
@@ -68,7 +71,7 @@ pub struct FieldConfig {
     s_mul: Selector,
 }
 
-impl<F: Field> FieldChip<F> {
+impl<F: FieldExt> FieldChip<F> {
     fn construct(config: <Self as Chip<F>>::Config) -> Self {
         Self {
             config,
@@ -126,7 +129,7 @@ impl<F: Field> FieldChip<F> {
 // ANCHOR_END: chip-config
 
 // ANCHOR: chip-impl
-impl<F: Field> Chip<F> for FieldChip<F> {
+impl<F: FieldExt> Chip<F> for FieldChip<F> {
     type Config = FieldConfig;
     type Loaded = ();
 
@@ -145,7 +148,7 @@ impl<F: Field> Chip<F> for FieldChip<F> {
 #[derive(Clone, Debug)]
 struct Number<F: Field>(AssignedCell<F, F>);
 
-impl<F: Field> NumericInstructions<F> for FieldChip<F> {
+impl<F: FieldExt> NumericInstructions<F> for FieldChip<F> {
     type Num = Number<F>;
 
     fn load_private(
@@ -264,7 +267,7 @@ pub struct MyCircuit<F: Field> {
     b: Vec<Value<F>>,
 }
 
-impl<F: Field> Circuit<F> for MyCircuit<F> {
+impl<F: FieldExt> Circuit<F> for MyCircuit<F> {
     // Since we are using a single chip for everything, we can just reuse its config.
     type Config = FieldConfig;
     type FloorPlanner = SimpleFloorPlanner;
@@ -360,8 +363,100 @@ fn main() {
     // If we try some other public input, the proof will fail!
     let start = std::time::Instant::now();
     public_inputs[0] += Fr::one();
-    let prover = MockProver::run(k, &circuit, vec![public_inputs]).unwrap();
-    assert!(prover.verify().is_err());
-    println!("negative test took {:?}", start.elapsed());
+
+    test_prover(k, circuit, public_inputs);
+
     // ANCHOR_END: test-circuit
+}
+
+
+fn test_prover(
+    k: u32,
+    circuit: MyCircuit<bn256::Fr>,
+    pi: Vec<bn256::Fr>,
+) {
+    let params = gen_srs::<bn256::G1Affine>(k);
+  
+    // if vk, pk, pi exist, read them from files and skip proof generation
+    let (vk, proof, pubs) = if std::fs::metadata("vk.bin").is_ok() && std::fs::metadata("proof.bin").is_ok() && std::fs::metadata("pubs.bin").is_ok() {
+        let vk_bytes = std::fs::read("vk.bin").unwrap();
+        let vk = pallet_halo2_verifier::Vk::decode(&mut &vk_bytes[..]).unwrap();
+        // let vk = VerifyingKey::<bn256::G1Affine>::read::<_, MyCircuit<bn256::Fr>>(&mut &vk_bytes[..], halo2_proofs::SerdeFormat::RawBytes).unwrap();
+        
+        let pubs_bytes = std::fs::read("pubs.bin").unwrap();
+        let proof_bytes = std::fs::read("proof.bin").unwrap();
+    
+        let pubs = Vec::<pallet_halo2_verifier::Fr>::decode(&mut &pubs_bytes[..]).unwrap();
+        (vk, proof_bytes, pubs)
+    } else {
+        let vk = keygen_vk(&params, &circuit).unwrap();
+        // let vk_bytes = vk.to_bytes(halo2_proofs::SerdeFormat::RawBytes);
+        // std::fs::write("vk.bin", vk_bytes).unwrap();
+        let pk = keygen_pk(&params, vk.clone(), &circuit).unwrap();
+        let vk: pallet_halo2_verifier::Vk = vk.into_ref().try_into().unwrap();
+        let vk_bytes = vk.encode();
+        std::fs::write("vk.bin", vk_bytes).unwrap();
+    
+        let proof = {
+            let mut transcript = Blake2bWrite::<_, _, Challenge255<_>>::init(vec![]);
+    
+            create_proof::<KZGCommitmentScheme<Bn256>, ProverSHPLONK<Bn256>, _, _, _, _>(
+                &params,
+                &pk,
+                &[circuit],
+                &[&[&pi]],
+                thread_rng(),
+                &mut transcript,
+            )
+            .expect("proof generation should not fail");
+    
+            transcript.finalize()
+        };
+    
+
+        std::fs::write("proof.bin", &proof).unwrap(); 
+
+        let pubs = pi.into_iter().map(|x| x.into()).collect::<Vec<_>>();
+        let pubs_bytes = pubs.encode();
+
+        std::fs::write("pubs.bin", pubs_bytes).unwrap();
+     
+        (vk, proof, pubs)    
+    };
+
+    let params = params.try_into().unwrap();
+  
+    Halo2::verify_proof(&(vk, params), &proof, &pubs).unwrap();
+
+    // verify_proof::<KZGCommitmentScheme<Bn256>, VerifierSHPLONK<Bn256>, _, _, _>(
+    //     &params,
+    //     pk.get_vk(),
+    //     strategy,
+    //     &[&[&pi]],
+    //     &mut transcript,
+    // )
+    // // .map(|strategy| strategy.finalize())
+    // .unwrap_or_default();
+}
+
+pub fn gen_srs<'a, C: CurveAffine>(
+    k: u32,
+) -> ParamsKZG<Bn256> {
+    let dir = "./params".to_string();
+    let path = format!("{dir}/kzg_bn254_{k}.srs");
+    match std::fs::read(path.as_str()) {
+        Ok(mut b) => {
+            println!("read params from {path}");
+            ParamsKZG::<Bn256>::read(&mut b.as_slice()).unwrap()
+        }
+        Err(_) => {
+            println!("creating params for {k}");
+            std::fs::create_dir_all(dir).unwrap();
+            let params = ParamsKZG::<Bn256>::setup(k, ChaCha20Rng::from_seed(Default::default()));
+            let mut bytes = vec![];
+            params.write(&mut bytes).unwrap();
+            std::fs::write(path.as_str(), bytes).unwrap();
+            params
+        }
+    }
 }

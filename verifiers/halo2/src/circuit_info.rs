@@ -1,39 +1,39 @@
 // pub mod serialize;
 
-use std::collections::BTreeMap;
-use std::io::BufReader;
+use crate::vk::{ConvertError, Fr, G1Affine};
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::pallet_prelude::TypeInfo;
+use frame_support::traits::IsType;
 use halo2_proofs::arithmetic::{CurveAffine, Field};
 use halo2_proofs::halo2curves::bn256;
 use halo2_proofs::halo2curves::bn256::Bn256;
-use halo2_proofs::plonk::{keygen_vk, Advice, AdviceQuery, Any, Challenge, Circuit, ConstraintSystem, Error, Fixed, FixedQuery, Instance, InstanceQuery};
+use halo2_proofs::plonk::{
+    keygen_vk, Advice, Any, Challenge, Circuit, ConstraintSystem, Error, Fixed, Instance,
+};
 use halo2_proofs::poly::commitment::Params;
 use halo2_proofs::poly::Rotation as Halo2Rotation;
-use crate::vk::{ConvertError, Fr, G1Affine};
+use std::collections::BTreeMap;
+use std::io::BufReader;
 
 #[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo)]
-pub struct CircuitInfo<C, F> {
-    fixed_commitments: Vec<C>,
-    permutation_commitments: Vec<C>,
-
-    num_fixed_columns: u64,
-    num_instance_columns: u64,
+pub struct CircuitInfo<F> {
+    pub num_fixed_columns: u64,
+    pub num_instance_columns: u64,
     pub num_advice_columns: u64,
 
-    k: u8,
-    max_num_query_of_advice_column: u32,
-    cs_degree: u32,
-    advice_column_phase: Vec<u8>,
-    challenge_phase: Vec<u8>,
-    gates: Vec<Gate<F>>,
+    // k: u8,
+    pub max_num_query_of_advice_column: u32,
+    pub cs_degree: u32,
+    pub advice_column_phase: Vec<u8>,
+    pub challenge_phase: Vec<u8>,
+    pub gates: Vec<Gate<F>>,
 
-    advice_queries: Vec<ColumnQuery>,
-    instance_queries: Vec<ColumnQuery>,
-    fixed_queries: Vec<ColumnQuery>,
-    permutation_columns: Vec<Column>,
-    lookups: Vec<Lookup<F>>,
-    shuffles: Vec<Shuffle<F>>,
+    pub advice_queries: Vec<ColumnQuery>,
+    pub instance_queries: Vec<ColumnQuery>,
+    pub fixed_queries: Vec<ColumnQuery>,
+    pub permutation_columns: Vec<Column>,
+    pub lookups: Vec<Lookup<F>>,
+    // pub shuffles: Vec<Shuffle<F>>,
 }
 
 #[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
@@ -58,15 +58,24 @@ pub struct VirtualCell {
     pub(crate) rotation: Rotation,
 }
 
+impl From<&halo2_proofs::plonk::VirtualCell> for VirtualCell {
+    fn from(value: &halo2_proofs::plonk::VirtualCell) -> Self {
+        Self {
+            column: value.column().into(),
+            rotation: value.rotation().into(),
+        }
+    }
+}
+
 #[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo)]
 pub struct Gate<F> {
     // pub name: String,
-    pub constraint_names: Vec<String>,
+    // pub constraint_names: Vec<String>,
     pub polys: Vec<Expression<F>>,
     /// We track queried selectors separately from other cells, so that we can use them to
     /// trigger debug checks on gates.
     pub queried_selectors: Vec<Selector>,
-    pubqueried_cells: Vec<VirtualCell>,
+    pub queried_cells: Vec<VirtualCell>,
 }
 
 #[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
@@ -78,44 +87,161 @@ impl From<Selector> for halo2_proofs::plonk::Selector {
     }
 }
 
+impl From<&halo2_proofs::plonk::Selector> for Selector {
+    fn from(value: &halo2_proofs::plonk::Selector) -> Self {
+        Self(value.index() as u64, value.is_simple())
+    }
+}
+
 #[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
 pub enum Expression<F> {
     /// This is a constant polynomial
     Constant(F),
     /// This is a virtual selector
     Selector(Selector),
-    // /// This is a fixed column queried at a certain relative location
-    // Fixed(FixedQuery),
-    // /// This is an advice (witness) column queried at a certain relative location
-    // Advice(AdviceQuery),
-    // /// This is an instance (external) column queried at a certain relative location
-    // Instance(InstanceQuery),
-    // /// This is a challenge
-    // Challenge(Challenge),
-    // /// This is a negated polynomial
-    // Negated(Box<halo2_proofs::plonk::Expression<F>>),
-    // /// This is the sum of two polynomials
-    // Sum(Box<Expression<F>>, Box<Expression<F>>),
-    // /// This is the product of two polynomials
-    // Product(Box<Expression<F>>, Box<Expression<F>>),
-    // /// This is a scaled polynomial
-    // Scaled(Box<Expression<F>>, F),
-}
-
-impl From<Expression<Fr>> for halo2_proofs::plonk::Expression<bn256::Fr> {
-    fn from(value: Expression<Fr>) -> Self {
-        unimplemented!()
-    }
+    /// This is a fixed column queried at a certain relative location
+    Fixed(FixedQuery),
+    /// This is an advice (witness) column queried at a certain relative location
+    Advice(AdviceQuery),
+    /// This is an instance (external) column queried at a certain relative location
+    Instance(InstanceQuery),
+    /// This is a challenge
+    Challenge((u32, u8)),
+    /// This is a negated polynomial
+    Negated(Box<Expression<F>>),
+    /// This is the sum of two polynomials
+    Sum(Box<Expression<F>>, Box<Expression<F>>),
+    /// This is the product of two polynomials
+    Product(Box<Expression<F>>, Box<Expression<F>>),
+    /// This is a scaled polynomial
+    Scaled(Box<Expression<F>>, F),
 }
 
 impl From<&halo2_proofs::plonk::Expression<bn256::Fr>> for Expression<Fr> {
     fn from(value: &halo2_proofs::plonk::Expression<bn256::Fr>) -> Self {
-        unimplemented!()
+        match value {
+            halo2_proofs::plonk::Expression::Constant(c) => Self::Constant((*c).into()),
+            halo2_proofs::plonk::Expression::Selector(s) => Self::Selector(s.into()),
+            halo2_proofs::plonk::Expression::Fixed(f) => Self::Fixed(f.into()),
+            halo2_proofs::plonk::Expression::Advice(a) => Self::Advice(a.into()),
+            halo2_proofs::plonk::Expression::Instance(i) => Self::Instance(i.into()),
+            halo2_proofs::plonk::Expression::Challenge(c) => Self::Challenge((c.index() as u32, c.phase() as u8)),
+            halo2_proofs::plonk::Expression::Negated(n) => Self::Negated(n.into()),
+            halo2_proofs::plonk::Expression::Sum(s, s2) => Self::Sum(s.into(), s2.into()),
+            halo2_proofs::plonk::Expression::Product(p, p2) => Self::Product(p.into(), p2.into()),
+            halo2_proofs::plonk::Expression::Scaled(s, f) => Self::Scaled(s.into(), (*f).into()),
+        }
     }
 }
 
-impl From<halo2_proofs::plonk::Column<Any>> for Column {
-    fn from(value: halo2_proofs::plonk::Column<Any>) -> Self {
+impl From<&Box<halo2_proofs::plonk::Expression<bn256::Fr>>> for Box<Expression<Fr>> {
+    fn from(value: &Box<halo2_proofs::plonk::Expression<bn256::Fr>>) -> Self {
+        Box::new(value.as_ref().into())
+    }
+}
+
+impl From<Box<Expression<Fr>>> for Box<halo2_proofs::plonk::Expression<bn256::Fr>> {
+    fn from(value: Box<Expression<Fr>>) -> Self {
+        Box::new(value.as_ref().clone().into())
+    }
+}
+
+impl From<Expression<Fr>> for halo2_proofs::plonk::Expression<bn256::Fr> {
+    fn from(value: Expression<Fr>) -> Self {
+        match value {
+            Expression::Constant(c) => halo2_proofs::plonk::Expression::Constant(c.into()),
+            Expression::Selector(s) => halo2_proofs::plonk::Expression::Selector(s.into()),
+            Expression::Fixed(f) => halo2_proofs::plonk::Expression::Fixed(f.into()),
+            Expression::Advice(a) => halo2_proofs::plonk::Expression::Advice(a.into()),
+            Expression::Instance(i) => halo2_proofs::plonk::Expression::Instance(i.into()),
+            Expression::Challenge((index, phase)) => halo2_proofs::plonk::Expression::Challenge(halo2_proofs::plonk::Challenge::new(index as usize, phase as u8)),
+            Expression::Negated(n) => halo2_proofs::plonk::Expression::Negated(n.into()),
+            Expression::Sum(s, s2) => halo2_proofs::plonk::Expression::Sum(s.into(), s2.into()),
+            Expression::Product(p, p2) => halo2_proofs::plonk::Expression::Product(p.into(), p2.into()),
+            Expression::Scaled(s, f) => halo2_proofs::plonk::Expression::Scaled(s.into(), f.into()),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
+struct FixedQuery {
+    pub index: u32,
+    pub column_index: u32,
+    pub rotation: Rotation,
+}
+
+impl From<&halo2_proofs::plonk::FixedQuery> for FixedQuery {
+    fn from(value: &halo2_proofs::plonk::FixedQuery) -> Self {
+        Self {
+            index: value.index() as u32,
+            column_index: value.column_index() as u32,
+            rotation: value.rotation().into_ref().into(),
+        }
+    }
+}
+
+impl From<FixedQuery> for halo2_proofs::plonk::FixedQuery {
+    fn from(value: FixedQuery) -> Self {
+        halo2_proofs::plonk::FixedQuery::new(value.index as usize, value.column_index as usize, value.rotation.into_ref().into())
+    }
+}
+
+#[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
+struct InstanceQuery {
+    pub index: u32,
+    pub column_index: u32,
+    pub rotation: Rotation,
+}
+
+impl From<&halo2_proofs::plonk::InstanceQuery> for InstanceQuery {
+    fn from(value: &halo2_proofs::plonk::InstanceQuery) -> Self {
+        Self {
+            index: value.index() as u32,
+            column_index: value.column_index() as u32,
+            rotation: value.rotation().into_ref().into(),
+        }
+    }
+}
+
+impl From<InstanceQuery> for halo2_proofs::plonk::InstanceQuery {
+    fn from(value: InstanceQuery) -> Self {
+        halo2_proofs::plonk::InstanceQuery::new(value.index as usize, value.column_index as usize, value.rotation.into_ref().into())
+    }
+}
+
+#[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
+struct AdviceQuery {
+    pub index: u32,
+    pub column_index: u32,
+    pub rotation: Rotation,
+    pub phase: u8,
+}
+
+impl From<&halo2_proofs::plonk::AdviceQuery> for AdviceQuery {
+    fn from(value: &halo2_proofs::plonk::AdviceQuery) -> Self {
+        Self {
+            index: value.index() as u32,
+            column_index: value.column_index() as u32,
+            rotation: value.rotation().into_ref().into(),
+            phase: value.phase(),
+        }
+    }
+}
+
+impl From<AdviceQuery> for halo2_proofs::plonk::AdviceQuery {
+    fn from(value: AdviceQuery) -> Self {
+        let phase = match value.phase {
+            0 => halo2_proofs::plonk::FirstPhase::sealed(),
+            1 => halo2_proofs::plonk::SecondPhase::sealed(),
+            2 => halo2_proofs::plonk::ThirdPhase::sealed(),
+            _ => unreachable!(),
+        };
+        halo2_proofs::plonk::AdviceQuery::new(value.index as usize, value.column_index as usize, value.rotation.into_ref().into(), phase)
+    }
+}
+
+impl From<&halo2_proofs::plonk::Column<Any>> for Column {
+    fn from(value: &halo2_proofs::plonk::Column<Any>) -> Self {
         let column_type = match value.column_type() {
             Any::Advice(phase) => phase.phase(),
             Any::Fixed => 255,
@@ -127,6 +253,13 @@ impl From<halo2_proofs::plonk::Column<Any>> for Column {
         }
     }
 }
+
+impl From<halo2_proofs::plonk::Column<Any>> for Column {
+    fn from(value: halo2_proofs::plonk::Column<Any>) -> Self {
+        Self::from(&value)
+    }
+}
+
 impl From<&Column> for halo2_proofs::plonk::Column<Any> {
     fn from(value: &Column) -> Self {
         let column_type = match value.column_type {
@@ -144,14 +277,50 @@ impl From<&Column> for halo2_proofs::plonk::Column<Any> {
     }
 }
 
+
+impl From<&Column> for halo2_proofs::plonk::Column<Advice> {
+    
+    fn from(value: &Column) -> Self {
+        let column_type = match value.column_type {
+            0 => Advice::new(halo2_proofs::plonk::FirstPhase),
+            1 => Advice::new(halo2_proofs::plonk::SecondPhase),
+            2 => Advice::new(halo2_proofs::plonk::ThirdPhase),
+            _ => unreachable!(),
+        };
+
+        halo2_proofs::plonk::Column::new(value.index as usize, column_type)
+    }
+}
+
+impl From<&Column> for halo2_proofs::plonk::Column<Instance> {
+
+    fn from(value: &Column) -> Self {
+        if value.column_type != 244 {
+            panic!("Expected an instance column, got {:?}", value.column_type);
+        }
+
+        halo2_proofs::plonk::Column::new(value.index as usize, Instance)
+    }
+}
+
+impl From<&Column> for halo2_proofs::plonk::Column<Fixed> {
+    fn from(value: &Column) -> Self {
+        if value.column_type != 255 {
+            panic!("Expected a fixed column, got {:?}", value.column_type);
+        }
+
+        halo2_proofs::plonk::Column::new(value.index as usize, Fixed)
+    }
+}
+
 #[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
 pub struct Rotation {
     pub rotation: u32,
     pub next: bool,
 }
 
-impl From<halo2_proofs::poly::Rotation> for Rotation {
-    fn from(value: halo2_proofs::poly::Rotation) -> Self {
+impl From<&halo2_proofs::poly::Rotation> for Rotation {
+    fn from(value: &halo2_proofs::poly::Rotation) -> Self {
         if value.0.is_negative() {
             Self {
                 rotation: value.0.unsigned_abs(),
@@ -187,20 +356,13 @@ pub struct Shuffle<F> {
     pub shuffle_exprs: Vec<Expression<F>>,
 }
 
-pub fn generate_circuit_info<'params, ConcreteCircuit>(
-    params: &halo2_proofs::poly::kzg::commitment::ParamsKZG<Bn256>,
-    circuit: &ConcreteCircuit,
-) -> Result<CircuitInfo<G1Affine, Fr>, Error>
-where
-    ConcreteCircuit: Circuit<bn256::G1Affine>,
-{
-    let vk = keygen_vk(params, circuit)?;
-    let cs = vk.cs();
+impl TryFrom<&halo2_proofs::plonk::ConstraintSystem<bn256::Fr>> for CircuitInfo<Fr> {
+    type Error = ConvertError;
+
+    fn try_from(cs: &halo2_proofs::plonk::ConstraintSystem<bn256::Fr>) -> Result<Self, Self::Error> {
 
     let info = CircuitInfo {
-        fixed_commitments: vk.fixed_commitments().clone(),
-        permutation_commitments: vk.permutation().commitments().clone(),
-        k: (params.k() as u8), // we expect k would not be too large.
+        // k: (params.k() as u8), // we expect k would not be too large.
         cs_degree: cs.degree() as u32,
         num_fixed_columns: cs.num_fixed_columns() as u64,
         num_advice_columns: cs.num_advice_columns() as u64,
@@ -213,7 +375,7 @@ where
             .iter()
             .map(|(c, r)| ColumnQuery {
                 column: halo2_proofs::plonk::Column::<Any>::from(*c).into(),
-                rotation: From::from(*r),
+                rotation: From::from(r),
             })
             .collect(),
         instance_queries: cs
@@ -221,7 +383,7 @@ where
             .iter()
             .map(|(c, r)| ColumnQuery {
                 column: halo2_proofs::plonk::Column::<Any>::from(*c).into(),
-                rotation: From::from(*r),
+                rotation: From::from(r),
             })
             .collect(),
         fixed_queries: cs
@@ -229,7 +391,7 @@ where
             .iter()
             .map(|(c, r)| ColumnQuery {
                 column: halo2_proofs::plonk::Column::<Any>::from(*c).into(),
-                rotation: From::from(*r),
+                rotation: From::from(r),
             })
             .collect(),
         permutation_columns: cs
@@ -242,41 +404,30 @@ where
             .lookups()
             .iter()
             .map(|l| Lookup {
-                input_exprs: l
-                    .input_expressions().iter()
-                    .map(|e| {
-                        e.into()
-                    })
-                    .collect(),
-                table_exprs: l
-                    .table_expressions()
-                    .iter()
-                    .map(|e| {
-                        e.into()
-                    })
-                    .collect(),
+                input_exprs: l.input_expressions().iter().map(|e| e.into()).collect(),
+                table_exprs: l.table_expressions().iter().map(|e| e.into()).collect(),
             })
             .collect(),
-        shuffles: cs
-            .shuffles()
-            .iter()
-            .map(|s| Shuffle {
-                input_exprs: s
-                    .input_expressions()
-                    .iter()
-                    .map(|e| {
-                        e.into()
-                    })
-                    .collect(),
-                shuffle_exprs: s
-                    .shuffle_expressions()
-                    .iter()
-                    .map(|e| {
-                        e.into()
-                    })
-                    .collect(),
-            })
-            .collect(),
+        // shuffles: cs
+        //     .shuffles()
+        //     .iter()
+        //     .map(|s| Shuffle {
+        //         input_exprs: s
+        //             .input_expressions()
+        //             .iter()
+        //             .map(|e| {
+        //                 e.into()
+        //             })
+        //             .collect(),
+        //         shuffle_exprs: s
+        //             .shuffle_expressions()
+        //             .iter()
+        //             .map(|e| {
+        //                 e.into()
+        //             })
+        //             .collect(),
+        //     })
+        //     .collect(),
         max_num_query_of_advice_column: cs
             .advice_queries()
             .iter()
@@ -297,87 +448,104 @@ where
             .gates()
             .iter()
             .map(|g| {
-                g.polynomials()
-                    .iter()
-                    .map(|e| {
-                        e.into()
-                    })
-                    .collect()
+                Gate {
+                    // name: g.name(),
+                    // constraint_names: g.constraint_names.clone(),
+                    polys: g.polynomials().iter().map(|e| e.into()).collect(),
+                    queried_selectors: g.queried_selectors().iter().map(|e| e.into()).collect(),
+                    queried_cells: g.queried_cells().iter().map(|e| e.into()).collect(),
+                }
             })
             .collect(),
     };
+
     Ok(info)
+    }
 }
 
-impl TryFrom<CircuitInfo<G1Affine, Fr>> for ConstraintSystem<bn256::Fr> {
+impl TryFrom<CircuitInfo<Fr>> for ConstraintSystem<bn256::Fr> {
     type Error = ConvertError;
 
-    fn try_from(value: CircuitInfo<G1Affine, Fr>) -> Result<Self, Self::Error> {
+    fn try_from(value: CircuitInfo<Fr>) -> Result<Self, Self::Error> {
         let mut cs = ConstraintSystem::default();
         cs.num_fixed_columns = value.num_fixed_columns as usize;
         cs.num_advice_columns = value.num_advice_columns as usize;
         cs.num_instance_columns = value.num_instance_columns as usize;
 
-        cs.advice_column_phase = value.advice_column_phase.iter().map(|x| match x {
-            0 => halo2_proofs::plonk::FirstPhase::sealed(),
-            1 => halo2_proofs::plonk::SecondPhase::sealed(),
-            2 => halo2_proofs::plonk::ThirdPhase::sealed(),
-            _ => unreachable!(),
-        }).collect();
+        cs.advice_column_phase = value
+            .advice_column_phase
+            .iter()
+            .map(|x| match x {
+                0 => halo2_proofs::plonk::FirstPhase::sealed(),
+                1 => halo2_proofs::plonk::SecondPhase::sealed(),
+                2 => halo2_proofs::plonk::ThirdPhase::sealed(),
+                _ => unreachable!(),
+            })
+            .collect();
 
-        cs.challenge_phase = value.challenge_phase.iter().map(|x| match x {
-            0 => halo2_proofs::plonk::FirstPhase::sealed(),
-            1 => halo2_proofs::plonk::SecondPhase::sealed(),
-            2 => halo2_proofs::plonk::ThirdPhase::sealed(),
-            _ => unreachable!(),
-        }).collect();
+        cs.challenge_phase = value
+            .challenge_phase
+            .iter()
+            .map(|x| match x {
+                0 => halo2_proofs::plonk::FirstPhase::sealed(),
+                1 => halo2_proofs::plonk::SecondPhase::sealed(),
+                2 => halo2_proofs::plonk::ThirdPhase::sealed(),
+                _ => unreachable!(),
+            })
+            .collect();
 
-        for gate in value.gates {
-            cs.create_gate("", |cs| {
-                let mut polys = Vec::new();
-                for poly in gate.polys {
-                    let mut terms = Vec::new();
-                    for (selector, coeff) in poly.iter() {
-                        let column = match selector.0 {
-                            0 => cs.advice_column(selector.1),
-                            1 => cs.fixed_column(selector.1),
-                            2 => cs.instance_column(selector.1),
-                            _ => unreachable!(),
-                        };
-                        terms.push((column, coeff));
-                    }
-                    polys.push(cs.poly(terms));
-                }
-                gate.queried_selectors.iter().for_each(|selector| {
-                    cs.query_selector(selector.clone().into());
-                });
-                polys
-            });
-        }
+        cs.advice_queries = value
+            .advice_queries
+            .iter()
+            .map(|q| (q.column.into_ref().into(), q.rotation.into_ref().into()))
+            .collect();
 
-        cs.advice_queries = value.advice_queries.iter().map(|q| {
-            ((&q.column).into(), (&q.rotation).into())
-        }).collect();
+        cs.instance_queries = value
+            .instance_queries
+            .iter()
+            .map(|q| (q.column.into_ref().into(), q.rotation.into_ref().into()))
+            .collect();
 
-        cs.instance_queries = value.instance_queries.iter().map(|q| {
-            ((&q.column).into(), (&q.rotation).into())
-        }).collect();
-
-        cs.fixed_queries = value.fixed_queries.iter().map(|q| {
-            ((&q.column).into(), (&q.rotation).into())
-        }).collect();
+        cs.fixed_queries = value
+            .fixed_queries
+            .iter()
+            .map(|q| (q.column.into_ref().into(), q.rotation.into_ref().into()))
+            .collect();
 
         cs.permutation = halo2_proofs::plonk::permutation::Argument {
             columns: value.permutation_columns.iter().map(|c| c.into()).collect(),
         };
 
-        cs.lookups = value.lookups.iter().map(|l| {
-            halo2_proofs::plonk::lookup::Argument::new("", l.input_exprs.iter().zip(l.table_exprs.iter()).map(|(i, t)| (i.clone(), t.clone())).collect())
-        }).collect();
+        cs.lookups = value
+            .lookups
+            .iter()
+            .map(|l| {
+                halo2_proofs::plonk::lookup::Argument::new(
+                    "",
+                    l.input_exprs
+                        .iter()
+                        .zip(l.table_exprs.iter())
+                        .map(|(i, t)| (i.clone().into(), t.clone().into()))
+                        .collect(),
+                )
+            })
+            .collect();
+
+            for gate in value.gates {
+                cs.create_gate("", |cs| {
+                   
+                    gate.queried_selectors.iter().for_each(|selector| {
+                        cs.query_selector(selector.clone().into());
+                    });
+                    gate.queried_cells.iter().for_each(|cell| {
+                        cs.query_any::<halo2_proofs::plonk::Column<Any>>(cell.column.into_ref().into(), cell.rotation.into_ref().into());
+                    });
+                    gate.polys.into_iter().map(|e| ("", e.into()))
+                });
+            }
 
         // halo2_proofs::plonk:: VerifyingKey::<G1Affine>::read::<BufReader<&[u8]>, BaseCircuitBuilder<Fr>>
 
         Ok(cs)
     }
 }
-

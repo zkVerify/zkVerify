@@ -8289,6 +8289,8 @@ dependencies = [
  "pallet-balances",
  "pallet-verifiers",
  "parity-scale-codec",
+ "rand 0.8.5",
+ "rand_chacha",
  "scale-info",
  "serde_json",
  "sp-core",

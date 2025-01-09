@@ -28,3 +28,18 @@ impl TryFrom<ParamsKZG> for halo2_proofs::poly::kzg::commitment::ParamsKZG<Bn256
         })
     }
 }
+
+impl TryFrom<halo2_proofs::poly::kzg::commitment::ParamsKZG<Bn256>> for ParamsKZG {
+    type Error = ConvertError;
+
+    fn try_from(params: halo2_proofs::poly::kzg::commitment::ParamsKZG<Bn256>) -> Result<Self, Self::Error> {
+        let g = params.g[0].try_into()?;
+        Ok(Self {
+            k: params.k,
+            n: params.n,
+            g,
+            g2: params.g2.try_into()?,
+            s_g2: params.s_g2.try_into()?,
+        })
+    }
+}
