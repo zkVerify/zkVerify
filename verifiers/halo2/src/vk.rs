@@ -86,7 +86,7 @@ trait IntoBytes {
 impl IntoBytes for U256 {
     fn into_bytes(self) -> [u8; 32] {
         let mut out = [0; 32];
-        self.to_big_endian(&mut out);
+        self.to_little_endian(&mut out);
         out
     }
 }
@@ -99,7 +99,7 @@ impl From<Fr> for bn256::Fr {
 
 impl From<bn256::Fr> for Fr {
     fn from(value: bn256::Fr) -> Self {
-        Self(U256::from_big_endian(&value.to_bytes()))
+        Self(U256::from_little_endian(&value.to_bytes()))
     }
 }
 

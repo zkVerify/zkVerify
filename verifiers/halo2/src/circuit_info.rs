@@ -361,6 +361,8 @@ impl TryFrom<&halo2_proofs::plonk::ConstraintSystem<bn256::Fr>> for CircuitInfo<
 
     fn try_from(cs: &halo2_proofs::plonk::ConstraintSystem<bn256::Fr>) -> Result<Self, Self::Error> {
 
+        println!("num gates: {}", cs.gates().len());
+
     let info = CircuitInfo {
         // k: (params.k() as u8), // we expect k would not be too large.
         cs_degree: cs.degree() as u32,

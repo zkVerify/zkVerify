@@ -17,14 +17,14 @@ impl TryFrom<ParamsKZG> for halo2_proofs::poly::kzg::commitment::ParamsKZG<Bn256
     type Error = ConvertError;
 
     fn try_from(params: ParamsKZG) -> Result<Self, Self::Error> {
-        let g = params.g.try_into()?;
+        let g = params.g.try_into().unwrap();
         Ok(Self {
             k: params.k,
             n: params.n,
             g: vec![g], // only g[0] is used in Shplonk and GWC
             g_lagrange: vec![], // not used in Shplonk and GWC
-            g2: params.g2.try_into()?,
-            s_g2: params.s_g2.try_into()?,
+            g2: params.g2.try_into().unwrap(),
+            s_g2: params.s_g2.try_into().unwrap(),
         })
     }
 }
