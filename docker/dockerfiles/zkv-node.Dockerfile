@@ -48,6 +48,7 @@ USER root
 WORKDIR /app
 
 COPY docker/scripts/entrypoint.sh .
+COPY docker/scripts/remove_password_file.sh .
 COPY --from=builder "/usr/src/node/target/${PROFILE}/zkv-node" "/usr/local/bin/"
 COPY --from=builder "/usr/src/node/target/${PROFILE}/wbuild/zkv-runtime/zkv_runtime.compact.compressed.wasm" "./zkv_runtime.compact.compressed.wasm"
 RUN chmod -R a+rx "/usr/local/bin"
