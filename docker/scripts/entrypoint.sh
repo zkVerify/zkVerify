@@ -125,6 +125,7 @@ echo "ZKV_NODE_KEY_FILE=${ZKV_NODE_KEY_FILE}"
 ZKV_CONF_BASE_PATH=${ZKV_CONF_BASE_PATH:-}
 ZKV_CONF_CHAIN=${ZKV_CONF_CHAIN:-}
 ZKV_SPEC_FILE_URL="${ZKV_SPEC_FILE_URL:-}"
+ZKV_SECRET_PASSWORD_PATH="${ZKV_SECRET_PASSWORD_PATH:-}"
 
 # Node configurations (env->arg)
 prefix="ZKV_CONF_"
@@ -143,8 +144,12 @@ while IFS='=' read -r -d '' var_name var_value; do
     echo "  ${var_name}=${var_value} -> ${arg_name} ${arg_value}"
   fi
 done < <(env -0)
+if [ -n "${ZKV_SECRET_PASSWORD_PATH}" ]; then
+  sed -i -z 's/\n$//' "${ZKV_SECRET_PASSWORD_PATH}" # make sure there is no ending newline
+  conf_args+=("--password-filename" "$(get_arg_value_from_env_value "${ZKV_SECRET_PASSWORD_PATH}")")
+fi
 
-# Realychain's collator configurations (env->arg)
+# Relaychain's collator configurations (env->arg)
 prefix="RC_CONF_"
 echo "Relaycain's collator configuration:"
 relaychain_appended_any=""
@@ -193,6 +198,9 @@ if [ -f "${ZKV_SECRET_PHRASE_PATH}" ]; then
     injection_args+=("$(get_arg_name_from_env_name ZKV_CONF_CHAIN ${prefix})")
     injection_args+=("$(get_arg_value_from_env_value "${ZKV_CONF_CHAIN}")")
   fi
+  if [ -n "${ZKV_SECRET_PASSWORD_PATH}" ]; then
+    injection_args+=("--password-filename" "$(get_arg_value_from_env_value "${ZKV_SECRET_PASSWORD_PATH}")")
+  fi
   echo "Injecting keys with ${injection_args[*]}"
   echo "Injecting key (Babe)"
   ${ZKV_NODE} key insert "${injection_args[@]}" \
@@ -230,6 +238,11 @@ if [[ (-n "${ZKV_CONF_BASE_PATH}") && (-n "${ZKV_CONF_CHAIN}") && (-f "${ZKV_NOD
   mkdir -p "${destination}"
   echo "Copying node key file"
   cp "${ZKV_NODE_KEY_FILE}" "${destination}/secret_ed25519"
+fi
+
+if [ -n "${ZKV_SECRET_PASSWORD_PATH}" ]; then
+    echo "Launching password file remover"
+    ./remove_password_file.sh ${ZKV_NODE} ${ZKV_SECRET_PASSWORD_PATH} &
 fi
 
 echo "Launching ${ZKV_NODE} with args ${conf_args[*]}"

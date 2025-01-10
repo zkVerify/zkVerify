@@ -48,6 +48,7 @@ USER root
 WORKDIR /app
 
 COPY docker/scripts/entrypoint.sh .
+COPY docker/scripts/remove_password_file.sh .
 COPY --from=builder "/usr/src/node/target/${PROFILE}/zkv-relay" "/usr/local/bin/"
 COPY --from=builder "/usr/src/node/target/${PROFILE}/zkv-relay-execute-worker" "/usr/local/bin/"
 COPY --from=builder "/usr/src/node/target/${PROFILE}/zkv-relay-prepare-worker" "/usr/local/bin/"
