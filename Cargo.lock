@@ -4812,6 +4812,7 @@ dependencies = [
 [[package]]
 name = "halo2_proofs"
 version = "0.2.0"
+source = "git+https://github.com/nulltea/halo2-nostd.git?branch=no_std#3e3282a372c4a9d013d69466887fde52ccd4fc04"
 dependencies = [
  "blake2b_simd",
  "cfg-if 0.1.10",
@@ -4832,6 +4833,7 @@ dependencies = [
 [[package]]
 name = "halo2curves"
 version = "0.3.1"
+source = "git+https://github.com/contrun/halo2curves.git?branch=v0.3.1-no-std#284ad5e7b95c7c8df987b091e34dca40456a6d1e"
 dependencies = [
  "ff 0.12.1",
  "group 0.12.1",
@@ -10592,6 +10594,7 @@ checksum = "cc9c68a3f6da06753e9335d63e27f6b9754dd1920d941135b7ea8224f141adb2"
 [[package]]
 name = "poseidon"
 version = "0.2.0"
+source = "git+https://github.com/contrun/poseidon.git?branch=no-std#103bec27d5de0754333373fd72091b67e61bbe27"
 dependencies = [
  "group 0.12.1",
  "halo2curves",

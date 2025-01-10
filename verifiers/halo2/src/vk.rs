@@ -1,10 +1,9 @@
-use sp_std::fmt::Debug;
+use crate::constraint_system::CircuitInfo;
 use codec::{Decode, Encode, MaxEncodedLen};
-use frame_support::traits::IsType;
+use halo2_proofs::halo2curves::bn256;
 use scale_info::TypeInfo;
 use sp_core::U256;
-use halo2_proofs::halo2curves::bn256;
-use crate::constraint_system::{CircuitInfo, Expression};
+use sp_std::fmt::Debug;
 
 #[cfg(not(feature = "std"))]
 use alloc::vec::Vec;
@@ -23,47 +22,17 @@ pub struct G2Affine(Fq2, Fq2);
 #[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo)] // MaxEncodedLen
 pub struct Vk {
     k: u32,
-    degree: u32,
     fixed_commitments: Vec<G1Affine>,
     permutation_commitments: Vec<G1Affine>,
     cs: CircuitInfo<Fr>,
-    /// The representative of this `VerifyingKey` in transcripts.
+    cs_degree: u32,
     transcript_repr: Fr,
-    selector_assignments: Vec<SelectorAssignment<Fr>>,
+    selectors: Vec<Vec<bool>>,
 }
 
 impl MaxEncodedLen for Vk {
     fn max_encoded_len() -> usize {
         unimplemented!()
-    }
-}
-
-#[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo)]
-pub struct SelectorAssignment<F> {
-    pub selector: u64,
-
-    pub combination_index: u64,
-
-    pub expression: Expression<F>,
-}
-
-impl From<SelectorAssignment<Fr>> for halo2_proofs::plonk::SelectorAssignment<bn256::Fr> {
-    fn from(value: SelectorAssignment<Fr>) -> Self {
-        Self {
-            selector: value.selector as usize,
-            combination_index: value.combination_index as usize,
-            expression: value.expression.into(),
-        }
-    }
-}
-
-impl From<&halo2_proofs::plonk::SelectorAssignment<bn256::Fr>> for SelectorAssignment<Fr> {
-    fn from(value: &halo2_proofs::plonk::SelectorAssignment<bn256::Fr>) -> Self {
-        Self {
-            selector: value.selector as u64,
-            combination_index: value.combination_index as u64,
-            expression: value.expression.into_ref().into(),
-        }
     }
 }
 
@@ -95,7 +64,9 @@ impl TryInto<bn256::Fq> for Fq {
     type Error = ConvertError;
 
     fn try_into(self) -> Result<bn256::Fq, Self::Error> {
-        bn256::Fq::from_bytes(&self.0.into_bytes()).into_option().ok_or(ConvertError::NotAMemberFq)
+        bn256::Fq::from_bytes(&self.0.into_bytes())
+            .into_option()
+            .ok_or(ConvertError::NotAMemberFq)
     }
 }
 
@@ -111,10 +82,7 @@ impl TryInto<bn256::Fq2> for Fq2 {
     type Error = ConvertError;
 
     fn try_into(self) -> Result<bn256::Fq2, Self::Error> {
-        Ok(bn256::Fq2::new(
-            self.0.try_into()?,
-            self.1.try_into()?,
-        ))
+        Ok(bn256::Fq2::new(self.0.try_into()?, self.1.try_into()?))
     }
 }
 
@@ -137,7 +105,10 @@ impl TryInto<bn256::G1Affine> for G1Affine {
     type Error = ConvertError;
 
     fn try_into(self) -> Result<bn256::G1Affine, Self::Error> {
-        let g1 = bn256::G1Affine { x: self.0.try_into()?, y: self.1.try_into()? };
+        let g1 = bn256::G1Affine {
+            x: self.0.try_into()?,
+            y: self.1.try_into()?,
+        };
         Ok(g1)
     }
 }
@@ -154,7 +125,10 @@ impl TryInto<bn256::G2Affine> for G2Affine {
     type Error = ConvertError;
 
     fn try_into(self) -> Result<bn256::G2Affine, Self::Error> {
-        let g1 = bn256::G2Affine { x: self.0.try_into()?, y: self.1.try_into()? };
+        let g1 = bn256::G2Affine {
+            x: self.0.try_into()?,
+            y: self.1.try_into()?,
+        };
         Ok(g1)
     }
 }
@@ -178,12 +152,22 @@ impl TryInto<halo2_proofs::plonk::VerifyingKey<bn256::G1Affine>> for Vk {
         Ok(halo2_proofs::plonk::VerifyingKey::<bn256::G1Affine> {
             domain,
             cs_degree: degree,
-            fixed_commitments: self.fixed_commitments.into_iter().map(|c| c.try_into()).collect::<Result<Vec<_>, _>>().unwrap(),
+            fixed_commitments: self
+                .fixed_commitments
+                .into_iter()
+                .map(|c| c.try_into())
+                .collect::<Result<Vec<_>, _>>()
+                .unwrap(),
             permutation: halo2_proofs::plonk::permutation::VerifyingKey {
-                commitments: self.permutation_commitments.into_iter().map(|c| c.try_into()).collect::<Result<Vec<_>, _>>().unwrap()
+                commitments: self
+                    .permutation_commitments
+                    .into_iter()
+                    .map(|c| c.try_into())
+                    .collect::<Result<Vec<_>, _>>()
+                    .unwrap(),
             },
             cs,
-            selector_assignments: self.selector_assignments.into_iter().map(|s| s.into()).collect::<Vec<_>>(),
+            selectors: self.selectors,
             transcript_repr: self.transcript_repr.into(),
         })
     }
@@ -192,15 +176,26 @@ impl TryInto<halo2_proofs::plonk::VerifyingKey<bn256::G1Affine>> for Vk {
 impl TryFrom<&halo2_proofs::plonk::VerifyingKey<bn256::G1Affine>> for Vk {
     type Error = ConvertError;
 
-    fn try_from(vk: &halo2_proofs::plonk::VerifyingKey<bn256::G1Affine>) -> Result<Self, Self::Error> {
+    fn try_from(
+        vk: &halo2_proofs::plonk::VerifyingKey<bn256::G1Affine>,
+    ) -> Result<Self, Self::Error> {
         Ok(Self {
             k: vk.domain.k(),
-            degree: vk.cs().degree() as u32,
-            fixed_commitments: vk.fixed_commitments().iter().map(|&c| c.try_into()).collect::<Result<Vec<_>, _>>()?,
-            permutation_commitments: vk.permutation().commitments().iter().map(|&c| c.try_into()).collect::<Result<Vec<_>, _>>()?,
+            cs_degree: vk.cs().degree() as u32,
+            fixed_commitments: vk
+                .fixed_commitments()
+                .iter()
+                .map(|&c| c.try_into())
+                .collect::<Result<Vec<_>, _>>()?,
+            permutation_commitments: vk
+                .permutation()
+                .commitments()
+                .iter()
+                .map(|&c| c.try_into())
+                .collect::<Result<Vec<_>, _>>()?,
             cs: vk.cs().try_into()?,
             transcript_repr: vk.transcript_repr.into(),
-            selector_assignments: vk.selector_assignments.iter().map(|s| s.into()).collect::<Vec<_>>(),
+            selectors: vk.selectors.clone(),
         })
     }
 }

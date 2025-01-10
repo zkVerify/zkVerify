@@ -33,19 +33,14 @@ pub struct CircuitInfo<F> {
 
 #[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
 pub struct ColumnQuery {
-    // name: &'static str,
     pub column: Column,
     pub rotation: Rotation,
 }
 #[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
 pub struct Column {
-    // name: String,
     pub index: u32,
     pub column_type: u8,
 }
-
-// #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-// pub struct Selector(pub(crate) usize, bool);
 
 #[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
 pub struct VirtualCell {
