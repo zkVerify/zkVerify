@@ -6,7 +6,7 @@ extern crate alloc;
 #[cfg(not(feature = "std"))]
 use alloc::vec::Vec;
 
-mod circuit_info;
+mod constraint_system;
 mod params;
 mod vk;
 

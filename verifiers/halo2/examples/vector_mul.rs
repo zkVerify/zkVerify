@@ -1,48 +1,12 @@
-use codec::{Decode, Encode};
-use frame_support::traits::IsType;
-use halo2_proofs::{
-    arithmetic::CurveAffine,
-    halo2curves::Bn256,
-    plonk::{create_proof, keygen_pk, keygen_vk, verify_proof, VerifyingKey},
-    poly::{
-        commitment::{Params, ParamsProver},
-        kzg::{
-            commitment::{KZGCommitmentScheme, ParamsKZG},
-use std::{
-    fs::File,
-    io::{BufReader, BufWriter, Read},
-    marker::PhantomData,
-};
-
-use codec::{Decode, Encode};
+use std::marker::PhantomData;
 use ff::PrimeField;
-
-use frame_support::traits::IsType;
 use halo2_proofs::{
-    arithmetic::{CurveAffine, Field, FieldExt},
+    arithmetic::{Field, FieldExt},
     circuit::{AssignedCell, Chip, Layouter, Region, SimpleFloorPlanner, Value},
-    halo2curves::bn256::{self, Bn256},
-    plonk::{
-        create_proof, keygen_pk, keygen_vk, verify_proof, Advice, Circuit, Column,
-        ConstraintSystem, Error, Instance, Selector, VerifyingKey,
-    },
-    poly::{
-        commitment::{Params, ParamsProver},
-        kzg::{
-            commitment::{KZGCommitmentScheme, ParamsKZG},
-            multiopen::{ProverSHPLONK, VerifierSHPLONK},
-            strategy::{AccumulatorStrategy, SingleStrategy},
-        },
-        Rotation, VerificationStrategy,
-    },
-    transcript::{
-        Blake2bRead, Blake2bWrite, Challenge255, TranscriptReadBuffer, TranscriptWriterBuffer,
-    },
+    halo2curves::bn256::{self},
+    plonk::{Advice, Circuit, Column, ConstraintSystem, Error, Instance, Selector},
+    poly::Rotation,
 };
-use hp_verifiers::Verifier;
-use pallet_halo2_verifier::Halo2;
-use rand::{thread_rng, SeedableRng};
-use rand_chacha::ChaCha20Rng;
 
 mod common;
 
@@ -217,40 +181,6 @@ impl<F: FieldExt> NumericInstructions<F> for FieldChip<F> {
         let config = self.config();
         assert_eq!(a.len(), b.len());
 
-        #[cfg(feature = "thread-safe-region")]
-        {
-            use rayon::prelude::{
-                IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator,
-            };
-            layouter.assign_region(
-                || "mul",
-                |region: Region<'_, F>| {
-                    let thread_safe_region = std::sync::Mutex::new(region);
-                    a.par_iter()
-                        .zip(b.par_iter())
-                        .enumerate()
-                        .map(|(i, (a, b))| {
-                            let mut region = thread_safe_region.lock().unwrap();
-
-                            config.s_mul.enable(&mut region, i)?;
-
-                            a.0.copy_advice(|| "lhs", &mut region, config.advice[0], i)?;
-                            b.0.copy_advice(|| "rhs", &mut region, config.advice[1], i)?;
-
-                            let value = a.0.value().copied() * b.0.value();
-
-                            // Finally, we do the assignment to the output, returning a
-                            // variable to be used in another part of the circuit.
-                            region
-                                .assign_advice(|| "lhs * rhs", config.advice[2], i, || value)
-                                .map(Number)
-                        })
-                        .collect()
-                },
-            )
-        }
-
-        #[cfg(not(feature = "thread-safe-region"))]
         layouter.assign_region(
             || "mul",
             |mut region: Region<'_, F>| {
@@ -305,8 +235,6 @@ impl<F: FieldExt> Circuit<F> for MyCircuit<F> {
     // Since we are using a single chip for everything, we can just reuse its config.
     type Config = FieldConfig;
     type FloorPlanner = SimpleFloorPlanner;
-    #[cfg(feature = "circuit-params")]
-    type Params = ();
 
     fn without_witnesses(&self) -> Self {
         Self::default()

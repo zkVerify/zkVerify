@@ -1,34 +1,13 @@
-use codec::Encode;
 use core::iter;
 use ff::BatchInvert;
-use frame_support::traits::IsType;
 use halo2_proofs::{
-    arithmetic::{CurveAffine, FieldExt},
+    arithmetic::FieldExt,
     circuit::{floor_planner::V1, Layouter, Value},
     dev::{metadata, FailureLocation, MockProver, VerifyFailure},
-    halo2curves::{bn256, pasta::EqAffine},
-    plonk::*,
-    poly::{
-        commitment::ParamsProver,
-        ipa::{
-            commitment::{IPACommitmentScheme, ParamsIPA},
-            multiopen::{ProverIPA, VerifierIPA},
-            strategy::AccumulatorStrategy,
-        },
-        kzg::{
-            commitment::KZGCommitmentScheme,
-            multiopen::{ProverSHPLONK, VerifierSHPLONK},
-            strategy::SingleStrategy,
-        },
-        Rotation, VerificationStrategy,
-    },
-    transcript::{
-        Blake2bRead, Blake2bWrite, Challenge255, TranscriptReadBuffer, TranscriptWriterBuffer,
-    },
+    plonk::{Advice, Challenge, Circuit, Column, ConstraintSystem, Error, Expression, FirstPhase, SecondPhase, Selector},
+    poly::Rotation,
 };
-use hp_verifiers::Verifier;
-use pallet_halo2_verifier::Halo2;
-use rand::{rngs::OsRng, thread_rng, RngCore};
+use rand::{rngs::OsRng, RngCore};
 
 mod common;
 
@@ -243,9 +222,6 @@ impl<F: FieldExt, const W: usize, const H: usize> Circuit<F> for MyCircuit<F, W,
                             })
                             .collect::<Vec<_>>();
 
-                        #[cfg(feature = "sanity-checks")]
-                        assert_eq!(F::one(), *z.last().unwrap());
-
                         z
                     },
                 );
@@ -326,3 +302,4 @@ fn main() {
         common::test_verifier(K, &circuit, None, false);
     }
 }
+

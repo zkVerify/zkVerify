@@ -4,7 +4,7 @@ use frame_support::traits::IsType;
 use scale_info::TypeInfo;
 use sp_core::U256;
 use halo2_proofs::halo2curves::bn256;
-use crate::circuit_info::{CircuitInfo, Expression};
+use crate::constraint_system::{CircuitInfo, Expression};
 
 #[cfg(not(feature = "std"))]
 use alloc::vec::Vec;
