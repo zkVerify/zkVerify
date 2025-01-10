@@ -17,26 +17,45 @@ use crate::VerifyError;
 use sp_runtime_interface::runtime_interface;
 
 #[cfg(feature = "std")]
-impl From<risc0_verifier::VerifyError> for VerifyError {
-    fn from(value: risc0_verifier::VerifyError) -> Self {
-        match value {
-            risc0_verifier::VerifyError::InvalidData {
-                cause: risc0_verifier::DeserializeError::InvalidProof,
-            } => VerifyError::InvalidProofData,
-            risc0_verifier::VerifyError::InvalidData {
-                cause: risc0_verifier::DeserializeError::InvalidPublicInputs,
-            } => VerifyError::InvalidInput,
-            _ => VerifyError::VerifyError,
-        }
+mod legacy_impl {
+    use crate::VerifyError;
+
+    fn deserialize_proof(proof: &[u8]) -> Result<risc0_verifier::InnerReceipt, VerifyError> {
+        bincode::deserialize(proof).map_err(|_x| {
+            if is_fake_proof(proof) {
+                VerifyError::VerifyError
+            } else {
+                VerifyError::InvalidProofData
+            }
+        })
+    }
+
+    fn deserialize_pubs(pubs: &[u8]) -> Result<risc0_verifier::Journal, VerifyError> {
+        bincode::deserialize(pubs).map_err(|_x| VerifyError::InvalidInput)
+    }
+
+    pub fn verify(vk: [u8; 32], proof: &[u8], pubs: &[u8]) -> Result<(), VerifyError> {
+        use risc0_verifier::Digestible;
+
+        let inner_receipt = deserialize_proof(proof)?;
+        let journal = deserialize_pubs(pubs)?;
+
+        let ctx = risc0_verifier::VerifierContext::v1_0();
+        let proof = risc0_verifier::Proof::new(inner_receipt);
+        proof
+            .verify(&ctx, vk, journal.digest())
+            .map_err(|_| VerifyError::VerifyError)
+    }
+
+    /// Return if the proof is a `Fake` proof
+    fn is_fake_proof(proof: &[u8]) -> bool {
+        proof.starts_with(&[0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
     }
 }
 
 #[runtime_interface]
 pub trait Risc0Verify {
     fn verify(vk: [u8; 32], proof: &[u8], pubs: &[u8]) -> Result<(), VerifyError> {
-        risc0_verifier::verify(vk.into(), proof, pubs)
-            .inspect_err(|e| log::debug!("Cannot verify proof: {:?}", e))
-            .map_err(Into::into)
-            .map(|_| log::trace!("verified"))
+        legacy_impl::verify(vk, proof, pubs)
     }
 }

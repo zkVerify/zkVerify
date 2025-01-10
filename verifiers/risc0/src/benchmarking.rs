@@ -16,6 +16,7 @@
 #![cfg(feature = "runtime-benchmarks")]
 
 use super::Risc0;
+use crate::Proof;
 use frame_benchmarking::v2::*;
 use frame_support::traits::{Consideration, Footprint};
 use frame_system::RawOrigin;
@@ -48,9 +49,9 @@ mod benchmarks {
         let (caller, domain_id) = init::<T>();
 
         let vk = VkOrHash::from_vk(VALID_VK);
-        let proof = include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_12.bin")
-            .to_vec()
-            .into();
+        let inner_proof =
+            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_12.bin").to_vec();
+        let proof = Proof::V1_0(inner_proof).into();
         let pubs = VALID_PUBS_CYCLE_2_POW_12.to_vec().into();
 
         #[extrinsic_call]
@@ -62,9 +63,9 @@ mod benchmarks {
         let (caller, domain_id) = init::<T>();
 
         let vk = VkOrHash::from_vk(VALID_VK);
-        let proof = include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_13.bin")
-            .to_vec()
-            .into();
+        let inner_proof =
+            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_13.bin").to_vec();
+        let proof = Proof::V1_0(inner_proof).into();
         let pubs = VALID_PUBS_CYCLE_2_POW_13.to_vec().into();
 
         #[extrinsic_call]
@@ -76,9 +77,9 @@ mod benchmarks {
         let (caller, domain_id) = init::<T>();
 
         let vk = VkOrHash::from_vk(VALID_VK);
-        let proof = include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_14.bin")
-            .to_vec()
-            .into();
+        let inner_proof =
+            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_14.bin").to_vec();
+        let proof = Proof::V1_0(inner_proof).into();
         let pubs = VALID_PUBS_CYCLE_2_POW_14.to_vec().into();
 
         #[extrinsic_call]
@@ -90,9 +91,9 @@ mod benchmarks {
         let (caller, domain_id) = init::<T>();
 
         let vk = VkOrHash::from_vk(VALID_VK);
-        let proof = include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_15.bin")
-            .to_vec()
-            .into();
+        let inner_proof =
+            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_15.bin").to_vec();
+        let proof = Proof::V1_0(inner_proof).into();
         let pubs = VALID_PUBS_CYCLE_2_POW_15.to_vec().into();
 
         #[extrinsic_call]
@@ -104,9 +105,9 @@ mod benchmarks {
         let (caller, domain_id) = init::<T>();
 
         let vk = VkOrHash::from_vk(VALID_VK);
-        let proof = include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_16.bin")
-            .to_vec()
-            .into();
+        let inner_proof =
+            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_16.bin").to_vec();
+        let proof = Proof::V1_0(inner_proof).into();
         let pubs = VALID_PUBS_CYCLE_2_POW_16.to_vec().into();
 
         #[extrinsic_call]
@@ -118,9 +119,9 @@ mod benchmarks {
         let (caller, domain_id) = init::<T>();
 
         let vk = VkOrHash::from_vk(VALID_VK);
-        let proof = include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_17.bin")
-            .to_vec()
-            .into();
+        let inner_proof =
+            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_17.bin").to_vec();
+        let proof = Proof::V1_0(inner_proof).into();
         let pubs = VALID_PUBS_CYCLE_2_POW_17.to_vec().into();
 
         #[extrinsic_call]
@@ -132,9 +133,9 @@ mod benchmarks {
         let (caller, domain_id) = init::<T>();
 
         let vk = VkOrHash::from_vk(VALID_VK);
-        let proof = include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_18.bin")
-            .to_vec()
-            .into();
+        let inner_proof =
+            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_18.bin").to_vec();
+        let proof = Proof::V1_0(inner_proof).into();
         let pubs = VALID_PUBS_CYCLE_2_POW_18.to_vec().into();
 
         #[extrinsic_call]
@@ -146,9 +147,9 @@ mod benchmarks {
         let (caller, domain_id) = init::<T>();
 
         let vk = VkOrHash::from_vk(VALID_VK);
-        let proof = include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_19.bin")
-            .to_vec()
-            .into();
+        let inner_proof =
+            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_19.bin").to_vec();
+        let proof = Proof::V1_0(inner_proof).into();
         let pubs = VALID_PUBS_CYCLE_2_POW_19.to_vec().into();
 
         #[extrinsic_call]
@@ -160,9 +161,9 @@ mod benchmarks {
         let (caller, domain_id) = init::<T>();
 
         let vk = VkOrHash::from_vk(VALID_VK);
-        let proof = include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_20.bin")
-            .to_vec()
-            .into();
+        let inner_proof =
+            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_20.bin").to_vec();
+        let proof = Proof::V1_0(inner_proof).into();
         let pubs = VALID_PUBS_CYCLE_2_POW_20.to_vec().into();
 
         #[extrinsic_call]
@@ -174,9 +175,9 @@ mod benchmarks {
         let (caller, domain_id) = init::<T>();
 
         let vk = VkOrHash::from_vk(VALID_VK);
-        let proof = include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_21.bin")
-            .to_vec()
-            .into();
+        let inner_proof =
+            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_21.bin").to_vec();
+        let proof = Proof::V1_0(inner_proof).into();
         let pubs = VALID_PUBS_CYCLE_2_POW_21.to_vec().into();
 
         #[extrinsic_call]
@@ -188,9 +189,9 @@ mod benchmarks {
         let (caller, domain_id) = init::<T>();
 
         let vk = VkOrHash::from_vk(VALID_VK);
-        let proof = include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_22.bin")
-            .to_vec()
-            .into();
+        let inner_proof =
+            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_22.bin").to_vec();
+        let proof = Proof::V1_0(inner_proof).into();
         let pubs = VALID_PUBS_CYCLE_2_POW_22.to_vec().into();
 
         #[extrinsic_call]
@@ -202,9 +203,9 @@ mod benchmarks {
         let (caller, domain_id) = init::<T>();
 
         let vk = VkOrHash::from_vk(VALID_VK);
-        let proof = include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_23.bin")
-            .to_vec()
-            .into();
+        let inner_proof =
+            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_23.bin").to_vec();
+        let proof = Proof::V1_0(inner_proof).into();
         let pubs = VALID_PUBS_CYCLE_2_POW_23.to_vec().into();
 
         #[extrinsic_call]
@@ -216,9 +217,9 @@ mod benchmarks {
         let (caller, domain_id) = init::<T>();
 
         let vk = VkOrHash::from_vk(VALID_VK);
-        let proof = include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_24.bin")
-            .to_vec()
-            .into();
+        let inner_proof =
+            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_24.bin").to_vec();
+        let proof = Proof::V1_0(inner_proof).into();
         let pubs = VALID_PUBS_CYCLE_2_POW_24.to_vec().into();
 
         #[extrinsic_call]
@@ -230,9 +231,9 @@ mod benchmarks {
         let (caller, domain_id) = init::<T>();
 
         let vk = VkOrHash::from_hash(VALID_VK);
-        let proof = include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_12.bin")
-            .to_vec()
-            .into();
+        let inner_proof =
+            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_12.bin").to_vec();
+        let proof = Proof::V1_0(inner_proof).into();
         let pubs = VALID_PUBS_CYCLE_2_POW_12.to_vec().into();
         let vk_entry = VkEntry::new(VALID_VK);
         Vks::<T, Risc0<T>>::insert(VALID_VK, vk_entry);
@@ -246,9 +247,9 @@ mod benchmarks {
         let (caller, domain_id) = init::<T>();
 
         let vk = VkOrHash::from_hash(VALID_VK);
-        let proof = include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_13.bin")
-            .to_vec()
-            .into();
+        let inner_proof =
+            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_13.bin").to_vec();
+        let proof = Proof::V1_0(inner_proof).into();
         let pubs = VALID_PUBS_CYCLE_2_POW_13.to_vec().into();
         let vk_entry = VkEntry::new(VALID_VK);
         Vks::<T, Risc0<T>>::insert(VALID_VK, vk_entry);
@@ -262,9 +263,9 @@ mod benchmarks {
         let (caller, domain_id) = init::<T>();
 
         let vk = VkOrHash::from_hash(VALID_VK);
-        let proof = include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_14.bin")
-            .to_vec()
-            .into();
+        let inner_proof =
+            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_14.bin").to_vec();
+        let proof = Proof::V1_0(inner_proof).into();
         let pubs = VALID_PUBS_CYCLE_2_POW_14.to_vec().into();
         let vk_entry = VkEntry::new(VALID_VK);
         Vks::<T, Risc0<T>>::insert(VALID_VK, vk_entry);
@@ -278,9 +279,9 @@ mod benchmarks {
         let (caller, domain_id) = init::<T>();
 
         let vk = VkOrHash::from_hash(VALID_VK);
-        let proof = include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_15.bin")
-            .to_vec()
-            .into();
+        let inner_proof =
+            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_15.bin").to_vec();
+        let proof = Proof::V1_0(inner_proof).into();
         let pubs = VALID_PUBS_CYCLE_2_POW_15.to_vec().into();
         let vk_entry = VkEntry::new(VALID_VK);
         Vks::<T, Risc0<T>>::insert(VALID_VK, vk_entry);
@@ -294,9 +295,9 @@ mod benchmarks {
         let (caller, domain_id) = init::<T>();
 
         let vk = VkOrHash::from_hash(VALID_VK);
-        let proof = include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_16.bin")
-            .to_vec()
-            .into();
+        let inner_proof =
+            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_16.bin").to_vec();
+        let proof = Proof::V1_0(inner_proof).into();
         let pubs = VALID_PUBS_CYCLE_2_POW_16.to_vec().into();
         let vk_entry = VkEntry::new(VALID_VK);
         Vks::<T, Risc0<T>>::insert(VALID_VK, vk_entry);
@@ -310,9 +311,9 @@ mod benchmarks {
         let (caller, domain_id) = init::<T>();
 
         let vk = VkOrHash::from_hash(VALID_VK);
-        let proof = include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_17.bin")
-            .to_vec()
-            .into();
+        let inner_proof =
+            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_17.bin").to_vec();
+        let proof = Proof::V1_0(inner_proof).into();
         let pubs = VALID_PUBS_CYCLE_2_POW_17.to_vec().into();
         let vk_entry = VkEntry::new(VALID_VK);
         Vks::<T, Risc0<T>>::insert(VALID_VK, vk_entry);
@@ -326,9 +327,9 @@ mod benchmarks {
         let (caller, domain_id) = init::<T>();
 
         let vk = VkOrHash::from_hash(VALID_VK);
-        let proof = include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_18.bin")
-            .to_vec()
-            .into();
+        let inner_proof =
+            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_18.bin").to_vec();
+        let proof = Proof::V1_0(inner_proof).into();
         let pubs = VALID_PUBS_CYCLE_2_POW_18.to_vec().into();
         let vk_entry = VkEntry::new(VALID_VK);
         Vks::<T, Risc0<T>>::insert(VALID_VK, vk_entry);
@@ -342,9 +343,9 @@ mod benchmarks {
         let (caller, domain_id) = init::<T>();
 
         let vk = VkOrHash::from_hash(VALID_VK);
-        let proof = include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_19.bin")
-            .to_vec()
-            .into();
+        let inner_proof =
+            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_19.bin").to_vec();
+        let proof = Proof::V1_0(inner_proof).into();
         let pubs = VALID_PUBS_CYCLE_2_POW_19.to_vec().into();
         let vk_entry = VkEntry::new(VALID_VK);
         Vks::<T, Risc0<T>>::insert(VALID_VK, vk_entry);
@@ -358,9 +359,9 @@ mod benchmarks {
         let (caller, domain_id) = init::<T>();
 
         let vk = VkOrHash::from_hash(VALID_VK);
-        let proof = include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_20.bin")
-            .to_vec()
-            .into();
+        let inner_proof =
+            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_20.bin").to_vec();
+        let proof = Proof::V1_0(inner_proof).into();
         let pubs = VALID_PUBS_CYCLE_2_POW_20.to_vec().into();
         let vk_entry = VkEntry::new(VALID_VK);
         Vks::<T, Risc0<T>>::insert(VALID_VK, vk_entry);
@@ -374,9 +375,9 @@ mod benchmarks {
         let (caller, domain_id) = init::<T>();
 
         let vk = VkOrHash::from_hash(VALID_VK);
-        let proof = include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_21.bin")
-            .to_vec()
-            .into();
+        let inner_proof =
+            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_21.bin").to_vec();
+        let proof = Proof::V1_0(inner_proof).into();
         let pubs = VALID_PUBS_CYCLE_2_POW_21.to_vec().into();
         let vk_entry = VkEntry::new(VALID_VK);
         Vks::<T, Risc0<T>>::insert(VALID_VK, vk_entry);
@@ -390,9 +391,9 @@ mod benchmarks {
         let (caller, domain_id) = init::<T>();
 
         let vk = VkOrHash::from_hash(VALID_VK);
-        let proof = include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_22.bin")
-            .to_vec()
-            .into();
+        let inner_proof =
+            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_22.bin").to_vec();
+        let proof = Proof::V1_0(inner_proof).into();
         let pubs = VALID_PUBS_CYCLE_2_POW_22.to_vec().into();
         let vk_entry = VkEntry::new(VALID_VK);
         Vks::<T, Risc0<T>>::insert(VALID_VK, vk_entry);
@@ -406,9 +407,9 @@ mod benchmarks {
         let (caller, domain_id) = init::<T>();
 
         let vk = VkOrHash::from_hash(VALID_VK);
-        let proof = include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_23.bin")
-            .to_vec()
-            .into();
+        let inner_proof =
+            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_23.bin").to_vec();
+        let proof = Proof::V1_0(inner_proof).into();
         let pubs = VALID_PUBS_CYCLE_2_POW_23.to_vec().into();
         let vk_entry = VkEntry::new(VALID_VK);
         Vks::<T, Risc0<T>>::insert(VALID_VK, vk_entry);
@@ -422,9 +423,9 @@ mod benchmarks {
         let (caller, domain_id) = init::<T>();
 
         let vk = VkOrHash::from_hash(VALID_VK);
-        let proof = include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_24.bin")
-            .to_vec()
-            .into();
+        let inner_proof =
+            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_24.bin").to_vec();
+        let proof = Proof::V1_0(inner_proof).into();
         let pubs = VALID_PUBS_CYCLE_2_POW_24.to_vec().into();
         let vk_entry = VkEntry::new(VALID_VK);
         Vks::<T, Risc0<T>>::insert(VALID_VK, vk_entry);
@@ -490,7 +491,7 @@ mod mock {
     );
 
     impl crate::Config for Test {
-        type MaxProofSize = ConstU32<2455714>;
+        type MaxProofSize = ConstU32<3067823>;
         type MaxPubsSize = ConstU32<2060>;
     }
 

@@ -328,10 +328,14 @@ mod submit_proof_should {
     use registered_vk::*;
 
     #[rstest]
-    #[case::vk(VkOrHash::Vk(Box::new(REGISTERED_VK)), VALID_HASH_REGISTERED_VK)]
-    #[case::use_registered_vk(VkOrHash::Hash(REGISTERED_VK_HASH), VALID_HASH_REGISTERED_VK)]
+    #[case::vk(42, VkOrHash::Vk(Box::new(REGISTERED_VK)), VALID_HASH_REGISTERED_VK)]
+    #[case::use_registered_vk(42, VkOrHash::Hash(REGISTERED_VK_HASH), VALID_HASH_REGISTERED_VK)]
+    #[case::use_version(fake_pallet::PROOF_WITH_FAKE_VERSION_LOWER_BOUND + 42, VkOrHash::Vk(Box::new(REGISTERED_VK)), H256(hex!(
+        "02975e6536d4cb401ba480feffe98e1e579169bfa7e67e65b0f73494b92206d3"
+    )))]
     fn validate_proof_and_notify_execution_when(
         mut def_vk: sp_io::TestExternalities,
+        #[case] proof_and_pubs: u64,
         #[case] vk_or_hash: VkOrHash,
         #[case] expected_hash: H256,
     ) {
@@ -342,8 +346,8 @@ mod submit_proof_should {
             assert_ok!(FakeVerifierPallet::submit_proof(
                 RuntimeOrigin::signed(42),
                 vk_or_hash,
-                Box::new(42),
-                Box::new(42),
+                Box::new(proof_and_pubs),
+                Box::new(proof_and_pubs),
                 Some(666),
             ));
 

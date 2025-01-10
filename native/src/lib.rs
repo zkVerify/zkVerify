@@ -24,6 +24,7 @@ mod ultraplonk;
 mod zksync;
 
 #[derive(PassByCodec, Encode, Decode)]
+#[cfg_attr(test, derive(Debug))]
 pub enum VerifyError {
     InvalidInput,
     InvalidProofData,

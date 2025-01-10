@@ -17,8 +17,9 @@
 
 use core::marker::PhantomData;
 
-use frame_support::{ensure, weights::Weight};
+use frame_support::{ensure, pallet_prelude::*, weights::Weight};
 use hp_verifiers::Verifier;
+use risc0_verifier::{CircuitCoreDef, Journal, VerifierContext, Vk as Risc0Vk};
 use sp_core::{Get, H256};
 use sp_std::vec::Vec;
 
@@ -45,9 +46,61 @@ pub trait Config: 'static {
 pub struct Risc0<T>;
 pub use weight::WeightInfo;
 
-pub type Proof = Vec<u8>;
+#[derive(Clone, Debug, PartialEq, Encode, Decode, TypeInfo)]
+pub enum Proof {
+    V1_0(Vec<u8>),
+    V1_1(Vec<u8>),
+    V1_2(Vec<u8>),
+}
+
 pub type Pubs = Vec<u8>;
 pub type Vk = H256;
+
+fn deserialize_and_verify_proof<SC: CircuitCoreDef, RC: CircuitCoreDef>(
+    ctx: &VerifierContext<SC, RC>,
+    vk: Risc0Vk,
+    proof: &[u8],
+    pubs: Journal,
+) -> Result<(), hp_verifiers::VerifyError> {
+    let risc0_proof =
+        ciborium::from_reader(proof).map_err(|_| hp_verifiers::VerifyError::InvalidProofData)?;
+    risc0_verifier::verify(ctx, vk, risc0_proof, pubs)
+        .inspect_err(|e| log::debug!("Cannot verify proof: {:?}", e))
+        .map_err(|_| hp_verifiers::VerifyError::VerifyError)
+}
+
+impl Proof {
+    fn verify(&self, vk: &Vk, journal: Journal) -> Result<(), hp_verifiers::VerifyError> {
+        match self {
+            Proof::V1_0(proof_bytes) => deserialize_and_verify_proof(
+                &VerifierContext::v1_0(),
+                vk.0.into(),
+                proof_bytes,
+                journal,
+            ),
+            Proof::V1_1(proof_bytes) => deserialize_and_verify_proof(
+                &VerifierContext::v1_1(),
+                vk.0.into(),
+                proof_bytes,
+                journal,
+            ),
+            Proof::V1_2(proof_bytes) => deserialize_and_verify_proof(
+                &VerifierContext::v1_2(),
+                vk.0.into(),
+                proof_bytes,
+                journal,
+            ),
+        }
+    }
+
+    fn len(&self) -> usize {
+        match self {
+            Proof::V1_0(proof_bytes) => proof_bytes.len(),
+            Proof::V1_1(proof_bytes) => proof_bytes.len(),
+            Proof::V1_2(proof_bytes) => proof_bytes.len(),
+        }
+    }
+}
 
 impl<T: Config> Verifier for Risc0<T> {
     type Proof = Proof;
@@ -75,7 +128,8 @@ impl<T: Config> Verifier for Risc0<T> {
             hp_verifiers::VerifyError::InvalidInput
         );
         log::trace!("Verifying (native)");
-        native::risc_0_verify::verify((*vk).into(), proof, pubs).map_err(Into::into)
+        let journal = Journal::new(pubs.to_vec());
+        proof.verify(vk, journal)
     }
 
     fn pubs_bytes(pubs: &Self::Pubs) -> hp_verifiers::Cow<[u8]> {
@@ -88,6 +142,21 @@ impl<T: Config> Verifier for Risc0<T> {
 
     fn vk_bytes(_vk: &Self::Vk) -> hp_verifiers::Cow<[u8]> {
         panic!("Risc0 vk is already hashed and we cannot know its preimage: use vk_hash() instead")
+    }
+
+    fn verifier_version_hash(proof: &Self::Proof) -> Option<H256> {
+        let h = match proof {
+            Proof::V1_0(_) => hex_literal::hex!(
+                "df801e3397d2a8fbb77c2fa30c7f7806ee8a60de44cb536108e7ef272618e2da"
+            ),
+            Proof::V1_1(_) => hex_literal::hex!(
+                "2a06d398245e645477a795d1b707344669459840d154e17fde4df2b40eea5558"
+            ),
+            Proof::V1_2(_) => hex_literal::hex!(
+                "5f39e7751602fc8dbc1055078b61e2704565e3271312744119505ab26605a942"
+            ),
+        };
+        H256(h).into()
     }
 }
 
