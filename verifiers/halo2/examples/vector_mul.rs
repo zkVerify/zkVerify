@@ -1,3 +1,13 @@
+use codec::{Decode, Encode};
+use frame_support::traits::IsType;
+use halo2_proofs::{
+    arithmetic::CurveAffine,
+    halo2curves::Bn256,
+    plonk::{create_proof, keygen_pk, keygen_vk, verify_proof, VerifyingKey},
+    poly::{
+        commitment::{Params, ParamsProver},
+        kzg::{
+            commitment::{KZGCommitmentScheme, ParamsKZG},
 use std::{
     fs::File,
     io::{BufReader, BufWriter, Read},
@@ -377,83 +387,17 @@ fn main() {
 
     // Arrange the public input. We expose the multiplication result in row 0
     // of the instance column, so we position it there in our public inputs.
-    let public_inputs = c;
+    let mut public_inputs = c;
 
     // Given the correct public input, our circuit will verify.
     let prover = MockProver::run(k, &circuit, vec![public_inputs.clone()]).unwrap();
     assert_eq!(prover.verify(), Ok(()));
 
-    test_verifier(k, circuit, public_inputs);
+    common::test_verifier(k, &circuit, Some(public_inputs.clone()), true);
+
+    public_inputs[0] += bn256::Fr::one();
+    common::test_verifier(k, &circuit, Some(public_inputs.clone()), false);
 
     // ANCHOR_END: test-circuit
 }
 
-fn test_verifier(k: u32, circuit: MyCircuit<bn256::Fr>, pi: Vec<bn256::Fr>) {
-    let params = common::gen_srs(k);
-
-    let (vk, proof, pubs) = if std::fs::metadata("vk.bin").is_ok()
-        && std::fs::metadata("proof.bin").is_ok()
-        && std::fs::metadata("pubs.bin").is_ok()
-    {
-        let vk_bytes = std::fs::read("vk.bin").unwrap();
-        let vk = pallet_halo2_verifier::Vk::decode(&mut &vk_bytes[..]).unwrap();
-
-        let pubs_bytes = std::fs::read("pubs.bin").unwrap();
-        let proof_bytes = std::fs::read("proof.bin").unwrap();
-
-        let pubs = Vec::<pallet_halo2_verifier::Fr>::decode(&mut &pubs_bytes[..]).unwrap();
-        (vk, proof_bytes, pubs)
-    } else {
-        let vk = keygen_vk(&params, &circuit).unwrap();
-        // let vk_bytes = vk.to_bytes(halo2_proofs::SerdeFormat::RawBytes);
-        // std::fs::write("vk.bin", vk_bytes).unwrap();
-        let pk = keygen_pk(&params, vk.clone(), &circuit).unwrap();
-        let vk: pallet_halo2_verifier::Vk = vk.into_ref().try_into().unwrap();
-        let vk_bytes = vk.encode();
-        // std::fs::write("vk.bin", vk_bytes).unwrap();
-
-        let proof = {
-            let mut transcript = Blake2bWrite::<_, _, Challenge255<_>>::init(vec![]);
-
-            create_proof::<KZGCommitmentScheme<Bn256>, ProverSHPLONK<Bn256>, _, _, _, _>(
-                &params,
-                &pk,
-                &[circuit],
-                &[&[&pi]],
-                thread_rng(),
-                &mut transcript,
-            )
-            .expect("proof generation should not fail");
-
-            transcript.finalize()
-        };
-
-        let mut transcript = Blake2bRead::<_, _, Challenge255<_>>::init(&proof[..]);
-
-        {
-            let strategy = SingleStrategy::new(&params);
-            verify_proof::<KZGCommitmentScheme<Bn256>, VerifierSHPLONK<Bn256>, _, _, _>(
-                &params,
-                pk.get_vk(),
-                strategy,
-                &[&[&pi]],
-                &mut transcript,
-            )
-            // .map(|strategy| strategy.finalize())
-            .unwrap_or_default();
-        }
-
-        // std::fs::write("proof.bin", &proof).unwrap();
-
-        let pubs = pi.into_iter().map(|x| x.into()).collect::<Vec<_>>();
-        let pubs_bytes = pubs.encode();
-
-        // std::fs::write("pubs.bin", pubs_bytes).unwrap();
-
-        (vk, proof, pubs)
-    };
-
-    let params = params.try_into().unwrap();
-
-    Halo2::verify_proof(&(vk, params), &proof, &Some(pubs)).unwrap();
-}

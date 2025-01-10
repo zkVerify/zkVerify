@@ -300,80 +300,29 @@ fn main() {
 
     {
         test_mock_prover(K, circuit.clone(), Ok(()));
-        test_verifier::<W, H>(K, circuit.clone(), None);
+        common::test_verifier(K, circuit, None, true);
     }
-
-    // #[cfg(not(feature = "sanity-checks"))]
-    // {
-    //     use core::ops::IndexMut;
-
-    //     let mut circuit = circuit.clone();
-    //     circuit.shuffled = circuit.shuffled.map(|mut shuffled| {
-    //         shuffled.index_mut(0).swap(0, 1);
-    //         shuffled
-    //     });
-
-    //     test_mock_prover(
-    //         K,
-    //         circuit.clone(),
-    //         Err(vec![(
-    //             ((1, "z should end with 1").into(), 0, "").into(),
-    //             FailureLocation::InRegion {
-    //                 region: (0, "Shuffle original into shuffled").into(),
-    //                 offset: 32,
-    //             },
-    //         )]),
-    //     );
-    //     test_verifier::<EqAffine, W, H>(K, circuit, vec![]);
-    // }
-}
-
-fn test_verifier<const W: usize, const H: usize>(
-    k: u32,
-    circuit: MyCircuit<bn256::Fr, W, H>,
-    pi: Option<Vec<bn256::Fr>>,
-) {
-    let params = common::gen_srs(k);
-
-    let vk = keygen_vk(&params, &circuit).unwrap();
-    let pk = keygen_pk(&params, vk.clone(), &circuit).unwrap();
-    let vk: pallet_halo2_verifier::Vk = vk.into_ref().try_into().unwrap();
-
-    let proof = {
-        let mut transcript = Blake2bWrite::<_, _, Challenge255<_>>::init(vec![]);
-        let instance = if let Some(ref pi) = pi { vec![&pi[..]] } else { vec![] };
-
-        create_proof::<KZGCommitmentScheme<bn256::Bn256>, ProverSHPLONK<bn256::Bn256>, _, _, _, _>(
-            &params,
-            &pk,
-            &[circuit],
-            &[&instance[..]],
-            thread_rng(),
-            &mut transcript,
-        )
-        .expect("proof generation should not fail");
-
-        transcript.finalize()
-    };
-
-    let mut transcript = Blake2bRead::<_, _, Challenge255<_>>::init(&proof[..]);
 
     {
-        let strategy = SingleStrategy::new(&params);
-        verify_proof::<KZGCommitmentScheme<bn256::Bn256>, VerifierSHPLONK<bn256::Bn256>, _, _, _>(
-            &params,
-            pk.get_vk(),
-            strategy,
-            &[&[]],
-            &mut transcript,
-        )
-        .unwrap_or_default();
+        use core::ops::IndexMut;
+
+        let mut circuit = circuit.clone();
+        circuit.shuffled = circuit.shuffled.map(|mut shuffled| {
+            shuffled.index_mut(0).swap(0, 1);
+            shuffled
+        });
+
+        test_mock_prover(
+            K,
+            circuit.clone(),
+            Err(vec![(
+                ((1, "z should end with 1").into(), 0, "").into(),
+                FailureLocation::InRegion {
+                    region: (0, "Shuffle original into shuffled").into(),
+                    offset: 32,
+                },
+            )]),
+        );
+        common::test_verifier(K, &circuit, None, false);
     }
-
-    let pubs = pi.map(|x| x.into_iter().map(|x| x.into()).collect::<Vec<_>>());
-    let params = params.try_into().unwrap();
-
-    println!("pubs: {:?}", pubs);
-
-    Halo2::verify_proof(&(vk, params), &proof, &pubs).unwrap();
 }
