@@ -22,6 +22,7 @@ pub struct CircuitInfo<F> {
     pub num_fixed_columns: u64,
     pub num_instance_columns: u64,
     pub num_advice_columns: u64,
+    pub num_challenges: u64,
 
     pub max_num_query_of_advice_column: u32,
     pub cs_degree: u32,
@@ -363,11 +364,11 @@ impl TryFrom<&halo2_proofs::plonk::ConstraintSystem<bn256::Fr>> for CircuitInfo<
     fn try_from(cs: &halo2_proofs::plonk::ConstraintSystem<bn256::Fr>) -> Result<Self, Self::Error> {
 
     let info = CircuitInfo {
-        // k: (params.k() as u8), // we expect k would not be too large.
         cs_degree: cs.degree() as u32,
         num_fixed_columns: cs.num_fixed_columns() as u64,
         num_advice_columns: cs.num_advice_columns() as u64,
         num_instance_columns: cs.num_instance_columns() as u64,
+        num_challenges: cs.num_challenges as u64,
         advice_column_phase: cs.advice_column_phase(),
         challenge_phase: cs.challenge_phase(),
 
@@ -472,6 +473,7 @@ impl TryFrom<CircuitInfo<Fr>> for ConstraintSystem<bn256::Fr> {
         cs.num_fixed_columns = value.num_fixed_columns as usize;
         cs.num_advice_columns = value.num_advice_columns as usize;
         cs.num_instance_columns = value.num_instance_columns as usize;
+        cs.num_challenges = value.num_challenges as usize;
 
         cs.advice_column_phase = value
             .advice_column_phase

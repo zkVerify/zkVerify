@@ -455,5 +455,5 @@ fn test_verifier(k: u32, circuit: MyCircuit<bn256::Fr>, pi: Vec<bn256::Fr>) {
 
     let params = params.try_into().unwrap();
 
-    Halo2::verify_proof(&(vk, params), &proof, &pubs).unwrap();
+    Halo2::verify_proof(&(vk, params), &proof, &Some(pubs)).unwrap();
 }

@@ -29,7 +29,7 @@ pub use vk::Vk;
 impl Verifier for Halo2 {
     type Proof = Vec<u8>;
 
-    type Pubs = Vec<Fr>;
+    type Pubs = Option<Vec<Fr>>;
 
     type Vk = (vk::Vk, params::ParamsKZG);
 
@@ -55,9 +55,14 @@ impl Verifier for Halo2 {
             .map_err(|_| VerifyError::InvalidVerificationKey)?;
 
         let pubs = raw_pubs
-            .iter()
-            .map(|x| x.clone().into())
-            .collect::<Vec<_>>();
+            .clone()
+            .map(|x| x.iter().map(|x| x.clone().into()).collect::<Vec<_>>());
+        let instance = if let Some(ref pi) = pubs {
+            vec![&pi[..]]
+        } else {
+            vec![]
+        };
+
         let mut transcript = Blake2bRead::init(raw_proof.as_slice());
 
         let strategy = SingleStrategy::new(&params);
@@ -68,13 +73,7 @@ impl Verifier for Halo2 {
             Challenge255<G1Affine>,
             Blake2bRead<&[u8], G1Affine, Challenge255<G1Affine>>,
             SingleStrategy<'_, Bn256>,
-        >(
-            &params,
-            &vk,
-            strategy,
-            &[&[pubs.as_slice()]],
-            &mut transcript,
-        )
+        >(&params, &vk, strategy, &[&instance[..]], &mut transcript)
         .map(|_| ())
         .map_err(|e| log::debug!("Verification failed: {:?}", e))
         .map_err(|_| VerifyError::VerifyError)
