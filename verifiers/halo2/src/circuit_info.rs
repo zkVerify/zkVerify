@@ -1,5 +1,5 @@
-// pub mod serialize;
 
+use sp_std::fmt::Debug;
 use crate::vk::{ConvertError, Fr, G1Affine};
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::pallet_prelude::TypeInfo;
@@ -12,8 +12,10 @@ use halo2_proofs::plonk::{
 };
 use halo2_proofs::poly::commitment::Params;
 use halo2_proofs::poly::Rotation as Halo2Rotation;
-use std::collections::BTreeMap;
-use std::io::BufReader;
+use sp_std::collections::btree_map::{BTreeMap, Entry};
+
+#[cfg(not(feature = "std"))]
+use alloc::{vec::Vec, boxed::Box};
 
 #[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo)]
 pub struct CircuitInfo<F> {
@@ -21,7 +23,6 @@ pub struct CircuitInfo<F> {
     pub num_instance_columns: u64,
     pub num_advice_columns: u64,
 
-    // k: u8,
     pub max_num_query_of_advice_column: u32,
     pub cs_degree: u32,
     pub advice_column_phase: Vec<u8>,
@@ -361,8 +362,6 @@ impl TryFrom<&halo2_proofs::plonk::ConstraintSystem<bn256::Fr>> for CircuitInfo<
 
     fn try_from(cs: &halo2_proofs::plonk::ConstraintSystem<bn256::Fr>) -> Result<Self, Self::Error> {
 
-        println!("num gates: {}", cs.gates().len());
-
     let info = CircuitInfo {
         // k: (params.k() as u8), // we expect k would not be too large.
         cs_degree: cs.degree() as u32,
@@ -434,7 +433,7 @@ impl TryFrom<&halo2_proofs::plonk::ConstraintSystem<bn256::Fr>> for CircuitInfo<
             .advice_queries()
             .iter()
             .fold(BTreeMap::default(), |mut m, (c, _r)| {
-                if let std::collections::btree_map::Entry::Vacant(e) = m.entry(c.index()) {
+                if let Entry::Vacant(e) = m.entry(c.index()) {
                     e.insert(1u32);
                 } else {
                     *m.get_mut(&c.index()).unwrap() += 1;
@@ -545,8 +544,6 @@ impl TryFrom<CircuitInfo<Fr>> for ConstraintSystem<bn256::Fr> {
                     gate.polys.into_iter().map(|e| ("", e.into()))
                 });
             }
-
-        // halo2_proofs::plonk:: VerifyingKey::<G1Affine>::read::<BufReader<&[u8]>, BaseCircuitBuilder<Fr>>
 
         Ok(cs)
     }

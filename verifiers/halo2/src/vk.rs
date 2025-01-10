@@ -1,25 +1,13 @@
-// Copyright 2024, Horizen Labs, Inc.
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
-
-use std::fmt::Debug;
+use sp_std::fmt::Debug;
 use codec::{Decode, Encode, MaxEncodedLen};
-use frame_support::{sp_runtime::traits::CheckedConversion, traits::IsType};
+use frame_support::traits::IsType;
 use scale_info::TypeInfo;
 use sp_core::U256;
-use halo2_proofs::{halo2curves::bn256, plonk::Circuit};
+use halo2_proofs::halo2curves::bn256;
 use crate::circuit_info::{CircuitInfo, Expression};
+
+#[cfg(not(feature = "std"))]
+use alloc::vec::Vec;
 
 #[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
 pub struct Fr(U256);
@@ -28,9 +16,9 @@ struct Fq(U256);
 #[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
 struct Fq2(Fq, Fq);
 #[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
-pub(crate) struct G1Affine(Fq, Fq);
+pub struct G1Affine(Fq, Fq);
 #[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
-pub(crate) struct G2Affine(Fq2, Fq2);
+pub struct G2Affine(Fq2, Fq2);
 
 #[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo)] // MaxEncodedLen
 pub struct Vk {
@@ -196,7 +184,7 @@ impl TryInto<halo2_proofs::plonk::VerifyingKey<bn256::G1Affine>> for Vk {
             },
             cs,
             selector_assignments: self.selector_assignments.into_iter().map(|s| s.into()).collect::<Vec<_>>(),
-            transcript_repr: self.transcript_repr.try_into().unwrap(),
+            transcript_repr: self.transcript_repr.into(),
         })
     }
 }

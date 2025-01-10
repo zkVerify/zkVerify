@@ -8295,6 +8295,7 @@ dependencies = [
  "serde_json",
  "sp-core",
  "sp-io",
+ "sp-std",
  "substrate-bn",
 ]
 

@@ -1,14 +1,16 @@
-#![cfg_attr(not(feature = "std"), no_std)]
+#![cfg_attr(not(any(feature = "std", test)), no_std)]
+
+#[macro_use]
+extern crate alloc;
+
+#[cfg(not(feature = "std"))]
+use alloc::vec::Vec;
 
 mod circuit_info;
 mod params;
 mod vk;
 
-use codec::{Decode, Encode};
-use halo2_proofs::dev::MockProver;
-use std::io::Cursor;
-// use frame_benchmarking::BenchmarkParameter::r;
-use frame_support::weights::Weight;
+use codec::Encode;
 use halo2_proofs::halo2curves::bn256;
 use halo2_proofs::halo2curves::bn256::{Bn256, G1Affine};
 use halo2_proofs::plonk::verify_proof;
@@ -17,16 +19,12 @@ use halo2_proofs::poly::kzg::multiopen::VerifierSHPLONK;
 use halo2_proofs::poly::kzg::strategy::SingleStrategy;
 use halo2_proofs::transcript::{Blake2bRead, Challenge255, TranscriptReadBuffer};
 use hp_verifiers::{Cow, Verifier, VerifyError};
-use scale_info::TypeInfo;
 
 #[pallet_verifiers::verifier]
 pub struct Halo2;
 
 pub use crate::vk::Fr;
 pub use vk::Vk;
-
-// #[derive(Debug, Clone, PartialEq, Encode, Decode, TypeInfo)]
-// pub struct Public(Vec<Fr>);
 
 impl Verifier for Halo2 {
     type Proof = Vec<u8>;
@@ -62,17 +60,7 @@ impl Verifier for Halo2 {
             .collect::<Vec<_>>();
         let mut transcript = Blake2bRead::init(raw_proof.as_slice());
 
-        // log::trace!(
-        //     "Extracted public inputs [{:?}...{:?}] and proof data [{:?}...{:?}]",
-        //     &raw_pubs[0],
-        //     &raw_pubs[PUBS_SIZE - 1],
-        //     &raw_proof[0],
-        //     &raw_proof[PROOF_SIZE - 1]
-        // );
-
         let strategy = SingleStrategy::new(&params);
-
-        println!("pubs: {:?}", pubs);
 
         verify_proof::<
             KZGCommitmentScheme<Bn256>,

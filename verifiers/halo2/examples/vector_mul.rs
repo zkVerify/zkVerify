@@ -34,6 +34,8 @@ use pallet_halo2_verifier::Halo2;
 use rand::{thread_rng, SeedableRng};
 use rand_chacha::ChaCha20Rng;
 
+mod common;
+
 // ANCHOR: instructions
 trait NumericInstructions<F: FieldExt>: Chip<F> {
     /// Variable representing a number.
@@ -334,6 +336,7 @@ impl<F: FieldExt> Circuit<F> for MyCircuit<F> {
         Ok(())
     }
 }
+
 pub fn get_example_circuit<F: PrimeField>() -> (MyCircuit<F>, Vec<F>) {
     const N: usize = 3;
     // Prepare the private and public inputs to the circuit!
@@ -374,34 +377,26 @@ fn main() {
 
     // Arrange the public input. We expose the multiplication result in row 0
     // of the instance column, so we position it there in our public inputs.
-    let mut public_inputs = c;
+    let public_inputs = c;
 
-    let start = std::time::Instant::now();
     // Given the correct public input, our circuit will verify.
     let prover = MockProver::run(k, &circuit, vec![public_inputs.clone()]).unwrap();
     assert_eq!(prover.verify(), Ok(()));
-    println!("positive test took {:?}", start.elapsed());
 
-    // If we try some other public input, the proof will fail!
-    let start = std::time::Instant::now();
-    // public_inputs[0] += Fr::one();
-
-    test_prover(k, circuit, public_inputs);
+    test_verifier(k, circuit, public_inputs);
 
     // ANCHOR_END: test-circuit
 }
 
-fn test_prover(k: u32, circuit: MyCircuit<bn256::Fr>, pi: Vec<bn256::Fr>) {
-    let params = gen_srs::<bn256::G1Affine>(k);
+fn test_verifier(k: u32, circuit: MyCircuit<bn256::Fr>, pi: Vec<bn256::Fr>) {
+    let params = common::gen_srs(k);
 
-    // if vk, pk, pi exist, read them from files and skip proof generation
     let (vk, proof, pubs) = if std::fs::metadata("vk.bin").is_ok()
         && std::fs::metadata("proof.bin").is_ok()
         && std::fs::metadata("pubs.bin").is_ok()
     {
         let vk_bytes = std::fs::read("vk.bin").unwrap();
         let vk = pallet_halo2_verifier::Vk::decode(&mut &vk_bytes[..]).unwrap();
-        // let vk = VerifyingKey::<bn256::G1Affine>::read::<_, MyCircuit<bn256::Fr>>(&mut &vk_bytes[..], halo2_proofs::SerdeFormat::RawBytes).unwrap();
 
         let pubs_bytes = std::fs::read("pubs.bin").unwrap();
         let proof_bytes = std::fs::read("proof.bin").unwrap();
@@ -416,8 +411,6 @@ fn test_prover(k: u32, circuit: MyCircuit<bn256::Fr>, pi: Vec<bn256::Fr>) {
         let vk: pallet_halo2_verifier::Vk = vk.into_ref().try_into().unwrap();
         let vk_bytes = vk.encode();
         // std::fs::write("vk.bin", vk_bytes).unwrap();
-
-        println!("pi: {:?}", pi);
 
         let proof = {
             let mut transcript = Blake2bWrite::<_, _, Challenge255<_>>::init(vec![]);
@@ -463,24 +456,4 @@ fn test_prover(k: u32, circuit: MyCircuit<bn256::Fr>, pi: Vec<bn256::Fr>) {
     let params = params.try_into().unwrap();
 
     Halo2::verify_proof(&(vk, params), &proof, &pubs).unwrap();
-}
-
-pub fn gen_srs<'a, C: CurveAffine>(k: u32) -> ParamsKZG<Bn256> {
-    let dir = "./params".to_string();
-    let path = format!("{dir}/kzg_bn254_{k}.srs");
-    match std::fs::read(path.as_str()) {
-        Ok(mut b) => {
-            println!("read params from {path}");
-            ParamsKZG::<Bn256>::read(&mut b.as_slice()).unwrap()
-        }
-        Err(_) => {
-            println!("creating params for {k}");
-            std::fs::create_dir_all(dir).unwrap();
-            let params = ParamsKZG::<Bn256>::setup(k, ChaCha20Rng::from_seed(Default::default()));
-            let mut bytes = vec![];
-            params.write(&mut bytes).unwrap();
-            std::fs::write(path.as_str(), bytes).unwrap();
-            params
-        }
-    }
 }

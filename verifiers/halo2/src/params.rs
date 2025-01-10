@@ -1,3 +1,4 @@
+use sp_std::fmt::Debug;
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::pallet_prelude::TypeInfo;
 use halo2_proofs::halo2curves::bn256::Bn256;
@@ -8,9 +9,10 @@ pub struct ParamsKZG {
     pub k: u32,
     pub n: u64,
     pub g: G1Affine,
-    // pub g_lagrange: Vec<G1Affine>,
     pub g2: G2Affine,
     pub s_g2: G2Affine,
+
+    // pub g_lagrange: Vec<G1Affine>,
 }
 
 impl TryFrom<ParamsKZG> for halo2_proofs::poly::kzg::commitment::ParamsKZG<Bn256> {
