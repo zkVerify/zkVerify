@@ -15,7 +15,6 @@
 
 #![cfg(test)]
 
-use hex_literal::hex;
 use rstest::rstest;
 use sp_core::ConstU32;
 
@@ -39,10 +38,22 @@ fn verify_valid_proof(#[case] vk: &Vk, #[case] proof: Proof, #[case] pubs: &[u8]
 }
 
 #[rstest]
-#[case::v1_0(Proof::V1_0(Default::default()), Some(H256::from(hex!("df801e3397d2a8fbb77c2fa30c7f7806ee8a60de44cb536108e7ef272618e2da"))))]
-#[case::v1_1(Proof::V1_1(Default::default()), Some(H256::from(hex!("2a06d398245e645477a795d1b707344669459840d154e17fde4df2b40eea5558"))))]
-#[case::v1_2(Proof::V1_2(Default::default()), Some(H256::from(hex!("5f39e7751602fc8dbc1055078b61e2704565e3271312744119505ab26605a942"))))]
-#[case::do_not_depend_on_proof_content(Proof::V1_2([0xde;16].to_vec()), Some(H256::from(hex!("5f39e7751602fc8dbc1055078b61e2704565e3271312744119505ab26605a942"))))]
+#[case::v1_0(
+    Proof::V1_0(Default::default()),
+    Some(H256::from(sp_io::hashing::sha2_256(b"risc0:v1.0")))
+)]
+#[case::v1_1(
+    Proof::V1_1(Default::default()),
+    Some(H256::from(sp_io::hashing::sha2_256(b"risc0:v1.1")))
+)]
+#[case::v1_2(
+    Proof::V1_2(Default::default()),
+    Some(H256::from(sp_io::hashing::sha2_256(b"risc0:v1.2")))
+)]
+#[case::do_not_depend_on_proof_content(
+    Proof::V1_2([0xde;16].to_vec()),
+    Some(H256::from(sp_io::hashing::sha2_256(b"risc0:v1.2")))
+)]
 fn return_the_correct_verifier_version_hash(#[case] proof: Proof, #[case] expected: Option<H256>) {
     let h = Risc0::<Mock>::verifier_version_hash(&proof);
 

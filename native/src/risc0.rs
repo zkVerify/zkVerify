@@ -47,7 +47,7 @@ mod legacy_impl {
             .map_err(|_| VerifyError::VerifyError)
     }
 
-    /// Return if the proof is an Fake or Goth16 proof
+    /// Return if the proof is a `Fake` proof
     fn is_fake_proof(proof: &[u8]) -> bool {
         proof.starts_with(&[0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
     }

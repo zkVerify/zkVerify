@@ -10,7 +10,7 @@ license = "Apache-2.0"
 
 [dependencies]
 log = "0.4.21"
-hex-literal = { workspace = true, optional = true }
+hex-literal = { workspace = true }
 risc0-verifier = { workspace = true }
 ciborium = { version = "0.2.2", default-features = false }
 
@@ -20,7 +20,6 @@ pallet-verifiers = { workspace = true }
 codec = { workspace = true }
 scale-info = { workspace = true }
 sp-core = { workspace = true }
-sp-io = { workspace = true }
 sp-std = { workspace = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
@@ -30,9 +29,9 @@ pallet-aggregate = { workspace = true, optional = true, default-features = false
 ] }
 
 [dev-dependencies]
+sp-io = { workspace = true }
 codec = { workspace = true, features = ["std"] }
 scale-info = { workspace = true, features = ["std"] }
-hex-literal = { workspace = true }
 pallet-balances = { workspace = true, features = ["std", "runtime-benchmarks"] }
 rstest = { workspace = true }
 
@@ -49,7 +48,6 @@ std = [
 ]
 default = ["std"]
 runtime-benchmarks = [
-    "dep:hex-literal",
     "dep:frame-benchmarking",
     "dep:pallet-aggregate",
     "pallet-verifiers/runtime-benchmarks",

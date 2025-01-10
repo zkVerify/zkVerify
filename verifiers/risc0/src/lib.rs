@@ -146,9 +146,15 @@ impl<T: Config> Verifier for Risc0<T> {
 
     fn verifier_version_hash(proof: &Self::Proof) -> Option<H256> {
         let h = match proof {
-            Proof::V1_0(_) => sp_io::hashing::sha2_256(b"risc0:v1.0"),
-            Proof::V1_1(_) => sp_io::hashing::sha2_256(b"risc0:v1.1"),
-            Proof::V1_2(_) => sp_io::hashing::sha2_256(b"risc0:v1.2"),
+            Proof::V1_0(_) => hex_literal::hex!(
+                "df801e3397d2a8fbb77c2fa30c7f7806ee8a60de44cb536108e7ef272618e2da"
+            ),
+            Proof::V1_1(_) => hex_literal::hex!(
+                "2a06d398245e645477a795d1b707344669459840d154e17fde4df2b40eea5558"
+            ),
+            Proof::V1_2(_) => hex_literal::hex!(
+                "5f39e7751602fc8dbc1055078b61e2704565e3271312744119505ab26605a942"
+            ),
         };
         H256(h).into()
     }

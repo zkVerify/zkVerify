@@ -88,8 +88,8 @@ pub trait Verifier: 'static {
     /// default implementation: you should implement it.
     fn pubs_bytes(pubs: &Self::Pubs) -> Cow<[u8]>;
 
-    /// Return an hash that represent the verifier version used to verify the proof.
-    /// If any this hash will be used on computing the statement hash.
+    /// Return a hash that represents the verifier version used to verify the proof.
+    /// This value, if present, will be included in the computation of the statement hash.
     fn verifier_version_hash(_proof: &Self::Proof) -> Option<H256> {
         None
     }
