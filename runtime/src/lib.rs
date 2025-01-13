@@ -915,10 +915,9 @@ impl pallet_verifiers::Config<pallet_groth16_verifier::Groth16<Runtime>> for Run
 }
 
 parameter_types! {
-    pub const Risc0MaxProofSize: u32 = 2455714; // 2455714: risc0 proof size for a 2^24 cycle-count run
-    pub const Risc0MaxPubsSize: u32 = 8 + 4 + 32 * 64; // 8: for bincode::serialize,
-                                                       // 4: bytes for payload length,
-                                                       // 32 * 64: sufficient multiple of 32 bytes
+    pub const Risc0MaxProofSize: u32 = 3067823; // 3067823: risc0 proof size for a 2^24 cycle-count run
+    pub const Risc0MaxPubsSize: u32 = 4 + 32 * 64;  // 4: bytes for payload length,
+                                                    // 32 * 64: sufficient multiple of 32 bytes
 }
 
 impl pallet_risc0_verifier::Config for Runtime {
@@ -1249,6 +1248,7 @@ mod benches {
         [pallet_fflonk_verifier, FflonkVerifierBench::<Runtime>]
         [pallet_groth16_verifier, Groth16VerifierBench::<Runtime>]
         [pallet_risc0_verifier, Risc0VerifierBench::<Runtime>]
+        [pallet_risc0_verifier_extend, Risc0VerifierExtendBench::<Runtime>]
         [pallet_ultraplonk_verifier, UltraplonkVerifierBench::<Runtime>]
         [pallet_proofofsql_verifier, ProofOfSqlVerifierBench::<Runtime>]
     );
@@ -1288,6 +1288,7 @@ mod benches {
         [pallet_fflonk_verifier, FflonkVerifierBench::<Runtime>]
         [pallet_groth16_verifier, Groth16VerifierBench::<Runtime>]
         [pallet_risc0_verifier, Risc0VerifierBench::<Runtime>]
+        [pallet_risc0_verifier_extend, Risc0VerifierExtendBench::<Runtime>]
         [pallet_ultraplonk_verifier, UltraplonkVerifierBench::<Runtime>]
         [pallet_proofofsql_verifier, ProofOfSqlVerifierBench::<Runtime>]
         // parachains
@@ -1788,6 +1789,7 @@ impl_runtime_apis! {
             use pallet_zksync_verifier::benchmarking::Pallet as ZksyncVerifierBench;
             use pallet_groth16_verifier::benchmarking::Pallet as Groth16VerifierBench;
             use pallet_risc0_verifier::benchmarking::Pallet as Risc0VerifierBench;
+            use pallet_risc0_verifier::extend_benchmarking::Pallet as Risc0VerifierExtendBench;
             use pallet_ultraplonk_verifier::benchmarking::Pallet as UltraplonkVerifierBench;
             use pallet_proofofsql_verifier::benchmarking::Pallet as ProofOfSqlVerifierBench;
 
@@ -1819,6 +1821,7 @@ impl_runtime_apis! {
             use pallet_zksync_verifier::benchmarking::Pallet as ZksyncVerifierBench;
             use pallet_groth16_verifier::benchmarking::Pallet as Groth16VerifierBench;
             use pallet_risc0_verifier::benchmarking::Pallet as Risc0VerifierBench;
+            use pallet_risc0_verifier::extend_benchmarking::Pallet as Risc0VerifierExtendBench;
             use pallet_ultraplonk_verifier::benchmarking::Pallet as UltraplonkVerifierBench;
             use pallet_proofofsql_verifier::benchmarking::Pallet as ProofOfSqlVerifierBench;
 
@@ -1987,16 +1990,6 @@ impl_runtime_apis! {
                 }
             }
 
-
-            impl frame_system_benchmarking::Config for Runtime {}
-            impl baseline::Config for Runtime {}
-            impl pallet_election_provider_support_benchmarking::Config for Runtime {}
-
-            impl pallet_session_benchmarking::Config for Runtime {}
-
-            #[cfg(feature = "relay")]
-            impl parachains::slashing::benchmarking::Config for Runtime {}
-
             use frame_support::traits::WhitelistedStorageKeys;
             let whitelist: Vec<TrackedStorageKey> = AllPalletsWithSystem::whitelisted_storage_keys();
 
@@ -2051,4 +2044,18 @@ impl_runtime_apis! {
         }
     }
 
+}
+
+#[cfg(feature = "runtime-benchmarks")]
+mod runtime_benchmarking_extra_config {
+    use crate::Runtime;
+
+    impl frame_system_benchmarking::Config for Runtime {}
+    impl frame_benchmarking::baseline::Config for Runtime {}
+    impl pallet_election_provider_support_benchmarking::Config for Runtime {}
+
+    impl pallet_session_benchmarking::Config for Runtime {}
+
+    #[cfg(feature = "relay")]
+    impl crate::parachains::slashing::benchmarking::Config for Runtime {}
 }

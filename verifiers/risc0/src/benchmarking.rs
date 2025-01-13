@@ -41,7 +41,6 @@ fn init<T: pallet_aggregate::Config>() -> (T::AccountId, u32) {
 
 #[benchmarks(where T: pallet_verifiers::Config<Risc0<T>> + pallet_aggregate::Config)]
 mod benchmarks {
-
     use super::*;
 
     #[benchmark]
@@ -467,7 +466,7 @@ mod benchmarks {
 }
 
 #[cfg(test)]
-mod mock {
+pub mod mock {
     use frame_support::{
         derive_impl, parameter_types,
         sp_runtime::{traits::IdentityLookup, BuildStorage},

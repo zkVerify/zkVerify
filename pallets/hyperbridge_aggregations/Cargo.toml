@@ -22,7 +22,6 @@ sp-std = { workspace = true }
 sp-runtime = { workspace = true }
 sp-io = { workspace = true }
 ismp = { workspace = true }
-ismp-grandpa = { workspace = true }
 pallet-ismp = { workspace = true }
 pallet-timestamp = { workspace = true }
 pallet-balances = { workspace = true }
@@ -34,6 +33,7 @@ alloy-primitives = { workspace = true }
 [dev-dependencies]
 pallet-balances = { workspace = true, features = ["std"] }
 rstest = { workspace = true }
+ismp-grandpa = { workspace = true }
 
 [features]
 runtime-benchmarks = [
@@ -48,7 +48,6 @@ std = [
     "codec/std",
     "scale-info/std",
     "sp-runtime/std",
-    "ismp-grandpa/std",
     "sp-core/std",
     "sp-io/std",
     "alloy-primitives/std",
@@ -57,4 +56,4 @@ std = [
     "frame-support/std",
     "frame-system/std",
 ]
-try-runtime = ["frame-support/try-runtime", "frame-system/try-runtime", "ismp-grandpa/try-runtime",]
+try-runtime = ["frame-support/try-runtime", "frame-system/try-runtime", "ismp-grandpa/try-runtime"]

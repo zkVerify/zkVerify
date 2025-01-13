@@ -13,7 +13,7 @@ log = "0.4.21"
 hex-literal = { workspace = true }
 risc0-verifier = { workspace = true }
 ciborium = { version = "0.2.2", default-features = false }
-
+native = { workspace = true, default-features = false }
 hp-verifiers = { workspace = true }
 pallet-verifiers = { workspace = true }
 
@@ -45,6 +45,7 @@ std = [
     "frame-support/std",
     "frame-system/std",
     "pallet-balances/std",
+    "native/std",
 ]
 default = ["std"]
 runtime-benchmarks = [
@@ -53,3 +54,5 @@ runtime-benchmarks = [
     "pallet-verifiers/runtime-benchmarks",
     "frame-support/runtime-benchmarks",
 ]
+inject-native-poseidon2 = []
+extend-benchmarks = ["inject-native-poseidon2"]

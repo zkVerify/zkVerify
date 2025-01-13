@@ -806,22 +806,11 @@ impl_runtime_apis! {
         fn dispatch_benchmark(
             config: frame_benchmarking::BenchmarkConfig
         ) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
-            use frame_benchmarking::{BenchmarkError, Benchmarking, BenchmarkBatch};
+            use frame_benchmarking::{Benchmarking, BenchmarkBatch};
 
             use frame_system_benchmarking::Pallet as SystemBench;
-            impl frame_system_benchmarking::Config for Runtime {
-                fn setup_set_code_requirements(code: &sp_std::vec::Vec<u8>) -> Result<(), BenchmarkError> {
-                    ParachainSystem::initialize_for_set_code_benchmark(code.len() as u32);
-                    Ok(())
-                }
-
-                fn verify_set_code() {
-                    System::assert_last_event(cumulus_pallet_parachain_system::Event::<Runtime>::ValidationFunctionStored.into());
-                }
-            }
 
             use cumulus_pallet_session_benchmarking::Pallet as SessionBench;
-            impl cumulus_pallet_session_benchmarking::Config for Runtime {}
 
             use frame_support::traits::WhitelistedStorageKeys;
             let whitelist = AllPalletsWithSystem::whitelisted_storage_keys();
@@ -857,6 +846,28 @@ impl_runtime_apis! {
             ConsensusHook::can_build_upon(included_hash, slot)
         }
     }
+}
+
+#[cfg(feature = "runtime-benchmarks")]
+mod runtime_benchmarking_extra_config {
+    use frame_benchmarking::BenchmarkError;
+
+    use crate::Runtime;
+
+    impl frame_system_benchmarking::Config for Runtime {
+        fn setup_set_code_requirements(code: &sp_std::vec::Vec<u8>) -> Result<(), BenchmarkError> {
+            crate::ParachainSystem::initialize_for_set_code_benchmark(code.len() as u32);
+            Ok(())
+        }
+
+        fn verify_set_code() {
+            crate::System::assert_last_event(
+                cumulus_pallet_parachain_system::Event::<Runtime>::ValidationFunctionStored.into(),
+            );
+        }
+    }
+
+    impl cumulus_pallet_session_benchmarking::Config for Runtime {}
 }
 
 cumulus_pallet_parachain_system::register_validate_block! {
