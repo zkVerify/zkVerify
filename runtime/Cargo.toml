@@ -172,6 +172,7 @@ runtime-benchmarks = [
 	"pallet-xcm-benchmarks?/runtime-benchmarks",
 ]
 fast-runtime = []
+metadata-hash = ["substrate-wasm-builder/metadata-hash"]
 relay = [
 	"dep:polkadot-primitives",
 	"dep:polkadot-runtime-parachains",

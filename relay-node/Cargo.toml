@@ -59,6 +59,7 @@ extend-benchmarks = [
 ]
 runtime-metrics = ["zkv-cli/runtime-metrics"]
 pyroscope = ["zkv-cli/pyroscope"]
+metadata-hash = ["zkv-cli/metadata-hash"]
 jemalloc-allocator = [
 	"dep:tikv-jemallocator",
 	"polkadot-node-core-pvf-prepare-worker/jemalloc-allocator",

@@ -40,10 +40,16 @@ jobs:
       - name: Build docker image
         run: |
           if [[ "${{ inputs.chain }}" == "solo" ]]; then
-            docker build --build-arg PROFILE=production -f "docker/dockerfiles/zkv-node.Dockerfile" -t "${DOCKER_HUB_ORG}/${DOCKER_IMAGE_BUILD_NAME}-solo" .
+            docker build --build-arg PROFILE=production \
+              --build-arg FEATURES=metadata-hash \
+              -f "docker/dockerfiles/zkv-node.Dockerfile" \
+              -t "${DOCKER_HUB_ORG}/${DOCKER_IMAGE_BUILD_NAME}-solo" .
             echo "DOCKER_IMAGE_NAME=${DOCKER_HUB_ORG}/${DOCKER_IMAGE_BUILD_NAME}-solo" >> $GITHUB_ENV
           elif [[ "${{ inputs.chain }}" == "relay" ]]; then
-            docker build --build-arg PROFILE=production -f "docker/dockerfiles/zkv-relay.Dockerfile" -t "${DOCKER_HUB_ORG}/${DOCKER_IMAGE_BUILD_NAME}-relay" .
+            docker build --build-arg PROFILE=production \
+              --build-arg FEATURES=metadata-hash \
+              -f "docker/dockerfiles/zkv-relay.Dockerfile" \
+              -t "${DOCKER_HUB_ORG}/${DOCKER_IMAGE_BUILD_NAME}-relay" .
             echo "DOCKER_IMAGE_NAME=${DOCKER_HUB_ORG}/${DOCKER_IMAGE_BUILD_NAME}-relay" >> $GITHUB_ENV
           fi
       

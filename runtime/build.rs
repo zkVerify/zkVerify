@@ -18,10 +18,12 @@ fn main() {
     {
         std::env::remove_var("CARGO_FEATURE_STD");
         std::env::remove_var("CARGO_FEATURE_DEFAULT");
-        substrate_wasm_builder::WasmBuilder::new()
-            .with_current_project()
-            .export_heap_base()
-            .import_memory()
-            .build();
+        let builder = substrate_wasm_builder::WasmBuilder::init_with_defaults();
+        // We cannot enable it as default because this option require to build the WASM runtime two
+        // time, one to get the metadata and te recompile it with the metadata hash in an environment
+        // variable.
+        #[cfg(feature = "metadata-hash")]
+        let builder = builder.enable_metadata_hash("ACME", 18);
+        builder.build()
     }
 }
