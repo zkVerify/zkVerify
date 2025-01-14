@@ -20,7 +20,7 @@ use native_cache::ultraplonk;
 
 fn main() {
     let profile = env::var("PROFILE").expect("Should have a PROFILE environment variable");
-    let cache_root: PathBuf = env::current_dir().unwrap().join("../deps");
+    let cache_root: PathBuf = PathBuf::from(env::var("CARGO_WORKSPACE_DIR").unwrap()).join("deps");
     native_cache::handle_dependency("../target", &ultraplonk(&cache_root, &profile), &profile)
         .expect("Cannot handle cache");
 }

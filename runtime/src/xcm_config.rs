@@ -13,8 +13,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-#![cfg(feature = "relay")]
-
 //! XCM configuration for zkVerify.
 //! FIXME: this configuration is meant for testing only, and MUST not deployed to a production
 //! network without proper assessment.

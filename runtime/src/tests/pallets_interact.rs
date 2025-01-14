@@ -110,17 +110,6 @@ mod authorship {
         });
     }
 
-    // Check that Authorship calls back on ImOnline
-    #[test]
-    #[cfg(not(feature = "relay"))]
-    fn notifies_imonline() {
-        test().execute_with(|| {
-            assert!(!ImOnline::is_online(BABE_AUTHOR_ID));
-            Authorship::on_initialize(BLOCK_NUMBER);
-            assert!(ImOnline::is_online(BABE_AUTHOR_ID));
-        });
-    }
-
     #[test]
     fn notifies_staking() {
         test().execute_with(|| {
@@ -226,38 +215,6 @@ mod offences {
             // Check that pallet_staking generates the related event (i.e. it has been notified of
             // the offence)
             assert!(System::events().contains(&expected_slashing_event));
-        });
-    }
-
-    #[test]
-    #[cfg(not(feature = "relay"))]
-    fn notified_by_imonline() {
-        test().execute_with(|| {
-            let session = Session::current_index();
-            let offender_account =
-                AccountId32::new(testsfixtures::SAMPLE_USERS[BABE_AUTHOR_ID as usize].raw_account);
-
-            const EQUIVOCATION_KIND: &offence::Kind = b"im-online:offlin";
-            // Check that no previous offences were reported
-            assert!(!is_offender(
-                session.encode(),
-                &offender_account,
-                EQUIVOCATION_KIND
-            ));
-
-            // BABE_AUTHOR_ID is considered offline
-            assert!(!ImOnline::is_online(BABE_AUTHOR_ID));
-
-            // Advance to next session w/o offender being online
-            System::set_block_number(System::block_number() + 1);
-            Session::rotate_session();
-
-            // Check that the offline offence for the last session was received by pallet_offences
-            assert!(is_offender(
-                session.encode(),
-                &offender_account,
-                EQUIVOCATION_KIND
-            ));
         });
     }
 

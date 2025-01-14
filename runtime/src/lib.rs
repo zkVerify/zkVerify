@@ -25,7 +25,6 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 use codec::MaxEncodedLen;
 use pallet_babe::AuthorityId as BabeId;
 use pallet_grandpa::AuthorityId as GrandpaId;
-use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use proof_of_existence_rpc_runtime_api::MerkleProof;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, Get, OpaqueMetadata, H256};
@@ -403,26 +402,6 @@ parameter_types! {
     pub TransactionByteFee: Balance = 10 * MILLICENTS;
 }
 
-#[cfg(not(feature = "relay"))]
-impl_opaque_keys! {
-    pub struct SessionKeysBase {
-        pub babe: Babe,
-        pub grandpa: Grandpa,
-        pub im_online: ImOnline,
-    }
-}
-
-// This is a temporary hack to make relay and non-relay runtimes coexist.
-#[cfg(feature = "relay")]
-impl_opaque_keys! {
-    pub struct SessionKeysBase {
-        pub babe: Babe,
-        pub grandpa: Grandpa,
-        pub im_online: ImOnlineId,
-    }
-}
-
-#[cfg(feature = "relay")]
 impl_opaque_keys! {
     pub struct SessionKeysRelay {
         pub babe: Babe,
@@ -433,11 +412,7 @@ impl_opaque_keys! {
     }
 }
 
-#[cfg(feature = "relay")]
 pub type SessionKeys = SessionKeysRelay;
-
-#[cfg(not(feature = "relay"))]
-pub type SessionKeys = SessionKeysBase;
 
 impl pallet_transaction_payment::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
@@ -828,9 +803,6 @@ impl pallet_staking::Config for Runtime {
 
 impl pallet_authorship::Config for Runtime {
     type FindAuthor = pallet_session::FindAccountFromAuthorIndex<Self, Babe>;
-    #[cfg(not(feature = "relay"))]
-    type EventHandler = (Staking, ImOnline);
-    #[cfg(feature = "relay")]
     type EventHandler = Staking;
 }
 
@@ -850,19 +822,6 @@ impl pallet_session::historical::Config for Runtime {
 parameter_types! {
     pub const MaxKeys: u32 = 10_000; // We need them for benchmarking
     pub const MaxPeerInHeartbeats: u32 = 10_000;
-}
-
-#[cfg(not(feature = "relay"))]
-impl pallet_im_online::Config for Runtime {
-    type AuthorityId = ImOnlineId;
-    type RuntimeEvent = RuntimeEvent;
-    type NextSessionRotation = Babe;
-    type ValidatorSet = Historical;
-    type ReportUnresponsiveness = Offences;
-    type UnsignedPriority = ();
-    type WeightInfo = weights::pallet_im_online::ZKVWeight<Runtime>;
-    type MaxKeys = MaxKeys;
-    type MaxPeerInHeartbeats = MaxPeerInHeartbeats;
 }
 
 impl pallet_offences::Config for Runtime {
@@ -1090,54 +1049,6 @@ impl IsmpRouter for ModuleRouter {
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
-#[cfg(not(feature = "relay"))]
-construct_runtime!(
-    pub struct Runtime {
-        System: frame_system,
-        Timestamp: pallet_timestamp,
-        Balances: pallet_balances,
-        Authorship: pallet_authorship,
-        Staking: pallet_staking,
-        Session: pallet_session,
-        Babe: pallet_babe,
-        Grandpa: pallet_grandpa,
-        TransactionPayment: pallet_transaction_payment,
-        Sudo: pallet_sudo,
-        Multisig: pallet_multisig,
-        Scheduler: pallet_scheduler,
-        Preimage: pallet_preimage,
-        ConvictionVoting: pallet_conviction_voting,
-        Origins: pallet_custom_origins,
-        Whitelist: pallet_whitelist,
-        Referenda: pallet_referenda,
-        Offences: pallet_offences,
-        Historical: pallet_session_historical::{Pallet},
-        ImOnline: pallet_im_online,
-        SettlementFFlonkPallet: pallet_fflonk_verifier,
-        Poe: pallet_poe,
-        SettlementZksyncPallet: pallet_zksync_verifier,
-        SettlementGroth16Pallet: pallet_groth16_verifier,
-        SettlementRisc0Pallet: pallet_risc0_verifier,
-        SettlementUltraplonkPallet: pallet_ultraplonk_verifier,
-        Treasury: pallet_treasury,
-        Bounties: pallet_bounties,
-        ChildBounties: pallet_child_bounties,
-        Utility: pallet_utility,
-        Vesting: pallet_vesting,
-        VoterList: pallet_bags_list::<Instance1>,
-        Proxy: pallet_proxy,
-        CommonVerifiers: pallet_verifiers::common,
-        SettlementProofOfSqlPallet: pallet_proofofsql_verifier,
-        Aggregate: pallet_aggregate,
-        Ismp: pallet_ismp,
-        IsmpGrandpa: ismp_grandpa,
-        HyperbridgeAggregations: pallet_hyperbridge_aggregations,
-        Claim: pallet_claim,
-    }
-);
-
-// Create the runtime by composing the FRAME pallets that were previously configured.
-#[cfg(feature = "relay")]
 construct_runtime!(
     pub struct Runtime {
         // Basic stuff
@@ -1253,10 +1164,7 @@ pub type SignedExtra = (
 /// All migrations of the runtime, aside from the ones declared in the pallets.
 ///
 /// This can be a tuple of types, each implementing `OnRuntimeUpgrade`.
-#[cfg(feature = "relay")]
 pub type ParachainMigrations = parachains::Migrations;
-#[cfg(not(feature = "relay"))]
-pub type ParachainMigrations = ();
 
 #[allow(unused_parens)]
 type Migrations = (migrations::Unreleased, ParachainMigrations);
@@ -1280,50 +1188,7 @@ pub type Executive = frame_executive::Executive<
 #[macro_use]
 extern crate frame_benchmarking;
 
-#[cfg(all(feature = "runtime-benchmarks", not(feature = "relay")))]
-mod benches {
-    define_benchmarks!(
-        [frame_benchmarking, BaselineBench::<Runtime>]
-        [frame_system, SystemBench::<Runtime>]
-        [pallet_balances, Balances]
-        [pallet_bags_list, VoterList]
-        [pallet_babe, crate::Babe]
-        [pallet_grandpa, crate::Grandpa]
-        [pallet_timestamp, Timestamp]
-        [pallet_sudo, Sudo]
-        [pallet_multisig, Multisig]
-        [pallet_scheduler, Scheduler]
-        [pallet_preimage, Preimage]
-        [pallet_session, SessionBench::<Runtime>]
-        [pallet_staking, Staking]
-        [pallet_im_online, ImOnline]
-        [frame_election_provider_support, ElectionProviderBench::<Runtime>]
-        [pallet_poe, Poe]
-        [pallet_conviction_voting, ConvictionVoting]
-        [pallet_treasury, Treasury]
-        [pallet_bounties, Bounties]
-        [pallet_child_bounties, ChildBounties]
-        [pallet_utility, Utility]
-        [pallet_vesting, Vesting]
-        [pallet_referenda, Referenda]
-        [pallet_whitelist, Whitelist]
-        [pallet_proxy, Proxy]
-        [pallet_aggregate, Aggregate]
-        [pallet_hyperbridge_aggregations, HyperbridgeAggregations]
-        [ismp_grandpa, IsmpGrandpa]
-        [pallet_claim, Claim]
-        [pallet_zksync_verifier, ZksyncVerifierBench::<Runtime>]
-        [pallet_fflonk_verifier, FflonkVerifierBench::<Runtime>]
-        [pallet_groth16_verifier, Groth16VerifierBench::<Runtime>]
-        [pallet_risc0_verifier, Risc0VerifierBench::<Runtime>]
-        [pallet_risc0_verifier_verify_proof, Risc0VerifierVerifyProofBench::<Runtime>]
-        [pallet_risc0_verifier_extend, Risc0VerifierExtendBench::<Runtime>]
-        [pallet_ultraplonk_verifier, UltraplonkVerifierBench::<Runtime>]
-        [pallet_proofofsql_verifier, ProofOfSqlVerifierBench::<Runtime>]
-    );
-}
-
-#[cfg(all(feature = "runtime-benchmarks", feature = "relay"))]
+#[cfg(feature = "runtime-benchmarks")]
 mod benches {
     define_benchmarks!(
         [frame_benchmarking, BaselineBench::<Runtime>]
@@ -1386,7 +1251,6 @@ pub const BABE_GENESIS_EPOCH_CONFIG: sp_consensus_babe::BabeEpochConfiguration =
         allowed_slots: sp_consensus_babe::AllowedSlots::PrimaryAndSecondaryVRFSlots,
     };
 
-#[cfg(feature = "relay")]
 use polkadot_primitives::{
     self as primitives, slashing, ApprovalVotingParams, CandidateEvent, CandidateHash,
     CommittedCandidateReceipt, CoreState, DisputeState, ExecutorParams, GroupRotationInfo,
@@ -1397,7 +1261,7 @@ use polkadot_primitives::{
 
 use hp_dispatch::{Destination, DispatchAggregation};
 use pallet_hyperbridge_aggregations::{Params, ZKV_MODULE_ID};
-#[cfg(feature = "relay")]
+
 pub use polkadot_runtime_parachains::runtime_api_impl::{
     v10 as parachains_runtime_api_impl, vstaging as parachains_staging_runtime_api_impl,
 };
@@ -1526,7 +1390,6 @@ impl_runtime_apis! {
         }
     }
 
-    #[cfg(feature = "relay")]
     impl authority_discovery_primitives::AuthorityDiscoveryApi<Block> for Runtime {
         fn authorities() -> Vec<polkadot_primitives::AuthorityDiscoveryId> {
             polkadot_runtime_parachains::runtime_api_impl::v10::relevant_authority_ids::<Runtime>()
@@ -1687,7 +1550,6 @@ impl_runtime_apis! {
         }
     }
 
-    #[cfg(feature = "relay")]
     #[api_version(10)]
     impl primitives::runtime_api::ParachainHost<Block> for Runtime {
         fn validators() -> Vec<ValidatorId> {
@@ -1867,7 +1729,6 @@ impl_runtime_apis! {
             use pallet_ultraplonk_verifier::benchmarking::Pallet as UltraplonkVerifierBench;
             use pallet_proofofsql_verifier::benchmarking::Pallet as ProofOfSqlVerifierBench;
 
-            #[cfg(feature = "relay")]
             pub mod xcm {
                 pub use pallet_xcm::benchmarking::Pallet as XcmPalletBench;
                 pub use pallet_xcm_benchmarks::fungible::Pallet as XcmPalletBenchFungible;
@@ -1900,7 +1761,6 @@ impl_runtime_apis! {
             use pallet_ultraplonk_verifier::benchmarking::Pallet as UltraplonkVerifierBench;
             use pallet_proofofsql_verifier::benchmarking::Pallet as ProofOfSqlVerifierBench;
 
-            #[cfg(feature = "relay")]
             pub mod xcm {
                 use super::*;
                 use xcm::v4::{Asset, AssetId, Assets, Location, InteriorLocation, Junction, Junctions::Here, NetworkId, Response};
@@ -2131,6 +1991,5 @@ mod runtime_benchmarking_extra_config {
 
     impl pallet_session_benchmarking::Config for Runtime {}
 
-    #[cfg(feature = "relay")]
     impl crate::parachains::slashing::benchmarking::Config for Runtime {}
 }

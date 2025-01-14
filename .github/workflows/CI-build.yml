@@ -14,23 +14,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Solo chain build
-        uses: ./.github/actions/cmd-in-docker
-        with:
-          command: "cargo build -p mainchain --release"
-          use_cache: 'yes'
-          cache_key: 'build-mainchain'
-          cmake_install: 'yes'
-          lld_install: 'yes'
-
-      - name: Upload zkv-node binary artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: "zkv-node"
-          path: target/release/zkv-node
-          retention-days: 1
-          overwrite: true
-
   build-relay-paratest:
     runs-on: warp-ubuntu-latest-x64-8x
     name: Build relay chain and paratest

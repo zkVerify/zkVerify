@@ -8,7 +8,6 @@ homepage = "https://horizenlabs.io"
 resolver = "2"
 
 members = [
-    "node",
     "runtime",
     "pallets/proof_of_existence",
     "primitives/hp-proof-of-existence",
@@ -49,7 +48,7 @@ members = [
 ]
 
 exclude = ["utils/generate-bags/node-runtime"]
-# default-members = ["node"]
+# default-members = ["zkv-relay"]
 
 [workspace.dependencies]
 anyhow = { version = "1.0", default-features = false }
@@ -303,7 +302,6 @@ sc-rpc-spec-v2 = { version = "0.44.0" }
 substrate-test-client = { path = "relay-node/test/substrate/client" }
 sp-trie = { version = "37.0.0" }
 sp-arithmetic = { version = "26.0.0" }
-substrate-test-utils = { version = "3.0.0", git = "https://github.com/paritytech/polkadot-sdk", branch = "release-crates-io-v1.10.0" }
 sc-utils = { version = "17.0.0" }
 sp-application-crypto = { version = "38.0.0", default-features = false }
 pallet-indices = { version = "37.0.0", default-features = false }

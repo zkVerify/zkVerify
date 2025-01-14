@@ -11,7 +11,7 @@ description = "Utils to tie different ZkVerify Realy chain components together a
 workspace = true
 
 [dependencies]
-zkv-runtime = { workspace = true, features = ["std", "relay"] }
+zkv-runtime = { workspace = true, features = ["std"] }
 native = { workspace = true, features = ["std"] }
 hp-poe = { workspace = true, features = ["std"] }
 proof-of-existence-rpc = { workspace = true, features = ["std"] }
