@@ -176,7 +176,7 @@ pub mod opaque {
 // https://docs.substrate.io/main-docs/build/upgrade#runtime-versioning
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-    spec_name: create_runtime_str!("nh-node"), // TODO: change to zkv-node when ok with regenesis
+    spec_name: create_runtime_str!("zkv-node"),
     impl_name: create_runtime_str!("zkv-node"),
     authoring_version: 1,
     // The version of the runtime specification. A full node will not attempt to use its native
