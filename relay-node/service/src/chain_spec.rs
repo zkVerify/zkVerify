@@ -221,8 +221,8 @@ pub fn local_config() -> Result<ChainSpec, String> {
         WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?,
         Default::default(),
     )
-    .with_name("NH Local")
-    .with_id("nh_local")
+    .with_name("ZKV Local")
+    .with_id("zkv_local")
     .with_protocol_id("lacme")
     .with_chain_type(ChainType::Local)
     .with_properties(chain_properties())
@@ -409,7 +409,7 @@ fn genesis(
         },
         "staking": {
             "minimumValidatorCount": initial_authorities.len(), // must be 1 for pallet-session benchmarks
-            "validatorCount": 3,
+            "validatorCount": 10,
             "stakers": initial_authorities.iter()
                 .cloned()
                 .map(|((account, ..), staking)| (account.clone(), account, staking, sp_staking::StakerStatus::Validator::<AccountId>))
