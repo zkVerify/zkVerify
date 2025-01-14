@@ -47,9 +47,6 @@ jobs:
           echo "USER_ID=$(id -u)" >> $GITHUB_ENV
           echo "GRP_ID=$(id -g)" >> $GITHUB_ENV
 
-      - name: Cargo build mainchain
-        run: ${{ env.DOCKER_COMPOSE_CMD }} cargo build -p mainchain --release
-
       - name: Cargo build relaychain and paratest
         run: ${{ env.DOCKER_COMPOSE_CMD }} cargo build -p zkv-relay -p paratest-node --release --features fast-runtime
 

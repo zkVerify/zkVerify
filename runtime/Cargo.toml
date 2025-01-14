@@ -166,10 +166,10 @@ runtime-benchmarks = [
 	"polkadot-primitives?/runtime-benchmarks",
 	"polkadot-runtime-parachains?/runtime-benchmarks",
 	"polkadot-runtime-common?/runtime-benchmarks",
-	"xcm-builder?/runtime-benchmarks",
-	"xcm-executor?/runtime-benchmarks",
-	"pallet-xcm?/runtime-benchmarks",
-	"pallet-xcm-benchmarks?/runtime-benchmarks",
+	"xcm-builder/runtime-benchmarks",
+	"xcm-executor/runtime-benchmarks",
+	"pallet-xcm/runtime-benchmarks",
+	"pallet-xcm-benchmarks/runtime-benchmarks",
 	"pallet-ismp/runtime-benchmarks",
 	"pallet-message-queue/runtime-benchmarks",
 	"pallet-offences/runtime-benchmarks",
@@ -177,18 +177,6 @@ runtime-benchmarks = [
 ]
 fast-runtime = []
 metadata-hash = ["substrate-wasm-builder/metadata-hash"]
-relay = [
-	"dep:polkadot-primitives",
-	"dep:polkadot-runtime-parachains",
-	"dep:pallet-authority-discovery",
-	"dep:authority-discovery-primitives",
-	"dep:polkadot-runtime-common",
-	"dep:xcm",
-	"dep:xcm-builder",
-	"dep:xcm-executor",
-	"dep:pallet-xcm",
-	"dep:pallet-xcm-benchmarks",
-]
 default = ["std"]
 std = [
 	"anyhow/std",
@@ -233,7 +221,7 @@ std = [
 	"pallet-transaction-payment-rpc-runtime-api/std",
 	"pallet-transaction-payment/std",
 	"pallet-message-queue/std",
-	"pallet-xcm?/std",
+	"pallet-xcm/std",
 	"pallet-xcm-benchmarks?/std",
 	"pallet-proxy/std",
 	"pallet-verifiers/std",
@@ -270,18 +258,18 @@ std = [
 	"pallet-proofofsql-verifier/std",
 	"hp-verifiers/std",
 	"substrate-wasm-builder",
-	"polkadot-primitives?/std",
-	"polkadot-runtime-parachains?/std",
-	"pallet-authority-discovery?/std",
+	"polkadot-primitives/std",
+	"polkadot-runtime-parachains/std",
+	"pallet-authority-discovery/std",
 	"authority-discovery-primitives?/std",
 	"polkadot-runtime-common?/std",
 	"log/std",
 	"pallet-election-provider-support-benchmarking?/std",
 	"pallet-session-benchmarking?/std",
 	"sp-mmr-primitives/std",
-	"xcm?/std",
-	"xcm-builder?/std",
-	"xcm-executor?/std"
+	"xcm/std",
+	"xcm-builder/std",
+	"xcm-executor/std"
 ]
 try-runtime = [
 	"frame-executive/try-runtime",
@@ -321,9 +309,9 @@ try-runtime = [
 	"pallet-poe/try-runtime",
 	"sp-runtime/try-runtime",
 	"pallet-verifiers/try-runtime",
-	"polkadot-runtime-parachains?/try-runtime",
-	"pallet-authority-discovery?/try-runtime",
-	"polkadot-runtime-common?/try-runtime",
+	"polkadot-runtime-parachains/try-runtime",
+	"pallet-authority-discovery/try-runtime",
+	"polkadot-runtime-common/try-runtime",
 	"pallet-xcm?/try-runtime",
 	"pallet-message-queue/try-runtime",
 	"pallet-zksync-verifier/try-runtime"
