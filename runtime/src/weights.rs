@@ -19,6 +19,7 @@ pub mod db;
 pub mod extrinsic_weights;
 pub mod frame_election_provider_support;
 pub mod frame_system;
+pub mod ismp_grandpa;
 pub mod pallet_aggregate;
 pub mod pallet_babe;
 pub mod pallet_bags_list;

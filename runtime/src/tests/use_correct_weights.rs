@@ -270,6 +270,16 @@ fn pallet_hyperbridge_aggregations() {
 }
 
 #[test]
+fn ismp_grandpa() {
+    use ismp_grandpa::WeightInfo;
+
+    assert_eq!(
+        <Runtime as ismp_grandpa::Config>::WeightInfo::add_state_machines(42),
+        crate::weights::ismp_grandpa::ZKVWeight::<Runtime>::add_state_machines(42)
+    );
+}
+
+#[test]
 fn pallet_staking() {
     use pallet_staking::WeightInfo;
 
