@@ -25,11 +25,6 @@ if [ "$RELAY_FEATURES" ]; then
   RELAY_FEATURES="--features ${RELAY_FEATURES}"
 fi
 
-# Compile nodes
-echo "----------------------------------------------------------"
-echo "Compile solo node"
-${CARGO} build -p mainchain "${BUILD_PROFILE}"
-
 echo "----------------------------------------------------------"
 echo "Compile relay node"
 ${CARGO} build -p zkv-relay "${BUILD_PROFILE}" "${RELAY_FEATURES}"
@@ -39,10 +34,6 @@ echo "Compile test parachain node"
 ${CARGO} build -p paratest-node "${BUILD_PROFILE}"
 
 # Create docker images
-echo "----------------------------------------------------------"
-echo "Building solo node image"
-"${SCRIPTS}/build-chain-image-injected.sh"
-
 echo "----------------------------------------------------------"
 echo "Building relay node image"
 "${SCRIPTS}/build-zkv-relay-image-injected.sh"

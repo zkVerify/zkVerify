@@ -47,15 +47,6 @@ jobs:
           echo "USER_ID=$(id -u)" >> $GITHUB_ENV
           echo "GRP_ID=$(id -g)" >> $GITHUB_ENV
 
-      - name: Cargo build solo chain
-        run: ${{ env.DOCKER_COMPOSE_CMD }} cargo build -p mainchain --release
-
-      - name: Upload solochain runtime artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: "zkv_runtime.solochain.compact.compressed.wasm"
-          path: target/release/wbuild/zkv-runtime/zkv_runtime.compact.compressed.wasm
-      
       - name: Cargo build relay chain
         run: ${{ env.DOCKER_COMPOSE_CMD }} cargo build -p zkv-relay --release
 
