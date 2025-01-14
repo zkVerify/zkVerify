@@ -14,12 +14,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download zkv-node binary artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: "zkv-node"
-          path: target/release/
-
       - name: Download relay and paratest build binaries
         uses: actions/download-artifact@v4
         with:

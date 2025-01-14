@@ -218,17 +218,6 @@ fn pallet_timestamp() {
 }
 
 #[test]
-#[cfg(not(feature = "relay"))]
-fn pallet_im_online() {
-    use pallet_im_online::WeightInfo;
-
-    assert_eq!(
-        <Runtime as pallet_im_online::Config>::WeightInfo::validate_unsigned_and_then_heartbeat(42),
-        crate::weights::pallet_im_online::ZKVWeight::<Runtime>::validate_unsigned_and_then_heartbeat(42)
-    );
-}
-
-#[test]
 fn pallet_proxy() {
     use pallet_proxy::WeightInfo;
 
@@ -309,7 +298,6 @@ fn pallet_claim() {
     );
 }
 
-#[cfg(feature = "relay")]
 #[test]
 fn pallet_message_queue() {
     use pallet_message_queue::WeightInfo;
@@ -321,8 +309,6 @@ fn pallet_message_queue() {
 }
 
 mod parachains {
-    #![cfg(feature = "relay")]
-
     use super::*;
     use crate::parachains::*;
 
