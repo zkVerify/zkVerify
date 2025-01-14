@@ -58,7 +58,6 @@ substrate-test-client = { workspace = true }
 
 [dev-dependencies]
 pallet-balances = { workspace = true }
-substrate-test-utils = { workspace = true }
 tokio = { workspace = true, features = ["macros"] }
 
 [features]
