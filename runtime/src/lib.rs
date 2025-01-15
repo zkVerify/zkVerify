@@ -25,7 +25,6 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 use codec::MaxEncodedLen;
 use pallet_babe::AuthorityId as BabeId;
 use pallet_grandpa::AuthorityId as GrandpaId;
-use proof_of_existence_rpc_runtime_api::MerkleProof;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, Get, OpaqueMetadata, H256};
 use sp_runtime::{
@@ -693,19 +692,6 @@ static_assertions::const_assert!(MIN_PROOFS_FOR_ROOT_PUBLISHING > 0);
 // We should keep in memory at least one attestation
 static_assertions::const_assert!(MAX_STORAGE_ATTESTATIONS > 1);
 
-use pallet_poe::MaxStorageAttestations;
-parameter_types! {
-    pub MaxAttestations: MaxStorageAttestations = MaxStorageAttestations(MAX_STORAGE_ATTESTATIONS);
-}
-
-impl pallet_poe::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type MinProofsForPublishing = ConstU32<MIN_PROOFS_FOR_ROOT_PUBLISHING>;
-    type MaxElapsedTimeMs = ConstU64<MILLISECS_PER_PROOF_ROOT_PUBLISHING>;
-    type MaxStorageAttestations = MaxAttestations;
-    type WeightInfo = weights::pallet_poe::ZKVWeight<Runtime>;
-}
-
 pub struct ValidatorIdOf;
 impl sp_runtime::traits::Convert<AccountId, Option<AccountId>> for ValidatorIdOf {
     fn convert(a: AccountId) -> Option<AccountId> {
@@ -890,7 +876,7 @@ impl pallet_verifiers::common::Config for Runtime {
 
 impl pallet_verifiers::Config<pallet_fflonk_verifier::Fflonk> for Runtime {
     type RuntimeEvent = RuntimeEvent;
-    type OnProofVerified = (Poe, Aggregate);
+    type OnProofVerified = Aggregate;
     type WeightInfo =
         pallet_fflonk_verifier::FflonkWeight<weights::pallet_fflonk_verifier::ZKVWeight<Runtime>>;
     type Ticket = VkRegistrationHoldConsideration;
@@ -900,7 +886,7 @@ impl pallet_verifiers::Config<pallet_fflonk_verifier::Fflonk> for Runtime {
 
 impl pallet_verifiers::Config<pallet_zksync_verifier::Zksync> for Runtime {
     type RuntimeEvent = RuntimeEvent;
-    type OnProofVerified = (Poe, Aggregate);
+    type OnProofVerified = Aggregate;
     type WeightInfo =
         pallet_zksync_verifier::ZksyncWeight<weights::pallet_zksync_verifier::ZKVWeight<Runtime>>;
     type Ticket = VkRegistrationHoldConsideration;
@@ -925,7 +911,7 @@ const_assert!(
 
 impl pallet_verifiers::Config<pallet_groth16_verifier::Groth16<Runtime>> for Runtime {
     type RuntimeEvent = RuntimeEvent;
-    type OnProofVerified = (Poe, Aggregate);
+    type OnProofVerified = Aggregate;
     type WeightInfo = pallet_groth16_verifier::Groth16Weight<
         weights::pallet_groth16_verifier::ZKVWeight<Runtime>,
     >;
@@ -951,7 +937,7 @@ impl pallet_risc0_verifier::Config for Runtime {
 
 impl pallet_verifiers::Config<pallet_risc0_verifier::Risc0<Runtime>> for Runtime {
     type RuntimeEvent = RuntimeEvent;
-    type OnProofVerified = (Poe, Aggregate);
+    type OnProofVerified = Aggregate;
     type WeightInfo =
         pallet_risc0_verifier::Risc0Weight<weights::pallet_risc0_verifier::ZKVWeight<Runtime>>;
     type Ticket = VkRegistrationHoldConsideration;
@@ -969,7 +955,7 @@ impl pallet_ultraplonk_verifier::Config for Runtime {
 
 impl pallet_verifiers::Config<pallet_ultraplonk_verifier::Ultraplonk<Runtime>> for Runtime {
     type RuntimeEvent = RuntimeEvent;
-    type OnProofVerified = (Poe, Aggregate);
+    type OnProofVerified = Aggregate;
     type WeightInfo = pallet_ultraplonk_verifier::UltraplonkWeight<
         weights::pallet_ultraplonk_verifier::ZKVWeight<Runtime>,
     >;
@@ -993,7 +979,7 @@ const_assert!(
 
 impl pallet_verifiers::Config<pallet_proofofsql_verifier::ProofOfSql<Runtime>> for Runtime {
     type RuntimeEvent = RuntimeEvent;
-    type OnProofVerified = (Poe, Aggregate);
+    type OnProofVerified = Aggregate;
     type WeightInfo = pallet_proofofsql_verifier::ProofOfSqlWeight<
         weights::pallet_proofofsql_verifier::ZKVWeight<Runtime>,
     >;
@@ -1098,7 +1084,6 @@ construct_runtime!(
         Vesting: pallet_vesting = 51,
 
         // Our stuff
-        Poe: pallet_poe = 80,
         Aggregate: pallet_aggregate = 81,
         Claim: pallet_claim = 82,
 
@@ -1205,7 +1190,6 @@ mod benches {
         [pallet_session, SessionBench::<Runtime>]
         [pallet_staking, Staking]
         [frame_election_provider_support, ElectionProviderBench::<Runtime>]
-        [pallet_poe, Poe]
         [pallet_conviction_voting, ConvictionVoting]
         [pallet_treasury, Treasury]
         [pallet_bounties, Bounties]
@@ -1528,15 +1512,6 @@ impl_runtime_apis! {
         }
         fn query_length_to_fee(length: u32) -> Balance {
             TransactionPayment::length_to_fee(length)
-        }
-    }
-
-    impl proof_of_existence_rpc_runtime_api::PoEApi<Block> for Runtime {
-        fn get_proof_path(
-            attestation_id: u64,
-            proof_hash: sp_core::H256
-        ) -> Result<MerkleProof, proof_of_existence_rpc_runtime_api::AttestationPathRequestError> {
-            Poe::get_proof_path_from_pallet(attestation_id, proof_hash).map(|c| c.into())
         }
     }
 

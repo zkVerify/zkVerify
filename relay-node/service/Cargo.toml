@@ -13,8 +13,6 @@ workspace = true
 [dependencies]
 zkv-runtime = { workspace = true, features = ["std"] }
 native = { workspace = true, features = ["std"] }
-hp-poe = { workspace = true, features = ["std"] }
-proof-of-existence-rpc = { workspace = true, features = ["std"] }
 aggregate-rpc = { workspace = true, features = ["std"] }
 
 sc-authority-discovery = { workspace = true }

@@ -494,8 +494,8 @@ where
         sc_consensus_babe::block_import(babe_config.clone(), grandpa_block_import, client.clone())?;
 
     let slot_duration = babe_link.config().slot_duration();
-    let (import_queue, babe_worker_handle) =
-        sc_consensus_babe::import_queue(sc_consensus_babe::ImportQueueParams {
+    let (import_queue, babe_worker_handle) = sc_consensus_babe::import_queue(
+        sc_consensus_babe::ImportQueueParams {
             link: babe_link.clone(),
             block_import: block_import.clone(),
             justification_import: Some(Box::new(justification_import)),
@@ -505,20 +505,19 @@ where
                 let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
 
                 let slot =
-				sp_consensus_babe::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
-					*timestamp,
-					slot_duration,
-				);
+                    sp_consensus_babe::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
+                    	*timestamp,
+                    	slot_duration,
+                    );
 
-                let poe = hp_poe::InherentDataProvider::default();
-
-                Ok((slot, timestamp, poe))
+                Ok((slot, timestamp))
             },
             spawner: &task_manager.spawn_essential_handle(),
             registry: config.prometheus_registry(),
             telemetry: telemetry.as_ref().map(|x| x.handle()),
             offchain_tx_pool_factory: OffchainTransactionPoolFactory::new(transaction_pool.clone()),
-        })?;
+        },
+    )?;
 
     let justification_stream = grandpa_link.justification_stream();
     let shared_authority_set = grandpa_link.shared_authority_set().clone();
@@ -1154,14 +1153,12 @@ pub fn new_full<
                     let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
 
                     let slot =
-						sp_consensus_babe::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
-							*timestamp,
-							slot_duration,
-						);
+                        sp_consensus_babe::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
+                        	*timestamp,
+                        	slot_duration,
+                        );
 
-                    let poe = hp_poe::InherentDataProvider::default();
-
-                    Ok((slot, timestamp, parachain, poe))
+                    Ok((slot, timestamp, parachain))
                 }
             },
             force_authoring,

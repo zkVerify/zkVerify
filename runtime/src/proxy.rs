@@ -62,7 +62,6 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 				RuntimeCall::Multisig(..) |
 				RuntimeCall::VoterList(..) |
                 // zkVerify specifics
-                RuntimeCall::Poe(..) |
                 RuntimeCall::Aggregate(..) |
                 RuntimeCall::SettlementFFlonkPallet(..) |
                 RuntimeCall::SettlementZksyncPallet(..) |

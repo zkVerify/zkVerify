@@ -32,7 +32,6 @@ pub mod pallet_grandpa;
 pub mod pallet_groth16_verifier;
 pub mod pallet_message_queue;
 pub mod pallet_multisig;
-pub mod pallet_poe;
 pub mod pallet_preimage;
 pub mod pallet_proofofsql_verifier;
 pub mod pallet_proxy;
