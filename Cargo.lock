@@ -5123,18 +5123,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "hp-poe"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "parity-scale-codec",
- "snafu 0.8.5",
- "sp-core",
- "sp-inherents",
- "sp-runtime",
-]
-
-[[package]]
 name = "hp-verifiers"
 version = "0.1.0"
 dependencies = [
@@ -8482,27 +8470,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-poe"
-version = "0.1.0"
-dependencies = [
- "binary-merkle-tree",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "hex-literal",
- "hp-on-proof-verified",
- "hp-poe",
- "log",
- "pallet-timestamp",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "pallet-preimage"
 version = "37.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -10835,35 +10802,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.98",
-]
-
-[[package]]
-name = "proof-of-existence-rpc"
-version = "0.1.0"
-dependencies = [
- "jsonrpsee",
- "parity-scale-codec",
- "proof-of-existence-rpc-runtime-api",
- "sc-rpc-api",
- "sp-api",
- "sp-blockchain",
- "sp-core",
- "sp-runtime",
-]
-
-[[package]]
-name = "proof-of-existence-rpc-runtime-api"
-version = "0.1.0"
-dependencies = [
- "binary-merkle-tree",
- "pallet-poe",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-api",
- "sp-core",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
@@ -17890,7 +17828,6 @@ dependencies = [
  "pallet-message-queue",
  "pallet-multisig",
  "pallet-offences",
- "pallet-poe",
  "pallet-preimage",
  "pallet-proofofsql-verifier",
  "pallet-proxy",
@@ -17918,7 +17855,6 @@ dependencies = [
  "polkadot-primitives",
  "polkadot-runtime-common",
  "polkadot-runtime-parachains",
- "proof-of-existence-rpc-runtime-api",
  "scale-info",
  "serde_json",
  "sp-api",
@@ -17965,7 +17901,6 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "futures",
  "hex-literal",
- "hp-poe",
  "is_executable",
  "jsonrpsee",
  "kvdb",
@@ -18016,7 +17951,6 @@ dependencies = [
  "polkadot-primitives",
  "polkadot-runtime-parachains",
  "polkadot-statement-distribution",
- "proof-of-existence-rpc",
  "rand 0.8.5",
  "sc-authority-discovery",
  "sc-basic-authorship",
