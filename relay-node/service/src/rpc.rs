@@ -96,7 +96,6 @@ where
         + 'static,
     C::Api: frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
     C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
-    C::Api: proof_of_existence_rpc::PoERuntimeApi<Block>,
     C::Api: aggregate_rpc::AggregateRuntimeApi<Block>,
     C::Api: BabeApi<Block>,
     C::Api: BlockBuilder<Block>,
@@ -108,7 +107,6 @@ where
     use aggregate_rpc::{Aggregate, AggregateApiServer};
     use frame_rpc_system::{System, SystemApiServer};
     use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
-    use proof_of_existence_rpc::{PoE, PoEApiServer};
     use sc_consensus_babe_rpc::{Babe, BabeApiServer};
     use sc_consensus_grandpa_rpc::{Grandpa, GrandpaApiServer};
     use sc_rpc_spec_v2::chain_spec::{ChainSpec, ChainSpecApiServer};
@@ -159,7 +157,6 @@ where
         )
         .into_rpc(),
     )?;
-    io.merge(PoE::new(client.clone()).into_rpc())?;
     io.merge(Aggregate::new(client).into_rpc())?;
 
     Ok(io)
