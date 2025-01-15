@@ -199,6 +199,7 @@ pub fn generate_thresholds<T: pallet_staking::Config>(
     total_issuance: u128,
     minimum_balance: u128,
 ) -> Result<(), std::io::Error> {
+    use sp_staking::currency_to_vote::CurrencyToVote;
     // ensure the file is accessible
     if let Some(parent) = output.parent() {
         if !parent.exists() {
@@ -277,15 +278,27 @@ pub fn generate_thresholds<T: pallet_staking::Config>(
     // thresholds balance
     writeln!(buf)?;
     writeln!(buf, "/// Upper thresholds delimiting the bag list.")?;
+    writeln!(buf, "#[allow(unused)]")?;
     writeln!(
         buf,
         "pub const THRESHOLDS_BALANCES: [u128; {}] = [",
         thresholds.len()
     )?;
     for threshold in thresholds {
-        num_buf.write_formatted(&threshold, &format);
-        // u64::MAX, with spacers every 3 digits, is 26 characters wide
-        writeln!(buf, "	{:>26},", num_buf.as_str())?;
+        let currency_threshold: u128 = T::CurrencyToVote::to_currency(
+            threshold
+                .try_into()
+                .map_err(|_| "failed to convert threshold to type u128")
+                .unwrap(),
+            total_issuance
+                .try_into()
+                .map_err(|_| "failed to convert total_issuance to type u128")
+                .unwrap(),
+        )
+        .try_into().map_err(|_| "err").unwrap();
+        num_buf.write_formatted(&currency_threshold, &format);
+        // u128::MAX, with spacers every 3 digits, is 51 characters wide
+        writeln!(buf, "	{:>51},", num_buf.as_str())?;
     }
     writeln!(buf, "];")?;
 

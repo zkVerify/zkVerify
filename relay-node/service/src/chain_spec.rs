@@ -172,7 +172,7 @@ pub fn authority_ids_from_ss58(
 fn chain_properties() -> Properties {
     [
         ("tokenSymbol".to_string(), serde_json::Value::from("ACME")),
-        ("tokenDecimals".to_string(), serde_json::Value::from(18_u8)),
+        ("tokenDecimals".to_string(), serde_json::Value::from(10_u8)),
     ]
     .into_iter()
     .collect()
