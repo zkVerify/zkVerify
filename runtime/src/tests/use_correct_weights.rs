@@ -228,16 +228,6 @@ fn pallet_proxy() {
 }
 
 #[test]
-fn pallet_poe() {
-    use pallet_poe::WeightInfo;
-
-    assert_eq!(
-        <Runtime as pallet_poe::Config>::WeightInfo::publish_attestation(),
-        crate::weights::pallet_poe::ZKVWeight::<Runtime>::publish_attestation()
-    );
-}
-
-#[test]
 fn pallet_aggregate() {
     use pallet_aggregate::WeightInfo;
 

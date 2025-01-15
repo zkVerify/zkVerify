@@ -321,14 +321,6 @@ fn pallet_proofofsql_availability() {
 
 // Test definition and execution. Test body must be written in the execute_with closure.
 #[test]
-fn pallet_poe() {
-    test().execute_with(|| {
-        assert_ok!(Poe::publish_attestation(RuntimeOrigin::root()));
-        // just checking code builds, hence the pallet is available to the runtime
-    });
-}
-
-#[test]
 fn pallet_bags_list() {
     test().execute_with(|| {
         assert!(VoterList::list_bags_get(12).is_none());

@@ -9,8 +9,6 @@ resolver = "2"
 
 members = [
     "runtime",
-    "pallets/proof_of_existence",
-    "primitives/hp-proof-of-existence",
     "primitives/hp-on-proof-verified",
     "native",
     "pallets/aggregate",
@@ -34,8 +32,6 @@ members = [
     "relay-node/test/runtime/constants",
     "relay-node/test/subsystem-helpers",
     "relay-node/test/substrate/client",
-    "rpc/proof_of_existence",
-    "rpc/proof_of_existence/runtime-api",
     "rpc/aggregate",
     "rpc/aggregate/runtime-api",
     "paratest/runtime",
@@ -90,12 +86,10 @@ sp-keyring = { version = "39.0.0" }
 sp-keystore = { version = "0.40.0" }
 
 native = { default-features = false, path = "native" }
-pallet-poe = { path = "pallets/proof_of_existence", default-features = false }
 pallet-aggregate = { path = "pallets/aggregate", default-features = false }
 pallet-verifiers = { path = "pallets/verifiers", default-features = false }
 pallet-verifiers-macros = { path = "pallets/verifiers/macros" }
 hp-on-proof-verified = { default-features = false, path = "primitives/hp-on-proof-verified" }
-hp-poe = { default-features = false, path = "primitives/hp-proof-of-existence" }
 hp-verifiers = { path = "primitives/hp-verifiers", default-features = false }
 hp-groth16 = { path = "primitives/hp-groth16", default-features = false }
 pallet-fflonk-verifier = { path = "verifiers/fflonk", default-features = false }
@@ -189,8 +183,6 @@ serde_json = { version = "1.0.114", default-features = false, features = [
 sp-weights = { default-features = false, version = "31.0.0" }
 sp-genesis-builder = { default-features = false, version = "0.15.0" }
 sp-npos-elections = { default-features = false, version = "34.0.0" }
-proof-of-existence-rpc = { default-features = false, path = "rpc/proof_of_existence" }
-proof-of-existence-rpc-runtime-api = { default-features = false, path = "rpc/proof_of_existence/runtime-api" }
 aggregate-rpc = { default-features = false, path = "rpc/aggregate" }
 aggregate-rpc-runtime-api = { default-features = false, path = "rpc/aggregate/runtime-api" }
 
