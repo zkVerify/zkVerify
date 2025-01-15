@@ -3,6 +3,7 @@ set -eEuo pipefail
 
 root_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." &>/dev/null && pwd)"
 common_file_location="${root_dir}/ci/common.sh"
+conf_file_location="${root_dir}/ci/run_locally"
 workflows_dir="${root_dir}/.github/workflows"
 PRE_PUSH_HOOK="${PRE_PUSH_HOOK:-false}"
 
@@ -52,7 +53,7 @@ fi
 # Running workflow(s)
 ####
 workflows_orchestrator="CI-build CI-test CI-coverage CI-lint-format CI-zombienet-test"
-workflows_extra="CI-rustdoc"
+workflows_extra="CI-rustdoc CI-build-docker-image"
 if [ "${interactive_mode}" == 'true' ];then
   workflows="${workflows_orchestrator} ${workflows_extra}"
   while true; do
@@ -62,8 +63,19 @@ if [ "${interactive_mode}" == 'true' ];then
     if [ "${workflow}" == 'QUIT' ]; then
       break
     else
+      declare -a opt_args
+      env_file="${conf_file_location}/${workflow}.vars"
+      if [ -f "${env_file}" ]; then
+        log_debug "\n=== Using envs from ${env_file} ==="
+        opt_args+=(--var-file "${env_file}")
+      fi
+      inputs_file="${conf_file_location}/${workflow}.inputs"
+      if [ -f "${inputs_file}" ]; then
+        log_debug "\n=== Using inputs from ${env_file} ==="
+        opt_args+=(--input-file "${inputs_file}")
+      fi
       log_debug "\n=== Running ${workflows_dir}/${workflow}.yml workflow ==="
-      act --detect-event --rm -W "${workflows_dir}/${workflow}.yml" || fn_die "ERROR: attempt to run ${workflows_dir}/${workflow}.yml workflow locally has failed. Exiting ..."
+      act "${opt_args[@]}" --detect-event --rm -W "${workflows_dir}/${workflow}.yml" || fn_die "ERROR: attempt to run ${workflows_dir}/${workflow}.yml workflow locally has failed. Exiting ..."
     fi
   done
 elif [ "${interactive_mode}" == 'false' ]; then
