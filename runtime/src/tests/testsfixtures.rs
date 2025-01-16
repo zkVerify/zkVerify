@@ -13,7 +13,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-use sp_core::{Pair, Public};
+use codec::Encode;
+use frame_support::traits::Hooks;
+use sp_consensus_babe::Slot;
+use sp_core::{crypto::VrfSecret, Pair, Public};
+use sp_runtime::{Digest, DigestItem};
 
 use crate::{currency, Balance, EXISTENTIAL_DEPOSIT};
 
@@ -36,6 +40,36 @@ const TEST_BABE_GENESIS_EPOCH_CONFIG: sp_consensus_babe::BabeEpochConfiguration 
         allowed_slots: sp_consensus_babe::AllowedSlots::PrimaryAndSecondaryVRFSlots,
     };
 
+// Any random values for these constants should do
+pub const BLOCK_NUMBER: BlockNumber = 1;
+pub const SLOT_ID: u64 = 87;
+pub const BABE_AUTHOR_ID: u32 = 1;
+
+// Initialize block #BLOCK_NUMBER, authored at slot SLOT_ID by BABE_AUTHOR_ID using Babe
+pub fn initialize() {
+    let slot = Slot::from(SLOT_ID);
+    let authority_index = BABE_AUTHOR_ID;
+    let transcript = sp_consensus_babe::VrfTranscript::new(b"test", &[]);
+    let pair: &sp_consensus_babe::AuthorityPair =
+        &get_from_seed::<BabeId>(SAMPLE_USERS[BABE_AUTHOR_ID as usize].session_key_seed);
+    let vrf_signature = pair.as_ref().vrf_sign(&transcript.into());
+    let digest_data = sp_consensus_babe::digests::PreDigest::Primary(
+        sp_consensus_babe::digests::PrimaryPreDigest {
+            authority_index,
+            slot,
+            vrf_signature,
+        },
+    );
+    let pre_digest = Digest {
+        logs: vec![DigestItem::PreRuntime(
+            sp_consensus_babe::BABE_ENGINE_ID,
+            digest_data.encode(),
+        )],
+    };
+    System::reset_events();
+    System::initialize(&BLOCK_NUMBER, &Default::default(), &pre_digest);
+    Babe::on_initialize(BLOCK_NUMBER);
+}
 /// Function used for creating the environment for the test.
 /// It must return a sp_io::TestExternalities, and the actual test will execute this one before running.
 pub fn test() -> sp_io::TestExternalities {
@@ -129,7 +163,7 @@ pub fn test() -> sp_io::TestExternalities {
 
     let mut ext = sp_io::TestExternalities::from(t);
 
-    ext.execute_with(|| System::set_block_number(1));
+    ext.execute_with(|| initialize());
 
     // Return the test externalities
     ext

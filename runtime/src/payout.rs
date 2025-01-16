@@ -18,6 +18,11 @@
 //! Details on the actual formula and its parameters are given below.
 
 use super::*;
+pub use frame_support::traits::{
+    fungible::{Balanced, Credit},
+    tokens::imbalance::ResolveTo,
+    Imbalance, OnUnbalanced,
+};
 pub use sp_runtime::{Percent, Perquintill};
 
 fn abs(v: f64) -> f64 {
@@ -116,6 +121,50 @@ impl pallet_staking::EraPayout<Balance> for ZKVPayout {
             ValidatorsSplit::get() * inflation_tot,
             (Percent::from_percent(100) - ValidatorsSplit::get()) * inflation_tot,
         )
+    }
+}
+
+/// Logic for the author to get a portion of fees.
+pub struct ToAuthor<R>(core::marker::PhantomData<R>);
+impl<R> OnUnbalanced<Credit<R::AccountId, pallet_balances::Pallet<R>>> for ToAuthor<R>
+where
+    R: pallet_balances::Config + pallet_authorship::Config,
+    <R as frame_system::Config>::AccountId: From<polkadot_primitives::AccountId>,
+    <R as frame_system::Config>::AccountId: Into<polkadot_primitives::AccountId>,
+{
+    fn on_nonzero_unbalanced(
+        amount: Credit<<R as frame_system::Config>::AccountId, pallet_balances::Pallet<R>>,
+    ) {
+        if let Some(author) = <pallet_authorship::Pallet<R>>::author() {
+            let _ = <pallet_balances::Pallet<R>>::resolve(&author, amount);
+        }
+    }
+}
+
+parameter_types! {
+    pub FeesValidatorsSplit: Percent = Percent::from_percent(20);
+}
+
+pub struct DealWithFees<R>(core::marker::PhantomData<R>);
+impl<R> OnUnbalanced<Credit<R::AccountId, pallet_balances::Pallet<R>>> for DealWithFees<R>
+where
+    R: pallet_balances::Config + pallet_authorship::Config + pallet_treasury::Config,
+    <R as frame_system::Config>::AccountId: From<polkadot_primitives::AccountId>,
+    <R as frame_system::Config>::AccountId: Into<polkadot_primitives::AccountId>,
+{
+    fn on_unbalanceds<B>(
+        mut fees_then_tips: impl Iterator<Item = Credit<R::AccountId, pallet_balances::Pallet<R>>>,
+    ) {
+        if let Some(fees) = fees_then_tips.next() {
+            // for fees, 80% to treasury, 20% to author
+            let mut split = fees.ration(80, 20);
+            if let Some(tips) = fees_then_tips.next() {
+                // for tips, if any, 100% to author
+                tips.merge_into(&mut split.1);
+            }
+            ResolveTo::<pallet_treasury::TreasuryAccountId<R>, pallet_balances::Pallet<R>>::on_unbalanced(split.0);
+            <ToAuthor<R> as OnUnbalanced<_>>::on_unbalanced(split.1);
+        }
     }
 }
 
