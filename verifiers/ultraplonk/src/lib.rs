@@ -20,9 +20,16 @@ use hp_verifiers::{Cow, Verifier, VerifyError};
 use sp_core::Get;
 use sp_std::{marker::PhantomData, vec::Vec};
 
-pub use native::ULTRAPLONK_PROOF_SIZE as PROOF_SIZE;
-pub use native::ULTRAPLONK_PUBS_SIZE as PUBS_SIZE;
-pub use native::ULTRAPLONK_VK_SIZE as VK_SIZE;
+use ultraplonk_no_std::key::VerificationKey;
+// pub use native::ULTRAPLONK_PROOF_SIZE as PROOF_SIZE;
+// pub use native::ULTRAPLONK_PUBS_SIZE as PUBS_SIZE;
+// pub use native::ULTRAPLONK_VK_SIZE as VK_SIZE;
+pub use ultraplonk_no_std::PROOF_SIZE;
+pub use ultraplonk_no_std::PUBS_SIZE;
+pub use ultraplonk_no_std::VK_SIZE;
+
+use ultraplonk_no_std::testhooks::TestHooks;
+
 pub type Proof = Vec<u8>;
 pub type Pubs = Vec<[u8; PUBS_SIZE]>;
 pub type Vk = [u8; VK_SIZE];
@@ -65,12 +72,26 @@ impl<T: Config> Verifier for Ultraplonk<T> {
             hp_verifiers::VerifyError::InvalidInput
         );
 
-        log::trace!("Verifying (native)");
-        native::ultraplonk_verify::verify(*vk, proof, pubs).map_err(Into::into)
+        // log::trace!("Verifying (native)");
+        // native::ultraplonk_verify::verify(*vk, proof, pubs).map_err(Into::into)
+        log::trace!("Verifying (no-std)");
+        ultraplonk_no_std::verify::<TestHooks>(vk, proof, pubs)
+            .map_err(|e| log::debug!("Cannot verify proof: {:?}", e))
+            .map_err(|_| VerifyError::VerifyError) // Into::into
     }
 
     fn validate_vk(vk: &Self::Vk) -> Result<(), VerifyError> {
-        native::ultraplonk_verify::validate_vk(vk).map_err(Into::into)
+        let _vk = VerificationKey::<TestHooks>::try_from(&vk[..])
+            .map_err(|_| VerifyError::InvalidVerificationKey)?;
+
+        Ok(())
+
+        // let _ = ultraplonk_no_std::validate_vk::<TestHooks>(vk)
+        // .map_err(|e| log::debug!("Invalid Vk: {:?}", e))
+        // .map_err(|_| VerifyError::InvalidVerificationKey)?;
+        //  // Into::into
+
+        //  Ok(())
     }
 
     fn vk_bytes(vk: &Self::Vk) -> Cow<[u8]> {

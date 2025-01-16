@@ -409,6 +409,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "ark-bn254-ext"
+version = "0.4.0"
+source = "git+https://github.com/zkVerify/accelerated-bn-cryptography.git#c764589d32d2460c41fb0fbee4c2012d1914e1f7"
+dependencies = [
+ "ark-bn254",
+ "ark-ec",
+ "ark-ff 0.4.2",
+ "ark-models-ext",
+ "ark-std 0.4.0",
+]
+
+[[package]]
 name = "ark-crypto-primitives"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -553,6 +565,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "ark-models-ext"
+version = "0.4.0"
+source = "git+https://github.com/zkVerify/accelerated-bn-cryptography.git#c764589d32d2460c41fb0fbee4c2012d1914e1f7"
+dependencies = [
+ "ark-ec",
+ "ark-ff 0.4.2",
+ "ark-serialize 0.4.2",
+ "ark-std 0.4.0",
+ "derivative",
+]
+
+[[package]]
 name = "ark-poly"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -574,6 +598,20 @@ dependencies = [
  "ark-ff 0.4.2",
  "ark-std 0.4.0",
  "tracing",
+]
+
+[[package]]
+name = "ark-scale"
+version = "0.0.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5f69c00b3b529be29528a6f2fd5fa7b1790f8bed81b9cdca17e326538545a179"
+dependencies = [
+ "ark-ec",
+ "ark-ff 0.4.2",
+ "ark-serialize 0.4.2",
+ "ark-std 0.4.0",
+ "parity-scale-codec",
+ "scale-info",
 ]
 
 [[package]]
@@ -1175,7 +1213,7 @@ dependencies = [
  "bitflags 2.6.0",
  "cexpr",
  "clang-sys",
- "itertools 0.12.1",
+ "itertools 0.11.0",
  "lazy_static",
  "lazycell",
  "log",
@@ -8846,6 +8884,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "ultraplonk-no-std",
 ]
 
 [[package]]
@@ -9147,7 +9186,7 @@ checksum = "4e69bf016dc406eff7d53a7d3f7cf1c2e72c82b9088aac1118591e36dd2cd3e9"
 dependencies = [
  "bitcoin_hashes",
  "rand 0.8.5",
- "rand_core 0.6.4",
+ "rand_core 0.4.2",
  "serde",
  "unicode-normalization",
 ]
@@ -15754,6 +15793,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "test-utils"
+version = "0.4.0"
+source = "git+https://github.com/zkVerify/accelerated-bn-cryptography.git#c764589d32d2460c41fb0fbee4c2012d1914e1f7"
+dependencies = [
+ "ark-ec",
+ "ark-scale",
+ "ark-std 0.4.0",
+]
+
+[[package]]
 name = "thiserror"
 version = "1.0.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -16377,9 +16426,9 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "digest 0.10.7",
- "rand 0.8.5",
+ "rand 0.4.6",
  "static_assertions",
 ]
 
@@ -16405,6 +16454,22 @@ dependencies = [
  "crunchy",
  "hex",
  "static_assertions",
+]
+
+[[package]]
+name = "ultraplonk-no-std"
+version = "0.1.0"
+source = "git+https://github.com/zkVerify/ultraplonk_verifier.git?branch=dimitris/ultraplonk_no_std#b2ef3aa38c52a2ace80c8e8039a6577c1af8736e"
+dependencies = [
+ "ark-bn254",
+ "ark-bn254-ext",
+ "ark-ec",
+ "ark-ff 0.4.2",
+ "ark-models-ext",
+ "hex-literal 0.4.1",
+ "sha3",
+ "snafu 0.8.5",
+ "test-utils",
 ]
 
 [[package]]
