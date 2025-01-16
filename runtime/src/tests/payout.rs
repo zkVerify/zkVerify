@@ -15,7 +15,10 @@
 
 //! This module tests the correct computation of rewards for validators.
 
-use crate::{payout::*, Balance, Perbill, Runtime, ACME, MILLICENTS};
+use super::*;
+use crate::{
+    payout::*, AccountId, Balance, Balances, Perbill, Runtime, Treasury, ACME, MILLICENTS,
+};
 use pallet_staking::EraPayout;
 
 #[test]
@@ -164,4 +167,35 @@ fn check_era_rewards() {
             others_split * expected_inflation
         )
     );
+}
+
+#[test]
+fn deal_with_fees() {
+    super::test().execute_with(|| {
+        let fee_amount = ACME;
+        let tip_amount = ACME;
+        let fee = Balances::issue(fee_amount);
+        let tip = Balances::issue(tip_amount);
+
+        let author_account: AccountId = testsfixtures::SAMPLE_USERS[BABE_AUTHOR_ID as usize]
+            .raw_account
+            .into();
+        let author_balance = testsfixtures::SAMPLE_USERS[BABE_AUTHOR_ID as usize].starting_balance;
+        assert_eq!(Balances::free_balance(Treasury::account_id()), 0);
+        assert_eq!(
+            Balances::free_balance(author_account.clone()),
+            author_balance
+        );
+
+        DealWithFees::on_unbalanceds([fee, tip].into_iter());
+
+        assert_eq!(
+            Balances::free_balance(Treasury::account_id()),
+            Perbill::from_percent(80) * fee_amount
+        );
+        assert_eq!(
+            Balances::free_balance(author_account),
+            author_balance + Perbill::from_percent(20) * fee_amount + tip_amount
+        );
+    })
 }
