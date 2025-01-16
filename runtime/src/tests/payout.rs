@@ -177,14 +177,16 @@ fn deal_with_fees() {
         );
 
         DealWithFees::on_unbalanceds([fee, tip].into_iter());
-
-        assert_eq!(
-            Balances::free_balance(Treasury::account_id()),
-            Perbill::from_percent(80) * fee_amount
-        );
+        // FeesValidatorsSplit of the fee and all the tips go to the block author
         assert_eq!(
             Balances::free_balance(author_account),
-            author_balance + Perbill::from_percent(20) * fee_amount + tip_amount
+            author_balance + FeesValidatorsSplit::get() * fee_amount + tip_amount
+        );
+
+        // The rest of the fees goes to the Treasury (as hardcoded in DealWithFees)
+        assert_eq!(
+            Balances::free_balance(Treasury::account_id()),
+            (Percent::from_percent(100) - FeesValidatorsSplit::get()) * fee_amount
         );
     })
 }

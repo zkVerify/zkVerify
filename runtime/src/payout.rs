@@ -161,7 +161,9 @@ where
     ) {
         if let Some(fees) = fees_then_tips.next() {
             // for fees, 80% to treasury, 20% to author
-            let mut split = fees.ration(80, 20);
+            let val_split = FeesValidatorsSplit::get() * 100u32;
+            let others_split = 100u32 - val_split;
+            let mut split = fees.ration(others_split, val_split);
             if let Some(tips) = fees_then_tips.next() {
                 // for tips, if any, 100% to author
                 tips.merge_into(&mut split.1);
