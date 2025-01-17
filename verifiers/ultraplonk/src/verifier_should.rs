@@ -128,7 +128,7 @@ mod reject {
 
         assert_eq!(
             Ultraplonk::<MockRuntime>::verify_proof(&vk, &invalid_proof, &pi),
-            Err(VerifyError::VerifyError)
+            Err(VerifyError::InvalidProofData)
         );
     }
 
@@ -188,7 +188,7 @@ mod reject {
 
         assert_eq!(
             Ultraplonk::<MockRuntime>::verify_proof(&vk, &malformed_proof, &pi),
-            Err(VerifyError::VerifyError)
+            Err(VerifyError::InvalidProofData)
         );
     }
 }

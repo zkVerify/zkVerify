@@ -23,7 +23,6 @@ use sp_std::{marker::PhantomData, vec::Vec};
 pub use ultraplonk_no_std::PROOF_SIZE;
 pub use ultraplonk_no_std::PUBS_SIZE;
 pub use ultraplonk_no_std::VK_SIZE;
-use ultraplonk_no_std::{key::VerificationKey, testhooks::TestHooks};
 use ultraplonk_no_std::{key::VerificationKey, testhooks::TestHooks as CurveHooksImpl};
 pub type Proof = Vec<u8>;
 pub type Pubs = Vec<[u8; PUBS_SIZE]>;
@@ -68,7 +67,7 @@ impl<T: Config> Verifier for Ultraplonk<T> {
         );
 
         log::trace!("Verifying (no-std)");
-        ultraplonk_no_std::verify::<TestHooks>(vk, proof, pubs)
+        ultraplonk_no_std::verify::<CurveHooksImpl>(vk, proof, pubs)
             .map_err(|e| {
                 log::debug!("Cannot verify proof: {:?}", e);
                 e
@@ -84,8 +83,8 @@ impl<T: Config> Verifier for Ultraplonk<T> {
                     hp_verifiers::VerifyError::InvalidVerificationKey
                 }
                 ultraplonk_no_std::errors::VerifyError::InvalidProofError => {
-                    hp_verifiers::VerifyError::VerifyError
                     hp_verifiers::VerifyError::InvalidProofData
+                }
                 ultraplonk_no_std::errors::VerifyError::OtherError => {
                     hp_verifiers::VerifyError::VerifyError
                 }
@@ -93,7 +92,7 @@ impl<T: Config> Verifier for Ultraplonk<T> {
     }
 
     fn validate_vk(vk: &Self::Vk) -> Result<(), VerifyError> {
-        let _vk = VerificationKey::<TestHooks>::try_from(&vk[..])
+        let _vk = VerificationKey::<CurveHooksImpl>::try_from(&vk[..])
             .map_err(|e| log::debug!("Invalid Vk: {:?}", e))
             .map_err(|_| VerifyError::InvalidVerificationKey)?;
 
