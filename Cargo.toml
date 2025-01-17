@@ -197,10 +197,10 @@ aggregate-rpc-runtime-api = { default-features = false, path = "rpc/aggregate/ru
 
 # Hyperbridge dependencies
 ismp = { default-features = false, version = "0.2.2" }
-pallet-ismp = { default-features = false, version = "=1.15.1" }
-pallet-ismp-rpc = { default-features = false, version = "=1.15.1" }
-pallet-ismp-runtime-api = { default-features = false, version = "=1.15.1" }
-ismp-grandpa = { default-features = false, version = "=1.15.1" }
+pallet-ismp = { default-features = false, version = "15.0.0" }
+pallet-ismp-rpc = { default-features = false, version = "15.0.0" }
+pallet-ismp-runtime-api = { default-features = false, version = "15.0.0" }
+ismp-grandpa = { default-features = false, version = "15.0.0" }
 frame-metadata-hash-extension = { default-features = false, version = "0.5.0" }
 pallet-hyperbridge-aggregations = { path = "pallets/hyperbridge_aggregations", default-features = false }
 alloy-dyn-abi = { default-features = false, version = "0.8.14" }

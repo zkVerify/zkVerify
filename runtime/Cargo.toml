@@ -150,6 +150,7 @@ runtime-benchmarks = [
 	"pallet-vesting/runtime-benchmarks",
 	"pallet-aggregate/runtime-benchmarks",
 	"pallet-hyperbridge-aggregations/runtime-benchmarks",
+	"ismp-grandpa/runtime-benchmarks",
 	"pallet-poe/runtime-benchmarks",
 	"pallet-staking/runtime-benchmarks",
 	"pallet-proxy/runtime-benchmarks",

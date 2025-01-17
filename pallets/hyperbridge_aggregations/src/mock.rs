@@ -20,7 +20,6 @@ use frame_support::weights::RuntimeDbWeight;
 use frame_support::{construct_runtime, derive_impl, parameter_types, traits::ConstU64};
 use ismp::host::StateMachine;
 use ismp::router::IsmpRouter;
-use pallet_ismp::NoOpMmrTree;
 use sp_runtime::{traits::IdentityLookup, BuildStorage};
 
 pub type Balance = u128;
@@ -68,9 +67,22 @@ impl pallet_balances::Config for Test {
     type RuntimeFreezeReason = ();
 }
 
+pub struct FakeWeightInfo;
+
+impl ismp_grandpa::WeightInfo for FakeWeightInfo {
+    fn add_state_machines(_n: u32) -> frame_support::weights::Weight {
+        frame_support::weights::Weight::from_parts(42, 24)
+    }
+
+    fn remove_state_machines(_n: u32) -> frame_support::weights::Weight {
+        frame_support::weights::Weight::from_parts(4242, 2424)
+    }
+}
+
 impl ismp_grandpa::Config for Test {
     type RuntimeEvent = RuntimeEvent;
     type IsmpHost = Ismp;
+    type WeightInfo = FakeWeightInfo;
 }
 
 parameter_types! {
@@ -88,8 +100,8 @@ impl pallet_ismp::Config for Test {
     type Router = ModuleRouter;
     type Coprocessor = Coprocessor;
     type ConsensusClients = (ismp_grandpa::consensus::GrandpaConsensusClient<Test>,);
-    type Mmr = NoOpMmrTree<Test>;
     type WeightProvider = ();
+    type OffchainDB = ();
 }
 
 #[derive(Default)]

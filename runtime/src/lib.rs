@@ -76,8 +76,6 @@ use ismp::module::IsmpModule;
 use ismp::router::{IsmpRouter, Request, Response};
 use ismp::Error;
 pub use pallet_balances::Call as BalancesCall;
-use pallet_ismp::mmr::{Leaf, Proof, ProofKeys};
-use pallet_ismp::NoOpMmrTree;
 use pallet_session::historical as pallet_session_historical;
 pub use pallet_timestamp::Call as TimestampCall;
 use static_assertions::const_assert;
@@ -998,8 +996,8 @@ impl pallet_ismp::Config for Runtime {
     type Router = ModuleRouter;
     type Coprocessor = Coprocessor;
     type ConsensusClients = (ismp_grandpa::consensus::GrandpaConsensusClient<Runtime>,);
-    type Mmr = NoOpMmrTree<Runtime>;
     type WeightProvider = ();
+    type OffchainDB = ();
 }
 
 impl pallet_hyperbridge_aggregations::Config for Runtime {
@@ -1011,6 +1009,7 @@ impl pallet_hyperbridge_aggregations::Config for Runtime {
 impl ismp_grandpa::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type IsmpHost = Ismp;
+    type WeightInfo = weights::ismp_grandpa::ZKVWeight<Runtime>;
 }
 
 #[derive(Default)]
@@ -1245,6 +1244,7 @@ mod benches {
         [pallet_proxy, Proxy]
         [pallet_aggregate, Aggregate]
         [pallet_hyperbridge_aggregations, HyperbridgeAggregations]
+        [ismp_grandpa, IsmpGrandpa]
         [pallet_zksync_verifier, ZksyncVerifierBench::<Runtime>]
         [pallet_fflonk_verifier, FflonkVerifierBench::<Runtime>]
         [pallet_groth16_verifier, Groth16VerifierBench::<Runtime>]
@@ -1283,6 +1283,7 @@ mod benches {
         [pallet_proxy, Proxy]
         [pallet_aggregate, Aggregate]
         [pallet_hyperbridge_aggregations, HyperbridgeAggregations]
+        [ismp_grandpa, IsmpGrandpa]
         [pallet_zksync_verifier, ZksyncVerifierBench::<Runtime>]
         [pallet_fflonk_verifier, FflonkVerifierBench::<Runtime>]
         [pallet_groth16_verifier, Groth16VerifierBench::<Runtime>]
@@ -1518,12 +1519,6 @@ impl_runtime_apis! {
 
         fn challenge_period(id: StateMachineId) -> Option<u64> {
             pallet_ismp::Pallet::<Runtime>::challenge_period(id)
-        }
-
-        fn generate_proof(
-            keys: ProofKeys
-        ) -> Result<(Vec<Leaf>, Proof<<Block as BlockT>::Hash>), sp_mmr_primitives::Error> {
-            pallet_ismp::Pallet::<Runtime>::generate_proof(keys)
         }
 
         fn block_events() -> Vec<ismp::events::Event> {
