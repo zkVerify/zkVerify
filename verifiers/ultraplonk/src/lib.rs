@@ -85,7 +85,7 @@ impl<T: Config> Verifier for Ultraplonk<T> {
                 }
                 ultraplonk_no_std::errors::VerifyError::InvalidProofError => {
                     hp_verifiers::VerifyError::VerifyError
-                }
+                    hp_verifiers::VerifyError::InvalidProofData
                 ultraplonk_no_std::errors::VerifyError::OtherError => {
                     hp_verifiers::VerifyError::VerifyError
                 }
