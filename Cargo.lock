@@ -6916,7 +6916,7 @@ dependencies = [
 
 [[package]]
 name = "mainchain"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "aggregate-rpc",
  "clap",
@@ -17907,7 +17907,7 @@ dependencies = [
 
 [[package]]
 name = "zkv-runtime"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "aggregate-rpc-runtime-api",
  "anyhow",
