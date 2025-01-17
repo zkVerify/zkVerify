@@ -24,6 +24,7 @@ pallet-aggregate = { workspace = true, optional = true, default-features = false
     "runtime-benchmarks",
 ] }
 ultraplonk-no-std = { git = "https://github.com/zkVerify/ultraplonk_verifier.git", branch = "dimitris/ultraplonk_no_std" }
+sp-io = { workspace = true, default-features = false }
 
 [dev-dependencies]
 hex-literal = { workspace = true }
@@ -38,6 +39,7 @@ pallet-balances = { workspace = true, features = ["std", "runtime-benchmarks"] }
 std = [
     "sp-core/std",
     "sp-std/std",
+    "sp-io/std",
     "hp-verifiers/std",
     "frame-support/std",
     "frame-system/std",
