@@ -24,6 +24,12 @@ use sp_core::{Get, H256};
 use sp_std::vec::Vec;
 
 pub mod benchmarking;
+pub mod extend_benchmarking;
+pub mod fake_extend_benchmarking;
+
+#[cfg(all(feature = "runtime-benchmarks", not(feature = "extend-benchmarks")))]
+pub use fake_extend_benchmarking as extend_benchmarking;
+
 mod verifier_should;
 mod weight;
 
@@ -56,7 +62,7 @@ pub enum Proof {
 pub type Pubs = Vec<u8>;
 pub type Vk = H256;
 
-fn deserialize_and_verify_proof<SC: CircuitCoreDef, RC: CircuitCoreDef>(
+pub(crate) fn deserialize_and_verify_proof<SC: CircuitCoreDef, RC: CircuitCoreDef>(
     ctx: &VerifierContext<SC, RC>,
     vk: Risc0Vk,
     proof: &[u8],
@@ -73,19 +79,19 @@ impl Proof {
     fn verify(&self, vk: &Vk, journal: Journal) -> Result<(), hp_verifiers::VerifyError> {
         match self {
             Proof::V1_0(proof_bytes) => deserialize_and_verify_proof(
-                &VerifierContext::v1_0(),
+                &VerifierContext::v1_0().inject_native_poseidon2_if_needed(),
                 vk.0.into(),
                 proof_bytes,
                 journal,
             ),
             Proof::V1_1(proof_bytes) => deserialize_and_verify_proof(
-                &VerifierContext::v1_1(),
+                &VerifierContext::v1_1().inject_native_poseidon2_if_needed(),
                 vk.0.into(),
                 proof_bytes,
                 journal,
             ),
             Proof::V1_2(proof_bytes) => deserialize_and_verify_proof(
-                &VerifierContext::v1_2(),
+                &VerifierContext::v1_2().inject_native_poseidon2_if_needed(),
                 vk.0.into(),
                 proof_bytes,
                 journal,
@@ -99,6 +105,42 @@ impl Proof {
             Proof::V1_1(proof_bytes) => proof_bytes.len(),
             Proof::V1_2(proof_bytes) => proof_bytes.len(),
         }
+    }
+}
+
+mod native_poseidon2 {
+    #![cfg(feature = "inject-native-poseidon2")]
+    //! This module provide [`NativePoseidon2Mix`] that can handle the poseidon2 mix native
+    //! implementation.
+
+    use risc0_verifier::poseidon2_injection::{BabyBearElem, Poseidon2Mix, POSEIDON2_CELLS};
+
+    /// Implement Poseidon2 mix native implementation.
+    pub struct NativePoseidon2Mix;
+
+    impl Poseidon2Mix for NativePoseidon2Mix {
+        fn poseidon2_mix(cells: &mut [BabyBearElem; POSEIDON2_CELLS]) {
+            native::Poseidon2Mix::new(cells).poseidon2_mix();
+        }
+    }
+}
+
+/// Inject native poseidon2 mix into VerifierContext if it's needed: if and only if
+/// the `"inject-native-poseidon2"` is enabled.
+pub trait InjectNativePoseidon2IfNeeded {
+    fn inject_native_poseidon2_if_needed(self) -> Self;
+}
+
+impl<SC: CircuitCoreDef, RC: CircuitCoreDef> InjectNativePoseidon2IfNeeded
+    for VerifierContext<SC, RC>
+{
+    #[cfg(feature = "inject-native-poseidon2")]
+    fn inject_native_poseidon2_if_needed(self) -> Self {
+        self.with_poseidon2_mix(native_poseidon2::NativePoseidon2Mix)
+    }
+    #[cfg(not(feature = "inject-native-poseidon2"))]
+    fn inject_native_poseidon2_if_needed(self) -> Self {
+        self
     }
 }
 
@@ -164,15 +206,15 @@ impl<T: Config> Verifier for Risc0<T> {
 /// benchmarks to the weight needed by the `pallet-verifiers`.
 pub struct Risc0Weight<W: weight::WeightInfo>(PhantomData<W>);
 
-pub static CYCLE_2_POW_FROM_12_TO_13: usize = 215538;
-pub static CYCLE_2_POW_FROM_14_TO_17: usize = 238578;
-pub static CYCLE_2_POW_FROM_18_TO_18: usize = 250290;
-pub static CYCLE_2_POW_FROM_19_TO_19: usize = 262514;
-pub static CYCLE_2_POW_FROM_20_TO_20: usize = 275762;
-pub static CYCLE_2_POW_FROM_21_TO_21: usize = 514256;
-pub static CYCLE_2_POW_FROM_22_TO_22: usize = 789934;
-pub static CYCLE_2_POW_FROM_23_TO_23: usize = 1353002;
-pub static CYCLE_2_POW_FROM_24_TO_24: usize = 2455714;
+pub static CYCLE_2_POW_FROM_12_TO_13: usize = 269216;
+pub static CYCLE_2_POW_FROM_14_TO_17: usize = 298016;
+pub static CYCLE_2_POW_FROM_18_TO_18: usize = 312655;
+pub static CYCLE_2_POW_FROM_19_TO_19: usize = 327937;
+pub static CYCLE_2_POW_FROM_20_TO_20: usize = 344501;
+pub static CYCLE_2_POW_FROM_21_TO_21: usize = 642420;
+pub static CYCLE_2_POW_FROM_22_TO_22: usize = 986807;
+pub static CYCLE_2_POW_FROM_23_TO_23: usize = 1690238;
+pub static CYCLE_2_POW_FROM_24_TO_24: usize = 3067823;
 
 impl<T: Config, W: weight::WeightInfo> pallet_verifiers::WeightInfo<Risc0<T>> for Risc0Weight<W> {
     fn submit_proof(

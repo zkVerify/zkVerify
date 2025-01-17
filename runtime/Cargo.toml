@@ -116,6 +116,7 @@ pallet-xcm-benchmarks = { workspace = true, optional = true }
 xcm-builder = { workspace = true, optional = true }
 xcm-executor = { workspace = true, optional = true }
 xcm = { workspace = true, optional = true }
+xcm-procedural = { workspace = true }
 hex-literal = { workspace = true }
 
 [build-dependencies]
@@ -312,4 +313,7 @@ try-runtime = [
 	"pallet-authority-discovery?/try-runtime",
 	"polkadot-runtime-common?/try-runtime",
 	"pallet-xcm?/try-runtime",
+]
+extend-benchmarks = [
+	"pallet-risc0-verifier/extend-benchmarks"
 ]

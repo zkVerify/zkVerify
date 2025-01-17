@@ -54,6 +54,9 @@ native-cache = { workspace = true, features = ["rocksdb"] }
 runtime-benchmarks = ["zkv-cli/runtime-benchmarks"]
 try-runtime = ["zkv-cli/try-runtime"]
 fast-runtime = ["zkv-cli/fast-runtime"]
+extend-benchmarks = [
+	"zkv-cli/extend-benchmarks"
+]
 runtime-metrics = ["zkv-cli/runtime-metrics"]
 pyroscope = ["zkv-cli/pyroscope"]
 jemalloc-allocator = [
