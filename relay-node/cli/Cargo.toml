@@ -68,11 +68,13 @@ full-node = ["service/full-node"]
 try-runtime = ["service/try-runtime"]
 fast-runtime = ["service/fast-runtime"]
 pyroscope = ["pyro", "pyroscope_pprofrs"]
+metadata-hash = [
+	"service/metadata-hash",
+	"zkv-runtime/metadata-hash"
+]
 extend-benchmarks = [
 	"zkv-runtime/extend-benchmarks"
 ]
-
-
 runtime-metrics = [
 	"polkadot-node-metrics/runtime-metrics",
 	"service/runtime-metrics",

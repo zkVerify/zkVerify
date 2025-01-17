@@ -210,3 +210,4 @@ fast-runtime = ["zkv-runtime/fast-runtime"]
 
 malus = ["full-node"]
 runtime-metrics = ["polkadot-runtime-parachains/runtime-metrics"]
+metadata-hash = ["zkv-runtime/metadata-hash"]

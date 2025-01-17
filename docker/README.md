@@ -124,6 +124,15 @@ and run it with
 
 All arguments after `horizenlabs/zkv*` image names will be passed to the node executable.
 
+### Production
+
+If you want to build the docker image compiled for production you can add the following flags:
+
+```sh
+--build-arg PROFILE=production # To enable all the optimizations \
+--build-arg FEATURES=metadata-hash # Add metadata hash computation to runtime
+```
+
 ### Compose
 
 Some notes about compose cluster configuration: if you want to run a node with some specific environment variables you can just edit the files in `docker/resources/envs`.
