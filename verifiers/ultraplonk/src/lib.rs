@@ -24,7 +24,7 @@ pub use ultraplonk_no_std::PROOF_SIZE;
 pub use ultraplonk_no_std::PUBS_SIZE;
 pub use ultraplonk_no_std::VK_SIZE;
 use ultraplonk_no_std::{key::VerificationKey, testhooks::TestHooks};
-
+use ultraplonk_no_std::{key::VerificationKey, testhooks::TestHooks as CurveHooksImpl};
 pub type Proof = Vec<u8>;
 pub type Pubs = Vec<[u8; PUBS_SIZE]>;
 pub type Vk = [u8; VK_SIZE];
