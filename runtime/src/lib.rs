@@ -76,7 +76,6 @@ use ismp::module::IsmpModule;
 use ismp::router::{IsmpRouter, Request, Response};
 use ismp::Error;
 pub use pallet_balances::Call as BalancesCall;
-use pallet_ismp::offchain::{Leaf, Proof, ProofKeys};
 use pallet_session::historical as pallet_session_historical;
 pub use pallet_timestamp::Call as TimestampCall;
 use static_assertions::const_assert;
@@ -1520,12 +1519,6 @@ impl_runtime_apis! {
 
         fn challenge_period(id: StateMachineId) -> Option<u64> {
             pallet_ismp::Pallet::<Runtime>::challenge_period(id)
-        }
-
-        fn generate_proof(
-            keys: ProofKeys
-        ) -> Result<(Vec<Leaf>, Proof<<Block as BlockT>::Hash>), sp_mmr_primitives::Error> {
-            pallet_ismp::Pallet::<Runtime>::generate_proof(keys)
         }
 
         fn block_events() -> Vec<ismp::events::Event> {

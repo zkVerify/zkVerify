@@ -70,11 +70,11 @@ impl pallet_balances::Config for Test {
 pub struct FakeWeightInfo;
 
 impl ismp_grandpa::WeightInfo for FakeWeightInfo {
-    fn add_state_machines(n: u32) -> frame_support::weights::Weight {
+    fn add_state_machines(_n: u32) -> frame_support::weights::Weight {
         frame_support::weights::Weight::from_parts(42, 24)
     }
 
-    fn remove_state_machines(n: u32) -> frame_support::weights::Weight {
+    fn remove_state_machines(_n: u32) -> frame_support::weights::Weight {
         frame_support::weights::Weight::from_parts(4242, 2424)
     }
 }
