@@ -20,13 +20,10 @@ use hp_verifiers::{Cow, Verifier, VerifyError};
 use sp_core::{Get, H256};
 use sp_std::{marker::PhantomData, vec::Vec};
 
-use ultraplonk_no_std::{key::VerificationKey, testhooks::TestHooks};
-// pub use native::ULTRAPLONK_PROOF_SIZE as PROOF_SIZE;
-// pub use native::ULTRAPLONK_PUBS_SIZE as PUBS_SIZE;
-// pub use native::ULTRAPLONK_VK_SIZE as VK_SIZE;
 pub use ultraplonk_no_std::PROOF_SIZE;
 pub use ultraplonk_no_std::PUBS_SIZE;
 pub use ultraplonk_no_std::VK_SIZE;
+use ultraplonk_no_std::{key::VerificationKey, testhooks::TestHooks};
 
 pub type Proof = Vec<u8>;
 pub type Pubs = Vec<[u8; PUBS_SIZE]>;
@@ -97,16 +94,10 @@ impl<T: Config> Verifier for Ultraplonk<T> {
 
     fn validate_vk(vk: &Self::Vk) -> Result<(), VerifyError> {
         let _vk = VerificationKey::<TestHooks>::try_from(&vk[..])
+            .map_err(|e| log::debug!("Invalid Vk: {:?}", e))
             .map_err(|_| VerifyError::InvalidVerificationKey)?;
 
         Ok(())
-
-        // let _ = ultraplonk_no_std::validate_vk::<TestHooks>(vk)
-        // .map_err(|e| log::debug!("Invalid Vk: {:?}", e))
-        // .map_err(|_| VerifyError::InvalidVerificationKey)?;
-        //  // Into::into
-
-        //  Ok(())
     }
 
     fn vk_hash(vk: &Self::Vk) -> H256 {
@@ -125,24 +116,6 @@ impl<T: Config> Verifier for Ultraplonk<T> {
         Cow::Owned(data)
     }
 }
-
-// #[cfg(feature = "std")]
-// impl From<ultraplonk_no_std::VerifyError> for VerifyError {
-//     fn from(value: ultraplonk_verifier::VerifyError) -> Self {
-//         match value {
-//             ultraplonk_verifier::VerifyError::BackendError(e) => {
-//                 log::warn!("Ultraplonk Backend error on verify proof: {e:?}");
-//                 VerifyError::VerifyError
-//             }
-//             ultraplonk_verifier::VerifyError::KeyError(e) => {
-//                 log::debug!("Invalid verification key on verify proof should be a simple verify error: {e:?}");
-//                 VerifyError::VerifyError
-//             }
-//             ultraplonk_verifier::VerifyError::PublicInputError { .. } => VerifyError::InvalidInput,
-//             ultraplonk_verifier::VerifyError::VerificationError => VerifyError::VerifyError,
-//         }
-//     }
-// }
 
 /// The struct to use in runtime pallet configuration to map the weight computed by this crate
 /// benchmarks to the weight needed by the `pallet-verifiers`.
