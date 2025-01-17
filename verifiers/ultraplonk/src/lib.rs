@@ -80,7 +80,7 @@ impl<T: Config> Verifier for Ultraplonk<T> {
                 ultraplonk_no_std::errors::VerifyError::VerificationError => {
                     hp_verifiers::VerifyError::VerifyError
                 }
-                ultraplonk_no_std::errors::VerifyError::PublicInputError => {
+                ultraplonk_no_std::errors::VerifyError::PublicInputError { message: _ } => {
                     hp_verifiers::VerifyError::InvalidInput
                 }
                 ultraplonk_no_std::errors::VerifyError::KeyError => {
@@ -92,7 +92,7 @@ impl<T: Config> Verifier for Ultraplonk<T> {
                 ultraplonk_no_std::errors::VerifyError::OtherError => {
                     hp_verifiers::VerifyError::VerifyError
                 }
-            }) // Into::into
+            })
     }
 
     fn validate_vk(vk: &Self::Vk) -> Result<(), VerifyError> {
