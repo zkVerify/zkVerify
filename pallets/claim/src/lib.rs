@@ -18,8 +18,8 @@
 
 //! A pallet implementing the possibility of making airdrops on-chain and letting **Beneficiaries**
 //! manually claim the amount of tokens they have right to.
-//! Only **ManagerOrigin** is able to start and end airdrops, as well as adding and removing
-//! beneficiaries with their rightful balance.
+//! Only **ManagerOrigin** is able to start and end airdrops, as well as adding beneficiaries with
+//! their rightful balance.
 //! Currently it possible only to held one airdrop at a time.
 //! When airdrop ends, all the funds still available in the pallet's associated account
 //! are transferred to **UnclaimedDestination**.
@@ -35,10 +35,7 @@ use core::marker::PhantomData;
 
 extern crate alloc;
 
-use alloc::{
-    collections::{btree_map::BTreeMap, btree_set::BTreeSet},
-    vec::Vec,
-};
+use alloc::{collections::btree_map::BTreeMap, vec::Vec};
 use sp_runtime::traits::{AccountIdConversion, Saturating, Zero};
 
 use frame_support::{
@@ -190,6 +187,10 @@ pub mod pallet {
         NotEnoughFunds,
         /// Account requested a claim but it is not present among the Beneficiaries
         NotEligible,
+        /// Added a beneficiary without balance to claim
+        NothingToClaim,
+        /// Attempt to modify the balance of an already added beneficiary
+        AlreadyPresent,
         /// There was some issue with the mechanism of payment.
         PayoutError,
         /// Attempt to perform an action implying an open airdrop, while it has already ended
@@ -206,7 +207,7 @@ pub mod pallet {
         }
 
         /// Return the amount of money in the pot.
-        /// The existential deposit is not part of the pot so treasury account never gets deleted.
+        /// The existential deposit is not part of the pot so claim account never gets deleted.
         pub fn pot() -> BalanceOf<T> {
             T::Currency::reducible_balance(
                 &Self::account_id(),
@@ -244,7 +245,7 @@ pub mod pallet {
                         None
                     }
                     // Account is not eligible to receive funds
-                    None => Err(Error::<T>::NotEligible)?,
+                    _ => Err(Error::<T>::NotEligible)?,
                 };
                 Ok::<_, DispatchError>(())
             })?;
@@ -261,20 +262,14 @@ pub mod pallet {
             beneficiaries
                 .iter()
                 .try_for_each::<_, DispatchResult>(|(account, amount)| {
-                    // Account already exists
-                    if let Some(old_amount) = Beneficiaries::<T>::get(account.clone()) {
-                        // We're giving the account less token compared to before
-                        if old_amount > *amount {
-                            // Subtract the difference from the required balance this pallet's account should have
-                            required_amount =
-                                required_amount.saturating_sub(old_amount.saturating_sub(*amount));
-                        } else {
-                            // We're giving the account more tokens compared to before
-                            // Add the difference to the required balance this pallet's account should have
-                            required_amount =
-                                required_amount.saturating_add(amount.saturating_sub(old_amount));
-                        }
-                        log::debug!("Beneficiary {account:?} already existing. Old amount: {old_amount:?} New amount: {amount:?}");
+                    if let Some(_) = Beneficiaries::<T>::get(account.clone()) {
+                        // Account already exists
+                        log::warn!("Beneficiary {account:?} already added.");
+                        Err(Error::<T>::AlreadyPresent)?;
+                    } else if amount.is_zero() {
+                        // Attempting to add a beneficiary with nothing to claim
+                        log::warn!("Beneficiary {account:?} with nothing to claim.");
+                        Err(Error::<T>::NothingToClaim)?;
                     } else {
                         // Account doesn't exist. Add its token amount to the required amount this pallet's account should have
                         required_amount = required_amount.saturating_add(*amount);
@@ -295,19 +290,6 @@ pub mod pallet {
             TotalClaimable::<T>::put(required_amount);
 
             Ok(())
-        }
-
-        fn do_remove_beneficiaries(beneficiaries: BTreeSet<T::AccountId>) {
-            let mut required_amount = TotalClaimable::<T>::get();
-
-            beneficiaries.into_iter().for_each(|account| {
-                if let Some(amount) = Beneficiaries::<T>::take(account.clone()) {
-                    required_amount -= amount;
-                    log::trace!("Removed beneficiary {account:?}");
-                }
-            });
-
-            TotalClaimable::<T>::put(required_amount);
         }
 
         fn check_airdrop_status() -> DispatchResult {
@@ -400,6 +382,7 @@ pub mod pallet {
         /// Add beneficiaries.
         /// Raise an Error if:
         /// - There isn't enough balance in the pallets' account to cover for the claim of the supplied beneficiaries (if specified)
+        /// - Attempt to modify the claimable amount of an already existing beneficiary
         /// This is an atomic operation. If there isn't enough balance to cover for all the beneficiaries, then none will be added.
         /// Origin must be the ManagerOrigin.
         #[pallet::call_index(3)]
@@ -418,29 +401,11 @@ pub mod pallet {
             })
         }
 
-        /// Remove beneficiaries from the storage.
-        /// Origin must be the ManagerOrigin.
-        #[pallet::call_index(4)]
-        #[pallet::weight(T::WeightInfo::remove_beneficiaries(beneficiaries.len() as u32))]
-        pub fn remove_beneficiaries(
-            origin: OriginFor<T>,
-            beneficiaries: BTreeSet<T::AccountId>,
-        ) -> DispatchResultWithPostInfo {
-            Self::check_airdrop_status()?;
-            T::ManagerOrigin::ensure_origin(origin)?;
-            Self::do_remove_beneficiaries(beneficiaries);
-
-            Ok(PostDispatchInfo {
-                actual_weight: None,
-                pays_fee: Pays::No,
-            })
-        }
-
         /// End an airdrop. Storage variables will be cleared.
         /// Any unclaimed balance will be sent to the destination specified as per 'UnclaimedDestination'.
         /// Raise an Error if attempting to end an already ended airdrop.
         /// Origin must be 'ManagerOrigin'.
-        #[pallet::call_index(5)]
+        #[pallet::call_index(4)]
         #[pallet::weight(T::WeightInfo::end_airdrop(Beneficiaries::<T>::iter_keys().collect::<Vec<_>>().len() as u32))]
         pub fn end_airdrop(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
             T::ManagerOrigin::ensure_origin(origin)?;

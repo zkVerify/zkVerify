@@ -205,6 +205,21 @@ fn claim() {
 }
 
 #[test]
+fn double_claim_is_err() {
+    test_with_configs(
+        WithGenesisBeneficiaries::Yes,
+        GenesisClaimBalance::Sufficient,
+    )
+    .execute_with(|| {
+        assert_ok!(Claim::claim(Origin::Signed(USER_1).into(), None));
+        assert_err!(
+            Claim::claim(Origin::Signed(USER_1).into(), None),
+            Error::<Test>::NotEligible
+        )
+    });
+}
+
+#[test]
 fn claim_with_opt_dest() {
     test_with_configs(
         WithGenesisBeneficiaries::Yes,
@@ -471,133 +486,19 @@ fn add_beneficiaries_insufficient_funds() {
 }
 
 #[test]
-fn add_new_mixed_beneficiaries_modify_total_claimable_success() {
+fn cannot_add_already_existing_beneficiary() {
     test_with_configs(
         WithGenesisBeneficiaries::Yes,
         GenesisClaimBalance::Sufficient,
     )
     .execute_with(|| {
-        let _ = Balances::mint_into(&Claim::account_id(), MODIFIED_SUFFICIENT_BALANCE).unwrap();
-        assert_ok!(Claim::add_beneficiaries(
-            Origin::Signed(MANAGER_USER).into(),
-            MODIFIED_BENEFICIARIES_MAP.clone()
-        ));
-        assert_eq!(
-            Claim::pot(),
-            SUFFICIENT_GENESIS_BALANCE + MODIFIED_SUFFICIENT_BALANCE
-        );
-        assert_eq!(
-            TotalClaimable::<Test>::get(),
-            SUFFICIENT_GENESIS_BALANCE + MODIFIED_SUFFICIENT_BALANCE
-        );
-        assert_eq!(
-            Beneficiaries::<Test>::get(USER_1),
-            Some(USER_1_MODIFIED_AMOUNT)
-        );
-        assert_eq!(
-            Beneficiaries::<Test>::get(USER_3),
-            Some(USER_3_MODIFIED_AMOUNT)
-        );
-        assert_eq!(Beneficiaries::<Test>::get(USER_6), Some(USER_6_AMOUNT));
-    })
-}
-
-#[test]
-fn add_new_mixed_beneficiaries_modify_total_claimable_failure() {
-    test_with_configs(
-        WithGenesisBeneficiaries::Yes,
-        GenesisClaimBalance::Sufficient,
-    )
-    .execute_with(|| {
-        let _ = Balances::mint_into(&Claim::account_id(), USER_6_AMOUNT).unwrap();
         assert_err!(
             Claim::add_beneficiaries(
                 Origin::Signed(MANAGER_USER).into(),
-                MODIFIED_BENEFICIARIES_MAP.clone()
+                GENESIS_BENEFICIARIES_MAP.clone()
             ),
-            Error::<Test>::NotEnoughFunds
+            Error::<Test>::AlreadyPresent
         );
-        // Atomic operation: state is untouched
-        assert_eq!(Claim::pot(), SUFFICIENT_GENESIS_BALANCE + USER_6_AMOUNT);
-        assert_eq!(TotalClaimable::<Test>::get(), SUFFICIENT_GENESIS_BALANCE);
-        assert_eq!(
-            Beneficiaries::<Test>::iter().collect::<BTreeMap<_, _>>(),
-            GENESIS_BENEFICIARIES_MAP.clone()
-        );
-    })
-}
-
-#[test]
-fn remove_beneficiaries_wrong_origin() {
-    test_with_configs(
-        WithGenesisBeneficiaries::Yes,
-        GenesisClaimBalance::Sufficient,
-    )
-    .execute_with(|| {
-        assert_err!(
-            Claim::remove_beneficiaries(
-                Origin::Signed(USER_1).into(),
-                GENESIS_BENEFICIARIES_SET.clone()
-            ),
-            BadOrigin
-        );
-    })
-}
-
-#[test]
-fn cannot_remove_beneficiaries_while_airdrop_inactive() {
-    test().execute_with(|| {
-        assert_err!(
-            Claim::remove_beneficiaries(
-                Origin::Signed(MANAGER_USER).into(),
-                GENESIS_BENEFICIARIES_SET.clone()
-            ),
-            Error::<Test>::AlreadyEnded
-        );
-    })
-}
-
-#[test]
-fn remove_beneficiaries_modify_total_claimable() {
-    test_with_configs(
-        WithGenesisBeneficiaries::Yes,
-        GenesisClaimBalance::Sufficient,
-    )
-    .execute_with(|| {
-        let mut beneficiaries_to_remove = GENESIS_BENEFICIARIES_SET.clone();
-        let _ = beneficiaries_to_remove.take(&USER_3);
-
-        assert_ok!(Claim::remove_beneficiaries(
-            Origin::Signed(MANAGER_USER).into(),
-            beneficiaries_to_remove
-        ));
-
-        assert_eq!(Claim::pot(), SUFFICIENT_GENESIS_BALANCE);
-        assert_eq!(
-            TotalClaimable::<Test>::get(),
-            SUFFICIENT_GENESIS_BALANCE - USER_1_AMOUNT - USER_2_AMOUNT
-        );
-        assert_eq!(
-            Beneficiaries::<Test>::iter().collect::<Vec<(_, _)>>(),
-            vec![(USER_3, USER_3_AMOUNT)]
-        );
-    })
-}
-
-#[test]
-fn remove_beneficiaries_not_existing_is_ok() {
-    test_with_configs(
-        WithGenesisBeneficiaries::Yes,
-        GenesisClaimBalance::Sufficient,
-    )
-    .execute_with(|| {
-        let mut beneficiaries_to_remove = GENESIS_BENEFICIARIES_SET.clone();
-        beneficiaries_to_remove.insert(USER_4);
-        assert_ok!(Claim::remove_beneficiaries(
-            Origin::Signed(MANAGER_USER).into(),
-            beneficiaries_to_remove
-        ));
-        assert!(Beneficiaries::<Test>::iter().next().is_none());
     })
 }
 

@@ -13,10 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::{
-    collections::{BTreeMap, BTreeSet},
-    sync::LazyLock,
-};
+use std::{collections::BTreeMap, sync::LazyLock};
 
 use frame_support::{
     derive_impl, parameter_types,
@@ -36,12 +33,10 @@ pub const EXISTENTIAL_DEPOSIT: Balance = 1;
 
 pub const USER_1: AccountId = 42;
 pub const USER_1_AMOUNT: Balance = 42_000_000_000;
-pub const USER_1_MODIFIED_AMOUNT: Balance = 20_000_000_000;
 pub const USER_2: AccountId = 24;
 pub const USER_2_AMOUNT: Balance = 24_000_000_000;
 pub const USER_3: AccountId = 42_000;
 pub const USER_3_AMOUNT: Balance = 100_000_000_000;
-pub const USER_3_MODIFIED_AMOUNT: Balance = 600_000_000_000;
 pub const USER_4: AccountId = 24_000;
 pub const USER_4_AMOUNT: Balance = 200_000_000_000;
 pub const USER_5: AccountId = 99_000;
@@ -61,13 +56,6 @@ pub static GENESIS_BENEFICIARIES: [(AccountId, Balance); 3] = [
 pub static GENESIS_BENEFICIARIES_MAP: LazyLock<BTreeMap<AccountId, Balance>> =
     LazyLock::new(|| GENESIS_BENEFICIARIES.into_iter().collect());
 
-pub static GENESIS_BENEFICIARIES_SET: LazyLock<BTreeSet<AccountId>> = LazyLock::new(|| {
-    GENESIS_BENEFICIARIES
-        .into_iter()
-        .map(|(account, _)| account)
-        .collect()
-});
-
 pub static SUFFICIENT_GENESIS_BALANCE: Balance = USER_1_AMOUNT + USER_2_AMOUNT + USER_3_AMOUNT;
 pub const INSUFFICIENT_GENESIS_BALANCE: Balance = USER_5_AMOUNT;
 
@@ -81,19 +69,6 @@ pub static NEW_BENEFICIARIES_MAP: LazyLock<BTreeMap<AccountId, Balance>> =
     LazyLock::new(|| NEW_BENEFICIARIES.into_iter().collect());
 
 pub static NEW_SUFFICIENT_BALANCE: Balance = USER_4_AMOUNT + USER_5_AMOUNT + USER_6_AMOUNT;
-
-pub static MODIFIED_BENEFICIARIES: [(AccountId, Balance); 3] = [
-    (USER_1, USER_1_MODIFIED_AMOUNT),
-    (USER_3, USER_3_MODIFIED_AMOUNT),
-    (USER_6, USER_6_AMOUNT),
-];
-
-pub static MODIFIED_BENEFICIARIES_MAP: LazyLock<BTreeMap<AccountId, Balance>> =
-    LazyLock::new(|| MODIFIED_BENEFICIARIES.into_iter().collect());
-
-pub static MODIFIED_SUFFICIENT_BALANCE: Balance = (USER_3_MODIFIED_AMOUNT - USER_3_AMOUNT)
-    - (USER_1_AMOUNT - USER_1_MODIFIED_AMOUNT)
-    + USER_6_AMOUNT;
 
 pub struct MockWeightInfo;
 
@@ -124,14 +99,6 @@ impl crate::WeightInfo for MockWeightInfo {
     }
 
     fn add_beneficiaries(n: u32) -> frame_support::weights::Weight {
-        let variable = 1000 * n as u64;
-        frame_support::weights::Weight::from_parts(
-            Self::REF_TIME + variable,
-            Self::PROOF_SIZE + variable,
-        )
-    }
-
-    fn remove_beneficiaries(n: u32) -> frame_support::weights::Weight {
         let variable = 1000 * n as u64;
         frame_support::weights::Weight::from_parts(
             Self::REF_TIME + variable,

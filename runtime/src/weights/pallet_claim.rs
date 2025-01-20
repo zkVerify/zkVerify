@@ -150,27 +150,6 @@ impl<T: frame_system::Config> pallet_claim::WeightInfo for ZKVWeight<T> {
             .saturating_add(RocksDbWeight::get().writes((1_u64).saturating_mul(n.into())))
             .saturating_add(Weight::from_parts(0, 2531).saturating_mul(n.into()))
     }
-    /// Storage: `Claim::AirdropActive` (r:1 w:0)
-    /// Proof: `Claim::AirdropActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
-    /// Storage: `Claim::TotalClaimable` (r:1 w:1)
-    /// Proof: `Claim::TotalClaimable` (`max_values`: Some(1), `max_size`: Some(16), added: 511, mode: `MaxEncodedLen`)
-    /// Storage: `Claim::Beneficiaries` (r:999 w:999)
-    /// Proof: `Claim::Beneficiaries` (`max_values`: None, `max_size`: Some(56), added: 2531, mode: `MaxEncodedLen`)
-    /// The range of component `n` is `[1, 1000]`.
-    fn remove_beneficiaries(n: u32, ) -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `130 + n * (61 ±0)`
-        //  Estimated: `1501 + n * (2531 ±0)`
-        // Minimum execution time: 9_345_000 picoseconds.
-        Weight::from_parts(9_758_000, 1501)
-            // Standard Error: 7_756
-            .saturating_add(Weight::from_parts(3_363_944, 0).saturating_mul(n.into()))
-            .saturating_add(RocksDbWeight::get().reads(2_u64))
-            .saturating_add(RocksDbWeight::get().reads((1_u64).saturating_mul(n.into())))
-            .saturating_add(RocksDbWeight::get().writes(1_u64))
-            .saturating_add(RocksDbWeight::get().writes((1_u64).saturating_mul(n.into())))
-            .saturating_add(Weight::from_parts(0, 2531).saturating_mul(n.into()))
-    }
     /// Storage: `Claim::AirdropActive` (r:1 w:1)
     /// Proof: `Claim::AirdropActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
     /// Storage: `Claim::Beneficiaries` (r:999 w:999)

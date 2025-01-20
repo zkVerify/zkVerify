@@ -20,8 +20,6 @@ use super::*;
 use frame_benchmarking::v2::*;
 use frame_system::RawOrigin;
 
-const AMOUNT_OFFSET: u32 = 10;
-
 fn get_beneficiaries_map<T: Config>(
     n: u32,
 ) -> (BTreeMap<T::AccountId, BalanceOf<T>>, BalanceOf<T>) {
@@ -36,20 +34,6 @@ fn get_beneficiaries_map<T: Config>(
         })
         .collect::<BTreeMap<_, _>>();
     (beneficiaries_map, total_amount)
-}
-
-fn mutate_beneficiaries_map<T: Config>(beneficiaries: &mut BTreeMap<T::AccountId, BalanceOf<T>>) {
-    beneficiaries
-        .iter_mut()
-        .enumerate()
-        .for_each(|(i, (_, amount))| {
-            // Modify claimable balances alternating giving more token and less tokens
-            if i % 2 == 0 {
-                *amount = amount.saturating_add((AMOUNT_OFFSET * i as u32).into());
-            } else {
-                *amount = amount.saturating_sub((AMOUNT_OFFSET * i as u32).into())
-            }
-        })
 }
 
 fn init_airdrop_state<T: Config>(
@@ -120,21 +104,20 @@ mod benchmarks {
 
     #[benchmark]
     fn add_beneficiaries(n: Linear<1, <T as Config>::MAX_BENEFICIARIES>) {
-        let mut beneficiaries = init_airdrop_state::<T>(n, true);
+        // Init airdrop
+        Pallet::<T>::begin_airdrop(RawOrigin::Root.into(), None).unwrap();
 
-        mutate_beneficiaries_map::<T>(&mut beneficiaries);
+        // Prepare beneficiaries and sufficient amount
+        let (beneficiaries, total_amount) = get_beneficiaries_map::<T>(n);
+        let _ = T::Currency::mint_into(
+            &Pallet::<T>::account_id(),
+            total_amount.saturating_mul(2u32.into()), // Just to be extra safe
+        )
+        .unwrap();
 
         // Worst case scenario: all the amounts of existing beneficiaries have been modified
         #[extrinsic_call]
         add_beneficiaries(RawOrigin::Root, beneficiaries);
-    }
-
-    #[benchmark]
-    fn remove_beneficiaries(n: Linear<1, <T as Config>::MAX_BENEFICIARIES>) {
-        let beneficiaries = init_airdrop_state::<T>(n, true);
-
-        #[extrinsic_call]
-        remove_beneficiaries(RawOrigin::Root, beneficiaries.into_keys().collect());
     }
 
     #[benchmark]
