@@ -79,21 +79,4 @@ pub mod migrate_staking_to_bags_list {
     }
 }
 
-pub type Unreleased = (
-    pallet_staking::migrations::v15::MigrateV14ToV15<Runtime>,
-    pallet_verifiers::migrations::v1::MigrateV0ToV1<Runtime, pallet_fflonk_verifier::Fflonk>,
-    pallet_verifiers::migrations::v1::MigrateV0ToV1<
-        Runtime,
-        pallet_groth16_verifier::Groth16<Runtime>,
-    >,
-    pallet_verifiers::migrations::v1::MigrateV0ToV1<Runtime, pallet_risc0_verifier::Risc0<Runtime>>,
-    pallet_verifiers::migrations::v1::MigrateV0ToV1<
-        Runtime,
-        pallet_proofofsql_verifier::ProofOfSql<Runtime>,
-    >,
-    pallet_verifiers::migrations::v1::MigrateV0ToV1<
-        Runtime,
-        pallet_ultraplonk_verifier::Ultraplonk<Runtime>,
-    >,
-    pallet_verifiers::migrations::v1::MigrateV0ToV1<Runtime, pallet_zksync_verifier::Zksync>,
-);
+pub type Unreleased = ();
