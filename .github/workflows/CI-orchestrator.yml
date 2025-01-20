@@ -16,6 +16,11 @@ jobs:
     with:
       CACHING_MODE: "CACHE_RESTORE"
 
+  try-runtime-job:
+    uses: ./.github/workflows/CI-try-runtime.yml
+    with:
+      CACHING_MODE: "CACHE_RESTORE"
+
   coverage-job:
     uses: ./.github/workflows/CI-coverage.yml
     with:
@@ -50,7 +55,7 @@ jobs:
 
   set-overall-result:
     runs-on: ubuntu-latest
-    needs: [build-job, test-job, coverage-job, lint-format-job, zombienet-test-job, audit-job, check-act]
+    needs: [build-job, test-job, try-runtime-job, coverage-job, lint-format-job, zombienet-test-job, audit-job, check-act]
     if: ${{ !cancelled() && needs.check-act.outputs.act == 'false' }}
     outputs:
       branch-name: ${{ steps.get-info.outputs.BRANCH_NAME }}
@@ -83,6 +88,7 @@ jobs:
             OVERALL_STATUS="success"
             if [ "${{ needs.build-job.result }}" != "success" ] || 
                 [ "${{ needs.test-job.result }}" != "success" ] ||
+                [ "${{ needs.try-runtime-job.result }}" != "success" ] ||
                 [ "${{ needs.coverage-job.result }}" != "success" ] ||
                 [ "${{ needs.lint-format-job.result }}" != "success" ] || 
                 [ "${{ needs.zombienet-test-job.result }}" != "success" ]; then
