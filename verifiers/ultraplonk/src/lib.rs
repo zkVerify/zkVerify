@@ -17,12 +17,13 @@
 
 use frame_support::{ensure, weights::Weight};
 use hp_verifiers::{Cow, Verifier, VerifyError};
-use sp_core::Get;
+use sp_core::{Get, H256};
 use sp_std::{marker::PhantomData, vec::Vec};
 
-pub use native::ULTRAPLONK_PROOF_SIZE as PROOF_SIZE;
-pub use native::ULTRAPLONK_PUBS_SIZE as PUBS_SIZE;
-pub use native::ULTRAPLONK_VK_SIZE as VK_SIZE;
+pub use ultraplonk_no_std::PROOF_SIZE;
+pub use ultraplonk_no_std::PUBS_SIZE;
+pub use ultraplonk_no_std::VK_SIZE;
+use ultraplonk_no_std::{key::VerificationKey, testhooks::TestHooks as CurveHooksImpl};
 pub type Proof = Vec<u8>;
 pub type Pubs = Vec<[u8; PUBS_SIZE]>;
 pub type Vk = [u8; VK_SIZE];
@@ -65,12 +66,41 @@ impl<T: Config> Verifier for Ultraplonk<T> {
             hp_verifiers::VerifyError::InvalidInput
         );
 
-        log::trace!("Verifying (native)");
-        native::ultraplonk_verify::verify(*vk, proof, pubs).map_err(Into::into)
+        log::trace!("Verifying (no-std)");
+        ultraplonk_no_std::verify::<CurveHooksImpl>(vk, proof, pubs)
+            .map_err(|e| {
+                log::debug!("Cannot verify proof: {:?}", e);
+                e
+            })
+            .map_err(|e| match e {
+                ultraplonk_no_std::errors::VerifyError::VerificationError => {
+                    hp_verifiers::VerifyError::VerifyError
+                }
+                ultraplonk_no_std::errors::VerifyError::PublicInputError { message: _ } => {
+                    hp_verifiers::VerifyError::InvalidInput
+                }
+                ultraplonk_no_std::errors::VerifyError::KeyError => {
+                    hp_verifiers::VerifyError::InvalidVerificationKey
+                }
+                ultraplonk_no_std::errors::VerifyError::InvalidProofError => {
+                    hp_verifiers::VerifyError::InvalidProofData
+                }
+                ultraplonk_no_std::errors::VerifyError::OtherError => {
+                    hp_verifiers::VerifyError::VerifyError
+                }
+            })
     }
 
     fn validate_vk(vk: &Self::Vk) -> Result<(), VerifyError> {
-        native::ultraplonk_verify::validate_vk(vk).map_err(Into::into)
+        let _vk = VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&vk[..])
+            .map_err(|e| log::debug!("Invalid Vk: {:?}", e))
+            .map_err(|_| VerifyError::InvalidVerificationKey)?;
+
+        Ok(())
+    }
+
+    fn vk_hash(vk: &Self::Vk) -> H256 {
+        sp_io::hashing::sha2_256(&Self::vk_bytes(vk)).into()
     }
 
     fn vk_bytes(vk: &Self::Vk) -> Cow<[u8]> {
