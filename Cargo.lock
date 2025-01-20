@@ -16458,14 +16458,15 @@ dependencies = [
 
 [[package]]
 name = "ultraplonk-no-std"
-version = "0.1.0"
-source = "git+https://github.com/zkVerify/ultraplonk_verifier.git?branch=dimitris/ultraplonk_no_std#2de536e9c0708f8f1bd2e1c24dbae18d2ce3c39b"
+version = "0.2.0"
+source = "git+https://github.com/zkVerify/ultraplonk_verifier.git?tag=v0.2.0#98516cf22bc9dda3bbe1df3a7027600d88a5c5e4"
 dependencies = [
  "ark-bn254",
  "ark-bn254-ext",
  "ark-ec",
  "ark-ff 0.4.2",
  "ark-models-ext",
+ "ark-std 0.4.0",
  "hex-literal 0.4.1",
  "sha3",
  "snafu 0.8.5",
