@@ -157,7 +157,7 @@ pub mod pallet {
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
-        /// Beginning of a new airdrop campaing
+        /// Beginning of a new airdrop campaign
         AirdropStarted {
             /// The id of the airdrop that has just started
             airdrop_id: u64,
@@ -171,7 +171,7 @@ pub mod pallet {
             /// The payment id
             payment_id: <T::Paymaster as Pay>::Id,
         },
-        /// Ending of the airdrop campaing
+        /// Ending of the airdrop campaign
         AirdropEnded {
             /// The id of the airdrop that has just ended
             airdrop_id: u64,
