@@ -63,11 +63,13 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 				RuntimeCall::VoterList(..) |
                 // zkVerify specifics
                 RuntimeCall::Poe(..) |
+                RuntimeCall::Aggregate(..) |
                 RuntimeCall::SettlementFFlonkPallet(..) |
                 RuntimeCall::SettlementZksyncPallet(..) |
                 RuntimeCall::SettlementGroth16Pallet(..) |
                 RuntimeCall::SettlementRisc0Pallet(..) |
-                RuntimeCall::SettlementUltraplonkPallet(..)
+                RuntimeCall::SettlementUltraplonkPallet(..) |
+                RuntimeCall::SettlementProofOfSqlPallet(..)
             ),
             ProxyType::Governance => matches!(
                 c,
