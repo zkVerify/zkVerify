@@ -92,7 +92,7 @@ impl<T: Config> Verifier for Ultraplonk<T> {
     }
 
     fn validate_vk(vk: &Self::Vk) -> Result<(), VerifyError> {
-        let _vk = VerificationKey::<CurveHooksImpl>::try_from(&vk[..])
+        let _vk = VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&vk[..])
             .map_err(|e| log::debug!("Invalid Vk: {:?}", e))
             .map_err(|_| VerifyError::InvalidVerificationKey)?;
 
