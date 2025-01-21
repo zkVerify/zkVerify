@@ -25,55 +25,20 @@ env:
 
 jobs:
   build:
-    name: Docker image
-    uses: ./.github/workflows/CI-build-docker-image.yml
-    with:
-      chain: ${{ inputs.chain }}
-  
-  # execute-e2e-tests:
-  #   runs-on:
-  #     group: ${{ vars.RUNNER_GROUP }}
-  #   needs: build
-  #   name: Execute E2E Tests
-  #   outputs:
-  #     test_status: ${{ steps.run-test.outputs.test_status }} 
-  #   steps:
-  #     - name: E2E
-  #       run: echo "execute-e2e-tests with ${{ needs.build.outputs.artifact_name }}"  
-
-  #     - uses: actions/checkout@v4
-  #       with:
-  #         repository: HorizenLabs/zkVerify-qa
-  #         ref: main
-  #         clean: true
-  #         fetch-depth: 1
-
-  #     - name: Download zkVerify Docker image artifact
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: ${{ needs.build.outputs.artifact_name }}
-  #         path: ./
-
-  #     - name: Load Docker image and rename
-  #       run: |
-  #         IMAGE_NAME="$(docker load -i "${GITHUB_WORKSPACE}/${{ needs.build.outputs.artifact_name }}.tar" | awk '/Loaded image:/ { print $3 }')"
-  #         echo $(docker images -q "${IMAGE_NAME}" > /dev/null 2>&1 && echo "Image exists..." || echo "Image missing...")
-  #         echo "Loaded image ${IMAGE_NAME}"
-  #         TEST_TAG=test
-  #         echo "TEST_TAG=${TEST_TAG}" >> $GITHUB_ENV
-  #         docker image tag "${IMAGE_NAME}" "${DOCKER_HUB_ORG}/zkverify:$TEST_TAG"
-  #         # TODO ideally we'd pass DOCKER_IMAGE_BUILD_NAME as another variable in 'with:' of the next block to the QA action and paramerize the image name there as well, instead of hard coding it to "${DOCKER_HUB_ORG}/zkverify:$TEST_TAG"
-  #       shell: bash
-
-  #     - name: Run test
-  #       id: run-test
-  #       uses: 'HorizenLabs/zkVerify-qa/.github/actions/e2e-test@main'
-  #       with:
-  #         zkverify_docker_tag: ${{ env.TEST_TAG }}
-  #         DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
-  #         DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
-  #         GH_TOKEN: ${{ secrets.GH_TOKEN }}
-  #         QA_SLACK_WEBHOOK_URL: ${{ secrets.QA_SLACK_WEBHOOK_URL }}
+    runs-on:
+      group: ${{ vars.RUNNER_GROUP }}
+    name: Build Docker image
+    steps:
+      - uses: actions/checkout@v4
+      - id: create-docker-images
+        uses: ./.github/actions/build-docker-image
+        with:
+          chain: ${{ inputs.chain }}
+          ref: ${{ github.ref }}
+          docker_hub_org: ${{ env.DOCKER_HUB_ORG }}
+          docker_image_name: ${{ env.DOCKER_IMAGE_BUILD_NAME }}
+    outputs:
+      artifact_name: ${{ steps.create-docker-images.outputs.artifact_name }}
 
   publish-docker-image:
     name: Publish Docker Image
