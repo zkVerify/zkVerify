@@ -1,0 +1,80 @@
+name: 'Build Docker Image'
+
+description : 'Generate and save the given docker image'
+
+inputs:
+  chain:
+    description: "Solo or relay"
+    required: true
+    type: string
+  ref:
+    description: "Git ref"
+    required: true
+    type: string
+  docker_image_name: 
+    description: "Docker image name"
+    required: true
+    type: string
+  docker_hub_org: 
+    description: "Docker hub organization"
+    type: string
+    default: 'horizenlabs'
+
+outputs:
+  artifact_name:
+    description: 'Docker image tar artifact name'
+    value: ${{ steps.create-tar-file.outputs.artifact_name }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout repository
+      if: ${{ !env.ACT }}
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.ref }}
+        fetch-depth: 0
+
+    - name: Use local if act
+      if: ${{ env.ACT }}
+      uses: actions/checkout@v4
+
+    - name: Build docker image
+      shell: bash
+      run: |
+        if [[ "${{ inputs.chain }}" == "solo" ]]; then
+          docker build --build-arg PROFILE=production \
+            --build-arg FEATURES=metadata-hash \
+            -f "docker/dockerfiles/zkv-node.Dockerfile" \
+            -t "${{ inputs.docker_hub_org }}/${{ inputs.docker_image_name }}-solo" .
+          echo "DOCKER_IMAGE_NAME=${{ inputs.docker_hub_org }}/${{ inputs.docker_image_name }}-solo" >> $GITHUB_ENV
+        elif [[ "${{ inputs.chain }}" == "relay" ]]; then
+          docker build --build-arg PROFILE=production \
+            --build-arg FEATURES=metadata-hash \
+            -f "docker/dockerfiles/zkv-relay.Dockerfile" \
+            -t "${{ inputs.docker_hub_org }}/${{ inputs.docker_image_name }}-relay" .
+          echo "DOCKER_IMAGE_NAME=${{ inputs.docker_hub_org }}/${{ inputs.docker_image_name }}-relay" >> $GITHUB_ENV
+        fi
+    
+    - name: Save the Docker image as a tarball
+      id: create-tar-file
+      shell: bash
+      run: |
+        ARTIFACT_NAME="${{ inputs.docker_image_name }}-${{ inputs.chain }}"
+        TAR_FILE="${{github.workspace}}/${ARTIFACT_NAME}.tar"
+
+        echo "artifact_name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
+        echo "TAR_FILE=$TAR_FILE" >> $GITHUB_ENV
+
+        docker save "${DOCKER_IMAGE_NAME}" -o "${TAR_FILE}"
+
+    - name: Upload Docker Image Artifact
+      if: ${{ !env.ACT }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ steps.create-tar-file.outputs.artifact_name }}
+        path: ${{ env.TAR_FILE }}
+        if-no-files-found: error
+        retention-days: 1
+        compression-level: 0
+        overwrite: true
