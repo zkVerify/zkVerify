@@ -73,7 +73,7 @@ pub mod pallet {
         #[pallet::constant]
         type PalletId: Get<PalletId>;
 
-        /// Manager allowed to add/remove beneficiaries
+        /// Manager allowed to begin/end airdrops and add beneficiaries
         type ManagerOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
         /// Type for processing spends of [Self::AssetKind] in favor of [`Self::Beneficiary`].
@@ -178,7 +178,7 @@ pub mod pallet {
         },
     }
 
-    /// Error for the treasury pallet.
+    /// Error for the claim pallet.
     #[pallet::error]
     pub enum Error<T> {
         /// Attemp to start a new airdrop while there is one already in progress

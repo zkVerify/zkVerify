@@ -115,7 +115,6 @@ mod benchmarks {
         )
         .unwrap();
 
-        // Worst case scenario: all the amounts of existing beneficiaries have been modified
         #[extrinsic_call]
         add_beneficiaries(RawOrigin::Root, beneficiaries);
     }
