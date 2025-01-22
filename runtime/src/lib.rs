@@ -638,6 +638,8 @@ impl pallet_aggregate::Config for Runtime {
 
     #[cfg(feature = "runtime-benchmarks")]
     type Currency = Balances;
+
+    type HyperbridgeAggregationHandler = pallet_hyperbridge_aggregations::Pallet<Runtime>;
 }
 
 parameter_types! {

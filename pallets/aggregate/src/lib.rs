@@ -70,8 +70,9 @@ pub mod pallet {
         pallet_prelude::{BlockNumberFor, OriginFor},
     };
     use hp_on_proof_verified::OnProofVerified;
-    use sp_core::H256;
-    use sp_runtime::traits::{BadOrigin, Keccak256};
+    use ismp::host::StateMachine;
+    use sp_core::{H160, H256};
+    use sp_runtime::traits::{BadOrigin, Keccak256, Saturating};
     use sp_std::vec::Vec;
 
     /// Given a `Configuration` return the Account type.
@@ -100,8 +101,30 @@ pub mod pallet {
         }
     }
 
+    /// This trait define how the pallet dispatches aggregation to Hyperbridge
+    pub trait AggregationDispatcher<T: Config> {
+        /// Given a few params, dispatch aggregation to Hyperbridge
+        fn dispatch_aggregation(
+            origin: OriginFor<T>,
+            aggregation_id: u64,
+            aggregation: H256,
+            domain_id: u32,
+        ) -> DispatchResult;
+    }
+
+    impl<T: Config> AggregationDispatcher<T> for () {
+        fn dispatch_aggregation(
+            _origin: OriginFor<T>,
+            _aggregation_id: u64,
+            _aggregation: H256,
+            _domain_id: u32,
+        ) -> DispatchResult {
+            Ok(())
+        }
+    }
+
     #[pallet::config]
-    pub trait Config: frame_system::Config {
+    pub trait Config: frame_system::Config + scale_info::TypeInfo {
         /// Because this pallet emits events, it depends on the runtime's definition of an event.
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
         /// The overarching hold reason.
@@ -138,6 +161,8 @@ pub mod pallet {
         /// The weight definition for this pallet
         #[cfg(feature = "runtime-benchmarks")]
         type Currency: frame_support::traits::fungible::Mutate<AccountOf<Self>>;
+        /// Aggregation handler
+        type HyperbridgeAggregationHandler: AggregationDispatcher<Self>;
     }
 
     impl<T: Config> OnProofVerified<<T as frame_system::Config>::AccountId> for Pallet<T> {
@@ -267,6 +292,62 @@ pub mod pallet {
         },
     }
 
+    /// Dispatcher types that can be used
+    #[derive(Debug, Clone, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
+    pub enum DispatcherType {
+        /// Hyperbridge dispatcher
+        Hyperbridge,
+        /// Attestation bot
+        AttestationBot,
+    }
+
+    /// Bounded version for State Machine
+    #[derive(Debug, Clone, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
+    pub enum BoundedStateMachine {
+        /// Evm state machines
+        #[codec(index = 0)]
+        Evm(u32),
+        /// Polkadot parachains
+        #[codec(index = 1)]
+        Polkadot(u32),
+        /// Kusama parachains
+        #[codec(index = 2)]
+        Kusama(u32),
+        /// Substrate-based standalone chain
+        #[codec(index = 3)]
+        Substrate([u8; 4]),
+        /// Tendermint chains
+        #[codec(index = 4)]
+        Tendermint([u8; 4]),
+    }
+
+    impl From<BoundedStateMachine> for StateMachine {
+        fn from(bsm: BoundedStateMachine) -> Self {
+            match bsm {
+                BoundedStateMachine::Evm(id) => StateMachine::Evm(id),
+                BoundedStateMachine::Polkadot(id) => StateMachine::Polkadot(id),
+                BoundedStateMachine::Kusama(id) => StateMachine::Kusama(id),
+                BoundedStateMachine::Substrate(id) => StateMachine::Substrate(id),
+                BoundedStateMachine::Tendermint(id) => StateMachine::Tendermint(id),
+            }
+        }
+    }
+
+    /// Configuration for dispatching aggregations
+    #[derive(Debug, Clone, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
+    pub struct DispatchConfig<T: Config> {
+        /// Type of dispatcher to use
+        pub dispatcher_type: DispatcherType,
+        /// The destination state machine
+        pub destination_chain: BoundedStateMachine,
+        /// Module identifier of the receiving module
+        pub destination_module: H160,
+        /// Relative from the current timestamp at which this request expires in seconds.
+        pub timeout: u64,
+        /// Base fee for dispatch
+        pub base_fee: BalanceOf<T>,
+    }
+
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     /// The emitted events.
@@ -335,12 +416,13 @@ pub mod pallet {
         <T as Config>::AggregationSize,
         <T as Config>::MaxPendingPublishQueueSize,
         TicketOf<T>,
+        T,
     >;
 
     /// Shortcut to get the Domain type from config.
     #[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
     #[scale_info(skip_type_params(T))]
-    pub(crate) struct Domain<T: Config>(DomainType<T>);
+    pub struct Domain<T: Config>(DomainType<T>);
 
     impl<T: Config> Domain<T> {
         /// Create a new domain
@@ -358,6 +440,7 @@ pub mod pallet {
             max_aggregation_size: AggregationSize,
             publish_queue_size: u32,
             ticket: Option<TicketOf<T>>,
+            dispatch_config: DispatchConfig<T>,
         ) -> Result<Self, Error<T>> {
             if max_aggregation_size == 0
                 || publish_queue_size == 0
@@ -373,6 +456,7 @@ pub mod pallet {
                     max_aggregation_size,
                     publish_queue_size,
                     ticket,
+                    dispatch_config,
                 )))
             }
         }
@@ -513,7 +597,7 @@ pub mod pallet {
 
     /// Domains storage
     #[pallet::storage]
-    pub(crate) type Domains<T: Config> =
+    pub type Domains<T: Config> =
         StorageMap<Hasher = Blake2_128Concat, Key = u32, Value = Domain<T>>;
 
     #[pallet::storage]
@@ -598,7 +682,7 @@ pub mod pallet {
             aggregation_id: u64,
         ) -> DispatchResultWithPostInfo {
             use frame_support::traits::DefensiveSaturating;
-            let origin = ensure_signed(origin)?;
+            let origin_signed = ensure_signed(origin.clone())?;
             let (root, size) = Domains::<T>::try_mutate(domain_id, |domain| {
                 let domain = domain.as_mut().ok_or_else(|| {
                     dispatch_post_error(
@@ -625,7 +709,7 @@ pub mod pallet {
                         let remain = T::Hold::transfer_on_hold(
                             &HoldReason::Aggregation.into(),
                             account,
-                            &origin,
+                            &origin_signed,
                             s.reserve,
                             Precision::BestEffort,
                             Restriction::Free,
@@ -635,7 +719,7 @@ pub mod pallet {
                         .defensive_saturating_sub(s.reserve);
                         if remain > 0_u32.into() {
                             log::warn!(
-                                "Cannot refund all funds from {account:?} to {origin:?}: missed {remain:?}"
+                                "Cannot refund all funds from {account:?} to {origin_signed:?}: missed {remain:?}"
                             )
                         }
                     }
@@ -650,6 +734,14 @@ pub mod pallet {
                 aggregation_id,
                 receipt: root,
             });
+
+            T::HyperbridgeAggregationHandler::dispatch_aggregation(
+                origin,
+                aggregation_id,
+                root,
+                domain_id,
+            )?;
+
             Ok(Some(T::WeightInfo::aggregate(size)).into())
         }
 
@@ -660,10 +752,20 @@ pub mod pallet {
         ///
         /// - aggregation_size: The size of the aggregation, in other words how many statements any aggregation have.
         /// - queue_size: The maximum number of aggregations that can be in the queue for this domain.
+        /// - dispatcher_type: An enum representing a dispatcher type.
+        /// - destination_chain: Bounded version of StateMachine representing a receiving State Machine.
+        /// - destination_module: Module identifier of the receiving module.
+        /// - timeout: Relative from the current timestamp at which this request expires in seconds.
+        /// - base_fee: The fee that was paid for relayers, in USD
         pub fn register_domain(
             origin: OriginFor<T>,
             aggregation_size: AggregationSize,
             queue_size: Option<u32>,
+            dispatcher_type: DispatcherType,
+            destination_chain: BoundedStateMachine,
+            destination_module: H160,
+            timeout: u64,
+            base_fee: BalanceOf<T>,
         ) -> DispatchResultWithPostInfo {
             let owner = User::<T::AccountId>::from_origin::<T>(origin)?;
             let id = Self::next_domain_id();
@@ -683,6 +785,15 @@ pub mod pallet {
                     .transpose()
                 })
                 .transpose()?;
+
+            let dispatch_config = DispatchConfig {
+                dispatcher_type,
+                destination_chain,
+                destination_module,
+                timeout,
+                base_fee,
+            };
+
             let domain = Domain::<T>::try_create(
                 id,
                 owner.clone(),
@@ -690,6 +801,7 @@ pub mod pallet {
                 aggregation_size,
                 queue_size,
                 ticket,
+                dispatch_config,
             )?;
             Domains::<T>::insert(id, domain);
             NextDomainId::<T>::put(id + 1);

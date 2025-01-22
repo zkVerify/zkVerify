@@ -558,6 +558,7 @@ mod aggregate {
 }
 
 mod register_domain {
+    use sp_core::H160;
     use super::*;
 
     #[test]
@@ -566,7 +567,12 @@ mod register_domain {
             assert_ok!(Aggregate::register_domain(
                 Origin::Signed(USER_DOMAIN_1).into(),
                 16,
-                Some(8)
+                Some(8),
+                DispatcherType::Hyperbridge,
+                BoundedStateMachine::Evm(11155111),
+                H160::default(),
+                100,
+                100u32.into(),
             ));
             let registered_id = registered_ids()[0];
 
@@ -575,6 +581,11 @@ mod register_domain {
             assert_eq!(registered_id, domain.id);
             assert_eq!(16, domain.max_aggregation_size);
             assert_eq!(8, domain.publish_queue_size);
+            assert_eq!(DispatcherType::Hyperbridge, domain.dispatch_config.dispatcher_type);
+            assert_eq!(BoundedStateMachine::Evm(11155111), domain.dispatch_config.destination_chain);
+            assert_eq!(H160::default(), domain.dispatch_config.destination_module);
+            assert_eq!(100, domain.dispatch_config.timeout);
+            assert_eq!(<BalanceOf<Test>>::from(100u32), domain.dispatch_config.base_fee);
             assert_eq!(domain.next, Aggregation::<Test>::create(1, 16));
             assert!(domain.should_publish.is_empty());
         })
@@ -587,17 +598,32 @@ mod register_domain {
             assert_ok!(Aggregate::register_domain(
                 Origin::Signed(USER_DOMAIN_1).into(),
                 values[0].0,
-                values[0].1
+                values[0].1,
+                DispatcherType::Hyperbridge,
+                BoundedStateMachine::Evm(11155111),
+                H160::default(),
+                100,
+                100u32.into(),
             ));
             assert_ok!(Aggregate::register_domain(
                 Origin::Signed(USER_DOMAIN_1).into(),
                 values[1].0,
-                values[1].1
+                values[1].1,
+                DispatcherType::Hyperbridge,
+                BoundedStateMachine::Evm(11155111),
+                H160::default(),
+                100,
+                100u32.into(),
             ));
             assert_ok!(Aggregate::register_domain(
                 Origin::Signed(USER_DOMAIN_1).into(),
                 values[2].0,
-                values[2].1
+                values[2].1,
+                DispatcherType::Hyperbridge,
+                BoundedStateMachine::Evm(11155111),
+                H160::default(),
+                100,
+                100u32.into(),
             ));
 
             let registered_ids = registered_ids();
@@ -616,6 +642,11 @@ mod register_domain {
                 assert_eq!(id, domain.id);
                 assert_eq!(aggregation_size, domain.max_aggregation_size);
                 assert_eq!(queue_size, domain.publish_queue_size);
+                assert_eq!(DispatcherType::Hyperbridge, domain.dispatch_config.dispatcher_type);
+                assert_eq!(BoundedStateMachine::Evm(11155111), domain.dispatch_config.destination_chain);
+                assert_eq!(H160::default(), domain.dispatch_config.destination_module);
+                assert_eq!(100, domain.dispatch_config.timeout);
+                assert_eq!(<BalanceOf<Test>>::from(100u32), domain.dispatch_config.base_fee);
                 assert_eq!(
                     domain.next,
                     Aggregation::<Test>::create(1, aggregation_size)
@@ -632,14 +663,24 @@ mod register_domain {
             assert_ok!(Aggregate::register_domain(
                 Origin::Signed(USER_DOMAIN_1).into(),
                 MaxAggregationSize::get(),
-                Some(MaxPendingPublishQueueSize::get())
+                Some(MaxPendingPublishQueueSize::get()),
+                DispatcherType::Hyperbridge,
+                BoundedStateMachine::Evm(11155111),
+                H160::default(),
+                100,
+                100u32.into(),
             ));
 
             assert_err!(
                 Aggregate::register_domain(
                     Origin::Signed(USER_DOMAIN_1).into(),
                     0,
-                    Some(MaxPendingPublishQueueSize::get())
+                    Some(MaxPendingPublishQueueSize::get()),
+                    DispatcherType::Hyperbridge,
+                    BoundedStateMachine::Evm(11155111),
+                    H160::default(),
+                    100,
+                    100u32.into(),
                 ),
                 Error::<Test>::InvalidDomainParams
             );
@@ -647,7 +688,12 @@ mod register_domain {
                 Aggregate::register_domain(
                     Origin::Signed(USER_DOMAIN_1).into(),
                     MaxAggregationSize::get() + 1,
-                    Some(MaxPendingPublishQueueSize::get())
+                    Some(MaxPendingPublishQueueSize::get()),
+                    DispatcherType::Hyperbridge,
+                    BoundedStateMachine::Evm(11155111),
+                    H160::default(),
+                    100,
+                    100u32.into(),
                 ),
                 Error::<Test>::InvalidDomainParams
             );
@@ -655,7 +701,12 @@ mod register_domain {
                 Aggregate::register_domain(
                     Origin::Signed(USER_DOMAIN_1).into(),
                     MaxAggregationSize::get(),
-                    Some(MaxPendingPublishQueueSize::get() + 1)
+                    Some(MaxPendingPublishQueueSize::get() + 1),
+                    DispatcherType::Hyperbridge,
+                    BoundedStateMachine::Evm(11155111),
+                    H160::default(),
+                    100,
+                    100u32.into(),
                 ),
                 Error::<Test>::InvalidDomainParams
             );
@@ -668,7 +719,12 @@ mod register_domain {
             assert_ok!(Aggregate::register_domain(
                 Origin::Signed(USER_DOMAIN_1).into(),
                 16,
-                None
+                None,
+                DispatcherType::Hyperbridge,
+                BoundedStateMachine::Evm(11155111),
+                H160::default(),
+                100,
+                100u32.into(),
             ));
 
             let domain = Domains::<Test>::get(registered_ids()[0]).unwrap();
@@ -693,7 +749,12 @@ mod register_domain {
             assert_ok!(Aggregate::register_domain(
                 Origin::Signed(ROOT_USER).into(),
                 16,
-                None
+                None,
+                DispatcherType::Hyperbridge,
+                BoundedStateMachine::Evm(11155111),
+                H160::default(),
+                100,
+                100u32.into(),
             ));
 
             let domain = Domains::<Test>::get(registered_ids()[0]).unwrap();
@@ -717,19 +778,19 @@ mod register_domain {
         );
 
         // Fixture max
-        assert_eq!(Domain::<Test>::max_encoded_len(), 61342);
+        assert_eq!(Domain::<Test>::max_encoded_len(), 61392);
 
         // Fixtures
         assert_eq!(
-            1366,
+            1416,
             Domain::<Test>::compute_encoded_size(1, MaxPendingPublishQueueSize::get())
         );
         assert_eq!(
-            7252,
+            7302,
             Domain::<Test>::compute_encoded_size(MaxAggregationSize::get(), 1)
         );
         assert_eq!(
-            16366,
+            16416,
             Domain::<Test>::compute_encoded_size(
                 MaxAggregationSize::get() / 2,
                 MaxPendingPublishQueueSize::get() / 2
@@ -741,7 +802,16 @@ mod register_domain {
     fn rise_error_on_if_new_consideration_fails() {
         test().execute_with(|| {
             assert_err!(
-                Aggregate::register_domain(Origin::Signed(USER_DOMAIN_ERROR_NEW).into(), 16, None),
+                Aggregate::register_domain(
+                    Origin::Signed(USER_DOMAIN_ERROR_NEW).into(),
+                    16,
+                    None,
+                    DispatcherType::Hyperbridge,
+                    BoundedStateMachine::Evm(11155111),
+                    H160::default(),
+                    100,
+                    100u32.into()
+                ),
                 sp_runtime::DispatchError::from("User Domain Error New")
             );
         })
@@ -751,9 +821,18 @@ mod register_domain {
     fn apply_fee() {
         test().execute_with(|| {
             assert_eq!(
-                Aggregate::register_domain(Origin::Signed(USER_DOMAIN_1).into(), 16, None)
-                    .unwrap()
-                    .pays_fee,
+                Aggregate::register_domain(
+                    Origin::Signed(USER_DOMAIN_1).into(),
+                    16,
+                    None,
+                    DispatcherType::Hyperbridge,
+                    BoundedStateMachine::Evm(11155111),
+                    H160::default(),
+                    100,
+                    100u32.into()
+                )
+                .unwrap()
+                .pays_fee,
                 Pays::Yes
             );
         })
@@ -763,9 +842,18 @@ mod register_domain {
     fn don_t_apply_fee_to_manager() {
         test().execute_with(|| {
             assert_eq!(
-                Aggregate::register_domain(Origin::Signed(ROOT_USER).into(), 16, None)
-                    .unwrap()
-                    .pays_fee,
+                Aggregate::register_domain(
+                    Origin::Signed(ROOT_USER).into(),
+                    16,
+                    None,
+                    DispatcherType::Hyperbridge,
+                    BoundedStateMachine::Evm(11155111),
+                    H160::default(),
+                    100,
+                    100u32.into()
+                )
+                .unwrap()
+                .pays_fee,
                 Pays::No
             );
         })
@@ -776,6 +864,11 @@ mod register_domain {
         let info = Call::<Test>::register_domain {
             aggregation_size: 16,
             queue_size: Some(8),
+            dispatcher_type: DispatcherType::Hyperbridge,
+            destination_chain: BoundedStateMachine::Evm(11155111),
+            destination_module: H160::default(),
+            timeout: 100,
+            base_fee: 100u32.into(),
         }
         .get_dispatch_info();
 
@@ -857,6 +950,7 @@ mod hold_domain {
     }
 
     mod raise_error_if {
+        use sp_core::H160;
         use super::*;
 
         #[test]
@@ -880,7 +974,16 @@ mod hold_domain {
                     BadOrigin
                 );
 
-                let id = register_domain(USER_DOMAIN_2, 16, None);
+                let id = register_domain(
+                    USER_DOMAIN_2,
+                    16,
+                    None,
+                    DispatcherType::Hyperbridge,
+                    BoundedStateMachine::Evm(11155111),
+                    H160::default(),
+                    100,
+                    100u32.into(),
+                );
 
                 assert_err!(
                     Aggregate::hold_domain(Origin::Signed(USER_DOMAIN_1).into(), id),
@@ -952,7 +1055,7 @@ mod handle_the_hold_state_transactions {
 }
 
 mod unregister_domain {
-
+    use sp_core::H160;
     use super::*;
 
     fn test() -> sp_io::TestExternalities {
@@ -966,7 +1069,16 @@ mod unregister_domain {
     }
 
     fn register_removable_domain(user: AccountId) -> u32 {
-        let id = register_domain(user, 16, None);
+        let id = register_domain(
+            user,
+            16,
+            None,
+            DispatcherType::Hyperbridge,
+            BoundedStateMachine::Evm(11155111),
+            H160::default(),
+            100,
+            100u32.into(),
+        );
         Domains::<Test>::mutate_extant(id, |d| {
             d.state = DomainState::Removable;
         });
@@ -1059,7 +1171,16 @@ mod unregister_domain {
     fn ignore_error_on_drop_ticket_but_defensive_proof_on_test() {
         let origin = Origin::Signed(USER_DOMAIN_ERROR_DROP);
         test().execute_with(|| {
-            assert_ok!(Aggregate::register_domain(origin.clone().into(), 16, None));
+            assert_ok!(Aggregate::register_domain(
+                origin.clone().into(),
+                16,
+                None,
+                DispatcherType::Hyperbridge,
+                BoundedStateMachine::Evm(11155111),
+                H160::default(),
+                100,
+                100u32.into(),
+            ));
 
             let id = registered_ids()[0];
 

@@ -27,10 +27,13 @@ use frame_support::{
 };
 use frame_system::RawOrigin;
 use scale_info::TypeInfo;
-use sp_core::{ConstU128, ConstU32};
+use sp_core::{ConstU128, ConstU32, H160};
 use sp_runtime::{traits::IdentityLookup, BuildStorage, Perbill};
 
-use crate::{AggregationSize, BalanceOf, CallOf, ComputePublisherTip, Domains};
+use crate::{
+    AggregationSize, BalanceOf, BoundedStateMachine, CallOf, ComputePublisherTip, DispatchConfig,
+    DispatcherType, Domains,
+};
 
 parameter_types! {
     pub const MaxAggregationSize: AggregationSize = 64;
@@ -271,6 +274,7 @@ impl crate::Config for Test {
     const AGGREGATION_SIZE: u32 = MaxAggregationSize::get() as u32;
     #[cfg(feature = "runtime-benchmarks")]
     type Currency = Balances;
+    type HyperbridgeAggregationHandler = ();
 }
 
 // Configure a mock runtime to test the pallet.
@@ -318,6 +322,7 @@ impl crate::Domain<Test> {
         max_aggregation_size: AggregationSize,
         publish_queue_size: u32,
         ticket: Option<crate::TicketOf<Test>>,
+        dispatch_config: DispatchConfig<Test>,
     ) -> Self {
         Self::try_create(
             id,
@@ -326,6 +331,7 @@ impl crate::Domain<Test> {
             max_aggregation_size,
             publish_queue_size,
             ticket,
+            dispatch_config,
         )
         .unwrap()
     }
@@ -344,6 +350,14 @@ pub fn test() -> sp_io::TestExternalities {
 
     let mut ext = sp_io::TestExternalities::from(t);
 
+    let dispatch_config = DispatchConfig {
+        dispatcher_type: DispatcherType::Hyperbridge,
+        destination_chain: BoundedStateMachine::Evm(11155111),
+        destination_module: H160::default(),
+        timeout: 100,
+        base_fee: 100u32.into(),
+    };
+
     ext.execute_with(|| {
         System::set_block_number(1);
         Domains::<Test>::insert(
@@ -355,6 +369,7 @@ pub fn test() -> sp_io::TestExternalities {
                 DOMAIN_SIZE,
                 DOMAIN_QUEUE_SIZE,
                 None,
+                dispatch_config,
             ),
         );
     });

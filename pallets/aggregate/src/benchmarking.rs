@@ -29,6 +29,7 @@ type BalanceOf<T> =
 
 pub mod utils {
     use super::*;
+    use sp_core::H160;
 
     /// Return a whitelisted account with enough founds to do anything.
     pub fn funded_account<T: Config>() -> T::AccountId {
@@ -47,6 +48,15 @@ pub mod utils {
             .unwrap_or_else(|| <T as Config>::AggregationSize::get() as u32)
             .try_into()
             .unwrap();
+
+        let dispatch_config = DispatchConfig {
+            dispatcher_type: DispatcherType::Hyperbridge,
+            destination_chain: BoundedStateMachine::Evm(11155111),
+            destination_module: H160::default(),
+            timeout: 100,
+            base_fee: 100u32.into(),
+        };
+
         let domain = Domain::<T>::try_create(
             domain_id,
             account.into(),
@@ -54,6 +64,7 @@ pub mod utils {
             aggregation_size,
             <T as Config>::MaxPendingPublishQueueSize::get(),
             None,
+            dispatch_config,
         )
         .unwrap();
         Domains::<T>::insert(domain_id, domain);
@@ -74,6 +85,7 @@ mod benchmarks {
     use __private::traits::UnfilteredDispatchable;
     use codec::{Decode, Encode};
     use data::DomainState;
+    use sp_core::H160;
 
     use super::{utils::*, *};
 
@@ -148,6 +160,11 @@ mod benchmarks {
             RawOrigin::Signed(caller),
             <T as Config>::AggregationSize::get(),
             Some(<T as Config>::MaxPendingPublishQueueSize::get()),
+            DispatcherType::Hyperbridge,
+            BoundedStateMachine::Evm(11155111),
+            H160::default(),
+            100,
+            100u32.into(),
         );
     }
 

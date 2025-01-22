@@ -15,6 +15,7 @@
 
 use core::marker::PhantomData;
 
+use crate::{Config, DispatchConfig};
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{PartialEqNoBound, RuntimeDebugNoBound};
 use scale_info::TypeInfo;
@@ -179,6 +180,7 @@ pub struct DomainEntry<
     S: Get<AggregationSize>,
     M: Get<u32>,
     T: Encode + Decode + TypeInfo + MaxEncodedLen,
+    Z: Config,
 > {
     /// The unique identifier of the domain.
     pub id: u32,
@@ -197,6 +199,8 @@ pub struct DomainEntry<
     /// The consideration ticket used to hold the balance for the space used by domain storage. The manager will
     /// not hold any balance.
     pub ticket: Option<T>,
+    /// Configuration to dispatch aggregations
+    pub dispatch_config: DispatchConfig<Z>,
 }
 
 impl<
@@ -205,7 +209,8 @@ impl<
         S: Get<AggregationSize>,
         M: Get<u32>,
         Ticket: Encode + Decode + TypeInfo + MaxEncodedLen,
-    > DomainEntry<A, B, S, M, Ticket>
+        Z: Config,
+    > DomainEntry<A, B, S, M, Ticket, Z>
 {
     /// Create a new domain.
     ///
@@ -216,6 +221,7 @@ impl<
         max_aggregation_size: AggregationSize,
         publish_queue_size: u32,
         ticket: Option<Ticket>,
+        dispatch_config: DispatchConfig<Z>,
     ) -> Self {
         assert!(
             max_aggregation_size <= S::get(),
@@ -234,6 +240,7 @@ impl<
             should_publish: Default::default(),
             publish_queue_size,
             ticket,
+            dispatch_config,
         }
     }
 
@@ -267,6 +274,7 @@ impl<
         Self: MaxEncodedLen,
         BoundedVec<StatementEntry<A, B>, VecSize<S>>: MaxEncodedLen,
         StatementEntry<A, B>: MaxEncodedLen,
+        DispatchConfig<Z>: MaxEncodedLen,
     {
         let upper = Self::max_encoded_len();
         let aggregation_size =

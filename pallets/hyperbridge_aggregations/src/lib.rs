@@ -15,9 +15,12 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use frame_system::pallet_prelude::OriginFor;
+use ismp::host::StateMachine;
 use ismp::module::IsmpModule;
 use ismp::router::{PostRequest, Response, Timeout};
 pub use pallet::*;
+use sp_core::H256;
 
 mod benchmarking;
 #[cfg(test)]
@@ -27,7 +30,8 @@ mod weight;
 // Export the benchmarking utils.
 #[cfg(feature = "runtime-benchmarks")]
 pub use benchmarking::utils::*;
-
+pub use pallet_aggregate::AggregationDispatcher;
+pub use pallet_aggregate::DispatchConfig;
 pub use weight::WeightInfo;
 
 #[frame_support::pallet]
@@ -69,6 +73,7 @@ pub mod pallet {
     #[pallet::error]
     pub enum Error<T> {
         MessageDispatchFailed,
+        DomainNotFound,
     }
 
     // Hack for implementing the [`Default`] bound needed for
@@ -110,11 +115,8 @@ pub mod pallet {
         aggregation: sp_core::H256,
     }
 
-    #[pallet::call]
     impl<T: Config> Pallet<T> {
         /// Dispatch aggregation to given EVM chain
-        #[pallet::weight(T::WeightInfo::dispatch_aggregation())]
-        #[pallet::call_index(0)]
         pub fn dispatch_aggregation(
             origin: OriginFor<T>,
             params: Params<T::Balance>,
@@ -155,6 +157,40 @@ pub mod pallet {
 
             Ok(())
         }
+    }
+}
+
+impl<T: Config + pallet_aggregate::Config> AggregationDispatcher<T> for Pallet<T>
+where
+    T::Balance: From<
+        <<T as pallet_aggregate::Config>::Hold as frame_support::traits::fungible::Inspect<
+            <T as frame_system::Config>::AccountId,
+        >>::Balance,
+    >,
+{
+    fn dispatch_aggregation(
+        origin: OriginFor<T>,
+        aggregation_id: u64,
+        aggregation: H256,
+        domain_id: u32,
+    ) -> frame_support::dispatch::DispatchResult {
+        let domain =
+            pallet_aggregate::Domains::<T>::get(domain_id).ok_or(Error::<T>::DomainNotFound)?;
+
+        let dispatch_config = &domain.dispatch_config;
+        let base_fee = T::Balance::from(domain.dispatch_config.base_fee);
+
+        Self::dispatch_aggregation(
+            origin,
+            Params {
+                aggregation_id,
+                aggregation,
+                module: dispatch_config.destination_module,
+                destination: StateMachine::from(dispatch_config.destination_chain.clone()),
+                timeout: dispatch_config.timeout,
+                fee: base_fee,
+            },
+        )
     }
 }
 

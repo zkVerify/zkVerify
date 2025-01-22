@@ -68,8 +68,11 @@ mod benchmarks {
         let initial_nonce = pallet_ismp::Nonce::<T>::get();
         let initial_event_count = frame_system::Pallet::<T>::events().len();
 
-        #[extrinsic_call]
-        dispatch_aggregation(RawOrigin::Signed(caller), params);
+        #[block]
+        {
+            let origin = RawOrigin::Signed(caller.clone()).into();
+            Pallet::<T>::dispatch_aggregation(origin, params).expect("dispatch should work");
+        }
 
         // Assertions
         assert!(

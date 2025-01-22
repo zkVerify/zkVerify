@@ -160,11 +160,25 @@ pub fn state_events() -> Vec<Event<Test>> {
         .collect()
 }
 
-pub fn register_domain(user: AccountId, size: AggregationSize, queue: Option<u32>) -> u32 {
+pub fn register_domain(
+    user: AccountId,
+    size: AggregationSize,
+    queue: Option<u32>,
+    dispatch_type: DispatcherType,
+    destination_chain: BoundedStateMachine,
+    destination_module: sp_core::H160,
+    timeout: u64,
+    base_fee: BalanceOf<Test>,
+) -> u32 {
     frame_support::assert_ok!(Aggregate::register_domain(
         Origin::Signed(user).into(),
         size,
-        queue
+        queue,
+        dispatch_type,
+        destination_chain,
+        destination_module,
+        timeout,
+        base_fee
     ));
     registered_ids()[0]
 }
