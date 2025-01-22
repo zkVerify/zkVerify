@@ -558,8 +558,8 @@ mod aggregate {
 }
 
 mod register_domain {
-    use sp_core::H160;
     use super::*;
+    use sp_core::H160;
 
     #[test]
     fn add_a_domain_with_the_given_values() {
@@ -581,11 +581,20 @@ mod register_domain {
             assert_eq!(registered_id, domain.id);
             assert_eq!(16, domain.max_aggregation_size);
             assert_eq!(8, domain.publish_queue_size);
-            assert_eq!(DispatcherType::Hyperbridge, domain.dispatch_config.dispatcher_type);
-            assert_eq!(BoundedStateMachine::Evm(11155111), domain.dispatch_config.destination_chain);
+            assert_eq!(
+                DispatcherType::Hyperbridge,
+                domain.dispatch_config.dispatcher_type
+            );
+            assert_eq!(
+                BoundedStateMachine::Evm(11155111),
+                domain.dispatch_config.destination_chain
+            );
             assert_eq!(H160::default(), domain.dispatch_config.destination_module);
             assert_eq!(100, domain.dispatch_config.timeout);
-            assert_eq!(<BalanceOf<Test>>::from(100u32), domain.dispatch_config.base_fee);
+            assert_eq!(
+                <BalanceOf<Test>>::from(100u32),
+                domain.dispatch_config.base_fee
+            );
             assert_eq!(domain.next, Aggregation::<Test>::create(1, 16));
             assert!(domain.should_publish.is_empty());
         })
@@ -642,11 +651,20 @@ mod register_domain {
                 assert_eq!(id, domain.id);
                 assert_eq!(aggregation_size, domain.max_aggregation_size);
                 assert_eq!(queue_size, domain.publish_queue_size);
-                assert_eq!(DispatcherType::Hyperbridge, domain.dispatch_config.dispatcher_type);
-                assert_eq!(BoundedStateMachine::Evm(11155111), domain.dispatch_config.destination_chain);
+                assert_eq!(
+                    DispatcherType::Hyperbridge,
+                    domain.dispatch_config.dispatcher_type
+                );
+                assert_eq!(
+                    BoundedStateMachine::Evm(11155111),
+                    domain.dispatch_config.destination_chain
+                );
                 assert_eq!(H160::default(), domain.dispatch_config.destination_module);
                 assert_eq!(100, domain.dispatch_config.timeout);
-                assert_eq!(<BalanceOf<Test>>::from(100u32), domain.dispatch_config.base_fee);
+                assert_eq!(
+                    <BalanceOf<Test>>::from(100u32),
+                    domain.dispatch_config.base_fee
+                );
                 assert_eq!(
                     domain.next,
                     Aggregation::<Test>::create(1, aggregation_size)
@@ -950,8 +968,8 @@ mod hold_domain {
     }
 
     mod raise_error_if {
-        use sp_core::H160;
         use super::*;
+        use sp_core::H160;
 
         #[test]
         fn invalid_domain() {
@@ -1055,8 +1073,8 @@ mod handle_the_hold_state_transactions {
 }
 
 mod unregister_domain {
-    use sp_core::H160;
     use super::*;
+    use sp_core::H160;
 
     fn test() -> sp_io::TestExternalities {
         let mut ext = super::test();
