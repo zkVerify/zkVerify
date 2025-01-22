@@ -91,8 +91,8 @@ exports.submitProof = async (pallet, signer, ...verifierArgs) => {
     );
 }
 
-exports.registerDomain = async (signer, aggregation_size, queue_len) => {
-    let extrinsic = api.tx.aggregate.registerDomain(aggregation_size, queue_len);
+exports.registerDomain = async (signer, aggregation_size, queue_len, dispatcher_type, destination_chain, destination_module, timeout, base_fee) => {
+    let extrinsic = api.tx.aggregate.registerDomain(aggregation_size, queue_len, dispatcher_type, destination_chain, destination_module, timeout, base_fee);
     return await submitExtrinsic(api, extrinsic, signer, BlockUntil.InBlock, (event) => event.section == "aggregate" && event.method == "NewDomain");
 }
 

@@ -36,6 +36,13 @@ async function run(nodeName, networkInfo, _args) {
     // Create the proof submission extrinsics...
     let proofHashesArray = [];
 
+    // dispatch config params
+    const dispatcher_type = { Hyperbridge: null };
+    const destination_chain = { Evm: 11155111 };
+    const destination_module = "0x1234567890123456789012345678901234567890";
+    const timeout = 3600;
+    const base_fee = 100;
+
     verifiers = [
         {
             name: "FFlonk",
@@ -69,7 +76,7 @@ async function run(nodeName, networkInfo, _args) {
         }
     ];
 
-    let events = await registerDomain(bob, verifiers.length, null);
+    let events = await registerDomain(bob, verifiers.length, null, dispatcher_type, destination_chain, destination_module, timeout, base_fee);
     if (!receivedEvents(events)) {
         console.log(`Register Domain Error`);
         return ReturnCode.ErrDomainRegistrationFailed;
@@ -195,7 +202,7 @@ async function run(nodeName, networkInfo, _args) {
         return ReturnCode.ErrProofOnUnregisteredDomain;
     }
 
-    data = await registerDomain(bob, 4, 8);
+    data = await registerDomain(bob, 4, 8, dispatcher_type, destination_chain, destination_module, timeout, base_fee);
     if (!receivedEvents(data)) {
         console.log(`Register Domain Error`);
         return ReturnCode.ErrDomainRegistrationFailed;
