@@ -746,6 +746,7 @@ pub mod pallet {
         }
 
         #[pallet::call_index(1)]
+        #[allow(clippy::too_many_arguments)]
         /// Register a new domain. It holds a deposit for all the storage that the domain need. The account that
         /// requested this domain will be the owner and is the only one that can unregister it. Unregister the domain
         /// will unlock the deposit and remove the domain from the system.
