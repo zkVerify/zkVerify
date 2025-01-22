@@ -21,8 +21,7 @@ env:
 
 jobs:
   try-runtime:
-    runs-on:
-      group: ${{ vars.RUNNER_GROUP }}
+    runs-on: ubuntu-latest
     steps:
       - name: Git checkout
         uses: actions/checkout@v4
@@ -53,6 +52,6 @@ jobs:
 
       - name: Execute try-runtime
         run: |
-          curl -sL https://github.com/paritytech/try-runtime-cli/releases/download/v0.8.0/try-runtime-x86_64-unknown-linux-musl -o try-runtime
-          chmod +x try-runtime
-          ./try-runtime --runtime target/release/wbuild/zkv-runtime/zkv_runtime.compact.compressed.wasm on-runtime-upgrade --blocktime 6 --disable-mbm-checks --disable-spec-version-check live --uri wss://testnet-rpc.zkverify.io
+          ${{ env.DOCKER_COMPOSE_CMD }} curl -sL https://github.com/paritytech/try-runtime-cli/releases/download/v0.8.0/try-runtime-x86_64-unknown-linux-musl -o try-runtime
+          ${{ env.DOCKER_COMPOSE_CMD }} chmod +x try-runtime
+          ${{ env.DOCKER_COMPOSE_CMD }} ./try-runtime --runtime target/release/wbuild/zkv-runtime/zkv_runtime.compact.compressed.wasm on-runtime-upgrade --blocktime 6 --disable-mbm-checks --disable-spec-version-check live --uri wss://testnet-rpc.zkverify.io
