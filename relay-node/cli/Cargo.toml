@@ -63,10 +63,19 @@ runtime-benchmarks = [
 	"polkadot-node-metrics/runtime-benchmarks",
 	"sc-service?/runtime-benchmarks",
 	"service/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"zkv-runtime/runtime-benchmarks"
 ]
 full-node = ["service/full-node"]
-try-runtime = ["service/try-runtime"]
-fast-runtime = ["service/fast-runtime"]
+try-runtime = [
+	"service/try-runtime",
+	"sp-runtime/try-runtime",
+	"zkv-runtime/try-runtime"
+]
+fast-runtime = [
+	"service/fast-runtime",
+	"zkv-runtime/fast-runtime"
+]
 pyroscope = ["pyro", "pyroscope_pprofrs"]
 metadata-hash = [
 	"service/metadata-hash",

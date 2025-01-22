@@ -31,19 +31,30 @@ rstest = { workspace = true }
 
 [features]
 runtime-benchmarks = [
-    "frame-benchmarking/runtime-benchmarks",
-    "frame-support/runtime-benchmarks",
-    "frame-system/runtime-benchmarks",
+	"frame-benchmarking/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"pallet-balances/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks"
 ]
 default = ["std"]
 std = [
-    "codec/std",
-    "scale-info/std",
-    "sp-runtime/std",
-    "sp-core/std",
-    "frame-benchmarking/std",
-    "frame-support/std",
-    "frame-system/std",
-    "binary-merkle-tree/std",
+	"codec/std",
+	"scale-info/std",
+	"sp-runtime/std",
+	"sp-core/std",
+	"frame-benchmarking/std",
+	"frame-support/std",
+	"frame-system/std",
+	"binary-merkle-tree/std",
+	"log/std",
+	"pallet-balances/std",
+	"sp-io/std",
+	"sp-std/std"
 ]
-try-runtime = ["frame-support/try-runtime", "frame-system/try-runtime"]
+try-runtime = [
+	"frame-support/try-runtime",
+	"frame-system/try-runtime",
+	"pallet-balances/try-runtime",
+	"sp-runtime/try-runtime"
+]

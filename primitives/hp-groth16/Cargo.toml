@@ -43,9 +43,19 @@ default = ["std", "implementation"]
 implementation = []
 dummy-circuit = []
 std = [
-    "sp-runtime-interface/std",
-    "codec/std",
-    "scale-info/std",
-    "sp-std/std",
-    "hp-verifiers/std",
+	"sp-runtime-interface/std",
+	"codec/std",
+	"scale-info/std",
+	"sp-std/std",
+	"hp-verifiers/std",
+	"ark-bls12-381/std",
+	"ark-bn254/std",
+	"ark-crypto-primitives/std",
+	"ark-ec/std",
+	"ark-ff/std",
+	"ark-groth16/std",
+	"ark-relations/std",
+	"ark-serialize/std",
+	"ark-std/std",
+	"frame-support/std"
 ]

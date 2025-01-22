@@ -37,23 +37,42 @@ ismp-grandpa = { workspace = true }
 
 [features]
 runtime-benchmarks = [
-    "frame-benchmarking/runtime-benchmarks",
-    "frame-support/runtime-benchmarks",
-    "frame-system/runtime-benchmarks",
-    "pallet-ismp/runtime-benchmarks",
+	"frame-benchmarking/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"pallet-ismp/runtime-benchmarks",
+	"ismp-grandpa/runtime-benchmarks",
+	"pallet-balances/runtime-benchmarks",
+	"pallet-timestamp/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks"
 ]
 default = ["std"]
 std = [
-    "anyhow/std",
-    "codec/std",
-    "scale-info/std",
-    "sp-runtime/std",
-    "sp-core/std",
-    "sp-io/std",
-    "alloy-primitives/std",
-    "pallet-timestamp/std",
-    "frame-benchmarking/std",
-    "frame-support/std",
-    "frame-system/std",
+	"anyhow/std",
+	"codec/std",
+	"scale-info/std",
+	"sp-runtime/std",
+	"sp-core/std",
+	"sp-io/std",
+	"alloy-primitives/std",
+	"pallet-timestamp/std",
+	"frame-benchmarking/std",
+	"frame-support/std",
+	"frame-system/std",
+	"alloy-dyn-abi/std",
+	"ismp/std",
+	"ismp-grandpa/std",
+	"log/std",
+	"pallet-balances/std",
+	"pallet-ismp/std",
+	"sp-std/std"
 ]
-try-runtime = ["frame-support/try-runtime", "frame-system/try-runtime", "ismp-grandpa/try-runtime"]
+try-runtime = [
+	"frame-support/try-runtime",
+	"frame-system/try-runtime",
+	"ismp-grandpa/try-runtime",
+	"pallet-balances/try-runtime",
+	"pallet-ismp/try-runtime",
+	"pallet-timestamp/try-runtime",
+	"sp-runtime/try-runtime"
+]

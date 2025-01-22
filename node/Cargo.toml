@@ -88,6 +88,8 @@ runtime-benchmarks = [
 	"zkv-runtime/runtime-benchmarks",
 	"sc-service/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
+	"pallet-im-online/runtime-benchmarks",
+	"sp-staking/runtime-benchmarks"
 ]
 # Enable features that allow the runtime to be tried and debugged. Name might be subject to change
 # in the near future.
@@ -96,6 +98,7 @@ try-runtime = [
 	"zkv-runtime/try-runtime",
 	"pallet-transaction-payment/try-runtime",
 	"sp-runtime/try-runtime",
+	"pallet-im-online/try-runtime"
 ]
 extend-benchmarks = [
 	"zkv-runtime/extend-benchmarks"

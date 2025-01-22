@@ -86,4 +86,5 @@ runtime-benchmarks = [
 try-runtime = [
 	"paratest-runtime/try-runtime",
 	"sp-runtime/try-runtime",
+	"zkv-cli/try-runtime"
 ]

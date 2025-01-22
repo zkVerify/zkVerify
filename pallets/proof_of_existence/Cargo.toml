@@ -38,6 +38,8 @@ runtime-benchmarks = [
 	"frame-benchmarking/runtime-benchmarks",
 	"frame-support/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
+	"pallet-timestamp/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks"
 ]
 std = [
 	"codec/std",
@@ -52,5 +54,11 @@ std = [
 	"pallet-timestamp/std",
 	"hp-poe/std",
 	"binary-merkle-tree/std",
+	"log/std"
 ]
-try-runtime = ["frame-support/try-runtime", "frame-system/try-runtime"]
+try-runtime = [
+	"frame-support/try-runtime",
+	"frame-system/try-runtime",
+	"pallet-timestamp/try-runtime",
+	"sp-runtime/try-runtime"
+]

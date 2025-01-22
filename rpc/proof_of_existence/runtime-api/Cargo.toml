@@ -29,5 +29,6 @@ std = [
 	"sp-runtime/std",
 	"scale-info/std",
 	"binary-merkle-tree/std",
-	"serde"
+	"serde",
+	"sp-core/std"
 ]

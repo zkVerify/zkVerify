@@ -170,6 +170,10 @@ runtime-benchmarks = [
 	"xcm-executor?/runtime-benchmarks",
 	"pallet-xcm?/runtime-benchmarks",
 	"pallet-xcm-benchmarks?/runtime-benchmarks",
+	"pallet-ismp/runtime-benchmarks",
+	"pallet-message-queue/runtime-benchmarks",
+	"pallet-offences/runtime-benchmarks",
+	"sp-staking/runtime-benchmarks"
 ]
 fast-runtime = []
 metadata-hash = ["substrate-wasm-builder/metadata-hash"]
@@ -187,7 +191,7 @@ relay = [
 ]
 default = ["std"]
 std = [
-    "anyhow/std",
+	"anyhow/std",
 	"codec/std",
 	"finality-grandpa/std",
 	"frame-benchmarking?/std",
@@ -271,6 +275,13 @@ std = [
 	"pallet-authority-discovery?/std",
 	"authority-discovery-primitives?/std",
 	"polkadot-runtime-common?/std",
+	"log/std",
+	"pallet-election-provider-support-benchmarking?/std",
+	"pallet-session-benchmarking?/std",
+	"sp-mmr-primitives/std",
+	"xcm?/std",
+	"xcm-builder?/std",
+	"xcm-executor?/std"
 ]
 try-runtime = [
 	"frame-executive/try-runtime",
@@ -314,6 +325,8 @@ try-runtime = [
 	"pallet-authority-discovery?/try-runtime",
 	"polkadot-runtime-common?/try-runtime",
 	"pallet-xcm?/try-runtime",
+	"pallet-message-queue/try-runtime",
+	"pallet-zksync-verifier/try-runtime"
 ]
 extend-benchmarks = [
 	"pallet-risc0-verifier/extend-benchmarks"

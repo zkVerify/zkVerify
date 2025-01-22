@@ -37,22 +37,32 @@ rstest = { workspace = true }
 
 [features]
 std = [
-    "hp-verifiers/std",
-    "pallet-verifiers/std",
-    "sp-std/std",
-    "sp-io/std",
-    "sp-core/std",
-    "frame-support/std",
-    "frame-system/std",
-    "pallet-balances/std",
-    "native/std",
+	"hp-verifiers/std",
+	"pallet-verifiers/std",
+	"sp-std/std",
+	"sp-io/std",
+	"sp-core/std",
+	"frame-support/std",
+	"frame-system/std",
+	"pallet-balances/std",
+	"native/std",
+	"ciborium/std",
+	"frame-benchmarking?/std",
+	"log/std",
+	"pallet-aggregate?/std",
+	"codec/std",
+	"scale-info/std"
 ]
 default = ["std"]
 runtime-benchmarks = [
-    "dep:frame-benchmarking",
-    "dep:pallet-aggregate",
-    "pallet-verifiers/runtime-benchmarks",
-    "frame-support/runtime-benchmarks",
+	"dep:frame-benchmarking",
+	"dep:pallet-aggregate",
+	"pallet-verifiers/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
+	"frame-benchmarking/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"pallet-aggregate?/runtime-benchmarks",
+	"pallet-balances/runtime-benchmarks"
 ]
 inject-native-poseidon2 = []
 extend-benchmarks = ["inject-native-poseidon2"]
