@@ -23,7 +23,11 @@ fn main() {
         // time, one to get the metadata and te recompile it with the metadata hash in an environment
         // variable.
         #[cfg(feature = "metadata-hash")]
-        let builder = builder.enable_metadata_hash("ACME", 18);
+        let builder = if std::env::var_os("ZKV_FORCE_DISABLE_METADATA_HASH").is_none() {
+            builder.enable_metadata_hash("ACME", 18)
+        } else {
+            builder
+        };
         builder.build()
     }
 }

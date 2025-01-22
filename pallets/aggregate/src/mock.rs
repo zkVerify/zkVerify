@@ -17,20 +17,25 @@
 use core::cell::RefCell;
 use std::collections::VecDeque;
 
+use crate::{
+    data::{Delivery, Reserve},
+    AggregationSize, BalanceOf, CallOf, ComputePublisherTip, Domains,
+};
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
     derive_impl,
     dispatch::PostDispatchInfo,
     parameter_types,
     traits::{Consideration, EnsureOrigin, EstimateCallFee, Footprint},
-    weights::RuntimeDbWeight,
+    weights::{RuntimeDbWeight, Weight},
 };
 use frame_system::RawOrigin;
+use hp_dispatch::{
+    BoundedStateMachine, Destination, DispatchAggregation, HyperbridgeDispatchParameters,
+};
 use scale_info::TypeInfo;
-use sp_core::{ConstU128, ConstU32};
-use sp_runtime::{traits::IdentityLookup, BuildStorage, Perbill};
-
-use crate::{AggregationSize, BalanceOf, CallOf, ComputePublisherTip, Domains};
+use sp_core::{ConstU128, ConstU32, H160, H256};
+use sp_runtime::{traits::IdentityLookup, BuildStorage, DispatchResult, Perbill};
 
 parameter_types! {
     pub const MaxAggregationSize: AggregationSize = 64;
@@ -47,13 +52,16 @@ pub type Origin = RawOrigin<AccountId>;
 
 pub const DOMAIN_ID: u32 = 51;
 pub const DOMAIN: Option<u32> = Some(DOMAIN_ID);
+pub const DOMAIN_ID_NONE: u32 = 666;
+pub const DOMAIN_NONE: Option<u32> = Some(DOMAIN_ID_NONE);
 pub const DOMAIN_SIZE: AggregationSize = 32;
 pub const DOMAIN_QUEUE_SIZE: u32 = 16;
 pub const DOMAIN_FEE: Balance = (ESTIMATED_FEE_CORRECTED / DOMAIN_SIZE as u32) as Balance;
 pub const NOT_REGISTERED_DOMAIN_ID: u32 = 911;
 pub const NOT_REGISTERED_DOMAIN: Option<u32> = Some(NOT_REGISTERED_DOMAIN_ID);
-pub const NUM_TEST_ACCOUNTS: usize = 6;
-pub const NO_FOUND_USER: AccountId = 999;
+pub const NO_DOMAIN_FEE_FOUND_USER: AccountId = 999;
+pub const NO_DELIVERY_FOUND_USER: AccountId = 888;
+pub const NO_FOUND_USER: AccountId = 777;
 pub const PUBLISHER_USER: AccountId = 100;
 pub const USER_1: AccountId = 42;
 pub const USER_2: AccountId = 24;
@@ -61,15 +69,18 @@ pub const USER_DOMAIN_1: AccountId = 42_000;
 pub const USER_DOMAIN_2: AccountId = 24_000;
 pub const USER_DOMAIN_ERROR_NEW: AccountId = 99_000;
 pub const USER_DOMAIN_ERROR_DROP: AccountId = 100_000;
+pub const USER_DELIVERY_OWNER: AccountId = 33_333;
 pub const ROOT_USER: AccountId = 666;
 
-pub static USERS: [(AccountId, Balance); NUM_TEST_ACCOUNTS] = [
+pub static USERS: &[(AccountId, Balance)] = &[
     (USER_1, 42_000_000_000),
     (USER_2, 24_000_000_000),
     (USER_DOMAIN_1, 100_000_000_000),
     (USER_DOMAIN_2, 200_000_000_000),
     (PUBLISHER_USER, 1_000_000_000),
-    (NO_FOUND_USER, (ESTIMATED_FEE / 64 / 2) as u128),
+    (NO_DOMAIN_FEE_FOUND_USER, (DOMAIN_FEE / 2) as u128),
+    (NO_DELIVERY_FOUND_USER, DOMAIN_FEE + 1 as u128),
+    (NO_FOUND_USER, 1_u128),
 ];
 
 pub struct MockWeightInfo;
@@ -85,6 +96,8 @@ impl MockWeightInfo {
     pub const UNR_PROOF_SIZE: u64 = 224;
     pub const HOLD_REF_TIME: u64 = 342;
     pub const HOLD_PROOF_SIZE: u64 = 324;
+    pub const SET_PRICE_REF_TIME: u64 = 442;
+    pub const SET_PRICE_PROOF_SIZE: u64 = 424;
     pub const AGG_NO_DOMAIN_REF_TIME: u64 = 1_000_042;
     pub const AGG_NO_DOMAIN_PROOF_SIZE: u64 = 1_000_024;
     pub const AGG_NO_ID_REF_TIME: u64 = 1_001_042;
@@ -96,38 +109,36 @@ impl crate::WeightInfo for MockWeightInfo {
         frame_support::weights::Weight::from_parts(Self::OPV_REF_TIME, Self::OPV_REF_TIME)
     }
 
-    fn aggregate(n: u32) -> frame_support::weights::Weight {
+    fn aggregate(n: u32) -> Weight {
         let variable = 1000 * n as u64;
-        frame_support::weights::Weight::from_parts(
+        Weight::from_parts(
             Self::AGG_REF_TIME + variable,
             Self::AGG_PROOF_SIZE + variable,
         )
     }
 
-    fn aggregate_on_invalid_domain() -> frame_support::weights::Weight {
-        frame_support::weights::Weight::from_parts(
-            Self::AGG_NO_DOMAIN_REF_TIME,
-            Self::AGG_NO_DOMAIN_PROOF_SIZE,
-        )
+    fn aggregate_on_invalid_domain() -> Weight {
+        Weight::from_parts(Self::AGG_NO_DOMAIN_REF_TIME, Self::AGG_NO_DOMAIN_PROOF_SIZE)
     }
 
-    fn aggregate_on_invalid_id() -> frame_support::weights::Weight {
-        frame_support::weights::Weight::from_parts(
-            Self::AGG_NO_ID_REF_TIME,
-            Self::AGG_NO_ID_PROOF_SIZE,
-        )
+    fn aggregate_on_invalid_id() -> Weight {
+        Weight::from_parts(Self::AGG_NO_ID_REF_TIME, Self::AGG_NO_ID_PROOF_SIZE)
     }
 
-    fn register_domain() -> frame_support::weights::Weight {
-        frame_support::weights::Weight::from_parts(Self::REG_REF_TIME, Self::REG_PROOF_SIZE)
+    fn register_domain() -> Weight {
+        Weight::from_parts(Self::REG_REF_TIME, Self::REG_PROOF_SIZE)
     }
 
-    fn unregister_domain() -> frame_support::weights::Weight {
-        frame_support::weights::Weight::from_parts(Self::UNR_REF_TIME, Self::UNR_PROOF_SIZE)
+    fn unregister_domain() -> Weight {
+        Weight::from_parts(Self::UNR_REF_TIME, Self::UNR_PROOF_SIZE)
     }
 
-    fn hold_domain() -> frame_support::weights::Weight {
-        frame_support::weights::Weight::from_parts(Self::HOLD_REF_TIME, Self::HOLD_PROOF_SIZE)
+    fn hold_domain() -> Weight {
+        Weight::from_parts(Self::HOLD_REF_TIME, Self::HOLD_PROOF_SIZE)
+    }
+
+    fn set_delivery_price() -> Weight {
+        Weight::from_parts(Self::SET_PRICE_REF_TIME, Self::SET_PRICE_PROOF_SIZE)
     }
 }
 
@@ -162,6 +173,86 @@ impl<O: Into<Result<RawOrigin<AccountId>, O>> + From<RawOrigin<AccountId>>> Ensu
     #[cfg(feature = "runtime-benchmarks")]
     fn try_successful_origin() -> Result<O, ()> {
         Ok(O::from(RawOrigin::Signed(ROOT_USER)))
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MockDispatchAggregation {
+    pub domain_id: u32,
+    pub aggregation_id: u64,
+    pub aggregation: H256,
+    pub destination: Destination,
+}
+
+impl MockDispatchAggregation {
+    pub const NONE_REF_TIME: u64 = 42;
+    pub const NONE_PROOF_SIZE: u64 = 24;
+    pub const HB_REF_TIME: u64 = 4242;
+    pub const HB_PROOF_SIZE: u64 = 2424;
+
+    thread_local! {
+        pub static CALLS: RefCell<VecDeque<MockDispatchAggregation>> = RefCell::new(Default::default());
+    }
+
+    thread_local! {
+        pub static RETURN: RefCell<DispatchResult> = RefCell::new(Ok(()));
+    }
+
+    pub fn pop() -> Option<Self> {
+        Self::CALLS.with_borrow_mut(|calls| calls.pop_front())
+    }
+
+    fn push(self) {
+        Self::CALLS.with_borrow_mut(|calls| calls.push_back(self))
+    }
+
+    pub fn set_return(dispatch_result: DispatchResult) {
+        let _ = Self::RETURN.replace(dispatch_result);
+    }
+
+    fn return_value() -> DispatchResult {
+        Self::RETURN.with_borrow(|r| *r)
+    }
+
+    pub fn none_weight() -> Weight {
+        Weight::from_parts(Self::NONE_REF_TIME, Self::NONE_PROOF_SIZE)
+    }
+
+    pub fn hyperbridge_weight() -> Weight {
+        Weight::from_parts(Self::HB_REF_TIME, Self::HB_PROOF_SIZE)
+    }
+
+    pub fn max_weight() -> Weight {
+        Self::hyperbridge_weight()
+    }
+}
+
+impl DispatchAggregation for MockDispatchAggregation {
+    fn dispatch_aggregation(
+        domain_id: u32,
+        aggregation_id: u64,
+        aggregation: H256,
+        destination: Destination,
+    ) -> DispatchResult {
+        MockDispatchAggregation {
+            domain_id,
+            aggregation_id,
+            aggregation,
+            destination,
+        }
+        .push();
+        MockDispatchAggregation::return_value()
+    }
+
+    fn max_weight() -> Weight {
+        Self::max_weight()
+    }
+
+    fn dispatch_weight(destination: &Destination) -> Weight {
+        match destination {
+            Destination::None => Self::none_weight(),
+            Destination::Hyperbridge(_) => Self::hyperbridge_weight(),
+        }
     }
 }
 
@@ -277,6 +368,7 @@ impl crate::Config for Test {
     const AGGREGATION_SIZE: u32 = MaxAggregationSize::get() as u32;
     #[cfg(feature = "runtime-benchmarks")]
     type Currency = Balances;
+    type DispatchAggregation = MockDispatchAggregation;
 }
 
 // Configure a mock runtime to test the pallet.
@@ -288,6 +380,26 @@ frame_support::construct_runtime!(
         Aggregate: crate,
     }
 );
+
+pub fn hyperbridge_destination() -> Destination {
+    Destination::Hyperbridge(HyperbridgeDispatchParameters {
+        destination_chain: BoundedStateMachine::Evm(11155111),
+        destination_module: H160::default(),
+        timeout: 100,
+    })
+}
+
+pub fn none_destination() -> Destination {
+    Destination::None
+}
+
+pub fn none_delivering() -> Delivery<Balance> {
+    none_destination().into()
+}
+
+pub fn priced_none_delivering(delivery_price: Balance) -> Delivery<Balance> {
+    Delivery::new(none_destination(), delivery_price)
+}
 
 #[derive_impl(frame_system::config_preludes::SolochainDefaultConfig as frame_system::DefaultConfig)]
 impl frame_system::Config for Test {
@@ -323,7 +435,9 @@ impl crate::Domain<Test> {
         next_aggregation_id: u64,
         max_aggregation_size: AggregationSize,
         publish_queue_size: u32,
+        aggregate_rules: crate::data::AggregateSecurityRules,
         ticket: Option<crate::TicketOf<Test>>,
+        delivery: crate::data::DeliveryParams<crate::AccountOf<Test>, crate::BalanceOf<Test>>,
     ) -> Self {
         Self::try_create(
             id,
@@ -331,7 +445,9 @@ impl crate::Domain<Test> {
             next_aggregation_id,
             max_aggregation_size,
             publish_queue_size,
+            aggregate_rules,
             ticket,
+            delivery,
         )
         .unwrap()
     }
@@ -360,9 +476,48 @@ pub fn test() -> sp_io::TestExternalities {
                 1,
                 DOMAIN_SIZE,
                 DOMAIN_QUEUE_SIZE,
+                crate::data::AggregateSecurityRules::Untrusted,
                 None,
+                hyperbridge_destination().into(),
+            ),
+        );
+        Domains::<Test>::insert(
+            DOMAIN_ID_NONE,
+            crate::Domain::<Test>::create(
+                DOMAIN_ID_NONE,
+                USER_DOMAIN_1.into(),
+                1,
+                DOMAIN_SIZE,
+                DOMAIN_QUEUE_SIZE,
+                crate::data::AggregateSecurityRules::Untrusted,
+                None,
+                none_delivering().into(),
             ),
         );
     });
     ext
+}
+
+impl From<Destination> for crate::data::Delivery<Balance> {
+    fn from(destination: Destination) -> Self {
+        Delivery::new(destination, 0_u128)
+    }
+}
+
+impl From<crate::data::Delivery<Balance>> for crate::data::DeliveryParams<AccountId, Balance> {
+    fn from(delivery: crate::data::Delivery<Balance>) -> Self {
+        Self::new(USER_DELIVERY_OWNER, delivery)
+    }
+}
+
+impl From<Destination> for crate::data::DeliveryParams<AccountId, Balance> {
+    fn from(destination: Destination) -> Self {
+        crate::data::Delivery::<Balance>::from(destination).into()
+    }
+}
+
+impl Default for Reserve<Balance> {
+    fn default() -> Self {
+        Self::new(0, 0)
+    }
 }

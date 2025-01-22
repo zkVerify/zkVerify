@@ -13,14 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::data::{AggregateSecurityRules, Delivery, Reserve};
+use crate::mock::RuntimeEvent as TestEvent;
+use crate::mock::{self, *};
+use crate::*;
 use data::{DomainState, StatementEntry};
 use frame_support::weights::RuntimeDbWeight;
 use frame_system::{EventRecord, Phase};
 use sp_core::{Get, H256};
-
-use crate::mock::RuntimeEvent as TestEvent;
-use crate::mock::{self, *};
-use crate::*;
 
 pub fn assert_evt(event: Event<Test>, context: &str) {
     assert_evt_gen(true, event, context);
@@ -96,7 +96,7 @@ pub fn statement_entry(
         .unwrap();
     StatementEntry::new(
         account,
-        ESTIMATED_FEE_CORRECTED as u128 / aggregation_size,
+        Reserve::<Balance>::new(ESTIMATED_FEE_CORRECTED as u128 / aggregation_size, 0),
         statement,
     )
 }
@@ -117,7 +117,7 @@ impl Aggregation<Test> {
     pub(crate) fn add_statement(
         &mut self,
         account: AccountOf<Test>,
-        reserve: BalanceOf<Test>,
+        reserve: Reserve<BalanceOf<Test>>,
         statement: H256,
     ) {
         self.statements
@@ -160,11 +160,21 @@ pub fn state_events() -> Vec<Event<Test>> {
         .collect()
 }
 
-pub fn register_domain(user: AccountId, size: AggregationSize, queue: Option<u32>) -> u32 {
+pub fn register_domain(
+    user: AccountId,
+    size: AggregationSize,
+    queue: Option<u32>,
+    aggregate_rules: AggregateSecurityRules,
+    delivery: Delivery<crate::mock::Balance>,
+    delivery_owner: Option<crate::mock::AccountId>,
+) -> u32 {
     frame_support::assert_ok!(Aggregate::register_domain(
         Origin::Signed(user).into(),
         size,
-        queue
+        queue,
+        aggregate_rules,
+        delivery,
+        delivery_owner
     ));
     registered_ids()[0]
 }

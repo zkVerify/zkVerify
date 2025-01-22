@@ -27,7 +27,6 @@ mod weight;
 // Export the benchmarking utils.
 #[cfg(feature = "runtime-benchmarks")]
 pub use benchmarking::utils::*;
-
 pub use weight::WeightInfo;
 
 #[frame_support::pallet]
@@ -36,13 +35,13 @@ pub mod pallet {
     use alloy_dyn_abi::DynSolValue;
     use alloy_primitives::{B256, U256};
     use frame_support::{pallet_prelude::*, PalletId};
-    use frame_system::pallet_prelude::*;
     use ismp::dispatcher::{DispatchPost, DispatchRequest, FeeMetadata, IsmpDispatcher};
     use ismp::host::StateMachine;
     use pallet_ismp::ModuleId;
     use sp_std::vec;
 
     pub const ZKV_MODULE_ID: ModuleId = ModuleId::Pallet(PalletId(*b"ZKVE-MOD"));
+    pub const PALLET_ID: PalletId = PalletId(*b"HYP-AGR!");
 
     #[pallet::config]
     pub trait Config: frame_system::Config + pallet_ismp::Config {
@@ -85,6 +84,8 @@ pub mod pallet {
         Clone, codec::Encode, codec::Decode, scale_info::TypeInfo, PartialEq, Eq, RuntimeDebug,
     )]
     pub struct Params<Balance> {
+        /// Domain id
+        pub domain_id: u32,
         /// Attestation id
         pub aggregation_id: u64,
 
@@ -110,18 +111,14 @@ pub mod pallet {
         aggregation: sp_core::H256,
     }
 
-    #[pallet::call]
     impl<T: Config> Pallet<T> {
         /// Dispatch aggregation to given EVM chain
-        #[pallet::weight(T::WeightInfo::dispatch_aggregation())]
-        #[pallet::call_index(0)]
         pub fn dispatch_aggregation(
-            origin: OriginFor<T>,
+            account: T::AccountId,
             params: Params<T::Balance>,
         ) -> DispatchResult {
-            let origin = ensure_signed(origin)?;
-
             let data = DynSolValue::Tuple(vec![
+                DynSolValue::Uint(U256::from(params.domain_id), 256),
                 DynSolValue::Uint(U256::from(params.aggregation_id), 256),
                 DynSolValue::FixedBytes(B256::from_slice(params.aggregation.as_ref()), 32),
             ]);
@@ -144,7 +141,7 @@ pub mod pallet {
                 .dispatch_request(
                     DispatchRequest::Post(post),
                     FeeMetadata {
-                        payer: origin,
+                        payer: account,
                         fee: params.fee,
                     },
                 )

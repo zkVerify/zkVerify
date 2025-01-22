@@ -14,6 +14,7 @@ workspace = true
 [dependencies]
 log = { workspace = true }
 binary-merkle-tree = { workspace = true }
+ismp = { workspace = true }
 
 codec = { workspace = true }
 scale-info = { workspace = true, features = ["derive"] }
@@ -26,6 +27,8 @@ sp-std = { workspace = true }
 sp-runtime = { workspace = true }
 
 hp-on-proof-verified = { workspace = true }
+hp-dispatch = { workspace = true }
+hex-literal = { workspace = true }
 
 [dev-dependencies]
 pallet-balances = { workspace = true, features = ["std"] }
@@ -38,7 +41,8 @@ runtime-benchmarks = [
 	"frame-support/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
 	"pallet-balances/runtime-benchmarks",
-	"sp-runtime/runtime-benchmarks"
+	"sp-runtime/runtime-benchmarks",
+	"hp-dispatch/runtime-benchmarks"
 ]
 default = ["std"]
 std = [
@@ -54,11 +58,15 @@ std = [
 	"pallet-balances/std",
 	"sp-io/std",
 	"sp-std/std",
-	"hp-on-proof-verified/std"
+	"hp-on-proof-verified/std",
+	"sp-std/std",
+	"ismp/std",
+	"hp-dispatch/std"
 ]
 try-runtime = [
 	"frame-support/try-runtime",
 	"frame-system/try-runtime",
 	"pallet-balances/try-runtime",
-	"sp-runtime/try-runtime"
+	"sp-runtime/try-runtime",
+	"hp-dispatch/try-runtime"
 ]

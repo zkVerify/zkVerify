@@ -12,6 +12,7 @@ members = [
     "runtime",
     "pallets/proof_of_existence",
     "primitives/hp-proof-of-existence",
+    "primitives/hp-dispatch",
     "primitives/hp-on-proof-verified",
     "native",
     "pallets/aggregate",
@@ -60,7 +61,7 @@ binary-merkle-tree = { default-features = false, version = "15.0.0" }
 snafu = { version = "0.8.0", default-features = false }
 async-trait = { version = "0.1.57" }
 serde = { version = "1.0.197" }
-rstest = { version = "0.19.0" }
+rstest = { version = "0.24.0" }
 rstest_reuse = { version = "0.7.0" }
 hex-literal = { version = "0.4.1" }
 metered = { version = "0.6.1", default-features = false, package = "prioritized-metered-channel" }
@@ -101,6 +102,7 @@ pallet-verifiers = { path = "pallets/verifiers", default-features = false }
 pallet-verifiers-macros = { path = "pallets/verifiers/macros" }
 hp-on-proof-verified = { default-features = false, path = "primitives/hp-on-proof-verified" }
 hp-poe = { default-features = false, path = "primitives/hp-proof-of-existence" }
+hp-dispatch = { default-features = false, path = "primitives/hp-dispatch" }
 hp-verifiers = { path = "primitives/hp-verifiers", default-features = false }
 hp-groth16 = { path = "primitives/hp-groth16", default-features = false }
 pallet-fflonk-verifier = { path = "verifiers/fflonk", default-features = false }
@@ -201,10 +203,10 @@ aggregate-rpc-runtime-api = { default-features = false, path = "rpc/aggregate/ru
 
 # Hyperbridge dependencies
 ismp = { default-features = false, version = "0.2.2" }
-pallet-ismp = { default-features = false, version = "15.0.0" }
+pallet-ismp = { default-features = false, version = "15.1.0" }
 pallet-ismp-rpc = { default-features = false, version = "15.0.0" }
 pallet-ismp-runtime-api = { default-features = false, version = "15.0.0" }
-ismp-grandpa = { default-features = false, version = "15.0.0" }
+ismp-grandpa = { default-features = false, version = "15.0.1" }
 frame-metadata-hash-extension = { default-features = false, version = "0.5.0" }
 pallet-hyperbridge-aggregations = { path = "pallets/hyperbridge_aggregations", default-features = false }
 alloy-dyn-abi = { default-features = false, version = "0.8.14" }
