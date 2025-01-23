@@ -68,6 +68,7 @@ pub mod pallet {
         ensure_signed,
         pallet_prelude::{BlockNumberFor, OriginFor},
     };
+    use hp_on_proof_verified::OnProofVerified;
     use sp_core::H256;
     use sp_runtime::traits::{BadOrigin, Keccak256, Saturating};
     use sp_std::vec::Vec;
@@ -138,9 +139,7 @@ pub mod pallet {
         type Currency: frame_support::traits::fungible::Mutate<AccountOf<Self>>;
     }
 
-    impl<T: Config> hp_on_proof_verified::OnProofVerified<<T as frame_system::Config>::AccountId>
-        for Pallet<T>
-    {
+    impl<T: Config> OnProofVerified<<T as frame_system::Config>::AccountId> for Pallet<T> {
         fn on_proof_verified(
             account: Option<<T as frame_system::Config>::AccountId>,
             domain_id: Option<u32>,
@@ -308,7 +307,7 @@ pub mod pallet {
             /// The aggregation receipt hash.
             receipt: H256,
         },
-        /// Some error occurred in [`on_proof_verify`] execution.
+        /// Some error occurred in [`OnProofVerified::on_proof_verified`] execution.
         CannotAggregate {
             /// The statement hash that describe the proof.
             statement: H256,

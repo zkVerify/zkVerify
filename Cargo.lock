@@ -16543,7 +16543,7 @@ dependencies = [
  "ark-ff 0.4.2",
  "ark-models-ext",
  "ark-std 0.4.0",
- "hex-literal 0.4.1",
+ "hex-literal",
  "sha3",
  "snafu 0.8.5",
  "test-utils",
