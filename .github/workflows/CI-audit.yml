@@ -1,0 +1,25 @@
+name: Audit
+
+run-name: "Workflow CI/CD Steps: cargo audit"
+
+on:
+  workflow_call:
+
+env:
+  IMAGE_NAME: zencash/sc-ci-base
+  IMAGE_TAG: noble_rust-stable_latest
+  DOCKER_COMPOSE_CMD: "docker compose -f ${GITHUB_WORKSPACE}/ci/docker-compose.yml run --rm cargo-container"
+  DOCKER_BUILD_DIR: /build
+  DOCKER_CARGO_HOME: /tmp/.cargo
+  CARGO_BINARIES_INSTALL: "cargo-audit"
+
+jobs:
+  audit:
+    runs-on:
+      group: ${{ vars.RUNNER_GROUP }}
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v4
+
+      - name: Cargo audit
+        run: ${{ env.DOCKER_COMPOSE_CMD }} cargo audit
