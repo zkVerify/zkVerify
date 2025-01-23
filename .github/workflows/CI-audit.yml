@@ -1,0 +1,36 @@
+name: Audit
+
+run-name: "Workflow CI/CD Steps: cargo audit"
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: zencash/sc-ci-base
+  IMAGE_TAG: noble_rust-stable_latest
+  DOCKER_COMPOSE_CMD: "docker compose -f ${GITHUB_WORKSPACE}/ci/docker-compose.yml run --rm cargo-container"
+  DOCKER_BUILD_DIR: /build
+  DOCKER_CARGO_HOME: /tmp/.cargo
+  CARGO_BINARIES_INSTALL: "cargo-audit"
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v4
+
+      - name: Cargo audit
+        run: ${{ env.DOCKER_COMPOSE_CMD }} cargo audit 2>&1 | tee audit_output.txt
+
+      - name: Upload output
+        if: ${{ !env.ACT }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-output
+          path: audit_output.txt
+          if-no-files-found: warn
+          retention-days: 1
+          compression-level: 0
+          overwrite: true
