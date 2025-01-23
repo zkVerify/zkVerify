@@ -25,7 +25,11 @@ frame-system = { workspace = true }
 frame-benchmarking = { workspace = true, optional = true }
 sp-core = { workspace = true }
 sp-std = { workspace = true }
-
+educe = { version = "0.6.0", default-features = false, features = [
+    "Clone",
+    "Debug",
+    "PartialEq",
+] }
 
 substrate-bn = "0.6.0"
 serde_json = { version = "1.0.117", optional = true, default-features = false }
@@ -33,18 +37,19 @@ sp-io = { workspace = true, optional = true }
 pallet-aggregate = { workspace = true, optional = true, default-features = false, features = [
     "runtime-benchmarks",
 ] }
-halo2_proofs = { git = "https://github.com/nulltea/halo2-nostd.git", branch = "no_std" }
+halo2_verifier = { path = "../../../halo2-verifier/verifier" }
 # halo2_proofs = { path = "../../../halo2-nostd/halo2_proofs" }
-ff = { version = "0.12.0", default-features = false }
+ff = { version = "0.12.0", default-features = false, features = ["alloc"] }
+serde = { version = "1.0.200", features = ["derive"], optional = true, default-features = false }
 
 [dev-dependencies]
+rstest = { workspace = true }
 hex-literal = { version = "0.4.1" }
 rand = { version = "0.8.5" }
 rand_chacha = { version = "0.3" }
-
-
 serde_json = { version = "1.0.117" }
 pallet-balances = { workspace = true, features = ["std", "runtime-benchmarks"] }
+hex = { version = "0.4.3" }
 
 [features]
 default = []
@@ -57,6 +62,7 @@ std = [
     "hp-verifiers/std",
     "pallet-verifiers/std",
     "pallet-balances/std",
+    "serde",
 ]
 runtime-benchmarks = [
     "frame-benchmarking/runtime-benchmarks",

@@ -108,12 +108,6 @@ dependencies = [
 
 [[package]]
 name = "ahash"
-version = "0.4.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0453232ace82dee0dd0b4c87a59bd90f7b53b314f3e0f61fe2ee7c8a16482289"
-
-[[package]]
-name = "ahash"
 version = "0.8.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e89da841a80418a9b391ebaea17f5c112ffaaa96f621d2c285b5174da76b9011"
@@ -4810,24 +4804,20 @@ dependencies = [
 ]
 
 [[package]]
-name = "halo2_proofs"
-version = "0.2.0"
-source = "git+https://github.com/nulltea/halo2-nostd.git?branch=no_std#3e3282a372c4a9d013d69466887fde52ccd4fc04"
+name = "halo2_verifier"
+version = "0.1.0"
 dependencies = [
  "blake2b_simd",
- "cfg-if 0.1.10",
  "ff 0.12.1",
  "group 0.12.1",
  "halo2curves",
- "hashbrown 0.9.1",
- "num-bigint",
- "num-integer",
- "poseidon",
+ "log",
+ "num-traits",
+ "rand 0.8.5",
  "rand_chacha",
  "rand_core 0.6.4",
- "scapegoat",
  "sha3 0.9.1",
- "subtle 2.6.1",
+ "substrate-bn",
 ]
 
 [[package]]
@@ -4883,15 +4873,6 @@ dependencies = [
 
 [[package]]
 name = "hashbrown"
-version = "0.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d7afe4a420e3fe79967a00898cc1f4db7c8a49a9333a29f8a4bd76a253d5cd04"
-dependencies = [
- "ahash 0.4.8",
-]
-
-[[package]]
-name = "hashbrown"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8a9ee70c43aaf417c914396645a0fa852624801b24ebb7ae78fe8272889ac888"
@@ -4902,7 +4883,7 @@ version = "0.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "43a3c133739dddd0d2990f9a4bdf8eb4b21ef50e4851ca85ab661199821d510e"
 dependencies = [
- "ahash 0.8.11",
+ "ahash",
 ]
 
 [[package]]
@@ -4911,7 +4892,7 @@ version = "0.14.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e5274423e17b7c9fc20b6e7e208532f9b19825d82dfd615708b70edd83df41f1"
 dependencies = [
- "ahash 0.8.11",
+ "ahash",
  "allocator-api2",
  "serde",
 ]
@@ -7065,12 +7046,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "micromath"
-version = "2.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c3c8dda44ff03a2f238717214da50f65d5a53b45cd213a7370424ffdb6fae815"
-
-[[package]]
 name = "mime"
 version = "0.3.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8279,11 +8254,13 @@ dependencies = [
 name = "pallet-halo2-verifier"
 version = "0.1.0"
 dependencies = [
+ "educe",
  "ff 0.12.1",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "halo2_proofs",
+ "halo2_verifier",
+ "hex",
  "hex-literal 0.4.1",
  "hp-verifiers",
  "log",
@@ -8293,7 +8270,9 @@ dependencies = [
  "parity-scale-codec",
  "rand 0.8.5",
  "rand_chacha",
+ "rstest",
  "scale-info",
+ "serde",
  "serde_json",
  "sp-core",
  "sp-io",
@@ -10592,16 +10571,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cc9c68a3f6da06753e9335d63e27f6b9754dd1920d941135b7ea8224f141adb2"
 
 [[package]]
-name = "poseidon"
-version = "0.2.0"
-source = "git+https://github.com/contrun/poseidon.git?branch=no-std#103bec27d5de0754333373fd72091b67e61bbe27"
-dependencies = [
- "group 0.12.1",
- "halo2curves",
- "subtle 2.6.1",
-]
-
-[[package]]
 name = "postcard"
 version = "1.0.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -10923,7 +10892,7 @@ version = "0.28.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ebb98863a7bf22a17fa8b6f3ad19b9bfc484921ea7d7bb522b262732acd00c1"
 dependencies = [
- "ahash 0.8.11",
+ "ahash",
  "ark-bls12-381",
  "ark-curve25519",
  "ark-ec",
@@ -10974,7 +10943,7 @@ name = "proof-of-sql-verifier"
 version = "0.1.0"
 source = "git+https://github.com/HorizenLabs/proof-of-sql-verifier.git?tag=v0.2.0#d499c6d64915954c033d14dbd2ec937434b8b564"
 dependencies = [
- "ahash 0.8.11",
+ "ahash",
  "ark-bls12-381",
  "ark-ec",
  "ark-serialize 0.4.2",
@@ -12613,7 +12582,7 @@ version = "0.29.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "197e67ed725bcad27563c4418254e89e56eb79491cebb278e9926760a1fc16d4"
 dependencies = [
- "ahash 0.8.11",
+ "ahash",
  "array-bytes",
  "async-trait",
  "dyn-clone",
@@ -12906,7 +12875,7 @@ version = "0.44.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2dc2ff366c09b8aba9b0bfd04b991508788203a28da0c66a32625cda7ae8015d"
 dependencies = [
- "ahash 0.8.11",
+ "ahash",
  "futures",
  "futures-timer",
  "log",
@@ -13457,17 +13426,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "scapegoat"
-version = "2.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6bf8e98628e0f8e55bfbdc3adb03da88cc20a3816c9dbc8783e1b0146f6e18a4"
-dependencies = [
- "micromath",
- "smallnum",
- "tinyvec",
-]
-
-[[package]]
 name = "scc"
 version = "2.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -13491,7 +13449,7 @@ version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c9a8ef13a93c54d20580de1e5c413e624e53121d42fc7e2c11d10ef7f8b02367"
 dependencies = [
- "ahash 0.8.11",
+ "ahash",
  "cfg-if 1.0.0",
  "hashbrown 0.13.2",
 ]
@@ -14039,12 +13997,6 @@ checksum = "dbff4acf519f630b3a3ddcfaea6c06b42174d9a44bc70c620e9ed1649d58b82a"
 dependencies = [
  "version_check",
 ]
-
-[[package]]
-name = "smallnum"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "adb49cee96b087232a59514b3a60fc9e2c79140ee3eeb5bbc2398a7ae38defc9"
 
 [[package]]
 name = "smallvec"
@@ -14959,7 +14911,7 @@ version = "37.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6282aef9f4b6ecd95a67a45bcdb67a71f4a4155c09a53c10add4ffe823db18cd"
 dependencies = [
- "ahash 0.8.11",
+ "ahash",
  "hash-db",
  "lazy_static",
  "memory-db",
