@@ -17,7 +17,7 @@
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error(transparent)]
-    PolkadotService(#[from] service::Error),
+    ZKVService(#[from] service::Error),
 
     #[error(transparent)]
     SubstrateCli(#[from] sc_cli::Error),

@@ -226,7 +226,7 @@ pub fn run() -> Result<()> {
 
             Ok(runner.async_run(|mut config| {
                 let (client, _, _, task_manager) =
-                    service::new_chain_ops(&mut config, None).map_err(Error::PolkadotService)?;
+                    service::new_chain_ops(&mut config, None).map_err(Error::ZKVService)?;
                 Ok((
                     cmd.run(client, config.database)
                         .map_err(Error::SubstrateCli),

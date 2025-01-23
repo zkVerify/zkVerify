@@ -186,7 +186,7 @@ pub struct DomainEntry<
     pub owner: User<A>,
     /// The state of the domain.
     pub state: DomainState,
-    /// The aggregation that is not already completed.
+    /// The aggregation that is not yet completed.
     pub next: AggregationEntry<A, B, S>,
     /// The maximum size of the aggregation for this domain.
     pub max_aggregation_size: AggregationSize,
