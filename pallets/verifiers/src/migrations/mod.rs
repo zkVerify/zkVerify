@@ -1,5 +1,7 @@
 //! Storage migrations.
 
+#![cfg(not(doc))]
+
 use frame_support::traits::UncheckedOnRuntimeUpgrade;
 use hp_verifiers::Verifier;
 use sp_core::Get;
