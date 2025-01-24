@@ -23,7 +23,7 @@ workflows:
         '--show-path',
         '--quiet',
       ]
-  # Same as `check_*`, but with the `--fix` flag.
+  # Same as `check_*`.
   default:
     - [ $check.0 ]
 

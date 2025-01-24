@@ -17,7 +17,6 @@ env:
   DOCKER_CARGO_HOME: /tmp/.cargo
   CMAKE_INSTALL: true
   LLD_INSTALL: true
-  CARGO_BINARIES_INSTALL: "zepter"
 
 jobs:
   lint-and-format:
@@ -55,10 +54,6 @@ jobs:
         shell: bash
         run: ${{ env.DOCKER_COMPOSE_CMD }} cargo fmt --check 2>&1 | tee formatting_output.txt
 
-      - name: Features
-        shell: bash
-        run: ${{ env.DOCKER_COMPOSE_CMD }} zepter run --config .cargo/zepter-ci.yaml | tee features_output.txt
-
       - name: Save lint-format cache
         if: ${{ !env.ACT && inputs.CACHING_MODE == 'CACHE_SAVE' }}
         uses: buildjet/cache/save@v3
@@ -80,7 +75,6 @@ jobs:
           path: |
             linting_output.txt
             formatting_output.txt
-            features_output.txt
           if-no-files-found: warn
           retention-days: 1
           compression-level: 0

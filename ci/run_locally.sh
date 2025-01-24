@@ -52,7 +52,7 @@ fi
 ####
 # Running workflow(s)
 ####
-workflows_orchestrator="CI-build CI-test CI-try-runtime CI-coverage CI-lint-format CI-zombienet-test CI-audit"
+workflows_orchestrator="CI-build CI-test CI-try-runtime CI-coverage CI-lint-format CI-zombienet-test CI-audit CI-feature-propagation"
 workflows_extra="CI-rustdoc CI-build-docker-image"
 if [ "${interactive_mode}" == 'true' ];then
   workflows="${workflows_orchestrator} ${workflows_extra}"
