@@ -14,16 +14,64 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-use crate::polkadot_rpc::{BabeDeps, FullDeps, GrandpaDeps, RpcExtension};
 use jsonrpsee::RpcModule;
-use polkadot_primitives::{AccountId, Balance, Block, Nonce};
+use polkadot_primitives::{AccountId, Balance, Block, BlockNumber, Hash, Nonce};
 use sc_client_api::AuxStore;
+use sc_consensus_grandpa::FinalityProofProvider;
+pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_consensus::SelectChain;
 use sp_consensus_babe::BabeApi;
+use sp_keystore::KeystorePtr;
+use std::sync::Arc;
 use substrate_frame_rpc_system as frame_rpc_system;
+
+/// A type representing all RPC extensions.
+pub type RpcExtension = RpcModule<()>;
+
+/// Extra dependencies for BABE.
+pub struct BabeDeps {
+    /// A handle to the BABE worker for issuing requests.
+    pub babe_worker_handle: sc_consensus_babe::BabeWorkerHandle<Block>,
+    /// The keystore that manages the keys of the node.
+    pub keystore: KeystorePtr,
+}
+
+/// Dependencies for GRANDPA
+pub struct GrandpaDeps<B> {
+    /// Voting round info.
+    pub shared_voter_state: sc_consensus_grandpa::SharedVoterState,
+    /// Authority set info.
+    pub shared_authority_set: sc_consensus_grandpa::SharedAuthoritySet<Hash, BlockNumber>,
+    /// Receives notifications about justification events from Grandpa.
+    pub justification_stream: sc_consensus_grandpa::GrandpaJustificationStream<Block>,
+    /// Executor to drive the subscription manager in the Grandpa RPC handler.
+    pub subscription_executor: sc_rpc::SubscriptionTaskExecutor,
+    /// Finality proof provider.
+    pub finality_provider: Arc<FinalityProofProvider<B, Block>>,
+}
+
+/// Full client dependencies
+pub struct FullDeps<C, P, SC, B> {
+    /// The client instance to use.
+    pub client: Arc<C>,
+    /// Transaction pool instance.
+    pub pool: Arc<P>,
+    /// The [`SelectChain`] Strategy
+    pub select_chain: SC,
+    /// A copy of the chain spec.
+    pub chain_spec: Box<dyn sc_chain_spec::ChainSpec>,
+    /// Whether to deny unsafe calls
+    pub deny_unsafe: DenyUnsafe,
+    /// BABE specific dependencies.
+    pub babe: BabeDeps,
+    /// GRANDPA specific dependencies.
+    pub grandpa: GrandpaDeps<B>,
+    /// Backend used by the node.
+    pub backend: Arc<B>,
+}
 
 /// Instantiate all RPC extensions.
 pub fn create_full<C, P, SC, B>(
@@ -31,7 +79,7 @@ pub fn create_full<C, P, SC, B>(
         client,
         pool,
         select_chain,
-        chain_spec: _,
+        chain_spec,
         deny_unsafe,
         babe,
         grandpa,
@@ -63,6 +111,7 @@ where
     use proof_of_existence_rpc::{PoE, PoEApiServer};
     use sc_consensus_babe_rpc::{Babe, BabeApiServer};
     use sc_consensus_grandpa_rpc::{Grandpa, GrandpaApiServer};
+    use sc_rpc_spec_v2::chain_spec::{ChainSpec, ChainSpecApiServer};
     use substrate_state_trie_migration_rpc::{StateMigration, StateMigrationApiServer};
 
     let mut io = RpcModule::new(());
@@ -78,6 +127,15 @@ where
         finality_provider,
     } = grandpa;
 
+    let chain_name = chain_spec.name().to_string();
+    let genesis_hash = client
+        .hash(0)
+        .ok()
+        .flatten()
+        .expect("Genesis block exists; qed");
+    let properties = chain_spec.properties();
+
+    io.merge(ChainSpec::new(chain_name, genesis_hash, properties).into_rpc())?;
     io.merge(StateMigration::new(client.clone(), backend.clone(), deny_unsafe).into_rpc())?;
     io.merge(System::new(client.clone(), pool.clone(), deny_unsafe).into_rpc())?;
     io.merge(TransactionPayment::new(client.clone()).into_rpc())?;
