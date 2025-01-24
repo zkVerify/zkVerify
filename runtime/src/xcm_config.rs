@@ -15,21 +15,13 @@
 
 #![cfg(feature = "relay")]
 
-//! XCM configuration for Zkv.
+//! XCM configuration for zkVerify.
+//! FIXME: this configuration is meant for testing only, and MUST not deployed to a production
+//! network without proper assessment.
 
 use super::{
-    AccountId,
-    AllPalletsWithSystem,
-    Balances,
-    Dmp,
-    ParaId,
-    Runtime,
-    RuntimeCall,
-    RuntimeEvent,
-    RuntimeOrigin,
-    TransactionByteFee,
-    XcmPallet,
-    //Treasury,
+    AccountId, AllPalletsWithSystem, Balances, Dmp, ParaId, Runtime, RuntimeCall, RuntimeEvent,
+    RuntimeOrigin, TransactionByteFee, XcmPallet,
 };
 use crate::{governance::GeneralAdmin, parachains::parachains_origin};
 use frame_support::{
