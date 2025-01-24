@@ -61,3 +61,9 @@ jobs:
     uses: ./.github/workflows/CI-lint-format.yml
     with:
       CACHING_MODE: "CACHE_SAVE"
+
+  try-runtime-job:
+    needs: [clear-caches-job]
+    uses: ./.github/workflows/CI-try-runtime.yml
+    with:
+      CACHING_MODE: "CACHE_SAVE"

@@ -40,7 +40,7 @@ jobs:
             ~/.cargo/git/db/
             target/
             deps/
-          key: build-cache
+          key: try-runtime-cache
 
       - name: Set docker env vars
         run: |
@@ -49,6 +49,19 @@ jobs:
 
       - name: Cargo build zkv-runtime
         run: ${{ env.DOCKER_COMPOSE_CMD }} cargo build -p zkv-runtime --release --features try-runtime
+
+      - name: Save zkv-runtime cache
+        if: ${{ !env.ACT && inputs.CACHING_MODE == 'CACHE_SAVE' }}
+        uses: buildjet/cache/save@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            deps/
+          key: try-runtime-cache
 
       - name: Execute try-runtime
         run: |
