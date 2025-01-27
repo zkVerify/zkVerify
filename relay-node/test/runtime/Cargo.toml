@@ -85,7 +85,26 @@ no_std = []
 only-staking = []
 try-runtime = [
 	"sp-runtime/try-runtime",
-  "frame-support/try-runtime",
+	"frame-support/try-runtime",
+	"frame-election-provider-support/try-runtime",
+	"frame-executive/try-runtime",
+	"frame-system/try-runtime",
+	"pallet-authority-discovery/try-runtime",
+	"pallet-authorship/try-runtime",
+	"pallet-babe/try-runtime",
+	"pallet-balances/try-runtime",
+	"pallet-grandpa/try-runtime",
+	"pallet-indices/try-runtime",
+	"pallet-offences/try-runtime",
+	"pallet-session/try-runtime",
+	"pallet-staking/try-runtime",
+	"pallet-sudo/try-runtime",
+	"pallet-timestamp/try-runtime",
+	"pallet-transaction-payment/try-runtime",
+	"pallet-vesting/try-runtime",
+	"pallet-xcm/try-runtime",
+	"polkadot-runtime-common/try-runtime",
+	"polkadot-runtime-parachains/try-runtime"
 ]
 runtime-metrics = [
 	"polkadot-runtime-parachains/runtime-metrics",

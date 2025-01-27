@@ -1,0 +1,70 @@
+name: Try runtime 
+
+run-name: "Workflow CI/CD Steps: build runtime w/ try-runtime feat, and execute a run"
+
+on:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      CACHING_MODE:
+        required: true
+        type: string
+        
+env:
+  IMAGE_NAME: zencash/sc-ci-base
+  IMAGE_TAG: noble_rust-stable_latest
+  DOCKER_COMPOSE_CMD: "docker compose -f ${GITHUB_WORKSPACE}/ci/docker-compose.yml run --rm cargo-container"
+  DOCKER_BUILD_DIR: /build
+  DOCKER_CARGO_HOME: /tmp/.cargo
+  CMAKE_INSTALL: true
+  LLD_INSTALL: true
+
+jobs:
+  try-runtime:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v4
+
+      - name: Set up deps cache
+        run: mkdir deps
+
+      - name: Restore main cache
+        if: ${{ !env.ACT && inputs.CACHING_MODE == 'CACHE_RESTORE' }}
+        uses: buildjet/cache/restore@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            deps/
+          key: try-runtime-cache
+
+      - name: Set docker env vars
+        run: |
+          echo "USER_ID=$(id -u)" >> $GITHUB_ENV
+          echo "GRP_ID=$(id -g)" >> $GITHUB_ENV
+
+      - name: Cargo build zkv-runtime
+        run: ${{ env.DOCKER_COMPOSE_CMD }} cargo build -p zkv-runtime --release --features try-runtime
+
+      - name: Save zkv-runtime cache
+        if: ${{ !env.ACT && inputs.CACHING_MODE == 'CACHE_SAVE' }}
+        uses: buildjet/cache/save@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            deps/
+          key: try-runtime-cache
+
+      - name: Execute try-runtime
+        run: |
+          ${{ env.DOCKER_COMPOSE_CMD }} curl -sL https://github.com/paritytech/try-runtime-cli/releases/download/v0.8.0/try-runtime-x86_64-unknown-linux-musl -o try-runtime
+          ${{ env.DOCKER_COMPOSE_CMD }} chmod +x try-runtime
+          ${{ env.DOCKER_COMPOSE_CMD }} ./try-runtime --runtime target/release/wbuild/zkv-runtime/zkv_runtime.compact.compressed.wasm on-runtime-upgrade --blocktime 6 --disable-mbm-checks --disable-spec-version-check live --uri wss://testnet-rpc.zkverify.io

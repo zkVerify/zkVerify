@@ -43,4 +43,5 @@ runtime-benchmarks = [
 	"test-service/runtime-benchmarks",
 	"sc-service/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
+	"zkv-runtime/runtime-benchmarks"
 ]

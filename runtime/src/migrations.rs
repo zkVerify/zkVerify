@@ -22,6 +22,7 @@ mod migrate_change_vk_format {
 
     use super::*;
 
+    #[allow(dead_code)]
     pub struct RemoveUltraplonkVks;
 
     #[cfg(feature = "try-runtime")]
@@ -154,4 +155,4 @@ pub mod migrate_staking_to_bags_list {
     }
 }
 
-pub type Unreleased = migrate_change_vk_format::RemoveUltraplonkVks;
+pub type Unreleased = ();

@@ -48,6 +48,7 @@ if [ -n "${CARGO_BINARIES_INSTALL}" ]; then
   for binary in $(tr "," " " <<< "${CARGO_BINARIES_INSTALL}"); do
     cargo install --force "${binary}" || fn_die "ERROR: Failed to install cargo binary: ${binary}"
   done
+  PATH=$PATH:"${CARGO_HOME}/bin"
 fi
 
 # Node.js install if required

@@ -22,4 +22,10 @@ sc-rpc-api = { workspace = true }
 
 [features]
 default = ["std"]
-std = ["sp-api/std", "aggregate-rpc-runtime-api/std"]
+std = [
+	"sp-api/std",
+	"aggregate-rpc-runtime-api/std",
+	"codec/std",
+	"sp-core/std",
+	"sp-runtime/std"
+]

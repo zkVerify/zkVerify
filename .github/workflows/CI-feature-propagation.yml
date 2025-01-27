@@ -1,0 +1,42 @@
+name: Feature Propagation 
+
+run-name: "Workflow CI/CD Steps: feature propagation"
+
+on:
+  workflow_call:
+
+env:
+  IMAGE_NAME: zencash/sc-ci-base
+  IMAGE_TAG: noble_rust-stable_latest
+  DOCKER_COMPOSE_CMD: "docker compose -f ${GITHUB_WORKSPACE}/ci/docker-compose.yml run --rm cargo-container"
+  DOCKER_BUILD_DIR: /build
+  DOCKER_CARGO_HOME: /tmp/.cargo
+  CARGO_BINARIES_INSTALL: "zepter"
+
+jobs:
+  feature-propagation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v4
+
+      - name: Set docker env vars
+        run: |
+          echo "USER_ID=$(id -u)" >> $GITHUB_ENV
+          echo "GRP_ID=$(id -g)" >> $GITHUB_ENV
+
+      - name: Features
+        shell: bash
+        run: ${{ env.DOCKER_COMPOSE_CMD }} zepter run --config .cargo/zepter-ci.yaml | tee features_output.txt
+
+      - name: Upload output(s)
+        if: ${{ !env.ACT }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: feature-propagation-output
+          path: |
+            features_output.txt
+          if-no-files-found: warn
+          retention-days: 1
+          compression-level: 0
+          overwrite: true
