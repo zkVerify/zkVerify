@@ -35,6 +35,7 @@ pub mod pallet_im_online;
 #[cfg(feature = "relay")]
 pub mod pallet_message_queue;
 pub mod pallet_multisig;
+pub mod pallet_plonky2_verifier;
 pub mod pallet_poe;
 pub mod pallet_preimage;
 pub mod pallet_proofofsql_verifier;
