@@ -1,19 +1,23 @@
+///! Verification Key to be morphed into `plonky2` variant.
+
 use crate::Config;
 use alloc::vec::Vec;
-use codec::{Decode, Encode, MaxEncodedLen};
+
 use core::marker::PhantomData;
+
+use codec::{Decode, Encode, MaxEncodedLen};
 use educe::Educe;
 use frame_support::pallet_prelude::TypeInfo;
 
 #[derive(Copy, Clone, Debug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
-pub enum Plonky2SystemConfig {
-    Keccak,   // preset Keccak over Goldilocks config available in `plonky2`
-    Poseidon, // preset Poseidon over Goldilocks config available in `plonky2`
+pub enum Plonky2Config {
+    Keccak,
+    Poseidon,
 }
 
-impl Default for Plonky2SystemConfig {
+impl Default for Plonky2Config {
     fn default() -> Self {
-        Plonky2SystemConfig::Poseidon
+        Plonky2Config::Poseidon
     }
 }
 
@@ -22,32 +26,51 @@ impl Default for Plonky2SystemConfig {
 #[derive(Educe, Encode, Decode, TypeInfo)]
 #[educe(Clone, Debug, PartialEq)]
 #[scale_info(skip_type_params(T))]
-pub struct VerificationKeyWithSystemConfig<T> {
-    pub system_config: Plonky2SystemConfig,
-    pub vk_serialized: Vec<u8>,
+pub struct VkWithConfig<T> {
+    pub config: Plonky2Config,
+    pub bytes: Vec<u8>,
     _marker: PhantomData<T>,
 }
 
-impl<T: Config> MaxEncodedLen for VerificationKeyWithSystemConfig<T> {
+impl<T: Config> MaxEncodedLen for VkWithConfig<T> {
     fn max_encoded_len() -> usize {
-        Plonky2SystemConfig::max_encoded_len() + T::max_vk_size() as usize
+        Plonky2Config::max_encoded_len() + T::max_vk_size() as usize
     }
 }
 
-impl<T: Config> Default for VerificationKeyWithSystemConfig<T> {
+impl From<Plonky2Config> for plonky2_verifier::Plonky2Config{
+    fn from(config: Plonky2Config) -> Self {
+        match config{
+            Plonky2Config::Keccak => plonky2_verifier::Plonky2Config::Keccak,
+            Plonky2Config::Poseidon => plonky2_verifier::Plonky2Config::Poseidon,
+        }
+    }
+}
+
+impl<T: Config> From<VkWithConfig<T>> for plonky2_verifier::Vk{
+    fn from(vk: VkWithConfig<T>) -> Self {
+        Self{
+            config: vk.config.into(),
+            bytes: vk.bytes,
+        }
+    }
+}
+
+impl<T: Config> Default for VkWithConfig<T> {
     fn default() -> Self {
         Self {
-            system_config: Plonky2SystemConfig::default(),
-            vk_serialized: Vec::default(),
+            config: Plonky2Config::default(),
+            bytes: Vec::default(),
             _marker: PhantomData,
         }
     }
 }
 
-impl<T: Config> VerificationKeyWithSystemConfig<T> {
+impl<T: Config> VkWithConfig<T> {
+    #[allow(dead_code)] // used in resources.rs
     pub(crate) fn from_default_with_bytes(bytes: Vec<u8>) -> Self {
         Self {
-            vk_serialized: bytes,
+             bytes,
             ..Default::default()
         }
     }

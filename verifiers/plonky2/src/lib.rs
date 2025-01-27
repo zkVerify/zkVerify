@@ -1,19 +1,20 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 extern crate alloc;
 
-pub use crate::vk::{Plonky2SystemConfig, VerificationKeyWithSystemConfig};
+pub use crate::vk::{Plonky2Config, VkWithConfig};
 use alloc::vec::Vec;
 use core::marker::PhantomData;
 use frame_support::__private::Get;
 use frame_support::ensure;
-use frame_support::traits::ConstU32;
 use frame_support::weights::Weight;
 use hp_verifiers::{Cow, Verifier, VerifyError};
-use plonky2_verifier::validate::{validate_vk_default_keccak, validate_vk_default_poseidon};
-use plonky2_verifier::{verify_default_keccak, verify_default_poseidon};
+use plonky2_verifier::validate::validate_vk;
+use plonky2_verifier::verify;
+
+#[cfg(any(test, feature = "runtime-benchmarks"))]
+mod resources;
 
 pub mod benchmarking;
-mod resources;
 pub(crate) mod verifier_should;
 mod vk;
 mod weight;
@@ -22,11 +23,11 @@ pub use weight::WeightInfo;
 
 pub type Pubs = Vec<u8>;
 pub type Proof = Vec<u8>;
-pub type Vk<T> = VerificationKeyWithSystemConfig<T>;
+pub type Vk<T> = VkWithConfig<T>;
 
 impl<T: Config> Vk<T> {
     pub fn validate_size(&self) -> Result<(), VerifyError> {
-        match self.vk_serialized.len() < T::max_vk_size() as usize {
+        match self.bytes.len() < T::max_vk_size() as usize {
             true => Ok(()),
             false => Err(VerifyError::InvalidVerificationKey),
         }
@@ -82,25 +83,21 @@ impl<T: Config> Verifier for Plonky2<T> {
             hp_verifiers::VerifyError::InvalidInput
         );
         vk.validate_size()?;
-        match vk.system_config {
-            Plonky2SystemConfig::Keccak => {
-                verify_default_keccak(&vk.vk_serialized, raw_proof, raw_pubs)
-            }
-            Plonky2SystemConfig::Poseidon => {
-                verify_default_poseidon(&vk.vk_serialized, raw_proof, raw_pubs)
-            }
-        }
-        .map_err(|e| log::debug!("Proof verification failed: {:?}", e))
+
+        let vk = plonky2_verifier::Vk::from(vk.clone());
+
+        verify(&vk, &raw_proof, &raw_pubs)
+        .inspect_err(|e| log::debug!("Proof verification failed: {:?}", e))
         .map_err(|_| VerifyError::VerifyError)
     }
 
     fn validate_vk(vk: &Self::Vk) -> Result<(), VerifyError> {
         vk.validate_size()?;
-        match vk.system_config {
-            Plonky2SystemConfig::Keccak => validate_vk_default_keccak(&vk.vk_serialized),
-            Plonky2SystemConfig::Poseidon => validate_vk_default_poseidon(&vk.vk_serialized),
-        }
-        .map_err(|e| log::debug!("VK validation failed: {:?}", e))
+
+        let vk = plonky2_verifier::Vk::from(vk.clone());
+
+        validate_vk(&vk)
+        .inspect_err(|e| log::debug!("VK validation failed: {:?}", e))
         .map_err(|_| VerifyError::InvalidVerificationKey)
     }
 

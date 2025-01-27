@@ -61,12 +61,11 @@ mod reject {
 
     #[rstest]
     fn should_not_validate_corrupted_vk(valid_test_data: TestData<MockConfig>) {
-        let mut vk_bytes = valid_test_data.vk.vk_serialized.clone();
-
-        let len = vk_bytes.len();
-        vk_bytes[len - 1] = vk_bytes.last().unwrap().wrapping_add(1);
         let mut vk = valid_test_data.vk.clone();
-        vk.vk_serialized = vk_bytes;
+
+        if let Some(last_byte) = vk.bytes.last_mut() {
+            *last_byte = last_byte.wrapping_add(1);
+        }
 
         assert_err!(
             Plonky2::<MockConfig>::validate_vk(&vk),
