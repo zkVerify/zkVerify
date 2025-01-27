@@ -4,7 +4,6 @@
 extern crate alloc;
 
 use core::marker::PhantomData;
-use core::num;
 
 #[cfg(not(feature = "std"))]
 use alloc::vec::Vec;
@@ -39,7 +38,11 @@ pub struct Halo2<T>;
 #[derive(Educe, Encode, Decode, TypeInfo)]
 #[educe(Clone, Debug, PartialEq)]
 #[scale_info(skip_type_params(T))]
-pub struct ParamsAndVk<T>(Vec<u8>, PhantomData<T>);
+pub struct ParamsAndVk<T> {
+    pub params_bytes: Vec<u8>,
+    pub vk_bytes: Vec<u8>,
+    _t: PhantomData<T>,
+}
 
 // #[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
 // pub struct Fr(U256);
@@ -96,6 +99,7 @@ impl<T: Config> Verifier for Halo2<T> {
     }
 
     fn validate_vk(vk: &Self::Vk) -> Result<(), hp_verifiers::VerifyError> {
+        vk.validate_size()?;
         let _ = vk.decode()?;
 
         Ok(())
@@ -110,21 +114,44 @@ impl<T: Config> ParamsAndVk<T> {
     pub fn decode(
         &self,
     ) -> Result<(ParamsKZG<bn256::Bn256>, VerifyingKey<bn256::G1Affine>), VerifyError> {
-        let params_len = ParamsKZG::<bn256::Bn256>::bytes_length();
-        let params = ParamsKZG::<bn256::Bn256>::read(&mut &self.0[..params_len])
+        let params = ParamsKZG::<bn256::Bn256>::read(&mut &self.params_bytes[..])
             .map_err(|e| log::debug!("Invalid params: {:?}", e))
             .map_err(|_| VerifyError::InvalidVerificationKey)?;
-        let vk = VerifyingKey::<bn256::G1Affine>::read(
-            &mut &self.0[params_len..],
-            SerdeFormat::RawBytes,
-        )
-        .map_err(|e| log::debug!("Invalid verifying key: {:?}", e))
-        .map_err(|_| VerifyError::InvalidVerificationKey)?;
+        let vk =
+            VerifyingKey::<bn256::G1Affine>::read(&mut &self.vk_bytes[..], SerdeFormat::RawBytes)
+                .map_err(|e| log::debug!("Invalid verifying key: {:?}", e))
+                .map_err(|_| VerifyError::InvalidVerificationKey)?;
         Ok((params, vk))
     }
 
     pub fn validate_size(&self) -> Result<(), VerifyError> {
-        unimplemented!()
+        if self.params_bytes.len() != ParamsKZG::<bn256::Bn256>::bytes_length() {
+            return Err(VerifyError::InvalidVerificationKey);
+        }
+        if self.vk_bytes.len() > ParamsAndVk::<T>::max_encoded_len() {
+            return Err(VerifyError::InvalidVerificationKey);
+        }
+        Ok(())
+    }
+}
+
+impl<T: Config> ParamsAndVk<T> {
+    pub fn flatten(&self) -> Vec<u8> {
+        let mut bytes = Vec::<u8>::with_capacity(self.params_bytes.len() + self.vk_bytes.len());
+        bytes.extend_from_slice(&self.params_bytes);
+        bytes.extend_from_slice(&self.vk_bytes);
+        bytes
+    }
+
+    pub fn from_flattened(bytes: Vec<u8>) -> Result<Self, VerifyError> {
+        let params_len = ParamsKZG::<bn256::Bn256>::bytes_length();
+        let (left, right) = bytes.split_at(params_len);
+
+        Ok(Self {
+            params_bytes: left.to_vec(),
+            vk_bytes: right.to_vec(),
+            _t: PhantomData,
+        })
     }
 }
 
@@ -186,18 +213,22 @@ impl<T: Config> TryFrom<(ParamsKZG<bn256::Bn256>, VerifyingKey<bn256::G1Affine>)
                 .map_err(|_| VerifyError::InvalidVerificationKey)?;
         }
 
-        let mut bytes =
-            Vec::<u8>::with_capacity(ParamsKZG::<bn256::Bn256>::bytes_length() + vk.bytes_length());
+        let mut params_bytes = Vec::<u8>::with_capacity(ParamsKZG::<bn256::Bn256>::bytes_length());
+        let mut vk_bytes = Vec::<u8>::with_capacity(vk.bytes_length());
 
-        params.write(&mut bytes).unwrap();
-        vk.write(&mut bytes, SerdeFormat::RawBytes).unwrap();
-        Ok(Self(bytes, PhantomData))
+        params.write(&mut params_bytes).unwrap();
+        vk.write(&mut vk_bytes, SerdeFormat::RawBytes).unwrap();
+        Ok(Self {
+            params_bytes,
+            vk_bytes,
+            _t: PhantomData,
+        })
     }
 }
 
-impl<T> From<Vec<u8>> for ParamsAndVk<T> {
+impl<T: Config> From<Vec<u8>> for ParamsAndVk<T> {
     fn from(value: Vec<u8>) -> Self {
-        Self(value, PhantomData)
+        Self::from_flattened(value).unwrap()
     }
 }
 

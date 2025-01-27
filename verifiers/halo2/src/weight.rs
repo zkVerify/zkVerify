@@ -1,6 +1,5 @@
 //It contains just dummy weights for allowing the project to build. Later benchmarks will be run for generating proper values.
 
-
 #![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
 #![allow(unused_imports)]
