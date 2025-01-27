@@ -250,9 +250,9 @@ pub fn testnet_config() -> Result<ChainSpec, String> {
         WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?,
         Default::default(),
     )
-    .with_name("ZKV Testnet")
+    .with_name("zkVerify Testnet")
     .with_id("zkv_testnet")
-    .with_protocol_id("tacme")
+    .with_protocol_id("tzkv")
     .with_chain_type(ChainType::Live)
     .with_boot_nodes(vec![
         format!("/dns/{BOOTNODE_1_DNS}/tcp/30333/p2p/{BOOTNODE_1_PEER_ID}")
