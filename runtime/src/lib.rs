@@ -51,8 +51,11 @@ use frame_election_provider_support::{
 };
 
 use frame_support::genesis_builder_helper::{build_state, get_preset};
+use frame_support::traits::tokens::Precision::BestEffort;
 
 use frame_support::dispatch::DispatchResult;
+use frame_support::ensure;
+use frame_support::traits::fungible::MutateHold;
 pub use frame_support::{
     construct_runtime, derive_impl,
     dispatch::DispatchClass,
@@ -611,7 +614,13 @@ where
 }
 
 impl OnAggregate<Runtime> for Runtime {
-    fn on_aggregate(destination: Destination<Runtime>) -> DispatchResult {
+    fn on_aggregate(domain_id: u32, destination: Destination<Runtime>) -> DispatchResult {
+        /// TODO: define a way to set TIP
+        const RELAYER_TIP: u128 = 10_000;
+
+        /// TODO: Calculate how much this fee is
+        const HYPERBRIDGE_NON_REFUNDABLE_FEE: u128 = 10_000;
+
         match destination {
             Destination::None => Ok(()),
             Destination::Hyperbridge(params) => {
@@ -621,15 +630,53 @@ impl OnAggregate<Runtime> for Runtime {
                     dispatch_config,
                 } = params;
 
+                let domain = pallet_aggregate::Domains::<Runtime>::get(domain_id)
+                    .ok_or(pallet_aggregate::Error::<Runtime>::UnknownDomainId)?;
+
+                let owner_account = domain
+                    .owner
+                    .owner()
+                    .ok_or(frame_support::error::BadOrigin)?
+                    .clone();
+
+                let base_relayer_fee = dispatch_config
+                    .base_fee
+                    .saturating_mul(dispatch_config.gas_price);
+                let total_relayer_fee = base_relayer_fee.saturating_add(RELAYER_TIP);
+                let total_fee = total_relayer_fee.saturating_add(HYPERBRIDGE_NON_REFUNDABLE_FEE);
+
+                let held_amount = pallet_aggregate::DomainAmountDispatchFees::<Runtime>::get(
+                    domain_id,
+                    &owner_account,
+                );
+
+                ensure!(
+                    held_amount >= total_fee,
+                    pallet_aggregate::Error::<Runtime>::InsufficientHeldFundsDispatchFees
+                );
+
+                <Runtime as pallet_aggregate::Config>::Hold::release(
+                    &pallet_aggregate::HoldReason::DomainDispatchFee.into(),
+                    &owner_account,
+                    total_fee,
+                    BestEffort,
+                )?;
+
+                pallet_aggregate::DomainAmountDispatchFees::<Runtime>::insert(
+                    domain_id,
+                    &owner_account,
+                    held_amount.saturating_sub(total_fee),
+                );
+
                 pallet_hyperbridge_aggregations::Pallet::<Runtime>::dispatch_aggregation(
-                    frame_system::RawOrigin::Root.into(),
+                    frame_system::RawOrigin::Signed(owner_account).into(),
                     Params {
                         aggregation_id,
                         aggregation,
                         module: dispatch_config.destination_module,
                         destination: StateMachine::from(dispatch_config.destination_chain),
                         timeout: dispatch_config.timeout,
-                        fee: dispatch_config.base_fee,
+                        fee: total_fee,
                     },
                 )
             }

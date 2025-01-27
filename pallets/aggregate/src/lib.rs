@@ -243,6 +243,8 @@ pub mod pallet {
         InvalidDomainParams,
         /// Try to remove or hold a domain in a invalid state.
         InvalidDomainState,
+        /// Insufficient held funds to pay dispatch fee
+        InsufficientHeldFundsDispatchFees,
     }
 
     #[derive(Debug, Clone, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
@@ -296,11 +298,11 @@ pub mod pallet {
     /// Trait on aggregate
     pub trait OnAggregate<T: Config> {
         /// on aggregate method
-        fn on_aggregate(destination: Destination<T>) -> DispatchResult;
+        fn on_aggregate(domain_id: u32, destination: Destination<T>) -> DispatchResult;
     }
 
     impl<T: Config> OnAggregate<T> for () {
-        fn on_aggregate(_destination: Destination<T>) -> DispatchResult {
+        fn on_aggregate(_domain_id: u32, _destination: Destination<T>) -> DispatchResult {
             Ok(())
         }
     }
@@ -314,8 +316,10 @@ pub mod pallet {
         pub destination_module: H160,
         /// Relative from the current timestamp at which this request expires in seconds.
         pub timeout: u64,
-        /// Base fee for dispatch
+        /// Base fee for dispatch representing Proof verification cost + Message execution gas cost, in gas units in destination chain
         pub base_fee: BalanceOf<T>,
+        /// Gas price X where 1 TOKEN in destination chain = X ACMEs
+        pub gas_price: BalanceOf<T>,
     }
 
     impl<T: Config> fmt::Debug for DispatchConfig<T>
@@ -328,6 +332,7 @@ pub mod pallet {
                 .field("destination_module", &self.destination_module)
                 .field("timeout", &self.timeout)
                 .field("base_fee", &self.base_fee)
+                .field("gas_price", &self.gas_price)
                 .finish()
         }
     }
@@ -604,6 +609,8 @@ pub mod pallet {
         Aggregation,
         /// The funds are held as storage deposit for a domain registration.
         Domain,
+        /// The funds are held as storage deposit for dispatch fees for a given domain.
+        DomainDispatchFee,
     }
 
     /// Domains storage
@@ -615,6 +622,18 @@ pub mod pallet {
     #[pallet::storage]
     pub type Domains<T: Config> =
         StorageMap<Hasher = Blake2_128Concat, Key = u32, Value = Domain<T>>;
+
+    // Storage for held amounts per domain and account to pay dispatch fees
+    #[pallet::storage]
+    pub type DomainAmountDispatchFees<T: Config> = StorageDoubleMap<
+        _,
+        Blake2_128Concat,
+        u32, // domain_id
+        Blake2_128Concat,
+        T::AccountId,
+        BalanceOf<T>,
+        ValueQuery,
+    >;
 
     #[pallet::storage]
     #[pallet::getter(fn published)]
@@ -762,10 +781,11 @@ pub mod pallet {
                     destination_module: dispatch_config.destination_module,
                     timeout: dispatch_config.timeout,
                     base_fee: dispatch_config.base_fee,
+                    gas_price: dispatch_config.gas_price,
                 },
             });
 
-            T::OnAggregate::on_aggregate(destination)?;
+            T::OnAggregate::on_aggregate(domain_id, destination)?;
 
             Ok(Some(T::WeightInfo::aggregate(size)).into())
         }
@@ -902,6 +922,62 @@ pub mod pallet {
                     None => Err(Error::<T>::UnknownDomainId)?,
                 };
                 Ok::<_, DispatchError>(())
+            })?;
+
+            Ok(owner.post_info(None))
+        }
+
+        /// Set gas price for a given domain ID
+        /// Gas price is X in the following formula - 1 TOKEN in destination chain = X origin tokens
+        #[pallet::call_index(4)]
+        pub fn set_gas_price(
+            origin: OriginFor<T>,
+            domain_id: u32,
+            gas_price: BalanceOf<T>,
+        ) -> DispatchResultWithPostInfo {
+            let owner = User::<T::AccountId>::from_origin::<T>(origin)?;
+
+            Domains::<T>::try_mutate(domain_id, |domain| -> Result<(), DispatchError> {
+                let domain = domain.as_mut().ok_or(Error::<T>::UnknownDomainId)?;
+
+                if !owner.can_handle_domain::<T>(domain) {
+                    return Err(BadOrigin.into());
+                }
+
+                domain.dispatch_config.gas_price = gas_price;
+                Ok(())
+            })?;
+
+            Ok(owner.post_info(None))
+        }
+
+        /// Hold (lock) tokens to pay dispatch fees
+        /// Only the domain owner can call this extrinsic.
+        #[pallet::call_index(5)]
+        pub fn hold_tokens_dispatch_fee(
+            origin: OriginFor<T>,
+            domain_id: u32,
+            amount: BalanceOf<T>,
+        ) -> DispatchResultWithPostInfo {
+            let owner = User::<T::AccountId>::from_origin::<T>(origin)?;
+
+            Domains::<T>::try_mutate(domain_id, |domain| -> Result<(), DispatchError> {
+                let domain = domain.as_mut().ok_or(Error::<T>::UnknownDomainId)?;
+
+                if !owner.can_handle_domain::<T>(domain) {
+                    return Err(BadOrigin.into());
+                }
+
+                let account = match &owner {
+                    User::Owner(account) => account,
+                    _ => return Err(BadOrigin.into()),
+                };
+
+                T::Hold::hold(&HoldReason::DomainDispatchFee.into(), account, amount)?;
+
+                DomainAmountDispatchFees::<T>::insert(domain_id, account, amount);
+
+                Ok(())
             })?;
 
             Ok(owner.post_info(None))

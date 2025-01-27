@@ -132,4 +132,12 @@ impl<T: frame_system::Config> pallet_aggregate::WeightInfo for ZKVWeight<T> {
             .saturating_add(T::DbWeight::get().reads(1_u64))
             .saturating_add(T::DbWeight::get().writes(1_u64))
     }
+
+    fn set_gas_price() -> Weight {
+        Weight::from_parts(13_444_000, 177995)
+    }
+
+    fn hold_tokens_dispatch_fee() -> Weight {
+        Weight::from_parts(13_444_000, 177995)
+    }
 }

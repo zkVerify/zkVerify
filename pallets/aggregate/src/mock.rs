@@ -90,6 +90,10 @@ impl MockWeightInfo {
     pub const AGG_NO_DOMAIN_PROOF_SIZE: u64 = 1_000_024;
     pub const AGG_NO_ID_REF_TIME: u64 = 1_001_042;
     pub const AGG_NO_ID_PROOF_SIZE: u64 = 1_001_024;
+    pub const GAS_PRICE_REF_TIME: u64 = 142;
+    pub const GAS_PRICE_PROOF_SIZE: u64 = 124;
+    pub const HOLD_TOKENS_REF_TIME: u64 = 142;
+    pub const HOLD_TOKENS_PROOF_SIZE: u64 = 124;
 }
 
 impl crate::WeightInfo for MockWeightInfo {
@@ -120,11 +124,25 @@ impl crate::WeightInfo for MockWeightInfo {
     }
 
     fn unregister_domain() -> frame_support::weights::Weight {
-        frame_support::weights::Weight::from_parts(Self::UNR_REF_TIME, Self::UNR_PROOF_SIZE)
+        frame_support::weights::Weight::from_parts(Self::GAS_PRICE_REF_TIME, Self::UNR_PROOF_SIZE)
     }
 
     fn hold_domain() -> frame_support::weights::Weight {
         frame_support::weights::Weight::from_parts(Self::HOLD_REF_TIME, Self::HOLD_PROOF_SIZE)
+    }
+
+    fn set_gas_price() -> frame_support::weights::Weight {
+        frame_support::weights::Weight::from_parts(
+            Self::GAS_PRICE_REF_TIME,
+            Self::GAS_PRICE_PROOF_SIZE,
+        )
+    }
+
+    fn hold_tokens_dispatch_fee() -> frame_support::weights::Weight {
+        frame_support::weights::Weight::from_parts(
+            Self::HOLD_TOKENS_REF_TIME,
+            Self::HOLD_TOKENS_PROOF_SIZE,
+        )
     }
 }
 
@@ -355,6 +373,7 @@ pub fn test() -> sp_io::TestExternalities {
         destination_module: H160::default(),
         timeout: 100,
         base_fee: 100u32.into(),
+        gas_price: 10u32.into(),
     };
 
     ext.execute_with(|| {

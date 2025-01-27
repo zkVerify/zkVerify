@@ -54,6 +54,7 @@ pub mod utils {
             destination_module: H160::default(),
             timeout: 100,
             base_fee: 100u32.into(),
+            gas_price: 10u32.into(),
         };
 
         let domain = Domain::<T>::try_create(
@@ -159,6 +160,7 @@ mod benchmarks {
             destination_module: H160::default(),
             timeout: 100,
             base_fee: 100u32.into(),
+            gas_price: 10u32.into(),
         };
 
         #[extrinsic_call]

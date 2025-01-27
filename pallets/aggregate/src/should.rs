@@ -74,6 +74,7 @@ fn get_dispatch_config() -> DispatchConfig<Test> {
         destination_module: H160::default(),
         timeout: 100,
         base_fee: 100u32.into(),
+        gas_price: 10u32.into(),
     }
 }
 
@@ -757,19 +758,19 @@ mod register_domain {
         );
 
         // Fixture max
-        assert_eq!(Domain::<Test>::max_encoded_len(), 61391);
+        assert_eq!(Domain::<Test>::max_encoded_len(), 61407);
 
         // Fixtures
         assert_eq!(
-            1415,
+            1431,
             Domain::<Test>::compute_encoded_size(1, MaxPendingPublishQueueSize::get())
         );
         assert_eq!(
-            7301,
+            7317,
             Domain::<Test>::compute_encoded_size(MaxAggregationSize::get(), 1)
         );
         assert_eq!(
-            16415,
+            16431,
             Domain::<Test>::compute_encoded_size(
                 MaxAggregationSize::get() / 2,
                 MaxPendingPublishQueueSize::get() / 2
