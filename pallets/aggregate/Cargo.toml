@@ -52,7 +52,8 @@ std = [
 	"log/std",
 	"pallet-balances/std",
 	"sp-io/std",
-	"sp-std/std"
+	"sp-std/std",
+	"ismp/std",
 ]
 try-runtime = [
 	"frame-support/try-runtime",

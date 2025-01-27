@@ -746,7 +746,7 @@ pub mod pallet {
                     destination_chain: dispatch_config.destination_chain.clone(),
                     destination_module: dispatch_config.destination_module,
                     timeout: dispatch_config.timeout,
-                    base_fee: dispatch_config.base_fee.clone(),
+                    base_fee: dispatch_config.base_fee,
                 },
             });
 
