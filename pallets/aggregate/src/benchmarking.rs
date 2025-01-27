@@ -50,7 +50,6 @@ pub mod utils {
             .unwrap();
 
         let dispatch_config = DispatchConfig {
-            dispatcher_type: DispatcherType::Hyperbridge,
             destination_chain: BoundedStateMachine::Evm(11155111),
             destination_module: H160::default(),
             timeout: 100,
@@ -160,7 +159,6 @@ mod benchmarks {
             RawOrigin::Signed(caller),
             <T as Config>::AggregationSize::get(),
             Some(<T as Config>::MaxPendingPublishQueueSize::get()),
-            DispatcherType::Hyperbridge,
             BoundedStateMachine::Evm(11155111),
             H160::default(),
             100,

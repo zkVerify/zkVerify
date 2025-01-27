@@ -101,28 +101,6 @@ pub mod pallet {
         }
     }
 
-    /// This trait define how the pallet dispatches aggregation to Hyperbridge
-    pub trait AggregationDispatcher<T: Config> {
-        /// Given a few params, dispatch aggregation to Hyperbridge
-        fn dispatch_aggregation(
-            origin: OriginFor<T>,
-            aggregation_id: u64,
-            aggregation: H256,
-            domain_id: u32,
-        ) -> DispatchResult;
-    }
-
-    impl<T: Config> AggregationDispatcher<T> for () {
-        fn dispatch_aggregation(
-            _origin: OriginFor<T>,
-            _aggregation_id: u64,
-            _aggregation: H256,
-            _domain_id: u32,
-        ) -> DispatchResult {
-            Ok(())
-        }
-    }
-
     #[pallet::config]
     pub trait Config: frame_system::Config + scale_info::TypeInfo {
         /// Because this pallet emits events, it depends on the runtime's definition of an event.
@@ -161,8 +139,8 @@ pub mod pallet {
         /// The weight definition for this pallet
         #[cfg(feature = "runtime-benchmarks")]
         type Currency: frame_support::traits::fungible::Mutate<AccountOf<Self>>;
-        /// Aggregation handler
-        type HyperbridgeAggregationHandler: AggregationDispatcher<Self>;
+        /// Handler for when an aggregation is completed
+        type OnAggregate: OnAggregate<Self>;
     }
 
     impl<T: Config> OnProofVerified<<T as frame_system::Config>::AccountId> for Pallet<T> {
@@ -292,17 +270,55 @@ pub mod pallet {
         },
     }
 
+    /// Params to dispatch hyperbridge message
+    #[derive(Clone, Encode, Decode, TypeInfo, PartialEq, Eq, RuntimeDebug)]
+    pub struct HyperBridgeDispatchParameters<T: Config> {
+        /// Attestation id
+        pub aggregation_id: u64,
+
+        /// Attestation of Merkle tree
+        pub aggregation: H256,
+
+        /// Dispatch config
+        pub dispatch_config: DispatchConfig<T>,
+    }
+
     /// Dispatcher types that can be used
     #[derive(Debug, Clone, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
-    pub enum DispatcherType {
+    pub enum Destination<T: Config> {
+        /// No destination
+        None,
         /// Hyperbridge dispatcher
-        Hyperbridge,
-        /// Attestation bot
-        AttestationBot,
+        Hyperbridge(HyperBridgeDispatchParameters<T>),
+    }
+
+    /// Trait on aggregate
+    pub trait OnAggregate<T: Config> {
+        /// on aggregate method
+        fn on_aggregate(destination: Destination<T>) -> DispatchResult;
+    }
+
+    impl<T: Config> OnAggregate<T> for () {
+        fn on_aggregate(_destination: Destination<T>) -> DispatchResult {
+            Ok(())
+        }
+    }
+
+    /// Configuration for dispatching aggregations
+    #[derive(Debug, Clone, PartialEq, Eq, Encode, Decode, TypeInfo, MaxEncodedLen)]
+    pub struct DispatchConfig<T: Config> {
+        /// The destination state machine
+        pub destination_chain: BoundedStateMachine,
+        /// Module identifier of the receiving module
+        pub destination_module: H160,
+        /// Relative from the current timestamp at which this request expires in seconds.
+        pub timeout: u64,
+        /// Base fee for dispatch
+        pub base_fee: BalanceOf<T>,
     }
 
     /// Bounded version for State Machine
-    #[derive(Debug, Clone, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
+    #[derive(Debug, Clone, PartialEq, Eq, Encode, Decode, TypeInfo, MaxEncodedLen)]
     pub enum BoundedStateMachine {
         /// Evm state machines
         #[codec(index = 0)]
@@ -331,21 +347,6 @@ pub mod pallet {
                 BoundedStateMachine::Tendermint(id) => StateMachine::Tendermint(id),
             }
         }
-    }
-
-    /// Configuration for dispatching aggregations
-    #[derive(Debug, Clone, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
-    pub struct DispatchConfig<T: Config> {
-        /// Type of dispatcher to use
-        pub dispatcher_type: DispatcherType,
-        /// The destination state machine
-        pub destination_chain: BoundedStateMachine,
-        /// Module identifier of the receiving module
-        pub destination_module: H160,
-        /// Relative from the current timestamp at which this request expires in seconds.
-        pub timeout: u64,
-        /// Base fee for dispatch
-        pub base_fee: BalanceOf<T>,
     }
 
     #[pallet::event]
@@ -735,12 +736,21 @@ pub mod pallet {
                 receipt: root,
             });
 
-            T::HyperbridgeAggregationHandler::dispatch_aggregation(
-                origin,
+            let domain = Domains::<T>::get(domain_id).ok_or(Error::<T>::UnknownDomainId)?;
+            let dispatch_config = &domain.dispatch_config;
+
+            let destination = Destination::Hyperbridge(HyperBridgeDispatchParameters {
                 aggregation_id,
-                root,
-                domain_id,
-            )?;
+                aggregation: root,
+                dispatch_config: DispatchConfig {
+                    destination_chain: dispatch_config.destination_chain.clone(),
+                    destination_module: dispatch_config.destination_module,
+                    timeout: dispatch_config.timeout,
+                    base_fee: dispatch_config.base_fee.clone(),
+                },
+            });
+
+            T::OnAggregate::on_aggregate(destination)?;
 
             Ok(Some(T::WeightInfo::aggregate(size)).into())
         }
@@ -762,7 +772,6 @@ pub mod pallet {
             origin: OriginFor<T>,
             aggregation_size: AggregationSize,
             queue_size: Option<u32>,
-            dispatcher_type: DispatcherType,
             destination_chain: BoundedStateMachine,
             destination_module: H160,
             timeout: u64,
@@ -788,7 +797,6 @@ pub mod pallet {
                 .transpose()?;
 
             let dispatch_config = DispatchConfig {
-                dispatcher_type,
                 destination_chain,
                 destination_module,
                 timeout,

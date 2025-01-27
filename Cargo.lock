@@ -8325,7 +8325,6 @@ dependencies = [
  "ismp",
  "ismp-grandpa",
  "log",
- "pallet-aggregate",
  "pallet-balances",
  "pallet-ismp 15.0.0",
  "pallet-timestamp",

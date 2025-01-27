@@ -568,7 +568,6 @@ mod register_domain {
                 Origin::Signed(USER_DOMAIN_1).into(),
                 16,
                 Some(8),
-                DispatcherType::Hyperbridge,
                 BoundedStateMachine::Evm(11155111),
                 H160::default(),
                 100,
@@ -581,10 +580,6 @@ mod register_domain {
             assert_eq!(registered_id, domain.id);
             assert_eq!(16, domain.max_aggregation_size);
             assert_eq!(8, domain.publish_queue_size);
-            assert_eq!(
-                DispatcherType::Hyperbridge,
-                domain.dispatch_config.dispatcher_type
-            );
             assert_eq!(
                 BoundedStateMachine::Evm(11155111),
                 domain.dispatch_config.destination_chain
@@ -608,7 +603,6 @@ mod register_domain {
                 Origin::Signed(USER_DOMAIN_1).into(),
                 values[0].0,
                 values[0].1,
-                DispatcherType::Hyperbridge,
                 BoundedStateMachine::Evm(11155111),
                 H160::default(),
                 100,
@@ -618,7 +612,6 @@ mod register_domain {
                 Origin::Signed(USER_DOMAIN_1).into(),
                 values[1].0,
                 values[1].1,
-                DispatcherType::Hyperbridge,
                 BoundedStateMachine::Evm(11155111),
                 H160::default(),
                 100,
@@ -628,7 +621,6 @@ mod register_domain {
                 Origin::Signed(USER_DOMAIN_1).into(),
                 values[2].0,
                 values[2].1,
-                DispatcherType::Hyperbridge,
                 BoundedStateMachine::Evm(11155111),
                 H160::default(),
                 100,
@@ -651,10 +643,6 @@ mod register_domain {
                 assert_eq!(id, domain.id);
                 assert_eq!(aggregation_size, domain.max_aggregation_size);
                 assert_eq!(queue_size, domain.publish_queue_size);
-                assert_eq!(
-                    DispatcherType::Hyperbridge,
-                    domain.dispatch_config.dispatcher_type
-                );
                 assert_eq!(
                     BoundedStateMachine::Evm(11155111),
                     domain.dispatch_config.destination_chain
@@ -682,7 +670,6 @@ mod register_domain {
                 Origin::Signed(USER_DOMAIN_1).into(),
                 MaxAggregationSize::get(),
                 Some(MaxPendingPublishQueueSize::get()),
-                DispatcherType::Hyperbridge,
                 BoundedStateMachine::Evm(11155111),
                 H160::default(),
                 100,
@@ -694,7 +681,6 @@ mod register_domain {
                     Origin::Signed(USER_DOMAIN_1).into(),
                     0,
                     Some(MaxPendingPublishQueueSize::get()),
-                    DispatcherType::Hyperbridge,
                     BoundedStateMachine::Evm(11155111),
                     H160::default(),
                     100,
@@ -707,7 +693,6 @@ mod register_domain {
                     Origin::Signed(USER_DOMAIN_1).into(),
                     MaxAggregationSize::get() + 1,
                     Some(MaxPendingPublishQueueSize::get()),
-                    DispatcherType::Hyperbridge,
                     BoundedStateMachine::Evm(11155111),
                     H160::default(),
                     100,
@@ -720,7 +705,6 @@ mod register_domain {
                     Origin::Signed(USER_DOMAIN_1).into(),
                     MaxAggregationSize::get(),
                     Some(MaxPendingPublishQueueSize::get() + 1),
-                    DispatcherType::Hyperbridge,
                     BoundedStateMachine::Evm(11155111),
                     H160::default(),
                     100,
@@ -738,7 +722,6 @@ mod register_domain {
                 Origin::Signed(USER_DOMAIN_1).into(),
                 16,
                 None,
-                DispatcherType::Hyperbridge,
                 BoundedStateMachine::Evm(11155111),
                 H160::default(),
                 100,
@@ -768,7 +751,6 @@ mod register_domain {
                 Origin::Signed(ROOT_USER).into(),
                 16,
                 None,
-                DispatcherType::Hyperbridge,
                 BoundedStateMachine::Evm(11155111),
                 H160::default(),
                 100,
@@ -796,19 +778,19 @@ mod register_domain {
         );
 
         // Fixture max
-        assert_eq!(Domain::<Test>::max_encoded_len(), 61392);
+        assert_eq!(Domain::<Test>::max_encoded_len(), 61391);
 
         // Fixtures
         assert_eq!(
-            1416,
+            1415,
             Domain::<Test>::compute_encoded_size(1, MaxPendingPublishQueueSize::get())
         );
         assert_eq!(
-            7302,
+            7301,
             Domain::<Test>::compute_encoded_size(MaxAggregationSize::get(), 1)
         );
         assert_eq!(
-            16416,
+            16415,
             Domain::<Test>::compute_encoded_size(
                 MaxAggregationSize::get() / 2,
                 MaxPendingPublishQueueSize::get() / 2
@@ -824,7 +806,6 @@ mod register_domain {
                     Origin::Signed(USER_DOMAIN_ERROR_NEW).into(),
                     16,
                     None,
-                    DispatcherType::Hyperbridge,
                     BoundedStateMachine::Evm(11155111),
                     H160::default(),
                     100,
@@ -843,7 +824,6 @@ mod register_domain {
                     Origin::Signed(USER_DOMAIN_1).into(),
                     16,
                     None,
-                    DispatcherType::Hyperbridge,
                     BoundedStateMachine::Evm(11155111),
                     H160::default(),
                     100,
@@ -864,7 +844,6 @@ mod register_domain {
                     Origin::Signed(ROOT_USER).into(),
                     16,
                     None,
-                    DispatcherType::Hyperbridge,
                     BoundedStateMachine::Evm(11155111),
                     H160::default(),
                     100,
@@ -882,7 +861,6 @@ mod register_domain {
         let info = Call::<Test>::register_domain {
             aggregation_size: 16,
             queue_size: Some(8),
-            dispatcher_type: DispatcherType::Hyperbridge,
             destination_chain: BoundedStateMachine::Evm(11155111),
             destination_module: H160::default(),
             timeout: 100,
@@ -996,7 +974,6 @@ mod hold_domain {
                     USER_DOMAIN_2,
                     16,
                     None,
-                    DispatcherType::Hyperbridge,
                     BoundedStateMachine::Evm(11155111),
                     H160::default(),
                     100,
@@ -1091,7 +1068,6 @@ mod unregister_domain {
             user,
             16,
             None,
-            DispatcherType::Hyperbridge,
             BoundedStateMachine::Evm(11155111),
             H160::default(),
             100,
@@ -1193,7 +1169,6 @@ mod unregister_domain {
                 origin.clone().into(),
                 16,
                 None,
-                DispatcherType::Hyperbridge,
                 BoundedStateMachine::Evm(11155111),
                 H160::default(),
                 100,

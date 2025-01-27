@@ -252,7 +252,7 @@ mod mock {
         type WeightInfo = ();
         const AGGREGATION_SIZE: u32 = 32;
         type Currency = Balances;
-        type HyperbridgeAggregationHandler = ();
+        type OnAggregate = ();
     }
 
     /// Build genesis storage according to the mock runtime.

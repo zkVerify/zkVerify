@@ -32,7 +32,7 @@ use sp_runtime::{traits::IdentityLookup, BuildStorage, Perbill};
 
 use crate::{
     AggregationSize, BalanceOf, BoundedStateMachine, CallOf, ComputePublisherTip, DispatchConfig,
-    DispatcherType, Domains,
+    Domains,
 };
 
 parameter_types! {
@@ -274,7 +274,7 @@ impl crate::Config for Test {
     const AGGREGATION_SIZE: u32 = MaxAggregationSize::get() as u32;
     #[cfg(feature = "runtime-benchmarks")]
     type Currency = Balances;
-    type HyperbridgeAggregationHandler = ();
+    type OnAggregate = ();
 }
 
 // Configure a mock runtime to test the pallet.
@@ -351,7 +351,6 @@ pub fn test() -> sp_io::TestExternalities {
     let mut ext = sp_io::TestExternalities::from(t);
 
     let dispatch_config = DispatchConfig {
-        dispatcher_type: DispatcherType::Hyperbridge,
         destination_chain: BoundedStateMachine::Evm(11155111),
         destination_module: H160::default(),
         timeout: 100,

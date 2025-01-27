@@ -25,7 +25,6 @@ ismp = { workspace = true }
 pallet-ismp = { workspace = true }
 pallet-timestamp = { workspace = true }
 pallet-balances = { workspace = true }
-pallet-aggregate = { workspace = true }
 anyhow = { workspace = true, default-features = false }
 hex-literal = { workspace = true }
 alloy-dyn-abi = { workspace = true }

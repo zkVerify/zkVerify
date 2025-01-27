@@ -52,6 +52,7 @@ use frame_election_provider_support::{
 
 use frame_support::genesis_builder_helper::{build_state, get_preset};
 
+use frame_support::dispatch::DispatchResult;
 pub use frame_support::{
     construct_runtime, derive_impl,
     dispatch::DispatchClass,
@@ -609,6 +610,33 @@ where
     }
 }
 
+impl OnAggregate<Runtime> for Runtime {
+    fn on_aggregate(destination: Destination<Runtime>) -> DispatchResult {
+        match destination {
+            Destination::None => Ok(()),
+            Destination::Hyperbridge(params) => {
+                let HyperBridgeDispatchParameters {
+                    aggregation_id,
+                    aggregation,
+                    dispatch_config,
+                } = params;
+
+                pallet_hyperbridge_aggregations::Pallet::<Runtime>::dispatch_aggregation(
+                    frame_system::RawOrigin::Root.into(), // or whatever origin you want to use
+                    Params {
+                        aggregation_id,
+                        aggregation,
+                        module: dispatch_config.destination_module,
+                        destination: StateMachine::from(dispatch_config.destination_chain),
+                        timeout: dispatch_config.timeout,
+                        fee: dispatch_config.base_fee,
+                    },
+                )
+            }
+        }
+    }
+}
+
 impl pallet_aggregate::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type RuntimeHoldReason = RuntimeHoldReason;
@@ -639,7 +667,7 @@ impl pallet_aggregate::Config for Runtime {
     #[cfg(feature = "runtime-benchmarks")]
     type Currency = Balances;
 
-    type HyperbridgeAggregationHandler = pallet_hyperbridge_aggregations::Pallet<Runtime>;
+    type OnAggregate = Self;
 }
 
 parameter_types! {
@@ -1346,7 +1374,8 @@ use polkadot_primitives::{
     ValidationCodeHash, ValidatorId, ValidatorIndex, PARACHAIN_KEY_TYPE_ID,
 };
 
-use pallet_hyperbridge_aggregations::ZKV_MODULE_ID;
+use pallet_aggregate::{Destination, HyperBridgeDispatchParameters, OnAggregate};
+use pallet_hyperbridge_aggregations::{Params, ZKV_MODULE_ID};
 #[cfg(feature = "relay")]
 pub use polkadot_runtime_parachains::runtime_api_impl::{
     v10 as parachains_runtime_api_impl, vstaging as parachains_staging_runtime_api_impl,
