@@ -50,6 +50,7 @@ pub use benchmarking::utils::*;
 #[frame_support::pallet]
 pub mod pallet {
     use core::ops::Deref;
+    use sp_std::fmt;
 
     pub use crate::data::AggregationSize;
     use crate::data::{DomainState, StatementEntry, User};
@@ -305,7 +306,7 @@ pub mod pallet {
     }
 
     /// Configuration for dispatching aggregations
-    #[derive(Debug, Clone, PartialEq, Eq, Encode, Decode, TypeInfo, MaxEncodedLen)]
+    #[derive(Clone, PartialEq, Eq, Encode, Decode, TypeInfo, MaxEncodedLen)]
     pub struct DispatchConfig<T: Config> {
         /// The destination state machine
         pub destination_chain: BoundedStateMachine,
@@ -315,6 +316,20 @@ pub mod pallet {
         pub timeout: u64,
         /// Base fee for dispatch
         pub base_fee: BalanceOf<T>,
+    }
+
+    impl<T: Config> fmt::Debug for DispatchConfig<T>
+    where
+        BalanceOf<T>: fmt::Debug,
+    {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            f.debug_struct("DispatchConfig")
+                .field("destination_chain", &self.destination_chain)
+                .field("destination_module", &self.destination_module)
+                .field("timeout", &self.timeout)
+                .field("base_fee", &self.base_fee)
+                .finish()
+        }
     }
 
     /// Bounded version for State Machine
@@ -763,7 +778,6 @@ pub mod pallet {
         ///
         /// - aggregation_size: The size of the aggregation, in other words how many statements any aggregation have.
         /// - queue_size: The maximum number of aggregations that can be in the queue for this domain.
-        /// - dispatcher_type: An enum representing a dispatcher type.
         /// - destination_chain: Bounded version of StateMachine representing a receiving State Machine.
         /// - destination_module: Module identifier of the receiving module.
         /// - timeout: Relative from the current timestamp at which this request expires in seconds.
@@ -772,10 +786,7 @@ pub mod pallet {
             origin: OriginFor<T>,
             aggregation_size: AggregationSize,
             queue_size: Option<u32>,
-            destination_chain: BoundedStateMachine,
-            destination_module: H160,
-            timeout: u64,
-            base_fee: BalanceOf<T>,
+            dispatch_config: DispatchConfig<T>,
         ) -> DispatchResultWithPostInfo {
             let owner = User::<T::AccountId>::from_origin::<T>(origin)?;
             let id = Self::next_domain_id();
@@ -795,13 +806,6 @@ pub mod pallet {
                     .transpose()
                 })
                 .transpose()?;
-
-            let dispatch_config = DispatchConfig {
-                destination_chain,
-                destination_module,
-                timeout,
-                base_fee,
-            };
 
             let domain = Domain::<T>::try_create(
                 id,

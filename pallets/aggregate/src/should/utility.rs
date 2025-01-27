@@ -164,19 +164,13 @@ pub fn register_domain(
     user: AccountId,
     size: AggregationSize,
     queue: Option<u32>,
-    destination_chain: BoundedStateMachine,
-    destination_module: sp_core::H160,
-    timeout: u64,
-    base_fee: BalanceOf<Test>,
+    dispatch_config: DispatchConfig<Test>,
 ) -> u32 {
     frame_support::assert_ok!(Aggregate::register_domain(
         Origin::Signed(user).into(),
         size,
         queue,
-        destination_chain,
-        destination_module,
-        timeout,
-        base_fee
+        dispatch_config
     ));
     registered_ids()[0]
 }

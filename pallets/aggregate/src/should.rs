@@ -25,7 +25,7 @@ use frame_support::{
 };
 use hp_on_proof_verified::OnProofVerified;
 use rstest::rstest;
-use sp_core::H256;
+use sp_core::{H160, H256};
 use sp_runtime::traits::BadOrigin;
 use sp_runtime::SaturatedConversion;
 use utility::*;
@@ -66,6 +66,15 @@ fn emit_domain_full_event_when_publish_queue_is_full() {
 
         assert_evt(event, "Domain full");
     })
+}
+
+fn get_dispatch_config() -> DispatchConfig<Test> {
+    DispatchConfig {
+        destination_chain: BoundedStateMachine::Evm(11155111),
+        destination_module: H160::default(),
+        timeout: 100,
+        base_fee: 100u32.into(),
+    }
 }
 
 mod not_add_the_statement_to_any_domain_if {
@@ -568,10 +577,7 @@ mod register_domain {
                 Origin::Signed(USER_DOMAIN_1).into(),
                 16,
                 Some(8),
-                BoundedStateMachine::Evm(11155111),
-                H160::default(),
-                100,
-                100u32.into(),
+                get_dispatch_config(),
             ));
             let registered_id = registered_ids()[0];
 
@@ -603,28 +609,19 @@ mod register_domain {
                 Origin::Signed(USER_DOMAIN_1).into(),
                 values[0].0,
                 values[0].1,
-                BoundedStateMachine::Evm(11155111),
-                H160::default(),
-                100,
-                100u32.into(),
+                get_dispatch_config(),
             ));
             assert_ok!(Aggregate::register_domain(
                 Origin::Signed(USER_DOMAIN_1).into(),
                 values[1].0,
                 values[1].1,
-                BoundedStateMachine::Evm(11155111),
-                H160::default(),
-                100,
-                100u32.into(),
+                get_dispatch_config(),
             ));
             assert_ok!(Aggregate::register_domain(
                 Origin::Signed(USER_DOMAIN_1).into(),
                 values[2].0,
                 values[2].1,
-                BoundedStateMachine::Evm(11155111),
-                H160::default(),
-                100,
-                100u32.into(),
+                get_dispatch_config(),
             ));
 
             let registered_ids = registered_ids();
@@ -670,10 +667,7 @@ mod register_domain {
                 Origin::Signed(USER_DOMAIN_1).into(),
                 MaxAggregationSize::get(),
                 Some(MaxPendingPublishQueueSize::get()),
-                BoundedStateMachine::Evm(11155111),
-                H160::default(),
-                100,
-                100u32.into(),
+                get_dispatch_config(),
             ));
 
             assert_err!(
@@ -681,10 +675,7 @@ mod register_domain {
                     Origin::Signed(USER_DOMAIN_1).into(),
                     0,
                     Some(MaxPendingPublishQueueSize::get()),
-                    BoundedStateMachine::Evm(11155111),
-                    H160::default(),
-                    100,
-                    100u32.into(),
+                    get_dispatch_config(),
                 ),
                 Error::<Test>::InvalidDomainParams
             );
@@ -693,10 +684,7 @@ mod register_domain {
                     Origin::Signed(USER_DOMAIN_1).into(),
                     MaxAggregationSize::get() + 1,
                     Some(MaxPendingPublishQueueSize::get()),
-                    BoundedStateMachine::Evm(11155111),
-                    H160::default(),
-                    100,
-                    100u32.into(),
+                    get_dispatch_config(),
                 ),
                 Error::<Test>::InvalidDomainParams
             );
@@ -705,10 +693,7 @@ mod register_domain {
                     Origin::Signed(USER_DOMAIN_1).into(),
                     MaxAggregationSize::get(),
                     Some(MaxPendingPublishQueueSize::get() + 1),
-                    BoundedStateMachine::Evm(11155111),
-                    H160::default(),
-                    100,
-                    100u32.into(),
+                    get_dispatch_config(),
                 ),
                 Error::<Test>::InvalidDomainParams
             );
@@ -722,10 +707,7 @@ mod register_domain {
                 Origin::Signed(USER_DOMAIN_1).into(),
                 16,
                 None,
-                BoundedStateMachine::Evm(11155111),
-                H160::default(),
-                100,
-                100u32.into(),
+                get_dispatch_config(),
             ));
 
             let domain = Domains::<Test>::get(registered_ids()[0]).unwrap();
@@ -751,10 +733,7 @@ mod register_domain {
                 Origin::Signed(ROOT_USER).into(),
                 16,
                 None,
-                BoundedStateMachine::Evm(11155111),
-                H160::default(),
-                100,
-                100u32.into(),
+                get_dispatch_config(),
             ));
 
             let domain = Domains::<Test>::get(registered_ids()[0]).unwrap();
@@ -806,10 +785,7 @@ mod register_domain {
                     Origin::Signed(USER_DOMAIN_ERROR_NEW).into(),
                     16,
                     None,
-                    BoundedStateMachine::Evm(11155111),
-                    H160::default(),
-                    100,
-                    100u32.into()
+                    get_dispatch_config(),
                 ),
                 sp_runtime::DispatchError::from("User Domain Error New")
             );
@@ -824,10 +800,7 @@ mod register_domain {
                     Origin::Signed(USER_DOMAIN_1).into(),
                     16,
                     None,
-                    BoundedStateMachine::Evm(11155111),
-                    H160::default(),
-                    100,
-                    100u32.into()
+                    get_dispatch_config(),
                 )
                 .unwrap()
                 .pays_fee,
@@ -844,10 +817,7 @@ mod register_domain {
                     Origin::Signed(ROOT_USER).into(),
                     16,
                     None,
-                    BoundedStateMachine::Evm(11155111),
-                    H160::default(),
-                    100,
-                    100u32.into()
+                    get_dispatch_config(),
                 )
                 .unwrap()
                 .pays_fee,
@@ -861,10 +831,7 @@ mod register_domain {
         let info = Call::<Test>::register_domain {
             aggregation_size: 16,
             queue_size: Some(8),
-            destination_chain: BoundedStateMachine::Evm(11155111),
-            destination_module: H160::default(),
-            timeout: 100,
-            base_fee: 100u32.into(),
+            dispatch_config: get_dispatch_config(),
         }
         .get_dispatch_info();
 
@@ -947,7 +914,6 @@ mod hold_domain {
 
     mod raise_error_if {
         use super::*;
-        use sp_core::H160;
 
         #[test]
         fn invalid_domain() {
@@ -970,15 +936,7 @@ mod hold_domain {
                     BadOrigin
                 );
 
-                let id = register_domain(
-                    USER_DOMAIN_2,
-                    16,
-                    None,
-                    BoundedStateMachine::Evm(11155111),
-                    H160::default(),
-                    100,
-                    100u32.into(),
-                );
+                let id = register_domain(USER_DOMAIN_2, 16, None, get_dispatch_config());
 
                 assert_err!(
                     Aggregate::hold_domain(Origin::Signed(USER_DOMAIN_1).into(), id),
@@ -1051,7 +1009,6 @@ mod handle_the_hold_state_transactions {
 
 mod unregister_domain {
     use super::*;
-    use sp_core::H160;
 
     fn test() -> sp_io::TestExternalities {
         let mut ext = super::test();
@@ -1064,15 +1021,7 @@ mod unregister_domain {
     }
 
     fn register_removable_domain(user: AccountId) -> u32 {
-        let id = register_domain(
-            user,
-            16,
-            None,
-            BoundedStateMachine::Evm(11155111),
-            H160::default(),
-            100,
-            100u32.into(),
-        );
+        let id = register_domain(user, 16, None, get_dispatch_config());
         Domains::<Test>::mutate_extant(id, |d| {
             d.state = DomainState::Removable;
         });
@@ -1169,10 +1118,7 @@ mod unregister_domain {
                 origin.clone().into(),
                 16,
                 None,
-                BoundedStateMachine::Evm(11155111),
-                H160::default(),
-                100,
-                100u32.into(),
+                get_dispatch_config(),
             ));
 
             let id = registered_ids()[0];

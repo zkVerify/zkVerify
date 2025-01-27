@@ -622,7 +622,7 @@ impl OnAggregate<Runtime> for Runtime {
                 } = params;
 
                 pallet_hyperbridge_aggregations::Pallet::<Runtime>::dispatch_aggregation(
-                    frame_system::RawOrigin::Root.into(), // or whatever origin you want to use
+                    frame_system::RawOrigin::Root.into(),
                     Params {
                         aggregation_id,
                         aggregation,

@@ -154,15 +154,19 @@ mod benchmarks {
     fn register_domain() {
         let caller: T::AccountId = funded_account::<T>();
 
+        let dispatch_config = DispatchConfig {
+            destination_chain: BoundedStateMachine::Evm(11155111),
+            destination_module: H160::default(),
+            timeout: 100,
+            base_fee: 100u32.into(),
+        };
+
         #[extrinsic_call]
         register_domain(
             RawOrigin::Signed(caller),
             <T as Config>::AggregationSize::get(),
             Some(<T as Config>::MaxPendingPublishQueueSize::get()),
-            BoundedStateMachine::Evm(11155111),
-            H160::default(),
-            100,
-            100u32.into(),
+            dispatch_config,
         );
     }
 
