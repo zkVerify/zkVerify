@@ -7,4 +7,4 @@ const VK = `{
 
 exports.PROOF = PROOF;
 exports.PUBS = PUBS;
-exports.VK = VK;
+exports.VK = JSON.parse(VK);
