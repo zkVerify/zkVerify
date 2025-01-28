@@ -1302,11 +1302,8 @@ mod benches {
         [pallet_proxy, Proxy]
         [pallet_aggregate, Aggregate]
         [pallet_hyperbridge_aggregations, HyperbridgeAggregations]
-<<<<<<< HEAD
         [ismp_grandpa, IsmpGrandpa]
-=======
         [pallet_claim, Claim]
->>>>>>> af8ebb9 (Add benches and logs)
         [pallet_zksync_verifier, ZksyncVerifierBench::<Runtime>]
         [pallet_fflonk_verifier, FflonkVerifierBench::<Runtime>]
         [pallet_groth16_verifier, Groth16VerifierBench::<Runtime>]
