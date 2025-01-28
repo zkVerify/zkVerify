@@ -13,12 +13,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-use sp_core::{Pair, Public};
-use sp_std::sync::LazyLock;
 use codec::Encode;
 use frame_support::traits::Hooks;
 use sp_consensus_babe::Slot;
+use sp_core::{crypto::VrfSecret, Pair, Public};
 use sp_runtime::{Digest, DigestItem};
+use sp_std::sync::LazyLock;
 
 use crate::{currency, Balance, EXISTENTIAL_DEPOSIT};
 
