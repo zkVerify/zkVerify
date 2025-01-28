@@ -105,20 +105,20 @@ pallet-ultraplonk-verifier = { workspace = true }
 pallet-proofofsql-verifier = { workspace = true }
 hp-dispatch = {workspace = true}
 
-authority-discovery-primitives = { workspace = true, optional = true }
+authority-discovery-primitives = { workspace = true }
 
-polkadot-primitives = { workspace = true, optional = true }
-polkadot-runtime-parachains = { workspace = true, optional = true }
-pallet-authority-discovery = { workspace = true, optional = true }
+polkadot-primitives = { workspace = true }
+polkadot-runtime-parachains = { workspace = true }
+pallet-authority-discovery = { workspace = true }
 
-polkadot-runtime-common = { workspace = true, optional = true }
+polkadot-runtime-common = { workspace = true }
 
 pallet-message-queue = { workspace = true }
-pallet-xcm = { workspace = true, optional = true }
+pallet-xcm = { workspace = true }
 pallet-xcm-benchmarks = { workspace = true, optional = true }
-xcm-builder = { workspace = true, optional = true }
-xcm-executor = { workspace = true, optional = true }
-xcm = { workspace = true, optional = true }
+xcm-builder = { workspace = true }
+xcm-executor = { workspace = true }
+xcm = { workspace = true }
 xcm-procedural = { workspace = true }
 hex-literal = { workspace = true }
 
@@ -166,9 +166,9 @@ runtime-benchmarks = [
 	"pallet-risc0-verifier/runtime-benchmarks",
 	"pallet-ultraplonk-verifier/runtime-benchmarks",
 	"pallet-proofofsql-verifier/runtime-benchmarks",
-	"polkadot-primitives?/runtime-benchmarks",
-	"polkadot-runtime-parachains?/runtime-benchmarks",
-	"polkadot-runtime-common?/runtime-benchmarks",
+	"polkadot-primitives/runtime-benchmarks",
+	"polkadot-runtime-parachains/runtime-benchmarks",
+	"polkadot-runtime-common/runtime-benchmarks",
 	"xcm-builder/runtime-benchmarks",
 	"xcm-executor/runtime-benchmarks",
 	"pallet-xcm/runtime-benchmarks",
@@ -264,8 +264,8 @@ std = [
 	"polkadot-primitives/std",
 	"polkadot-runtime-parachains/std",
 	"pallet-authority-discovery/std",
-	"authority-discovery-primitives?/std",
-	"polkadot-runtime-common?/std",
+	"authority-discovery-primitives/std",
+	"polkadot-runtime-common/std",
 	"log/std",
 	"pallet-election-provider-support-benchmarking?/std",
 	"pallet-session-benchmarking?/std",
@@ -316,7 +316,7 @@ try-runtime = [
 	"polkadot-runtime-parachains/try-runtime",
 	"pallet-authority-discovery/try-runtime",
 	"polkadot-runtime-common/try-runtime",
-	"pallet-xcm?/try-runtime",
+	"pallet-xcm/try-runtime",
 	"pallet-message-queue/try-runtime",
 	"pallet-zksync-verifier/try-runtime",
 	"hp-dispatch/try-runtime"
