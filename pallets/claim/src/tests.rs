@@ -4,8 +4,8 @@ use crate::mock::*;
 use crate::*;
 use frame_support::{assert_err, assert_noop, assert_ok, dispatch::Pays};
 use frame_system::{EventRecord, Phase};
-use sp_runtime::{traits::BadOrigin, TokenError};
 use sp_core::TypedGet;
+use sp_runtime::{traits::BadOrigin, TokenError};
 
 pub fn assert_evt(event: Event<Test>, context: &str) {
     assert_evt_gen(true, event, context);
