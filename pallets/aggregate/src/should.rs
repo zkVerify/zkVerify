@@ -68,8 +68,8 @@ fn emit_domain_full_event_when_publish_queue_is_full() {
     })
 }
 
-fn get_dispatch_config() -> DispatchConfig<Test> {
-    DispatchConfig {
+fn get_destination() -> Destination<Test> {
+    Destination {
         destination_chain: BoundedStateMachine::Evm(11155111),
         destination_module: H160::default(),
         timeout: 100,
@@ -578,7 +578,7 @@ mod register_domain {
                 Origin::Signed(USER_DOMAIN_1).into(),
                 16,
                 Some(8),
-                get_dispatch_config(),
+                get_destination(),
             ));
             let registered_id = registered_ids()[0];
 
@@ -589,14 +589,11 @@ mod register_domain {
             assert_eq!(8, domain.publish_queue_size);
             assert_eq!(
                 BoundedStateMachine::Evm(11155111),
-                domain.dispatch_config.destination_chain
+                domain.destination.destination_chain
             );
-            assert_eq!(H160::default(), domain.dispatch_config.destination_module);
-            assert_eq!(100, domain.dispatch_config.timeout);
-            assert_eq!(
-                <BalanceOf<Test>>::from(100u32),
-                domain.dispatch_config.base_fee
-            );
+            assert_eq!(H160::default(), domain.destination.destination_module);
+            assert_eq!(100, domain.destination.timeout);
+            assert_eq!(<BalanceOf<Test>>::from(100u32), domain.destination.base_fee);
             assert_eq!(domain.next, Aggregation::<Test>::create(1, 16));
             assert!(domain.should_publish.is_empty());
         })
@@ -610,19 +607,19 @@ mod register_domain {
                 Origin::Signed(USER_DOMAIN_1).into(),
                 values[0].0,
                 values[0].1,
-                get_dispatch_config(),
+                get_destination(),
             ));
             assert_ok!(Aggregate::register_domain(
                 Origin::Signed(USER_DOMAIN_1).into(),
                 values[1].0,
                 values[1].1,
-                get_dispatch_config(),
+                get_destination(),
             ));
             assert_ok!(Aggregate::register_domain(
                 Origin::Signed(USER_DOMAIN_1).into(),
                 values[2].0,
                 values[2].1,
-                get_dispatch_config(),
+                get_destination(),
             ));
 
             let registered_ids = registered_ids();
@@ -643,14 +640,11 @@ mod register_domain {
                 assert_eq!(queue_size, domain.publish_queue_size);
                 assert_eq!(
                     BoundedStateMachine::Evm(11155111),
-                    domain.dispatch_config.destination_chain
+                    domain.destination.destination_chain
                 );
-                assert_eq!(H160::default(), domain.dispatch_config.destination_module);
-                assert_eq!(100, domain.dispatch_config.timeout);
-                assert_eq!(
-                    <BalanceOf<Test>>::from(100u32),
-                    domain.dispatch_config.base_fee
-                );
+                assert_eq!(H160::default(), domain.destination.destination_module);
+                assert_eq!(100, domain.destination.timeout);
+                assert_eq!(<BalanceOf<Test>>::from(100u32), domain.destination.base_fee);
                 assert_eq!(
                     domain.next,
                     Aggregation::<Test>::create(1, aggregation_size)
@@ -668,7 +662,7 @@ mod register_domain {
                 Origin::Signed(USER_DOMAIN_1).into(),
                 MaxAggregationSize::get(),
                 Some(MaxPendingPublishQueueSize::get()),
-                get_dispatch_config(),
+                get_destination(),
             ));
 
             assert_err!(
@@ -676,7 +670,7 @@ mod register_domain {
                     Origin::Signed(USER_DOMAIN_1).into(),
                     0,
                     Some(MaxPendingPublishQueueSize::get()),
-                    get_dispatch_config(),
+                    get_destination(),
                 ),
                 Error::<Test>::InvalidDomainParams
             );
@@ -685,7 +679,7 @@ mod register_domain {
                     Origin::Signed(USER_DOMAIN_1).into(),
                     MaxAggregationSize::get() + 1,
                     Some(MaxPendingPublishQueueSize::get()),
-                    get_dispatch_config(),
+                    get_destination(),
                 ),
                 Error::<Test>::InvalidDomainParams
             );
@@ -694,7 +688,7 @@ mod register_domain {
                     Origin::Signed(USER_DOMAIN_1).into(),
                     MaxAggregationSize::get(),
                     Some(MaxPendingPublishQueueSize::get() + 1),
-                    get_dispatch_config(),
+                    get_destination(),
                 ),
                 Error::<Test>::InvalidDomainParams
             );
@@ -708,7 +702,7 @@ mod register_domain {
                 Origin::Signed(USER_DOMAIN_1).into(),
                 16,
                 None,
-                get_dispatch_config(),
+                get_destination(),
             ));
 
             let domain = Domains::<Test>::get(registered_ids()[0]).unwrap();
@@ -734,7 +728,7 @@ mod register_domain {
                 Origin::Signed(ROOT_USER).into(),
                 16,
                 None,
-                get_dispatch_config(),
+                get_destination(),
             ));
 
             let domain = Domains::<Test>::get(registered_ids()[0]).unwrap();
@@ -786,7 +780,7 @@ mod register_domain {
                     Origin::Signed(USER_DOMAIN_ERROR_NEW).into(),
                     16,
                     None,
-                    get_dispatch_config(),
+                    get_destination(),
                 ),
                 sp_runtime::DispatchError::from("User Domain Error New")
             );
@@ -801,7 +795,7 @@ mod register_domain {
                     Origin::Signed(USER_DOMAIN_1).into(),
                     16,
                     None,
-                    get_dispatch_config(),
+                    get_destination(),
                 )
                 .unwrap()
                 .pays_fee,
@@ -818,7 +812,7 @@ mod register_domain {
                     Origin::Signed(ROOT_USER).into(),
                     16,
                     None,
-                    get_dispatch_config(),
+                    get_destination(),
                 )
                 .unwrap()
                 .pays_fee,
@@ -832,7 +826,7 @@ mod register_domain {
         let info = Call::<Test>::register_domain {
             aggregation_size: 16,
             queue_size: Some(8),
-            dispatch_config: get_dispatch_config(),
+            destination: get_destination(),
         }
         .get_dispatch_info();
 
@@ -937,7 +931,7 @@ mod hold_domain {
                     BadOrigin
                 );
 
-                let id = register_domain(USER_DOMAIN_2, 16, None, get_dispatch_config());
+                let id = register_domain(USER_DOMAIN_2, 16, None, get_destination());
 
                 assert_err!(
                     Aggregate::hold_domain(Origin::Signed(USER_DOMAIN_1).into(), id),
@@ -1022,7 +1016,7 @@ mod unregister_domain {
     }
 
     fn register_removable_domain(user: AccountId) -> u32 {
-        let id = register_domain(user, 16, None, get_dispatch_config());
+        let id = register_domain(user, 16, None, get_destination());
         Domains::<Test>::mutate_extant(id, |d| {
             d.state = DomainState::Removable;
         });
@@ -1119,7 +1113,7 @@ mod unregister_domain {
                 origin.clone().into(),
                 16,
                 None,
-                get_dispatch_config(),
+                get_destination(),
             ));
 
             let id = registered_ids()[0];

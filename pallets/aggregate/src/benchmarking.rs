@@ -49,7 +49,7 @@ pub mod utils {
             .try_into()
             .unwrap();
 
-        let dispatch_config = DispatchConfig {
+        let destination = Destination {
             destination_chain: BoundedStateMachine::Evm(11155111),
             destination_module: H160::default(),
             timeout: 100,
@@ -64,7 +64,7 @@ pub mod utils {
             aggregation_size,
             <T as Config>::MaxPendingPublishQueueSize::get(),
             None,
-            dispatch_config,
+            destination,
         )
         .unwrap();
         Domains::<T>::insert(domain_id, domain);
@@ -155,7 +155,7 @@ mod benchmarks {
     fn register_domain() {
         let caller: T::AccountId = funded_account::<T>();
 
-        let dispatch_config = DispatchConfig {
+        let destination = Destination {
             destination_chain: BoundedStateMachine::Evm(11155111),
             destination_module: H160::default(),
             timeout: 100,
@@ -168,7 +168,7 @@ mod benchmarks {
             RawOrigin::Signed(caller),
             <T as Config>::AggregationSize::get(),
             Some(<T as Config>::MaxPendingPublishQueueSize::get()),
-            dispatch_config,
+            destination,
         );
     }
 

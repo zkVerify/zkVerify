@@ -164,13 +164,13 @@ pub fn register_domain(
     user: AccountId,
     size: AggregationSize,
     queue: Option<u32>,
-    dispatch_config: DispatchConfig<Test>,
+    destination: Destination<Test>,
 ) -> u32 {
     frame_support::assert_ok!(Aggregate::register_domain(
         Origin::Signed(user).into(),
         size,
         queue,
-        dispatch_config
+        destination
     ));
     registered_ids()[0]
 }

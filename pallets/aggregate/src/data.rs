@@ -15,7 +15,7 @@
 
 use core::marker::PhantomData;
 
-use crate::{Config, DispatchConfig};
+use crate::{Config, Destination};
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{PartialEqNoBound, RuntimeDebugNoBound};
 use scale_info::TypeInfo;
@@ -200,7 +200,7 @@ pub struct DomainEntry<
     /// not hold any balance.
     pub ticket: Option<T>,
     /// Configuration to dispatch aggregations
-    pub dispatch_config: DispatchConfig<Z>,
+    pub destination: Destination<Z>,
 }
 
 impl<
@@ -221,7 +221,7 @@ impl<
         max_aggregation_size: AggregationSize,
         publish_queue_size: u32,
         ticket: Option<Ticket>,
-        dispatch_config: DispatchConfig<Z>,
+        destination: Destination<Z>,
     ) -> Self {
         assert!(
             max_aggregation_size <= S::get(),
@@ -240,7 +240,7 @@ impl<
             should_publish: Default::default(),
             publish_queue_size,
             ticket,
-            dispatch_config,
+            destination,
         }
     }
 
@@ -274,7 +274,7 @@ impl<
         Self: MaxEncodedLen,
         BoundedVec<StatementEntry<A, B>, VecSize<S>>: MaxEncodedLen,
         StatementEntry<A, B>: MaxEncodedLen,
-        DispatchConfig<Z>: MaxEncodedLen,
+        Destination<Z>: MaxEncodedLen,
     {
         let upper = Self::max_encoded_len();
         let aggregation_size =

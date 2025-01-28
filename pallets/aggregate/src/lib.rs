@@ -273,43 +273,31 @@ pub mod pallet {
         },
     }
 
-    /// Params to dispatch hyperbridge message
-    #[derive(Clone, Encode, Decode, TypeInfo, PartialEq, Eq, RuntimeDebug)]
-    pub struct HyperBridgeDispatchParameters<T: Config> {
-        /// Attestation id
-        pub aggregation_id: u64,
-
-        /// Attestation of Merkle tree
-        pub aggregation: H256,
-
-        /// Dispatch config
-        pub dispatch_config: DispatchConfig<T>,
-    }
-
-    /// Dispatcher types that can be used
-    #[derive(Debug, Clone, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
-    pub enum Destination<T: Config> {
-        /// No destination
-        None,
-        /// Hyperbridge dispatcher
-        Hyperbridge(HyperBridgeDispatchParameters<T>),
-    }
-
     /// Trait on aggregate
     pub trait OnAggregate<T: Config> {
         /// on aggregate method
-        fn on_aggregate(domain_id: u32, destination: Destination<T>) -> DispatchResult;
+        fn on_aggregate(
+            domain_id: u32,
+            aggregation_id: u64,
+            aggregation: H256,
+            destination: Destination<T>,
+        ) -> DispatchResult;
     }
 
     impl<T: Config> OnAggregate<T> for () {
-        fn on_aggregate(_domain_id: u32, _destination: Destination<T>) -> DispatchResult {
+        fn on_aggregate(
+            _domain_id: u32,
+            _aggregation_id: u64,
+            _aggregation: H256,
+            _destination: Destination<T>,
+        ) -> DispatchResult {
             Ok(())
         }
     }
 
-    /// Configuration for dispatching aggregations
+    /// Configuration for destination chain
     #[derive(Clone, PartialEq, Eq, Encode, Decode, TypeInfo, MaxEncodedLen)]
-    pub struct DispatchConfig<T: Config> {
+    pub struct Destination<T: Config> {
         /// The destination state machine
         pub destination_chain: BoundedStateMachine,
         /// Module identifier of the receiving module
@@ -322,12 +310,12 @@ pub mod pallet {
         pub gas_price: BalanceOf<T>,
     }
 
-    impl<T: Config> fmt::Debug for DispatchConfig<T>
+    impl<T: Config> fmt::Debug for Destination<T>
     where
         BalanceOf<T>: fmt::Debug,
     {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            f.debug_struct("DispatchConfig")
+            f.debug_struct("Destination")
                 .field("destination_chain", &self.destination_chain)
                 .field("destination_module", &self.destination_module)
                 .field("timeout", &self.timeout)
@@ -461,7 +449,7 @@ pub mod pallet {
             max_aggregation_size: AggregationSize,
             publish_queue_size: u32,
             ticket: Option<TicketOf<T>>,
-            dispatch_config: DispatchConfig<T>,
+            destination: Destination<T>,
         ) -> Result<Self, Error<T>> {
             if max_aggregation_size == 0
                 || publish_queue_size == 0
@@ -477,7 +465,7 @@ pub mod pallet {
                     max_aggregation_size,
                     publish_queue_size,
                     ticket,
-                    dispatch_config,
+                    destination,
                 )))
             }
         }
@@ -771,21 +759,9 @@ pub mod pallet {
             });
 
             let domain = Domains::<T>::get(domain_id).ok_or(Error::<T>::UnknownDomainId)?;
-            let dispatch_config = &domain.dispatch_config;
+            let destination = &domain.destination;
 
-            let destination = Destination::Hyperbridge(HyperBridgeDispatchParameters {
-                aggregation_id,
-                aggregation: root,
-                dispatch_config: DispatchConfig {
-                    destination_chain: dispatch_config.destination_chain.clone(),
-                    destination_module: dispatch_config.destination_module,
-                    timeout: dispatch_config.timeout,
-                    base_fee: dispatch_config.base_fee,
-                    gas_price: dispatch_config.gas_price,
-                },
-            });
-
-            T::OnAggregate::on_aggregate(domain_id, destination)?;
+            T::OnAggregate::on_aggregate(domain_id, aggregation_id, root, destination.clone())?;
 
             Ok(Some(T::WeightInfo::aggregate(size)).into())
         }
@@ -806,7 +782,7 @@ pub mod pallet {
             origin: OriginFor<T>,
             aggregation_size: AggregationSize,
             queue_size: Option<u32>,
-            dispatch_config: DispatchConfig<T>,
+            destination: Destination<T>,
         ) -> DispatchResultWithPostInfo {
             let owner = User::<T::AccountId>::from_origin::<T>(origin)?;
             let id = Self::next_domain_id();
@@ -834,7 +810,7 @@ pub mod pallet {
                 aggregation_size,
                 queue_size,
                 ticket,
-                dispatch_config,
+                destination,
             )?;
             Domains::<T>::insert(id, domain);
             NextDomainId::<T>::put(id + 1);
@@ -944,7 +920,7 @@ pub mod pallet {
                     return Err(BadOrigin.into());
                 }
 
-                domain.dispatch_config.gas_price = gas_price;
+                domain.destination.gas_price = gas_price;
                 Ok(())
             })?;
 

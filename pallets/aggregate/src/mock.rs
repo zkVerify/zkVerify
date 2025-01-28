@@ -31,7 +31,7 @@ use sp_core::{ConstU128, ConstU32, H160};
 use sp_runtime::{traits::IdentityLookup, BuildStorage, Perbill};
 
 use crate::{
-    AggregationSize, BalanceOf, BoundedStateMachine, CallOf, ComputePublisherTip, DispatchConfig,
+    AggregationSize, BalanceOf, BoundedStateMachine, CallOf, ComputePublisherTip, Destination,
     Domains,
 };
 
@@ -340,7 +340,7 @@ impl crate::Domain<Test> {
         max_aggregation_size: AggregationSize,
         publish_queue_size: u32,
         ticket: Option<crate::TicketOf<Test>>,
-        dispatch_config: DispatchConfig<Test>,
+        destination: Destination<Test>,
     ) -> Self {
         Self::try_create(
             id,
@@ -349,7 +349,7 @@ impl crate::Domain<Test> {
             max_aggregation_size,
             publish_queue_size,
             ticket,
-            dispatch_config,
+            destination,
         )
         .unwrap()
     }
@@ -368,7 +368,7 @@ pub fn test() -> sp_io::TestExternalities {
 
     let mut ext = sp_io::TestExternalities::from(t);
 
-    let dispatch_config = DispatchConfig {
+    let destination = Destination {
         destination_chain: BoundedStateMachine::Evm(11155111),
         destination_module: H160::default(),
         timeout: 100,
@@ -387,7 +387,7 @@ pub fn test() -> sp_io::TestExternalities {
                 DOMAIN_SIZE,
                 DOMAIN_QUEUE_SIZE,
                 None,
-                dispatch_config,
+                destination,
             ),
         );
     });
