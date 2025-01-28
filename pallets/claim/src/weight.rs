@@ -53,8 +53,7 @@ use core::marker::PhantomData;
 
 /// Weight functions needed for `pallet_claim`.
 pub trait WeightInfo {
-    fn begin_airdrop_empty_beneficiaries() -> Weight;
-    fn begin_airdrop_with_beneficiaries(n: u32, ) -> Weight;
+    fn begin_airdrop(n: u32, ) -> Weight;
     fn claim() -> Weight;
     fn claim_for() -> Weight;
     fn add_beneficiaries(n: u32, ) -> Weight;
@@ -63,19 +62,6 @@ pub trait WeightInfo {
 
 // For backwards compatibility and tests.
 impl WeightInfo for () {
-    /// Storage: `Claim::AirdropActive` (r:1 w:1)
-    /// Proof: `Claim::AirdropActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
-    /// Storage: `Claim::AirdropId` (r:1 w:1)
-    /// Proof: `Claim::AirdropId` (`max_values`: Some(1), `max_size`: Some(8), added: 503, mode: `MaxEncodedLen`)
-    fn begin_airdrop_empty_beneficiaries() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `43`
-        //  Estimated: `1493`
-        // Minimum execution time: 6_069_000 picoseconds.
-        Weight::from_parts(6_437_000, 1493)
-            .saturating_add(RocksDbWeight::get().reads(2_u64))
-            .saturating_add(RocksDbWeight::get().writes(2_u64))
-    }
     /// Storage: `Claim::AirdropActive` (r:1 w:1)
     /// Proof: `Claim::AirdropActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
     /// Storage: `System::Account` (r:1 w:0)
@@ -87,7 +73,7 @@ impl WeightInfo for () {
     /// Storage: `Claim::AirdropId` (r:1 w:1)
     /// Proof: `Claim::AirdropId` (`max_values`: Some(1), `max_size`: Some(8), added: 503, mode: `MaxEncodedLen`)
     /// The range of component `n` is `[1, 1000]`.
-    fn begin_airdrop_with_beneficiaries(n: u32, ) -> Weight {
+    fn begin_airdrop(n: u32, ) -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `146`
         //  Estimated: `3593 + n * (2531 ±0)`

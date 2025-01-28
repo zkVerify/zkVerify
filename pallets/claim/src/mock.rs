@@ -17,7 +17,7 @@ use std::{collections::BTreeMap, sync::LazyLock};
 
 use frame_support::{
     derive_impl, parameter_types,
-    traits::{tokens::PayFromAccount, EitherOfDiverse, EnsureOrigin},
+    traits::{EitherOfDiverse, EnsureOrigin},
     weights::RuntimeDbWeight,
     PalletId,
 };
@@ -53,6 +53,9 @@ pub static GENESIS_BENEFICIARIES: [(AccountId, Balance); 3] = [
     (USER_3, USER_3_AMOUNT),
 ];
 
+pub static EMPTY_BENEFICIARIES_MAP: LazyLock<BTreeMap<AccountId, Balance>> =
+    LazyLock::new(|| BTreeMap::new());
+
 pub static GENESIS_BENEFICIARIES_MAP: LazyLock<BTreeMap<AccountId, Balance>> =
     LazyLock::new(|| GENESIS_BENEFICIARIES.into_iter().collect());
 
@@ -78,11 +81,7 @@ impl MockWeightInfo {
 }
 
 impl crate::WeightInfo for MockWeightInfo {
-    fn begin_airdrop_empty_beneficiaries() -> frame_support::weights::Weight {
-        frame_support::weights::Weight::from_parts(Self::REF_TIME, Self::PROOF_SIZE)
-    }
-
-    fn begin_airdrop_with_beneficiaries(n: u32) -> frame_support::weights::Weight {
+    fn begin_airdrop(n: u32) -> frame_support::weights::Weight {
         let variable = 1000 * n as u64;
         frame_support::weights::Weight::from_parts(
             Self::REF_TIME + variable,
@@ -143,7 +142,6 @@ impl<O: Into<Result<RawOrigin<AccountId>, O>> + From<RawOrigin<AccountId>>> Ensu
 
 parameter_types! {
     pub const ClaimPalletId: PalletId = PalletId(*b"zkvt/clm");
-    pub ClaimAccount: AccountId = Claim::account_id();
     pub const MaxBeneficiaries: u32 = 100;
     pub UnclaimedDestinationMockAccount: AccountId = 111;
 }
@@ -152,7 +150,6 @@ impl crate::Config for Test {
     type RuntimeEvent = RuntimeEvent;
     type PalletId = ClaimPalletId;
     type ManagerOrigin = EitherOfDiverse<EnsureRoot<AccountId>, MockManager>;
-    type Paymaster = PayFromAccount<Balances, ClaimAccount>;
     type Currency = Balances;
     type UnclaimedDestination = UnclaimedDestinationMockAccount;
     type WeightInfo = MockWeightInfo;

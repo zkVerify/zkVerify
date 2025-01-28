@@ -67,6 +67,8 @@ metered = { version = "0.6.1", default-features = false, package = "prioritized-
 array-bytes = { version = "6.2.3", default-features = false }
 tokio = { version = "1.37.0", default-features = false }
 tracing = { version = "0.1.37", default-features = false }
+log = { version = "0.4.21", default-features = false }
+
 
 sc-cli = { version = "0.46.0" }
 sc-executor = { version = "0.40.0" }

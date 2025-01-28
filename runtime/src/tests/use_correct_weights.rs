@@ -304,8 +304,8 @@ fn pallet_claim() {
     use pallet_claim::WeightInfo;
 
     assert_eq!(
-        <Runtime as pallet_claim::Config>::WeightInfo::begin_airdrop_empty_beneficiaries(),
-        crate::weights::pallet_claim::ZKVWeight::<Runtime>::begin_airdrop_empty_beneficiaries()
+        <Runtime as pallet_claim::Config>::WeightInfo::claim(),
+        crate::weights::pallet_claim::ZKVWeight::<Runtime>::claim()
     );
 }
 

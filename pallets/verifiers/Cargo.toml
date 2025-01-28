@@ -17,7 +17,7 @@ scale-info = { workspace = true }
 frame-support = { workspace = true }
 frame-benchmarking = { workspace = true, optional = true }
 
-log = "0.4.20"
+log = { workspace = true }
 
 frame-system = { workspace = true }
 sp-core = { workspace = true }

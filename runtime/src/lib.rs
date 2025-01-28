@@ -642,7 +642,6 @@ impl pallet_aggregate::Config for Runtime {
 
 parameter_types! {
     pub const ClaimPalletId: PalletId = PalletId(*b"zkv/pclm");
-    pub ZKVerifyClaimAccount: AccountId = ClaimPalletId::get().into_account_truncating();
     pub const MaxBeneficiaries: u32 = 1_000;
 }
 
@@ -650,7 +649,6 @@ impl pallet_claim::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type PalletId = ClaimPalletId;
     type ManagerOrigin = EitherOfDiverse<EnsureRoot<AccountId>, Treasurer>;
-    type Paymaster = PayFromAccount<Balances, ZKVerifyClaimAccount>;
     type Currency = Balances;
     type UnclaimedDestination = ZKVerifyTreasuryAccount;
     type WeightInfo = weights::pallet_claim::ZKVWeight<Runtime>;

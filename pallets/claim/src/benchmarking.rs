@@ -48,7 +48,7 @@ fn init_airdrop_state<T: Config>(
     .unwrap();
 
     if begin_airdrop {
-        Pallet::<T>::begin_airdrop(RawOrigin::Root.into(), Some(beneficiaries.clone())).unwrap();
+        Pallet::<T>::begin_airdrop(RawOrigin::Root.into(), beneficiaries.clone()).unwrap();
     }
     beneficiaries
 }
@@ -59,17 +59,11 @@ mod benchmarks {
     use super::*;
 
     #[benchmark]
-    fn begin_airdrop_empty_beneficiaries() {
-        #[extrinsic_call]
-        begin_airdrop(RawOrigin::Root, None);
-    }
-
-    #[benchmark]
-    fn begin_airdrop_with_beneficiaries(n: Linear<1, <T as Config>::MAX_BENEFICIARIES>) {
+    fn begin_airdrop(n: Linear<0, <T as Config>::MAX_BENEFICIARIES>) {
         let beneficiaries = init_airdrop_state::<T>(n, false);
 
         #[extrinsic_call]
-        begin_airdrop(RawOrigin::Root, Some(beneficiaries));
+        begin_airdrop(RawOrigin::Root, beneficiaries);
     }
 
     #[benchmark]
@@ -105,7 +99,7 @@ mod benchmarks {
     #[benchmark]
     fn add_beneficiaries(n: Linear<1, <T as Config>::MAX_BENEFICIARIES>) {
         // Init airdrop
-        Pallet::<T>::begin_airdrop(RawOrigin::Root.into(), None).unwrap();
+        Pallet::<T>::begin_airdrop(RawOrigin::Root.into(), BTreeMap::new()).unwrap();
 
         // Prepare beneficiaries and sufficient amount
         let (beneficiaries, total_amount) = get_beneficiaries_map::<T>(n);

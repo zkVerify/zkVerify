@@ -39,10 +39,10 @@ use alloc::{collections::btree_map::BTreeMap, vec::Vec};
 use sp_runtime::traits::{AccountIdConversion, Saturating, Zero};
 
 use frame_support::{
-    dispatch::{DispatchResult, PostDispatchInfo},
+    dispatch::DispatchResult,
     traits::{
         fungible::{Inspect, Mutate},
-        tokens::{Fortitude, Pay, Preservation},
+        tokens::{Fortitude, Preservation},
         Get,
     },
     PalletId,
@@ -58,8 +58,9 @@ pub use weight::WeightInfo;
 pub mod pallet {
 
     use super::*;
-    use frame_support::pallet_prelude::*;
+    use frame_support::{pallet_prelude::*, traits::DefensiveSaturating};
     use frame_system::pallet_prelude::*;
+    use sp_runtime::TokenError;
 
     #[pallet::pallet]
     pub struct Pallet<T>(_);
@@ -75,13 +76,6 @@ pub mod pallet {
 
         /// Manager allowed to begin/end airdrops and add beneficiaries
         type ManagerOrigin: EnsureOrigin<Self::RuntimeOrigin>;
-
-        /// Type for processing spends of [Self::AssetKind] in favor of [`Self::Beneficiary`].
-        type Paymaster: Pay<
-            Beneficiary = Self::AccountId,
-            AssetKind = (),
-            Balance = BalanceOf<Self>,
-        >;
 
         /// The staking balance.
         type Currency: Mutate<Self::AccountId>;
@@ -99,22 +93,18 @@ pub mod pallet {
 
     /// Candidates eligible to receive an airdrop with the associated balance they have right to
     #[pallet::storage]
-    #[pallet::getter(fn beneficiaries)]
     pub type Beneficiaries<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, BalanceOf<T>>;
 
     /// Total tokens claimable from the current airdrop.  
     #[pallet::storage]
-    #[pallet::getter(fn total_claimable)]
     pub type TotalClaimable<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
     /// Whether there is an active airdrop or not
     #[pallet::storage]
-    #[pallet::getter(fn aidrop_active)]
     pub type AirdropActive<T: Config> = StorageValue<_, bool, ValueQuery>;
 
     /// Id of the current (or the last) airdrop
     #[pallet::storage]
-    #[pallet::getter(fn airdrop_id)]
     pub type AirdropId<T: Config> = StorageValue<_, u64>;
 
     /// Genesis config for this pallet
@@ -137,7 +127,10 @@ pub mod pallet {
 
             // Fill account with genesis balance
             let min = T::Currency::minimum_balance();
-            let _ = T::Currency::mint_into(&account_id, min.saturating_add(self.genesis_balance));
+            let _ = T::Currency::mint_into(
+                &account_id,
+                min.defensive_saturating_add(self.genesis_balance),
+            );
 
             TotalClaimable::<T>::put(BalanceOf::<T>::zero());
 
@@ -168,8 +161,6 @@ pub mod pallet {
             beneficiary: T::AccountId,
             /// How many tokens were claimed
             amount: BalanceOf<T>,
-            /// The payment id
-            payment_id: <T::Paymaster as Pay>::Id,
         },
         /// Ending of the airdrop campaign
         AirdropEnded {
@@ -181,27 +172,20 @@ pub mod pallet {
     /// Error for the claim pallet.
     #[pallet::error]
     pub enum Error<T> {
-        /// Attemp to start a new airdrop while there is one already in progress
+        /// Attempt to start a new airdrop while there is one already in progress
         AlreadyStarted,
-        /// The pot has not enough funds available to cover for all the airdropped amounts
-        NotEnoughFunds,
         /// Account requested a claim but it is not present among the Beneficiaries
         NotEligible,
         /// Added a beneficiary without balance to claim
         NothingToClaim,
         /// Attempt to modify the balance of an already added beneficiary
         AlreadyPresent,
-        /// There was some issue with the mechanism of payment.
-        PayoutError,
         /// Attempt to perform an action implying an open airdrop, while it has already ended
         AlreadyEnded,
     }
 
     impl<T: Config> Pallet<T> {
         /// The account ID of the claim pot.
-        ///
-        /// This actually does computation. If you need to keep using it, then make sure you cache the
-        /// value and only call this once.
         pub fn account_id() -> T::AccountId {
             T::PalletId::get().into_account_truncating()
         }
@@ -228,19 +212,22 @@ pub mod pallet {
                         let available = Self::pot();
                         if *amount > available {
                             log::warn!("Claimable amount {amount:?} bigger than total available {available:?}");
-                            Err(Error::<T>::PayoutError)?; // Prevent going under the existential deposit of the account
+                            Err(TokenError::FundsUnavailable)?; // Prevent going under the existential deposit of the account
                         }
-                        let payment_id = T::Paymaster::pay(&beneficiary, (), *amount)
-                            .map_err(|_| Error::<T>::PayoutError)?;
+                        T::Currency::transfer(
+                            &Self::account_id(),
+                            &beneficiary,
+                            *amount,
+                            Preservation::Preserve,
+                        )?;
                         // Subtract the claimed token from the TotalClaimable
                         TotalClaimable::<T>::mutate(|required_amount| {
-                            *required_amount = required_amount.saturating_sub(*amount)
+                            *required_amount = required_amount.defensive_saturating_sub(*amount)
                         });
                         log::trace!("Claimed {amount:?} for {beneficiary:?}");
                         Self::deposit_event(Event::<T>::Claimed {
                             beneficiary,
                             amount: *amount,
-                            payment_id,
                         });
                         None
                     }
@@ -262,23 +249,23 @@ pub mod pallet {
             beneficiaries
                 .iter()
                 .try_for_each::<_, DispatchResult>(|(account, amount)| {
-                    if let Some(_) = Beneficiaries::<T>::get(account.clone()) {
+                    if Beneficiaries::<T>::contains_key(account) {
                         // Account already exists
                         log::warn!("Beneficiary {account:?} already added.");
                         Err(Error::<T>::AlreadyPresent)?;
-                    } else if amount.is_zero() {
+                    }
+                    if amount.is_zero() {
                         // Attempting to add a beneficiary with nothing to claim
                         log::warn!("Beneficiary {account:?} with nothing to claim.");
                         Err(Error::<T>::NothingToClaim)?;
-                    } else {
-                        // Account doesn't exist. Add its token amount to the required amount this pallet's account should have
-                        required_amount = required_amount.saturating_add(*amount);
-                        log::trace!("Added beneficiary {account:?}. Can claim: {amount:?}");
                     }
+                    // Account doesn't exist. Add its token amount to the required amount this pallet's account should have
+                    required_amount = required_amount.defensive_saturating_add(*amount);
+                    log::trace!("Added beneficiary {account:?}. Can claim: {amount:?}");
 
                     // Cannot cover for all the tokens, raise an error
                     if required_amount > available_amount {
-                        Err(Error::<T>::NotEnoughFunds)?;
+                        Err(TokenError::FundsUnavailable)?;
                     }
 
                     Beneficiaries::<T>::insert(account, amount);
@@ -302,20 +289,17 @@ pub mod pallet {
 
     #[pallet::call]
     impl<T: Config> Pallet<T> {
-        /// Declare the beginning of a new aidrop and start adding beneficiaries (if specified).
+        /// Declare the beginning of a new airdrop and start adding beneficiaries (if specified).
         /// Raise an Error if:
         /// - There is an already active airdrop
         /// - There isn't enough balance in the pallets' account to cover for the claim of the supplied beneficiaries (if specified)
         /// This is an atomic operation. If there isn't enough balance to cover for all the beneficiaries, then none will be added.
         /// Origin must be the ManagerOrigin.
         #[pallet::call_index(0)]
-        #[pallet::weight(match &beneficiaries {
-            Some(beneficiaries) => T::WeightInfo::begin_airdrop_with_beneficiaries(beneficiaries.len() as u32),
-            None => T::WeightInfo::begin_airdrop_empty_beneficiaries(),
-        })]
+        #[pallet::weight(T::WeightInfo::begin_airdrop(beneficiaries.len() as u32))]
         pub fn begin_airdrop(
             origin: OriginFor<T>,
-            beneficiaries: Option<BTreeMap<T::AccountId, BalanceOf<T>>>,
+            beneficiaries: BTreeMap<T::AccountId, BalanceOf<T>>,
         ) -> DispatchResultWithPostInfo {
             T::ManagerOrigin::ensure_origin(origin)?;
 
@@ -330,9 +314,7 @@ pub mod pallet {
             })?;
 
             // Start adding beneficiaries if specified
-            if let Some(beneficiaries) = beneficiaries {
-                Self::do_add_beneficiaries(beneficiaries)?;
-            }
+            Self::do_add_beneficiaries(beneficiaries)?;
 
             // Increase airdrop id
             AirdropId::<T>::mutate(|id| {
@@ -341,10 +323,7 @@ pub mod pallet {
                 Self::deposit_event(Event::<T>::AirdropStarted { airdrop_id });
             });
 
-            Ok(PostDispatchInfo {
-                actual_weight: None,
-                pays_fee: Pays::No,
-            })
+            Ok(Pays::No.into())
         }
 
         /// Claim token airdrop for 'origin' or 'dest' (if specified).
@@ -359,10 +338,7 @@ pub mod pallet {
             let origin_account = ensure_signed(origin)?;
             Self::check_airdrop_status()?;
             Self::do_claim(origin_account, dest)?;
-            Ok(PostDispatchInfo {
-                actual_weight: None,
-                pays_fee: Pays::No,
-            })
+            Ok(Pays::No.into())
         }
 
         /// Claim token airdrop for 'origin' or 'dest' (if specified).
@@ -373,10 +349,7 @@ pub mod pallet {
         pub fn claim_for(_origin: OriginFor<T>, dest: T::AccountId) -> DispatchResultWithPostInfo {
             Self::check_airdrop_status()?;
             Self::do_claim(dest, None)?;
-            Ok(PostDispatchInfo {
-                actual_weight: None,
-                pays_fee: Pays::No,
-            })
+            Ok(Pays::No.into())
         }
 
         /// Add beneficiaries.
@@ -395,10 +368,7 @@ pub mod pallet {
             T::ManagerOrigin::ensure_origin(origin)?;
             Self::do_add_beneficiaries(beneficiaries)?;
 
-            Ok(PostDispatchInfo {
-                actual_weight: None,
-                pays_fee: Pays::No,
-            })
+            Ok(Pays::No.into())
         }
 
         /// End an airdrop. Storage variables will be cleared.
@@ -446,10 +416,7 @@ pub mod pallet {
                 airdrop_id: AirdropId::<T>::get().unwrap(),
             });
 
-            Ok(PostDispatchInfo {
-                actual_weight: None,
-                pays_fee: Pays::No,
-            })
+            Ok(Pays::No.into())
         }
     }
 }

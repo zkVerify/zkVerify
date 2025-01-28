@@ -9,7 +9,7 @@ repository.workspace = true
 license = "Apache-2.0"
 
 [dependencies]
-log = "0.4.20"
+log = { workspace = true }
 binary-merkle-tree = { workspace = true }
 
 codec = { workspace = true }
