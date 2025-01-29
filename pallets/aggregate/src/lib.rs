@@ -517,10 +517,8 @@ pub mod pallet {
     pub enum HoldReason {
         /// The funds are held as storage deposit for a aggregation pay.
         Aggregation,
-        /// The funds are held as storage deposit for a domain registration.
+        /// The funds are held as storage deposit for anything related to a domain.
         Domain,
-        /// The funds are held as storage deposit for dispatch fees for a given domain.
-        DomainDispatchFee,
     }
 
     /// Domains storage
@@ -882,7 +880,7 @@ pub mod pallet {
                     _ => return Err(BadOrigin.into()),
                 };
 
-                T::Hold::hold(&HoldReason::DomainDispatchFee.into(), account, amount)?;
+                T::Hold::hold(&HoldReason::Domain.into(), account, amount)?;
 
                 DomainAmountDispatchFees::<T>::insert(domain_id, account, amount);
 

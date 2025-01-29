@@ -648,7 +648,7 @@ impl OnAggregate<Balance> for Runtime {
         );
 
         <Runtime as pallet_aggregate::Config>::Hold::release(
-            &pallet_aggregate::HoldReason::DomainDispatchFee.into(),
+            &pallet_aggregate::HoldReason::Domain.into(),
             &owner_account,
             total_fee,
             BestEffort,
