@@ -29,8 +29,8 @@ type BalanceOf<T> =
 
 pub mod utils {
     use super::*;
-    use sp_core::H160;
     use hp_bridge_dispatch_aggregations::{BoundedStateMachine, Destination};
+    use sp_core::H160;
 
     /// Return a whitelisted account with enough founds to do anything.
     pub fn funded_account<T: Config>() -> T::AccountId {
@@ -83,12 +83,12 @@ fn fill_aggregation<T: Config>(caller: AccountOf<T>, domain_id: u32) {
 
 #[benchmarks]
 mod benchmarks {
+    use super::{utils::*, *};
     use __private::traits::UnfilteredDispatchable;
     use codec::{Decode, Encode};
     use data::DomainState;
-    use sp_core::H160;
     use hp_bridge_dispatch_aggregations::{BoundedStateMachine, Destination};
-    use super::{utils::*, *};
+    use sp_core::H160;
 
     #[benchmark]
     fn aggregate(n: Linear<1, <T as Config>::AGGREGATION_SIZE>) {

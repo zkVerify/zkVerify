@@ -13,14 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use data::{DomainState, StatementEntry};
-use frame_support::weights::RuntimeDbWeight;
-use frame_system::{EventRecord, Phase};
-use sp_core::{Get, H256};
-use hp_bridge_dispatch_aggregations::Destination;
 use crate::mock::RuntimeEvent as TestEvent;
 use crate::mock::{self, *};
 use crate::*;
+use data::{DomainState, StatementEntry};
+use frame_support::weights::RuntimeDbWeight;
+use frame_system::{EventRecord, Phase};
+use hp_bridge_dispatch_aggregations::Destination;
+use sp_core::{Get, H256};
 
 pub fn assert_evt(event: Event<Test>, context: &str) {
     assert_evt_gen(true, event, context);

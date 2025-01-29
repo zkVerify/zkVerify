@@ -17,6 +17,7 @@
 use core::cell::RefCell;
 use std::collections::VecDeque;
 
+use crate::{AggregationSize, BalanceOf, CallOf, ComputePublisherTip, Domains};
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
     derive_impl,
@@ -26,14 +27,10 @@ use frame_support::{
     weights::RuntimeDbWeight,
 };
 use frame_system::RawOrigin;
+use hp_bridge_dispatch_aggregations::{BoundedStateMachine, Destination};
 use scale_info::TypeInfo;
 use sp_core::{ConstU128, ConstU32, H160};
 use sp_runtime::{traits::IdentityLookup, BuildStorage, Perbill};
-use hp_bridge_dispatch_aggregations::{BoundedStateMachine, Destination};
-use crate::{
-    AggregationSize, BalanceOf, CallOf, ComputePublisherTip,
-    Domains,
-};
 
 parameter_types! {
     pub const MaxAggregationSize: AggregationSize = 64;

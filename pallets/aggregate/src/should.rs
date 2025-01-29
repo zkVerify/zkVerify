@@ -23,12 +23,12 @@ use frame_support::{
     dispatch::{GetDispatchInfo, Pays},
     traits::Hooks,
 };
+use hp_bridge_dispatch_aggregations::{BoundedStateMachine, Destination};
 use hp_on_proof_verified::OnProofVerified;
 use rstest::rstest;
 use sp_core::{H160, H256};
 use sp_runtime::traits::BadOrigin;
 use sp_runtime::SaturatedConversion;
-use hp_bridge_dispatch_aggregations::{BoundedStateMachine, Destination};
 use utility::*;
 
 mod utility;
