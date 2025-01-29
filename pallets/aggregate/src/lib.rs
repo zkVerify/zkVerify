@@ -73,7 +73,7 @@ pub mod pallet {
     use hp_bridge_dispatch_aggregations::{Destination, OnAggregate};
     use hp_on_proof_verified::OnProofVerified;
     use sp_core::H256;
-    use sp_runtime::traits::{BadOrigin, Keccak256, Saturating};
+    use sp_runtime::traits::{BadOrigin, Keccak256};
     use sp_std::vec::Vec;
 
     /// Given a `Configuration` return the Account type.
@@ -103,7 +103,7 @@ pub mod pallet {
     }
 
     #[pallet::config]
-    pub trait Config: frame_system::Config + scale_info::TypeInfo {
+    pub trait Config: frame_system::Config {
         /// Because this pallet emits events, it depends on the runtime's definition of an event.
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
         /// The overarching hold reason.
@@ -347,7 +347,6 @@ pub mod pallet {
     #[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
     #[scale_info(skip_type_params(T))]
     pub struct Domain<T: Config>(DomainType<T>);
-
 
     impl<T: Config> Domain<T>
     where
