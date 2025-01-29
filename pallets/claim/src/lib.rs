@@ -107,6 +107,10 @@ pub mod pallet {
     #[pallet::storage]
     pub type AirdropId<T: Config> = StorageValue<_, u64>;
 
+    /// Account id of this pallet
+    #[pallet::storage]
+    pub type PalletAccountId<T: Config> = StorageValue<_, T::AccountId>;
+
     /// Genesis config for this pallet
     #[pallet::genesis_config]
     #[derive(frame_support::DefaultNoBound)]
@@ -187,7 +191,15 @@ pub mod pallet {
     impl<T: Config> Pallet<T> {
         /// The account ID of the claim pot.
         pub fn account_id() -> T::AccountId {
-            T::PalletId::get().into_account_truncating()
+            // Check the memorized storage value.
+            if let Some(id) = PalletAccountId::<T>::get() {
+                return id;
+            }
+
+            // Create account if not present
+            let id = T::PalletId::get().into_account_truncating();
+            PalletAccountId::<T>::put(&id);
+            id
         }
 
         /// Return the amount of money in the pot.
@@ -394,8 +406,6 @@ pub mod pallet {
             let _ = Beneficiaries::<T>::clear(u32::MAX, None);
 
             // Deal with any remaining balance in the pallet's account
-            // TODO: Shall we want to withdraw all the balance in the pallet's account or only up to
-            // TotalClaimable ?
             let unclaimed_destination = T::UnclaimedDestination::get();
             if unclaimed_destination != Self::account_id() {
                 let remaining_funds = Self::pot();
