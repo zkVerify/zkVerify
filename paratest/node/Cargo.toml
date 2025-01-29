@@ -12,7 +12,7 @@ publish = false
 
 [dependencies]
 clap = { version = "4.4.10", features = ["derive"] }
-log = "0.4.20"
+log = { workspace = true }
 codec = { workspace = true }
 serde = { version = "1.0.193", features = ["derive"] }
 jsonrpsee = { workspace = true, features = ["server"] }

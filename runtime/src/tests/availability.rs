@@ -387,3 +387,11 @@ fn pallet_hyperbridge_aggregations() {
         // just checking code builds, hence the pallet is available to the runtime
     });
 }
+
+#[test]
+fn pallet_claim() {
+    test().execute_with(|| {
+        assert_ok!(Claim::end_airdrop(RuntimeOrigin::root()));
+        // just checking code builds, hence the pallet is available to the runtime
+    });
+}

@@ -17,7 +17,7 @@ scale-info = { workspace = true }
 sp-core = { workspace = true }
 fflonk_verifier = { git = "https://github.com/HorizenLabs/fflonk_verifier.git", default-features = false, tag = "v0.4.0" }
 hp-verifiers = { workspace = true }
-log = "0.4.20"
+log = { workspace = true }
 hex-literal = { workspace = true, optional = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }

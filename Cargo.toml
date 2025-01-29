@@ -17,6 +17,7 @@ members = [
     "pallets/aggregate",
     "pallets/verifiers",
     "pallets/verifiers/macros",
+    "pallets/claim",
     "primitives/hp-verifiers",
     "primitives/hp-groth16",
     "verifiers/fflonk",
@@ -66,6 +67,8 @@ metered = { version = "0.6.1", default-features = false, package = "prioritized-
 array-bytes = { version = "6.2.3", default-features = false }
 tokio = { version = "1.37.0", default-features = false }
 tracing = { version = "0.1.37", default-features = false }
+log = { version = "0.4.21", default-features = false }
+
 
 sc-cli = { version = "0.46.0" }
 sc-executor = { version = "0.40.0" }
@@ -93,6 +96,7 @@ sp-keystore = { version = "0.40.0" }
 native = { default-features = false, path = "native" }
 pallet-poe = { path = "pallets/proof_of_existence", default-features = false }
 pallet-aggregate = { path = "pallets/aggregate", default-features = false }
+pallet-claim = { path = "pallets/claim", default-features = false }
 pallet-verifiers = { path = "pallets/verifiers", default-features = false }
 pallet-verifiers-macros = { path = "pallets/verifiers/macros" }
 hp-on-proof-verified = { default-features = false, path = "primitives/hp-on-proof-verified" }

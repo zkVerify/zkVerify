@@ -38,7 +38,7 @@ pallet-referenda = { workspace = true }
 pallet-utility = { workspace = true }
 pallet-vesting = { workspace = true }
 ismp = { workspace = true }
-pallet-ismp = { workspace = true, features = [ "unsigned" ]}
+pallet-ismp = { workspace = true, features = ["unsigned"] }
 pallet-ismp-runtime-api = { workspace = true }
 ismp-grandpa = { workspace = true }
 frame-metadata-hash-extension = { workspace = true }
@@ -72,7 +72,7 @@ serde_json = { workspace = true, features = ["alloc"] }
 sp-genesis-builder = { workspace = true }
 sp-weights = { workspace = true }
 sp-io = { workspace = true }
-log = "0.4.20"
+log = { workspace = true }
 
 # Used for the node template's RPCs
 frame-system-rpc-runtime-api = { workspace = true }
@@ -87,6 +87,7 @@ frame-system-benchmarking = { workspace = true, optional = true }
 
 # Custom logic
 pallet-aggregate = { workspace = true }
+pallet-claim = { workspace = true }
 pallet-hyperbridge-aggregations = { workspace = true }
 pallet-poe = { workspace = true }
 static_assertions = "1.1.0"
@@ -150,6 +151,7 @@ runtime-benchmarks = [
 	"pallet-utility/runtime-benchmarks",
 	"pallet-vesting/runtime-benchmarks",
 	"pallet-aggregate/runtime-benchmarks",
+	"pallet-claim/runtime-benchmarks",
 	"pallet-hyperbridge-aggregations/runtime-benchmarks",
 	"ismp-grandpa/runtime-benchmarks",
 	"pallet-poe/runtime-benchmarks",
@@ -238,6 +240,7 @@ std = [
 	"pallet-proxy/std",
 	"pallet-verifiers/std",
 	"pallet-aggregate/std",
+	"pallet-claim/std",
 	"pallet-poe/std",
 	"proof-of-existence-rpc-runtime-api/std",
 	"aggregate-rpc-runtime-api/std",
@@ -318,6 +321,7 @@ try-runtime = [
 	"pallet-proxy/try-runtime",
 	"pallet-verifiers/try-runtime",
 	"pallet-aggregate/try-runtime",
+	"pallet-claim/try-runtime",
 	"pallet-poe/try-runtime",
 	"sp-runtime/try-runtime",
 	"pallet-verifiers/try-runtime",
