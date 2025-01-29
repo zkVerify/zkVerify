@@ -28,6 +28,7 @@ use rstest::rstest;
 use sp_core::{H160, H256};
 use sp_runtime::traits::BadOrigin;
 use sp_runtime::SaturatedConversion;
+use hp_bridge_dispatch_aggregations::{BoundedStateMachine, Destination};
 use utility::*;
 
 mod utility;
@@ -68,7 +69,7 @@ fn emit_domain_full_event_when_publish_queue_is_full() {
     })
 }
 
-fn get_destination() -> Destination<Test> {
+fn get_destination() -> Destination<Balance> {
     Destination {
         destination_chain: BoundedStateMachine::Evm(11155111),
         destination_module: H160::default(),

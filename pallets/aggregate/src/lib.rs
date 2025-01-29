@@ -50,7 +50,7 @@ pub use benchmarking::utils::*;
 #[frame_support::pallet]
 pub mod pallet {
     use core::ops::Deref;
-    use sp_std::fmt;
+    use sp_std::fmt::Debug;
 
     pub use crate::data::AggregationSize;
     use crate::data::{DomainState, StatementEntry, User};
@@ -70,9 +70,9 @@ pub mod pallet {
         ensure_signed,
         pallet_prelude::{BlockNumberFor, OriginFor},
     };
+    use hp_bridge_dispatch_aggregations::{Destination, OnAggregate};
     use hp_on_proof_verified::OnProofVerified;
-    use ismp::host::StateMachine;
-    use sp_core::{H160, H256};
+    use sp_core::H256;
     use sp_runtime::traits::{BadOrigin, Keccak256, Saturating};
     use sp_std::vec::Vec;
 
@@ -141,7 +141,7 @@ pub mod pallet {
         #[cfg(feature = "runtime-benchmarks")]
         type Currency: frame_support::traits::fungible::Mutate<AccountOf<Self>>;
         /// Handler for when an aggregation is completed
-        type OnAggregate: OnAggregate<Self>;
+        type OnAggregate: OnAggregate<BalanceOf<Self>>;
     }
 
     impl<T: Config> OnProofVerified<<T as frame_system::Config>::AccountId> for Pallet<T> {
@@ -273,90 +273,6 @@ pub mod pallet {
         },
     }
 
-    /// Trait on aggregate
-    pub trait OnAggregate<T: Config> {
-        /// on aggregate method
-        fn on_aggregate(
-            domain_id: u32,
-            aggregation_id: u64,
-            aggregation: H256,
-            destination: Destination<T>,
-        ) -> DispatchResult;
-    }
-
-    impl<T: Config> OnAggregate<T> for () {
-        fn on_aggregate(
-            _domain_id: u32,
-            _aggregation_id: u64,
-            _aggregation: H256,
-            _destination: Destination<T>,
-        ) -> DispatchResult {
-            Ok(())
-        }
-    }
-
-    /// Configuration for destination chain
-    #[derive(Clone, PartialEq, Eq, Encode, Decode, TypeInfo, MaxEncodedLen)]
-    pub struct Destination<T: Config> {
-        /// The destination state machine
-        pub destination_chain: BoundedStateMachine,
-        /// Module identifier of the receiving module
-        pub destination_module: H160,
-        /// Relative from the current timestamp at which this request expires in seconds.
-        pub timeout: u64,
-        /// Base fee for dispatch representing Proof verification cost + Message execution gas cost, in gas units in destination chain
-        pub base_fee: BalanceOf<T>,
-        /// Gas price X where 1 TOKEN in destination chain = X ACMEs
-        pub gas_price: BalanceOf<T>,
-    }
-
-    impl<T: Config> fmt::Debug for Destination<T>
-    where
-        BalanceOf<T>: fmt::Debug,
-    {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            f.debug_struct("Destination")
-                .field("destination_chain", &self.destination_chain)
-                .field("destination_module", &self.destination_module)
-                .field("timeout", &self.timeout)
-                .field("base_fee", &self.base_fee)
-                .field("gas_price", &self.gas_price)
-                .finish()
-        }
-    }
-
-    /// Bounded version for State Machine
-    #[derive(Debug, Clone, PartialEq, Eq, Encode, Decode, TypeInfo, MaxEncodedLen)]
-    pub enum BoundedStateMachine {
-        /// Evm state machines
-        #[codec(index = 0)]
-        Evm(u32),
-        /// Polkadot parachains
-        #[codec(index = 1)]
-        Polkadot(u32),
-        /// Kusama parachains
-        #[codec(index = 2)]
-        Kusama(u32),
-        /// Substrate-based standalone chain
-        #[codec(index = 3)]
-        Substrate([u8; 4]),
-        /// Tendermint chains
-        #[codec(index = 4)]
-        Tendermint([u8; 4]),
-    }
-
-    impl From<BoundedStateMachine> for StateMachine {
-        fn from(bsm: BoundedStateMachine) -> Self {
-            match bsm {
-                BoundedStateMachine::Evm(id) => StateMachine::Evm(id),
-                BoundedStateMachine::Polkadot(id) => StateMachine::Polkadot(id),
-                BoundedStateMachine::Kusama(id) => StateMachine::Kusama(id),
-                BoundedStateMachine::Substrate(id) => StateMachine::Substrate(id),
-                BoundedStateMachine::Tendermint(id) => StateMachine::Tendermint(id),
-            }
-        }
-    }
-
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     /// The emitted events.
@@ -425,7 +341,6 @@ pub mod pallet {
         <T as Config>::AggregationSize,
         <T as Config>::MaxPendingPublishQueueSize,
         TicketOf<T>,
-        T,
     >;
 
     /// Shortcut to get the Domain type from config.
@@ -433,7 +348,14 @@ pub mod pallet {
     #[scale_info(skip_type_params(T))]
     pub struct Domain<T: Config>(DomainType<T>);
 
-    impl<T: Config> Domain<T> {
+
+    impl<T: Config> Domain<T>
+    where
+        T::AccountId: MaxEncodedLen,
+        BalanceOf<T>: MaxEncodedLen,
+        T::RuntimeHoldReason: MaxEncodedLen,
+        T::Consideration: MaxEncodedLen,
+    {
         /// Create a new domain
         ///
         /// - `id`: id of the new domain.
@@ -449,7 +371,7 @@ pub mod pallet {
             max_aggregation_size: AggregationSize,
             publish_queue_size: u32,
             ticket: Option<TicketOf<T>>,
-            destination: Destination<T>,
+            destination: Destination<BalanceOf<T>>,
         ) -> Result<Self, Error<T>> {
             if max_aggregation_size == 0
                 || publish_queue_size == 0
@@ -761,7 +683,18 @@ pub mod pallet {
             let domain = Domains::<T>::get(domain_id).ok_or(Error::<T>::UnknownDomainId)?;
             let destination = &domain.destination;
 
-            T::OnAggregate::on_aggregate(domain_id, aggregation_id, root, destination.clone())?;
+            T::OnAggregate::on_aggregate(
+                domain_id,
+                aggregation_id,
+                root,
+                Destination {
+                    destination_chain: destination.destination_chain.clone(),
+                    destination_module: destination.destination_module,
+                    timeout: destination.timeout,
+                    base_fee: destination.base_fee.clone(),
+                    gas_price: destination.gas_price.clone(),
+                },
+            )?;
 
             Ok(Some(T::WeightInfo::aggregate(size)).into())
         }
@@ -782,7 +715,7 @@ pub mod pallet {
             origin: OriginFor<T>,
             aggregation_size: AggregationSize,
             queue_size: Option<u32>,
-            destination: Destination<T>,
+            destination: Destination<BalanceOf<T>>,
         ) -> DispatchResultWithPostInfo {
             let owner = User::<T::AccountId>::from_origin::<T>(origin)?;
             let id = Self::next_domain_id();

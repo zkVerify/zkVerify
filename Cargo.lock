@@ -5051,6 +5051,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "hp-bridge-dispatch-aggregations"
+version = "0.1.0"
+dependencies = [
+ "binary-merkle-tree",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "hex-literal",
+ "hp-on-proof-verified",
+ "ismp",
+ "log",
+ "pallet-balances",
+ "parity-scale-codec",
+ "rstest",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "hp-groth16"
 version = "0.1.0"
 dependencies = [
@@ -7886,6 +7908,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal",
+ "hp-bridge-dispatch-aggregations",
  "hp-on-proof-verified",
  "ismp",
  "log",
@@ -17923,6 +17946,7 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "hex-literal",
+ "hp-bridge-dispatch-aggregations",
  "hp-verifiers",
  "ismp",
  "ismp-grandpa",

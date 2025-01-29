@@ -17,7 +17,7 @@ use data::{DomainState, StatementEntry};
 use frame_support::weights::RuntimeDbWeight;
 use frame_system::{EventRecord, Phase};
 use sp_core::{Get, H256};
-
+use hp_bridge_dispatch_aggregations::Destination;
 use crate::mock::RuntimeEvent as TestEvent;
 use crate::mock::{self, *};
 use crate::*;
@@ -164,7 +164,7 @@ pub fn register_domain(
     user: AccountId,
     size: AggregationSize,
     queue: Option<u32>,
-    destination: Destination<Test>,
+    destination: Destination<Balance>,
 ) -> u32 {
     frame_support::assert_ok!(Aggregate::register_domain(
         Origin::Signed(user).into(),

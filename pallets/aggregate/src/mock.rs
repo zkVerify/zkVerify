@@ -29,9 +29,9 @@ use frame_system::RawOrigin;
 use scale_info::TypeInfo;
 use sp_core::{ConstU128, ConstU32, H160};
 use sp_runtime::{traits::IdentityLookup, BuildStorage, Perbill};
-
+use hp_bridge_dispatch_aggregations::{BoundedStateMachine, Destination};
 use crate::{
-    AggregationSize, BalanceOf, BoundedStateMachine, CallOf, ComputePublisherTip, Destination,
+    AggregationSize, BalanceOf, CallOf, ComputePublisherTip,
     Domains,
 };
 
@@ -340,7 +340,7 @@ impl crate::Domain<Test> {
         max_aggregation_size: AggregationSize,
         publish_queue_size: u32,
         ticket: Option<crate::TicketOf<Test>>,
-        destination: Destination<Test>,
+        destination: Destination<Balance>,
     ) -> Self {
         Self::try_create(
             id,

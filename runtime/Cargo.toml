@@ -102,6 +102,7 @@ pallet-groth16-verifier = { workspace = true }
 pallet-risc0-verifier = { workspace = true }
 pallet-ultraplonk-verifier = { workspace = true }
 pallet-proofofsql-verifier = { workspace = true }
+hp-bridge-dispatch-aggregations = {workspace = true}
 
 authority-discovery-primitives = { workspace = true, optional = true }
 

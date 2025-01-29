@@ -30,6 +30,7 @@ type BalanceOf<T> =
 pub mod utils {
     use super::*;
     use sp_core::H160;
+    use hp_bridge_dispatch_aggregations::{BoundedStateMachine, Destination};
 
     /// Return a whitelisted account with enough founds to do anything.
     pub fn funded_account<T: Config>() -> T::AccountId {
@@ -86,7 +87,7 @@ mod benchmarks {
     use codec::{Decode, Encode};
     use data::DomainState;
     use sp_core::H160;
-
+    use hp_bridge_dispatch_aggregations::{BoundedStateMachine, Destination};
     use super::{utils::*, *};
 
     #[benchmark]

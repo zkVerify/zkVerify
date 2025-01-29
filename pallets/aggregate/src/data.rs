@@ -15,9 +15,9 @@
 
 use core::marker::PhantomData;
 
-use crate::{Config, Destination};
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{PartialEqNoBound, RuntimeDebugNoBound};
+use hp_bridge_dispatch_aggregations::Destination;
 use scale_info::TypeInfo;
 use sp_core::{Get, H256};
 use sp_runtime::{traits::Keccak256, BoundedBTreeMap, BoundedVec};
@@ -180,7 +180,6 @@ pub struct DomainEntry<
     S: Get<AggregationSize>,
     M: Get<u32>,
     T: Encode + Decode + TypeInfo + MaxEncodedLen,
-    Z: Config,
 > {
     /// The unique identifier of the domain.
     pub id: u32,
@@ -200,7 +199,7 @@ pub struct DomainEntry<
     /// not hold any balance.
     pub ticket: Option<T>,
     /// Configuration to dispatch aggregations
-    pub destination: Destination<Z>,
+    pub destination: Destination<B>,
 }
 
 impl<
@@ -209,8 +208,7 @@ impl<
         S: Get<AggregationSize>,
         M: Get<u32>,
         Ticket: Encode + Decode + TypeInfo + MaxEncodedLen,
-        Z: Config,
-    > DomainEntry<A, B, S, M, Ticket, Z>
+    > DomainEntry<A, B, S, M, Ticket>
 {
     /// Create a new domain.
     ///
@@ -221,7 +219,7 @@ impl<
         max_aggregation_size: AggregationSize,
         publish_queue_size: u32,
         ticket: Option<Ticket>,
-        destination: Destination<Z>,
+        destination: Destination<B>,
     ) -> Self {
         assert!(
             max_aggregation_size <= S::get(),
@@ -274,7 +272,7 @@ impl<
         Self: MaxEncodedLen,
         BoundedVec<StatementEntry<A, B>, VecSize<S>>: MaxEncodedLen,
         StatementEntry<A, B>: MaxEncodedLen,
-        Destination<Z>: MaxEncodedLen,
+        Destination<B>: MaxEncodedLen,
     {
         let upper = Self::max_encoded_len();
         let aggregation_size =

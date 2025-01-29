@@ -613,12 +613,12 @@ where
     }
 }
 
-impl OnAggregate<Runtime> for Runtime {
+impl OnAggregate<Balance> for Runtime {
     fn on_aggregate(
         domain_id: u32,
         aggregation_id: u64,
         aggregation: H256,
-        destination: Destination<Runtime>,
+        destination: Destination<Balance>,
     ) -> DispatchResult {
         /// TODO: define a way to set TIP
         const RELAYER_TIP: u128 = 10_000;
@@ -1411,7 +1411,7 @@ use polkadot_primitives::{
     ValidationCodeHash, ValidatorId, ValidatorIndex, PARACHAIN_KEY_TYPE_ID,
 };
 
-use pallet_aggregate::{Destination, OnAggregate};
+use hp_bridge_dispatch_aggregations::{Destination, OnAggregate};
 use pallet_hyperbridge_aggregations::{Params, ZKV_MODULE_ID};
 #[cfg(feature = "relay")]
 pub use polkadot_runtime_parachains::runtime_api_impl::{
