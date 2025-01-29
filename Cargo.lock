@@ -3540,9 +3540,9 @@ dependencies = [
  "base16ct",
  "crypto-bigint",
  "digest 0.10.7",
- "ff 0.13.0",
+ "ff",
  "generic-array 0.14.7",
- "group 0.13.0",
+ "group",
  "pkcs8",
  "rand_core 0.6.4",
  "sec1",
@@ -3865,21 +3865,11 @@ dependencies = [
 
 [[package]]
 name = "ff"
-version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d013fc25338cc558c5c2cfbad646908fb23591e2404481826742b651c9af7160"
-dependencies = [
- "bitvec",
- "rand_core 0.6.4",
- "subtle 2.6.1",
-]
-
-[[package]]
-name = "ff"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ded41244b729663b1e574f1b4fb731469f69f79c17667b5d776b16cda0479449"
 dependencies = [
+ "bitvec",
  "rand_core 0.6.4",
  "subtle 2.6.1",
 ]
@@ -4735,22 +4725,11 @@ dependencies = [
 
 [[package]]
 name = "group"
-version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5dfbfb3a6cfbd390d5c9564ab283a0349b9b9fcd46a706c1eb10e0db70bfbac7"
-dependencies = [
- "ff 0.12.1",
- "rand_core 0.6.4",
- "subtle 2.6.1",
-]
-
-[[package]]
-name = "group"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f0f9ef7462f7c099f518d754361858f86d8a07af53ba9af0fe635bbccb151a63"
 dependencies = [
- "ff 0.13.0",
+ "ff",
  "rand_core 0.6.4",
  "subtle 2.6.1",
 ]
@@ -4806,10 +4785,11 @@ dependencies = [
 [[package]]
 name = "halo2_verifier"
 version = "0.1.0"
+source = "git+https://github.com/ChainSafe/halo2-verifier.git#17fe53d8010318e7097642f4772a43acea29c4dc"
 dependencies = [
  "blake2b_simd",
- "ff 0.12.1",
- "group 0.12.1",
+ "ff",
+ "group",
  "halo2curves",
  "log",
  "num-traits",
@@ -4822,14 +4802,22 @@ dependencies = [
 
 [[package]]
 name = "halo2curves"
-version = "0.3.1"
-source = "git+https://github.com/contrun/halo2curves.git?branch=v0.3.1-no-std#284ad5e7b95c7c8df987b091e34dca40456a6d1e"
+version = "0.6.1"
+source = "git+https://github.com/ChainSafe/halo2curves.git?branch=no-std#cf943c5734142b64e39e162dbac725feec958f83"
 dependencies = [
- "ff 0.12.1",
- "group 0.12.1",
+ "blake2b_simd",
+ "ff",
+ "group",
+ "lazy_static",
+ "num-bigint",
+ "num-traits",
+ "pairing",
  "pasta_curves",
+ "paste",
  "rand 0.8.5",
  "rand_core 0.6.4",
+ "rayon",
+ "static_assertions",
  "subtle 2.6.1",
 ]
 
@@ -7823,6 +7811,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c1b04fb49957986fdce4d6ee7a65027d55d4b6d2265e5848bbb507b58ccfdb6f"
 
 [[package]]
+name = "pairing"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "81fec4625e73cf41ef4bb6846cafa6d44736525f442ba45e407c4a000a13996f"
+dependencies = [
+ "group",
+]
+
+[[package]]
 name = "pairing_ce"
 version = "0.28.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8255,7 +8252,7 @@ name = "pallet-halo2-verifier"
 version = "0.1.0"
 dependencies = [
  "educe",
- "ff 0.12.1",
+ "ff",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -9272,13 +9269,14 @@ dependencies = [
 
 [[package]]
 name = "pasta_curves"
-version = "0.4.1"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5cc65faf8e7313b4b1fbaa9f7ca917a0eed499a9663be71477f87993604341d8"
+checksum = "d3e57598f73cc7e1b2ac63c79c517b31a0877cd7c402cdcaa311b5208de7a095"
 dependencies = [
  "blake2b_simd",
- "ff 0.12.1",
- "group 0.12.1",
+ "ff",
+ "group",
+ "lazy_static",
  "rand 0.8.5",
  "static_assertions",
  "subtle 2.6.1",

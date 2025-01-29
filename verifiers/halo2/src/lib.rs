@@ -14,10 +14,10 @@ mod weight;
 
 use codec::{Decode, Encode, MaxEncodedLen};
 use educe::Educe;
-use ff::PrimeField;
 use frame_support::weights::Weight;
 use halo2_verifier::halo2curves::bn256;
 use halo2_verifier::halo2curves::bn256::{Bn256, G1Affine};
+use halo2_verifier::halo2curves::ff::PrimeField;
 use halo2_verifier::halo2curves::serde::SerdeObject;
 use halo2_verifier::helpers::SerdeFormat;
 use halo2_verifier::plonk::{Any, Column};
@@ -236,15 +236,16 @@ impl<T: Config> MaxEncodedLen for ParamsAndVk<T> {
     fn max_encoded_len() -> usize {
         let g1_bytes = bn256::G1Affine::default().to_raw_bytes().len();
 
-        let expression_max = 8 + T::max_expression_degree() * (T::max_expression_vars() * 36 + 16);
+        let expression_max = 8 + T::max_expression_degree() * (T::max_expression_vars() * 6 + 16);
 
-        let cs_max = 20
+        let cs_max = 24
             + T::max_columns() * 8
             + T::max_selectors() * 8
             + T::max_queries() * 6
             + T::max_permutation() * Column::<Any>::bytes_length()
             + T::max_gates() * expression_max
-            + T::max_lookups() * expression_max * 2;
+            + T::max_lookups() * expression_max * 2
+            + T::max_shuffles() * expression_max * 2;
 
         40 + (T::max_fixed() * g1_bytes)
             + (T::max_permutation() * g1_bytes)
@@ -286,26 +287,16 @@ impl<T: Config, W: weight::WeightInfo> pallet_verifiers::WeightInfo<Halo2<T>> fo
 
 pub trait Config: 'static {
     type FixedMax: Get<u32>;
-
     type ColumnsMax: Get<u32>;
-
     type PermutationMax: Get<u32>;
-
     type SelectorMax: Get<u32>;
-
     type LargestK: Get<u32>;
-
-    type ChallengesMax: Get<u32>;
-
     type QueriesMax: Get<u32>;
-
     type ExpressionDegreeMax: Get<u32>;
-
     type ExpressionVarsMax: Get<u32>;
-
     type GatesMax: Get<u32>;
-
     type LookupsMax: Get<u32>;
+    type ShufflesMax: Get<u32>;
 }
 
 pub(crate) trait MaxFieldSizes {
@@ -318,8 +309,6 @@ pub(crate) trait MaxFieldSizes {
 
     fn largest_k() -> usize;
 
-    fn max_challenges() -> usize;
-
     fn max_queries() -> usize;
 
     fn max_expression_degree() -> usize;
@@ -329,6 +318,8 @@ pub(crate) trait MaxFieldSizes {
     fn max_gates() -> usize;
 
     fn max_lookups() -> usize;
+
+    fn max_shuffles() -> usize;
 }
 
 impl<T: Config> MaxFieldSizes for T {
@@ -352,10 +343,6 @@ impl<T: Config> MaxFieldSizes for T {
         <Self as Config>::LargestK::get() as usize
     }
 
-    fn max_challenges() -> usize {
-        <Self as Config>::ChallengesMax::get() as usize
-    }
-
     fn max_queries() -> usize {
         <Self as Config>::QueriesMax::get() as usize
     }
@@ -374,5 +361,9 @@ impl<T: Config> MaxFieldSizes for T {
 
     fn max_lookups() -> usize {
         <Self as Config>::LookupsMax::get() as usize
+    }
+
+    fn max_shuffles() -> usize {
+        <Self as Config>::ShufflesMax::get() as usize
     }
 }

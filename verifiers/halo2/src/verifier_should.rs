@@ -13,52 +13,32 @@ struct ConfigTest;
 
 impl Config for ConfigTest {
     type FixedMax = ConstU32<50>;
-
     type ColumnsMax = ConstU32<100>;
-
     type PermutationMax = ConstU32<100>;
-
     type SelectorMax = ConstU32<100>;
-
     type LargestK = ConstU32<20>;
-
-    type ChallengesMax = ConstU32<100>;
-
     type QueriesMax = ConstU32<100>;
-
     type ExpressionDegreeMax = ConstU32<100>;
-
     type ExpressionVarsMax = ConstU32<100>;
-
     type GatesMax = ConstU32<100>;
-
     type LookupsMax = ConstU32<100>;
+    type ShufflesMax = ConstU32<100>;
 }
 
 struct ConfigTestSmall;
 
 impl Config for ConfigTestSmall {
     type FixedMax = ConstU32<1>;
-
     type ColumnsMax = ConstU32<1>;
-
     type PermutationMax = ConstU32<1>;
-
     type SelectorMax = ConstU32<1>;
-
     type LargestK = ConstU32<4>;
-
-    type ChallengesMax = ConstU32<1>;
-
     type QueriesMax = ConstU32<1>;
-
     type ExpressionDegreeMax = ConstU32<1>;
-
     type ExpressionVarsMax = ConstU32<1>;
-
     type GatesMax = ConstU32<1>;
-
     type LookupsMax = ConstU32<1>;
+    type ShufflesMax = ConstU32<1>;
 }
 
 pub struct TestData {

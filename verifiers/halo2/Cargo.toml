@@ -30,17 +30,17 @@ educe = { version = "0.6.0", default-features = false, features = [
     "Debug",
     "PartialEq",
 ] }
-
 substrate-bn = "0.6.0"
 serde_json = { version = "1.0.117", optional = true, default-features = false }
 sp-io = { workspace = true, optional = true }
 pallet-aggregate = { workspace = true, optional = true, default-features = false, features = [
     "runtime-benchmarks",
 ] }
-halo2_verifier = { path = "../../../halo2-verifier/verifier" }
-# halo2_proofs = { path = "../../../halo2-nostd/halo2_proofs" }
-ff = { version = "0.12.0", default-features = false, features = ["alloc"] }
-serde = { version = "1.0.200", features = ["derive"], optional = true, default-features = false }
+halo2_verifier = { git = "https://github.com/ChainSafe/halo2-verifier.git", name = "halo2_verifier" }
+ff = { version = "0.13.0", default-features = false, features = ["alloc"] }
+serde = { version = "1.0.200", features = [
+    "derive",
+], optional = true, default-features = false }
 
 [dev-dependencies]
 rstest = { workspace = true }
@@ -73,5 +73,5 @@ runtime-benchmarks = [
     "dep:hex-literal",
     "dep:serde_json",
     "dep:sp-io",
-    "dep:pallet-aggregate", 
+    "dep:pallet-aggregate",
 ]

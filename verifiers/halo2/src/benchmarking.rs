@@ -1,5 +1,7 @@
 #![cfg(feature = "runtime-benchmarks")]
 
+use std::io::{BufReader, Read};
+
 use crate::Halo2;
 use frame_benchmarking::v2::*;
 use frame_support::traits::{Consideration, Footprint};
@@ -7,6 +9,7 @@ use frame_system::RawOrigin;
 
 use pallet_aggregate::{funded_account, insert_domain};
 use pallet_verifiers::{Tickets, VkEntry, VkOrHash, Vks};
+use sp_core::U256;
 
 pub struct Pallet<T: Config>(crate::Pallet<T>);
 pub trait Config: crate::Config {}
@@ -18,6 +21,31 @@ fn init<T: pallet_aggregate::Config>() -> (T::AccountId, u32) {
     let domain_id = 1;
     insert_domain::<T>(domain_id, caller.clone(), Some(1));
     (caller, domain_id)
+}
+
+pub struct BenchData {
+    pub vk: Vec<u8>,
+    pub proof: Vec<u8>,
+    pub pubs: Vec<U256>,
+}
+
+pub fn valid_bench_data() -> BenchData {
+    let pubs_bytes = include_bytes!("resources/VALID_PUBS.bin").to_vec();
+    let mut pubs = vec![];
+
+    // using reader
+    let mut reader = BufReader::new(pubs_bytes.as_slice());
+    let mut buffer = [0u8; 32];
+    while reader.read(&mut buffer).unwrap() > 0 {
+        let fr = U256::from_little_endian(&buffer);
+        pubs.push(fr);
+    }
+
+    BenchData {
+        vk: include_bytes!("resources/VALID_VK.bin").to_vec(),
+        proof: include_bytes!("resources/VALID_PROOF.bin").to_vec(),
+        pubs,
+    }
 }
 
 #[benchmarks(where T: pallet_verifiers::Config<Halo2<T>> + pallet_aggregate::Config)]
@@ -75,7 +103,10 @@ mod benchmarks {
         let verifier_should::TestData { vk, .. } = verifier_should::valid_test_data();
 
         #[extrinsic_call]
-        register_vk(RawOrigin::Signed(caller), ParamsAndVk::from(vk.clone()).into());
+        register_vk(
+            RawOrigin::Signed(caller),
+            ParamsAndVk::from(vk.clone()).into(),
+        );
 
         // Verify
         assert!(Vks::<T, Halo2<T>>::get(Halo2::<T>::vk_hash(&ParamsAndVk::from(vk))).is_some());
@@ -128,26 +159,16 @@ mod mock {
 
     impl crate::Config for Test {
         type FixedMax = ConstU32<50>;
-
         type ColumnsMax = ConstU32<100>;
-
         type PermutationMax = ConstU32<100>;
-
         type SelectorMax = ConstU32<100>;
-
         type LargestK = ConstU32<20>;
-
-        type ChallengesMax = ConstU32<100>;
-
         type QueriesMax = ConstU32<100>;
-
         type ExpressionDegreeMax = ConstU32<100>;
-
         type ExpressionVarsMax = ConstU32<100>;
-
         type GatesMax = ConstU32<100>;
-
         type LookupsMax = ConstU32<100>;
+        type ShuffleMax = ConstU32<100>;
     }
 
     #[derive_impl(frame_system::config_preludes::SolochainDefaultConfig as frame_system::DefaultConfig)]
