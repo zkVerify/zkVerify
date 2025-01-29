@@ -19,6 +19,7 @@ use super::*;
 
 use frame_benchmarking::v2::*;
 use frame_system::RawOrigin;
+use sp_runtime::Saturating;
 
 fn get_beneficiaries_map<T: Config>(
     n: u32,
