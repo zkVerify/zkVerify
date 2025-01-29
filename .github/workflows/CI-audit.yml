@@ -3,6 +3,8 @@ name: Audit
 run-name: "Workflow CI/CD Steps: cargo audit"
 
 on:
+  schedule:
+    - cron: "0 1 * * SAT"  # Runs every Saturday 1:00 UTC
   workflow_call:
   workflow_dispatch:
 
@@ -22,6 +24,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Cargo audit
+        shell: bash
         run: ${{ env.DOCKER_COMPOSE_CMD }} cargo audit 2>&1 | tee audit_output.txt
 
       - name: Upload output
