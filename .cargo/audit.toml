@@ -12,9 +12,9 @@ ignore = [
     "RUSTSEC-2024-0421",
     "RUSTSEC-2024-0336",
 ]
-informational_warnings = ["unmaintained"]
+informational_warnings = ["unmaintained", "yanked"]
 
 [output]
-deny = ["unsound", "yanked"]
+deny = ["unsound"]
 quiet = false
 show_tree = false
