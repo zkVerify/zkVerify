@@ -16,6 +16,8 @@
 #![cfg(feature = "relay")]
 
 //! Parachain modules configurations.
+//! FIXME: this configuration is meant for testing only, and MUST not deployed to a production
+//! network without proper assessment.
 
 use frame_support::{
     traits::{ProcessMessage, ProcessMessageError},

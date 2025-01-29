@@ -34,7 +34,7 @@ use test_runtime::{
     UncheckedExtrinsic, VERSION,
 };
 
-pub use service::polkadot_rpc;
+pub use service::rpc;
 
 use sc_chain_spec::ChainSpec;
 use sc_client_api::BlockchainEvents;

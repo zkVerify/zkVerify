@@ -22,9 +22,8 @@ pub mod benchmarking;
 pub mod chain_spec;
 mod grandpa_support;
 mod parachains_db;
-pub mod polkadot_rpc;
 mod relay_chain_selection;
-mod rpc;
+pub mod rpc;
 
 #[cfg(feature = "full-node")]
 pub mod overseer;
@@ -451,9 +450,9 @@ fn new_partial<ChainSelection>(
         sc_transaction_pool::FullPool<Block, FullClient>,
         (
             impl Fn(
-                polkadot_rpc::DenyUnsafe,
-                polkadot_rpc::SubscriptionTaskExecutor,
-            ) -> Result<polkadot_rpc::RpcExtension, SubstrateServiceError>,
+                rpc::DenyUnsafe,
+                rpc::SubscriptionTaskExecutor,
+            ) -> Result<rpc::RpcExtension, SubstrateServiceError>,
             (
                 babe::BabeBlockImport<Block, FullClient, FullGrandpaBlockImport<ChainSelection>>,
                 sc_consensus_grandpa::LinkHalf<Block, FullClient, ChainSelection>,
@@ -541,19 +540,19 @@ where
         let backend = backend.clone();
 
         move |deny_unsafe,
-              subscription_executor: polkadot_rpc::SubscriptionTaskExecutor|
-              -> Result<polkadot_rpc::RpcExtension, sc_service::Error> {
-            let deps = polkadot_rpc::FullDeps {
+              subscription_executor: rpc::SubscriptionTaskExecutor|
+              -> Result<rpc::RpcExtension, sc_service::Error> {
+            let deps = rpc::FullDeps {
                 client: client.clone(),
                 pool: transaction_pool.clone(),
                 select_chain: select_chain.clone(),
                 chain_spec: chain_spec.cloned_box(),
                 deny_unsafe,
-                babe: polkadot_rpc::BabeDeps {
+                babe: rpc::BabeDeps {
                     babe_worker_handle: babe_worker_handle.clone(),
                     keystore: keystore.clone(),
                 },
-                grandpa: polkadot_rpc::GrandpaDeps {
+                grandpa: rpc::GrandpaDeps {
                     shared_voter_state: shared_voter_state.clone(),
                     shared_authority_set: shared_authority_set.clone(),
                     justification_stream: justification_stream.clone(),
