@@ -19,7 +19,7 @@ use crate::*;
 use data::{DomainState, StatementEntry};
 use frame_support::weights::RuntimeDbWeight;
 use frame_system::{EventRecord, Phase};
-use hp_bridge_dispatch_aggregations::Destination;
+use hp_dispatch::DestinationParams;
 use sp_core::{Get, H256};
 
 pub fn assert_evt(event: Event<Test>, context: &str) {
@@ -164,13 +164,13 @@ pub fn register_domain(
     user: AccountId,
     size: AggregationSize,
     queue: Option<u32>,
-    destination: Destination<Balance>,
+    destination_params: DestinationParams,
 ) -> u32 {
     frame_support::assert_ok!(Aggregate::register_domain(
         Origin::Signed(user).into(),
         size,
         queue,
-        destination
+        destination_params
     ));
     registered_ids()[0]
 }

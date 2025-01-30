@@ -5051,7 +5051,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "hp-bridge-dispatch-aggregations"
+name = "hp-dispatch"
 version = "0.1.0"
 dependencies = [
  "binary-merkle-tree",
@@ -7908,7 +7908,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal",
- "hp-bridge-dispatch-aggregations",
+ "hp-dispatch",
  "hp-on-proof-verified",
  "ismp",
  "log",
@@ -17946,7 +17946,7 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "hex-literal",
- "hp-bridge-dispatch-aggregations",
+ "hp-dispatch",
  "hp-verifiers",
  "ismp",
  "ismp-grandpa",

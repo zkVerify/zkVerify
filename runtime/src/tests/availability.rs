@@ -372,6 +372,7 @@ fn pallet_hyperbridge_aggregations() {
         let dummy_origin = AccountId32::new([0; 32]);
 
         let params = Params {
+            domain_id: 1u32,
             aggregation_id: 1u64,
             aggregation: sp_core::H256(default_empty_aggr),
             module: sp_core::H160(test_contract),
@@ -381,7 +382,7 @@ fn pallet_hyperbridge_aggregations() {
         };
 
         assert_ok!(HyperbridgeAggregations::dispatch_aggregation(
-            RuntimeOrigin::signed(dummy_origin),
+            dummy_origin,
             params
         ));
         // just checking code builds, hence the pallet is available to the runtime

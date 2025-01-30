@@ -70,7 +70,7 @@ pub mod pallet {
         ensure_signed,
         pallet_prelude::{BlockNumberFor, OriginFor},
     };
-    use hp_bridge_dispatch_aggregations::{Destination, OnAggregate};
+    use hp_dispatch::{DestinationParams, OnAggregate};
     use hp_on_proof_verified::OnProofVerified;
     use sp_core::H256;
     use sp_runtime::traits::{BadOrigin, Keccak256};
@@ -141,7 +141,7 @@ pub mod pallet {
         #[cfg(feature = "runtime-benchmarks")]
         type Currency: frame_support::traits::fungible::Mutate<AccountOf<Self>>;
         /// Handler for when an aggregation is completed
-        type OnAggregate: OnAggregate<BalanceOf<Self>>;
+        type OnAggregate: OnAggregate;
     }
 
     impl<T: Config> OnProofVerified<<T as frame_system::Config>::AccountId> for Pallet<T> {
@@ -243,8 +243,6 @@ pub mod pallet {
         InvalidDomainParams,
         /// Try to remove or hold a domain in a invalid state.
         InvalidDomainState,
-        /// Insufficient held funds to pay dispatch fee
-        InsufficientHeldFundsDispatchFees,
     }
 
     #[derive(Debug, Clone, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
@@ -346,15 +344,9 @@ pub mod pallet {
     /// Shortcut to get the Domain type from config.
     #[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
     #[scale_info(skip_type_params(T))]
-    pub struct Domain<T: Config>(DomainType<T>);
+    pub(crate) struct Domain<T: Config>(DomainType<T>);
 
-    impl<T: Config> Domain<T>
-    where
-        T::AccountId: MaxEncodedLen,
-        BalanceOf<T>: MaxEncodedLen,
-        T::RuntimeHoldReason: MaxEncodedLen,
-        T::Consideration: MaxEncodedLen,
-    {
+    impl<T: Config> Domain<T> {
         /// Create a new domain
         ///
         /// - `id`: id of the new domain.
@@ -370,7 +362,7 @@ pub mod pallet {
             max_aggregation_size: AggregationSize,
             publish_queue_size: u32,
             ticket: Option<TicketOf<T>>,
-            destination: Destination<BalanceOf<T>>,
+            destination: DestinationParams,
         ) -> Result<Self, Error<T>> {
             if max_aggregation_size == 0
                 || publish_queue_size == 0
@@ -527,20 +519,8 @@ pub mod pallet {
 
     /// Domains storage
     #[pallet::storage]
-    pub type Domains<T: Config> =
+    pub(crate) type Domains<T: Config> =
         StorageMap<Hasher = Blake2_128Concat, Key = u32, Value = Domain<T>>;
-
-    // Storage for held amounts per domain and account to pay dispatch fees
-    #[pallet::storage]
-    pub type DomainAmountDispatchFees<T: Config> = StorageDoubleMap<
-        _,
-        Blake2_128Concat,
-        u32, // domain_id
-        Blake2_128Concat,
-        T::AccountId,
-        BalanceOf<T>,
-        ValueQuery,
-    >;
 
     #[pallet::storage]
     #[pallet::getter(fn published)]
@@ -678,20 +658,9 @@ pub mod pallet {
             });
 
             let domain = Domains::<T>::get(domain_id).ok_or(Error::<T>::UnknownDomainId)?;
-            let destination = &domain.destination;
+            let destination_params = domain.destination_params.clone();
 
-            T::OnAggregate::on_aggregate(
-                domain_id,
-                aggregation_id,
-                root,
-                Destination {
-                    destination_chain: destination.destination_chain.clone(),
-                    destination_module: destination.destination_module,
-                    timeout: destination.timeout,
-                    base_fee: destination.base_fee.clone(),
-                    gas_price: destination.gas_price.clone(),
-                },
-            )?;
+            T::OnAggregate::on_aggregate(domain_id, aggregation_id, root, destination_params)?;
 
             Ok(Some(T::WeightInfo::aggregate(size)).into())
         }
@@ -712,7 +681,7 @@ pub mod pallet {
             origin: OriginFor<T>,
             aggregation_size: AggregationSize,
             queue_size: Option<u32>,
-            destination: Destination<BalanceOf<T>>,
+            destination_params: DestinationParams,
         ) -> DispatchResultWithPostInfo {
             let owner = User::<T::AccountId>::from_origin::<T>(origin)?;
             let id = Self::next_domain_id();
@@ -740,7 +709,7 @@ pub mod pallet {
                 aggregation_size,
                 queue_size,
                 ticket,
-                destination,
+                destination_params,
             )?;
             Domains::<T>::insert(id, domain);
             NextDomainId::<T>::put(id + 1);
@@ -828,62 +797,6 @@ pub mod pallet {
                     None => Err(Error::<T>::UnknownDomainId)?,
                 };
                 Ok::<_, DispatchError>(())
-            })?;
-
-            Ok(owner.post_info(None))
-        }
-
-        /// Set gas price for a given domain ID
-        /// Gas price is X in the following formula - 1 TOKEN in destination chain = X origin tokens
-        #[pallet::call_index(4)]
-        pub fn set_gas_price(
-            origin: OriginFor<T>,
-            domain_id: u32,
-            gas_price: BalanceOf<T>,
-        ) -> DispatchResultWithPostInfo {
-            let owner = User::<T::AccountId>::from_origin::<T>(origin)?;
-
-            Domains::<T>::try_mutate(domain_id, |domain| -> Result<(), DispatchError> {
-                let domain = domain.as_mut().ok_or(Error::<T>::UnknownDomainId)?;
-
-                if !owner.can_handle_domain::<T>(domain) {
-                    return Err(BadOrigin.into());
-                }
-
-                domain.destination.gas_price = gas_price;
-                Ok(())
-            })?;
-
-            Ok(owner.post_info(None))
-        }
-
-        /// Hold (lock) tokens to pay dispatch fees
-        /// Only the domain owner can call this extrinsic.
-        #[pallet::call_index(5)]
-        pub fn hold_tokens_dispatch_fee(
-            origin: OriginFor<T>,
-            domain_id: u32,
-            amount: BalanceOf<T>,
-        ) -> DispatchResultWithPostInfo {
-            let owner = User::<T::AccountId>::from_origin::<T>(origin)?;
-
-            Domains::<T>::try_mutate(domain_id, |domain| -> Result<(), DispatchError> {
-                let domain = domain.as_mut().ok_or(Error::<T>::UnknownDomainId)?;
-
-                if !owner.can_handle_domain::<T>(domain) {
-                    return Err(BadOrigin.into());
-                }
-
-                let account = match &owner {
-                    User::Owner(account) => account,
-                    _ => return Err(BadOrigin.into()),
-                };
-
-                T::Hold::hold(&HoldReason::Domain.into(), account, amount)?;
-
-                DomainAmountDispatchFees::<T>::insert(domain_id, account, amount);
-
-                Ok(())
             })?;
 
             Ok(owner.post_info(None))

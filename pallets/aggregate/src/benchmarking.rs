@@ -29,7 +29,7 @@ type BalanceOf<T> =
 
 pub mod utils {
     use super::*;
-    use hp_bridge_dispatch_aggregations::{BoundedStateMachine, Destination};
+    use hp_dispatch::{BoundedStateMachine, DestinationParams, HyperbridgeDispatchParameters};
     use sp_core::H160;
 
     /// Return a whitelisted account with enough founds to do anything.
@@ -50,13 +50,11 @@ pub mod utils {
             .try_into()
             .unwrap();
 
-        let destination = Destination {
+        let destination = DestinationParams::Hyperbridge(HyperbridgeDispatchParameters {
             destination_chain: BoundedStateMachine::Evm(11155111),
             destination_module: H160::default(),
             timeout: 100,
-            base_fee: 100u32.into(),
-            gas_price: 10u32.into(),
-        };
+        });
 
         let domain = Domain::<T>::try_create(
             domain_id,
@@ -87,7 +85,7 @@ mod benchmarks {
     use __private::traits::UnfilteredDispatchable;
     use codec::{Decode, Encode};
     use data::DomainState;
-    use hp_bridge_dispatch_aggregations::{BoundedStateMachine, Destination};
+    use hp_dispatch::{BoundedStateMachine, DestinationParams, HyperbridgeDispatchParameters};
     use sp_core::H160;
 
     #[benchmark]
@@ -156,13 +154,11 @@ mod benchmarks {
     fn register_domain() {
         let caller: T::AccountId = funded_account::<T>();
 
-        let destination = Destination {
+        let destination = DestinationParams::Hyperbridge(HyperbridgeDispatchParameters {
             destination_chain: BoundedStateMachine::Evm(11155111),
             destination_module: H160::default(),
             timeout: 100,
-            base_fee: 100u32.into(),
-            gas_price: 10u32.into(),
-        };
+        });
 
         #[extrinsic_call]
         register_domain(

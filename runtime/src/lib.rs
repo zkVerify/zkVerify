@@ -51,11 +51,8 @@ use frame_election_provider_support::{
 };
 
 use frame_support::genesis_builder_helper::{build_state, get_preset};
-use frame_support::traits::tokens::Precision::BestEffort;
 
 use frame_support::dispatch::DispatchResult;
-use frame_support::ensure;
-use frame_support::traits::fungible::MutateHold;
 pub use frame_support::{
     construct_runtime, derive_impl,
     dispatch::DispatchClass,
@@ -613,64 +610,30 @@ where
     }
 }
 
-impl OnAggregate<Balance> for Runtime {
+impl OnAggregate for Runtime {
     fn on_aggregate(
         domain_id: u32,
         aggregation_id: u64,
         aggregation: H256,
-        destination: Destination<Balance>,
+        destination_params: DestinationParams,
     ) -> DispatchResult {
-        /// TODO: define a way to set TIP
-        const RELAYER_TIP: u128 = 10_000;
-
-        /// TODO: Calculate how much this fee is
-        const HYPERBRIDGE_NON_REFUNDABLE_FEE: u128 = 10_000;
-
-        let domain = pallet_aggregate::Domains::<Runtime>::get(domain_id)
-            .ok_or(pallet_aggregate::Error::<Runtime>::UnknownDomainId)?;
-
-        let owner_account = domain
-            .owner
-            .owner()
-            .ok_or(frame_support::error::BadOrigin)?
-            .clone();
-
-        let base_relayer_fee = destination.base_fee.saturating_mul(destination.gas_price);
-        let total_relayer_fee = base_relayer_fee.saturating_add(RELAYER_TIP);
-        let total_fee = total_relayer_fee.saturating_add(HYPERBRIDGE_NON_REFUNDABLE_FEE);
-
-        let held_amount =
-            pallet_aggregate::DomainAmountDispatchFees::<Runtime>::get(domain_id, &owner_account);
-
-        ensure!(
-            held_amount >= total_fee,
-            pallet_aggregate::Error::<Runtime>::InsufficientHeldFundsDispatchFees
-        );
-
-        <Runtime as pallet_aggregate::Config>::Hold::release(
-            &pallet_aggregate::HoldReason::Domain.into(),
-            &owner_account,
-            total_fee,
-            BestEffort,
-        )?;
-
-        pallet_aggregate::DomainAmountDispatchFees::<Runtime>::insert(
-            domain_id,
-            &owner_account,
-            held_amount.saturating_sub(total_fee),
-        );
-
-        pallet_hyperbridge_aggregations::Pallet::<Runtime>::dispatch_aggregation(
-            frame_system::RawOrigin::Signed(owner_account).into(),
-            Params {
-                aggregation_id,
-                aggregation,
-                module: destination.destination_module,
-                destination: StateMachine::from(destination.destination_chain),
-                timeout: destination.timeout,
-                fee: total_fee,
-            },
-        )
+        match destination_params {
+            DestinationParams::None => Ok(()),
+            DestinationParams::Hyperbridge(params) => {
+                pallet_hyperbridge_aggregations::Pallet::<Runtime>::dispatch_aggregation(
+                    pallet_hyperbridge_aggregations::PALLET_ID.into_account_truncating(),
+                    Params {
+                        domain_id,
+                        aggregation_id,
+                        aggregation,
+                        module: params.destination_module,
+                        destination: StateMachine::from(params.destination_chain),
+                        timeout: params.timeout,
+                        fee: Balance::zero(),
+                    },
+                )
+            }
+        }
     }
 }
 
@@ -1411,12 +1374,13 @@ use polkadot_primitives::{
     ValidationCodeHash, ValidatorId, ValidatorIndex, PARACHAIN_KEY_TYPE_ID,
 };
 
-use hp_bridge_dispatch_aggregations::{Destination, OnAggregate};
+use hp_dispatch::{DestinationParams, OnAggregate};
 use pallet_hyperbridge_aggregations::{Params, ZKV_MODULE_ID};
 #[cfg(feature = "relay")]
 pub use polkadot_runtime_parachains::runtime_api_impl::{
     v10 as parachains_runtime_api_impl, vstaging as parachains_staging_runtime_api_impl,
 };
+use sp_runtime::traits::Zero;
 
 // Used for testing purposes only.
 sp_api::decl_runtime_apis! {

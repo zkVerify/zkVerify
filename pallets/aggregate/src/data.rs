@@ -17,7 +17,7 @@ use core::marker::PhantomData;
 
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{PartialEqNoBound, RuntimeDebugNoBound};
-use hp_bridge_dispatch_aggregations::Destination;
+use hp_dispatch::DestinationParams;
 use scale_info::TypeInfo;
 use sp_core::{Get, H256};
 use sp_runtime::{traits::Keccak256, BoundedBTreeMap, BoundedVec};
@@ -198,8 +198,8 @@ pub struct DomainEntry<
     /// The consideration ticket used to hold the balance for the space used by domain storage. The manager will
     /// not hold any balance.
     pub ticket: Option<T>,
-    /// Configuration to dispatch aggregations
-    pub destination: Destination<B>,
+    /// Configuration params for destination chain to dispatch aggregations
+    pub destination_params: DestinationParams,
 }
 
 impl<
@@ -219,7 +219,7 @@ impl<
         max_aggregation_size: AggregationSize,
         publish_queue_size: u32,
         ticket: Option<Ticket>,
-        destination: Destination<B>,
+        destination: DestinationParams,
     ) -> Self {
         assert!(
             max_aggregation_size <= S::get(),
@@ -238,7 +238,7 @@ impl<
             should_publish: Default::default(),
             publish_queue_size,
             ticket,
-            destination,
+            destination_params: destination,
         }
     }
 
@@ -272,7 +272,7 @@ impl<
         Self: MaxEncodedLen,
         BoundedVec<StatementEntry<A, B>, VecSize<S>>: MaxEncodedLen,
         StatementEntry<A, B>: MaxEncodedLen,
-        Destination<B>: MaxEncodedLen,
+        DestinationParams: MaxEncodedLen,
     {
         let upper = Self::max_encoded_len();
         let aggregation_size =

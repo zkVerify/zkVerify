@@ -12,7 +12,7 @@ members = [
     "runtime",
     "pallets/proof_of_existence",
     "primitives/hp-proof-of-existence",
-    "primitives/hp-bridge-dispatch-aggregations",
+    "primitives/hp-dispatch",
     "primitives/hp-on-proof-verified",
     "native",
     "pallets/aggregate",
@@ -102,7 +102,7 @@ pallet-verifiers = { path = "pallets/verifiers", default-features = false }
 pallet-verifiers-macros = { path = "pallets/verifiers/macros" }
 hp-on-proof-verified = { default-features = false, path = "primitives/hp-on-proof-verified" }
 hp-poe = { default-features = false, path = "primitives/hp-proof-of-existence" }
-hp-bridge-dispatch-aggregations = { default-features = false, path = "primitives/hp-bridge-dispatch-aggregations" }
+hp-dispatch = { default-features = false, path = "primitives/hp-dispatch" }
 hp-verifiers = { path = "primitives/hp-verifiers", default-features = false }
 hp-groth16 = { path = "primitives/hp-groth16", default-features = false }
 pallet-fflonk-verifier = { path = "verifiers/fflonk", default-features = false }

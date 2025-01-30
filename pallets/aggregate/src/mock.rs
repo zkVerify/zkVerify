@@ -27,7 +27,7 @@ use frame_support::{
     weights::RuntimeDbWeight,
 };
 use frame_system::RawOrigin;
-use hp_bridge_dispatch_aggregations::{BoundedStateMachine, Destination};
+use hp_dispatch::{BoundedStateMachine, DestinationParams, HyperbridgeDispatchParameters};
 use scale_info::TypeInfo;
 use sp_core::{ConstU128, ConstU32, H160};
 use sp_runtime::{traits::IdentityLookup, BuildStorage, Perbill};
@@ -87,10 +87,6 @@ impl MockWeightInfo {
     pub const AGG_NO_DOMAIN_PROOF_SIZE: u64 = 1_000_024;
     pub const AGG_NO_ID_REF_TIME: u64 = 1_001_042;
     pub const AGG_NO_ID_PROOF_SIZE: u64 = 1_001_024;
-    pub const GAS_PRICE_REF_TIME: u64 = 142;
-    pub const GAS_PRICE_PROOF_SIZE: u64 = 124;
-    pub const HOLD_TOKENS_REF_TIME: u64 = 142;
-    pub const HOLD_TOKENS_PROOF_SIZE: u64 = 124;
 }
 
 impl crate::WeightInfo for MockWeightInfo {
@@ -121,25 +117,11 @@ impl crate::WeightInfo for MockWeightInfo {
     }
 
     fn unregister_domain() -> frame_support::weights::Weight {
-        frame_support::weights::Weight::from_parts(Self::GAS_PRICE_REF_TIME, Self::UNR_PROOF_SIZE)
+        frame_support::weights::Weight::from_parts(Self::UNR_REF_TIME, Self::UNR_PROOF_SIZE)
     }
 
     fn hold_domain() -> frame_support::weights::Weight {
         frame_support::weights::Weight::from_parts(Self::HOLD_REF_TIME, Self::HOLD_PROOF_SIZE)
-    }
-
-    fn set_gas_price() -> frame_support::weights::Weight {
-        frame_support::weights::Weight::from_parts(
-            Self::GAS_PRICE_REF_TIME,
-            Self::GAS_PRICE_PROOF_SIZE,
-        )
-    }
-
-    fn hold_tokens_dispatch_fee() -> frame_support::weights::Weight {
-        frame_support::weights::Weight::from_parts(
-            Self::HOLD_TOKENS_REF_TIME,
-            Self::HOLD_TOKENS_PROOF_SIZE,
-        )
     }
 }
 
@@ -337,7 +319,7 @@ impl crate::Domain<Test> {
         max_aggregation_size: AggregationSize,
         publish_queue_size: u32,
         ticket: Option<crate::TicketOf<Test>>,
-        destination: Destination<Balance>,
+        destination_params: DestinationParams,
     ) -> Self {
         Self::try_create(
             id,
@@ -346,7 +328,7 @@ impl crate::Domain<Test> {
             max_aggregation_size,
             publish_queue_size,
             ticket,
-            destination,
+            destination_params,
         )
         .unwrap()
     }
@@ -365,13 +347,11 @@ pub fn test() -> sp_io::TestExternalities {
 
     let mut ext = sp_io::TestExternalities::from(t);
 
-    let destination = Destination {
+    let destination_params = DestinationParams::Hyperbridge(HyperbridgeDispatchParameters {
         destination_chain: BoundedStateMachine::Evm(11155111),
         destination_module: H160::default(),
         timeout: 100,
-        base_fee: 100u32.into(),
-        gas_price: 10u32.into(),
-    };
+    });
 
     ext.execute_with(|| {
         System::set_block_number(1);
@@ -384,7 +364,7 @@ pub fn test() -> sp_io::TestExternalities {
                 DOMAIN_SIZE,
                 DOMAIN_QUEUE_SIZE,
                 None,
-                destination,
+                destination_params,
             ),
         );
     });

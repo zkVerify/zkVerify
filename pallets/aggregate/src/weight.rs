@@ -59,8 +59,6 @@ pub trait WeightInfo {
     fn register_domain() -> Weight;
     fn hold_domain() -> Weight;
     fn unregister_domain() -> Weight;
-    fn set_gas_price() -> Weight;
-    fn hold_tokens_dispatch_fee() -> Weight;
 }
 
 // For backwards compatibility and tests.
@@ -140,13 +138,5 @@ impl WeightInfo for () {
         Weight::from_parts(14_076_000, 177995)
             .saturating_add(RocksDbWeight::get().reads(1_u64))
             .saturating_add(RocksDbWeight::get().writes(1_u64))
-    }
-
-    fn set_gas_price() -> Weight {
-        Weight::from_parts(13_444_000, 177995)
-    }
-
-    fn hold_tokens_dispatch_fee() -> Weight {
-        Weight::from_parts(13_444_000, 177995)
     }
 }

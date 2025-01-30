@@ -23,59 +23,48 @@ use frame_support::dispatch::DispatchResult;
 use ismp::host::StateMachine;
 use scale_info::TypeInfo;
 use sp_core::{H160, H256};
-use sp_std::fmt;
 use sp_std::fmt::Debug;
 
 /// Trait on aggregate
-pub trait OnAggregate<Balance> {
+pub trait OnAggregate {
     /// on aggregate method
     fn on_aggregate(
         domain_id: u32,
         aggregation_id: u64,
         aggregation: H256,
-        destination: Destination<Balance>,
+        destination: DestinationParams,
     ) -> DispatchResult;
 }
 
-impl<Balance> OnAggregate<Balance> for () {
+impl OnAggregate for () {
     fn on_aggregate(
         _domain_id: u32,
         _aggregation_id: u64,
         _aggregation: H256,
-        _destination: Destination<Balance>,
+        _destination: DestinationParams,
     ) -> DispatchResult {
         Ok(())
     }
 }
 
-/// Configuration for destination chain
-#[derive(Clone, PartialEq, Eq, Encode, Decode, TypeInfo, MaxEncodedLen)]
-pub struct Destination<Balance> {
+/// Configuration for Hyperbridge Dispatch params
+#[derive(Clone, PartialEq, Eq, Encode, Decode, TypeInfo, MaxEncodedLen, Debug)]
+pub struct HyperbridgeDispatchParameters {
     /// The destination state machine
     pub destination_chain: BoundedStateMachine,
     /// Module identifier of the receiving module
     pub destination_module: H160,
     /// Relative from the current timestamp at which this request expires in seconds.
     pub timeout: u64,
-    /// Base fee for dispatch representing Proof verification cost + Message execution gas cost, in gas units in destination chain
-    pub base_fee: Balance,
-    /// Gas price X where 1 TOKEN in destination chain = X ACMEs
-    pub gas_price: Balance,
 }
 
-impl<Balance> Debug for Destination<Balance>
-where
-    Balance: Debug,
-{
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("Destination")
-            .field("destination_chain", &self.destination_chain)
-            .field("destination_module", &self.destination_module)
-            .field("timeout", &self.timeout)
-            .field("base_fee", &self.base_fee)
-            .field("gas_price", &self.gas_price)
-            .finish()
-    }
+/// Configuration for Destination Params
+#[derive(Clone, PartialEq, Eq, Encode, Decode, TypeInfo, MaxEncodedLen, Debug)]
+pub enum DestinationParams {
+    /// No Destination
+    None,
+    /// Hyperbridge Destination
+    Hyperbridge(HyperbridgeDispatchParameters),
 }
 
 /// Bounded version for State Machine
