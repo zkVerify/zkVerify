@@ -673,10 +673,7 @@ pub mod pallet {
         ///
         /// - aggregation_size: The size of the aggregation, in other words how many statements any aggregation have.
         /// - queue_size: The maximum number of aggregations that can be in the queue for this domain.
-        /// - destination_chain: Bounded version of StateMachine representing a receiving State Machine.
-        /// - destination_module: Module identifier of the receiving module.
-        /// - timeout: Relative from the current timestamp at which this request expires in seconds.
-        /// - base_fee: The fee that was paid for relayers, in USD
+        /// - destination_params: Params defining destination chain
         pub fn register_domain(
             origin: OriginFor<T>,
             aggregation_size: AggregationSize,
