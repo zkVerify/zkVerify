@@ -50,11 +50,7 @@ pub mod utils {
             .try_into()
             .unwrap();
 
-        let destination = Destination::Hyperbridge(HyperbridgeDispatchParameters {
-            destination_chain: BoundedStateMachine::Evm(11155111),
-            destination_module: H160::default(),
-            timeout: 100,
-        });
+        let destination = Destination::None;
 
         let domain = Domain::<T>::try_create(
             domain_id,

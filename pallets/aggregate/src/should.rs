@@ -398,6 +398,7 @@ mod clean_the_published_storage_on_initialize {
 
 mod aggregate {
     use frame_support::{assert_noop, dispatch::DispatchInfo};
+    use hp_dispatch::DispatchAggregation;
 
     use super::*;
 
@@ -588,6 +589,7 @@ mod aggregate {
         assert_eq!(
             info.weight,
             MockWeightInfo::aggregate(mock::MaxAggregationSize::get() as u32)
+                + MockDispatchAggregation::max_weight()
         );
     }
 
@@ -595,17 +597,27 @@ mod aggregate {
     #[case::full(DOMAIN_SIZE)]
     #[case::half(DOMAIN_SIZE/2)]
     #[case::just_one_proof(1)]
-    fn should_pay_just_for_the_real_used_weight(#[case] proofs: u32) {
+    fn should_pay_just_for_the_real_used_weight(
+        #[case] proofs: u32,
+        #[values(
+            (DOMAIN_ID, hyperbridge_destination()),
+            (DOMAIN_ID_NONE, none_destination())
+        )]
+        (domain_id, destination): (u32, Destination),
+    ) {
         test().execute_with(|| {
             for _ in 0..proofs {
-                Aggregate::on_proof_verified(Some(USER_1), DOMAIN, Default::default());
+                Aggregate::on_proof_verified(Some(USER_1), Some(domain_id), Default::default());
             }
 
-            let expected_weight = <Test as Config>::WeightInfo::aggregate(proofs);
+            let expected_weight = <Test as Config>::WeightInfo::aggregate(proofs)
+                + <<Test as Config>::DispatchAggregation as DispatchAggregation>::dispatch_weight(
+                    &destination,
+                );
 
             assert_eq!(
                 expected_weight,
-                Aggregate::aggregate(Origin::Signed(PUBLISHER_USER).into(), DOMAIN_ID, 1)
+                Aggregate::aggregate(Origin::Signed(PUBLISHER_USER).into(), domain_id, 1)
                     .unwrap()
                     .calc_actual_weight(&dispatch_info())
             )

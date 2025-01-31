@@ -420,7 +420,19 @@ dependencies = [
  "ark-bn254",
  "ark-ec",
  "ark-ff 0.4.2",
- "ark-models-ext",
+ "ark-models-ext 0.4.0 (git+https://github.com/zkVerify/accelerated-bn-cryptography.git?tag=v0.4.0)",
+ "ark-std 0.4.0",
+]
+
+[[package]]
+name = "ark-bn254-ext"
+version = "0.4.0"
+source = "git+https://github.com/zkVerify/accelerated-bn-cryptography.git#c764589d32d2460c41fb0fbee4c2012d1914e1f7"
+dependencies = [
+ "ark-bn254",
+ "ark-ec",
+ "ark-ff 0.4.2",
+ "ark-models-ext 0.4.0 (git+https://github.com/zkVerify/accelerated-bn-cryptography.git)",
  "ark-std 0.4.0",
 ]
 
@@ -573,6 +585,18 @@ dependencies = [
 name = "ark-models-ext"
 version = "0.4.0"
 source = "git+https://github.com/zkVerify/accelerated-bn-cryptography.git?tag=v0.4.0#c764589d32d2460c41fb0fbee4c2012d1914e1f7"
+dependencies = [
+ "ark-ec",
+ "ark-ff 0.4.2",
+ "ark-serialize 0.4.2",
+ "ark-std 0.4.0",
+ "derivative",
+]
+
+[[package]]
+name = "ark-models-ext"
+version = "0.4.0"
+source = "git+https://github.com/zkVerify/accelerated-bn-cryptography.git#c764589d32d2460c41fb0fbee4c2012d1914e1f7"
 dependencies = [
  "ark-ec",
  "ark-ff 0.4.2",
@@ -1209,7 +1233,7 @@ dependencies = [
  "bitflags 2.7.0",
  "cexpr",
  "clang-sys",
- "itertools 0.11.0",
+ "itertools 0.12.1",
  "lazy_static",
  "lazycell",
  "log",
@@ -7406,7 +7430,7 @@ name = "native"
 version = "0.3.0"
 dependencies = [
  "ark-bn254",
- "ark-bn254-ext",
+ "ark-bn254-ext 0.4.0 (git+https://github.com/zkVerify/accelerated-bn-cryptography.git?tag=v0.4.0)",
  "ark-ec",
  "ark-ff 0.4.2",
  "ark-scale",
@@ -7774,9 +7798,9 @@ checksum = "c08d65885ee38876c4f86fa503fb49d7b507c2b62552df7c70b2fce627e06381"
 
 [[package]]
 name = "openssl"
-version = "0.10.70"
+version = "0.10.68"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "61cfb4e166a8bb8c9b55c500bc2308550148ece889be90f609377e58140f42c6"
+checksum = "6174bc48f102d208783c2c84bf931bb75927a617866870de8a4ea85597f871f5"
 dependencies = [
  "bitflags 2.7.0",
  "cfg-if 1.0.0",
@@ -7815,9 +7839,9 @@ dependencies = [
 
 [[package]]
 name = "openssl-sys"
-version = "0.9.105"
+version = "0.9.104"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8b22d5b84be05a8d6947c7cb71f7c849aa0f112acd4bf51c2a7c1c988ac0a9dc"
+checksum = "45abf306cbf99debc8195b66b7346498d7b10c210de50418b5ccd7ceba08c741"
 dependencies = [
  "cc",
  "libc",
@@ -9219,7 +9243,7 @@ checksum = "4e69bf016dc406eff7d53a7d3f7cf1c2e72c82b9088aac1118591e36dd2cd3e9"
 dependencies = [
  "bitcoin_hashes",
  "rand 0.8.5",
- "rand_core 0.4.2",
+ "rand_core 0.6.4",
  "serde",
  "unicode-normalization",
 ]
@@ -11903,24 +11927,25 @@ dependencies = [
 
 [[package]]
 name = "rstest"
-version = "0.19.0"
+version = "0.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9d5316d2a1479eeef1ea21e7f9ddc67c191d497abc8fc3ba2467857abbb68330"
+checksum = "03e905296805ab93e13c1ec3a03f4b6c4f35e9498a3d5fa96dc626d22c03cd89"
 dependencies = [
- "futures",
  "futures-timer",
+ "futures-util",
  "rstest_macros",
  "rustc_version 0.4.1",
 ]
 
 [[package]]
 name = "rstest_macros"
-version = "0.19.0"
+version = "0.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "04a9df72cc1f67020b0d63ad9bfe4a323e459ea7eb68e03bd9824db49f9a4c25"
+checksum = "ef0053bbffce09062bee4bcc499b0fbe7a57b879f1efe088d6d8d4c7adcdef9b"
 dependencies = [
  "cfg-if 1.0.0",
  "glob",
+ "proc-macro-crate 3.2.0",
  "proc-macro2",
  "quote",
  "regex",
@@ -15886,7 +15911,7 @@ dependencies = [
 [[package]]
 name = "test-utils"
 version = "0.4.0"
-source = "git+https://github.com/zkVerify/accelerated-bn-cryptography.git?tag=v0.4.0#c764589d32d2460c41fb0fbee4c2012d1914e1f7"
+source = "git+https://github.com/zkVerify/accelerated-bn-cryptography.git#c764589d32d2460c41fb0fbee4c2012d1914e1f7"
 dependencies = [
  "ark-ec",
  "ark-scale",
@@ -16526,9 +16551,9 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 0.1.10",
+ "cfg-if 1.0.0",
  "digest 0.10.7",
- "rand 0.4.6",
+ "rand 0.8.5",
  "static_assertions",
 ]
 
@@ -16558,14 +16583,14 @@ dependencies = [
 
 [[package]]
 name = "ultraplonk-no-std"
-version = "0.2.1"
-source = "git+https://github.com/zkVerify/ultraplonk_verifier.git?tag=v0.2.1#3d6a30b90d8dd5b751465cfb524b339a7a16cb49"
+version = "0.2.0"
+source = "git+https://github.com/zkVerify/ultraplonk_verifier.git?tag=v0.2.0#98516cf22bc9dda3bbe1df3a7027600d88a5c5e4"
 dependencies = [
  "ark-bn254",
- "ark-bn254-ext",
+ "ark-bn254-ext 0.4.0 (git+https://github.com/zkVerify/accelerated-bn-cryptography.git)",
  "ark-ec",
  "ark-ff 0.4.2",
- "ark-models-ext",
+ "ark-models-ext 0.4.0 (git+https://github.com/zkVerify/accelerated-bn-cryptography.git)",
  "ark-std 0.4.0",
  "hex-literal",
  "sha3",

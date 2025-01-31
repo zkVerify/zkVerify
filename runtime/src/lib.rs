@@ -635,6 +635,21 @@ impl DispatchAggregation for Runtime {
             }
         }
     }
+
+    fn max_weight() -> Weight {
+        use pallet_hyperbridge_aggregations::WeightInfo;
+        <Runtime as pallet_hyperbridge_aggregations::Config>::WeightInfo::dispatch_aggregation()
+    }
+
+    fn dispatch_weight(destination: &Destination) -> Weight {
+        match destination {
+            Destination::None => Default::default(),
+            Destination::Hyperbridge(_) => {
+                use pallet_hyperbridge_aggregations::WeightInfo;
+                <Runtime as pallet_hyperbridge_aggregations::Config>::WeightInfo::dispatch_aggregation()
+            }
+        }
+    }
 }
 
 impl pallet_aggregate::Config for Runtime {
@@ -667,7 +682,7 @@ impl pallet_aggregate::Config for Runtime {
     #[cfg(feature = "runtime-benchmarks")]
     type Currency = Balances;
 
-    type OnAggregate = Self;
+    type DispatchAggregation = Self;
 }
 
 parameter_types! {

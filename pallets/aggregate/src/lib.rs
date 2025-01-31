@@ -141,7 +141,7 @@ pub mod pallet {
         #[cfg(feature = "runtime-benchmarks")]
         type Currency: frame_support::traits::fungible::Mutate<AccountOf<Self>>;
         /// Handler for when an aggregation is completed
-        type OnAggregate: DispatchAggregation;
+        type DispatchAggregation: DispatchAggregation;
     }
 
     impl<T: Config> OnProofVerified<<T as frame_system::Config>::AccountId> for Pallet<T> {
@@ -602,7 +602,7 @@ pub mod pallet {
         /// Arguments:
         /// - domain_id: The domain identifier.
         /// - id: The identifier of the aggregation.
-        #[pallet::weight(T::WeightInfo::aggregate(T::AggregationSize::get()))]
+        #[pallet::weight(T::WeightInfo::aggregate(T::AggregationSize::get()) + T::DispatchAggregation::max_weight())]
         #[pallet::call_index(0)]
         pub fn aggregate(
             origin: OriginFor<T>,
@@ -611,7 +611,7 @@ pub mod pallet {
         ) -> DispatchResultWithPostInfo {
             use frame_support::traits::DefensiveSaturating;
             let origin_signed = ensure_signed(origin.clone())?;
-            let (root, size) = Domains::<T>::try_mutate(domain_id, |domain| {
+            let (root, size, destination) = Domains::<T>::try_mutate(domain_id, |domain| {
                 let domain = domain.as_mut().ok_or_else(|| {
                     dispatch_post_error(
                         T::WeightInfo::aggregate_on_invalid_domain(),
@@ -655,7 +655,7 @@ pub mod pallet {
 
                 domain.handle_hold_state();
 
-                Result::<_, DispatchErrorWithPostInfo>::Ok((root, size))
+                Result::<_, DispatchErrorWithPostInfo>::Ok((root, size, domain.destination.clone()))
             })?;
             Self::deposit_event(Event::NewAggregationReceipt {
                 domain_id,
@@ -663,16 +663,16 @@ pub mod pallet {
                 receipt: root,
             });
 
-            let domain = Domains::<T>::get(domain_id).ok_or(Error::<T>::UnknownDomainId)?;
+            let dispatch_weight = T::DispatchAggregation::dispatch_weight(&destination);
 
-            T::OnAggregate::dispatch_aggregation(
+            T::DispatchAggregation::dispatch_aggregation(
                 domain_id,
                 aggregation_id,
                 root,
-                domain.destination.clone(),
+                destination.clone(),
             )?;
 
-            Ok(Some(T::WeightInfo::aggregate(size)).into())
+            Ok(Some(T::WeightInfo::aggregate(size) + dispatch_weight).into())
         }
 
         #[pallet::call_index(1)]

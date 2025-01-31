@@ -19,7 +19,7 @@
 //! Traits for hyperbridge
 
 use codec::{Decode, Encode, MaxEncodedLen};
-use frame_support::dispatch::DispatchResult;
+use frame_support::{dispatch::DispatchResult, weights::Weight};
 use ismp::host::StateMachine;
 use scale_info::TypeInfo;
 use sp_core::{H160, H256};
@@ -34,6 +34,14 @@ pub trait DispatchAggregation {
         aggregation: H256,
         destination: Destination,
     ) -> DispatchResult;
+
+    /// Maximum weight for this dispatch: should be the maximum weight for the dispatch
+    /// all type of destination. *The implementation should be simple (ideally a constant)*
+    fn max_weight() -> Weight;
+
+    /// The weight for dispatch to a given destination. *Also in this case the implementation
+    /// should be simple (ideally a constant)*
+    fn dispatch_weight(destination: &Destination) -> Weight;
 }
 
 impl DispatchAggregation for () {
@@ -44,6 +52,14 @@ impl DispatchAggregation for () {
         _destination: Destination,
     ) -> DispatchResult {
         Ok(())
+    }
+
+    fn max_weight() -> Weight {
+        Default::default()
+    }
+
+    fn dispatch_weight(_destination: &Destination) -> Weight {
+        Default::default()
     }
 }
 

@@ -24,7 +24,7 @@ use frame_support::{
     dispatch::PostDispatchInfo,
     parameter_types,
     traits::{Consideration, EnsureOrigin, EstimateCallFee, Footprint},
-    weights::RuntimeDbWeight,
+    weights::{RuntimeDbWeight, Weight},
 };
 use frame_system::RawOrigin;
 use hp_dispatch::{
@@ -172,6 +172,11 @@ pub struct MockDispatchAggregation {
 }
 
 impl MockDispatchAggregation {
+    pub const NONE_REF_TIME: u64 = 42;
+    pub const NONE_PROOF_SIZE: u64 = 24;
+    pub const HB_REF_TIME: u64 = 4242;
+    pub const HB_PROOF_SIZE: u64 = 2424;
+
     thread_local! {
         pub static CALLS: RefCell<VecDeque<MockDispatchAggregation>> = RefCell::new(Default::default());
     }
@@ -195,6 +200,18 @@ impl MockDispatchAggregation {
     fn return_value() -> DispatchResult {
         Self::RETURN.with_borrow(|r| *r)
     }
+
+    pub fn none_weight() -> Weight {
+        Weight::from_parts(Self::NONE_REF_TIME, Self::NONE_PROOF_SIZE)
+    }
+
+    pub fn hyperbridge_weight() -> Weight {
+        Weight::from_parts(Self::HB_REF_TIME, Self::HB_PROOF_SIZE)
+    }
+
+    pub fn max_weight() -> Weight {
+        Self::hyperbridge_weight()
+    }
 }
 
 impl DispatchAggregation for MockDispatchAggregation {
@@ -212,6 +229,17 @@ impl DispatchAggregation for MockDispatchAggregation {
         }
         .push();
         MockDispatchAggregation::return_value()
+    }
+
+    fn max_weight() -> Weight {
+        Self::max_weight()
+    }
+
+    fn dispatch_weight(destination: &Destination) -> Weight {
+        match destination {
+            Destination::None => Self::none_weight(),
+            Destination::Hyperbridge(_) => Self::hyperbridge_weight(),
+        }
     }
 }
 
@@ -327,7 +355,7 @@ impl crate::Config for Test {
     const AGGREGATION_SIZE: u32 = MaxAggregationSize::get() as u32;
     #[cfg(feature = "runtime-benchmarks")]
     type Currency = Balances;
-    type OnAggregate = MockDispatchAggregation;
+    type DispatchAggregation = MockDispatchAggregation;
 }
 
 // Configure a mock runtime to test the pallet.
