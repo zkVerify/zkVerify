@@ -664,13 +664,12 @@ pub mod pallet {
             });
 
             let domain = Domains::<T>::get(domain_id).ok_or(Error::<T>::UnknownDomainId)?;
-            let destination_params = domain.destination_params.clone();
 
             T::OnAggregate::dispatch_aggregation(
                 domain_id,
                 aggregation_id,
                 root,
-                destination_params,
+                domain.destination.clone(),
             )?;
 
             Ok(Some(T::WeightInfo::aggregate(size)).into())
@@ -684,7 +683,7 @@ pub mod pallet {
         ///
         /// - aggregation_size: The size of the aggregation, in other words how many statements any aggregation have.
         /// - queue_size: The maximum number of aggregations that can be in the queue for this domain.
-        /// - destination_params: Params defining destination chain
+        /// - destination: Params defining destination chain
         pub fn register_domain(
             origin: OriginFor<T>,
             aggregation_size: AggregationSize,

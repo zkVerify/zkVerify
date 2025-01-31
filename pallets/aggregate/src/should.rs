@@ -588,15 +588,7 @@ mod register_domain {
             assert_eq!(registered_id, domain.id);
             assert_eq!(16, domain.max_aggregation_size);
             assert_eq!(8, domain.publish_queue_size);
-
-            match &domain.destination_params {
-                Destination::Hyperbridge(params) => {
-                    assert_eq!(BoundedStateMachine::Evm(11155111), params.destination_chain);
-                    assert_eq!(H160::default(), params.destination_module);
-                    assert_eq!(100, params.timeout);
-                }
-                Destination::None => panic!("Expected Hyperbridge parameters"),
-            }
+            assert_eq!(hyperbridge_destination(), domain.destination);
 
             assert_eq!(domain.next, Aggregation::<Test>::create(1, 16));
             assert!(domain.should_publish.is_empty());
@@ -643,7 +635,7 @@ mod register_domain {
                 assert_eq!(aggregation_size, domain.max_aggregation_size);
                 assert_eq!(queue_size, domain.publish_queue_size);
 
-                match &domain.destination_params {
+                match &domain.destination {
                     Destination::Hyperbridge(params) => {
                         assert_eq!(BoundedStateMachine::Evm(11155111), params.destination_chain);
                         assert_eq!(H160::default(), params.destination_module);

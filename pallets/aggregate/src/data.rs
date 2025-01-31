@@ -199,7 +199,7 @@ pub struct DomainEntry<
     /// not hold any balance.
     pub ticket: Option<T>,
     /// Configuration params for destination chain to dispatch aggregations
-    pub destination_params: Destination,
+    pub destination: Destination,
 }
 
 impl<
@@ -238,7 +238,7 @@ impl<
             should_publish: Default::default(),
             publish_queue_size,
             ticket,
-            destination_params: destination,
+            destination,
         }
     }
 
