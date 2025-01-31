@@ -25,23 +25,23 @@ use scale_info::TypeInfo;
 use sp_core::{H160, H256};
 use sp_std::fmt::Debug;
 
-/// Trait on aggregate
-pub trait OnAggregate {
-    /// on aggregate method
-    fn on_aggregate(
+/// Trait to dispatch aggregations
+pub trait DispatchAggregation {
+    /// forward an aggregation to the destination
+    fn dispatch_aggregation(
         domain_id: u32,
         aggregation_id: u64,
         aggregation: H256,
-        destination: DestinationParams,
+        destination: Destination,
     ) -> DispatchResult;
 }
 
-impl OnAggregate for () {
-    fn on_aggregate(
+impl DispatchAggregation for () {
+    fn dispatch_aggregation(
         _domain_id: u32,
         _aggregation_id: u64,
         _aggregation: H256,
-        _destination: DestinationParams,
+        _destination: Destination,
     ) -> DispatchResult {
         Ok(())
     }
@@ -60,7 +60,7 @@ pub struct HyperbridgeDispatchParameters {
 
 /// Configuration for Destination Params
 #[derive(Clone, PartialEq, Eq, Encode, Decode, TypeInfo, MaxEncodedLen, Debug)]
-pub enum DestinationParams {
+pub enum Destination {
     /// No Destination
     None,
     /// Hyperbridge Destination

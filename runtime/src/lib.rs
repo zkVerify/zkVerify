@@ -610,16 +610,16 @@ where
     }
 }
 
-impl OnAggregate for Runtime {
-    fn on_aggregate(
+impl DispatchAggregation for Runtime {
+    fn dispatch_aggregation(
         domain_id: u32,
         aggregation_id: u64,
         aggregation: H256,
-        destination_params: DestinationParams,
+        destination_params: Destination,
     ) -> DispatchResult {
         match destination_params {
-            DestinationParams::None => Ok(()),
-            DestinationParams::Hyperbridge(params) => {
+            Destination::None => Ok(()),
+            Destination::Hyperbridge(params) => {
                 pallet_hyperbridge_aggregations::Pallet::<Runtime>::dispatch_aggregation(
                     pallet_hyperbridge_aggregations::PALLET_ID.into_account_truncating(),
                     Params {
@@ -1374,7 +1374,7 @@ use polkadot_primitives::{
     ValidationCodeHash, ValidatorId, ValidatorIndex, PARACHAIN_KEY_TYPE_ID,
 };
 
-use hp_dispatch::{DestinationParams, OnAggregate};
+use hp_dispatch::{Destination, DispatchAggregation};
 use pallet_hyperbridge_aggregations::{Params, ZKV_MODULE_ID};
 #[cfg(feature = "relay")]
 pub use polkadot_runtime_parachains::runtime_api_impl::{

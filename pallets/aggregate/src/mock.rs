@@ -27,7 +27,7 @@ use frame_support::{
     weights::RuntimeDbWeight,
 };
 use frame_system::RawOrigin;
-use hp_dispatch::{BoundedStateMachine, DestinationParams, HyperbridgeDispatchParameters};
+use hp_dispatch::{BoundedStateMachine, Destination, HyperbridgeDispatchParameters};
 use scale_info::TypeInfo;
 use sp_core::{ConstU128, ConstU32, H160};
 use sp_runtime::{traits::IdentityLookup, BuildStorage, Perbill};
@@ -319,7 +319,7 @@ impl crate::Domain<Test> {
         max_aggregation_size: AggregationSize,
         publish_queue_size: u32,
         ticket: Option<crate::TicketOf<Test>>,
-        destination_params: DestinationParams,
+        destination_params: Destination,
     ) -> Self {
         Self::try_create(
             id,
@@ -347,7 +347,7 @@ pub fn test() -> sp_io::TestExternalities {
 
     let mut ext = sp_io::TestExternalities::from(t);
 
-    let destination_params = DestinationParams::Hyperbridge(HyperbridgeDispatchParameters {
+    let destination_params = Destination::Hyperbridge(HyperbridgeDispatchParameters {
         destination_chain: BoundedStateMachine::Evm(11155111),
         destination_module: H160::default(),
         timeout: 100,

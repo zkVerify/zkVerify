@@ -23,7 +23,7 @@ use frame_support::{
     dispatch::{GetDispatchInfo, Pays},
     traits::Hooks,
 };
-use hp_dispatch::{BoundedStateMachine, DestinationParams, HyperbridgeDispatchParameters};
+use hp_dispatch::{BoundedStateMachine, Destination, HyperbridgeDispatchParameters};
 use hp_on_proof_verified::OnProofVerified;
 use rstest::rstest;
 use sp_core::{H160, H256};
@@ -69,8 +69,8 @@ fn emit_domain_full_event_when_publish_queue_is_full() {
     })
 }
 
-fn get_destination_params() -> DestinationParams {
-    DestinationParams::Hyperbridge(HyperbridgeDispatchParameters {
+fn get_destination_params() -> Destination {
+    Destination::Hyperbridge(HyperbridgeDispatchParameters {
         destination_chain: BoundedStateMachine::Evm(11155111),
         destination_module: H160::default(),
         timeout: 100,
@@ -588,12 +588,12 @@ mod register_domain {
             assert_eq!(8, domain.publish_queue_size);
 
             match &domain.destination_params {
-                DestinationParams::Hyperbridge(params) => {
+                Destination::Hyperbridge(params) => {
                     assert_eq!(BoundedStateMachine::Evm(11155111), params.destination_chain);
                     assert_eq!(H160::default(), params.destination_module);
                     assert_eq!(100, params.timeout);
                 }
-                DestinationParams::None => panic!("Expected Hyperbridge parameters"),
+                Destination::None => panic!("Expected Hyperbridge parameters"),
             }
 
             assert_eq!(domain.next, Aggregation::<Test>::create(1, 16));
@@ -642,12 +642,12 @@ mod register_domain {
                 assert_eq!(queue_size, domain.publish_queue_size);
 
                 match &domain.destination_params {
-                    DestinationParams::Hyperbridge(params) => {
+                    Destination::Hyperbridge(params) => {
                         assert_eq!(BoundedStateMachine::Evm(11155111), params.destination_chain);
                         assert_eq!(H160::default(), params.destination_module);
                         assert_eq!(100, params.timeout);
                     }
-                    DestinationParams::None => panic!("Expected Hyperbridge parameters"),
+                    Destination::None => panic!("Expected Hyperbridge parameters"),
                 }
 
                 assert_eq!(

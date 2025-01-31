@@ -70,7 +70,7 @@ pub mod pallet {
         ensure_signed,
         pallet_prelude::{BlockNumberFor, OriginFor},
     };
-    use hp_dispatch::{DestinationParams, OnAggregate};
+    use hp_dispatch::{Destination, DispatchAggregation};
     use hp_on_proof_verified::OnProofVerified;
     use sp_core::H256;
     use sp_runtime::traits::{BadOrigin, Keccak256};
@@ -141,7 +141,7 @@ pub mod pallet {
         #[cfg(feature = "runtime-benchmarks")]
         type Currency: frame_support::traits::fungible::Mutate<AccountOf<Self>>;
         /// Handler for when an aggregation is completed
-        type OnAggregate: OnAggregate;
+        type OnAggregate: DispatchAggregation;
     }
 
     impl<T: Config> OnProofVerified<<T as frame_system::Config>::AccountId> for Pallet<T> {
@@ -362,7 +362,7 @@ pub mod pallet {
             max_aggregation_size: AggregationSize,
             publish_queue_size: u32,
             ticket: Option<TicketOf<T>>,
-            destination: DestinationParams,
+            destination: Destination,
         ) -> Result<Self, Error<T>> {
             if max_aggregation_size == 0
                 || publish_queue_size == 0
@@ -660,7 +660,12 @@ pub mod pallet {
             let domain = Domains::<T>::get(domain_id).ok_or(Error::<T>::UnknownDomainId)?;
             let destination_params = domain.destination_params.clone();
 
-            T::OnAggregate::on_aggregate(domain_id, aggregation_id, root, destination_params)?;
+            T::OnAggregate::dispatch_aggregation(
+                domain_id,
+                aggregation_id,
+                root,
+                destination_params,
+            )?;
 
             Ok(Some(T::WeightInfo::aggregate(size)).into())
         }
@@ -678,7 +683,7 @@ pub mod pallet {
             origin: OriginFor<T>,
             aggregation_size: AggregationSize,
             queue_size: Option<u32>,
-            destination_params: DestinationParams,
+            destination_params: Destination,
         ) -> DispatchResultWithPostInfo {
             let owner = User::<T::AccountId>::from_origin::<T>(origin)?;
             let id = Self::next_domain_id();
