@@ -23,10 +23,10 @@ use frame_support::{
     dispatch::{GetDispatchInfo, Pays},
     traits::Hooks,
 };
-use hp_dispatch::{BoundedStateMachine, Destination, HyperbridgeDispatchParameters};
+use hp_dispatch::Destination;
 use hp_on_proof_verified::OnProofVerified;
 use rstest::rstest;
-use sp_core::{H160, H256};
+use sp_core::H256;
 use sp_runtime::traits::BadOrigin;
 use sp_runtime::SaturatedConversion;
 use utility::*;
@@ -66,14 +66,6 @@ fn emit_domain_full_event_when_publish_queue_is_full() {
         Aggregate::on_proof_verified(Some(USER_1), DOMAIN, Default::default());
 
         assert_evt(event, "Domain full");
-    })
-}
-
-fn hyperbridge_destination() -> Destination {
-    Destination::Hyperbridge(HyperbridgeDispatchParameters {
-        destination_chain: BoundedStateMachine::Evm(11155111),
-        destination_module: H160::default(),
-        timeout: 100,
     })
 }
 
@@ -405,7 +397,7 @@ mod clean_the_published_storage_on_initialize {
 }
 
 mod aggregate {
-    use frame_support::dispatch::DispatchInfo;
+    use frame_support::{assert_noop, dispatch::DispatchInfo};
 
     use super::*;
 
@@ -417,28 +409,68 @@ mod aggregate {
         .get_dispatch_info()
     }
 
+    fn add_aggregations(user: Option<AccountId>, domain: Option<u32>, size: u32) {
+        for i in 0..size {
+            Aggregate::on_proof_verified(user, domain, H256::from_low_u64_be(i.into()));
+        }
+    }
+
     #[test]
     fn emit_a_new_receipt() {
         test().execute_with(|| {
-            for i in 0..DOMAIN_SIZE {
-                Aggregate::on_proof_verified(Some(USER_2), DOMAIN, H256::from_low_u64_be(i.into()));
-            }
+            add_aggregations(Some(USER_2), DOMAIN, DOMAIN_SIZE);
 
             assert_ok!(Aggregate::aggregate(
                 Origin::Signed(USER_1).into(),
                 DOMAIN_ID,
                 1
             ));
+
             assert_new_receipt(DOMAIN_ID, 1, None);
+        })
+    }
+
+    #[test]
+    fn dispatch_aggregation() {
+        test().execute_with(|| {
+            add_aggregations(Some(USER_2), DOMAIN, DOMAIN_SIZE);
+
+            Aggregate::aggregate(Origin::Signed(USER_1).into(), DOMAIN_ID, 1).unwrap();
+
+            let MockDispatchAggregation {
+                domain_id,
+                aggregation_id,
+                aggregation,
+                destination,
+            } = MockDispatchAggregation::pop().expect("No call received");
+
+            assert_new_receipt(domain_id, aggregation_id, Some(aggregation));
+            assert_eq!(hyperbridge_destination(), destination);
+        })
+    }
+
+    #[test]
+    fn route_aggregation_to_correct_destination() {
+        test().execute_with(|| {
+            add_aggregations(Some(USER_2), DOMAIN_NONE, DOMAIN_SIZE);
+
+            Aggregate::aggregate(Origin::Signed(USER_1).into(), DOMAIN_ID_NONE, 1).unwrap();
+
+            let MockDispatchAggregation {
+                domain_id: _,
+                aggregation_id: _,
+                aggregation: _,
+                destination,
+            } = MockDispatchAggregation::pop().expect("No call received");
+
+            assert_eq!(none_destination(), destination);
         })
     }
 
     #[test]
     fn accept_also_composing_aggregation() {
         test().execute_with(|| {
-            for i in 0..DOMAIN_SIZE / 2 {
-                Aggregate::on_proof_verified(Some(USER_2), DOMAIN, H256::from_low_u64_be(i.into()));
-            }
+            add_aggregations(Some(USER_2), DOMAIN, DOMAIN_SIZE / 2);
 
             assert_ok!(Aggregate::aggregate(
                 Origin::Signed(USER_1).into(),
@@ -485,6 +517,21 @@ mod aggregate {
                     .unwrap_err()
                     .error;
             assert_eq!(err, Error::<Test>::UnknownDomainId.into());
+        })
+    }
+
+    #[test]
+    fn raise_error_if_aggregation_fails() {
+        test().execute_with(|| {
+            let sentinel = sp_runtime::DispatchError::Other("SENTINEL");
+            MockDispatchAggregation::set_return(Err(sentinel));
+
+            add_aggregations(Some(USER_2), DOMAIN, DOMAIN_SIZE);
+
+            assert_noop!(
+                Aggregate::aggregate(Origin::Signed(USER_1).into(), DOMAIN_ID, 1),
+                sentinel
+            );
         })
     }
 
@@ -562,15 +609,12 @@ mod aggregate {
                     .unwrap()
                     .calc_actual_weight(&dispatch_info())
             )
-        })
+        });
     }
 }
 
 mod register_domain {
-    use core::u32;
-
     use super::*;
-    use sp_core::H160;
 
     #[test]
     fn add_a_domain_with_the_given_values() {
@@ -634,15 +678,7 @@ mod register_domain {
                 assert_eq!(id, domain.id);
                 assert_eq!(aggregation_size, domain.max_aggregation_size);
                 assert_eq!(queue_size, domain.publish_queue_size);
-
-                match &domain.destination {
-                    Destination::Hyperbridge(params) => {
-                        assert_eq!(BoundedStateMachine::Evm(11155111), params.destination_chain);
-                        assert_eq!(H160::default(), params.destination_module);
-                        assert_eq!(100, params.timeout);
-                    }
-                    Destination::None => panic!("Expected Hyperbridge parameters"),
-                }
+                assert_eq!(hyperbridge_destination(), domain.destination);
 
                 assert_eq!(
                     domain.next,

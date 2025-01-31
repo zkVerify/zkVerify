@@ -27,10 +27,12 @@ use frame_support::{
     weights::RuntimeDbWeight,
 };
 use frame_system::RawOrigin;
-use hp_dispatch::{BoundedStateMachine, Destination, HyperbridgeDispatchParameters};
+use hp_dispatch::{
+    BoundedStateMachine, Destination, DispatchAggregation, HyperbridgeDispatchParameters,
+};
 use scale_info::TypeInfo;
-use sp_core::{ConstU128, ConstU32, H160};
-use sp_runtime::{traits::IdentityLookup, BuildStorage, Perbill};
+use sp_core::{ConstU128, ConstU32, H160, H256};
+use sp_runtime::{traits::IdentityLookup, BuildStorage, DispatchResult, Perbill};
 
 parameter_types! {
     pub const MaxAggregationSize: AggregationSize = 64;
@@ -47,6 +49,8 @@ pub type Origin = RawOrigin<AccountId>;
 
 pub const DOMAIN_ID: u32 = 51;
 pub const DOMAIN: Option<u32> = Some(DOMAIN_ID);
+pub const DOMAIN_ID_NONE: u32 = 666;
+pub const DOMAIN_NONE: Option<u32> = Some(DOMAIN_ID_NONE);
 pub const DOMAIN_SIZE: AggregationSize = 32;
 pub const DOMAIN_QUEUE_SIZE: u32 = 16;
 pub const DOMAIN_FEE: Balance = (ESTIMATED_FEE_CORRECTED / DOMAIN_SIZE as u32) as Balance;
@@ -156,6 +160,58 @@ impl<O: Into<Result<RawOrigin<AccountId>, O>> + From<RawOrigin<AccountId>>> Ensu
     #[cfg(feature = "runtime-benchmarks")]
     fn try_successful_origin() -> Result<O, ()> {
         Ok(O::from(RawOrigin::Signed(ROOT_USER)))
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MockDispatchAggregation {
+    pub domain_id: u32,
+    pub aggregation_id: u64,
+    pub aggregation: H256,
+    pub destination: Destination,
+}
+
+impl MockDispatchAggregation {
+    thread_local! {
+        pub static CALLS: RefCell<VecDeque<MockDispatchAggregation>> = RefCell::new(Default::default());
+    }
+
+    thread_local! {
+        pub static RETURN: RefCell<DispatchResult> = RefCell::new(Ok(()));
+    }
+
+    pub fn pop() -> Option<Self> {
+        Self::CALLS.with_borrow_mut(|calls| calls.pop_front())
+    }
+
+    fn push(self) {
+        Self::CALLS.with_borrow_mut(|calls| calls.push_back(self))
+    }
+
+    pub fn set_return(dispatch_result: DispatchResult) {
+        let _ = Self::RETURN.replace(dispatch_result);
+    }
+
+    fn return_value() -> DispatchResult {
+        Self::RETURN.with_borrow(|r| *r)
+    }
+}
+
+impl DispatchAggregation for MockDispatchAggregation {
+    fn dispatch_aggregation(
+        domain_id: u32,
+        aggregation_id: u64,
+        aggregation: H256,
+        destination: Destination,
+    ) -> DispatchResult {
+        MockDispatchAggregation {
+            domain_id,
+            aggregation_id,
+            aggregation,
+            destination,
+        }
+        .push();
+        MockDispatchAggregation::return_value()
     }
 }
 
@@ -271,7 +327,7 @@ impl crate::Config for Test {
     const AGGREGATION_SIZE: u32 = MaxAggregationSize::get() as u32;
     #[cfg(feature = "runtime-benchmarks")]
     type Currency = Balances;
-    type OnAggregate = ();
+    type OnAggregate = MockDispatchAggregation;
 }
 
 // Configure a mock runtime to test the pallet.
@@ -283,6 +339,18 @@ frame_support::construct_runtime!(
         Aggregate: crate,
     }
 );
+
+pub fn hyperbridge_destination() -> Destination {
+    Destination::Hyperbridge(HyperbridgeDispatchParameters {
+        destination_chain: BoundedStateMachine::Evm(11155111),
+        destination_module: H160::default(),
+        timeout: 100,
+    })
+}
+
+pub fn none_destination() -> Destination {
+    Destination::None
+}
 
 #[derive_impl(frame_system::config_preludes::SolochainDefaultConfig as frame_system::DefaultConfig)]
 impl frame_system::Config for Test {
@@ -319,7 +387,7 @@ impl crate::Domain<Test> {
         max_aggregation_size: AggregationSize,
         publish_queue_size: u32,
         ticket: Option<crate::TicketOf<Test>>,
-        destination_params: Destination,
+        destination: Destination,
     ) -> Self {
         Self::try_create(
             id,
@@ -328,7 +396,7 @@ impl crate::Domain<Test> {
             max_aggregation_size,
             publish_queue_size,
             ticket,
-            destination_params,
+            destination,
         )
         .unwrap()
     }
@@ -347,12 +415,6 @@ pub fn test() -> sp_io::TestExternalities {
 
     let mut ext = sp_io::TestExternalities::from(t);
 
-    let destination_params = Destination::Hyperbridge(HyperbridgeDispatchParameters {
-        destination_chain: BoundedStateMachine::Evm(11155111),
-        destination_module: H160::default(),
-        timeout: 100,
-    });
-
     ext.execute_with(|| {
         System::set_block_number(1);
         Domains::<Test>::insert(
@@ -364,7 +426,19 @@ pub fn test() -> sp_io::TestExternalities {
                 DOMAIN_SIZE,
                 DOMAIN_QUEUE_SIZE,
                 None,
-                destination_params,
+                hyperbridge_destination(),
+            ),
+        );
+        Domains::<Test>::insert(
+            DOMAIN_ID_NONE,
+            crate::Domain::<Test>::create(
+                DOMAIN_ID_NONE,
+                USER_DOMAIN_1.into(),
+                1,
+                DOMAIN_SIZE,
+                DOMAIN_QUEUE_SIZE,
+                None,
+                none_destination(),
             ),
         );
     });
