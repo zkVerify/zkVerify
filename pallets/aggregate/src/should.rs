@@ -69,7 +69,7 @@ fn emit_domain_full_event_when_publish_queue_is_full() {
     })
 }
 
-fn get_destination_params() -> Destination {
+fn hyperbridge_destination() -> Destination {
     Destination::Hyperbridge(HyperbridgeDispatchParameters {
         destination_chain: BoundedStateMachine::Evm(11155111),
         destination_module: H160::default(),
@@ -567,6 +567,8 @@ mod aggregate {
 }
 
 mod register_domain {
+    use core::u32;
+
     use super::*;
     use sp_core::H160;
 
@@ -577,7 +579,7 @@ mod register_domain {
                 Origin::Signed(USER_DOMAIN_1).into(),
                 16,
                 Some(8),
-                get_destination_params(),
+                hyperbridge_destination(),
             ));
             let registered_id = registered_ids()[0];
 
@@ -609,19 +611,19 @@ mod register_domain {
                 Origin::Signed(USER_DOMAIN_1).into(),
                 values[0].0,
                 values[0].1,
-                get_destination_params(),
+                hyperbridge_destination(),
             ));
             assert_ok!(Aggregate::register_domain(
                 Origin::Signed(USER_DOMAIN_1).into(),
                 values[1].0,
                 values[1].1,
-                get_destination_params(),
+                hyperbridge_destination(),
             ));
             assert_ok!(Aggregate::register_domain(
                 Origin::Signed(USER_DOMAIN_1).into(),
                 values[2].0,
                 values[2].1,
-                get_destination_params(),
+                hyperbridge_destination(),
             ));
 
             let registered_ids = registered_ids();
@@ -667,7 +669,7 @@ mod register_domain {
                 Origin::Signed(USER_DOMAIN_1).into(),
                 MaxAggregationSize::get(),
                 Some(MaxPendingPublishQueueSize::get()),
-                get_destination_params(),
+                hyperbridge_destination(),
             ));
 
             assert_err!(
@@ -675,7 +677,7 @@ mod register_domain {
                     Origin::Signed(USER_DOMAIN_1).into(),
                     0,
                     Some(MaxPendingPublishQueueSize::get()),
-                    get_destination_params(),
+                    hyperbridge_destination(),
                 ),
                 Error::<Test>::InvalidDomainParams
             );
@@ -684,7 +686,7 @@ mod register_domain {
                     Origin::Signed(USER_DOMAIN_1).into(),
                     MaxAggregationSize::get() + 1,
                     Some(MaxPendingPublishQueueSize::get()),
-                    get_destination_params(),
+                    hyperbridge_destination(),
                 ),
                 Error::<Test>::InvalidDomainParams
             );
@@ -693,7 +695,7 @@ mod register_domain {
                     Origin::Signed(USER_DOMAIN_1).into(),
                     MaxAggregationSize::get(),
                     Some(MaxPendingPublishQueueSize::get() + 1),
-                    get_destination_params(),
+                    hyperbridge_destination(),
                 ),
                 Error::<Test>::InvalidDomainParams
             );
@@ -707,7 +709,7 @@ mod register_domain {
                 Origin::Signed(USER_DOMAIN_1).into(),
                 16,
                 None,
-                get_destination_params(),
+                hyperbridge_destination(),
             ));
 
             let domain = Domains::<Test>::get(registered_ids()[0]).unwrap();
@@ -718,7 +720,8 @@ mod register_domain {
                     count: 1,
                     size: Domain::<Test>::compute_encoded_size(
                         16,
-                        MaxPendingPublishQueueSize::get()
+                        MaxPendingPublishQueueSize::get(),
+                        &hyperbridge_destination(),
                     ) as u64,
                 }),
                 domain.ticket,
@@ -733,7 +736,7 @@ mod register_domain {
                 Origin::Signed(ROOT_USER).into(),
                 16,
                 None,
-                get_destination_params(),
+                hyperbridge_destination(),
             ));
 
             let domain = Domains::<Test>::get(registered_ids()[0]).unwrap();
@@ -742,8 +745,14 @@ mod register_domain {
         });
     }
 
-    #[test]
-    fn not_change_domain_encoded_size() {
+    #[rstest]
+    #[case(hyperbridge_destination(), (61376, 1400, 7286, 16400))]
+    #[case(Destination::None, (61343, 1367, 7253, 16367))]
+    fn not_change_domain_encoded_size(
+        #[case] destination: Destination,
+        #[case] variables: (usize, usize, usize, usize),
+    ) {
+        let (bigger, min_agg_max_queue, max_agg_min_queue, middle) = variables;
         // This test is here to check the you don't changed the domain struct without change `compute_encoded_size`
         // accordantly
         use codec::MaxEncodedLen;
@@ -752,27 +761,43 @@ mod register_domain {
             Domain::<Test>::max_encoded_len(),
             Domain::<Test>::compute_encoded_size(
                 MaxAggregationSize::get(),
-                MaxPendingPublishQueueSize::get()
+                MaxPendingPublishQueueSize::get(),
+                &hyperbridge_destination()
             )
         );
 
         // Fixture max
         assert_eq!(Domain::<Test>::max_encoded_len(), 61376);
 
+        // Max configurations
+        assert_eq!(
+            bigger,
+            Domain::<Test>::compute_encoded_size(
+                MaxAggregationSize::get(),
+                MaxPendingPublishQueueSize::get(),
+                &destination
+            )
+        );
+
         // Fixtures
         assert_eq!(
-            1400,
-            Domain::<Test>::compute_encoded_size(1, MaxPendingPublishQueueSize::get())
+            min_agg_max_queue,
+            Domain::<Test>::compute_encoded_size(
+                1,
+                MaxPendingPublishQueueSize::get(),
+                &destination
+            )
         );
         assert_eq!(
-            7286,
-            Domain::<Test>::compute_encoded_size(MaxAggregationSize::get(), 1)
+            max_agg_min_queue,
+            Domain::<Test>::compute_encoded_size(MaxAggregationSize::get(), 1, &destination)
         );
         assert_eq!(
-            16400,
+            middle,
             Domain::<Test>::compute_encoded_size(
                 MaxAggregationSize::get() / 2,
-                MaxPendingPublishQueueSize::get() / 2
+                MaxPendingPublishQueueSize::get() / 2,
+                &destination
             )
         );
     }
@@ -785,7 +810,7 @@ mod register_domain {
                     Origin::Signed(USER_DOMAIN_ERROR_NEW).into(),
                     16,
                     None,
-                    get_destination_params(),
+                    hyperbridge_destination(),
                 ),
                 sp_runtime::DispatchError::from("User Domain Error New")
             );
@@ -800,7 +825,7 @@ mod register_domain {
                     Origin::Signed(USER_DOMAIN_1).into(),
                     16,
                     None,
-                    get_destination_params(),
+                    hyperbridge_destination(),
                 )
                 .unwrap()
                 .pays_fee,
@@ -817,7 +842,7 @@ mod register_domain {
                     Origin::Signed(ROOT_USER).into(),
                     16,
                     None,
-                    get_destination_params(),
+                    hyperbridge_destination(),
                 )
                 .unwrap()
                 .pays_fee,
@@ -831,7 +856,7 @@ mod register_domain {
         let info = Call::<Test>::register_domain {
             aggregation_size: 16,
             queue_size: Some(8),
-            destination_params: get_destination_params(),
+            destination: hyperbridge_destination(),
         }
         .get_dispatch_info();
 
@@ -936,7 +961,7 @@ mod hold_domain {
                     BadOrigin
                 );
 
-                let id = register_domain(USER_DOMAIN_2, 16, None, get_destination_params());
+                let id = register_domain(USER_DOMAIN_2, 16, None, hyperbridge_destination());
 
                 assert_err!(
                     Aggregate::hold_domain(Origin::Signed(USER_DOMAIN_1).into(), id),
@@ -1021,7 +1046,7 @@ mod unregister_domain {
     }
 
     fn register_removable_domain(user: AccountId) -> u32 {
-        let id = register_domain(user, 16, None, get_destination_params());
+        let id = register_domain(user, 16, None, hyperbridge_destination());
         Domains::<Test>::mutate_extant(id, |d| {
             d.state = DomainState::Removable;
         });
@@ -1118,7 +1143,7 @@ mod unregister_domain {
                 origin.clone().into(),
                 16,
                 None,
-                get_destination_params(),
+                hyperbridge_destination(),
             ));
 
             let id = registered_ids()[0];

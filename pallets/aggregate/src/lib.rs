@@ -408,12 +408,18 @@ pub mod pallet {
         /// Return the size in bytes for this domain that should be reserved in the storage.
         ///
         /// - `max_aggregation_size`: The maximum size of the aggregations for this domain.
-        /// - `publish_queue_size`: the publish queue size for this domain.
+        /// - `publish_queue_size`: The publish queue size for this domain.
+        /// - `destination`: The destination chain to dispatch aggregations.
         pub fn compute_encoded_size(
             max_aggregation_size: AggregationSize,
             publish_queue_size: u32,
+            destination: &Destination,
         ) -> usize {
-            DomainType::<T>::compute_encoded_size(max_aggregation_size, publish_queue_size)
+            DomainType::<T>::compute_encoded_size(
+                max_aggregation_size,
+                publish_queue_size,
+                destination,
+            )
         }
 
         /// Return the next non-empty aggregation to be published, or none if the aggregation is empty.
@@ -683,7 +689,7 @@ pub mod pallet {
             origin: OriginFor<T>,
             aggregation_size: AggregationSize,
             queue_size: Option<u32>,
-            destination_params: Destination,
+            destination: Destination,
         ) -> DispatchResultWithPostInfo {
             let owner = User::<T::AccountId>::from_origin::<T>(origin)?;
             let id = Self::next_domain_id();
@@ -697,7 +703,11 @@ pub mod pallet {
                         a,
                         Footprint::from_parts(
                             1,
-                            Domain::<T>::compute_encoded_size(aggregation_size, queue_size),
+                            Domain::<T>::compute_encoded_size(
+                                aggregation_size,
+                                queue_size,
+                                &destination,
+                            ),
                         ),
                     )
                     .transpose()
@@ -711,7 +721,7 @@ pub mod pallet {
                 aggregation_size,
                 queue_size,
                 ticket,
-                destination_params,
+                destination,
             )?;
             Domains::<T>::insert(id, domain);
             NextDomainId::<T>::put(id + 1);

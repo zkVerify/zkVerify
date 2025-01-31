@@ -262,10 +262,12 @@ impl<
     /// Return the size in bytes for this domain that should be reserved in the storage.
     ///
     /// - `max_aggregation_size`: The maximum size of the aggregations for this domain.
-    /// - `publish_queue_size`: the publish queue size for this domain.
+    /// - `publish_queue_size`: The publish queue size for this domain.
+    /// - `destination`: The destination chain to dispatch aggregations.
     pub fn compute_encoded_size(
         max_aggregation_size: AggregationSize,
         publish_queue_size: u32,
+        destination: &Destination,
     ) -> usize
     where
         AggregationEntry<A, B, S>: MaxEncodedLen,
@@ -280,6 +282,8 @@ impl<
         upper
             .saturating_sub(AggregationEntry::<A, B, S>::max_encoded_len())
             .saturating_sub(BoundedBTreeMap::<u64, AggregationEntry<A, B, S>, M>::max_encoded_len())
+            .saturating_sub(Destination::max_encoded_len())
+            .saturating_add(destination.encoded_size())
             .saturating_add(aggregation_size)
             .saturating_add(
                 (publish_queue_size as usize)
