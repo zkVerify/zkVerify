@@ -10,7 +10,7 @@ homepage.workspace = true
 
 [dependencies]
 ark-bn254 = { version = "0.4.0", default-features = false }
-ark-bn254-ext = { git = "https://github.com/zkVerify/accelerated-bn-cryptography.git", default-features = false }
+ark-bn254-ext = { git = "https://github.com/zkVerify/accelerated-bn-cryptography.git", default-features = false, tag = "v0.4.0" }
 ark-ec = { version = "0.4.0", default-features = false }
 ark-scale = { features = ["hazmat"], version = "0.0.12", default-features = false }
 zksync-era-verifier = { git = "https://github.com/HorizenLabs/zksync-era-verifier.git", tag = "v0.1.0", optional = true }

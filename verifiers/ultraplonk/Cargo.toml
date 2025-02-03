@@ -23,7 +23,7 @@ native = { workspace = true }
 pallet-aggregate = { workspace = true, optional = true, default-features = false, features = [
     "runtime-benchmarks",
 ] }
-ultraplonk-no-std = { git = "https://github.com/zkVerify/ultraplonk_verifier.git", tag = "v0.2.0" }
+ultraplonk-no-std = { git = "https://github.com/zkVerify/ultraplonk_verifier.git", tag = "v0.2.1" }
 sp-io = { workspace = true, default-features = false }
 
 [dev-dependencies]
