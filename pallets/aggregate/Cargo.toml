@@ -38,7 +38,8 @@ runtime-benchmarks = [
 	"frame-support/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
 	"pallet-balances/runtime-benchmarks",
-	"sp-runtime/runtime-benchmarks"
+	"sp-runtime/runtime-benchmarks",
+	"hp-dispatch/runtime-benchmarks"
 ]
 default = ["std"]
 std = [
@@ -55,10 +56,12 @@ std = [
 	"sp-io/std",
 	"sp-std/std",
 	"ismp/std",
+	"hp-dispatch/std"
 ]
 try-runtime = [
 	"frame-support/try-runtime",
 	"frame-system/try-runtime",
 	"pallet-balances/try-runtime",
-	"sp-runtime/try-runtime"
+	"sp-runtime/try-runtime",
+	"hp-dispatch/try-runtime"
 ]
