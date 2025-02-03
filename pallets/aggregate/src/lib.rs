@@ -691,6 +691,9 @@ pub mod pallet {
             destination: Destination,
         ) -> DispatchResultWithPostInfo {
             let owner = User::<T::AccountId>::from_origin::<T>(origin)?;
+            if !owner.can_create_domain(&destination) {
+                Err(BadOrigin)?
+            }
             let id = Self::next_domain_id();
             let queue_size = queue_size.unwrap_or(T::MaxPendingPublishQueueSize::get());
 
@@ -851,6 +854,13 @@ pub mod pallet {
             match self {
                 User::Owner(_) => &domain.owner == self,
                 User::Manager => true,
+            }
+        }
+
+        pub fn can_create_domain(&self, destination: &Destination) -> bool {
+            match (self, destination) {
+                (_, Destination::None) | (User::Manager, _) => true,
+                _ => false,
             }
         }
 
