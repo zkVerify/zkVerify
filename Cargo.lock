@@ -420,19 +420,7 @@ dependencies = [
  "ark-bn254",
  "ark-ec",
  "ark-ff 0.4.2",
- "ark-models-ext 0.4.0 (git+https://github.com/zkVerify/accelerated-bn-cryptography.git?tag=v0.4.0)",
- "ark-std 0.4.0",
-]
-
-[[package]]
-name = "ark-bn254-ext"
-version = "0.4.0"
-source = "git+https://github.com/zkVerify/accelerated-bn-cryptography.git#c764589d32d2460c41fb0fbee4c2012d1914e1f7"
-dependencies = [
- "ark-bn254",
- "ark-ec",
- "ark-ff 0.4.2",
- "ark-models-ext 0.4.0 (git+https://github.com/zkVerify/accelerated-bn-cryptography.git)",
+ "ark-models-ext",
  "ark-std 0.4.0",
 ]
 
@@ -585,18 +573,6 @@ dependencies = [
 name = "ark-models-ext"
 version = "0.4.0"
 source = "git+https://github.com/zkVerify/accelerated-bn-cryptography.git?tag=v0.4.0#c764589d32d2460c41fb0fbee4c2012d1914e1f7"
-dependencies = [
- "ark-ec",
- "ark-ff 0.4.2",
- "ark-serialize 0.4.2",
- "ark-std 0.4.0",
- "derivative",
-]
-
-[[package]]
-name = "ark-models-ext"
-version = "0.4.0"
-source = "git+https://github.com/zkVerify/accelerated-bn-cryptography.git#c764589d32d2460c41fb0fbee4c2012d1914e1f7"
 dependencies = [
  "ark-ec",
  "ark-ff 0.4.2",
@@ -7430,7 +7406,7 @@ name = "native"
 version = "0.3.0"
 dependencies = [
  "ark-bn254",
- "ark-bn254-ext 0.4.0 (git+https://github.com/zkVerify/accelerated-bn-cryptography.git?tag=v0.4.0)",
+ "ark-bn254-ext",
  "ark-ec",
  "ark-ff 0.4.2",
  "ark-scale",
@@ -15911,7 +15887,7 @@ dependencies = [
 [[package]]
 name = "test-utils"
 version = "0.4.0"
-source = "git+https://github.com/zkVerify/accelerated-bn-cryptography.git#c764589d32d2460c41fb0fbee4c2012d1914e1f7"
+source = "git+https://github.com/zkVerify/accelerated-bn-cryptography.git?tag=v0.4.0#c764589d32d2460c41fb0fbee4c2012d1914e1f7"
 dependencies = [
  "ark-ec",
  "ark-scale",
@@ -16583,14 +16559,14 @@ dependencies = [
 
 [[package]]
 name = "ultraplonk-no-std"
-version = "0.2.0"
-source = "git+https://github.com/zkVerify/ultraplonk_verifier.git?tag=v0.2.0#98516cf22bc9dda3bbe1df3a7027600d88a5c5e4"
+version = "0.2.1"
+source = "git+https://github.com/zkVerify/ultraplonk_verifier.git?tag=v0.2.1#3d6a30b90d8dd5b751465cfb524b339a7a16cb49"
 dependencies = [
  "ark-bn254",
- "ark-bn254-ext 0.4.0 (git+https://github.com/zkVerify/accelerated-bn-cryptography.git)",
+ "ark-bn254-ext",
  "ark-ec",
  "ark-ff 0.4.2",
- "ark-models-ext 0.4.0 (git+https://github.com/zkVerify/accelerated-bn-cryptography.git)",
+ "ark-models-ext",
  "ark-std 0.4.0",
  "hex-literal",
  "sha3",
