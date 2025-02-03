@@ -146,6 +146,8 @@ dependencies = [
  "alloy-sol-types",
  "const-hex",
  "itoa",
+ "serde",
+ "serde_json",
  "winnow",
 ]
 
@@ -158,6 +160,7 @@ dependencies = [
  "alloy-primitives",
  "alloy-sol-type-parser",
  "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -260,9 +263,11 @@ version = "0.8.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e3b478bc9c0c4737a04cd976accde4df7eba0bdc0d90ad6ff43d58bc93cf79c1"
 dependencies = [
+ "alloy-json-abi",
  "alloy-primitives",
  "alloy-sol-macro",
  "const-hex",
+ "serde",
 ]
 
 [[package]]
@@ -410,7 +415,7 @@ dependencies = [
 [[package]]
 name = "ark-bn254-ext"
 version = "0.4.0"
-source = "git+https://github.com/zkVerify/accelerated-bn-cryptography.git#c764589d32d2460c41fb0fbee4c2012d1914e1f7"
+source = "git+https://github.com/zkVerify/accelerated-bn-cryptography.git?tag=v0.4.0#c764589d32d2460c41fb0fbee4c2012d1914e1f7"
 dependencies = [
  "ark-bn254",
  "ark-ec",
@@ -567,7 +572,7 @@ dependencies = [
 [[package]]
 name = "ark-models-ext"
 version = "0.4.0"
-source = "git+https://github.com/zkVerify/accelerated-bn-cryptography.git#c764589d32d2460c41fb0fbee4c2012d1914e1f7"
+source = "git+https://github.com/zkVerify/accelerated-bn-cryptography.git?tag=v0.4.0#c764589d32d2460c41fb0fbee4c2012d1914e1f7"
 dependencies = [
  "ark-ec",
  "ark-ff 0.4.2",
@@ -598,6 +603,7 @@ dependencies = [
  "ark-ff 0.4.2",
  "ark-std 0.4.0",
  "tracing",
+ "tracing-subscriber 0.2.25",
 ]
 
 [[package]]
@@ -7746,9 +7752,9 @@ checksum = "c08d65885ee38876c4f86fa503fb49d7b507c2b62552df7c70b2fce627e06381"
 
 [[package]]
 name = "openssl"
-version = "0.10.68"
+version = "0.10.70"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6174bc48f102d208783c2c84bf931bb75927a617866870de8a4ea85597f871f5"
+checksum = "61cfb4e166a8bb8c9b55c500bc2308550148ece889be90f609377e58140f42c6"
 dependencies = [
  "bitflags 2.7.0",
  "cfg-if 1.0.0",
@@ -7787,9 +7793,9 @@ dependencies = [
 
 [[package]]
 name = "openssl-sys"
-version = "0.9.104"
+version = "0.9.105"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "45abf306cbf99debc8195b66b7346498d7b10c210de50418b5ccd7ceba08c741"
+checksum = "8b22d5b84be05a8d6947c7cb71f7c849aa0f112acd4bf51c2a7c1c988ac0a9dc"
 dependencies = [
  "cc",
  "libc",
@@ -13359,7 +13365,7 @@ dependencies = [
  "thiserror 1.0.69",
  "tracing",
  "tracing-log",
- "tracing-subscriber",
+ "tracing-subscriber 0.3.19",
 ]
 
 [[package]]
@@ -14929,7 +14935,7 @@ dependencies = [
  "parity-scale-codec",
  "tracing",
  "tracing-core",
- "tracing-subscriber",
+ "tracing-subscriber 0.3.19",
 ]
 
 [[package]]
@@ -15855,7 +15861,7 @@ dependencies = [
 [[package]]
 name = "test-utils"
 version = "0.4.0"
-source = "git+https://github.com/zkVerify/accelerated-bn-cryptography.git#c764589d32d2460c41fb0fbee4c2012d1914e1f7"
+source = "git+https://github.com/zkVerify/accelerated-bn-cryptography.git?tag=v0.4.0#c764589d32d2460c41fb0fbee4c2012d1914e1f7"
 dependencies = [
  "ark-ec",
  "ark-scale",
@@ -16337,6 +16343,15 @@ dependencies = [
 
 [[package]]
 name = "tracing-subscriber"
+version = "0.2.25"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0e0d2eaa99c3c2e41547cfa109e910a68ea03823cccad4a0525dcbc9b01e8c71"
+dependencies = [
+ "tracing-core",
+]
+
+[[package]]
+name = "tracing-subscriber"
 version = "0.3.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e8189decb5ac0fa7bc8b96b7cb9b2701d60d48805aca84a238004d665fcc4008"
@@ -16518,8 +16533,8 @@ dependencies = [
 
 [[package]]
 name = "ultraplonk-no-std"
-version = "0.2.0"
-source = "git+https://github.com/zkVerify/ultraplonk_verifier.git?tag=v0.2.0#98516cf22bc9dda3bbe1df3a7027600d88a5c5e4"
+version = "0.2.1"
+source = "git+https://github.com/zkVerify/ultraplonk_verifier.git?tag=v0.2.1#3d6a30b90d8dd5b751465cfb524b339a7a16cb49"
 dependencies = [
  "ark-bn254",
  "ark-bn254-ext",
