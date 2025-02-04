@@ -35,6 +35,7 @@ async function run(nodeName, networkInfo, _args) {
 
     // Create the proof submission extrinsics...
     let proofHashesArray = [];
+    const destination = { None: null };
 
     verifiers = [
         {
@@ -69,7 +70,7 @@ async function run(nodeName, networkInfo, _args) {
         }
     ];
 
-    let events = await registerDomain(bob, verifiers.length, null);
+    let events = await registerDomain(bob, verifiers.length, null, destination);
     if (!receivedEvents(events)) {
         console.log(`Register Domain Error`);
         return ReturnCode.ErrDomainRegistrationFailed;
@@ -195,7 +196,7 @@ async function run(nodeName, networkInfo, _args) {
         return ReturnCode.ErrProofOnUnregisteredDomain;
     }
 
-    data = await registerDomain(bob, 4, 8);
+    data = await registerDomain(bob, 4, 8, destination);
     if (!receivedEvents(data)) {
         console.log(`Register Domain Error`);
         return ReturnCode.ErrDomainRegistrationFailed;

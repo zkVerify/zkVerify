@@ -29,6 +29,8 @@ type BalanceOf<T> =
 
 pub mod utils {
     use super::*;
+    use hp_dispatch::{BoundedStateMachine, Destination, HyperbridgeDispatchParameters};
+    use sp_core::H160;
 
     /// Return a whitelisted account with enough founds to do anything.
     pub fn funded_account<T: Config>() -> T::AccountId {
@@ -47,6 +49,9 @@ pub mod utils {
             .unwrap_or_else(|| <T as Config>::AggregationSize::get() as u32)
             .try_into()
             .unwrap();
+
+        let destination = Destination::None;
+
         let domain = Domain::<T>::try_create(
             domain_id,
             account.into(),
@@ -54,6 +59,7 @@ pub mod utils {
             aggregation_size,
             <T as Config>::MaxPendingPublishQueueSize::get(),
             None,
+            destination,
         )
         .unwrap();
         Domains::<T>::insert(domain_id, domain);
@@ -71,11 +77,12 @@ fn fill_aggregation<T: Config>(caller: AccountOf<T>, domain_id: u32) {
 
 #[benchmarks]
 mod benchmarks {
+    use super::{utils::*, *};
     use __private::traits::UnfilteredDispatchable;
     use codec::{Decode, Encode};
     use data::DomainState;
-
-    use super::{utils::*, *};
+    use hp_dispatch::{BoundedStateMachine, Destination, HyperbridgeDispatchParameters};
+    use sp_core::H160;
 
     #[benchmark]
     fn aggregate(n: Linear<1, <T as Config>::AGGREGATION_SIZE>) {
@@ -143,11 +150,18 @@ mod benchmarks {
     fn register_domain() {
         let caller: T::AccountId = funded_account::<T>();
 
+        let destination = Destination::Hyperbridge(HyperbridgeDispatchParameters {
+            destination_chain: BoundedStateMachine::Evm(11155111),
+            destination_module: H160::default(),
+            timeout: 100,
+        });
+
         #[extrinsic_call]
         register_domain(
             RawOrigin::Signed(caller),
             <T as Config>::AggregationSize::get(),
             Some(<T as Config>::MaxPendingPublishQueueSize::get()),
+            destination,
         );
     }
 

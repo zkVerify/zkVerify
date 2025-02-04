@@ -222,6 +222,7 @@ mod mock {
         type WeightInfo = ();
         const AGGREGATION_SIZE: u32 = 32;
         type Currency = Balances;
+        type DispatchAggregation = ();
     }
 
     /// Build genesis storage according to the mock runtime.

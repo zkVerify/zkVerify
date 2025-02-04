@@ -17,6 +17,7 @@ use core::marker::PhantomData;
 
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{PartialEqNoBound, RuntimeDebugNoBound};
+use hp_dispatch::Destination;
 use scale_info::TypeInfo;
 use sp_core::{Get, H256};
 use sp_runtime::{traits::Keccak256, BoundedBTreeMap, BoundedVec};
@@ -114,6 +115,10 @@ impl<
         (self.size as usize).saturating_sub(self.statements.len())
     }
 
+   pub fn completed(&self) -> bool {
+        self.space_left() == 0
+    }
+
     pub fn compute(&self) -> H256 {
         binary_merkle_tree::merkle_root::<Keccak256, _>(
             self.statements.iter().map(|s| s.statement.as_ref()),
@@ -162,6 +167,17 @@ impl<
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
+/// The rules that describe the when accept or reject the aggregate extrinsic call.
+pub enum AggregateSecurityRules {
+    /// Accept any aggregate extrinsic call from any user.
+    Untrusted,
+    /// Only owner and manager can call aggregate on this domain.
+    OnlyOwner,
+    /// Only owner and manager can call aggregate on this domain for uncompleted aggregations.
+    OnlyOwnerUncompleted,
+}
+
 #[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
 #[scale_info(skip_type_params(S, M))]
 /// The data stored for a domain.
@@ -197,6 +213,10 @@ pub struct DomainEntry<
     /// The consideration ticket used to hold the balance for the space used by domain storage. The manager will
     /// not hold any balance.
     pub ticket: Option<T>,
+    /// Configure the rules that describe the when accept or reject the aggregate extrinsic call.
+    pub aggregate_rules: AggregateSecurityRules,
+    /// Configuration params for destination chain to dispatch aggregations
+    pub destination: Destination,
 }
 
 impl<
@@ -215,7 +235,9 @@ impl<
         next_aggregation_id: u64,
         max_aggregation_size: AggregationSize,
         publish_queue_size: u32,
+        aggregate_rules: AggregateSecurityRules,
         ticket: Option<Ticket>,
+        destination: Destination,
     ) -> Self {
         assert!(
             max_aggregation_size <= S::get(),
@@ -233,7 +255,9 @@ impl<
             max_aggregation_size,
             should_publish: Default::default(),
             publish_queue_size,
+            aggregate_rules,
             ticket,
+            destination,
         }
     }
 
@@ -257,16 +281,19 @@ impl<
     /// Return the size in bytes for this domain that should be reserved in the storage.
     ///
     /// - `max_aggregation_size`: The maximum size of the aggregations for this domain.
-    /// - `publish_queue_size`: the publish queue size for this domain.
+    /// - `publish_queue_size`: The publish queue size for this domain.
+    /// - `destination`: The destination chain to dispatch aggregations.
     pub fn compute_encoded_size(
         max_aggregation_size: AggregationSize,
         publish_queue_size: u32,
+        destination: &Destination,
     ) -> usize
     where
         AggregationEntry<A, B, S>: MaxEncodedLen,
         Self: MaxEncodedLen,
         BoundedVec<StatementEntry<A, B>, VecSize<S>>: MaxEncodedLen,
         StatementEntry<A, B>: MaxEncodedLen,
+        Destination: MaxEncodedLen,
     {
         let upper = Self::max_encoded_len();
         let aggregation_size =
@@ -274,6 +301,8 @@ impl<
         upper
             .saturating_sub(AggregationEntry::<A, B, S>::max_encoded_len())
             .saturating_sub(BoundedBTreeMap::<u64, AggregationEntry<A, B, S>, M>::max_encoded_len())
+            .saturating_sub(Destination::max_encoded_len())
+            .saturating_add(destination.encoded_size())
             .saturating_add(aggregation_size)
             .saturating_add(
                 (publish_queue_size as usize)

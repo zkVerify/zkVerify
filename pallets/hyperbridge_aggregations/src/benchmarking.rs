@@ -19,7 +19,6 @@ use super::*;
 
 use frame_benchmarking::v2::*;
 use frame_support::traits::fungible::Inspect;
-use frame_system::RawOrigin;
 use hex_literal::hex;
 use ismp::host::StateMachine;
 
@@ -57,6 +56,7 @@ mod benchmarks {
 
         // Prepare the parameters
         let params = Params {
+            domain_id: 1u32,
             aggregation_id: 1u64,
             aggregation: sp_core::H256(DEFAULT_EMPTY_ATT),
             module: sp_core::H160(TEST_CONTRACT),
@@ -68,8 +68,10 @@ mod benchmarks {
         let initial_nonce = pallet_ismp::Nonce::<T>::get();
         let initial_event_count = frame_system::Pallet::<T>::events().len();
 
-        #[extrinsic_call]
-        dispatch_aggregation(RawOrigin::Signed(caller), params);
+        #[block]
+        {
+            Pallet::<T>::dispatch_aggregation(caller, params).expect("dispatch should work");
+        }
 
         // Assertions
         assert!(
