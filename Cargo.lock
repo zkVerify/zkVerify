@@ -146,6 +146,8 @@ dependencies = [
  "alloy-sol-types",
  "const-hex",
  "itoa",
+ "serde",
+ "serde_json",
  "winnow",
 ]
 
@@ -158,6 +160,7 @@ dependencies = [
  "alloy-primitives",
  "alloy-sol-type-parser",
  "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -260,9 +263,11 @@ version = "0.8.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e3b478bc9c0c4737a04cd976accde4df7eba0bdc0d90ad6ff43d58bc93cf79c1"
 dependencies = [
+ "alloy-json-abi",
  "alloy-primitives",
  "alloy-sol-macro",
  "const-hex",
+ "serde",
 ]
 
 [[package]]
@@ -598,6 +603,7 @@ dependencies = [
  "ark-ff 0.4.2",
  "ark-std 0.4.0",
  "tracing",
+ "tracing-subscriber 0.2.25",
 ]
 
 [[package]]
@@ -13342,7 +13348,7 @@ dependencies = [
  "thiserror 1.0.69",
  "tracing",
  "tracing-log",
- "tracing-subscriber",
+ "tracing-subscriber 0.3.19",
 ]
 
 [[package]]
@@ -14912,7 +14918,7 @@ dependencies = [
  "parity-scale-codec",
  "tracing",
  "tracing-core",
- "tracing-subscriber",
+ "tracing-subscriber 0.3.19",
 ]
 
 [[package]]
@@ -16315,6 +16321,15 @@ checksum = "ee855f1f400bd0e5c02d150ae5de3840039a3f54b025156404e34c23c03f47c3"
 dependencies = [
  "log",
  "once_cell",
+ "tracing-core",
+]
+
+[[package]]
+name = "tracing-subscriber"
+version = "0.2.25"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0e0d2eaa99c3c2e41547cfa109e910a68ea03823cccad4a0525dcbc9b01e8c71"
+dependencies = [
  "tracing-core",
 ]
 

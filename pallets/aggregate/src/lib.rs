@@ -86,7 +86,7 @@ pub mod pallet {
     #[pallet::pallet]
     pub struct Pallet<T>(_);
 
-    /// This trait define how the pallet should compute the tip for the publisher.
+    /// This trait defines how the pallet should compute the tip for the publisher.
     /// This tip will be added to the estimation of the total cost of the transaction.
     pub trait ComputePublisherTip<B> {
         /// Given an estimated cost of a transaction, return an optional tip for the publisher.
