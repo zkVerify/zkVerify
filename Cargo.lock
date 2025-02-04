@@ -4746,9 +4746,9 @@ dependencies = [
 
 [[package]]
 name = "grandpa-verifier"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d00fddb62ec7e429d283c9d17dd83346df9a0c012d554f3fb8a47958921b2716"
+checksum = "c1cde0b634d2bdee4814e97069f2a7f21a2cbfd4a8bdfbbb15a4d1662b8f5ae5"
 dependencies = [
  "anyhow",
  "derive_more 0.99.18",
@@ -4764,14 +4764,14 @@ dependencies = [
  "sp-std",
  "sp-storage",
  "sp-trie",
- "substrate-state-machine 1.15.3",
+ "substrate-state-machine",
 ]
 
 [[package]]
 name = "grandpa-verifier-primitives"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "011cd8f7019cc3141794e2fcebbc8f1a2137d7580711f5a27d8f8d965b1fb6d8"
+checksum = "0a0a23cc4c73a93fda6d04748f47159c2c2183f0aa8e61a3dd58a25f361a8352"
 dependencies = [
  "anyhow",
  "finality-grandpa",
@@ -5738,9 +5738,9 @@ dependencies = [
 
 [[package]]
 name = "ismp-grandpa"
-version = "15.0.0"
+version = "15.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a4584bba3715b0a92c1faaadcf086ec82226829baa05f8d8c3513f31d4cf1ff0"
+checksum = "b6acd320d5c0a588f6e4a3639387d048c60920e367786d46fc0718aae9394688"
 dependencies = [
  "anyhow",
  "ckb-merkle-mountain-range",
@@ -5751,7 +5751,7 @@ dependencies = [
  "grandpa-verifier",
  "grandpa-verifier-primitives",
  "ismp",
- "pallet-ismp 15.0.0",
+ "pallet-ismp",
  "parity-scale-codec",
  "primitive-types",
  "scale-info",
@@ -5761,7 +5761,7 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "sp-trie",
- "substrate-state-machine 15.0.0",
+ "substrate-state-machine",
 ]
 
 [[package]]
@@ -8349,7 +8349,7 @@ dependencies = [
  "ismp-grandpa",
  "log",
  "pallet-balances",
- "pallet-ismp 15.0.0",
+ "pallet-ismp",
  "pallet-timestamp",
  "parity-scale-codec",
  "rstest",
@@ -8416,30 +8416,6 @@ dependencies = [
 
 [[package]]
 name = "pallet-ismp"
-version = "1.15.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1427602a5b78a0fe76f51bd216d6ad8b95a7c7cc36970fbbcfbc8053197ad859"
-dependencies = [
- "anyhow",
- "fortuples",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "ismp",
- "log",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-api",
- "sp-core",
- "sp-io",
- "sp-mmr-primitives",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "pallet-ismp"
 version = "15.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "06e2c662add3018095f2833d0329c95b28edee796d29cb2c5ed904581ddcafad"
@@ -8475,7 +8451,7 @@ dependencies = [
  "hex-literal",
  "ismp",
  "jsonrpsee",
- "pallet-ismp 15.0.0",
+ "pallet-ismp",
  "pallet-ismp-runtime-api",
  "parity-scale-codec",
  "sc-client-api",
@@ -8499,7 +8475,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ebef8f3c84b46fd3d85fe5fdd0d47ec274a49b8530c772441ec2783d4556b19d"
 dependencies = [
  "ismp",
- "pallet-ismp 15.0.0",
+ "pallet-ismp",
  "parity-scale-codec",
  "primitive-types",
  "serde",
@@ -15416,26 +15392,6 @@ dependencies = [
 
 [[package]]
 name = "substrate-state-machine"
-version = "1.15.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4a470df0c4cfd5c7498aaededa6a3d6327e817db5713f9899d1ecd7efe2cc192"
-dependencies = [
- "frame-support",
- "hash-db",
- "ismp",
- "pallet-ismp 1.15.3",
- "parity-scale-codec",
- "primitive-types",
- "scale-info",
- "serde",
- "sp-consensus-aura",
- "sp-consensus-babe",
- "sp-runtime",
- "sp-trie",
-]
-
-[[package]]
-name = "substrate-state-machine"
 version = "15.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c9d183786a8d02e2a5b422aeabab39165872e33d76ed9fe24e3ccd7be80b6c62"
@@ -15443,7 +15399,7 @@ dependencies = [
  "frame-support",
  "hash-db",
  "ismp",
- "pallet-ismp 15.0.0",
+ "pallet-ismp",
  "parity-scale-codec",
  "primitive-types",
  "scale-info",
@@ -17968,7 +17924,7 @@ dependencies = [
  "pallet-groth16-verifier",
  "pallet-hyperbridge-aggregations",
  "pallet-im-online",
- "pallet-ismp 15.0.0",
+ "pallet-ismp",
  "pallet-ismp-runtime-api",
  "pallet-message-queue",
  "pallet-multisig",
