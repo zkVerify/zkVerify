@@ -115,6 +115,10 @@ impl<
         (self.size as usize).saturating_sub(self.statements.len())
     }
 
+   pub fn completed(&self) -> bool {
+        self.space_left() == 0
+    }
+
     pub fn compute(&self) -> H256 {
         binary_merkle_tree::merkle_root::<Keccak256, _>(
             self.statements.iter().map(|s| s.statement.as_ref()),
@@ -163,6 +167,17 @@ impl<
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
+/// The rules that describe the when accept or reject the aggregate extrinsic call.
+pub enum AggregateSecurityRules {
+    /// Accept any aggregate extrinsic call from any user.
+    Untrusted,
+    /// Only owner and manager can call aggregate on this domain.
+    OnlyOwner,
+    /// Only owner and manager can call aggregate on this domain for uncompleted aggregations.
+    OnlyOwnerUncompleted,
+}
+
 #[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
 #[scale_info(skip_type_params(S, M))]
 /// The data stored for a domain.
@@ -198,6 +213,8 @@ pub struct DomainEntry<
     /// The consideration ticket used to hold the balance for the space used by domain storage. The manager will
     /// not hold any balance.
     pub ticket: Option<T>,
+    /// Configure the rules that describe the when accept or reject the aggregate extrinsic call.
+    pub aggregate_rules: AggregateSecurityRules,
     /// Configuration params for destination chain to dispatch aggregations
     pub destination: Destination,
 }
@@ -218,6 +235,7 @@ impl<
         next_aggregation_id: u64,
         max_aggregation_size: AggregationSize,
         publish_queue_size: u32,
+        aggregate_rules: AggregateSecurityRules,
         ticket: Option<Ticket>,
         destination: Destination,
     ) -> Self {
@@ -237,6 +255,7 @@ impl<
             max_aggregation_size,
             should_publish: Default::default(),
             publish_queue_size,
+            aggregate_rules,
             ticket,
             destination,
         }

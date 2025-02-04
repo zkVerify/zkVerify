@@ -53,7 +53,7 @@ pub mod pallet {
     use sp_std::fmt::Debug;
 
     pub use crate::data::AggregationSize;
-    use crate::data::{DomainState, StatementEntry, User};
+    use crate::data::{AggregateSecurityRules, DomainState, StatementEntry, User};
 
     use super::WeightInfo;
     use frame_support::{
@@ -361,6 +361,7 @@ pub mod pallet {
             next_aggregation_id: u64,
             max_aggregation_size: AggregationSize,
             publish_queue_size: u32,
+            aggregate_rules: AggregateSecurityRules,
             ticket: Option<TicketOf<T>>,
             destination: Destination,
         ) -> Result<Self, Error<T>> {
@@ -377,6 +378,7 @@ pub mod pallet {
                     next_aggregation_id,
                     max_aggregation_size,
                     publish_queue_size,
+                    aggregate_rules,
                     ticket,
                     destination,
                 )))
@@ -611,20 +613,27 @@ pub mod pallet {
         ) -> DispatchResultWithPostInfo {
             use frame_support::traits::DefensiveSaturating;
             let origin_signed = ensure_signed(origin.clone())?;
+            let aggregator = User::<T::AccountId>::from_origin::<T>(origin)?;
             let (root, size, destination) = Domains::<T>::try_mutate(domain_id, |domain| {
                 let domain = domain.as_mut().ok_or_else(|| {
-                    dispatch_post_error(
+                    dispatch_post_error::<T>(
                         T::WeightInfo::aggregate_on_invalid_domain(),
                         Error::<T>::UnknownDomainId,
                     )
                 })?;
                 let aggregation = domain.take_aggregation(aggregation_id).ok_or_else(|| {
-                    dispatch_post_error(
+                    dispatch_post_error::<T>(
                         T::WeightInfo::aggregate_on_invalid_id(),
                         Error::<T>::InvalidAggregationId,
                     )
                 })?;
-
+                if !domain.aggregate_rules.can_user_aggregate_it::<T>(
+                    &aggregator,
+                    &domain.owner,
+                    &aggregation,
+                ) {
+                    Err(BadOrigin)?
+                }
                 let root = aggregation.compute();
                 let size = aggregation.statements.len() as u32;
                 Published::<T>::mutate(|published: &mut _| {
@@ -688,6 +697,7 @@ pub mod pallet {
             origin: OriginFor<T>,
             aggregation_size: AggregationSize,
             queue_size: Option<u32>,
+            aggregate_rules: AggregateSecurityRules,
             destination: Destination,
         ) -> DispatchResultWithPostInfo {
             let owner = User::<T::AccountId>::from_origin::<T>(origin)?;
@@ -722,6 +732,7 @@ pub mod pallet {
                 1,
                 aggregation_size,
                 queue_size,
+                aggregate_rules,
                 ticket,
                 destination,
             )?;
@@ -829,7 +840,7 @@ pub mod pallet {
 
     fn dispatch_post_error<T: Config>(
         weight: Weight,
-        error: Error<T>,
+        error: impl Into<DispatchError>,
     ) -> DispatchErrorWithPostInfo {
         DispatchErrorWithPostInfo {
             post_info: Some(weight).into(),
@@ -843,8 +854,12 @@ pub mod pallet {
         ) -> Result<Self, BadOrigin> {
             match T::ManagerOrigin::ensure_origin(origin.clone()) {
                 Ok(_) => Ok(User::Manager),
-                Err(_) => ensure_signed(origin.clone()).map(User::Owner),
+                Err(_) => ensure_signed(origin).map(User::Owner),
             }
+        }
+
+        pub fn is_manager(&self) -> bool {
+            matches!(self, User::Manager)
         }
 
         pub fn can_handle_domain<T: Config<AccountId = A>>(&self, domain: &Domain<T>) -> bool
@@ -875,6 +890,25 @@ pub mod pallet {
             match self {
                 User::Owner(_owner) => Pays::Yes,
                 _ => Pays::No,
+            }
+        }
+    }
+
+    impl AggregateSecurityRules {
+        fn can_user_aggregate_it<T: Config>(
+            &self,
+            aggregator: &User<T::AccountId>,
+            domain_owner: &User<T::AccountId>,
+            aggregation: &Aggregation<T>,
+        ) -> bool {
+            match self {
+                AggregateSecurityRules::Untrusted => true,
+                AggregateSecurityRules::OnlyOwner => {
+                    aggregator == domain_owner || aggregator.is_manager()
+                }
+                AggregateSecurityRules::OnlyOwnerUncompleted => {
+                    aggregation.completed() || aggregator == domain_owner || aggregator.is_manager()
+                }
             }
         }
     }

@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::data::AggregateSecurityRules;
 use crate::mock::RuntimeEvent as TestEvent;
 use crate::mock::{self, *};
 use crate::*;
@@ -164,12 +165,14 @@ pub fn register_domain(
     user: AccountId,
     size: AggregationSize,
     queue: Option<u32>,
+    aggregate_rules: AggregateSecurityRules,
     destination_params: Destination,
 ) -> u32 {
     frame_support::assert_ok!(Aggregate::register_domain(
         Origin::Signed(user).into(),
         size,
         queue,
+        aggregate_rules,
         destination_params
     ));
     registered_ids()[0]

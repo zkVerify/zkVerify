@@ -414,6 +414,7 @@ impl crate::Domain<Test> {
         next_aggregation_id: u64,
         max_aggregation_size: AggregationSize,
         publish_queue_size: u32,
+        aggregate_rules: crate::data::AggregateSecurityRules,
         ticket: Option<crate::TicketOf<Test>>,
         destination: Destination,
     ) -> Self {
@@ -423,6 +424,7 @@ impl crate::Domain<Test> {
             next_aggregation_id,
             max_aggregation_size,
             publish_queue_size,
+            aggregate_rules,
             ticket,
             destination,
         )
@@ -453,6 +455,7 @@ pub fn test() -> sp_io::TestExternalities {
                 1,
                 DOMAIN_SIZE,
                 DOMAIN_QUEUE_SIZE,
+                crate::data::AggregateSecurityRules::Untrusted,
                 None,
                 hyperbridge_destination(),
             ),
@@ -465,6 +468,7 @@ pub fn test() -> sp_io::TestExternalities {
                 1,
                 DOMAIN_SIZE,
                 DOMAIN_QUEUE_SIZE,
+                crate::data::AggregateSecurityRules::Untrusted,
                 None,
                 none_destination(),
             ),

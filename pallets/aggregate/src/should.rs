@@ -16,6 +16,7 @@
 #![cfg(test)]
 
 use super::*;
+use crate::data::AggregateSecurityRules;
 use crate::mock::{self, *};
 use data::DomainState;
 use frame_support::{
@@ -510,6 +511,129 @@ mod aggregate {
         })
     }
 
+    mod policies {
+        use super::*;
+
+        fn init_domain(
+            owner: AccountId,
+            rules: AggregateSecurityRules,
+            size: u32,
+            completed: bool,
+        ) -> (sp_io::TestExternalities, u32, u64) {
+            let mut ex = test();
+            let (domain_id, aggregation_id) = ex.execute_with(|| {
+                assert_ok!(Aggregate::register_domain(
+                    Origin::Signed(owner).into(),
+                    size,
+                    None,
+                    rules,
+                    none_destination(),
+                ));
+
+                let domain_id = registered_ids()[0];
+                let aggregation_id = Domains::<Test>::mutate_extant(domain_id, |d| {
+                    let size = if completed { size } else { size - 1 };
+                    let aggregation_id = d.next.id;
+                    for i in 0..size {
+                        d.next
+                            .add_statement(USER_1, 0, H256::from_low_u64_be(i.into()));
+                    }
+                    aggregation_id
+                });
+                (domain_id, aggregation_id)
+            });
+            (ex, domain_id, aggregation_id)
+        }
+
+        #[rstest]
+        fn untrusted_should_accept_any_case(
+            #[values(USER_1, USER_2, ROOT_USER)] aggregator: AccountId,
+            #[values(true, false)] completed: bool,
+        ) {
+            let (mut test, domain_id, aggregation_id) =
+                init_domain(USER_1, AggregateSecurityRules::Untrusted, 16, completed);
+            test.execute_with(|| {
+                assert_ok!(Aggregate::aggregate(
+                    Origin::Signed(aggregator).into(),
+                    domain_id,
+                    aggregation_id
+                ));
+            })
+        }
+
+        #[rstest]
+        fn only_owner_only_owner_uncompleted_and_should_accept_calls_from_owner_and_manager(
+            #[values(
+                AggregateSecurityRules::OnlyOwner,
+                AggregateSecurityRules::OnlyOwnerUncompleted
+            )]
+            rules: AggregateSecurityRules,
+            #[values(USER_1, ROOT_USER)] aggregator: AccountId,
+            #[values(true, false)] completed: bool,
+        ) {
+            let (mut test, domain_id, aggregation_id) = init_domain(USER_1, rules, 16, completed);
+            test.execute_with(|| {
+                assert_ok!(Aggregate::aggregate(
+                    Origin::Signed(aggregator).into(),
+                    domain_id,
+                    aggregation_id
+                ));
+            })
+        }
+
+        #[test]
+        fn only_owner_uncompleted_should_accept_call_from_untrusted_user_on_completed_aggregation()
+        {
+            let (mut test, domain_id, aggregation_id) = init_domain(
+                USER_1,
+                AggregateSecurityRules::OnlyOwnerUncompleted,
+                16,
+                true,
+            );
+            test.execute_with(|| {
+                assert_ok!(Aggregate::aggregate(
+                    Origin::Signed(USER_2).into(),
+                    domain_id,
+                    aggregation_id
+                ));
+            })
+        }
+
+        #[rstest]
+        #[case::on_only_owner_from_untrusted_user_on_uncompleted_aggregation(
+            AggregateSecurityRules::OnlyOwner,
+            USER_2,
+            false
+        )]
+        #[case::on_only_owner_from_untrusted_user_on_completed_aggregation(
+            AggregateSecurityRules::OnlyOwner,
+            USER_2,
+            true
+        )]
+        #[case::on_only_owner_uncompleted_from_untrusted_user_on_uncompleted_aggregation(
+            AggregateSecurityRules::OnlyOwner,
+            USER_2,
+            false
+        )]
+        fn should_reject_aggregate(
+            #[case] rules: AggregateSecurityRules,
+            #[case] aggregator: AccountId,
+            #[case] completed: bool,
+        ) {
+            let (mut test, domain_id, aggregation_id) = init_domain(USER_1, rules, 16, completed);
+            test.execute_with(|| {
+                assert_noop!(
+                    Aggregate::aggregate(
+                        Origin::Signed(aggregator).into(),
+                        domain_id,
+                        aggregation_id
+                    ),
+                    BadOrigin
+                );
+            })
+        }
+    }
+
     #[test]
     fn raise_error_if_invalid_domain_is_used() {
         test().execute_with(|| {
@@ -637,6 +761,7 @@ mod register_domain {
                 Origin::Signed(USER_DOMAIN_1).into(),
                 16,
                 Some(8),
+                AggregateSecurityRules::OnlyOwnerUncompleted,
                 none_destination(),
             ));
             let registered_id = registered_ids()[0];
@@ -646,6 +771,10 @@ mod register_domain {
             assert_eq!(registered_id, domain.id);
             assert_eq!(16, domain.max_aggregation_size);
             assert_eq!(8, domain.publish_queue_size);
+            assert_eq!(
+                AggregateSecurityRules::OnlyOwnerUncompleted,
+                domain.aggregate_rules
+            );
             assert_eq!(none_destination(), domain.destination);
 
             assert_eq!(domain.next, Aggregation::<Test>::create(1, 16));
@@ -660,6 +789,7 @@ mod register_domain {
                 Origin::Signed(ROOT_USER).into(),
                 16,
                 Some(8),
+                AggregateSecurityRules::Untrusted,
                 hyperbridge_destination(),
             ));
             let registered_id = registered_ids()[0];
@@ -678,6 +808,7 @@ mod register_domain {
                     Origin::Signed(USER_DOMAIN_1).into(),
                     16,
                     Some(8),
+                    AggregateSecurityRules::OnlyOwner,
                     hyperbridge_destination(),
                 ),
                 BadOrigin
@@ -693,18 +824,21 @@ mod register_domain {
                 Origin::Signed(USER_DOMAIN_1).into(),
                 values[0].0,
                 values[0].1,
+                AggregateSecurityRules::Untrusted,
                 none_destination(),
             ));
             assert_ok!(Aggregate::register_domain(
                 Origin::Signed(USER_DOMAIN_1).into(),
                 values[1].0,
                 values[1].1,
+                AggregateSecurityRules::Untrusted,
                 none_destination(),
             ));
             assert_ok!(Aggregate::register_domain(
                 Origin::Signed(USER_DOMAIN_1).into(),
                 values[2].0,
                 values[2].1,
+                AggregateSecurityRules::Untrusted,
                 none_destination(),
             ));
 
@@ -743,6 +877,7 @@ mod register_domain {
                 Origin::Signed(USER_DOMAIN_1).into(),
                 MaxAggregationSize::get(),
                 Some(MaxPendingPublishQueueSize::get()),
+                AggregateSecurityRules::Untrusted,
                 none_destination(),
             ));
 
@@ -751,6 +886,7 @@ mod register_domain {
                     Origin::Signed(USER_DOMAIN_1).into(),
                     0,
                     Some(MaxPendingPublishQueueSize::get()),
+                    AggregateSecurityRules::Untrusted,
                     none_destination(),
                 ),
                 Error::<Test>::InvalidDomainParams
@@ -760,6 +896,7 @@ mod register_domain {
                     Origin::Signed(USER_DOMAIN_1).into(),
                     MaxAggregationSize::get() + 1,
                     Some(MaxPendingPublishQueueSize::get()),
+                    AggregateSecurityRules::Untrusted,
                     none_destination(),
                 ),
                 Error::<Test>::InvalidDomainParams
@@ -769,6 +906,7 @@ mod register_domain {
                     Origin::Signed(USER_DOMAIN_1).into(),
                     MaxAggregationSize::get(),
                     Some(MaxPendingPublishQueueSize::get() + 1),
+                    AggregateSecurityRules::Untrusted,
                     none_destination(),
                 ),
                 Error::<Test>::InvalidDomainParams
@@ -783,6 +921,7 @@ mod register_domain {
                 Origin::Signed(USER_DOMAIN_1).into(),
                 16,
                 None,
+                AggregateSecurityRules::Untrusted,
                 none_destination(),
             ));
 
@@ -810,6 +949,7 @@ mod register_domain {
                 Origin::Signed(ROOT_USER).into(),
                 16,
                 None,
+                AggregateSecurityRules::Untrusted,
                 none_destination(),
             ));
 
@@ -820,8 +960,8 @@ mod register_domain {
     }
 
     #[rstest]
-    #[case(hyperbridge_destination(), (61376, 1400, 7286, 16400))]
-    #[case(Destination::None, (61343, 1367, 7253, 16367))]
+    #[case(hyperbridge_destination(), (61377, 1401, 7287, 16401))]
+    #[case(Destination::None, (61344, 1368, 7254, 16368))]
     fn not_change_domain_encoded_size(
         #[case] destination: Destination,
         #[case] variables: (usize, usize, usize, usize),
@@ -841,7 +981,7 @@ mod register_domain {
         );
 
         // Fixture max
-        assert_eq!(Domain::<Test>::max_encoded_len(), 61376);
+        assert_eq!(Domain::<Test>::max_encoded_len(), 61377);
 
         // Max configurations
         assert_eq!(
@@ -884,6 +1024,7 @@ mod register_domain {
                     Origin::Signed(USER_DOMAIN_ERROR_NEW).into(),
                     16,
                     None,
+                    AggregateSecurityRules::Untrusted,
                     none_destination(),
                 ),
                 sp_runtime::DispatchError::from("User Domain Error New")
@@ -899,6 +1040,7 @@ mod register_domain {
                     Origin::Signed(USER_DOMAIN_1).into(),
                     16,
                     None,
+                    AggregateSecurityRules::Untrusted,
                     none_destination(),
                 )
                 .unwrap()
@@ -916,6 +1058,7 @@ mod register_domain {
                     Origin::Signed(ROOT_USER).into(),
                     16,
                     None,
+                    AggregateSecurityRules::Untrusted,
                     hyperbridge_destination(),
                 )
                 .unwrap()
@@ -930,6 +1073,7 @@ mod register_domain {
         let info = Call::<Test>::register_domain {
             aggregation_size: 16,
             queue_size: Some(8),
+            aggregate_rules: AggregateSecurityRules::Untrusted,
             destination: hyperbridge_destination(),
         }
         .get_dispatch_info();
@@ -1035,7 +1179,13 @@ mod hold_domain {
                     BadOrigin
                 );
 
-                let id = register_domain(USER_DOMAIN_2, 16, None, none_destination());
+                let id = register_domain(
+                    USER_DOMAIN_2,
+                    16,
+                    None,
+                    data::AggregateSecurityRules::Untrusted,
+                    none_destination(),
+                );
 
                 assert_err!(
                     Aggregate::hold_domain(Origin::Signed(USER_DOMAIN_1).into(), id),
@@ -1120,7 +1270,13 @@ mod unregister_domain {
     }
 
     fn register_removable_domain(user: AccountId) -> u32 {
-        let id = register_domain(user, 16, None, none_destination());
+        let id = register_domain(
+            user,
+            16,
+            None,
+            AggregateSecurityRules::Untrusted,
+            none_destination(),
+        );
         Domains::<Test>::mutate_extant(id, |d| {
             d.state = DomainState::Removable;
         });
@@ -1217,6 +1373,7 @@ mod unregister_domain {
                 origin.clone().into(),
                 16,
                 None,
+                AggregateSecurityRules::Untrusted,
                 none_destination(),
             ));
 
