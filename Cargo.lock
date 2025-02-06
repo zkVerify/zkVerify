@@ -4785,7 +4785,7 @@ dependencies = [
 [[package]]
 name = "halo2_verifier"
 version = "0.1.0"
-source = "git+https://github.com/ChainSafe/halo2-verifier.git#17fe53d8010318e7097642f4772a43acea29c4dc"
+source = "git+https://github.com/ChainSafe/halo2-verifier.git?tag=v1.0.0#7c63ed613c8904757f4fed71f38098ea8ead7aed"
 dependencies = [
  "blake2b_simd",
  "ff",

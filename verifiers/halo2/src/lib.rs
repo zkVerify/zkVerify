@@ -44,8 +44,6 @@ pub struct ParamsAndVk<T> {
     _t: PhantomData<T>,
 }
 
-// #[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
-// pub struct Fr(U256);
 
 impl<T: Config> Verifier for Halo2<T> {
     type Proof = Vec<u8>;
@@ -115,22 +113,37 @@ impl<T: Config> ParamsAndVk<T> {
         &self,
     ) -> Result<(ParamsKZG<bn256::Bn256>, VerifyingKey<bn256::G1Affine>), VerifyError> {
         let params = ParamsKZG::<bn256::Bn256>::read(&mut &self.params_bytes[..])
-            .map_err(|e| log::debug!("Invalid params: {:?}", e))
-            .map_err(|_| VerifyError::InvalidVerificationKey)?;
+            .map_err(|e| {
+            log::debug!("Invalid params: {:?}", e);
+            VerifyError::InvalidVerificationKey
+        })?;
         let vk =
             VerifyingKey::<bn256::G1Affine>::read(&mut &self.vk_bytes[..], SerdeFormat::RawBytes)
-                .map_err(|e| log::debug!("Invalid verifying key: {:?}", e))
-                .map_err(|_| VerifyError::InvalidVerificationKey)?;
+                .map_err(|e| {
+                log::debug!("Invalid verifying key: {:?}", e);
+                VerifyError::InvalidVerificationKey
+            })?;
         Ok((params, vk))
     }
 
     pub fn validate_size(&self) -> Result<(), VerifyError> {
+        log::debug!(
+            "Validating sizes: params_bytes.len() = {}, vk_bytes.len() = {}",
+            self.params_bytes.len(),
+            self.vk_bytes.len()
+        );
+
         if self.params_bytes.len() != ParamsKZG::<bn256::Bn256>::bytes_length() {
+            log::debug!("Validation failed: Invalid params size.");
             return Err(VerifyError::InvalidVerificationKey);
         }
+
         if self.vk_bytes.len() > ParamsAndVk::<T>::max_encoded_len() {
+            log::debug!("Validation failed: vk_bytes size exceeds max allowed.");
             return Err(VerifyError::InvalidVerificationKey);
         }
+
+        log::debug!("Validation succeeded.");
         Ok(())
     }
 }

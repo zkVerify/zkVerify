@@ -59,7 +59,7 @@ pub trait Verifier: 'static {
     fn hash_context_data() -> &'static [u8];
 
     /// Verify the proof: Should return `Ok(())` if the proof is coherent with the verification
-    /// key and the it's valid against the provided public inputs `pubs`.
+    /// key and that it is valid against the provided public inputs `pubs`.
     fn verify_proof(
         vk: &Self::Vk,
         proof: &Self::Proof,
