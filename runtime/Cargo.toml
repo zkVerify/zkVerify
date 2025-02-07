@@ -99,7 +99,7 @@ hp-verifiers = { workspace = true }
 pallet-fflonk-verifier = { workspace = true }
 pallet-zksync-verifier = { workspace = true }
 pallet-groth16-verifier = { workspace = true }
-pallet-risc0-verifier = { workspace = true }
+pallet-risc0-verifier = { workspace = true, features = ["inject-native-poseidon2"] }
 pallet-ultraplonk-verifier = { workspace = true }
 pallet-proofofsql-verifier = { workspace = true }
 
