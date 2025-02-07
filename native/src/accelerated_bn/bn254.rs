@@ -51,7 +51,7 @@ pub use self::{
 };
 
 /// Curve hooks jumping into [`host_calls`] host functions.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 pub struct HostHooks;
 
 /// Configuration for *BN254* curve.
