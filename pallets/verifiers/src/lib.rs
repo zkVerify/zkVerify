@@ -73,6 +73,7 @@ pub mod migrations;
 #[allow(missing_docs)]
 pub mod mock;
 
+pub mod benchmarking_utils;
 mod tests;
 
 pub use hp_verifiers::WeightInfo;
@@ -93,7 +94,7 @@ pub mod pallet {
         Identity,
     };
     use frame_system::pallet_prelude::*;
-    use hp_on_proof_verified::OnProofVerified;
+    use hp_on_proof_verified::{Compose as _, OnProofVerified};
     use sp_core::{hexdisplay::AsBytesRef, H256};
     use sp_io::hashing::keccak_256;
     use sp_runtime::{traits::BadOrigin, ArithmeticError};
@@ -174,31 +175,56 @@ pub mod pallet {
         }
     }
 
-    fn statement_hash(ctx: &[u8], vk_hash: &H256, version_hash: Option<H256>, pubs: &[u8]) -> H256 {
+    /// Compute the statement hash for a given vk, proof, and public data.
+    pub fn compute_statement_hash<I: Verifier>(
+        vk_or_hash: &VkOrHash<I::Vk>,
+        proof: &I::Proof,
+        pubs: &I::Pubs,
+    ) -> H256 {
+        let version_hash = I::verifier_version_hash(proof);
+        let hash = match vk_or_hash {
+            VkOrHash::Hash(h) => sp_std::borrow::Cow::Borrowed(h),
+            VkOrHash::Vk(vk) => sp_std::borrow::Cow::Owned(I::vk_hash(vk)),
+        };
+        let ctx: &[u8] = I::hash_context_data();
+        let vk_hash: &H256 = hash.as_ref();
+        let pubs = I::pubs_bytes(pubs);
+
         let mut data_to_hash = keccak_256(ctx).to_vec();
         data_to_hash.extend_from_slice(vk_hash.as_bytes());
         if let Some(h) = version_hash {
             data_to_hash.extend_from_slice(h.as_bytes());
         }
-        data_to_hash.extend_from_slice(keccak_256(pubs).as_bytes_ref());
+        data_to_hash.extend_from_slice(keccak_256(pubs.as_bytes_ref()).as_bytes_ref());
         H256(keccak_256(data_to_hash.as_slice()))
     }
 
-    fn compute_hash<I: Verifier>(
-        version_hash: Option<H256>,
-        pubs: &I::Pubs,
+    pub(crate) fn submit_proof_weight<T: Config<I>, I: 'static + Verifier>(
         vk_or_hash: &VkOrHash<I::Vk>,
-    ) -> H256 {
-        let hash = match vk_or_hash {
-            VkOrHash::Hash(h) => sp_std::borrow::Cow::Borrowed(h),
-            VkOrHash::Vk(vk) => sp_std::borrow::Cow::Owned(I::vk_hash(vk)),
+        proof: &I::Proof,
+        pubs: &I::Pubs,
+        domain_id: &Option<u32>,
+    ) -> Weight {
+        // Check disable: we din't consider any time cost about checking boolean
+        // variable and proof size: we consider them negligible
+        let base = T::DbWeight::get().reads(1);
+        let vk_weight = match vk_or_hash {
+            VkOrHash::Hash(_) => {
+                // We considering unwrapping VkEntry negligible
+                T::WeightInfo::get_vk()
+            }
+            VkOrHash::Vk(vk) => {
+                // We considering cloning vk negligible
+                T::WeightInfo::validate_vk(vk)
+            }
         };
-        statement_hash(
-            I::hash_context_data(),
-            hash.as_ref(),
-            version_hash,
-            I::pubs_bytes(pubs).as_ref(),
-        )
+        // ensure_signed is just a struct unwrapping.
+        let verify = T::WeightInfo::verify_proof(proof, pubs);
+        let statement = T::WeightInfo::compute_statement_hash(proof, pubs);
+        base.compose(vk_weight)
+            .compose(verify)
+            .compose(statement)
+            .compose(T::OnProofVerified::weight(domain_id))
     }
 
     /// Pallet specific events.
@@ -289,10 +315,9 @@ pub mod pallet {
         /// Accept either a Vk or its hash. If you use the Vk hash the Vk should be already registered
         /// with `register_vk` extrinsic.
         #[pallet::call_index(0)]
-        #[pallet::weight(match &vk_or_hash {
-                VkOrHash::Vk(_) => T::WeightInfo::submit_proof(proof, pubs),
-                VkOrHash::Hash(_) => T::WeightInfo::submit_proof_with_vk_hash(proof, pubs),
-            })]
+        #[pallet::weight(
+            submit_proof_weight::<T, I>(vk_or_hash, proof, pubs, domain_id)
+        )]
         pub fn submit_proof(
             origin: OriginFor<T>,
             vk_or_hash: VkOrHash<I::Vk>,
@@ -318,10 +343,16 @@ pub mod pallet {
                 }
             };
             let account = ensure_signed(origin).ok();
-            let statement = compute_hash::<I>(I::verifier_version_hash(&proof), &pubs, &vk_or_hash);
             I::verify_proof(&vk, &proof, &pubs)
-                .inspect(|_| Self::deposit_event(Event::ProofVerified { statement }))
-                .map(|_x| T::OnProofVerified::on_proof_verified(account, domain_id, statement))
+                .map(|_| compute_statement_hash::<I>(&vk_or_hash, &proof, &pubs))
+                .inspect(|statement| {
+                    Self::deposit_event(Event::ProofVerified {
+                        statement: *statement,
+                    })
+                })
+                .map(|statement| {
+                    T::OnProofVerified::on_proof_verified(account, domain_id, statement)
+                })
                 .map_err(Error::<T, I>::from)?;
             Ok(().into())
         }
@@ -461,21 +492,21 @@ pub mod pallet {
         #[rstest]
         #[case::vk_and_pubs_used_in_test(
             PhantomData::<FakeVerifier>,
-            None,
+            0,
             42,
             VkOrHash::from_vk(REGISTERED_VK),
             VALID_HASH_REGISTERED_VK
         )]
         #[case::same_from_vk_hash(
             PhantomData::<FakeVerifier>,
-            None,
+            0,
             42,
             VkOrHash::from_hash(REGISTERED_VK_HASH),
             VALID_HASH_REGISTERED_VK
         )]
         #[case::hash_as_documented(
             PhantomData::<FakeVerifier>,
-            Some(H256::from_low_u64_be(24)),
+            24,
             42,
             VkOrHash::from_vk(REGISTERED_VK),
             {
@@ -488,7 +519,7 @@ pub mod pallet {
         )]
         #[case::hash_as_documented(
             PhantomData::<FakeVerifier>,
-            None,
+            0,
             42,
             VkOrHash::from_vk(REGISTERED_VK),
             {
@@ -501,7 +532,7 @@ pub mod pallet {
         #[should_panic]
         #[case::should_take_care_of_pubs(
             PhantomData::<FakeVerifier>,
-            None,
+            0,
             24,
             VkOrHash::from_vk(REGISTERED_VK),
             VALID_HASH_REGISTERED_VK
@@ -509,7 +540,7 @@ pub mod pallet {
         #[should_panic]
         #[case::should_take_care_of_context_data(
             PhantomData::<OtherVerifier>,
-            None,
+            0,
             42,
             VkOrHash::from_vk(REGISTERED_VK),
             VALID_HASH_REGISTERED_VK
@@ -517,7 +548,7 @@ pub mod pallet {
         #[should_panic]
         #[case::should_take_care_of_vk(
             PhantomData::<FakeVerifier>,
-            None,
+            0,
             42,
             VkOrHash::from_vk(24),
             VALID_HASH_REGISTERED_VK
@@ -525,19 +556,19 @@ pub mod pallet {
         #[should_panic]
         #[case::should_take_care_of_verification_version(
             PhantomData::<FakeVerifier>,
-            Some(H256::from_low_u64_be(100)),
+            100,
             42,
             VkOrHash::from_vk(REGISTERED_VK),
             VALID_HASH_REGISTERED_VK
         )]
         fn hash_statement_as_expected<V: Verifier>(
             #[case] _verifier: PhantomData<V>,
-            #[case] version_hash: Option<H256>,
+            #[case] proof: V::Proof,
             #[case] pubs: V::Pubs,
             #[case] vk_or_hash: VkOrHash<V::Vk>,
             #[case] expected: H256,
         ) {
-            let hash = compute_hash::<V>(version_hash, &pubs, &vk_or_hash);
+            let hash = compute_statement_hash::<V>(&vk_or_hash, &proof, &pubs);
 
             assert_eq!(hash, expected);
         }

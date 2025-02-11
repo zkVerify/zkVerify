@@ -31,13 +31,10 @@ frame-system = { workspace = true }
 frame-benchmarking = { workspace = true, optional = true }
 sp-core = { workspace = true }
 sp-std = { workspace = true }
-sp-io = { workspace = true, optional = true }
-pallet-aggregate = { workspace = true, optional = true, default-features = false, features = [
-    "runtime-benchmarks",
-] }
 
 [dev-dependencies]
 rstest = { workspace = true }
+sp-io = { workspace = true, features = ["std"] }
 pallet-balances = { workspace = true, features = ["std", "runtime-benchmarks"] }
 
 [features]
@@ -54,9 +51,8 @@ std = [
 	"pallet-balances/std",
 	"frame-benchmarking?/std",
 	"log/std",
-	"pallet-aggregate?/std",
-	"sp-io?/std",
-	"sp-std/std"
+	"sp-std/std",
+	"sp-io/std"
 ]
 runtime-benchmarks = [
 	"frame-benchmarking/runtime-benchmarks",
@@ -65,8 +61,5 @@ runtime-benchmarks = [
 	"frame-support/runtime-benchmarks",
 	"pallet-verifiers/runtime-benchmarks",
 	"dep:hex-literal",
-	"dep:sp-io",
-	"dep:pallet-aggregate",
-	"pallet-aggregate?/runtime-benchmarks",
 	"pallet-balances/runtime-benchmarks"
 ]

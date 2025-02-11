@@ -217,55 +217,29 @@ pub static CYCLE_2_POW_FROM_23_TO_23: usize = 1690238;
 pub static CYCLE_2_POW_FROM_24_TO_24: usize = 3067823;
 
 impl<T: Config, W: weight::WeightInfo> pallet_verifiers::WeightInfo<Risc0<T>> for Risc0Weight<W> {
-    fn submit_proof(
+    fn verify_proof(
         proof: &<Risc0<T> as hp_verifiers::Verifier>::Proof,
         _pubs: &<Risc0<T> as hp_verifiers::Verifier>::Pubs,
     ) -> Weight {
         let len = proof.len();
         if len <= CYCLE_2_POW_FROM_12_TO_13 {
-            W::submit_proof_cycle_2_pow_13()
+            W::verify_proof_cycle_2_pow_13()
         } else if len <= CYCLE_2_POW_FROM_14_TO_17 {
-            W::submit_proof_cycle_2_pow_17()
+            W::verify_proof_cycle_2_pow_17()
         } else if len <= CYCLE_2_POW_FROM_18_TO_18 {
-            W::submit_proof_cycle_2_pow_18()
+            W::verify_proof_cycle_2_pow_18()
         } else if len <= CYCLE_2_POW_FROM_19_TO_19 {
-            W::submit_proof_cycle_2_pow_19()
+            W::verify_proof_cycle_2_pow_19()
         } else if len <= CYCLE_2_POW_FROM_20_TO_20 {
-            W::submit_proof_cycle_2_pow_20()
+            W::verify_proof_cycle_2_pow_20()
         } else if len <= CYCLE_2_POW_FROM_21_TO_21 {
-            W::submit_proof_cycle_2_pow_21()
+            W::verify_proof_cycle_2_pow_21()
         } else if len <= CYCLE_2_POW_FROM_22_TO_22 {
-            W::submit_proof_cycle_2_pow_22()
+            W::verify_proof_cycle_2_pow_22()
         } else if len <= CYCLE_2_POW_FROM_23_TO_23 {
-            W::submit_proof_cycle_2_pow_23()
+            W::verify_proof_cycle_2_pow_23()
         } else {
-            W::submit_proof_cycle_2_pow_24()
-        }
-    }
-
-    fn submit_proof_with_vk_hash(
-        proof: &<Risc0<T> as hp_verifiers::Verifier>::Proof,
-        _pubs: &<Risc0<T> as hp_verifiers::Verifier>::Pubs,
-    ) -> Weight {
-        let len = proof.len();
-        if len <= CYCLE_2_POW_FROM_12_TO_13 {
-            W::submit_proof_with_vk_hash_cycle_2_pow_13()
-        } else if len <= CYCLE_2_POW_FROM_14_TO_17 {
-            W::submit_proof_with_vk_hash_cycle_2_pow_17()
-        } else if len <= CYCLE_2_POW_FROM_18_TO_18 {
-            W::submit_proof_with_vk_hash_cycle_2_pow_18()
-        } else if len <= CYCLE_2_POW_FROM_19_TO_19 {
-            W::submit_proof_with_vk_hash_cycle_2_pow_19()
-        } else if len <= CYCLE_2_POW_FROM_20_TO_20 {
-            W::submit_proof_with_vk_hash_cycle_2_pow_20()
-        } else if len <= CYCLE_2_POW_FROM_21_TO_21 {
-            W::submit_proof_with_vk_hash_cycle_2_pow_21()
-        } else if len <= CYCLE_2_POW_FROM_22_TO_22 {
-            W::submit_proof_with_vk_hash_cycle_2_pow_22()
-        } else if len <= CYCLE_2_POW_FROM_23_TO_23 {
-            W::submit_proof_with_vk_hash_cycle_2_pow_23()
-        } else {
-            W::submit_proof_with_vk_hash_cycle_2_pow_24()
+            W::verify_proof_cycle_2_pow_24()
         }
     }
 
@@ -275,5 +249,20 @@ impl<T: Config, W: weight::WeightInfo> pallet_verifiers::WeightInfo<Risc0<T>> fo
 
     fn unregister_vk() -> frame_support::weights::Weight {
         W::unregister_vk()
+    }
+
+    fn get_vk() -> Weight {
+        W::get_vk()
+    }
+
+    fn validate_vk(_vk: &<Risc0<T> as hp_verifiers::Verifier>::Vk) -> Weight {
+        W::validate_vk()
+    }
+
+    fn compute_statement_hash(
+        _proof: &<Risc0<T> as Verifier>::Proof,
+        _pubs: &<Risc0<T> as Verifier>::Pubs,
+    ) -> Weight {
+        W::compute_statement_hash()
     }
 }

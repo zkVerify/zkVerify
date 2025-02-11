@@ -24,12 +24,9 @@ sp-std = { workspace = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
 frame-benchmarking = { workspace = true, optional = true }
-pallet-aggregate = { workspace = true, optional = true, default-features = false, features = [
-    "runtime-benchmarks",
-] }
 
 [dev-dependencies]
-sp-io = { workspace = true }
+sp-io = { workspace = true, features = ["std"] }
 codec = { workspace = true, features = ["std"] }
 scale-info = { workspace = true, features = ["std"] }
 pallet-balances = { workspace = true, features = ["std", "runtime-benchmarks"] }
@@ -49,19 +46,16 @@ std = [
 	"ciborium/std",
 	"frame-benchmarking?/std",
 	"log/std",
-	"pallet-aggregate?/std",
 	"codec/std",
 	"scale-info/std"
 ]
 default = ["std"]
 runtime-benchmarks = [
 	"dep:frame-benchmarking",
-	"dep:pallet-aggregate",
 	"pallet-verifiers/runtime-benchmarks",
 	"frame-support/runtime-benchmarks",
 	"frame-benchmarking/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
-	"pallet-aggregate?/runtime-benchmarks",
 	"pallet-balances/runtime-benchmarks"
 ]
 inject-native-poseidon2 = []

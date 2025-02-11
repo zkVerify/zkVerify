@@ -25,11 +25,11 @@ fn pallet_fflonk_verifier() {
     use pallet_fflonk_verifier::WeightInfo;
 
     assert_eq!(
-        <<Runtime as pallet_verifiers::Config<Fflonk>>::WeightInfo as pallet_verifiers::WeightInfo<Fflonk>>::submit_proof(
+        <<Runtime as pallet_verifiers::Config<Fflonk>>::WeightInfo as pallet_verifiers::WeightInfo<Fflonk>>::verify_proof(
             &dummy_proof,
             &dummy_pubs
         ),
-        crate::weights::pallet_fflonk_verifier::ZKVWeight::<Runtime>::submit_proof()
+        crate::weights::pallet_fflonk_verifier::ZKVWeight::<Runtime>::verify_proof()
     );
 }
 
@@ -41,11 +41,11 @@ fn pallet_zksync_verifier() {
     use pallet_zksync_verifier::WeightInfo;
 
     assert_eq!(
-        <<Runtime as pallet_verifiers::Config<Zksync>>::WeightInfo as pallet_verifiers::WeightInfo<Zksync>>::submit_proof(
+        <<Runtime as pallet_verifiers::Config<Zksync>>::WeightInfo as pallet_verifiers::WeightInfo<Zksync>>::verify_proof(
             &dummy_proof,
             &dummy_pubs
         ),
-        crate::weights::pallet_zksync_verifier::ZKVWeight::<Runtime>::submit_proof()
+        crate::weights::pallet_zksync_verifier::ZKVWeight::<Runtime>::verify_proof()
     );
 }
 
@@ -57,11 +57,11 @@ fn pallet_groth16_verifier() {
     assert_eq!(
         <<Runtime as pallet_verifiers::Config<Groth16<Runtime>>>::WeightInfo as
             pallet_verifiers::WeightInfo<Groth16<Runtime>>>
-            ::submit_proof(
+            ::verify_proof(
             &pallet_groth16_verifier::Proof::default(),
             &Vec::new()
         ),
-        crate::weights::pallet_groth16_verifier::ZKVWeight::<Runtime>::submit_proof_bn254(0)
+        crate::weights::pallet_groth16_verifier::ZKVWeight::<Runtime>::verify_proof_bn254(0)
     );
 }
 
@@ -73,11 +73,11 @@ fn pallet_settlement_risc0() {
     assert_eq!(
         <<Runtime as pallet_verifiers::Config<Risc0<Runtime>>>::WeightInfo as
             pallet_verifiers::WeightInfo<Risc0<Runtime>>>
-            ::submit_proof(
+            ::verify_proof(
             &pallet_risc0_verifier::Proof::V1_1(Vec::new()),
             &Vec::new()
         ),
-        crate::weights::pallet_risc0_verifier::ZKVWeight::<Runtime>::submit_proof_cycle_2_pow_13()
+        crate::weights::pallet_risc0_verifier::ZKVWeight::<Runtime>::verify_proof_cycle_2_pow_13()
     );
 }
 
@@ -88,11 +88,11 @@ fn pallet_settlement_ultraplonk() {
     assert_eq!(
         <<Runtime as pallet_verifiers::Config<Ultraplonk<Runtime>>>::WeightInfo as
             pallet_verifiers::WeightInfo<Ultraplonk<Runtime>>>
-            ::submit_proof(
+            ::verify_proof(
             &vec![0; pallet_ultraplonk_verifier::PROOF_SIZE],
             &Vec::new()
         ),
-        crate::weights::pallet_ultraplonk_verifier::ZKVWeight::<Runtime>::submit_proof_32()
+        crate::weights::pallet_ultraplonk_verifier::ZKVWeight::<Runtime>::verify_proof()
     );
 }
 
@@ -103,10 +103,10 @@ fn pallet_settlement_proofofsql() {
     assert_eq!(
         <<Runtime as pallet_verifiers::Config<ProofOfSql<Runtime>>>::WeightInfo as
             pallet_verifiers::WeightInfo<ProofOfSql<Runtime>>>
-            ::submit_proof(
+            ::verify_proof(
             &Vec::new(),
             &Vec::new()
         ),
-        crate::weights::pallet_proofofsql_verifier::ZKVWeight::<Runtime>::submit_proof()
+        crate::weights::pallet_proofofsql_verifier::ZKVWeight::<Runtime>::verify_proof()
     );
 }

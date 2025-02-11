@@ -226,6 +226,13 @@ pub mod pallet {
                 domain.handle_hold_state();
             });
         }
+
+        fn weight(domain_id: &Option<u32>) -> Weight {
+            match domain_id {
+                Some(_) => T::WeightInfo::on_proof_verified(),
+                None => Default::default(),
+            }
+        }
     }
 
     // Errors inform users that something went wrong.

@@ -17,10 +17,15 @@
 //! a new verifier pallet based on `pallet-verifiers` abstraction.
 //!
 
-use quote::{quote, ToTokens};
-use syn::{parse_macro_input, parse_quote, Attribute, Ident, Token, Type, Visibility};
+use std::fmt::Debug;
 
-#[derive(Clone)]
+use quote::{quote, ToTokens};
+use syn::{
+    parse::{Parse, ParseStream},
+    parse_macro_input, parse_quote, Attribute, Ident, Token, Type, TypePath, Visibility,
+};
+
+#[derive(Clone, Debug, PartialEq)]
 struct GenericType {
     pub l_angular: Token![<],
     pub t: Type,
@@ -54,8 +59,8 @@ struct Item {
     pub semi_token: Token![;],
 }
 
-impl syn::parse::Parse for Item {
-    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+impl Parse for Item {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
         let attrs = input.call(Attribute::parse_outer)?;
         let vis = input.parse()?;
         let struct_token = input.parse()?;
@@ -123,6 +128,134 @@ fn verifier_render(item: Item) -> proc_macro2::TokenStream {
             __substrate_call_check, __substrate_event_check, tt_default_parts, tt_error_token,
         };
     }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct BenchmarkingUtils {
+    verifier: Ident,
+    generic: Option<GenericType>,
+    config: Option<TypePath>,
+}
+
+impl Parse for BenchmarkingUtils {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        let verifier = input.parse()?;
+        let lookahead = input.lookahead1();
+        let generic = if lookahead.peek(Token![<]) {
+            Some(input.parse()?)
+        } else {
+            None
+        };
+        let lookahead = input.lookahead1();
+        let config = if lookahead.peek(Token![,]) {
+            let _: Token![,] = input.parse()?;
+            Some(input.parse()?)
+        } else {
+            None
+        };
+        Ok(Self {
+            verifier,
+            generic,
+            config,
+        })
+    }
+}
+
+#[proc_macro]
+pub fn benchmarking_utils(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let BenchmarkingUtils {
+        verifier,
+        generic,
+        config,
+    } = parse_macro_input!(input as BenchmarkingUtils);
+    let crate_name = crate_name();
+    let fish = generic.clone().map(|t| quote! {  ::#t });
+    let verifier_call = quote! { #verifier #fish};
+    let verifier = {
+        quote! { #verifier #generic }
+    };
+    let opt_cfg_bound = config.clone().map(|c| quote! { + #c });
+    let vk_of = quote! { VkOf #generic };
+    let proof_of = quote! { ProofOf #generic };
+    let pubs_of = quote! { PubsOf #generic };
+    quote! {
+        type #vk_of = <#verifier as #crate_name::benchmarking_utils::Verifier>::Vk;
+        type #proof_of = <#verifier as #crate_name::benchmarking_utils::Verifier>::Proof;
+        type #pubs_of = <#verifier as #crate_name::benchmarking_utils::Verifier>::Pubs;
+
+        /// execute verify_proof
+        fn do_verify_proof<T>(
+            vk: &#vk_of,
+            proof: &#proof_of,
+            pubs: &#pubs_of,
+        ) -> Result<(), #crate_name::benchmarking_utils::VerifyError>
+        where
+            T: #crate_name::Config<#verifier> #opt_cfg_bound,
+        {
+            #verifier_call::verify_proof(vk, proof, pubs)
+        }
+
+        /// Get a `VkEntry` from Vks storage.
+        fn do_get_vk<T>(hash: &sp_core::H256) -> Option<#crate_name::VkEntry<#vk_of>>
+        where
+            T: #crate_name::Config<#verifier> #opt_cfg_bound,
+        {
+            #crate_name::Vks::<T, #verifier>::get(&hash)
+        }
+
+        /// Validate a given vk.
+        fn do_validate_vk<T>(vk: &#vk_of) -> Result<(), #crate_name::benchmarking_utils::VerifyError>
+        where
+            T: #crate_name::Config<#verifier> #opt_cfg_bound,
+        {
+            #verifier_call::validate_vk(vk)
+        }
+
+        /// Compute the statement hash.
+        fn do_compute_statement_hash<T>(
+            vk_or_hash: &#crate_name::VkOrHash<#vk_of>,
+            proof: &#proof_of,
+            pubs: &#pubs_of,
+        ) -> sp_core::H256
+        where
+            T: #crate_name::Config<#verifier>  #opt_cfg_bound,
+        {
+            #crate_name::compute_statement_hash::<#verifier>(vk_or_hash, proof, pubs)
+        }
+
+        /// Compute the vk hash.
+        fn do_vk_hash<T>(vk: &#vk_of) -> sp_core::H256
+        where
+            T: #crate_name::Config<#verifier>  #opt_cfg_bound,
+        {
+            #verifier_call::vk_hash(vk)
+        }
+
+        /// Return a new account with enough founds to do anything.
+        fn funded_account<T>() -> T::AccountId
+        where
+            T: #crate_name::Config<#verifier> #opt_cfg_bound,
+        {
+            #crate_name::benchmarking_utils::funded_account::<T, #verifier>()
+        }
+
+        /// Insert a vk in the storage.
+        fn insert_vk<T>(owner: T::AccountId, vk: #vk_of, hash: sp_core::H256)
+        where
+            T: #crate_name::Config<#verifier>  #opt_cfg_bound,
+        {
+            #crate_name::benchmarking_utils::insert_vk::<T, #verifier>(owner, vk, hash)
+        }
+
+        /// Insert a vk in the storage owned by an anonymous.
+        fn insert_vk_anonymous<T>(vk: #vk_of, hash: sp_core::H256)
+        where
+            T: #crate_name::Config<#verifier>  #opt_cfg_bound,
+        {
+            #crate_name::benchmarking_utils::insert_vk_anonymous::<T, #verifier>(vk, hash)
+        }
+    }
+    .into()
 }
 
 #[cfg(not(test))]
@@ -243,5 +376,36 @@ mod tests {
         };
 
         assert_eq!(expected, out);
+    }
+
+    #[rstest]
+    #[case::configurable(BenchmarkingUtils {
+            verifier: syn::parse_str("Verifier").unwrap(),
+            generic: syn::parse_str("<T>").ok(),
+            config: syn::parse_str("crate::Config").ok(),
+        }, "Verifier<T>, crate::Config")]
+    #[case::no_gen(BenchmarkingUtils {
+            verifier: syn::parse_str("Verifier").unwrap(),
+            generic: None,
+            config: syn::parse_str("crate::Config").ok(),
+        }, "Verifier, crate::Config")]
+    #[case::no_cfg(BenchmarkingUtils {
+            verifier: syn::parse_str("Verifier").unwrap(),
+            generic: syn::parse_str("<T>").ok(),
+            config: None,
+        }, "Verifier<T>")]
+    #[case::plain(BenchmarkingUtils {
+            verifier: syn::parse_str("Verifier").unwrap(),
+            generic: None,
+            config: None,
+        }, "Verifier")]
+    #[case::other(BenchmarkingUtils {
+            verifier: syn::parse_str("Other").unwrap(),
+            generic: syn::parse_str("<Q>").ok(),
+            config: syn::parse_str("yet::another::path").ok(),
+        }, "Other<Q>, yet::another::path")]
+    fn should_parse_benchmarking_utils(#[case] expected: BenchmarkingUtils, #[case] s: &str) {
+        let parsed: BenchmarkingUtils = syn::parse_str(s).unwrap();
+        assert_eq!(expected, parsed);
     }
 }

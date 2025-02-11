@@ -61,12 +61,17 @@ pub mod utils {
     }
 }
 
-fn fill_aggregation<T: Config>(caller: AccountOf<T>, domain_id: u32) {
+fn insert_statements<T: Config>(caller: AccountOf<T>, domain_id: u32, elements: Option<u32>) {
     let domain = Domains::<T>::get(domain_id).unwrap();
+    let elements = elements.unwrap_or_else(|| domain.max_aggregation_size);
 
-    for _ in 0..domain.max_aggregation_size {
+    for _ in 0..elements {
         Pallet::<T>::on_proof_verified(Some(caller.clone()), Some(domain_id), Default::default());
     }
+}
+
+fn fill_aggregation<T: Config>(caller: AccountOf<T>, domain_id: u32) {
+    insert_statements::<T>(caller, domain_id, None);
 }
 
 #[benchmarks]
@@ -76,6 +81,29 @@ mod benchmarks {
     use data::DomainState;
 
     use super::{utils::*, *};
+
+    #[benchmark]
+    fn on_proof_verified() {
+        let caller: T::AccountId = funded_account::<T>();
+        let domain_id = 1;
+        let size = 16;
+        insert_domain::<T>(domain_id, caller.clone(), Some(size));
+        insert_statements::<T>(caller.clone(), domain_id, Some(size - 1));
+
+        #[block]
+        {
+            Pallet::<T>::on_proof_verified(
+                Some(caller.clone()),
+                Some(domain_id),
+                Default::default(),
+            );
+        }
+
+        // Sanity check: we putted the aggregation in should be published
+        let domain = Domains::<T>::get(domain_id).unwrap();
+        assert!(domain.next.statements.is_empty());
+        assert_eq!(domain.should_publish.len(), 1);
+    }
 
     #[benchmark]
     fn aggregate(n: Linear<1, <T as Config>::AGGREGATION_SIZE>) {

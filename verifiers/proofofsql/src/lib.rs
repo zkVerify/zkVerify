@@ -137,18 +137,11 @@ pub struct ProofOfSqlWeight<W: weight::WeightInfo>(PhantomData<W>);
 impl<T: Config, W: weight::WeightInfo> pallet_verifiers::WeightInfo<ProofOfSql<T>>
     for ProofOfSqlWeight<W>
 {
-    fn submit_proof(
+    fn verify_proof(
         _proof: &<ProofOfSql<T> as hp_verifiers::Verifier>::Proof,
         _pubs: &<ProofOfSql<T> as hp_verifiers::Verifier>::Pubs,
     ) -> Weight {
-        W::submit_proof()
-    }
-
-    fn submit_proof_with_vk_hash(
-        _proof: &<ProofOfSql<T> as hp_verifiers::Verifier>::Proof,
-        _pubs: &<ProofOfSql<T> as hp_verifiers::Verifier>::Pubs,
-    ) -> Weight {
-        W::submit_proof_with_vk_hash()
+        W::verify_proof()
     }
 
     fn register_vk(_vk: &<ProofOfSql<T> as hp_verifiers::Verifier>::Vk) -> Weight {
@@ -157,6 +150,21 @@ impl<T: Config, W: weight::WeightInfo> pallet_verifiers::WeightInfo<ProofOfSql<T
 
     fn unregister_vk() -> frame_support::weights::Weight {
         W::unregister_vk()
+    }
+
+    fn get_vk() -> Weight {
+        W::get_vk()
+    }
+
+    fn validate_vk(_vk: &<ProofOfSql<T> as hp_verifiers::Verifier>::Vk) -> Weight {
+        W::validate_vk()
+    }
+
+    fn compute_statement_hash(
+        _proof: &<ProofOfSql<T> as Verifier>::Proof,
+        _pubs: &<ProofOfSql<T> as Verifier>::Pubs,
+    ) -> Weight {
+        W::compute_statement_hash()
     }
 }
 

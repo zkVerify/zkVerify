@@ -19,12 +19,21 @@ use super::*;
 
 use frame_benchmarking::v2::*;
 use frame_system::RawOrigin;
+use hp_on_proof_verified::OnProofVerified;
 use sp_core::{Get, H256};
 use sp_runtime::SaturatedConversion;
 
 #[benchmarks]
 mod benchmarks {
     use super::*;
+
+    #[benchmark]
+    fn on_proof_verified() {
+        #[block]
+        {
+            Pallet::<T>::on_proof_verified(None, None, Default::default());
+        }
+    }
 
     #[benchmark]
     fn publish_attestation() {

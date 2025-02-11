@@ -54,7 +54,8 @@ std = [
 	"pallet-timestamp/std",
 	"hp-poe/std",
 	"binary-merkle-tree/std",
-	"log/std"
+	"log/std",
+	"hp-on-proof-verified/std"
 ]
 try-runtime = [
 	"frame-support/try-runtime",

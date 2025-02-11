@@ -75,6 +75,8 @@ pub static USERS: [(AccountId, Balance); NUM_TEST_ACCOUNTS] = [
 pub struct MockWeightInfo;
 
 impl MockWeightInfo {
+    pub const OPV_REF_TIME: u64 = 1_000_000_042;
+    pub const OPV_PROOF_SIZE: u64 = 1_000_000_024;
     pub const AGG_REF_TIME: u64 = 42;
     pub const AGG_PROOF_SIZE: u64 = 24;
     pub const REG_REF_TIME: u64 = 142;
@@ -90,6 +92,10 @@ impl MockWeightInfo {
 }
 
 impl crate::WeightInfo for MockWeightInfo {
+    fn on_proof_verified() -> frame_support::weights::Weight {
+        frame_support::weights::Weight::from_parts(Self::OPV_REF_TIME, Self::OPV_REF_TIME)
+    }
+
     fn aggregate(n: u32) -> frame_support::weights::Weight {
         let variable = 1000 * n as u64;
         frame_support::weights::Weight::from_parts(
