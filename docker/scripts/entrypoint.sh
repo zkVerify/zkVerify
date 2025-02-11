@@ -72,6 +72,8 @@ validate_and_download() {
   local CHAIN_VAR_NAME="$1"
   local URL_VAR_NAME="$2"
 
+  echo " --- validate and download chain-spec ---"
+
   # Dynamically retrieve the values of the variables using indirect expansion
   local CHAIN_VALUE="${!CHAIN_VAR_NAME}"
   local SPEC_FILE_URL="${!URL_VAR_NAME}"
