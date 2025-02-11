@@ -17,8 +17,6 @@ members = [
     "pallets/claim",
     "primitives/hp-verifiers",
     "primitives/hp-groth16",
-    "verifiers/fflonk",
-    "verifiers/zksync",
     "verifiers/groth16",
     "verifiers/risc0",
     "verifiers/ultraplonk",
@@ -96,8 +94,6 @@ pallet-verifiers-macros = { path = "pallets/verifiers/macros" }
 hp-on-proof-verified = { default-features = false, path = "primitives/hp-on-proof-verified" }
 hp-verifiers = { path = "primitives/hp-verifiers", default-features = false }
 hp-groth16 = { path = "primitives/hp-groth16", default-features = false }
-pallet-fflonk-verifier = { path = "verifiers/fflonk", default-features = false }
-pallet-zksync-verifier = { path = "verifiers/zksync", default-features = false }
 pallet-groth16-verifier = { path = "verifiers/groth16", default-features = false }
 pallet-risc0-verifier = { path = "verifiers/risc0", default-features = false }
 pallet-ultraplonk-verifier = { path = "verifiers/ultraplonk", default-features = false }

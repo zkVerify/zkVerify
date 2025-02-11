@@ -16,4 +16,3 @@ anyhow = "1.0"
 
 [features]
 rocksdb = []
-ultraplonk = []

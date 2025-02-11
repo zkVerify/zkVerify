@@ -30,24 +30,6 @@ use sp_runtime::traits::Zero;
 use sp_runtime::{traits::Hash, AccountId32, MultiAddress};
 
 #[test]
-fn pallet_fflonk() {
-    test().execute_with(|| {
-        let dummy_origin = AccountId32::new([0; 32]);
-        let dummy_proof: pallet_fflonk_verifier::Proof = [0; pallet_fflonk_verifier::PROOF_SIZE];
-        let dummy_pubs: pallet_fflonk_verifier::Pubs = [0; pallet_fflonk_verifier::PUBS_SIZE];
-        assert!(SettlementFFlonkPallet::submit_proof(
-            RuntimeOrigin::signed(dummy_origin),
-            VkOrHash::from_hash(H256::zero()),
-            dummy_proof.into(),
-            dummy_pubs.into(),
-            None,
-        )
-        .is_err());
-        // just checking code builds, hence the pallet is available to the runtime
-    });
-}
-
-#[test]
 fn pallet_multisig() {
     test().execute_with(|| {
         let issuer: AccountId32 = testsfixtures::SAMPLE_USERS[0].raw_account.into();
@@ -219,24 +201,6 @@ fn pallet_bounties() {
         let description = vec![0; 100];
 
         assert_ok!(Bounties::propose_bounty(origin, value, description.clone()));
-    });
-}
-
-#[test]
-fn pallet_zksync() {
-    test().execute_with(|| {
-        let dummy_origin = AccountId32::new([0; 32]);
-        let dummy_proof = [0; pallet_zksync_verifier::PROOF_SIZE];
-        let dummy_pubs = [0; pallet_zksync_verifier::PUBS_SIZE];
-        assert!(SettlementZksyncPallet::submit_proof(
-            RuntimeOrigin::signed(dummy_origin),
-            VkOrHash::from_hash(H256::zero()),
-            dummy_proof.into(),
-            dummy_pubs.into(),
-            None,
-        )
-        .is_err());
-        // just checking code builds, hence the pallet is available to the runtime
     });
 }
 

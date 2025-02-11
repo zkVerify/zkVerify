@@ -1,4 +1,4 @@
-Description: Testing that a proof submission for fflonk pallet can accept vkey or the hash of registered one
+Description: Testing that a proof submission for ultraplonk pallet can accept vkey or the hash of registered one
 Network: ./network_defs/single_node.toml
 Creds: config
 
