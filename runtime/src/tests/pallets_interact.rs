@@ -417,11 +417,14 @@ mod scheduler {
             let call = Box::new(
                 RuntimeCall::SettlementUltraplonkPallet(pallet_verifiers::Call::<
                     Runtime,
-                    pallet_ultraplonk_verifier::Ultraplonk,
+                    pallet_ultraplonk_verifier::Ultraplonk<Runtime>,
                 >::new_call_variant_submit_proof(
                     VkOrHash::from_hash(H256::zero()),
-                    [0; pallet_ultraplonk_verifier::PROOF_SIZE].into(),
-                    [0; pallet_ultraplonk_verifier::PUBS_SIZE].into(),
+                    [0u8; pallet_ultraplonk_verifier::PROOF_SIZE]
+                        .into_iter()
+                        .collect::<Vec<_>>()
+                        .into(),
+                    Vec::new().into(),
                     None,
                 )),
             );
