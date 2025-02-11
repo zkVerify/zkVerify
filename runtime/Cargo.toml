@@ -93,8 +93,6 @@ aggregate-rpc-runtime-api = { workspace = true }
 
 pallet-verifiers = { workspace = true }
 hp-verifiers = { workspace = true }
-pallet-fflonk-verifier = { workspace = true }
-pallet-zksync-verifier = { workspace = true }
 pallet-groth16-verifier = { workspace = true }
 pallet-risc0-verifier = { workspace = true }
 pallet-ultraplonk-verifier = { workspace = true }
@@ -154,8 +152,6 @@ runtime-benchmarks = [
 	"pallet-proxy/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
 	"pallet-verifiers/runtime-benchmarks",
-	"pallet-fflonk-verifier/runtime-benchmarks",
-	"pallet-zksync-verifier/runtime-benchmarks",
 	"pallet-groth16-verifier/runtime-benchmarks",
 	"pallet-risc0-verifier/runtime-benchmarks",
 	"pallet-ultraplonk-verifier/runtime-benchmarks",
@@ -245,8 +241,6 @@ std = [
 	"sp-version/std",
 	"sp-weights/std",
 	"pallet-verifiers/std",
-	"pallet-fflonk-verifier/std",
-	"pallet-zksync-verifier/std",
 	"pallet-groth16-verifier/std",
 	"pallet-risc0-verifier/std",
 	"pallet-ultraplonk-verifier/std",
@@ -308,7 +302,6 @@ try-runtime = [
 	"polkadot-runtime-common/try-runtime",
 	"pallet-xcm/try-runtime",
 	"pallet-message-queue/try-runtime",
-	"pallet-zksync-verifier/try-runtime"
 ]
 extend-benchmarks = [
 	"pallet-risc0-verifier/extend-benchmarks"

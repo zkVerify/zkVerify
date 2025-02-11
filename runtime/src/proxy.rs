@@ -63,8 +63,6 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 				RuntimeCall::VoterList(..) |
                 // zkVerify specifics
                 RuntimeCall::Aggregate(..) |
-                RuntimeCall::SettlementFFlonkPallet(..) |
-                RuntimeCall::SettlementZksyncPallet(..) |
                 RuntimeCall::SettlementGroth16Pallet(..) |
                 RuntimeCall::SettlementRisc0Pallet(..) |
                 RuntimeCall::SettlementUltraplonkPallet(..) |

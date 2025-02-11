@@ -18,38 +18,6 @@
 use super::*;
 
 #[test]
-fn pallet_fflonk_verifier() {
-    use pallet_fflonk_verifier::Fflonk;
-    let dummy_proof = [0; pallet_fflonk_verifier::PROOF_SIZE];
-    let dummy_pubs = [0; pallet_fflonk_verifier::PUBS_SIZE];
-    use pallet_fflonk_verifier::WeightInfo;
-
-    assert_eq!(
-        <<Runtime as pallet_verifiers::Config<Fflonk>>::WeightInfo as pallet_verifiers::WeightInfo<Fflonk>>::submit_proof(
-            &dummy_proof,
-            &dummy_pubs
-        ),
-        crate::weights::pallet_fflonk_verifier::ZKVWeight::<Runtime>::submit_proof()
-    );
-}
-
-#[test]
-fn pallet_zksync_verifier() {
-    use pallet_zksync_verifier::Zksync;
-    let dummy_proof = [0; pallet_zksync_verifier::PROOF_SIZE];
-    let dummy_pubs = [0; pallet_zksync_verifier::PUBS_SIZE];
-    use pallet_zksync_verifier::WeightInfo;
-
-    assert_eq!(
-        <<Runtime as pallet_verifiers::Config<Zksync>>::WeightInfo as pallet_verifiers::WeightInfo<Zksync>>::submit_proof(
-            &dummy_proof,
-            &dummy_pubs
-        ),
-        crate::weights::pallet_zksync_verifier::ZKVWeight::<Runtime>::submit_proof()
-    );
-}
-
-#[test]
 fn pallet_groth16_verifier() {
     use pallet_groth16_verifier::Groth16;
     use pallet_groth16_verifier::WeightInfo;

@@ -415,13 +415,13 @@ mod scheduler {
         test().execute_with(|| {
             // We need a call bigger than 128 bytes to trigger preimage usage
             let call = Box::new(
-                RuntimeCall::SettlementFFlonkPallet(pallet_verifiers::Call::<
+                RuntimeCall::SettlementUltraplonkPallet(pallet_verifiers::Call::<
                     Runtime,
-                    pallet_fflonk_verifier::Fflonk,
+                    pallet_ultraplonk_verifier::Ultraplonk,
                 >::new_call_variant_submit_proof(
                     VkOrHash::from_hash(H256::zero()),
-                    [0; pallet_fflonk_verifier::PROOF_SIZE].into(),
-                    [0; pallet_fflonk_verifier::PUBS_SIZE].into(),
+                    [0; pallet_ultraplonk_verifier::PROOF_SIZE].into(),
+                    [0; pallet_ultraplonk_verifier::PUBS_SIZE].into(),
                     None,
                 )),
             );

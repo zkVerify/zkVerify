@@ -22,7 +22,6 @@ mod accelerated_bn;
 mod groth16;
 mod risc0;
 mod ultraplonk;
-mod zksync;
 
 #[derive(PassByCodec, Encode, Decode)]
 #[cfg_attr(test, derive(Debug))]
@@ -45,12 +44,6 @@ impl From<VerifyError> for hp_verifiers::VerifyError {
         }
     }
 }
-
-pub use zksync::zksync_verify;
-pub use zksync::PROOF_SIZE as ZKSYNC_PROOF_SIZE;
-pub use zksync::PUBS_SIZE as ZKSYNC_PUBS_SIZE;
-#[cfg(feature = "std")]
-pub use zksync_verify::HostFunctions as ZksyncVerifierHostFunctions;
 
 pub use risc0::risc_0_verify;
 #[cfg(feature = "std")]
@@ -80,7 +73,6 @@ pub use accelerated_bn::bn254::host_calls::HostFunctions as AcceleratedBn254Host
 
 #[cfg(feature = "std")]
 pub type HLNativeHostFunctions = (
-    ZksyncVerifierHostFunctions,
     Risc0VerifierHostFunctions,
     Risc0AccelerateHostFunctions,
     UltraplonkVerifierHostFunctions,

@@ -813,26 +813,6 @@ impl pallet_verifiers::common::Config for Runtime {
     type CommonWeightInfo = Runtime;
 }
 
-impl pallet_verifiers::Config<pallet_fflonk_verifier::Fflonk> for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type OnProofVerified = Aggregate;
-    type WeightInfo =
-        pallet_fflonk_verifier::FflonkWeight<weights::pallet_fflonk_verifier::ZKVWeight<Runtime>>;
-    type Ticket = VkRegistrationHoldConsideration;
-    #[cfg(feature = "runtime-benchmarks")]
-    type Currency = Balances;
-}
-
-impl pallet_verifiers::Config<pallet_zksync_verifier::Zksync> for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type OnProofVerified = Aggregate;
-    type WeightInfo =
-        pallet_zksync_verifier::ZksyncWeight<weights::pallet_zksync_verifier::ZKVWeight<Runtime>>;
-    type Ticket = VkRegistrationHoldConsideration;
-    #[cfg(feature = "runtime-benchmarks")]
-    type Currency = Balances;
-}
-
 pub const GROTH16_MAX_NUM_INPUTS: u32 = 16;
 parameter_types! {
     pub const Groth16MaxNumInputs: u32 = GROTH16_MAX_NUM_INPUTS;
@@ -1052,12 +1032,10 @@ construct_runtime!(
         // Verifiers. Start indices at 160 to leave room and to the end (255). Don't add
         // any kind of other pallets after this value.
         CommonVerifiers: pallet_verifiers::common = 160,
-        SettlementFFlonkPallet: pallet_fflonk_verifier = 161,
-        SettlementZksyncPallet: pallet_zksync_verifier = 162,
-        SettlementGroth16Pallet: pallet_groth16_verifier = 163,
-        SettlementRisc0Pallet: pallet_risc0_verifier = 164,
-        SettlementUltraplonkPallet: pallet_ultraplonk_verifier = 165,
-        SettlementProofOfSqlPallet: pallet_proofofsql_verifier = 166,
+        SettlementGroth16Pallet: pallet_groth16_verifier = 161,
+        SettlementRisc0Pallet: pallet_risc0_verifier = 162,
+        SettlementUltraplonkPallet: pallet_ultraplonk_verifier = 163,
+        SettlementProofOfSqlPallet: pallet_proofofsql_verifier = 164,
     }
 );
 
@@ -1136,8 +1114,6 @@ mod benches {
         [pallet_aggregate, Aggregate]
         [pallet_hyperbridge_aggregations, HyperbridgeAggregations]
         [ismp_grandpa, IsmpGrandpa]
-        [pallet_zksync_verifier, ZksyncVerifierBench::<Runtime>]
-        [pallet_fflonk_verifier, FflonkVerifierBench::<Runtime>]
         [pallet_groth16_verifier, Groth16VerifierBench::<Runtime>]
         [pallet_risc0_verifier, Risc0VerifierBench::<Runtime>]
         [pallet_risc0_verifier_extend, Risc0VerifierExtendBench::<Runtime>]
@@ -1624,8 +1600,6 @@ impl_runtime_apis! {
             use baseline::Pallet as BaselineBench;
             use pallet_election_provider_support_benchmarking::Pallet as ElectionProviderBench;
             use pallet_session_benchmarking::Pallet as SessionBench;
-            use pallet_fflonk_verifier::benchmarking::Pallet as FflonkVerifierBench;
-            use pallet_zksync_verifier::benchmarking::Pallet as ZksyncVerifierBench;
             use pallet_groth16_verifier::benchmarking::Pallet as Groth16VerifierBench;
             use pallet_risc0_verifier::benchmarking::Pallet as Risc0VerifierBench;
             use pallet_risc0_verifier::extend_benchmarking::Pallet as Risc0VerifierExtendBench;
@@ -1655,8 +1629,6 @@ impl_runtime_apis! {
             use baseline::Pallet as BaselineBench;
             use pallet_election_provider_support_benchmarking::Pallet as ElectionProviderBench;
             use pallet_session_benchmarking::Pallet as SessionBench;
-            use pallet_fflonk_verifier::benchmarking::Pallet as FflonkVerifierBench;
-            use pallet_zksync_verifier::benchmarking::Pallet as ZksyncVerifierBench;
             use pallet_groth16_verifier::benchmarking::Pallet as Groth16VerifierBench;
             use pallet_risc0_verifier::benchmarking::Pallet as Risc0VerifierBench;
             use pallet_risc0_verifier::extend_benchmarking::Pallet as Risc0VerifierExtendBench;
