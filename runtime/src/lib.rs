@@ -685,6 +685,9 @@ parameter_types! {
 pub const MAX_TARGETS: u32 = 1_000;
 // Maximum number of voters. This also includes targets, which implicitly vote for themselves.
 pub const MAX_VOTERS: u32 = 5_000;
+// The maximum number of number of active validators that we want to handle.
+// This *must always be greater or equal* to staking.validatorCount storage value.
+pub const MAX_ACTIVE_VALIDATORS: u32 = 20;
 
 parameter_types! {
     // Maximum number of election voters and targets that can be handled by OnChainSeqPhragmen
@@ -692,7 +695,7 @@ parameter_types! {
     pub ElectionBoundsOnChain: ElectionBounds = ElectionBoundsBuilder::default().voters_count((MAX_VOTERS).into()).targets_count(MAX_TARGETS.into()).build();
     // Maximum number of election winners, and thus of authorities that can be active in a given
     // era.
-    pub const MaxActiveValidators: u32 = MAX_TARGETS;
+    pub const MaxActiveValidators: u32 = MAX_ACTIVE_VALIDATORS;
 }
 
 pub struct OnChainSeqPhragmen;
