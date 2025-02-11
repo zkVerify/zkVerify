@@ -74,13 +74,13 @@ parameter_types! {
     /// The target precions for exp(); impacts on the final precision for inflation computation.
     pub const ExpPrecision: f64 = 10e-15f64;
     /// Base inflation (I_b).
-    pub InflationBase: Perquintill = Perquintill::from_percent(5);
+    pub InflationBase: Perquintill = Perquintill::from_percent(3);
     /// The optimal staking rate (s_t).
     pub StakingTarget: Percent = Percent::from_percent(50);
     /// Sensitivity coefficient (K).
     pub const K: f64 = 1f64;
     /// Multiplier (C).
-    pub const C: f64 = 1f64;
+    pub const C: f64 = 0f64; // zero I_var
     /// Percentage of the minted tokens that goes to the validators (leaving the rest to the
     /// others).
     pub ValidatorsSplit: Percent = Percent::from_percent(50);
