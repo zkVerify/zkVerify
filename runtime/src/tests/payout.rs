@@ -17,7 +17,7 @@
 
 use super::*;
 use crate::{
-    payout::*, AccountId, Balance, Balances, Perbill, Runtime, Treasury, ACME, MILLICENTS,
+    payout::*, AccountId, Balance, Balances, Perbill, Runtime, Treasury, ACME,
 };
 use pallet_staking::EraPayout;
 
@@ -47,14 +47,14 @@ fn check_era_rewards() {
         (0, 0)
     );
 
-    // Check the reward for a normal era, s_c == s_t
-    let tot_issuance: Balance = TOT_ISSUANCE;
-    let tot_staked: Balance = Perbill::from_percent(50) * tot_issuance;
-    let expected_inflation: u128 = 60000000 * ACME;
+    // Check the reward for a normal era, s_c == s_t  ==> I_var == 1%
+    let tot_staked: Balance = Perbill::from_percent(50) * TOT_ISSUANCE;
+    let expected_inflation: u128 =
+        (InflationBase::get() + Perquintill::from_float(C::get() * 0.01)) * TOT_ISSUANCE;
     assert_eq!(
         <Runtime as pallet_staking::Config>::EraPayout::era_payout(
             tot_staked,
-            tot_issuance,
+            TOT_ISSUANCE,
             ERA_DURATION_MILLIS
         ),
         (
@@ -63,14 +63,15 @@ fn check_era_rewards() {
         )
     );
 
-    // Check the reward for a normal era, s_c == s_t / 2
-    let tot_issuance: Balance = TOT_ISSUANCE;
-    let tot_staked: Balance = Perbill::from_percent(25) * tot_issuance;
-    let expected_inflation: u128 = 66487212 * ACME + 70700 * MILLICENTS;
+    // Check the reward for a normal era, s_c == 0.0 (min)  ==> I_var == 2.718281828459%
+    let tot_staked: Balance = Perbill::from_percent(0) * TOT_ISSUANCE;
+    let expected_inflation: u128 = (InflationBase::get()
+        + Perquintill::from_float(C::get() * 0.02718281828459))
+        * TOT_ISSUANCE;
     assert_eq!(
         <Runtime as pallet_staking::Config>::EraPayout::era_payout(
             tot_staked,
-            tot_issuance,
+            TOT_ISSUANCE,
             ERA_DURATION_MILLIS
         ),
         (
@@ -79,30 +80,15 @@ fn check_era_rewards() {
         )
     );
 
-    // Check the reward for a normal era, s_c == 0.0 (min)
-    let tot_issuance: Balance = TOT_ISSUANCE;
-    let tot_staked: Balance = Perbill::from_percent(0) * tot_issuance;
-    let expected_inflation: u128 = 77182818 * ACME + 28459 * MILLICENTS;
+    // Check the reward for a normal era, s_c == 1.0 (max)  ==> I_var == 5.367879441171%
+    let tot_staked: Balance = Perbill::from_percent(100) * TOT_ISSUANCE;
+    let expected_inflation: u128 = (InflationBase::get()
+        + Perquintill::from_float(C::get() * 0.00367879441171))
+        * TOT_ISSUANCE;
     assert_eq!(
         <Runtime as pallet_staking::Config>::EraPayout::era_payout(
             tot_staked,
-            tot_issuance,
-            ERA_DURATION_MILLIS
-        ),
-        (
-            ValidatorsSplit::get() * expected_inflation,
-            others_split * expected_inflation
-        )
-    );
-
-    // Check the reward for a normal era, s_c == 1.0 (max)
-    let tot_issuance: Balance = TOT_ISSUANCE;
-    let tot_staked: Balance = Perbill::from_percent(100) * tot_issuance;
-    let expected_inflation: u128 = 53678794 * ACME + 41171 * MILLICENTS;
-    assert_eq!(
-        <Runtime as pallet_staking::Config>::EraPayout::era_payout(
-            tot_staked,
-            tot_issuance,
+            TOT_ISSUANCE,
             ERA_DURATION_MILLIS
         ),
         (
@@ -112,13 +98,15 @@ fn check_era_rewards() {
     );
 
     // Check the reward for an era with half the duration, s_c == 1.0 (max)
-    let tot_issuance: Balance = TOT_ISSUANCE;
-    let tot_staked: Balance = Perbill::from_percent(100) * tot_issuance;
-    let expected_inflation: u128 = (53678794 * ACME + 41171 * MILLICENTS) / 2;
+    let tot_staked: Balance = Perbill::from_percent(100) * TOT_ISSUANCE;
+    let expected_inflation: u128 = (InflationBase::get()
+        + Perquintill::from_float(C::get() * 0.00367879441171))
+        * TOT_ISSUANCE
+        / 2;
     assert_eq!(
         <Runtime as pallet_staking::Config>::EraPayout::era_payout(
             tot_staked,
-            tot_issuance,
+            TOT_ISSUANCE,
             ERA_DURATION_MILLIS / 2
         ),
         (
@@ -128,13 +116,14 @@ fn check_era_rewards() {
     );
 
     // Check the reward for an era with double the duration, s_c == 1.0 (max)
-    let tot_issuance: Balance = TOT_ISSUANCE;
-    let tot_staked: Balance = Perbill::from_percent(100) * tot_issuance;
-    let expected_inflation: u128 = 53678794 * ACME + 41171 * MILLICENTS;
+    let tot_staked: Balance = Perbill::from_percent(100) * TOT_ISSUANCE;
+    let expected_inflation: u128 = (InflationBase::get()
+        + Perquintill::from_float(C::get() * 0.00367879441171))
+        * TOT_ISSUANCE;
     assert_eq!(
         <Runtime as pallet_staking::Config>::EraPayout::era_payout(
             tot_staked,
-            tot_issuance,
+            TOT_ISSUANCE,
             ERA_DURATION_MILLIS * 2
         ),
         // capped at 1 year
@@ -145,21 +134,21 @@ fn check_era_rewards() {
     );
 
     // Check the reward for an era with zero duration, s_c == 1.0 (max)
-    let tot_issuance: Balance = TOT_ISSUANCE;
-    let tot_staked: Balance = Perbill::from_percent(100) * tot_issuance;
+    let tot_staked: Balance = Perbill::from_percent(100) * TOT_ISSUANCE;
     assert_eq!(
-        <Runtime as pallet_staking::Config>::EraPayout::era_payout(tot_staked, tot_issuance, 0),
+        <Runtime as pallet_staking::Config>::EraPayout::era_payout(tot_staked, TOT_ISSUANCE, 0),
         (0, 0)
     );
 
     // Check that tot_issuance is actually used, s_c == s_t
-    let tot_issuance: Balance = TOT_ISSUANCE / 2;
-    let tot_staked: Balance = Perbill::from_percent(50) * tot_issuance;
-    let expected_inflation: u128 = 30000000 * ACME;
+    let half_tot_issuance: Balance = TOT_ISSUANCE / 2;
+    let tot_staked: Balance = Perbill::from_percent(50) * half_tot_issuance;
+    let expected_inflation: u128 =
+        (InflationBase::get() + Perquintill::from_float(C::get() * 0.01)) * half_tot_issuance;
     assert_eq!(
         <Runtime as pallet_staking::Config>::EraPayout::era_payout(
             tot_staked,
-            tot_issuance,
+            half_tot_issuance,
             ERA_DURATION_MILLIS
         ),
         (

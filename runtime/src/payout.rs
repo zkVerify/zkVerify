@@ -107,10 +107,14 @@ impl pallet_staking::EraPayout<Balance> for ZKVPayout {
         let s = StakingTarget::get().saturating_reciprocal_mul(staking_current * SCALE as u128);
 
         // exp_arg = k * (1 - s)
-        let exp_arg = (SCALE - s as f64) * K::get() / SCALE;
-
-        // inflation_arg = C * e^(exp_arg)
-        let inflation_arg = C::get() * exp(exp_arg);
+        let inflation_arg = if C::get() != 0f64 {
+            let exp_arg = (SCALE - s as f64) * K::get() / SCALE;
+            // inflation_arg = C * e^(exp_arg)
+            C::get() * exp(exp_arg)
+        } else {
+            // will be zeroed by C, so do not bother to compute exp
+            0f64
+        };
 
         let inflation_var = to_inflation(inflation_arg);
 
