@@ -325,13 +325,17 @@ impl pallet_bags_list::Config<VoterBagsListInstance> for Runtime {
     type Score = sp_npos_elections::VoteWeight;
 }
 
+parameter_types! {
+    pub MaxSetIdSessionEntries: u32 = BondingDuration::get() * SessionsPerEra::get();
+}
+
 impl pallet_grandpa::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
 
     type WeightInfo = weights::pallet_grandpa::ZKVWeight<Runtime>;
     type MaxAuthorities = MaxAuthorities;
     type MaxNominators = ConstU32<MAX_VOTERS>;
-    type MaxSetIdSessionEntries = ConstU64<0>;
+    type MaxSetIdSessionEntries = MaxSetIdSessionEntries;
 
     type KeyOwnerProof = sp_session::MembershipProof;
     type EquivocationReportSystem =
