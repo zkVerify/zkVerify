@@ -21,8 +21,6 @@ use sp_runtime_interface::pass_by::PassByCodec;
 mod accelerated_bn;
 mod groth16;
 mod risc0;
-mod ultraplonk;
-mod zksync;
 
 #[derive(PassByCodec, Encode, Decode)]
 #[cfg_attr(test, derive(Debug))]
@@ -46,26 +44,9 @@ impl From<VerifyError> for hp_verifiers::VerifyError {
     }
 }
 
-pub use zksync::zksync_verify;
-pub use zksync::PROOF_SIZE as ZKSYNC_PROOF_SIZE;
-pub use zksync::PUBS_SIZE as ZKSYNC_PUBS_SIZE;
-#[cfg(feature = "std")]
-pub use zksync_verify::HostFunctions as ZksyncVerifierHostFunctions;
-
-pub use risc0::risc_0_verify;
-#[cfg(feature = "std")]
-pub use risc0::risc_0_verify::HostFunctions as Risc0VerifierHostFunctions;
-
 #[cfg(feature = "std")]
 pub use risc0::risc_0_accelerate::HostFunctions as Risc0AccelerateHostFunctions;
 pub use risc0::Poseidon2Mix;
-
-pub use ultraplonk::ultraplonk_verify;
-#[cfg(feature = "std")]
-pub use ultraplonk::ultraplonk_verify::HostFunctions as UltraplonkVerifierHostFunctions;
-pub use ultraplonk::PROOF_SIZE as ULTRAPLONK_PROOF_SIZE;
-pub use ultraplonk::PUBS_SIZE as ULTRAPLONK_PUBS_SIZE;
-pub use ultraplonk::VK_SIZE as ULTRAPLONK_VK_SIZE;
 
 pub use groth16::groth_16_bls_12_381_verify;
 #[cfg(feature = "std")]
@@ -80,11 +61,8 @@ pub use accelerated_bn::bn254::host_calls::HostFunctions as AcceleratedBn254Host
 
 #[cfg(feature = "std")]
 pub type HLNativeHostFunctions = (
-    ZksyncVerifierHostFunctions,
-    Risc0VerifierHostFunctions,
-    Risc0AccelerateHostFunctions,
-    UltraplonkVerifierHostFunctions,
     Groth16Bn254VerifierHostFunctions,
     Groth16Bls12VerifierHostFunctions,
+    Risc0AccelerateHostFunctions,
     AcceleratedBn254HostFunctions,
 );
