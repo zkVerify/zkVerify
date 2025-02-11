@@ -227,7 +227,7 @@ const MAXIMUM_BLOCK_WEIGHT: Weight =
     Weight::from_parts(WEIGHT_REF_TIME_PER_SECOND.saturating_mul(2), u64::MAX);
 
 parameter_types! {
-    pub const BlockHashCount: BlockNumber = 2400;
+    pub const BlockHashCount: BlockNumber = 4096;
     pub const Version: RuntimeVersion = VERSION;
 
     pub BlockWeights: frame_system::limits::BlockWeights =
