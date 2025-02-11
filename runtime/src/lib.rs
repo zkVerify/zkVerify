@@ -669,9 +669,9 @@ impl pallet_session::Config for Runtime {
 parameter_types! {
     pub SessionsPerEra: sp_staking::SessionIndex = 6 * HOURS / EpochDurationInBlocks::get(); // number of sessions in 1 era, 6h
 
-    pub const BondingDuration: sp_staking::EraIndex = 1; // number of sessions for which staking
+    pub const BondingDuration: sp_staking::EraIndex = 28; // number of sessions for which staking
                                                          // remains locked
-    pub const SlashDeferDuration: sp_staking::EraIndex = 0; // eras to wait before slashing is
+    pub const SlashDeferDuration: sp_staking::EraIndex = 24; // eras to wait before slashing is
                                                             // applied
     pub HistoryDepth: u32 = 30; // Number of eras to keep in history. Older eras cannot be claimed.
 }
