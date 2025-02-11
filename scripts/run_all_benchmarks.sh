@@ -32,6 +32,8 @@ source "${SOURCE_ROOT}/scripts/bench_cfg.sh"
 
 USE_DOCKER="${USE_DOCKER:-false}"
 ENABLE_PALLETS="${ENABLE_PALLETS:-false}"
+# Default all available pallets
+PALLETS="${PALLETS:-}"
 ENABLE_OVERHEAD="${ENABLE_OVERHEAD:-true}"
 ENABLE_MACHINE="${ENABLE_MACHINE:-true}"
 BENCH_BASE_PATH="${BENCH_BASE_PATH:-}"
@@ -52,6 +54,7 @@ if [ "${USE_DOCKER}" = "false" ]; then
 
   # The executable to use.
   ZKV_NODE="${PROJECT_ROOT}/target/production/zkv-relay"
+  ZKV_WASM="${PROJECT_ROOT}/target/production/wbuild/zkv-runtime/zkv_runtime.compact.compressed.wasm"
   SKIP_LINES=2
 else
   IMAGE="zkverify"
@@ -73,6 +76,7 @@ else
   fi
   # The executable to use.
   ZKV_NODE="docker compose -f ${compose_file} run -T --rm --remove-orphans zkverify-bench /usr/local/bin/zkv-node"
+  ZKV_WASM="/app/zkv_runtime.compact.compressed.wasm"
 
   # Now PROJECT_ROOT become the docker folder
   PROJECT_ROOT="/data/benchmark"
@@ -89,17 +93,23 @@ WEIGHTS_FOLDER="${WEIGHTS_FOLDER:-${PROJECT_ROOT}/runtime/src/weights}"
 
 CODE_HEADER="${PROJECT_ROOT}/HEADER-APACHE2"
 
-declare -a PALLETS=()
+declare -a SELECTED_PALLETS=()
 if [ "${ENABLE_PALLETS:-}" = "true" ]; then
-  # Load all pallet names in an array.
-  mapfile -t PALLETS < <(${ZKV_NODE} benchmark pallet \
-    --list \
-    --chain=dev | \
-    tail -n+${SKIP_LINES} | \
-    cut -d',' -f1 | \
-    sort | \
-    uniq \
-    )
+  if [ -n "${PALLETS}" ] ; then 
+    echo "PALLETS='${PALLETS}'"
+    mapfile -t SELECTED_PALLETS < <(for p in ${PALLETS}; do echo "${p}"; done | sort | uniq)
+  else
+    # get all
+    mapfile -t SELECTED_PALLETS < <(${ZKV_NODE} benchmark pallet \
+      --list \
+      --runtime "${ZKV_WASM}" \
+      --genesis-builder=runtime | \
+      tail -n+${SKIP_LINES} | \
+      cut -d',' -f1 | \
+      sort | \
+      uniq \
+      )
+    fi
 fi
 
 EXCLUDED_PALLETS=(
@@ -112,7 +122,7 @@ EXCLUDED_PALLETS=(
         # "pallet_im_online" "frame_benchmarking" "frame_system" "pallet_balances" "pallet_staking"
     )
 
-echo "[+] Benchmarking ${#PALLETS[@]} zkVerify pallets. (IGNORE SET [${#EXCLUDED_PALLETS[@]}])"
+echo "[+] Benchmarking ${#SELECTED_PALLETS[@]} zkVerify pallets. (IGNORE SET [${#EXCLUDED_PALLETS[@]}])"
 
 
 is_pallet_excluded() {
@@ -131,7 +141,7 @@ is_pallet_excluded() {
 rm -f "${ERR_FILE:?err_unset}"
 
 # Benchmark each pallet.
-for PALLET in "${PALLETS[@]}"; do
+for PALLET in "${SELECTED_PALLETS[@]}"; do
   if is_pallet_excluded "${PALLET}"; then
     echo "[+] Skipping - $PALLET"
     continue
@@ -139,7 +149,6 @@ for PALLET in "${PALLETS[@]}"; do
 
   PALLET_NAME="$(tr '_' '-' <<< "${PALLET}")"
   MODULE_NAME=$(echo "${PALLET}.rs" | sed 's/^crate:://g' | sed 's/::/\//g');
-  echo ${MODULE_NAME}
   WEIGHT_FILE="${WEIGHTS_FOLDER}/${MODULE_NAME}"
   mkdir -p "${MODULE_NAME}"
   echo "[+] Benchmarking $PALLET with weight file $WEIGHT_FILE"
@@ -155,6 +164,7 @@ for PALLET in "${PALLETS[@]}"; do
     WEIGTH_OUT_PATH="${WEIGHT_FILE}" \
     SKIP_BUILD="true" \
     ZKV_NODE_EXE="${ZKV_NODE}" \
+    ZKV_RUNTIME="${ZKV_WASM}" \
     WEIGTH_TEMPLATE="${TEMPLATE}" \
     CODE_HEADER="${CODE_HEADER}" \
     BM_STEPS="${BM_STEPS}" \

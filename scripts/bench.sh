@@ -33,7 +33,8 @@ function usage {
     PROJECT_ROOT    : the root of the project [the root of git project].
     SOURCE_ROOT     : the root of the source [the root of git project].
     SKIP_BUILD      : skip the build step if true [${DEFAULT_SKIP_BUILD}].
-    ZKV_NODE_EXE     : the path to the zkv-node executable [target/production/zkv-node in project root]
+    ZKV_NODE_EXE    : the path to the zkv-node executable [target/production/zkv-node in project root]
+    ZKV_RUNTIME     : the path to the zkv-runtime wasm [target/production/wbuild/zkv-runtime/zkv_runtime.compact.compressed.wasm in project root]
     "
     if [ -n "${message}" ]; 
     then
@@ -100,7 +101,8 @@ fi
 
 ${ZKV_NODE_EXE} \
     benchmark pallet \
-    --chain dev \
+    --runtime "${ZKV_RUNTIME}" \
+    --genesis-builder=runtime \
     --pallet "${PALLET}" \
     --extrinsic "*" \
     --steps "${BM_STEPS}" \

@@ -132,6 +132,9 @@ USE_DOCKER="true"
 ENABLE_PALLETS="${ENABLE_PALLETS:-true}"
 ENABLE_OVERHEAD="${ENABLE_OVERHEAD:-true}"
 ENABLE_MACHINE="${ENABLE_MACHINE:-true}"
+# The space separated pallet list to benchmark (empty means all). Use the inent
+# version like `pallet_aggregate` and not the one with `-` 
+PALLETS="${PALLETS:-}"
 
 export IS_BENCHMACHINE READ_IO WRITE_IO READ_BPS WRITE_BPS BENCH_BASE_PATH LOOP_DEV USE_DOCKER ENABLE_PALLETS ECHO_CMD ROOT_DIR
 
@@ -146,5 +149,5 @@ trap exit_handler EXIT
 # run benchmark
 setup_disk "${EXT4_IMG}" "${BENCH_BASE_PATH}" "${USER_ID}" "${GROUP_ID}"
 set_cpu "${cpu_profiles[${CPU_PROFILE}]}"
-sudo --preserve-env=IS_BENCHMACHINE,READ_IO,WRITE_IO,READ_BPS,WRITE_BPS,BENCH_BASE_PATH,LOOP_DEV,USE_DOCKER,ENABLE_PALLETS,ENABLE_OVERHEAD,ENABLE_MACHINE,ECHO_CMD,ROOT_DIR \
+sudo --preserve-env=IS_BENCHMACHINE,READ_IO,WRITE_IO,READ_BPS,WRITE_BPS,BENCH_BASE_PATH,LOOP_DEV,USE_DOCKER,ENABLE_PALLETS,ENABLE_OVERHEAD,ENABLE_MACHINE,PALLETS,ECHO_CMD,ROOT_DIR \
   -u "${USER}" bash -c 'cd "${ROOT_DIR}"; "${ROOT_DIR}/scripts/run_all_benchmarks.sh"'
