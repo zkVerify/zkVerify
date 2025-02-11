@@ -7,7 +7,7 @@ homepage = "https://github.com/HorizenLabs/zkVerify"
 edition.workspace = true
 publish = false
 repository.workspace = true
-license = "GPL-3.0"
+license = "Apache-2.0"
 
 [lints]
 workspace = true
@@ -97,8 +97,6 @@ aggregate-rpc-runtime-api = { workspace = true }
 
 pallet-verifiers = { workspace = true }
 hp-verifiers = { workspace = true }
-pallet-fflonk-verifier = { workspace = true }
-pallet-zksync-verifier = { workspace = true }
 pallet-groth16-verifier = { workspace = true }
 pallet-risc0-verifier = { workspace = true, features = ["inject-native-poseidon2"] }
 pallet-ultraplonk-verifier = { workspace = true }
@@ -160,8 +158,6 @@ runtime-benchmarks = [
 	"pallet-proxy/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
 	"pallet-verifiers/runtime-benchmarks",
-	"pallet-fflonk-verifier/runtime-benchmarks",
-	"pallet-zksync-verifier/runtime-benchmarks",
 	"pallet-groth16-verifier/runtime-benchmarks",
 	"pallet-risc0-verifier/runtime-benchmarks",
 	"pallet-ultraplonk-verifier/runtime-benchmarks",
@@ -253,8 +249,6 @@ std = [
 	"sp-version/std",
 	"sp-weights/std",
 	"pallet-verifiers/std",
-	"pallet-fflonk-verifier/std",
-	"pallet-zksync-verifier/std",
 	"pallet-groth16-verifier/std",
 	"pallet-risc0-verifier/std",
 	"pallet-ultraplonk-verifier/std",
@@ -318,7 +312,6 @@ try-runtime = [
 	"polkadot-runtime-common/try-runtime",
 	"pallet-xcm/try-runtime",
 	"pallet-message-queue/try-runtime",
-	"pallet-zksync-verifier/try-runtime",
 	"hp-dispatch/try-runtime"
 ]
 extend-benchmarks = [

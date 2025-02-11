@@ -76,24 +76,6 @@ mod benchmarks {
     }
 
     #[benchmark]
-    fn verify_legacy_22() {
-        let inner_proof =
-            include_bytes!("resources_benchmarking/LEGACY_VALID_PROOF_CYCLE_2_POW_22.bin").to_vec();
-        let pubs = hex_literal::hex!("0400000000000000d4850100");
-        #[block]
-        {
-            native::risc_0_verify::verify(VALID_VK.0, &inner_proof, &pubs)
-                .map_err(|e| match e {
-                    native::VerifyError::InvalidProofData => "Invalid proof",
-                    native::VerifyError::InvalidInput => "Invalid public inputs",
-                    native::VerifyError::InvalidVerificationKey => "Invalid Vk",
-                    native::VerifyError::VerifyError => "Verify Error",
-                })
-                .unwrap();
-        }
-    }
-
-    #[benchmark]
     fn verify_poseidon2_succinct_not_accelerated() {
         let vk = (*VK_RISC0_VERIFIER_VM_1_2_0).into();
         let journal = risc0_verifier::Journal::new(PUBS_RISC0_VERIFIER_22.to_vec());

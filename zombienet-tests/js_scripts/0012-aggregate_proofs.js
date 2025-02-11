@@ -41,16 +41,6 @@ async function run(nodeName, networkInfo, _args) {
 
     verifiers = [
         {
-            name: "FFlonk",
-            pallet: api.tx.settlementFFlonkPallet,
-            args: [{ 'Vk': FFLONK_VK }, FFLONK_PROOF, FFLONK_PUBS],
-        },
-        {
-            name: "Zksync",
-            pallet: api.tx.settlementZksyncPallet,
-            args: [{ 'Vk': null }, ZKSYNC_PROOF, ZKSYNC_PUBS],
-        },
-        {
             name: "Risc0",
             pallet: api.tx.settlementRisc0Pallet,
             args: [{ 'Vk': RISC0_VK }, RISC0_PROOF, RISC0_PUBS],

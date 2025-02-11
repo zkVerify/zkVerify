@@ -171,7 +171,7 @@ async function waitForEvent(api, timeout, pallet, name) {
 
 exports.registerVk = async (pallet, signer, vk) => {
     return await submitExtrinsic(api, pallet.registerVk(vk), signer, BlockUntil.InBlock,
-        (event) => event.section == "settlementFFlonkPallet" && event.method == "VkRegistered"
+        (event) => event.section == "settlementUltraplonkPallet" && event.method == "VkRegistered"
     )
 }
 
@@ -261,7 +261,7 @@ async function submitExtrinsic(api, extrinsic, signer, blockUntil, filter) {
                     events: records.map((record) => record.event).filter(filter)
                 };
             },
-            async function(error) {
+            async function (error) {
                 if (error !== "retry") {
                     console.log("Not retrying!");
                     return -1;
