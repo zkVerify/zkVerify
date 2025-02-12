@@ -21,13 +21,12 @@ fn init<T: pallet_aggregate::Config>() -> (T::AccountId, u32) {
     (caller, domain_id)
 }
 
-
 #[benchmarks(where T: pallet_verifiers::Config<Halo2<T>> + pallet_aggregate::Config)]
 mod benchmarks {
     use codec::Decode;
     use hp_verifiers::Verifier;
 
-    use crate::{verifier_should, ParamsAndVk};
+    use crate::ParamsAndVk;
 
     use super::*;
 
