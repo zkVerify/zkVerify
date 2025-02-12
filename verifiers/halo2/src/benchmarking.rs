@@ -9,7 +9,7 @@ use pallet_aggregate::{funded_account, insert_domain};
 use pallet_verifiers::{Tickets, VkEntry, VkOrHash, Vks};
 use sp_core::U256;
 
-pub struct Pallet<T: Config>(crate::Pallet<T>);
+//pub struct Pallet<T: Config>(crate::Pallet<T>);
 pub trait Config: crate::Config {}
 impl<T: crate::Config> Config for T {}
 pub type Call<T> = pallet_verifiers::Call<T, Halo2<T>>;
@@ -23,7 +23,7 @@ fn init<T: pallet_aggregate::Config>() -> (T::AccountId, u32) {
 
 #[benchmarks(where T: pallet_verifiers::Config<Halo2<T>> + pallet_aggregate::Config)]
 mod benchmarks {
-    use codec::Decode;
+    //use codec::Decode;
     use hp_verifiers::Verifier;
 
     use crate::ParamsAndVk;

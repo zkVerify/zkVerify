@@ -101,6 +101,7 @@ pallet-groth16-verifier = { workspace = true }
 pallet-risc0-verifier = { workspace = true }
 pallet-ultraplonk-verifier = { workspace = true }
 pallet-proofofsql-verifier = { workspace = true }
+pallet-halo2-verifier = { workspace = true }
 
 authority-discovery-primitives = { workspace = true, optional = true }
 
@@ -161,6 +162,7 @@ runtime-benchmarks = [
 	"pallet-risc0-verifier/runtime-benchmarks",
 	"pallet-ultraplonk-verifier/runtime-benchmarks",
 	"pallet-proofofsql-verifier/runtime-benchmarks",
+	"pallet-halo2-verifier/runtime-benchmarks",
 	"polkadot-primitives?/runtime-benchmarks",
 	"polkadot-runtime-parachains?/runtime-benchmarks",
 	"polkadot-runtime-common?/runtime-benchmarks",
@@ -261,6 +263,7 @@ std = [
 	"pallet-risc0-verifier/std",
 	"pallet-ultraplonk-verifier/std",
 	"pallet-proofofsql-verifier/std",
+	"pallet-halo2-verifier/std",
 	"hp-verifiers/std",
 	"substrate-wasm-builder",
 	"polkadot-primitives?/std",

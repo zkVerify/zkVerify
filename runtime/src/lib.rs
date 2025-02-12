@@ -883,6 +883,13 @@ impl pallet_verifiers::Config<pallet_fflonk_verifier::Fflonk> for Runtime {
     type Currency = Balances;
 }
 
+impl pallet_verifiers::Config<pallet_halo2_verifier::Halo2<Runtime>> for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type OnProofVerified = Poe;
+    type WeightInfo =
+        pallet_halo2_verifier::Halo2Weight<weights::pallet_halo2_verifier::ZKVWeight<Runtime>>;
+}
+
 impl pallet_verifiers::Config<pallet_zksync_verifier::Zksync> for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type OnProofVerified = (Poe, Aggregate);
@@ -1072,6 +1079,7 @@ construct_runtime!(
         Ismp: pallet_ismp,
         IsmpGrandpa: ismp_grandpa,
         HyperbridgeAggregations: pallet_hyperbridge_aggregations,
+        SettlementFooPallet: pallet_halo2_verifier,
     }
 );
 
@@ -1254,6 +1262,7 @@ mod benches {
         [pallet_risc0_verifier, Risc0VerifierBench::<Runtime>]
         [pallet_ultraplonk_verifier, UltraplonkVerifierBench::<Runtime>]
         [pallet_proofofsql_verifier, ProofOfSqlVerifierBench::<Runtime>]
+        [pallet_halo2_verifier, Halo2VerifierBench::<Runtime>]
     );
 }
 
@@ -1798,6 +1807,7 @@ impl_runtime_apis! {
             use pallet_risc0_verifier::benchmarking::Pallet as Risc0VerifierBench;
             use pallet_ultraplonk_verifier::benchmarking::Pallet as UltraplonkVerifierBench;
             use pallet_proofofsql_verifier::benchmarking::Pallet as ProofOfSqlVerifierBench;
+            use pallet_halo2_verifier::benchmarking::Pallet as Halo2VerifierBench;
 
             #[cfg(feature = "relay")]
             pub mod xcm {
@@ -1829,6 +1839,7 @@ impl_runtime_apis! {
             use pallet_risc0_verifier::benchmarking::Pallet as Risc0VerifierBench;
             use pallet_ultraplonk_verifier::benchmarking::Pallet as UltraplonkVerifierBench;
             use pallet_proofofsql_verifier::benchmarking::Pallet as ProofOfSqlVerifierBench;
+            use pallet_halo2_verifier::benchmarking::Pallet as Halo2VerifierBench;
 
             #[cfg(feature = "relay")]
             pub mod xcm {
