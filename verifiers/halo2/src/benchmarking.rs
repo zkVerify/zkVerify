@@ -1,10 +1,5 @@
 #![cfg(feature = "runtime-benchmarks")]
 
-use std::{
-    fs,
-    io::{BufReader, Read},
-};
-
 use crate::Halo2;
 use frame_benchmarking::v2::*;
 use frame_support::traits::{Consideration, Footprint};
@@ -26,34 +21,9 @@ fn init<T: pallet_aggregate::Config>() -> (T::AccountId, u32) {
     (caller, domain_id)
 }
 
-pub struct BenchData {
-    pub vk: Vec<u8>,
-    pub proof: Vec<u8>,
-    pub pubs: Vec<U256>,
-}
-
-pub fn valid_bench_data(k: usize) -> BenchData {
-    let pubs_bytes = fs::read(&format!("resources/VALID_PUBS_{}.bin", k)).unwrap();
-    let mut pubs = vec![];
-
-    // using reader
-    let mut reader = BufReader::new(pubs_bytes.as_slice());
-    let mut buffer = [0u8; 32];
-    while reader.read(&mut buffer).unwrap() > 0 {
-        let fr = U256::from_little_endian(&buffer);
-        pubs.push(fr);
-    }
-
-    BenchData {
-        vk: fs::read(&format!("resources/VALID_VK_{}.bin", k)).unwrap(),
-        proof: fs::read(&format!("resources/VALID_PROOF_{}.bin", k)).unwrap(),
-        pubs,
-    }
-}
 
 #[benchmarks(where T: pallet_verifiers::Config<Halo2<T>> + pallet_aggregate::Config)]
 mod benchmarks {
-
     use codec::Decode;
     use hp_verifiers::Verifier;
 
@@ -66,7 +36,20 @@ mod benchmarks {
         // setup code
         let (caller, domain_id) = init::<T>();
 
-        let BenchData { vk, proof, pubs } = valid_bench_data(8);
+        let pubs_bytes = include_bytes!("resources/VALID_PUBS_8.bin").to_vec();
+        let mut pubs = vec![];
+
+        // using reader
+        for chunk in pubs_bytes.chunks(32) {
+            if chunk.len() == 32 {
+                // ensure we have a full chunk
+                let fr = U256::from_little_endian(chunk);
+                pubs.push(fr);
+            }
+        }
+
+        let vk = include_bytes!("resources/VALID_VK_8.bin").to_vec();
+        let proof = include_bytes!("resources/VALID_PROOF_8.bin").to_vec();
 
         #[extrinsic_call]
         submit_proof(
@@ -83,7 +66,20 @@ mod benchmarks {
         // setup code
         let (caller, domain_id) = init::<T>();
 
-        let BenchData { vk, proof, pubs } = valid_bench_data(16);
+        let pubs_bytes = include_bytes!("resources/VALID_PUBS_16.bin").to_vec();
+        let mut pubs = vec![];
+
+        // using reader
+        for chunk in pubs_bytes.chunks(32) {
+            if chunk.len() == 32 {
+                // ensure we have a full chunk
+                let fr = U256::from_little_endian(chunk);
+                pubs.push(fr);
+            }
+        }
+
+        let vk = include_bytes!("resources/VALID_VK_16.bin").to_vec();
+        let proof = include_bytes!("resources/VALID_PROOF_16.bin").to_vec();
 
         #[extrinsic_call]
         submit_proof(
@@ -100,8 +96,20 @@ mod benchmarks {
         // setup code
         let (caller, domain_id) = init::<T>();
 
-        let BenchData { vk, proof, pubs } = valid_bench_data(21);
+        let pubs_bytes = include_bytes!("resources/VALID_PUBS_21.bin").to_vec();
+        let mut pubs = vec![];
 
+        // using reader
+        for chunk in pubs_bytes.chunks(32) {
+            if chunk.len() == 32 {
+                // ensure we have a full chunk
+                let fr = U256::from_little_endian(chunk);
+                pubs.push(fr);
+            }
+        }
+
+        let vk = include_bytes!("resources/VALID_VK_21.bin").to_vec();
+        let proof = include_bytes!("resources/VALID_PROOF_21.bin").to_vec();
         #[extrinsic_call]
         submit_proof(
             RawOrigin::Signed(caller),
@@ -117,7 +125,21 @@ mod benchmarks {
         // setup code
         let (caller, domain_id) = init::<T>();
 
-        let BenchData { vk, proof, pubs } = valid_bench_data(8);
+        let pubs_bytes = include_bytes!("resources/VALID_PUBS_8.bin").to_vec();
+        let mut pubs = vec![];
+
+        // using reader
+        for chunk in pubs_bytes.chunks(32) {
+            if chunk.len() == 32 {
+                // ensure we have a full chunk
+                let fr = U256::from_little_endian(chunk);
+                pubs.push(fr);
+            }
+        }
+
+        let vk = include_bytes!("resources/VALID_VK_8.bin").to_vec();
+        let proof = include_bytes!("resources/VALID_PROOF_8.bin").to_vec();
+
         let vk_entry = VkEntry::new(vk.into());
 
         let hash = sp_core::H256::repeat_byte(2);
@@ -137,7 +159,8 @@ mod benchmarks {
     fn register_vk() {
         // setup code
         let caller: T::AccountId = funded_account::<T>();
-        let BenchData { vk, .. } = valid_bench_data(8);
+
+        let vk = include_bytes!("resources/VALID_VK_8.bin").to_vec();
 
         #[extrinsic_call]
         register_vk(
@@ -154,7 +177,7 @@ mod benchmarks {
         // setup code
         let caller: T::AccountId = funded_account::<T>();
         let hash = sp_core::H256::repeat_byte(2);
-        let BenchData { vk, .. } = valid_bench_data(8);
+        let vk = include_bytes!("resources/VALID_VK_8.bin").to_vec();
 
         let footprint = Footprint::from_encodable(&vk);
         let vk_entry = VkEntry::new(vk.into());
@@ -196,6 +219,7 @@ mod mock {
 
     impl crate::Config for Test {
         type VkMaxBytes = ConstU32<866598845>;
+        type ProofMaxBytes = ConstU32<866598845>;
     }
 
     #[derive_impl(frame_system::config_preludes::SolochainDefaultConfig as frame_system::DefaultConfig)]
