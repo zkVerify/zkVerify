@@ -12,33 +12,16 @@ use super::*;
 struct ConfigTest;
 
 impl Config for ConfigTest {
-    type FixedMax = ConstU32<50>;
-    type ColumnsMax = ConstU32<100>;
-    type PermutationMax = ConstU32<100>;
-    type SelectorMax = ConstU32<100>;
-    type LargestK = ConstU32<20>;
-    type QueriesMax = ConstU32<100>;
-    type ExpressionDegreeMax = ConstU32<100>;
-    type ExpressionVarsMax = ConstU32<100>;
-    type GatesMax = ConstU32<100>;
-    type LookupsMax = ConstU32<100>;
-    type ShufflesMax = ConstU32<100>;
+    type VkMaxBytes = ConstU32<750000000>;
+    // most proofs would be capped at 4096 bytes, we double it to be safe
+    type ProofMaxBytes = ConstU32<8192>;
 }
 
 struct ConfigTestSmall;
 
 impl Config for ConfigTestSmall {
-    type FixedMax = ConstU32<1>;
-    type ColumnsMax = ConstU32<1>;
-    type PermutationMax = ConstU32<1>;
-    type SelectorMax = ConstU32<1>;
-    type LargestK = ConstU32<4>;
-    type QueriesMax = ConstU32<1>;
-    type ExpressionDegreeMax = ConstU32<1>;
-    type ExpressionVarsMax = ConstU32<1>;
-    type GatesMax = ConstU32<1>;
-    type LookupsMax = ConstU32<1>;
-    type ShufflesMax = ConstU32<1>;
+    type VkMaxBytes = ConstU32<100>;
+    type ProofMaxBytes = ConstU32<1024>;
 }
 
 pub struct TestData {
@@ -49,7 +32,7 @@ pub struct TestData {
 
 #[fixture]
 pub fn valid_test_data() -> TestData {
-    let pubs_bytes = include_bytes!("resources/VALID_PUBS.bin").to_vec();
+    let pubs_bytes = include_bytes!("resources/VALID_PUBS_21.bin").to_vec();
     let mut pubs = vec![];
 
     // using reader
@@ -61,8 +44,8 @@ pub fn valid_test_data() -> TestData {
     }
 
     TestData {
-        vk: include_bytes!("resources/VALID_VK.bin").to_vec(),
-        proof: include_bytes!("resources/VALID_PROOF.bin").to_vec(),
+        vk: include_bytes!("resources/VALID_VK_21.bin").to_vec(),
+        proof: include_bytes!("resources/VALID_PROOF_21.bin").to_vec(),
         pubs,
     }
 }
@@ -133,6 +116,19 @@ mod reject {
         assert_err!(
             Halo2::<ConfigTestSmall>::validate_vk(&valid_test_data.vk.into()),
             VerifyError::InvalidVerificationKey
+        )
+    }
+
+    #[rstest]
+    fn too_big_proof(valid_test_data: TestData) {
+        let proof = vec![1u8; ConfigTestSmall::max_proof_bytes() + 1];
+        assert_err!(
+            Halo2::<ConfigTestSmall>::verify_proof(
+                &valid_test_data.vk.into(),
+                &proof.into(),
+                &valid_test_data.pubs
+            ),
+            VerifyError::InvalidProofData
         )
     }
 }

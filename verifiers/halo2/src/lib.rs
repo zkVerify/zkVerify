@@ -17,10 +17,7 @@ use educe::Educe;
 use frame_support::weights::Weight;
 use halo2_verifier::halo2curves::bn256;
 use halo2_verifier::halo2curves::bn256::{Bn256, G1Affine};
-use halo2_verifier::halo2curves::ff::PrimeField;
-use halo2_verifier::halo2curves::serde::SerdeObject;
 use halo2_verifier::helpers::SerdeFormat;
-use halo2_verifier::plonk::{Any, Column};
 use halo2_verifier::poly::kzg::commitment::{KZGCommitmentScheme, ParamsKZG};
 use halo2_verifier::poly::kzg::multiopen::VerifierSHPLONK;
 use halo2_verifier::poly::kzg::strategy::SingleStrategy;
@@ -44,7 +41,6 @@ pub struct ParamsAndVk<T> {
     _t: PhantomData<T>,
 }
 
-
 impl<T: Config> Verifier for Halo2<T> {
     type Proof = Vec<u8>;
 
@@ -61,6 +57,10 @@ impl<T: Config> Verifier for Halo2<T> {
         raw_proof: &Self::Proof,
         pubs: &Self::Pubs,
     ) -> Result<(), VerifyError> {
+        if raw_proof.len() > T::max_proof_bytes() {
+            return Err(VerifyError::InvalidProofData);
+        }
+
         let (params, vk) = vk_and_params.decode()?;
 
         let pubs = pubs
@@ -112,8 +112,7 @@ impl<T: Config> ParamsAndVk<T> {
     pub fn decode(
         &self,
     ) -> Result<(ParamsKZG<bn256::Bn256>, VerifyingKey<bn256::G1Affine>), VerifyError> {
-        let params = ParamsKZG::<bn256::Bn256>::read(&mut &self.params_bytes[..])
-            .map_err(|e| {
+        let params = ParamsKZG::<bn256::Bn256>::read(&mut &self.params_bytes[..]).map_err(|e| {
             log::debug!("Invalid params: {:?}", e);
             VerifyError::InvalidVerificationKey
         })?;
@@ -178,56 +177,12 @@ impl<T: Config> TryFrom<(ParamsKZG<bn256::Bn256>, VerifyingKey<bn256::G1Affine>)
     ) -> Result<Self, Self::Error> {
         let (params, vk) = value;
 
-        if vk.fixed_commitments().len() > T::max_fixed() {
-            return Err(log::debug!(
-                "too many fixed commitments: {:?}",
-                vk.fixed_commitments().len()
-            ))
-            .map_err(|_| VerifyError::InvalidVerificationKey)?;
-        }
-
-        if vk.permutation().commitments.len() > T::max_permutation() {
-            return Err(log::debug!(
-                "too many permutations: {:?}",
-                vk.permutation().commitments.len()
-            ))
-            .map_err(|_| VerifyError::InvalidVerificationKey)?;
-        }
-
-        if vk.selectors.len() > T::max_selectors() {
-            return Err(log::debug!("too many selectors: {:?}", vk.selectors.len()))
-                .map_err(|_| VerifyError::InvalidVerificationKey)?;
-        }
-
-        let num_columns =
-            vk.cs().num_advice_columns + vk.cs().num_instance_columns + vk.cs().num_fixed_columns;
-
-        if num_columns > T::max_columns() {
-            return Err(log::debug!("too many columns: {:?}", num_columns))
-                .map_err(|_| VerifyError::InvalidVerificationKey)?;
-        }
-
-        let num_queries = vk.cs().advice_queries.len()
-            + vk.cs().instance_queries.len()
-            + vk.cs().fixed_queries.len();
-
-        if num_queries > T::max_queries() {
-            return Err(log::debug!("too many queries: {:?}", num_queries))
-                .map_err(|_| VerifyError::InvalidVerificationKey)?;
-        }
-
-        if vk.cs().gates.len() > T::max_gates() {
-            return Err(log::debug!("too many gates: {:?}", vk.cs().gates.len()))
-                .map_err(|_| VerifyError::InvalidVerificationKey)?;
-        }
-
-        if vk.cs().lookups.len() > T::max_lookups() {
-            return Err(log::debug!("too many lookups: {:?}", vk.cs().lookups.len()))
-                .map_err(|_| VerifyError::InvalidVerificationKey)?;
-        }
-
         let mut params_bytes = Vec::<u8>::with_capacity(ParamsKZG::<bn256::Bn256>::bytes_length());
         let mut vk_bytes = Vec::<u8>::with_capacity(vk.bytes_length());
+
+        if params_bytes.len() > T::max_vk_bytes() {
+            return Err(VerifyError::InvalidVerificationKey);
+        }
 
         params.write(&mut params_bytes).unwrap();
         vk.write(&mut vk_bytes, SerdeFormat::RawBytes).unwrap();
@@ -247,24 +202,7 @@ impl<T: Config> From<Vec<u8>> for ParamsAndVk<T> {
 
 impl<T: Config> MaxEncodedLen for ParamsAndVk<T> {
     fn max_encoded_len() -> usize {
-        let g1_bytes = bn256::G1Affine::default().to_raw_bytes().len();
-
-        let expression_max = 8 + T::max_expression_degree() * (T::max_expression_vars() * 6 + 16);
-
-        let cs_max = 24
-            + T::max_columns() * 8
-            + T::max_selectors() * 8
-            + T::max_queries() * 6
-            + T::max_permutation() * Column::<Any>::bytes_length()
-            + T::max_gates() * expression_max
-            + T::max_lookups() * expression_max * 2
-            + T::max_shuffles() * expression_max * 2;
-
-        40 + (T::max_fixed() * g1_bytes)
-            + (T::max_permutation() * g1_bytes)
-            + T::max_selectors() * ((1 << T::largest_k()) / 8 + 1)
-            + (bn256::Fr::NUM_BITS as usize / 8)
-            + cs_max
+        ParamsKZG::<bn256::Bn256>::bytes_length() + T::max_vk_bytes()
     }
 }
 
@@ -299,84 +237,21 @@ impl<T: Config, W: weight::WeightInfo> pallet_verifiers::WeightInfo<Halo2<T>> fo
 }
 
 pub trait Config: 'static {
-    type FixedMax: Get<u32>;
-    type ColumnsMax: Get<u32>;
-    type PermutationMax: Get<u32>;
-    type SelectorMax: Get<u32>;
-    type LargestK: Get<u32>;
-    type QueriesMax: Get<u32>;
-    type ExpressionDegreeMax: Get<u32>;
-    type ExpressionVarsMax: Get<u32>;
-    type GatesMax: Get<u32>;
-    type LookupsMax: Get<u32>;
-    type ShufflesMax: Get<u32>;
+    type VkMaxBytes: Get<u32>;
+    type ProofMaxBytes: Get<u32>;
 }
 
 pub(crate) trait MaxFieldSizes {
-    fn max_fixed() -> usize;
-    fn max_columns() -> usize;
-
-    fn max_permutation() -> usize;
-
-    fn max_selectors() -> usize;
-
-    fn largest_k() -> usize;
-
-    fn max_queries() -> usize;
-
-    fn max_expression_degree() -> usize;
-
-    fn max_expression_vars() -> usize;
-
-    fn max_gates() -> usize;
-
-    fn max_lookups() -> usize;
-
-    fn max_shuffles() -> usize;
+    fn max_vk_bytes() -> usize;
+    fn max_proof_bytes() -> usize;
 }
 
 impl<T: Config> MaxFieldSizes for T {
-    fn max_fixed() -> usize {
-        <Self as Config>::FixedMax::get() as usize
+    fn max_vk_bytes() -> usize {
+        <Self as Config>::VkMaxBytes::get() as usize
     }
 
-    fn max_columns() -> usize {
-        <Self as Config>::ColumnsMax::get() as usize
-    }
-
-    fn max_permutation() -> usize {
-        <Self as Config>::PermutationMax::get() as usize
-    }
-
-    fn max_selectors() -> usize {
-        <Self as Config>::SelectorMax::get() as usize
-    }
-
-    fn largest_k() -> usize {
-        <Self as Config>::LargestK::get() as usize
-    }
-
-    fn max_queries() -> usize {
-        <Self as Config>::QueriesMax::get() as usize
-    }
-
-    fn max_expression_degree() -> usize {
-        <Self as Config>::ExpressionDegreeMax::get() as usize
-    }
-
-    fn max_expression_vars() -> usize {
-        <Self as Config>::ExpressionVarsMax::get() as usize
-    }
-
-    fn max_gates() -> usize {
-        <Self as Config>::GatesMax::get() as usize
-    }
-
-    fn max_lookups() -> usize {
-        <Self as Config>::LookupsMax::get() as usize
-    }
-
-    fn max_shuffles() -> usize {
-        <Self as Config>::ShufflesMax::get() as usize
+    fn max_proof_bytes() -> usize {
+        <Self as Config>::ProofMaxBytes::get() as usize
     }
 }

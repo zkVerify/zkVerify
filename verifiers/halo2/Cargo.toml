@@ -36,7 +36,7 @@ sp-io = { workspace = true, optional = true }
 pallet-aggregate = { workspace = true, optional = true, default-features = false, features = [
     "runtime-benchmarks",
 ] }
-halo2_verifier = { git = "https://github.com/ChainSafe/halo2-verifier.git", tag = "v1.0.0", name = "halo2_verifier" }
+halo2_verifier = { git = "https://github.com/ChainSafe/halo2-verifier.git", tag = "v1.0.0" }
 ff = { version = "0.13.0", default-features = false, features = ["alloc"] }
 serde = { version = "1.0.200", features = [
     "derive",

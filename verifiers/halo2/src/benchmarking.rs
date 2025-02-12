@@ -1,6 +1,9 @@
 #![cfg(feature = "runtime-benchmarks")]
 
-use std::io::{BufReader, Read};
+use std::{
+    fs,
+    io::{BufReader, Read},
+};
 
 use crate::Halo2;
 use frame_benchmarking::v2::*;
@@ -29,8 +32,8 @@ pub struct BenchData {
     pub pubs: Vec<U256>,
 }
 
-pub fn valid_bench_data() -> BenchData {
-    let pubs_bytes = include_bytes!("resources/VALID_PUBS.bin").to_vec();
+pub fn valid_bench_data(k: usize) -> BenchData {
+    let pubs_bytes = fs::read(&format!("resources/VALID_PUBS_{}.bin", k)).unwrap();
     let mut pubs = vec![];
 
     // using reader
@@ -42,8 +45,8 @@ pub fn valid_bench_data() -> BenchData {
     }
 
     BenchData {
-        vk: include_bytes!("resources/VALID_VK.bin").to_vec(),
-        proof: include_bytes!("resources/VALID_PROOF.bin").to_vec(),
+        vk: fs::read(&format!("resources/VALID_VK_{}.bin", k)).unwrap(),
+        proof: fs::read(&format!("resources/VALID_PROOF_{}.bin", k)).unwrap(),
         pubs,
     }
 }
@@ -59,11 +62,45 @@ mod benchmarks {
     use super::*;
 
     #[benchmark]
-    fn submit_proof() {
+    fn submit_proof_8() {
         // setup code
         let (caller, domain_id) = init::<T>();
 
-        let verifier_should::TestData { vk, proof, pubs } = verifier_should::valid_test_data();
+        let BenchData { vk, proof, pubs } = valid_bench_data(8);
+
+        #[extrinsic_call]
+        submit_proof(
+            RawOrigin::Signed(caller),
+            VkOrHash::from_vk(vk.into()),
+            proof.into(),
+            pubs.into(),
+            Some(domain_id),
+        );
+    }
+
+    #[benchmark]
+    fn submit_proof_16() {
+        // setup code
+        let (caller, domain_id) = init::<T>();
+
+        let BenchData { vk, proof, pubs } = valid_bench_data(16);
+
+        #[extrinsic_call]
+        submit_proof(
+            RawOrigin::Signed(caller),
+            VkOrHash::from_vk(vk.into()),
+            proof.into(),
+            pubs.into(),
+            Some(domain_id),
+        );
+    }
+
+    #[benchmark]
+    fn submit_proof_21() {
+        // setup code
+        let (caller, domain_id) = init::<T>();
+
+        let BenchData { vk, proof, pubs } = valid_bench_data(21);
 
         #[extrinsic_call]
         submit_proof(
@@ -80,7 +117,7 @@ mod benchmarks {
         // setup code
         let (caller, domain_id) = init::<T>();
 
-        let verifier_should::TestData { vk, proof, pubs } = verifier_should::valid_test_data();
+        let BenchData { vk, proof, pubs } = valid_bench_data(8);
         let vk_entry = VkEntry::new(vk.into());
 
         let hash = sp_core::H256::repeat_byte(2);
@@ -100,7 +137,7 @@ mod benchmarks {
     fn register_vk() {
         // setup code
         let caller: T::AccountId = funded_account::<T>();
-        let verifier_should::TestData { vk, .. } = verifier_should::valid_test_data();
+        let BenchData { vk, .. } = valid_bench_data(8);
 
         #[extrinsic_call]
         register_vk(
@@ -117,7 +154,7 @@ mod benchmarks {
         // setup code
         let caller: T::AccountId = funded_account::<T>();
         let hash = sp_core::H256::repeat_byte(2);
-        let verifier_should::TestData { vk, .. } = verifier_should::valid_test_data();
+        let BenchData { vk, .. } = valid_bench_data(8);
 
         let footprint = Footprint::from_encodable(&vk);
         let vk_entry = VkEntry::new(vk.into());
@@ -158,17 +195,7 @@ mod mock {
     );
 
     impl crate::Config for Test {
-        type FixedMax = ConstU32<50>;
-        type ColumnsMax = ConstU32<100>;
-        type PermutationMax = ConstU32<100>;
-        type SelectorMax = ConstU32<100>;
-        type LargestK = ConstU32<20>;
-        type QueriesMax = ConstU32<100>;
-        type ExpressionDegreeMax = ConstU32<100>;
-        type ExpressionVarsMax = ConstU32<100>;
-        type GatesMax = ConstU32<100>;
-        type LookupsMax = ConstU32<100>;
-        type ShuffleMax = ConstU32<100>;
+        type VkMaxBytes = ConstU32<866598845>;
     }
 
     #[derive_impl(frame_system::config_preludes::SolochainDefaultConfig as frame_system::DefaultConfig)]
