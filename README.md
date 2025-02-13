@@ -48,22 +48,6 @@ git checkout <latest tagged release>
 cargo build -p mainchain --release
 ```
 
-#### Running GitHub workflows on local environment
-> ⚠️ It is currently supported only on Ubuntu Linux
-
-Use the `./ci/run_locally.sh` script to run GitHub Actions workflows locally.
-By default, the script runs all the workflows listed under `.github/workflows/CI-orchestrator.yml` file.
-However, an interactive mode is available, allowing you to choose workflows to run individually if needed.
-
-```bash
-./ci/run_locally.sh --help
-Usage: ./ci/run_locally.sh [-i | --help]
-
-Options:
-  -i        Run the script in interactive mode, allowing you to select workflows.
-  --help    Show this help message and exit.
-```
-
 ### Run
 
 It is possible to run tests with:

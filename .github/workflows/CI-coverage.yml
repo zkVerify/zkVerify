@@ -4,81 +4,34 @@ run-name: "Workflow CI/CD Steps: coverage"
 
 on:
   workflow_call:
-    inputs:
-      CACHING_MODE:
-        required: true
-        type: string
-
-env:
-  IMAGE_NAME: zencash/sc-ci-base
-  IMAGE_TAG: noble_rust-stable_latest
-  DOCKER_COMPOSE_CMD: "docker compose -f ${GITHUB_WORKSPACE}/ci/docker-compose.yml run --rm cargo-container"
-  DOCKER_BUILD_DIR: /build
-  DOCKER_CARGO_HOME: /tmp/.cargo
-  CARGO_BINARIES_INSTALL: "cargo-llvm-cov"
-  CMAKE_INSTALL: true
-  LLD_INSTALL: true
+  workflow_dispatch:
 
 jobs:
   coverage:
-    runs-on:
-      group: ${{ vars.RUNNER_GROUP }}
+    runs-on: warp-ubuntu-latest-x64-8x
+    name: Coverage
     steps:
-      - name: Git checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up deps cache
-        run: mkdir deps
-
-      - name: Restore coverage cache
-        if: ${{ !env.ACT && inputs.CACHING_MODE == 'CACHE_RESTORE' }}
-        uses: actions/cache/restore@v3 # Use GH
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-            deps/
-          key: coverage-cache
-
-      - name: Set docker env vars
-        run: |
-          echo "USER_ID=$(id -u)" >> $GITHUB_ENV
-          echo "GRP_ID=$(id -g)" >> $GITHUB_ENV
-
       - name: Cargo coverage
-        run: |
-          ${{ env.DOCKER_COMPOSE_CMD }} /bin/bash -c '
-            set -o pipefail \
-            && cargo llvm-cov clean --workspace \
-            && find . -name "*.profraw" -delete \
-            && cargo llvm-cov --all-features --workspace --exclude mainchain --exclude zkv-relay --exclude paratest-node --exclude test-service --lcov --output-path lcov.info \
-            && cargo llvm-cov report --json --output-path coverage_report.json --summary-only \
-            && cargo llvm-cov report | tee coverage_summary.txt
-          '
-
-      - name: Save coverage cache
-        if: ${{ !env.ACT && inputs.CACHING_MODE == 'CACHE_SAVE' }}
-        uses: actions/cache/save@v3 # Use GH
+        uses: ./.github/actions/cargo-cmd
         with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-            deps/
-          key: coverage-cache
+          command: >-
+            /bin/bash -c 'set -o pipefail && cargo llvm-cov clean --workspace && find . -name \"*.profraw\" -delete
+            && cargo llvm-cov --all-features --workspace --exclude mainchain --exclude zkv-relay --exclude paratest-node --exclude test-service --lcov --output-path lcov.info
+            && cargo llvm-cov report --json --output-path coverage_report.json --summary-only && cargo llvm-cov report | tee coverage_summary.txt'
+          use_cache: 'yes'
+          cache_key: 'coverage'
+          cmake_install: 'yes'
+          lld_install: 'yes'
+          cargo_binaries_install: cargo-llvm-cov
 
-      - name: Upload output(s)
-        if: ${{ !env.ACT }}
+      - name: Upload coverage report
         uses: actions/upload-artifact@v4
         with:
           name: coverage-output
           path: coverage_report.json
-          if-no-files-found: warn
           retention-days: 1
           compression-level: 0
           overwrite: true

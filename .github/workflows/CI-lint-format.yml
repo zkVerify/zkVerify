@@ -4,78 +4,48 @@ run-name: "Workflow CI/CD Steps: lint and format"
 
 on:
   workflow_call:
-    inputs:
-      CACHING_MODE:
-        required: true
-        type: string
-
-env:
-  IMAGE_NAME: zencash/sc-ci-base
-  IMAGE_TAG: noble_rust-stable_latest
-  DOCKER_COMPOSE_CMD: "docker compose -f ${GITHUB_WORKSPACE}/ci/docker-compose.yml run --rm cargo-container"
-  DOCKER_BUILD_DIR: /build
-  DOCKER_CARGO_HOME: /tmp/.cargo
-  CMAKE_INSTALL: true
-  LLD_INSTALL: true
+  workflow_dispatch:
 
 jobs:
-  lint-and-format:
-    runs-on: ubuntu-latest
+  lint-format:
+    runs-on: warp-ubuntu-latest-x64-8x
+    name: Lint and format
     steps:
-      - name: Git checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up deps cache
-        run: mkdir deps
-
-      - name: Restore lint-format cache
-        if: ${{ !env.ACT && inputs.CACHING_MODE == 'CACHE_RESTORE' }}
-        uses: buildjet/cache/restore@v3
+      - name: Cargo lint
+        uses: ./.github/actions/cargo-cmd
         with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-            deps/
-          key: lint-format-cache
+          command: "cargo clippy --release -- --deny warnings 2>&1 | tee linting_output.txt"
+          use_cache: 'yes'
+          cache_key: 'lint-format'
+          cmake_install: 'yes'
+          lld_install: 'yes'
 
-      - name: Set docker env vars
-        run: |
-          echo "USER_ID=$(id -u)" >> $GITHUB_ENV
-          echo "GRP_ID=$(id -g)" >> $GITHUB_ENV
-
-      - name: Linting
-        shell: bash
-        run: ${{ env.DOCKER_COMPOSE_CMD }} cargo clippy --release -- --deny warnings 2>&1 | tee linting_output.txt
-
-      - name: Formatting
-        shell: bash
-        run: ${{ env.DOCKER_COMPOSE_CMD }} cargo fmt --check 2>&1 | tee formatting_output.txt
-
-      - name: Save lint-format cache
-        if: ${{ !env.ACT && inputs.CACHING_MODE == 'CACHE_SAVE' }}
-        uses: buildjet/cache/save@v3
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-            deps/
-          key: lint-format-cache
-
-      - name: Upload output(s)
-        if: ${{ !env.ACT }}
+      - name: Upload lint artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: lint-and-format-output
-          path: |
-            linting_output.txt
-            formatting_output.txt
-          if-no-files-found: warn
+          name: lint-output
+          path: linting_output.txt
+          retention-days: 1
+          compression-level: 0
+          overwrite: true
+
+      - name: Cargo format
+        uses: ./.github/actions/cargo-cmd
+        with:
+          command: "cargo fmt --check 2>&1 | tee formatting_output.txt"
+          use_cache: 'yes'
+          cache_key: 'lint-format'
+          cmake_install: 'yes'
+          lld_install: 'yes'
+
+      - name: Upload format artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: format-output
+          path: formatting_output.txt
           retention-days: 1
           compression-level: 0
           overwrite: true

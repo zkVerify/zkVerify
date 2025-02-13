@@ -8,7 +8,7 @@ Compile all the different node implementations (*solo*, *relay*, *parachain*):
 
 ```bash
 > . cfg
-> bootstrap.sh
+> ./docker/scripts/bootstrap.sh
 ```
 
 Start a _**solo**_ chain with 2 validators (Alice and Bob) and a simple client node with:
@@ -17,7 +17,7 @@ Start a _**solo**_ chain with 2 validators (Alice and Bob) and a simple client n
 > docker compose -f docker/dockerfiles/zkv-docker-compose.yaml up
 ```
 
-Start a _**relay**_ chain with a test _**parachain**_ with:
+**TO BE SUPPORTED:** Start a _**relay**_ chain with a test _**parachain**_ with:
 - 2 relay chain validators (Alice and Bob) and a simple relay chain client node
 - 2 parachain collators (Alice and Bob) and a simple parachain client node
 
@@ -49,7 +49,7 @@ The simple workflow is:
 
 ```bash
 > . cfg # Just the first time
-> bootstrap.sh
+> ./docker/scripts/bootstrap.sh
 ```
 
 Once you have the docker images on your local docker repository, you can run:
@@ -76,7 +76,7 @@ Where:
 * `-p 9944:9944`: provide the access to the rpc interface on your host
 * `--rpc-cors all --rpc-external`: enable the access from _polkadot.js_ by relaxing the cors policy
 
-The `zkv-node`, `zkv-relay`, and `paratest-node` binaries are also available on your host environment at `target/release/zkv-node`.
+The `zkv-node`, `zkv-relay`, and `paratest-node` binaries are also available on your host environment at `target/release/` location.
 
 ### `my_cargo`
 
@@ -91,7 +91,7 @@ A script that generate a docker image with the base dependencies and the given e
 All Dockerfile and compose definitions are located in `docker/dockerfile` folder.
 
 * `zkv-builder.Dockerfile`: create an image with all dependencies needed to compile the node and is used by `my_cargo` script
-* `binary_injected.Dockerfile`: Is mainly used by the scripts and inject one or more binaries in a standard ubuntu 22:04 image
+* `binary_injected.Dockerfile`: Is mainly used by the scripts and inject one or more binaries in a standard ubuntu image
 * `zkv-node.Dockerfile`: generate a solo node image with a fresh source compilation (leverage on docker layers to create a small docker image)
 * `zkv-docker-compose.yaml`: the cluster definition that runs
 2 validator nodes (Alice and Bob) and a simple node that expose its rpc and P2P ports on localhost.

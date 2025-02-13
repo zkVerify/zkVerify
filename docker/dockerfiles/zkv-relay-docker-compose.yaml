@@ -1,4 +1,3 @@
-version: '3'
 services:
   local_node:
     image: horizenlabs/zkv-relay:latest

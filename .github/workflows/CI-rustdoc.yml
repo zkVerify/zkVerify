@@ -1,68 +1,55 @@
 name: Rustdoc
 
-run-name: "Workflow CI/CD Steps: rust doc generation"
+run-name: "Workflow CI/CD Steps: rust doc generation and deployment"
 
 on:
   workflow_call:
     inputs:
-      CACHING_MODE:
-        required: true
+      deploy:
+        description: 'Whether to deploy rustdoc to Github'
+        required: false
         type: string
-
-env:
-  IMAGE_NAME: zencash/sc-ci-base
-  IMAGE_TAG: noble_rust-stable_latest
-  DOCKER_COMPOSE_CMD: "docker compose -f ${GITHUB_WORKSPACE}/ci/docker-compose.yml run --rm cargo-container"
-  DOCKER_BUILD_DIR: /build
-  DOCKER_CARGO_HOME: /tmp/.cargo
-  CMAKE_INSTALL: true
-  LLD_INSTALL: true
+        default: 'yes'
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: 'Whether to deploy rustdoc to Github'
+        required: false
+        type: choice
+        options:
+          - 'yes'
+          - 'no'
+        default: 'no'
 
 jobs:
   rustdoc-generation:
-    runs-on: ubuntu-latest
+    runs-on: warp-ubuntu-latest-x64-8x
+    name: Rustdoc generation
     steps:
-      - name: Git checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up deps cache
-        run: mkdir deps
-
-      - name: Restore main cache
-        if: ${{ !env.ACT && inputs.CACHING_MODE == 'CACHE_RESTORE' }}
-        uses: buildjet/cache/restore@v3
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-            deps/
-          key: build-cache
-    
-      - name: Set docker env vars
-        run: |
-          echo "USER_ID=$(id -u)" >> $GITHUB_ENV
-          echo "GRP_ID=$(id -g)" >> $GITHUB_ENV
-      
       - name: Generate Rust documentation
-        run: ${{ env.DOCKER_COMPOSE_CMD }} cargo doc --no-deps --release
-
-      - name: Redirect index.html
-        run: |
-          ${{ env.DOCKER_COMPOSE_CMD }} sh -c '
-            echo "<meta http-equiv=\"refresh\" content=\"0; url=zkv_node/index.html\">" > ${{ env.DOCKER_BUILD_DIR }}/target/doc/index.html
-          '
+        uses: ./.github/actions/cargo-cmd
+        with:
+          command: >-
+            /bin/bash -c 'cargo doc --no-deps --release
+            && echo "<meta http-equiv=\"refresh\" content=\"0; url=zkv_node/index.html\">" > /build/target/doc/index.html'
+          use_cache: 'yes'
+          cache_key: 'rustdoc'
+          cmake_install: 'yes'
+          lld_install: 'yes'
 
       - name: Upload documentation
-        if: ${{ !env.ACT }}
+        if: ${{ inputs.deploy == 'yes' }}
         uses: actions/upload-pages-artifact@v3
         with:
           path: target/doc
 
   rustdoc-deployment:
-    runs-on: ubuntu-latest
+    runs-on: warp-ubuntu-latest-x64-2x
+    if: ${{ inputs.deploy == 'yes' }}
+    name: Rustdoc deployment
     needs: rustdoc-generation
     permissions:
       pages: write
@@ -73,6 +60,5 @@ jobs:
 
     steps:
       - name: Deploy to GitHub Pages
-        if: ${{ !env.ACT }}
         id: deployment
         uses: actions/deploy-pages@v4

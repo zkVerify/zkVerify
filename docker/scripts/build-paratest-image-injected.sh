@@ -1,6 +1,6 @@
 #!/bin/sh
 
-PROJECT_ROOT=${PROJECT_ROOT:-$(git rev-parse --show-toplevel)}
+PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel)}"
 
 IMAGE="paratest" \
 BINARY="paratest-node" \

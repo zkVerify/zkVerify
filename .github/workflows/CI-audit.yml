@@ -8,32 +8,61 @@ on:
   workflow_call:
   workflow_dispatch:
 
-env:
-  IMAGE_NAME: zencash/sc-ci-base
-  IMAGE_TAG: noble_rust-stable_latest
-  DOCKER_COMPOSE_CMD: "docker compose -f ${GITHUB_WORKSPACE}/ci/docker-compose.yml run --rm cargo-container"
-  DOCKER_BUILD_DIR: /build
-  DOCKER_CARGO_HOME: /tmp/.cargo
-  CARGO_BINARIES_INSTALL: "cargo-audit"
-
 jobs:
   audit:
-    runs-on: ubuntu-latest
+    runs-on: warp-ubuntu-latest-x64-2x
+    name: Cargo audit
     steps:
       - name: Git checkout
         uses: actions/checkout@v4
 
       - name: Cargo audit
-        shell: bash
-        run: ${{ env.DOCKER_COMPOSE_CMD }} cargo audit 2>&1 | tee audit_output.txt
+        uses: ./.github/actions/cargo-cmd
+        with:
+          command: "cargo audit 2>&1 | tee audit_output.txt"
+          use_cache: 'no'
+          cargo_binaries_install: cargo-audit
 
-      - name: Upload output
-        if: ${{ !env.ACT }}
+      - name: Upload cargo audit output
         uses: actions/upload-artifact@v4
         with:
           name: audit-output
           path: audit_output.txt
-          if-no-files-found: warn
-          retention-days: 1
+          retention-days: 7
           compression-level: 0
           overwrite: true
+
+  # Slack notification if failed on scheduled run
+  failure-notification:
+    runs-on: warp-ubuntu-latest-x64-2x
+    name: Notify if failed
+    needs: [audit]
+    if: ${{ failure() && !cancelled() && github.event_name == 'schedule' }}
+    steps:
+      - name: Send Slack notification
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          payload: |
+            {
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "🚨 ALERT - ${GITHUB_WORKFLOW} Job Failed! 🚨"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Job URL:* <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Job>"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.QA_SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK

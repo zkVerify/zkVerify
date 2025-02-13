@@ -1,82 +1,84 @@
 name: Build
 
-run-name: "Workflow CI/CD Steps: build, unit and integration testing"
+run-name: "Workflow CI/CD Step: cargo build"
 
 on:
   workflow_call:
-    inputs:
-      CACHING_MODE:
-        required: true
-        type: string
-        
-env:
-  IMAGE_NAME: zencash/sc-ci-base
-  IMAGE_TAG: noble_rust-stable_latest
-  DOCKER_COMPOSE_CMD: "docker compose -f ${GITHUB_WORKSPACE}/ci/docker-compose.yml run --rm cargo-container"
-  DOCKER_BUILD_DIR: /build
-  DOCKER_CARGO_HOME: /tmp/.cargo
-  CMAKE_INSTALL: true
-  LLD_INSTALL: true
+  workflow_dispatch:
 
 jobs:
-  build:
-    runs-on:
-      group: ${{ vars.RUNNER_GROUP }}
+  build-mainchain:
+    runs-on: warp-ubuntu-latest-x64-8x
+    name: Build mainchain
     steps:
-      - name: Git checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up deps cache
-        run: mkdir deps
-
-      - name: Restore main cache
-        if: ${{ !env.ACT && inputs.CACHING_MODE == 'CACHE_RESTORE' }}
-        uses: buildjet/cache/restore@v3
+      - name: Solo chain build
+        uses: ./.github/actions/cargo-cmd
         with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-            deps/
-          key: build-cache
+          command: "cargo build -p mainchain --release"
+          use_cache: 'yes'
+          cache_key: 'build-mainchain'
+          cmake_install: 'yes'
+          lld_install: 'yes'
 
-      - name: Set docker env vars
-        run: |
-          echo "USER_ID=$(id -u)" >> $GITHUB_ENV
-          echo "GRP_ID=$(id -g)" >> $GITHUB_ENV
-
-      - name: Cargo build solo chain
-        run: ${{ env.DOCKER_COMPOSE_CMD }} cargo build -p mainchain --release
-
-      - name: Upload solochain runtime artifact
+      - name: Upload zkv-node binary artifact
         uses: actions/upload-artifact@v4
         with:
-          name: "zkv_runtime.solochain.compact.compressed.wasm"
-          path: target/release/wbuild/zkv-runtime/zkv_runtime.compact.compressed.wasm
-      
-      - name: Cargo build relay chain
-        run: ${{ env.DOCKER_COMPOSE_CMD }} cargo build -p zkv-relay --release
+          name: "zkv-node"
+          path: target/release/zkv-node
+          retention-days: 1
+          overwrite: true
 
-      - name: Upload relay chain runtime artifact
+  build-relay-paratest:
+    runs-on: warp-ubuntu-latest-x64-8x
+    name: Build relay chain and paratest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Relay chain and paratest build
+        uses: ./.github/actions/cargo-cmd
+        with:
+          command: "cargo build -p zkv-relay -p paratest-node --release --features fast-runtime"
+          use_cache: 'yes'
+          cache_key: 'build-relay-paratest'
+          cmake_install: 'yes'
+          lld_install: 'yes'
+
+      - name: Upload relay and paratest build binaries
         uses: actions/upload-artifact@v4
         with:
-          name: "zkv_runtime.relaychain.compact.compressed.wasm"
-          path: target/release/wbuild/zkv-runtime/zkv_runtime.compact.compressed.wasm
-
-      - name: Cargo build paratest node
-        run: ${{ env.DOCKER_COMPOSE_CMD }} cargo build -p paratest-node --release
-
-      - name: Save build cache
-        if: ${{ !env.ACT && inputs.CACHING_MODE == 'CACHE_SAVE' }}
-        uses: buildjet/cache/save@v3
-        with:
+          name: "relay-paratest-bins"
           path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-            deps/
-          key: build-cache
+            target/release/zkv-relay
+            target/release/zkv-relay-execute-worker
+            target/release/zkv-relay-prepare-worker
+            target/release/paratest-node
+          retention-days: 1
+          overwrite: true
+
+  build-try-runtime:
+    runs-on: warp-ubuntu-latest-x64-8x
+    name: Build try-runtime
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: zkv-runtime build
+        uses: ./.github/actions/cargo-cmd
+        with:
+          command: "cargo build -p zkv-runtime --release --features try-runtime"
+          use_cache: 'yes'
+          cache_key: 'build-try-runtime'
+          cmake_install: 'yes'
+          lld_install: 'yes'
+
+      - name: Upload try-runtime wasm artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: "try-runtime"
+          path: target/release/wbuild/zkv-runtime/zkv_runtime.compact.compressed.wasm
+          retention-days: 1
+          overwrite: true

@@ -59,9 +59,9 @@ if [ -n "${NODEJS_VERSION_INSTALL}" ]; then
   echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_${NODEJS_VERSION_INSTALL}.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list
   export DEBIAN_FRONTEND=noninteractive
   apt update -qq
-  apt --no-install-recommends install -y nodejs
+  apt --no-install-recommends install -yqq nodejs
   npm install -g yarn
-  echo -e "Nodejs environment was successfully deployed. Node.js version: $(node -v) | npm version: $(npm -v) | yarn version: $(yarn -v)\n"
+  echo -e "\n=== Nodejs environment was successfully deployed. Node.js version: $(node -v) | npm version: $(npm -v) | yarn version: $(yarn -v)\n"
 fi
 
 # cmake install if required
@@ -69,8 +69,8 @@ if [ -n "${CMAKE_INSTALL}" ]; then
   echo -e "\n=== Installing cmake ===\n"
   export DEBIAN_FRONTEND=noninteractive
   apt update -qq
-  apt --no-install-recommends install -y cmake
-  echo -e "cmake was successfully installed. cmake version: $(cmake --version | grep -P -o -e '\d+\.\d+\.\d+')\n"
+  apt --no-install-recommends install -yqq cmake
+  echo -e "\n=== cmake package was successfully installed. cmake version: $(cmake --version | grep -P -o -e '\d+\.\d+\.\d+')\n"
 fi
 
 # lld install if required
@@ -78,15 +78,16 @@ if [ -n "${LLD_INSTALL}" ]; then
   echo -e "\n=== Installing lld ===\n"
   export DEBIAN_FRONTEND=noninteractive
   apt update -qq
-  apt --no-install-recommends install -y lld
-  echo -e "lld was successfully installed.\n"
+  apt --no-install-recommends install -yqq lld
+  echo -e "\n=== lld package was successfully installed. lld version: $(ldd --version | awk '/ldd/{print $NF}')\n"
 fi
 
 # System info
 rustup show
-num_cpus=$(lscpu | grep '^CPU(s):' | awk '{print $2}')
-total_ram=$(free -h | grep '^Mem:' | awk '{print $2}')
-echo -e "\nCPU count: ${num_cpus}\nTotal RAM: ${total_ram}"
+num_cpus="$(lscpu | grep '^CPU(s):' | awk '{print $2}')"
+total_ram="$(free -h | grep '^Mem:' | awk '{print $2}')"
+disk_space_usage="$(df -Th)"
+echo -e "\nCPU count: ${num_cpus}\nTotal RAM: ${total_ram}\nDisk space usage:\n${disk_space_usage}"
 echo -e "\nUsername: $USERNAME, HOME: $HOME, UID: $CURRENT_UID, GID: $CURRENT_GID"
 echo "CARGOARGS: ${CARGOARGS:-unset} | RUSTFLAGS: ${RUSTFLAGS:-unset} | RUST_CROSS_TARGETS: ${RUST_CROSS_TARGETS:-unset} | RUST_COMPONENTS: ${RUST_COMPONENTS:-unset} | RUSTUP_TOOLCHAIN: ${RUSTUP_TOOLCHAIN:-unset}"
 

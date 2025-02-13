@@ -1,0 +1,37 @@
+name: Default branch cache
+
+run-name: Rebuild default branch cache
+
+# Triggering on merge event to default branch ONLY
+on:
+  push:
+    branches:
+      - 'main'
+
+# Workflow-level concurrency to prevent concurrent runs to avoid concurrent write operations to cache
+concurrency:
+  group: 'workflow-${{ github.ref }}'  # Unique group name for each branch
+
+# Running only the jobs that are using cache
+jobs:
+  build-job-cache:
+    name: Build job cache rebuild
+    uses: ./.github/workflows/CI-build.yml
+
+  coverage-job-cache:
+    name: Coverage job cache rebuild
+    uses: ./.github/workflows/CI-coverage.yml
+
+  test-job-cache:
+    name: Cargo test job cache rebuild
+    uses: ./.github/workflows/CI-test.yml
+
+  lint-format-job-cache:
+    name: Lint and format job cache rebuild
+    uses: ./.github/workflows/CI-lint-format.yml
+
+  rustdoc-job-cache:
+    name: Rustdoc job cache rebuild
+    uses: ./.github/workflows/CI-rustdoc.yml
+    with:
+      deploy: 'no'

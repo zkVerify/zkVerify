@@ -4,74 +4,50 @@ run-name: "Workflow CI/CD Steps: test on zombienet"
 
 on:
   workflow_call:
-    inputs:
-      CACHING_MODE:
-        required: true
-        type: string
-
-env:
-  IMAGE_NAME: zencash/sc-ci-base
-  IMAGE_TAG: noble_rust-stable_latest
-  DOCKER_COMPOSE_CMD: "docker compose -f ${GITHUB_WORKSPACE}/ci/docker-compose.yml run --rm cargo-container"
-  DOCKER_BUILD_DIR: /build
-  DOCKER_CARGO_HOME: /tmp/.cargo
-  CMAKE_INSTALL: true
-  LLD_INSTALL: true
+  workflow_dispatch:
 
 jobs:
   zombienet-test:
-    runs-on:
-      group: ${{ vars.RUNNER_GROUP }}
+    runs-on: warp-ubuntu-latest-x64-8x
+    name: Zombienet test
     steps:
-      - name: Git checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up deps cache
-        run: mkdir deps
-
-      - name: Restore main cache
-        if: ${{ !env.ACT && inputs.CACHING_MODE == 'CACHE_RESTORE' }}
-        uses: buildjet/cache/restore@v3
+      - name: Download zkv-node binary artifact
+        uses: actions/download-artifact@v4
         with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-            deps/
-          key: build-cache
+          name: "zkv-node"
+          path: target/release/
 
-      - name: Set docker env vars
-        run: |
-          echo "USER_ID=$(id -u)" >> $GITHUB_ENV
-          echo "GRP_ID=$(id -g)" >> $GITHUB_ENV
+      - name: Download relay and paratest build binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: "relay-paratest-bins"
+          path: target/release/
 
-      - name: Cargo build mainchain
-        run: ${{ env.DOCKER_COMPOSE_CMD }} cargo build -p mainchain --release
-
-      - name: Cargo build relaychain and paratest
-        run: ${{ env.DOCKER_COMPOSE_CMD }} cargo build -p zkv-relay -p paratest-node --release --features fast-runtime
-
-      - name: Yarn install and test
+      - name: Make downloaded binaries executable
         shell: bash
-        env:
-          NODEJS_VERSION_INSTALL: 18
         run: |
-          ${{ env.DOCKER_COMPOSE_CMD }} /bin/bash -c '
-            set -o pipefail \
-            && cd ${{ env.DOCKER_BUILD_DIR }}/zombienet-tests \
-            && yarn install \
-            && yarn test 2>&1 | tee ${{ env.DOCKER_BUILD_DIR }}/zombienet_test_output.txt
-          '
-          
-      - name: Upload output(s)
-        if: ${{ !env.ACT }}
+          chmod +x target/release/*
+
+      - name: Yarn install and zombienet test
+        uses: ./.github/actions/cargo-cmd
+        with:
+          command: >-
+            /bin/bash -c 'set -o pipefail && cd /build/zombienet-tests
+            && yarn install
+            && yarn test 2>&1 | tee /build/zombienet_test_output.txt'
+          use_cache: 'no'
+          cmake_install: 'yes'
+          lld_install: 'yes'
+          nodejs_version_install: '18'
+
+      - name: Upload zombienet test results
         uses: actions/upload-artifact@v4
         with:
           name: zombienet-test-output
           path: zombienet_test_output.txt
-          if-no-files-found: warn
           retention-days: 1
           compression-level: 0
           overwrite: true

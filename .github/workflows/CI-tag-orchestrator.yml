@@ -5,27 +5,25 @@ on:
     tags:
       - "[0-9]+.[0-9]+.[0-9]+-[0-9]+.[0-9]+.[0-9]+*"
 
-env:
-  RUST_BACKTRACE: 1
-
 jobs:
-  build-test-publish:
+  docker-image:
+    name: Docker image
     strategy:
-      matrix: 
+      matrix:
         chain: [solo, relay]
       fail-fast: false
-    
+
     uses: ./.github/workflows/CI-build-test-publish.yml
     with:
       chain: ${{ matrix.chain }}
+      release_branch: release
     secrets:
       DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
       DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
-      GH_TOKEN: ${{ secrets.GH_TOKEN }}
-      QA_SLACK_WEBHOOK_URL: ${{ secrets.QA_SLACK_WEBHOOK_URL }}
       RELEASES_PROD_SLACK_WEBHOOK_URL: ${{ secrets.RELEASES_PROD_SLACK_WEBHOOK_URL }}
 
   rustdoc-job:
+    name: Rustdoc job
     uses: ./.github/workflows/CI-rustdoc.yml
     with:
-      CACHING_MODE: "CACHE_RESTORE"
+      deploy: 'yes'
