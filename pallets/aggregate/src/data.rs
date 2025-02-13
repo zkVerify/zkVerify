@@ -36,7 +36,7 @@ pub struct StatementEntry<A, B> {
     /// The amount of the reserve that the statement owner holds, it's the amount he will be used for the aggregation.
     pub reserve: B,
     /// The hash of the statement that will be used in the aggregation.
-    pub statement: H256,
+    pub statement: H256, // IMPORTANT NOTE: Must NOT be 64 bytes in length in order to avoid risks of proof forgery and leaf-branch ambiguity.
 }
 
 impl<A, B> StatementEntry<A, B> {
