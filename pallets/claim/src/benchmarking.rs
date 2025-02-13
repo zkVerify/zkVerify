@@ -24,7 +24,10 @@ use sp_runtime::Saturating;
 fn get_beneficiaries_map<T: Config>(
     n: u32,
 ) -> (BTreeMap<T::AccountId, BalanceOf<T>>, BalanceOf<T>) {
-    let base_amount = BalanceOf::<T>::from(100_000u32);
+    let minimum_balance = <<T as Config>::Currency as Inspect<
+        <T as frame_system::Config>::AccountId,
+    >>::minimum_balance();
+    let base_amount = BalanceOf::<T>::from(minimum_balance);
     let mut total_amount = BalanceOf::<T>::zero();
     let beneficiaries_map = (1..=n)
         .into_iter()
