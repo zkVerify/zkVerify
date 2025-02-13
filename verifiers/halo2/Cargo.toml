@@ -39,8 +39,8 @@ pallet-aggregate = { workspace = true, optional = true, default-features = false
 halo2_verifier = { git = "https://github.com/ChainSafe/halo2-verifier.git" }
 # halo2_verifier = { path = "../../../halo2-verifier/halo2_verifier" }
 # ff = { version = "0.13.0", default-features = false, features = ["alloc"] }
-getrandom = { version = "0.2", default-features = false, features = ["js"] }
-
+# getrandom = { version = "0.2", default-features = false, features = ["js"] }
+getrandom_or_panic = {version = "0.0.3", default-features = false, features = ["alloc"]}
 
 [dev-dependencies]
 rstest = { workspace = true }

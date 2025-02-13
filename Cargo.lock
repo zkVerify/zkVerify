@@ -4787,6 +4787,7 @@ dependencies = [
 [[package]]
 name = "halo2_verifier"
 version = "0.1.0"
+source = "git+https://github.com/ChainSafe/halo2-verifier.git#276f12817766dac88add6afd3fb0f12a94ac3ce5"
 dependencies = [
  "blake2b_simd",
  "ff",
@@ -8258,7 +8259,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "getrandom",
+ "getrandom_or_panic",
  "halo2_verifier",
  "hex",
  "hex-literal 0.4.1",
