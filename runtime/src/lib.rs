@@ -399,11 +399,6 @@ impl pallet_balances::Config for Runtime {
     type RuntimeFreezeReason = RuntimeFreezeReason;
 }
 
-parameter_types! {
-    pub FeeMultiplier: Multiplier = Multiplier::one();
-    pub TransactionByteFee: Balance = 10 * MILLICENTS;
-}
-
 impl_opaque_keys! {
     pub struct SessionKeysRelay {
         pub babe: Babe,
@@ -416,12 +411,18 @@ impl_opaque_keys! {
 
 pub type SessionKeys = SessionKeysRelay;
 
+parameter_types! {
+    pub const TransactionPicosecondFee: Balance = 5000000;
+    pub const TransactionByteFee: Balance = 5000000;
+    pub FeeMultiplier: Multiplier = Multiplier::one();
+}
+
 impl pallet_transaction_payment::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type OnChargeTransaction = FungibleAdapter<Balances, payout::DealWithFees<Runtime>>;
     type OperationalFeeMultiplier = ConstU8<5>;
-    type WeightToFee = IdentityFee<Balance>;
-    type LengthToFee = IdentityFee<Balance>;
+    type WeightToFee = ConstantMultiplier<Balance, TransactionPicosecondFee>;
+    type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
     type FeeMultiplierUpdate = ConstFeeMultiplier<FeeMultiplier>;
 }
 
@@ -438,6 +439,7 @@ parameter_types! {
     pub const MultisigDepositFactor: Balance = currency::deposit(0, 32);
     pub const MaxSignatories: u32 = 100;
 }
+
 impl pallet_multisig::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type RuntimeCall = RuntimeCall;
