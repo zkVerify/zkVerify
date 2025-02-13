@@ -4608,8 +4608,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c4567c8db10ae91089c99af84c68c38da3ec2f087c3f82960bcdbf3656b6f4d7"
 dependencies = [
  "cfg-if 1.0.0",
+ "js-sys",
  "libc",
  "wasi",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -4785,10 +4787,10 @@ dependencies = [
 [[package]]
 name = "halo2_verifier"
 version = "0.1.0"
-source = "git+https://github.com/ChainSafe/halo2-verifier.git?tag=v1.0.0#7c63ed613c8904757f4fed71f38098ea8ead7aed"
 dependencies = [
  "blake2b_simd",
  "ff",
+ "getrandom",
  "group",
  "halo2curves",
  "log",
@@ -4798,12 +4800,13 @@ dependencies = [
  "rand_core 0.6.4",
  "sha3 0.9.1",
  "substrate-bn",
+ "subtle 2.6.1",
 ]
 
 [[package]]
 name = "halo2curves"
 version = "0.6.1"
-source = "git+https://github.com/ChainSafe/halo2curves.git?branch=no-std#cf943c5734142b64e39e162dbac725feec958f83"
+source = "git+https://github.com/ChainSafe/halo2curves.git?branch=no-std#b7dc0fe94c6e19a3188e28a060c400bb278d1f59"
 dependencies = [
  "blake2b_simd",
  "ff",
@@ -8252,10 +8255,10 @@ name = "pallet-halo2-verifier"
 version = "0.1.0"
 dependencies = [
  "educe",
- "ff",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "getrandom",
  "halo2_verifier",
  "hex",
  "hex-literal 0.4.1",
@@ -8267,7 +8270,6 @@ dependencies = [
  "parity-scale-codec",
  "rstest",
  "scale-info",
- "serde",
  "serde_json",
  "sp-core",
  "sp-io",
@@ -15434,8 +15436,7 @@ checksum = "2d67a5a62ba6e01cb2192ff309324cb4875d0c451d55fe2319433abe7a05a8ee"
 [[package]]
 name = "subtle"
 version = "2.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
+source = "git+https://github.com/nulltea/subtle#9178f118aa00739e59c59da41781e960de452cba"
 
 [[package]]
 name = "subtle-ng"

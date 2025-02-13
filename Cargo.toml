@@ -337,10 +337,14 @@ parachains-common = { default-features = false, version = "17.0.0" }
 parachain-info = { package = "staging-parachain-info", default-features = false, version = "0.16.0" }
 cumulus-relay-chain-rpc-interface = { version = "0.17.0" }
 substrate-rpc-client = { version = "0.43.0" }
+subtle = { version = "2.6", default-features = false }
+
 
 [patch.crates-io]
 cumulus-relay-chain-inprocess-interface = { path = "patches/cumulus/client/relay-chain-inprocess-interface" }
 cumulus-relay-chain-minimal-node = { path = "patches/cumulus/client/relay-chain-minimal-node" }
+subtle = { git = "https://github.com/nulltea/subtle" }
+
 [profile.release]
 # Polkadot runtime requires unwinding.
 panic = "unwind"
@@ -361,3 +365,4 @@ inherits = "release"
 debug = 1               # debug symbols are useful for profilers
 debug-assertions = true
 overflow-checks = true
+
