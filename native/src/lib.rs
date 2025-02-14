@@ -20,7 +20,6 @@ use sp_runtime_interface::pass_by::PassByCodec;
 
 mod accelerated_bn;
 mod groth16;
-mod risc0;
 
 #[derive(PassByCodec, Encode, Decode)]
 #[cfg_attr(test, derive(Debug))]
@@ -44,14 +43,6 @@ impl From<VerifyError> for hp_verifiers::VerifyError {
     }
 }
 
-pub use risc0::risc_0_verify;
-#[cfg(feature = "std")]
-pub use risc0::risc_0_verify::HostFunctions as Risc0VerifierHostFunctions;
-
-#[cfg(feature = "std")]
-pub use risc0::risc_0_accelerate::HostFunctions as Risc0AccelerateHostFunctions;
-pub use risc0::Poseidon2Mix;
-
 pub use groth16::groth_16_bls_12_381_verify;
 #[cfg(feature = "std")]
 pub use groth16::groth_16_bls_12_381_verify::HostFunctions as Groth16Bls12VerifierHostFunctions;
@@ -65,8 +56,6 @@ pub use accelerated_bn::bn254::host_calls::HostFunctions as AcceleratedBn254Host
 
 #[cfg(feature = "std")]
 pub type HLNativeHostFunctions = (
-    Risc0VerifierHostFunctions,
-    Risc0AccelerateHostFunctions,
     Groth16Bn254VerifierHostFunctions,
     Groth16Bls12VerifierHostFunctions,
     AcceleratedBn254HostFunctions,

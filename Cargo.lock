@@ -7101,7 +7101,6 @@ dependencies = [
  "log",
  "native-cache",
  "parity-scale-codec",
- "risc0-verifier",
  "sp-runtime-interface",
 ]
 
