@@ -28,6 +28,7 @@ use sp_consensus_babe::BabeApi;
 use sp_keystore::KeystorePtr;
 use std::sync::Arc;
 use substrate_frame_rpc_system as frame_rpc_system;
+use vk_hash::{VKHash, VKHashApiServer};
 
 /// A type representing all RPC extensions.
 pub type RpcExtension = RpcModule<()>;
@@ -153,7 +154,8 @@ where
         )?
         .into_rpc(),
     )?;
-    io.merge(Aggregate::new(client).into_rpc())?;
+    io.merge(Aggregate::new(client.clone()).into_rpc())?;
+    io.merge(VKHash::new().into_rpc())?;
 
     Ok(io)
 }

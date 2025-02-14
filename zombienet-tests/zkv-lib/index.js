@@ -8,6 +8,17 @@ zkvTypes = {
         leaf_index: 'u32',
         leaf: 'H256',
     },
+    Curve: {
+        _enum: ["Bn254", "Bls12_381"]
+    },
+    Groth16Vk: {
+        curve: "Curve",
+        alphaG1: "Bytes",
+        betaG2: "Bytes",
+        gammaG2: "Bytes",
+        deltaG2: "Bytes",
+        gammaAbcG1: "Vec<Bytes>"
+    },
 };
 
 // This one defines the metadata for the arguments and return value of proofPath RPC call
@@ -35,6 +46,48 @@ zkvRpc = {
             ],
             type: 'MerkleProof'
         }
+    },
+    vk_hash: {
+        groth16: {
+            description: 'Get the hash of a Groth16 verification key',
+            params: [
+                {
+                    name: 'vk',
+                    type: 'Groth16Vk',
+                },
+            ],
+            type: 'H256'
+        },
+        proofofsql: {
+            description: 'Get the hash of a Proof-of-SQL verification key',
+            params: [
+                {
+                    name: 'vk',
+                    type: 'Bytes',
+                },
+            ],
+            type: 'H256'
+        },
+        risc0: {
+            description: 'Get the hash of a Risc0 verification key',
+            params: [
+                {
+                    name: 'vk',
+                    type: 'H256',
+                },
+            ],
+            type: 'H256'
+        },
+        ultraplonk: {
+            description: 'Get the hash of an UltraPLONK verification key',
+            params: [
+                {
+                    name: 'vk',
+                    type: 'Bytes',
+                },
+            ],
+            type: 'H256'
+        },
     }
 };
 

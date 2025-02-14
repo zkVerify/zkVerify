@@ -136,6 +136,8 @@ polkadot-statement-distribution = { workspace = true, optional = true }
 sc-rpc = { workspace = true }
 sc-rpc-spec-v2 = { workspace = true }
 
+vk-hash = { workspace = true }
+
 [dev-dependencies]
 test-client = { path = "../test/client", features = ["runtime-benchmarks"] }
 node-subsystem-test-helpers = { path = "../test/subsystem-helpers" }

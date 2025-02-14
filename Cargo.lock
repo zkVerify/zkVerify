@@ -19528,6 +19528,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 
 [[package]]
+name = "vk-hash"
+version = "0.1.0"
+dependencies = [
+ "hp-groth16",
+ "hp-verifiers",
+ "jsonrpsee",
+ "pallet-groth16-verifier",
+ "pallet-proofofsql-verifier",
+ "pallet-ultraplonk-verifier",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+]
+
+[[package]]
 name = "void"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -21169,6 +21184,7 @@ dependencies = [
  "test-client",
  "thiserror 1.0.69",
  "tracing-gum",
+ "vk-hash",
  "zkv-benchmarks",
  "zkv-runtime",
 ]
