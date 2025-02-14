@@ -156,18 +156,11 @@ The official documentation is available at [docs.zkverify.io](https://docs.zkver
 
 ## License
 
-zkVerify as a whole is released under the [GPL 3.0 license](LICENSE-GPL3). This is mostly due to the fact that the proof verification implemented by the `settlement-fflonk` pallet is based on GPL 3.0 software.
+zkVerify as a whole is released under the [Apache 2.0 license](LICENSE-APACHE2).
 
 For this reason, all the crates that include such dependency are GPL 3.0 licensed:
 
-- `pallet-settlement-fflonk`
 - `zkv-runtime`
 - `mainchain`
 
-The remaining crates, which are independent of the FFLONK verifier implementation, are released under the [APACHE 2.0 license](LICENSE-APACHE2):
-
-- `pallet-poe`
-- `hp-poe`
-- `proof-of-existence-rpc`
-- `proof-of-existence-rpc-runtime-api`
-- `pallet-settlement-zksync`
+The rest of the crates are licensed under [APACHE 2.0 license](LICENSE-APACHE2).
