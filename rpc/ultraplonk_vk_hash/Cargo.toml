@@ -9,11 +9,14 @@ homepage.workspace = true
 license = "Apache-2.0"
 
 [dependencies]
-
-
+pallet-ultraplonk-verifier = { workspace = true }
+codec = { default-features = false, workspace = true }
+jsonrpsee = { workspace = true, features = ["client-core", "server", "macros"] }
+sp-core = { default-features = false, workspace = true }
+hp-verifiers = { workspace = true }
 
 [features]
 default = ["std"]
 std = [
-    
+    "pallet-ultraplonk-verifier/std"
 ]

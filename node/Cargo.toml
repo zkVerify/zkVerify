@@ -1,0 +1,106 @@
+[package]
+name = "mainchain"
+version = "0.8.0"
+description = "zkVerify Mainchain."
+authors.workspace = true
+homepage = "https://github.com/HorizenLabs/zkVerify"
+edition.workspace = true
+publish = false
+repository.workspace = true
+build = "build.rs"
+license = "GPL-3.0"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[[bin]]
+name = "zkv-node"
+path = "src/main.rs"
+
+[dependencies]
+clap = { workspace = true, features = ["derive"] }
+futures = { workspace = true, features = ["thread-pool"] }
+serde_json = { workspace = true, features = ["arbitrary_precision"] }
+sc-cli = { workspace = true }
+sp-core = { workspace = true }
+sc-executor = { workspace = true }
+sc-network = { workspace = true }
+sc-service = { workspace = true }
+sc-telemetry = { workspace = true }
+sc-transaction-pool = { workspace = true }
+sc-transaction-pool-api = { workspace = true }
+sc-offchain = { workspace = true }
+sc-sysinfo = { workspace = true }
+sp-consensus = { workspace = true }
+sc-consensus-babe = { workspace = true }
+sc-consensus-babe-rpc = { workspace = true }
+sp-consensus-babe = { workspace = true }
+sc-consensus = { workspace = true }
+sc-consensus-grandpa = { workspace = true }
+sc-consensus-grandpa-rpc = { workspace = true }
+sp-consensus-grandpa = { workspace = true }
+sc-client-api = { workspace = true }
+sp-runtime = { workspace = true }
+sp-runtime-interface = { workspace = true, default-features = true }
+sp-io = { workspace = true }
+sp-timestamp = { workspace = true }
+sp-inherents = { workspace = true }
+sp-keyring = { workspace = true }
+sp-keystore = { workspace = true }
+frame-system = { workspace = true, default-features = true }
+pallet-transaction-payment = { workspace = true, default-features = false }
+sp-staking = { workspace = true }
+pallet-im-online = { workspace = true, default-features = false }
+pallet-ismp-rpc = { workspace = true}
+pallet-ismp-runtime-api = { workspace = true}
+frame-metadata-hash-extension = { workspace = true, default-features = true }
+
+# These dependencies are used for the node template's RPCs
+jsonrpsee = { workspace = true, features = ["server"] }
+sp-api = { workspace = true }
+sc-rpc = { workspace = true }
+sc-rpc-api = { workspace = true }
+sp-blockchain = { workspace = true }
+sp-block-builder = { workspace = true }
+sc-basic-authorship = { workspace = true }
+substrate-frame-rpc-system = { workspace = true }
+pallet-transaction-payment-rpc = { workspace = true }
+frame-benchmarking = { workspace = true }
+frame-benchmarking-cli = { workspace = true }
+zkv-runtime = { workspace = true, features = ["std"] }
+hp-poe = { workspace = true, features = ["std"] }
+proof-of-existence-rpc = { workspace = true, features = ["std"] }
+aggregate-rpc = { workspace = true, features = ["std"] }
+native = { workspace = true, features = ["std"] }
+ultraplonk-vk-hash = { workspace = true }
+
+[build-dependencies]
+substrate-build-script-utils = { workspace = true }
+native-cache = { workspace = true, features = ["rocksdb"] }
+
+[features]
+default = []
+metadata-hash = ["zkv-runtime/metadata-hash"]
+# Dependencies that are only required if runtime benchmarking should be build.
+runtime-benchmarks = [
+	"frame-benchmarking-cli/runtime-benchmarks",
+	"frame-benchmarking/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"zkv-runtime/runtime-benchmarks",
+	"sc-service/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"pallet-im-online/runtime-benchmarks",
+	"sp-staking/runtime-benchmarks"
+]
+# Enable features that allow the runtime to be tried and debugged. Name might be subject to change
+# in the near future.
+try-runtime = [
+	"frame-system/try-runtime",
+	"zkv-runtime/try-runtime",
+	"pallet-transaction-payment/try-runtime",
+	"sp-runtime/try-runtime",
+	"pallet-im-online/try-runtime"
+]
+extend-benchmarks = [
+	"zkv-runtime/extend-benchmarks"
+]

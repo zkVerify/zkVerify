@@ -13,81 +13,59 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+
+
 use std::sync::Arc;
 
-use jsonrpsee::{
-    core::RpcResult,
-    proc_macros::rpc,
-    types::error::{ErrorObject, ErrorObjectOwned},
-};
-use sp_api::ProvideRuntimeApi;
-use sp_blockchain::HeaderBackend;
-use sp_core::H256;
-use sp_runtime::traits::Block as BlockT;
+use hp_verifiers::Verifier;
+use jsonrpsee::{core::RpcResult, proc_macros::rpc};
+use pallet_ultraplonk_verifier::Ultraplonk;
+use sp_core::{Get, H256};
+
+struct MockType;
+
+struct MaxPubs;
+
+impl pallet_ultraplonk_verifier::Config for MockType {
+    type MaxPubs = MaxPubs;
+}
+
+impl Get<u32> for MaxPubs {
+    fn get() -> u32 {
+        32
+    }
+}
+
+type VkOf<V> = <V as hp_verifiers::Verifier>::Vk;
 
 #[rpc(client, server)]
 pub trait VKHashApi<ResponseType> {
     #[method(name = "compute_vk_hash_ultraplonk")]
-    fn compute_vk_hash_ultraplonk(&self, vk: Ultraplonk::Vk) -> RpcResult<ResponseType>;
+    fn compute_vk_hash_ultraplonk(
+        &self,
+        vk: &VkOf<Ultraplonk<MockType>>,
+    ) -> RpcResult<ResponseType>;
 }
 
-pub struct VKHash<C, P> {
+pub struct VKHash<C> {
     client: Arc<C>,
-    _marker: std::marker::PhantomData<P>,
 }
 
-impl<C, P> VKHash<C, P> {
+impl<C> VKHash<C> {
     // Creates a new instance of the vk-hash Rpc helper.
     pub fn new(client: Arc<C>) -> Self {
-        Self {
-            client,
-            _marker: Default::default(),
-        }
+        Self { client }
     }
 }
 
-// Error type of this RPC api.
-pub enum Error {
-    /// Statement not found
-    StatementNotFound,
-    //// Aggregate Receipt not published yet
-    ReceiptNotPublished,
-    /// The call to runtime failed.
-    RuntimeError,
-    /// The transaction was not decodable.
-    DecodeError,
-}
-
-impl From<Error> for i32 {
-    fn from(e: Error) -> i32 {
-        match e {
-            Error::StatementNotFound => 1,
-            Error::ReceiptNotPublished => 2,
-            Error::RuntimeError => 3,
-            Error::DecodeError => 4,
-        }
+impl<C> VKHashApiServer<H256> for VKHash<C>
+where
+    C: Send + Sync + 'static,
+{
+    fn compute_vk_hash_ultraplonk(
+        &self,
+        vk: &VkOf<Ultraplonk<MockType>>,
+    ) -> RpcResult<H256> {
+        Ok(Ultraplonk::<MockType>::vk_hash(vk))
     }
 }
-
-impl VKHashApiServer for VKHash {
-    fn compute_vk_hash_ultraplonk(&self, vk: &Ultraplonk::vk) -> RpcResult<H256> {
-        Ultraplonk::vk_hash(vk)
-    }
-}
-
-// fn convert_attestation_error(e: PathRequestError) -> ErrorObjectOwned {
-//     match e {
-//         PathRequestError::NotFound(domain_id, id, h) => ErrorObject::owned(
-//             Error::StatementNotFound.into(),
-//             "Statement not found in this aggregation",
-//             Some(format!(
-//                 "Statement {h} not found in Storage for aggregation ({domain_id},{id})"
-//             )),
-//         ),
-//         PathRequestError::ReceiptNotPublished(domain_id, id) => ErrorObject::owned(
-//             Error::ReceiptNotPublished.into(),
-//             "Receipt not published in this block",
-//             Some(format!("Receipt ({domain_id},{id}) not published yet")),
-//         ),
-//     }
-// }

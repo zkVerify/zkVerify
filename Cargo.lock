@@ -19180,6 +19180,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "ultraplonk-vk-hash"
+version = "0.1.0"
+dependencies = [
+ "hp-verifiers",
+ "jsonrpsee",
+ "pallet-ultraplonk-verifier",
+ "parity-scale-codec",
+ "sp-core",
+]
+
+[[package]]
 name = "unarray"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -20957,6 +20968,7 @@ dependencies = [
  "test-client",
  "thiserror 1.0.69",
  "tracing-gum",
+ "ultraplonk-vk-hash",
  "zkv-benchmarks",
  "zkv-runtime",
 ]
