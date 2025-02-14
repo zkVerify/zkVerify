@@ -32,7 +32,7 @@ pub struct TestData {
 
 #[fixture]
 pub fn valid_test_data() -> TestData {
-    let pubs_bytes = include_bytes!("resources/VALID_PUBS_21.bin").to_vec();
+    let pubs_bytes = include_bytes!("resources/VALID_PUBS_8.bin").to_vec();
     let mut pubs = vec![];
 
     // using reader
@@ -44,8 +44,8 @@ pub fn valid_test_data() -> TestData {
     }
 
     TestData {
-        vk: include_bytes!("resources/VALID_VK_21.bin").to_vec(),
-        proof: include_bytes!("resources/VALID_PROOF_21.bin").to_vec(),
+        vk: include_bytes!("resources/VALID_VK_8.bin").to_vec(),
+        proof: include_bytes!("resources/VALID_PROOF_8.bin").to_vec(),
         pubs,
     }
 }

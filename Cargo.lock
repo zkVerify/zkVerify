@@ -4608,10 +4608,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c4567c8db10ae91089c99af84c68c38da3ec2f087c3f82960bcdbf3656b6f4d7"
 dependencies = [
  "cfg-if 1.0.0",
- "js-sys",
  "libc",
  "wasi",
- "wasm-bindgen",
 ]
 
 [[package]]
@@ -4787,18 +4785,17 @@ dependencies = [
 [[package]]
 name = "halo2_verifier"
 version = "0.1.0"
-source = "git+https://github.com/ChainSafe/halo2-verifier.git#276f12817766dac88add6afd3fb0f12a94ac3ce5"
+source = "git+https://github.com/ChainSafe/halo2-verifier.git#bd71a8e93421448dd0fad14067d30a7d1c3b36f0"
 dependencies = [
  "blake2b_simd",
  "ff",
- "getrandom",
+ "getrandom_or_panic",
  "group",
  "halo2curves",
  "log",
  "num-traits",
  "rand 0.8.5",
  "rand_chacha",
- "rand_core 0.6.4",
  "sha3 0.9.1",
  "substrate-bn",
  "subtle 2.6.1",
@@ -4807,7 +4804,7 @@ dependencies = [
 [[package]]
 name = "halo2curves"
 version = "0.6.1"
-source = "git+https://github.com/ChainSafe/halo2curves.git?branch=no-std#b7dc0fe94c6e19a3188e28a060c400bb278d1f59"
+source = "git+https://github.com/ChainSafe/halo2curves.git?branch=no-std#bb455639f3c0d4cdd8c7b3612ff7bdddb806ce16"
 dependencies = [
  "blake2b_simd",
  "ff",
@@ -8259,7 +8256,6 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "getrandom_or_panic",
  "halo2_verifier",
  "hex",
  "hex-literal 0.4.1",
@@ -9277,7 +9273,6 @@ dependencies = [
  "blake2b_simd",
  "ff",
  "group",
- "lazy_static",
  "rand 0.8.5",
  "static_assertions",
  "subtle 2.6.1",
