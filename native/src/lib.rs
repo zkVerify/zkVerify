@@ -21,7 +21,6 @@ use sp_runtime_interface::pass_by::PassByCodec;
 mod accelerated_bn;
 mod groth16;
 mod risc0;
-mod ultraplonk;
 
 #[derive(PassByCodec, Encode, Decode)]
 #[cfg_attr(test, derive(Debug))]
@@ -53,13 +52,6 @@ pub use risc0::risc_0_verify::HostFunctions as Risc0VerifierHostFunctions;
 pub use risc0::risc_0_accelerate::HostFunctions as Risc0AccelerateHostFunctions;
 pub use risc0::Poseidon2Mix;
 
-pub use ultraplonk::ultraplonk_verify;
-#[cfg(feature = "std")]
-pub use ultraplonk::ultraplonk_verify::HostFunctions as UltraplonkVerifierHostFunctions;
-pub use ultraplonk::PROOF_SIZE as ULTRAPLONK_PROOF_SIZE;
-pub use ultraplonk::PUBS_SIZE as ULTRAPLONK_PUBS_SIZE;
-pub use ultraplonk::VK_SIZE as ULTRAPLONK_VK_SIZE;
-
 pub use groth16::groth_16_bls_12_381_verify;
 #[cfg(feature = "std")]
 pub use groth16::groth_16_bls_12_381_verify::HostFunctions as Groth16Bls12VerifierHostFunctions;
@@ -75,7 +67,6 @@ pub use accelerated_bn::bn254::host_calls::HostFunctions as AcceleratedBn254Host
 pub type HLNativeHostFunctions = (
     Risc0VerifierHostFunctions,
     Risc0AccelerateHostFunctions,
-    UltraplonkVerifierHostFunctions,
     Groth16Bn254VerifierHostFunctions,
     Groth16Bls12VerifierHostFunctions,
     AcceleratedBn254HostFunctions,

@@ -1173,29 +1173,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bindgen"
-version = "0.69.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "271383c67ccabffb7381723dea0672a673f292304fcb45c01cc648c7a8d58088"
-dependencies = [
- "bitflags 2.8.0",
- "cexpr",
- "clang-sys",
- "itertools 0.12.1",
- "lazy_static",
- "lazycell",
- "log",
- "prettyplease 0.2.29",
- "proc-macro2",
- "quote",
- "regex",
- "rustc-hash 1.1.0",
- "shlex",
- "syn 2.0.96",
- "which",
-]
-
-[[package]]
 name = "bip39"
 version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1816,15 +1793,6 @@ name = "clap_lex"
 version = "0.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f46ad14479a25103f283c0f10005961cf086d8dc42205bb44c46ac563475dca6"
-
-[[package]]
-name = "cmake"
-version = "0.1.53"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e24a03c8b52922d68a1589ad61032f2c1aa5a8158d2aa0d93c6e9534944bbad6"
-dependencies = [
- "cc",
-]
 
 [[package]]
 name = "coarsetime"
@@ -5893,9 +5861,6 @@ name = "lazy_static"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
-dependencies = [
- "spin 0.9.8",
-]
 
 [[package]]
 name = "lazycell"
@@ -6396,7 +6361,7 @@ version = "0.11.0+8.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d3386f101bcb4bd252d8e9d2fb41ec3b0862a15a62b478c355b2982efa469e3e"
 dependencies = [
- "bindgen 0.65.1",
+ "bindgen",
  "bzip2-sys",
  "cc",
  "glob",
@@ -7138,7 +7103,6 @@ dependencies = [
  "parity-scale-codec",
  "risc0-verifier",
  "sp-runtime-interface",
- "ultraplonk_verifier",
 ]
 
 [[package]]
@@ -14836,19 +14800,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "substrate-bn"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "72b5bbfa79abbae15dd642ea8176a21a635ff3c00059961d1ea27ad04e5b441c"
-dependencies = [
- "byteorder",
- "crunchy",
- "lazy_static",
- "rand",
- "rustc-hex",
-]
-
-[[package]]
 name = "substrate-build-script-utils"
 version = "11.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -16023,21 +15974,6 @@ dependencies = [
  "sha3",
  "snafu",
  "test-utils",
-]
-
-[[package]]
-name = "ultraplonk_verifier"
-version = "0.2.0"
-source = "git+https://github.com/HorizenLabs/ultraplonk_verifier.git?tag=v0.2.0#bcb1842a98f5e5f5b0894f94b4fb924d923a798e"
-dependencies = [
- "bindgen 0.69.5",
- "byteorder",
- "cc",
- "cmake",
- "hex-literal",
- "regex",
- "substrate-bn",
- "thiserror 1.0.69",
 ]
 
 [[package]]
