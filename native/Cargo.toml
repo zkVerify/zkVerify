@@ -14,6 +14,7 @@ ark-bn254-ext = { git = "https://github.com/zkVerify/accelerated-bn-cryptography
 ark-ec = { version = "0.4.0", default-features = false }
 ark-scale = { features = ["hazmat"], version = "0.0.12", default-features = false }
 bincode = { version = "1.3", optional = true }
+risc0-verifier = { workspace = true }
 
 sp-runtime-interface = { workspace = true }
 codec = { workspace = true }
