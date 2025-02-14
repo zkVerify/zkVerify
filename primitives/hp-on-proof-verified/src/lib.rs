@@ -17,8 +17,7 @@
 
 use sp_core::H256;
 
-/// Trait used by proof verifier pallets (e.g. pallet-settlement-fflonk) to signal that a successful proof verification
-/// happened.
+/// Trait used by proof verifier pallets to signal that a successful proof verification happened.
 /// This must be implemented by proof storage pallets (e.g. pallet-poe) to subscribe to proof verification events.
 #[impl_trait_for_tuples::impl_for_tuples(10)]
 pub trait OnProofVerified<A> {
