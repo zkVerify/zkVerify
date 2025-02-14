@@ -8,7 +8,7 @@ use core::marker::PhantomData;
 #[cfg(not(feature = "std"))]
 use alloc::vec::Vec;
 
-mod benchmarking;
+pub mod benchmarking;
 mod verifier_should;
 mod weight;
 
@@ -26,6 +26,7 @@ use halo2_verifier::{verify_proof, VerifyingKey};
 use hp_verifiers::{Cow, Verifier, VerifyError};
 use scale_info::TypeInfo;
 use sp_core::{Get, U256};
+pub use weight::WeightInfo;
 
 #[pallet_verifiers::verifier]
 pub struct Halo2<T>;

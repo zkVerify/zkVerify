@@ -883,13 +883,6 @@ impl pallet_verifiers::Config<pallet_fflonk_verifier::Fflonk> for Runtime {
     type Currency = Balances;
 }
 
-impl pallet_verifiers::Config<pallet_halo2_verifier::Halo2<Runtime>> for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type OnProofVerified = Poe;
-    type WeightInfo =
-        pallet_halo2_verifier::Halo2Weight<weights::pallet_halo2_verifier::ZKVWeight<Runtime>>;
-}
-
 impl pallet_verifiers::Config<pallet_zksync_verifier::Zksync> for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type OnProofVerified = (Poe, Aggregate);
@@ -991,6 +984,30 @@ impl pallet_verifiers::Config<pallet_proofofsql_verifier::ProofOfSql<Runtime>> f
     type Currency = Balances;
 }
 
+use pallet_halo2_verifier::Halo2;
+parameter_types! {
+    pub const Halo2VKMaxBytes: u32 = 32; 
+    pub const Halo2ProofMaxBytes: u32 = 32; 
+}
+
+impl pallet_halo2_verifier::Config for Runtime {
+    type VkMaxBytes = Halo2VKMaxBytes;
+    type ProofMaxBytes = Halo2ProofMaxBytes;
+}
+
+impl<T: pallet_halo2_verifier::Config> pallet_verifiers::Config<pallet_halo2_verifier::Halo2<T>> for Runtime where RuntimeEvent: From<pallet_verifiers::Event<Runtime, Halo2<T>>> {
+    type RuntimeEvent = RuntimeEvent;
+    type OnProofVerified = (Poe, Aggregate);
+    type WeightInfo =
+        pallet_halo2_verifier::Halo2Weight<weights::pallet_halo2_verifier::ZKVWeight<Runtime>>;
+    type Ticket = VkRegistrationHoldConsideration;
+    #[cfg(feature = "runtime-benchmarks")]
+    type Currency = Balances;
+}
+
+
+
+
 parameter_types! {
     pub const Coprocessor: Option<StateMachine> = Some(StateMachine::Kusama(4009));
     pub const HostStateMachine: StateMachine = StateMachine::Substrate(*b"zkv_");
@@ -1079,7 +1096,7 @@ construct_runtime!(
         Ismp: pallet_ismp,
         IsmpGrandpa: ismp_grandpa,
         HyperbridgeAggregations: pallet_hyperbridge_aggregations,
-        SettlementFooPallet: pallet_halo2_verifier,
+        SettlementHalo2Pallet: pallet_halo2_verifier,
     }
 );
 
@@ -1174,6 +1191,7 @@ construct_runtime!(
         SettlementRisc0Pallet: pallet_risc0_verifier = 164,
         SettlementUltraplonkPallet: pallet_ultraplonk_verifier = 165,
         SettlementProofOfSqlPallet: pallet_proofofsql_verifier = 166,
+        SettlementHalo2Pallet: pallet_halo2_verifier = 167,
     }
 );
 

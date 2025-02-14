@@ -30,7 +30,6 @@ pub mod pallet_fflonk_verifier;
 pub mod pallet_grandpa;
 pub mod pallet_groth16_verifier;
 #[cfg(not(feature = "relay"))]
-pub mod pallet_halo2_verifier;
 pub mod pallet_im_online;
 #[cfg(feature = "relay")]
 pub mod pallet_message_queue;
@@ -56,6 +55,8 @@ pub mod pallet_xcm;
 pub mod pallet_zksync_verifier;
 #[cfg(feature = "relay")]
 pub mod xcm;
+pub mod pallet_halo2_verifier;
+
 
 pub mod pallet_hyperbridge_aggregations;
 pub mod parachains;
