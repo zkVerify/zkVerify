@@ -15432,7 +15432,8 @@ checksum = "2d67a5a62ba6e01cb2192ff309324cb4875d0c451d55fe2319433abe7a05a8ee"
 [[package]]
 name = "subtle"
 version = "2.6.1"
-source = "git+https://github.com/nulltea/subtle#9178f118aa00739e59c59da41781e960de452cba"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 
 [[package]]
 name = "subtle-ng"

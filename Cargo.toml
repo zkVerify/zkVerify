@@ -343,7 +343,6 @@ subtle = { version = "2.6", default-features = false }
 [patch.crates-io]
 cumulus-relay-chain-inprocess-interface = { path = "patches/cumulus/client/relay-chain-inprocess-interface" }
 cumulus-relay-chain-minimal-node = { path = "patches/cumulus/client/relay-chain-minimal-node" }
-subtle = { git = "https://github.com/nulltea/subtle" }
 
 [profile.release]
 # Polkadot runtime requires unwinding.
