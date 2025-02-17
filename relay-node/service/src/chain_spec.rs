@@ -16,8 +16,7 @@
 
 #![allow(clippy::type_complexity)]
 
-use polkadot_primitives::vstaging::SchedulerParams;
-use polkadot_primitives::{AssignmentId, AsyncBackingParams, ValidatorId};
+use polkadot_primitives::{AssignmentId, AsyncBackingParams, SchedulerParams, ValidatorId};
 use sc_chain_spec::ChainSpecExtension;
 use sc_service::{ChainType, Properties};
 use sc_sync_state_rpc::LightSyncStateExtension;

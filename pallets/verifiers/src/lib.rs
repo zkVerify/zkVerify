@@ -69,7 +69,6 @@ pub use pallet::*;
 pub use pallet_verifiers_macros::*;
 
 pub mod common;
-pub mod migrations;
 #[allow(missing_docs)]
 pub mod mock;
 
@@ -300,7 +299,7 @@ pub mod pallet {
     pub type Tickets<T: Config<I>, I: 'static = ()>
     where
         I: Verifier,
-    = StorageMap<Hasher = Blake2_128Concat, Key = (T::AccountId, H256), Value = Option<T::Ticket>>;
+    = StorageMap<Hasher = Blake2_128Concat, Key = (T::AccountId, H256), Value = T::Ticket>;
 
     // Dispatchable functions allows users to interact with the pallet and invoke state changes.
     // These functions materialize as "extrinsics", which are often compared to transactions.
@@ -416,26 +415,25 @@ pub mod pallet {
         pub fn unregister_vk(origin: OriginFor<T>, vk_hash: H256) -> DispatchResult {
             log::trace!("Unregister vk");
             let account_id = ensure_signed(origin)?;
+            // Drop ticket if present
             if let Some(ticket) = Tickets::<T, I>::take((&account_id, vk_hash)) {
-                if let Some(ticket) = ticket {
-                    ticket.drop(&account_id)?;
-                }
-                Vks::<T, I>::mutate_exists(vk_hash, |vk_entry| match vk_entry {
-                    Some(v) => {
-                        v.ref_count = v.ref_count.saturating_sub(1);
-                        if v.ref_count == 0 {
-                            *vk_entry = None;
-                            Self::deposit_event(Event::VkUnregistered { hash: vk_hash });
-                        }
-                    }
-                    None => unreachable!(),
-                });
-                Ok(())
+                ticket.drop(&account_id)?;
             } else if Vks::<T, I>::contains_key(vk_hash) {
                 Err(BadOrigin)?
             } else {
                 Err(Error::<T, I>::VerificationKeyNotFound)?
             }
+            Vks::<T, I>::mutate_exists(vk_hash, |vk_entry| match vk_entry {
+                Some(v) => {
+                    v.ref_count = v.ref_count.saturating_sub(1);
+                    if v.ref_count == 0 {
+                        *vk_entry = None;
+                        Self::deposit_event(Event::VkUnregistered { hash: vk_hash });
+                    }
+                }
+                None => unreachable!(),
+            });
+            Ok(())
         }
     }
 
