@@ -156,7 +156,10 @@ The official documentation is available at [docs.zkverify.io](https://docs.zkver
 
 ## License
 
-zkVerify as a whole is released under the [Apache 2.0 license](LICENSE-APACHE2).
+zkVerify is released under the following licenses:
+- [GPL-3](LICENSE-GPL3) for `zkv-runtime` and `mainchain` crates.
+- GPL-3 with CLASSPATH exception for `cumulus-relay-chain-inprocess-interface` and `cumulus-relay-chain-minimal-node` crates.
+- [Apache 2.0](LICENSE-APACHE2) for all the other crates.
 
 For this reason, all the crates that include such dependency are GPL 3.0 licensed:
 
