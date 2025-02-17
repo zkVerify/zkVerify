@@ -40,10 +40,10 @@ use xcm_builder::{
     AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
     AllowTopLevelPaidExecutionFrom, ChildParachainAsNative, ChildParachainConvertsVia,
     DescribeAllTerminal, DescribeFamily, FrameTransactionalProcessor, FungibleAdapter,
-    HashedDescription, IsConcrete, MintLocation, OriginToPluralityVoice, SignedAccountId32AsNative,
-    SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, TrailingSetTopicAsId,
-    UsingComponents, WeightInfoBounds, WithComputedOrigin, WithUniqueTopic,
-    XcmFeeManagerFromComponents, XcmFeeToAccount,
+    HashedDescription, IsConcrete, MintLocation, OriginToPluralityVoice, SendXcmFeeToAccount,
+    SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
+    TrailingSetTopicAsId, UsingComponents, WeightInfoBounds, WithComputedOrigin, WithUniqueTopic,
+    XcmFeeManagerFromComponents,
 };
 
 use crate::weights::pallet_xcm::ZKVWeight as XcmPalletZKVWeight;
@@ -217,7 +217,7 @@ impl xcm_executor::Config for XcmConfig {
     type MaxAssetsIntoHolding = MaxAssetsIntoHolding;
     type FeeManager = XcmFeeManagerFromComponents<
         WaivedLocations,
-        XcmFeeToAccount<Self::AssetTransactor, AccountId, TreasuryAccount>,
+        SendXcmFeeToAccount<Self::AssetTransactor, TreasuryAccount>,
     >;
     // No bridges on the Relay Chain
     type MessageExporter = ();
