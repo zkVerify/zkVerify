@@ -18,7 +18,7 @@ use jsonrpsee::RpcModule;
 use polkadot_primitives::{AccountId, Balance, Block, BlockNumber, Hash, Nonce};
 use sc_client_api::AuxStore;
 use sc_consensus_grandpa::FinalityProofProvider;
-pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
+pub use sc_rpc::SubscriptionTaskExecutor;
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
@@ -63,8 +63,6 @@ pub struct FullDeps<C, P, SC, B> {
     pub select_chain: SC,
     /// A copy of the chain spec.
     pub chain_spec: Box<dyn sc_chain_spec::ChainSpec>,
-    /// Whether to deny unsafe calls
-    pub deny_unsafe: DenyUnsafe,
     /// BABE specific dependencies.
     pub babe: BabeDeps,
     /// GRANDPA specific dependencies.
@@ -80,7 +78,6 @@ pub fn create_full<C, P, SC, B>(
         pool,
         select_chain,
         chain_spec,
-        deny_unsafe,
         babe,
         grandpa,
         backend,
@@ -134,8 +131,8 @@ where
     let properties = chain_spec.properties();
 
     io.merge(ChainSpec::new(chain_name, genesis_hash, properties).into_rpc())?;
-    io.merge(StateMigration::new(client.clone(), backend.clone(), deny_unsafe).into_rpc())?;
-    io.merge(System::new(client.clone(), pool.clone(), deny_unsafe).into_rpc())?;
+    io.merge(StateMigration::new(client.clone(), backend.clone()).into_rpc())?;
+    io.merge(System::new(client.clone(), pool.clone()).into_rpc())?;
     io.merge(TransactionPayment::new(client.clone()).into_rpc())?;
     io.merge(
         Babe::new(
@@ -143,7 +140,6 @@ where
             babe_worker_handle.clone(),
             keystore,
             select_chain,
-            deny_unsafe,
         )
         .into_rpc(),
     )?;

@@ -788,7 +788,7 @@ pub mod pallet {
                 .clone()
                 .account()
                 .and_then(|a| {
-                    T::Consideration::new(
+                    Some(T::Consideration::new(
                         a,
                         Footprint::from_parts(
                             1,
@@ -798,8 +798,7 @@ pub mod pallet {
                                 &destination,
                             ),
                         ),
-                    )
-                    .transpose()
+                    ))
                 })
                 .transpose()?;
 

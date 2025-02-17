@@ -387,17 +387,18 @@ fn new_partial_basics(
         .transpose()?;
 
     let heap_pages = config
+        .executor
         .default_heap_pages
         .map_or(DEFAULT_HEAP_ALLOC_STRATEGY, |h| HeapAllocStrategy::Static {
             extra_pages: h as _,
         });
 
     let executor = WasmExecutor::builder()
-        .with_execution_method(config.wasm_method)
+        .with_execution_method(config.executor.wasm_method)
         .with_onchain_heap_alloc_strategy(heap_pages)
         .with_offchain_heap_alloc_strategy(heap_pages)
-        .with_max_runtime_instances(config.max_runtime_instances)
-        .with_runtime_cache_size(config.runtime_cache_size)
+        .with_max_runtime_instances(config.executor.max_runtime_instances)
+        .with_runtime_cache_size(config.executor.runtime_cache_size)
         .build();
 
     let (client, backend, keystore_container, task_manager) =
@@ -449,10 +450,7 @@ fn new_partial<ChainSelection>(
         sc_consensus::DefaultImportQueue<Block>,
         sc_transaction_pool::FullPool<Block, FullClient>,
         (
-            impl Fn(
-                rpc::DenyUnsafe,
-                rpc::SubscriptionTaskExecutor,
-            ) -> Result<rpc::RpcExtension, SubstrateServiceError>,
+            impl Fn(rpc::SubscriptionTaskExecutor) -> Result<rpc::RpcExtension, SubstrateServiceError>,
             (
                 babe::BabeBlockImport<Block, FullClient, FullGrandpaBlockImport<ChainSelection>>,
                 sc_consensus_grandpa::LinkHalf<Block, FullClient, ChainSelection>,
@@ -538,7 +536,7 @@ where
         let chain_spec = config.chain_spec.cloned_box();
         let backend = backend.clone();
 
-        move |deny_unsafe,
+        move |
               subscription_executor: rpc::SubscriptionTaskExecutor|
               -> Result<rpc::RpcExtension, sc_service::Error> {
             let deps = rpc::FullDeps {
@@ -546,7 +544,6 @@ where
                 pool: transaction_pool.clone(),
                 select_chain: select_chain.clone(),
                 chain_spec: chain_spec.cloned_box(),
-                deny_unsafe,
                 babe: rpc::BabeDeps {
                     babe_worker_handle: babe_worker_handle.clone(),
                     keystore: keystore.clone(),
@@ -708,7 +705,7 @@ pub fn new_full<
 ) -> Result<NewFull, Error> {
     use polkadot_availability_recovery::FETCH_CHUNKS_THRESHOLD;
     use polkadot_node_network_protocol::request_response::IncomingRequest;
-    use sc_network_sync::WarpSyncParams;
+    use sc_network_sync::WarpSyncConfig;
 
     let role = config.role.clone();
     let force_authoring = config.force_authoring;
@@ -760,8 +757,13 @@ pub fn new_full<
     let auth_disc_publish_non_global_ips = config.network.allow_non_globals_in_dht;
     let auth_disc_public_addresses = config.network.public_addresses.clone();
 
-    let mut net_config =
-        sc_network::config::FullNetworkConfiguration::<_, _, Network>::new(&config.network);
+    let mut net_config = sc_network::config::FullNetworkConfiguration::<_, _, Network>::new(
+        &config.network,
+        config
+            .prometheus_config
+            .as_ref()
+            .map(|cfg| cfg.registry.clone()),
+    );
 
     let genesis_hash = client
         .block_hash(0)
@@ -932,7 +934,7 @@ pub fn new_full<
             spawn_handle: task_manager.spawn_handle(),
             import_queue,
             block_announce_validator_builder: None,
-            warp_sync_params: Some(WarpSyncParams::WithProvider(warp_sync)),
+            warp_sync_config: Some(WarpSyncConfig::WithProvider(warp_sync)),
             block_relay: None,
             metrics,
         })?;
@@ -977,7 +979,7 @@ pub fn new_full<
 
     if let Some(hwbench) = hwbench {
         sc_sysinfo::print_hwbench(&hwbench);
-        match SUBSTRATE_REFERENCE_HARDWARE.check_hardware(&hwbench) {
+        match SUBSTRATE_REFERENCE_HARDWARE.check_hardware(&hwbench, role.is_authority()) {
             Err(err) if role.is_authority() => {
                 log::warn!(
 				"⚠️  The hardware does not meet the minimal requirements {} for role 'Authority' find out more at:\n\
