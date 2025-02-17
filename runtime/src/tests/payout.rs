@@ -20,6 +20,7 @@ use crate::{
     payout::*, AccountId, Balance, Balances, Perbill, Runtime, Treasury, ACME,
 };
 use pallet_staking::EraPayout;
+use sp_runtime::traits::Convert;
 
 #[test]
 fn check_params_sanity() {
@@ -188,5 +189,43 @@ fn deal_with_fees() {
             Balances::free_balance(Treasury::account_id()),
             (Percent::from_percent(100) - FeesValidatorsSplit::get()) * fee_amount
         );
+    })
+}
+
+#[test]
+fn block_cost_after_k_full_blocks() {
+    super::test().execute_with(|| {
+        // We check that after k full blocks, the fee multiplier is ~26.67, so that filling a block
+        // completely costs ~200ACME, considering time only.
+        let mut mul: Multiplier = 1.into();
+        let k = 100;
+        let final_mul = 26.67f64;
+        System::set_block_consumed_resources(
+            BlockWeights::get()
+                .get(DispatchClass::Normal)
+                .max_total
+                .unwrap(),
+            0,
+        );
+        for _i in 0..k {
+            mul = ZKVFeeUpdate::<Runtime>::convert(mul);
+        }
+
+        assert!((mul.to_float() - final_mul).abs() < 1e-9f64);
+    })
+}
+
+#[test]
+fn block_cost_after_k_empty_blocks() {
+    super::test().execute_with(|| {
+        let mut mul: Multiplier = 1.into();
+        // We check that after k empty blocks, the fee multiplier never goes below the minimum.
+        let k = 100;
+        System::set_block_consumed_resources(0.into(), 0);
+        for _i in 0..k {
+            mul = ZKVFeeUpdate::<Runtime>::convert(mul);
+        }
+
+        assert_eq!(mul, MinimumMultiplier::get());
     })
 }

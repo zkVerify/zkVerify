@@ -30,11 +30,11 @@ use sp_core::{crypto::KeyTypeId, Get, OpaqueMetadata, H256};
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
     traits::{
-        AccountIdConversion, BlakeTwo256, Block as BlockT, ConvertInto, IdentifyAccount,
+        AccountIdConversion, BlakeTwo256, Block as BlockT, Bounded, ConvertInto, IdentifyAccount,
         IdentityLookup, NumberFor, One, OpaqueKeys, Verify,
     },
     transaction_validity::{TransactionSource, TransactionValidity},
-    ApplyExtrinsicResult, MultiSignature,
+    ApplyExtrinsicResult, FixedPointNumber, MultiSignature, Perquintill,
 };
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
@@ -80,7 +80,7 @@ use static_assertions::const_assert;
 use weights::block_weights::BlockExecutionWeight;
 use weights::extrinsic_weights::ExtrinsicBaseWeight;
 
-use pallet_transaction_payment::{ConstFeeMultiplier, FungibleAdapter, Multiplier};
+use pallet_transaction_payment::{FungibleAdapter, Multiplier, TargetedFeeAdjustment};
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
@@ -414,8 +414,21 @@ pub type SessionKeys = SessionKeysRelay;
 parameter_types! {
     pub const TransactionPicosecondFee: Balance = 5000000;
     pub const TransactionByteFee: Balance = 5000000;
-    pub FeeMultiplier: Multiplier = Multiplier::one();
+    pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(75);
+    // AdjustmentVariable computed to result in a desired cost for filling n blocks in a row. See
+    // block_cost_after_k_full_blocks test for more info.
+    pub AdjustmentVariable: Multiplier = Multiplier::saturating_from_rational(1313646132342424i64, 10000000000000000i64);
+    pub MinimumMultiplier: Multiplier = Multiplier::one();
+    pub MaximumMultiplier: Multiplier = Bounded::max_value();
 }
+
+pub type ZKVFeeUpdate<R> = TargetedFeeAdjustment<
+    R,
+    TargetBlockFullness,
+    AdjustmentVariable,
+    MinimumMultiplier,
+    MaximumMultiplier,
+>;
 
 impl pallet_transaction_payment::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
@@ -423,7 +436,7 @@ impl pallet_transaction_payment::Config for Runtime {
     type OperationalFeeMultiplier = ConstU8<5>;
     type WeightToFee = ConstantMultiplier<Balance, TransactionPicosecondFee>;
     type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
-    type FeeMultiplierUpdate = ConstFeeMultiplier<FeeMultiplier>;
+    type FeeMultiplierUpdate = ZKVFeeUpdate<Self>;
 }
 
 impl pallet_sudo::Config for Runtime {

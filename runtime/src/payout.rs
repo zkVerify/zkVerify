@@ -13,9 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! This module contains a custom implementation for the pallet_staking::EraPayout trait, which
+//! This module contains custom implementations that regulate the distribution of tokens
+//! following inflation and fees/tips.
+//!
+//! Concretely, ZKVPayout implements the pallet_staking::EraPayout trait, which
 //! provides a custom inflation model which tries to drive the staking rate toward an ideal target.
 //! Details on the actual formula and its parameters are given below.
+//!
+//! DealWithFees, instead, implements the OnUnbalanced trait, and redirects fees and tips to the
+//! block author and to the treasury with a configurable ratio.
 
 use super::*;
 pub use frame_support::traits::{
