@@ -13,8 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
-
 use std::sync::Arc;
 
 use hp_verifiers::Verifier;
@@ -22,8 +20,9 @@ use jsonrpsee::{core::RpcResult, proc_macros::rpc};
 use pallet_ultraplonk_verifier::Ultraplonk;
 use sp_core::{Get, H256};
 
-struct MockType;
+type VkOf<V> = <V as hp_verifiers::Verifier>::Vk;
 
+struct MockType;
 struct MaxPubs;
 
 impl pallet_ultraplonk_verifier::Config for MockType {
@@ -36,15 +35,21 @@ impl Get<u32> for MaxPubs {
     }
 }
 
-type VkOf<V> = <V as hp_verifiers::Verifier>::Vk;
+// #[derive(serde::Serialize(VkOf<Ultraplonk<MockType>>))]
+// #[derive(serde::Deserialize(VkOf<Ultraplonk<MockType>>))]
 
 #[rpc(client, server)]
 pub trait VKHashApi<ResponseType> {
     #[method(name = "compute_vk_hash_ultraplonk")]
+<<<<<<< HEAD
     fn compute_vk_hash_ultraplonk(
         &self,
         vk: &VkOf<Ultraplonk<MockType>>,
     ) -> RpcResult<ResponseType>;
+=======
+    fn compute_vk_hash_ultraplonk(&self, vk: VkOf<Ultraplonk<MockType>>)
+        -> RpcResult<ResponseType>;
+>>>>>>> 72c9370 (Slight code update)
 }
 
 pub struct VKHash<C> {
@@ -62,10 +67,7 @@ impl<C> VKHashApiServer<H256> for VKHash<C>
 where
     C: Send + Sync + 'static,
 {
-    fn compute_vk_hash_ultraplonk(
-        &self,
-        vk: &VkOf<Ultraplonk<MockType>>,
-    ) -> RpcResult<H256> {
-        Ok(Ultraplonk::<MockType>::vk_hash(vk))
+    fn compute_vk_hash_ultraplonk(&self, vk: VkOf<Ultraplonk<MockType>>) -> RpcResult<H256> {
+        Ok(Ultraplonk::<MockType>::vk_hash(&vk))
     }
 }
