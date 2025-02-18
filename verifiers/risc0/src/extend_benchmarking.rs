@@ -27,7 +27,7 @@ pub struct Pallet<T: Config>(crate::Pallet<T>);
 
 pub use crate::benchmarking::{Call, Config};
 
-#[benchmarks(where T: pallet_verifiers::Config<Risc0<T>> + pallet_aggregate::Config)]
+#[benchmarks(where T: pallet_verifiers::Config<Risc0<T>>)]
 mod benchmarks {
 
     use crate::benchmarking::VALID_VK;

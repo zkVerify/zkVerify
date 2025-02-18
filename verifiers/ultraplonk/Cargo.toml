@@ -20,11 +20,8 @@ frame-benchmarking = { workspace = true, optional = true }
 log = "0.4.21"
 hex-literal = { workspace = true, optional = true }
 native = { workspace = true }
-pallet-aggregate = { workspace = true, optional = true, default-features = false, features = [
-    "runtime-benchmarks",
-] }
+sp-io = { workspace = true }
 ultraplonk-no-std = { git = "https://github.com/zkVerify/ultraplonk_verifier.git", tag = "v0.2.1" }
-sp-io = { workspace = true, default-features = false }
 
 [dev-dependencies]
 hex-literal = { workspace = true }
@@ -48,7 +45,6 @@ std = [
 	"pallet-balances/std",
 	"frame-benchmarking?/std",
 	"log/std",
-	"pallet-aggregate?/std",
 	"codec/std",
 	"scale-info/std",
 	"sp-runtime/std",
@@ -58,12 +54,10 @@ default = ["std"]
 runtime-benchmarks = [
 	"dep:hex-literal",
 	"dep:frame-benchmarking",
-	"dep:pallet-aggregate",
 	"pallet-verifiers/runtime-benchmarks",
 	"frame-support/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
 	"frame-benchmarking/runtime-benchmarks",
-	"pallet-aggregate?/runtime-benchmarks",
 	"pallet-balances/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks"
 ]

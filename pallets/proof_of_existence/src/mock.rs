@@ -48,6 +48,10 @@ impl crate::weight::WeightInfo for MockWeightInfo {
     fn publish_attestation() -> frame_support::weights::Weight {
         frame_support::weights::Weight::from_parts(Self::REF_TIME, Self::PROOF_SIZE)
     }
+
+    fn on_proof_verified() -> frame_support::weights::Weight {
+        frame_support::weights::Weight::default()
+    }
 }
 
 impl crate::Config for Test {

@@ -9,4 +9,13 @@ license = "Apache-2.0"
 
 [dependencies]
 sp-core = { workspace = true }
+sp-weights = { workspace = true }
 impl-trait-for-tuples = "0.2.2"
+
+
+[features]
+default = ["std"]
+std = [
+    "sp-core/std",
+    "sp-weights/std",
+]

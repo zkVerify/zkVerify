@@ -5080,6 +5080,7 @@ version = "0.1.0"
 dependencies = [
  "impl-trait-for-tuples",
  "sp-core",
+ "sp-weights",
 ]
 
 [[package]]
@@ -8252,7 +8253,6 @@ dependencies = [
  "hex-literal",
  "hp-verifiers",
  "log",
- "pallet-aggregate",
  "pallet-balances",
  "pallet-verifiers",
  "parity-scale-codec",
@@ -8297,7 +8297,6 @@ dependencies = [
  "hp-groth16",
  "hp-verifiers",
  "native",
- "pallet-aggregate",
  "pallet-balances",
  "pallet-verifiers",
  "parity-scale-codec",
@@ -8598,7 +8597,6 @@ dependencies = [
  "hex-literal",
  "hp-verifiers",
  "log",
- "pallet-aggregate",
  "pallet-balances",
  "pallet-verifiers",
  "parity-scale-codec",
@@ -8656,7 +8654,6 @@ dependencies = [
  "hp-verifiers",
  "log",
  "native",
- "pallet-aggregate",
  "pallet-balances",
  "pallet-verifiers",
  "parity-scale-codec",
@@ -8882,7 +8879,6 @@ dependencies = [
  "hp-verifiers",
  "log",
  "native",
- "pallet-aggregate",
  "pallet-balances",
  "pallet-verifiers",
  "parity-scale-codec",
@@ -9030,7 +9026,6 @@ dependencies = [
  "hex-literal",
  "hp-verifiers",
  "native",
- "pallet-aggregate",
  "pallet-balances",
  "pallet-verifiers",
  "parity-scale-codec",

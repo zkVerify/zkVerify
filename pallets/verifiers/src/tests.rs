@@ -324,6 +324,7 @@ mod unregister_should {
 
 mod submit_proof_should {
     use super::*;
+    use frame_support::weights::Weight;
     use hex_literal::hex;
     use registered_vk::*;
 
@@ -402,16 +403,12 @@ mod submit_proof_should {
         });
     }
 
-    #[rstest]
-    #[case::submit_proof(VkOrHash::from_vk(24), MockWeightInfo::submit_proof(&5, &6))]
-    #[case::submit_proof_with_vk_hash(
-        VkOrHash::from_hash(REGISTERED_VK_HASH),
-        MockWeightInfo::submit_proof_with_vk_hash(&12, &75)
-    )]
-    fn use_the_configured_weights(
-        #[case] vk_or_hash: VkOrHash,
-        #[case] weight: frame_support::weights::Weight,
-    ) {
+    #[test]
+    fn use_submit_proof_weight_to_compute_the_weight() {
+        let vk_or_hash = VkOrHash::from_vk(24);
+        let expected_weight =
+            crate::submit_proof_weight::<Test, FakeVerifier>(&vk_or_hash, &42, &24, &None);
+
         let info = Call::<Test, FakeVerifier>::submit_proof {
             vk_or_hash,
             proof: Box::new(42),
@@ -421,7 +418,67 @@ mod submit_proof_should {
         .get_dispatch_info();
 
         assert_eq!(info.pays_fee, Pays::Yes);
-        assert_eq!(info.weight, weight);
+        assert_eq!(info.weight, expected_weight);
+    }
+
+    #[rstest]
+    #[case::no_domain(
+        VkOrHash::from_vk(24),
+        5,
+        6,
+        None,
+        Weight::from_parts(6506050024001000, 0)
+    )]
+    #[case::no_domain(
+        VkOrHash::from_hash(Default::default()),
+        5,
+        6,
+        None,
+        Weight::from_parts(6506050000001100, 10)
+    )]
+    #[case::no_domain(
+        VkOrHash::from_vk(24),
+        12,
+        24,
+        None,
+        Weight::from_parts(25224120024001000, 0)
+    )]
+    #[case::domain(
+        VkOrHash::from_vk(24),
+        5,
+        6,
+        Some(12),
+        Weight::from_parts(6506050024001042, 24)
+    )]
+    #[case::domain(
+        VkOrHash::from_hash(Default::default()),
+        5,
+        6,
+        Some(12),
+        Weight::from_parts(6506050000001142, 24)
+    )]
+    #[case::domain(
+        VkOrHash::from_vk(24),
+        12,
+        24,
+        Some(12),
+        Weight::from_parts(25224120024001042, 24)
+    )]
+    fn submit_proof_expected_weights(
+        #[case] vk_or_hash: VkOrHash,
+        #[case] proof: u64,
+        #[case] pubs: u64,
+        #[case] domain_id: Option<u32>,
+        #[case] expected: Weight,
+    ) {
+        let weight = crate::submit_proof_weight::<Test, FakeVerifier>(
+            &vk_or_hash,
+            &proof,
+            &pubs,
+            &domain_id,
+        );
+
+        assert_eq!(expected, weight);
     }
 
     mod reject {

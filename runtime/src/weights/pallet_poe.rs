@@ -56,6 +56,14 @@ use core::marker::PhantomData;
 pub struct ZKVWeight<T>(PhantomData<T>);
 
 impl<T: frame_system::Config> pallet_poe::WeightInfo for ZKVWeight<T> {
+
+    /// FAKE
+    fn on_proof_verified() -> Weight {
+        Weight::from_parts(20_308_000, 4000)
+            .saturating_add(RocksDbWeight::get().reads(3_u64))
+            .saturating_add(RocksDbWeight::get().writes(2_u64))
+    }
+
     /// Storage: `Poe::NextAttestation` (r:1 w:1)
     /// Proof: `Poe::NextAttestation` (`max_values`: Some(1), `max_size`: Some(8), added: 503, mode: `MaxEncodedLen`)
     /// Storage: `Poe::Values` (r:65 w:32)

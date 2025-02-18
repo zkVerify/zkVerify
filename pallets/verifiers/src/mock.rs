@@ -17,7 +17,7 @@
 use frame_support::{
     derive_impl, parameter_types,
     traits::{fungible::HoldConsideration, LinearStoragePrice},
-    weights::{constants::ParityDbWeight, Weight},
+    weights::{RuntimeDbWeight, Weight},
 };
 use frame_system::RawOrigin;
 use hp_verifiers::{Verifier, VerifyError, WeightInfo};
@@ -70,6 +70,13 @@ pub mod on_proof_verified {
                     domain_id,
                     value,
                 });
+            }
+
+            fn weight(domain_id: &Option<u32>) -> Weight {
+                match domain_id {
+                    Some(_) => Weight::from_parts(42, 24),
+                    None => Default::default(),
+                }
             }
         }
 
@@ -155,7 +162,7 @@ pub mod fake_pallet {
 
         fn verifier_version_hash(proof: &Self::Proof) -> Option<sp_core::H256> {
             match *proof {
-                n if n >= PROOF_WITH_FAKE_VERSION_LOWER_BOUND => {
+                n if [24, 100].contains(&n) || n >= PROOF_WITH_FAKE_VERSION_LOWER_BOUND => {
                     Some(sp_core::H256::from_low_u64_be(n))
                 }
                 _ => None,
@@ -166,14 +173,6 @@ pub mod fake_pallet {
 
 pub struct MockWeightInfo;
 impl WeightInfo<FakeVerifier> for MockWeightInfo {
-    fn submit_proof(_proof: &u64, _pubs: &u64) -> Weight {
-        Weight::from_parts(1, 2)
-    }
-
-    fn submit_proof_with_vk_hash(_proof: &u64, _pubs: &u64) -> Weight {
-        Weight::from_parts(3, 4)
-    }
-
     fn register_vk(_vk: &u64) -> Weight {
         Weight::from_parts(5, 6)
     }
@@ -181,16 +180,41 @@ impl WeightInfo<FakeVerifier> for MockWeightInfo {
     fn unregister_vk() -> Weight {
         Weight::from_parts(7, 8)
     }
+
+    fn verify_proof(
+        proof: &<FakeVerifier as Verifier>::Proof,
+        pubs: &<FakeVerifier as Verifier>::Pubs,
+    ) -> Weight {
+        Weight::from_parts(10_000_000_000 * proof + 1_000_000_000_000 * pubs, 0)
+    }
+
+    fn get_vk() -> Weight {
+        Weight::from_parts(100, 10)
+    }
+
+    fn validate_vk(vk: &<FakeVerifier as Verifier>::Vk) -> Weight {
+        Weight::from_parts(1_000_000 * vk, 0)
+    }
+
+    fn compute_statement_hash(
+        proof: &<FakeVerifier as Verifier>::Proof,
+        pubs: &<FakeVerifier as Verifier>::Pubs,
+    ) -> Weight {
+        Weight::from_parts(
+            100_000_000_000_000 * proof + 10_00_000_000_000_000 * pubs,
+            0,
+        )
+    }
 }
 
 pub struct MockCommonWeightInfo;
 impl crate::common::WeightInfo for MockCommonWeightInfo {
     fn disable_verifier() -> Weight {
-        Weight::from_parts(1001, 1002)
+        Weight::from_parts(101, 102)
     }
 
     fn on_verify_disabled_verifier() -> Weight {
-        Weight::from_parts(1003, 1004)
+        Weight::from_parts(103, 104)
     }
 }
 
@@ -206,13 +230,22 @@ frame_support::construct_runtime!(
     }
 );
 
+parameter_types! {
+    /// ParityDB can be enabled with a feature flag, but is still experimental. These weights
+    /// are available for brave runtime engineers who may want to try this out as default.
+    pub const MockDbWeight: RuntimeDbWeight = RuntimeDbWeight {
+        read: 1_000,
+        write: 100_000,
+    };
+}
+
 #[derive_impl(frame_system::config_preludes::SolochainDefaultConfig as frame_system::DefaultConfig)]
 impl frame_system::Config for Test {
     type AccountId = AccountId;
     type Lookup = IdentityLookup<Self::AccountId>;
     type Block = frame_system::mocking::MockBlockU32<Test>;
     type AccountData = pallet_balances::AccountData<Balance>;
-    type DbWeight = ParityDbWeight;
+    type DbWeight = MockDbWeight;
 }
 
 parameter_types! {

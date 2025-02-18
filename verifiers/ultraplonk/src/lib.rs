@@ -125,22 +125,11 @@ pub struct UltraplonkWeight<W: weight::WeightInfo>(PhantomData<W>);
 impl<T: Config, W: weight::WeightInfo> pallet_verifiers::WeightInfo<Ultraplonk<T>>
     for UltraplonkWeight<W>
 {
-    fn submit_proof(
+    fn verify_proof(
         _proof: &<Ultraplonk<T> as hp_verifiers::Verifier>::Proof,
         _pubs: &<Ultraplonk<T> as hp_verifiers::Verifier>::Pubs,
     ) -> Weight {
-        // The verification time does not depends on the number of public inputs: we use
-        // the one from 32 public inputs
-        W::submit_proof_32()
-    }
-
-    fn submit_proof_with_vk_hash(
-        _proof: &<Ultraplonk<T> as hp_verifiers::Verifier>::Proof,
-        _pubs: &<Ultraplonk<T> as hp_verifiers::Verifier>::Pubs,
-    ) -> Weight {
-        // The verification time does not depends on the number of public inputs: we use
-        // the one from 32 public inputs
-        W::submit_proof_32_with_vk_hash()
+        W::verify_proof()
     }
 
     fn register_vk(_vk: &<Ultraplonk<T> as hp_verifiers::Verifier>::Vk) -> Weight {
@@ -149,5 +138,20 @@ impl<T: Config, W: weight::WeightInfo> pallet_verifiers::WeightInfo<Ultraplonk<T
 
     fn unregister_vk() -> frame_support::weights::Weight {
         W::unregister_vk()
+    }
+
+    fn get_vk() -> Weight {
+        W::get_vk()
+    }
+
+    fn validate_vk(_vk: &<Ultraplonk<T> as hp_verifiers::Verifier>::Vk) -> Weight {
+        W::validate_vk()
+    }
+
+    fn compute_statement_hash(
+        _proof: &<Ultraplonk<T> as Verifier>::Proof,
+        _pubs: &<Ultraplonk<T> as Verifier>::Pubs,
+    ) -> Weight {
+        W::compute_statement_hash()
     }
 }

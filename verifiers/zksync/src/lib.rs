@@ -69,25 +69,33 @@ impl Verifier for Zksync {
 pub struct ZksyncWeight<W: weight::WeightInfo>(PhantomData<W>);
 
 impl<W: weight::WeightInfo> pallet_verifiers::WeightInfo<Zksync> for ZksyncWeight<W> {
-    fn submit_proof(
-        _proof: &<Zksync as hp_verifiers::Verifier>::Proof,
-        _pubs: &<Zksync as hp_verifiers::Verifier>::Pubs,
-    ) -> Weight {
-        W::submit_proof()
-    }
-
-    fn submit_proof_with_vk_hash(
-        _proof: &<Zksync as hp_verifiers::Verifier>::Proof,
-        _pubs: &<Zksync as hp_verifiers::Verifier>::Pubs,
-    ) -> Weight {
-        W::submit_proof_with_vk_hash()
-    }
-
     fn register_vk(_vk: &<Zksync as hp_verifiers::Verifier>::Vk) -> Weight {
         W::register_vk()
     }
 
     fn unregister_vk() -> frame_support::weights::Weight {
         W::unregister_vk()
+    }
+
+    fn verify_proof(
+        _proof: &<Zksync as Verifier>::Proof,
+        _pubs: &<Zksync as Verifier>::Pubs,
+    ) -> Weight {
+        W::verify_proof()
+    }
+
+    fn get_vk() -> Weight {
+        W::get_vk()
+    }
+
+    fn validate_vk(_vk: &<Zksync as hp_verifiers::Verifier>::Vk) -> Weight {
+        W::validate_vk()
+    }
+
+    fn compute_statement_hash(
+        _proof: &<Zksync as Verifier>::Proof,
+        _pubs: &<Zksync as Verifier>::Pubs,
+    ) -> Weight {
+        W::compute_statement_hash()
     }
 }

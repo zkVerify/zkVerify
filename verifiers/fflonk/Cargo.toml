@@ -25,15 +25,12 @@ frame-benchmarking = { workspace = true, optional = true }
 pallet-verifiers = { workspace = true }
 substrate-bn = "0.6.0"
 serde_json = { version = "1.0.117", optional = true, default-features = false }
-sp-io = { workspace = true, optional = true }
-pallet-aggregate = { workspace = true, optional = true, default-features = false, features = [
-    "runtime-benchmarks",
-] }
 
 [dev-dependencies]
 fflonk_verifier = { git = "https://github.com/HorizenLabs/fflonk_verifier.git", default-features = false, features = [
     "serde",
 ], tag = "v0.4.0" }
+sp-io = { workspace = true, features = ["std"] }
 hex-literal = { workspace = true }
 serde_json = { version = "1.0.117" }
 pallet-balances = { workspace = true, features = ["std", "runtime-benchmarks"] }
@@ -52,8 +49,7 @@ std = [
 	"pallet-balances/std",
 	"frame-benchmarking?/std",
 	"log/std",
-	"pallet-aggregate?/std",
-	"sp-io?/std"
+	"sp-io/std"
 ]
 runtime-benchmarks = [
 	"frame-benchmarking/runtime-benchmarks",
@@ -63,9 +59,6 @@ runtime-benchmarks = [
 	"frame-benchmarking",
 	"dep:hex-literal",
 	"dep:serde_json",
-	"dep:sp-io",
-	"dep:pallet-aggregate",
 	"fflonk_verifier/serde",
-	"pallet-aggregate?/runtime-benchmarks",
 	"pallet-balances/runtime-benchmarks"
 ]

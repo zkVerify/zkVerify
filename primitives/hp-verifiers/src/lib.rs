@@ -96,17 +96,18 @@ pub trait Verifier: 'static {
 }
 
 /// The trait used to map the `pallet-verifiers` extrinsic in you verifier implementation
-/// weights. The methods provide a borrowed proof and public inputs but your code should
+/// weights. The methods provide a borrowed proof, public inputs or vk but your code should
 /// use them just to guess the _size_ of your verification and map the method in the weights
 /// that you computed for your own verifier implementation.
+///
+/// Any implementation SHOULD be as plain as possible (ideally static mappings) without
+/// any logic and without any dependencies on some values that cannot be extracted
+/// in a fast way like type or a vector length. As an example of a non trivial
+/// implementation look at `pallet-groth16-verifier` where almost all functions
+/// depends on number of public inputs.
 pub trait WeightInfo<V: Verifier> {
-    /// Here you should map the given request to a weight computed with your verifier
-    /// in the case of the vk is explicit.
-    fn submit_proof(proof: &V::Proof, pubs: &V::Pubs) -> Weight;
-
-    /// Here you should map the given request to a weight computed with your verifier
-    /// in the case of the vk is provided via a registered vk and its hash.
-    fn submit_proof_with_vk_hash(proof: &V::Proof, pubs: &V::Pubs) -> Weight;
+    /// Here you should map the given request to a weight computed with your verifier.
+    fn verify_proof(proof: &V::Proof, pubs: &V::Pubs) -> Weight;
 
     /// Here you should map the given request to a weight computed with your verifier.
     fn register_vk(vk: &V::Vk) -> Weight;
@@ -114,6 +115,19 @@ pub trait WeightInfo<V: Verifier> {
     /// Here you should map the given unregister_vk request to the weight computed with
     /// your verifier.
     fn unregister_vk() -> Weight;
+
+    /// The weight about retrieving the vk from `Vks` storage. You should overestimate
+    /// it at the bigger vk that your pallet use.
+    fn get_vk() -> Weight;
+
+    /// This is the weight about execute [`Verifier::validate_vk`]. In the case that you
+    /// cannot get enough information to estimate it correctly you should return the worst
+    /// case value.
+    fn validate_vk(vk: &V::Vk) -> Weight;
+
+    /// Estimate the weight about `pallet_verifiers`'s `compute_statement_hash()`
+    /// for your verifier.
+    fn compute_statement_hash(proof: &V::Proof, pubs: &V::Pubs) -> Weight;
 }
 
 /// `()` is a verifier that reject the proof and returns `VerifyError::VerifyError`.

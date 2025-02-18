@@ -74,6 +74,10 @@ pub mod pallet {
         ) {
             Self::insert(pubs_hash);
         }
+
+        fn weight(_domain_id: &Option<u32>) -> Weight {
+            <T as Config>::WeightInfo::on_proof_verified()
+        }
     }
 
     #[pallet::pallet]

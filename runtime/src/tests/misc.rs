@@ -16,6 +16,7 @@
 //! Here we write miscellaneous tests that don't fall in the other categories.
 
 use frame_support::traits::ExistenceRequirement;
+use pallet_verifiers::VkOrHash;
 
 use super::*;
 
@@ -47,5 +48,58 @@ fn check_starting_balances_and_existential_limit() {
             Balances::balance(&testsfixtures::SAMPLE_USERS[3].raw_account.into()),
             0
         );
+    });
+}
+
+#[test]
+fn submit_proof_weights_composition() {
+    test().execute_with(|| {
+        use frame_support::dispatch::GetDispatchInfo;
+        use pallet_aggregate::WeightInfo;
+        use pallet_groth16_verifier::Groth16;
+
+        let info =
+            pallet_verifiers::Call::<Runtime, pallet_groth16_verifier::Groth16<Runtime>>::submit_proof {
+                vk_or_hash: VkOrHash::from_hash(H256::zero()),
+                proof: pallet_groth16_verifier::Proof::default().into(),
+                pubs: Box::new(Vec::new()),
+                domain_id: Some(2),
+            }
+            .get_dispatch_info();
+        let ref_time = info.weight.ref_time();
+        let proof_size = info.weight.proof_size();
+
+        let verify_time = <<Runtime as pallet_verifiers::Config<Groth16<Runtime>>>::WeightInfo as
+            pallet_verifiers::WeightInfo<Groth16<Runtime>>>
+            ::verify_proof(
+            &pallet_groth16_verifier::Proof::default(),
+            &Vec::new()
+        ).ref_time();
+
+        // We don't want here check the complete logic for the ref time (unit tests should be enough)
+        assert!(ref_time > verify_time);
+        assert_eq!(proof_size, <Runtime as pallet_aggregate::Config>::WeightInfo::on_proof_verified().proof_size());
+    });
+}
+
+#[test]
+fn submit_proof_weights_composition_should_ignore_aggregate_if_no_domain() {
+    test().execute_with(|| {
+        use frame_support::dispatch::GetDispatchInfo;
+        use pallet_aggregate::WeightInfo;
+
+        let info =
+            pallet_verifiers::Call::<Runtime, pallet_groth16_verifier::Groth16<Runtime>>::submit_proof {
+                vk_or_hash: VkOrHash::from_hash(H256::zero()),
+                proof: pallet_groth16_verifier::Proof::default().into(),
+                pubs: Box::new(Vec::new()),
+                domain_id: None,
+            }
+            .get_dispatch_info();
+
+        let proof_size = info.weight.proof_size();
+
+        // We check that is lesser than half of the aggregate weight... just a reference to be sure that not use it
+        assert!(proof_size < <Runtime as pallet_aggregate::Config>::WeightInfo::on_proof_verified().proof_size()/2);
     });
 }

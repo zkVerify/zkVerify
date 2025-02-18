@@ -22,6 +22,7 @@ use frame_support::{
     assert_err, assert_ok,
     dispatch::{GetDispatchInfo, Pays},
     traits::Hooks,
+    weights::Weight,
 };
 use hp_on_proof_verified::OnProofVerified;
 use rstest::rstest;
@@ -1170,4 +1171,16 @@ mod get_statement_path {
             );
         })
     }
+}
+
+#[test]
+fn return_the_correct_weigh_on_proof_verified() {
+    assert_eq!(
+        <Aggregate as OnProofVerified<u64>>::weight(&None),
+        Weight::default()
+    );
+    assert_eq!(
+        <Aggregate as OnProofVerified<u64>>::weight(&Some(42)),
+        <Test as crate::Config>::WeightInfo::on_proof_verified()
+    );
 }
