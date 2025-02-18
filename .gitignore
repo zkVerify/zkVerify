@@ -4,7 +4,6 @@ target/
 *.iml
 .secrets
 .vscode
-actionlint.yaml
 docker/resources/deploy
 docker/resources/envs/.env
 node_modules

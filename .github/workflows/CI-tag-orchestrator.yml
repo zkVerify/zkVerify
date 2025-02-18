@@ -13,7 +13,7 @@ jobs:
         chain: [solo, relay]
       fail-fast: false
 
-    uses: ./.github/workflows/CI-build-test-publish.yml
+    uses: ./.github/workflows/CI-docker-build-publish.yml
     with:
       chain: ${{ matrix.chain }}
       release_branch: release

@@ -14,10 +14,8 @@ jobs:
     name: Cargo test job
     uses: ./.github/workflows/CI-test.yml
 
-  # Requires artifacts from the build job
   try-runtime-job:
     name: Try runtime job
-    needs: [build-job]
     uses: ./.github/workflows/CI-try-runtime.yml
 
   coverage-job:

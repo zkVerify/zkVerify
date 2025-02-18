@@ -32,7 +32,7 @@ jobs:
           chmod +x target/release/*
 
       - name: Yarn install and zombienet test
-        uses: ./.github/actions/cargo-cmd
+        uses: ./.github/actions/cmd-in-docker
         with:
           command: >-
             /bin/bash -c 'set -o pipefail && cd /build/zombienet-tests

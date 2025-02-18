@@ -30,7 +30,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Generate Rust documentation
-        uses: ./.github/actions/cargo-cmd
+        uses: ./.github/actions/cmd-in-docker
         with:
           command: >-
             /bin/bash -c 'cargo doc --no-deps --release

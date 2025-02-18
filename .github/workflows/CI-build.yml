@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Solo chain build
-        uses: ./.github/actions/cargo-cmd
+        uses: ./.github/actions/cmd-in-docker
         with:
           command: "cargo build -p mainchain --release"
           use_cache: 'yes'
@@ -39,7 +39,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Relay chain and paratest build
-        uses: ./.github/actions/cargo-cmd
+        uses: ./.github/actions/cmd-in-docker
         with:
           command: "cargo build -p zkv-relay -p paratest-node --release --features fast-runtime"
           use_cache: 'yes'
@@ -56,29 +56,5 @@ jobs:
             target/release/zkv-relay-execute-worker
             target/release/zkv-relay-prepare-worker
             target/release/paratest-node
-          retention-days: 1
-          overwrite: true
-
-  build-try-runtime:
-    runs-on: warp-ubuntu-latest-x64-8x
-    name: Build try-runtime
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: zkv-runtime build
-        uses: ./.github/actions/cargo-cmd
-        with:
-          command: "cargo build -p zkv-runtime --release --features try-runtime"
-          use_cache: 'yes'
-          cache_key: 'build-try-runtime'
-          cmake_install: 'yes'
-          lld_install: 'yes'
-
-      - name: Upload try-runtime wasm artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: "try-runtime"
-          path: target/release/wbuild/zkv-runtime/zkv_runtime.compact.compressed.wasm
           retention-days: 1
           overwrite: true

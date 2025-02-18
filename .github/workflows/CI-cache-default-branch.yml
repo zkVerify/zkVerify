@@ -30,6 +30,12 @@ jobs:
     name: Lint and format job cache rebuild
     uses: ./.github/workflows/CI-lint-format.yml
 
+  try-runtime-job-cache:
+    name: Try runtime job cache rebuild
+    uses: ./.github/workflows/CI-try-runtime.yml
+    with:
+      execute-try-runtime: 'no'
+
   rustdoc-job-cache:
     name: Rustdoc job cache rebuild
     uses: ./.github/workflows/CI-rustdoc.yml

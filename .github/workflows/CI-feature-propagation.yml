@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Features
-        uses: ./.github/actions/cargo-cmd
+        uses: ./.github/actions/cmd-in-docker
         with:
           command: "zepter run --config .cargo/zepter-ci.yaml | tee features_output.txt"
           use_cache: 'no'

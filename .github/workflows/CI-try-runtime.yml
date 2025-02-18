@@ -4,27 +4,43 @@ run-name: "Workflow CI/CD Steps: execute try-runtime"
 
 on:
   workflow_call:
+    inputs:
+      execute-try-runtime:
+        description: 'Whether to execute try-runtime step or not'
+        required: false
+        type: string
+        default: 'yes'
   workflow_dispatch:
+    inputs:
+      execute-try-runtime:
+        description: 'Whether to execute try-runtime step or not'
+        required: false
+        type: string
+        default: 'yes'
 
 jobs:
   try-runtime:
-    runs-on: warp-ubuntu-latest-x64-2x
+    runs-on: warp-ubuntu-latest-x64-8x
     name: Try runtime
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download try-runtime wasm artifact
-        uses: actions/download-artifact@v4
+      - name: zkv-runtime build
+        uses: ./.github/actions/cmd-in-docker
         with:
-          name: "try-runtime"
-          path: ${{ github.workspace }}
+          command: "cargo build -p zkv-runtime --release --features try-runtime"
+          use_cache: 'yes'
+          cache_key: 'build-try-runtime'
+          cmake_install: 'yes'
+          lld_install: 'yes'
 
       - name: Execute try-runtime
-        uses: ./.github/actions/cargo-cmd
+        if: ${{ inputs.execute-try-runtime == 'yes' }}
+        uses: ./.github/actions/cmd-in-docker
         with:
           command: >-
             /bin/bash -c 'curl -sL https://github.com/paritytech/try-runtime-cli/releases/download/v0.8.0/try-runtime-x86_64-unknown-linux-musl -o /build/try-runtime
             && chmod +x /build/try-runtime
-            && /build/try-runtime --runtime /build/zkv_runtime.compact.compressed.wasm on-runtime-upgrade --blocktime 6 --disable-mbm-checks --disable-spec-version-check live --uri wss://testnet-rpc.zkverify.io'
+            && /build/try-runtime --runtime /build/target/release/wbuild/zkv-runtime/zkv_runtime.compact.compressed.wasm on-runtime-upgrade --blocktime 6 --disable-mbm-checks --disable-spec-version-check live --uri wss://testnet-rpc.zkverify.io'
           use_cache: 'no'

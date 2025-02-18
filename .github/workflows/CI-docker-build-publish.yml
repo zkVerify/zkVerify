@@ -1,6 +1,6 @@
-name: Build, Test and Publish Docker Image
+name: Docker image build and publish
 
-run-name: "Workflow CI/CD Steps: build, test and publish docker image"
+run-name: "Workflow CI/CD Steps: Docker image build and publish"
 
 on:
   workflow_call:
@@ -72,7 +72,7 @@ jobs:
         run: |
           # shellcheck disable=SC1090
           source "${GITHUB_WORKSPACE}/ci/setup_env.sh"
-          "${GITHUB_WORKSPACE}/ci/docker.sh" --image-artifact ${{ needs.build-docker.outputs.artifact_name }}
+          "${GITHUB_WORKSPACE}/ci/publish-docker-image.sh" --image-artifact ${{ needs.build-docker.outputs.artifact_name }}
 
       - name: Upload runtime artifacts
         uses: actions/upload-artifact@v4

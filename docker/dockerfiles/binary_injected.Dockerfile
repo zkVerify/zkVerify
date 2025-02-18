@@ -21,7 +21,7 @@ WORKDIR /app
 COPY "bin/*" "/usr/local/bin/"
 RUN chmod -R a+rx "/usr/local/bin"
 
-RUN apt-get update \
+RUN apt-get update -qq \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
       aria2 \
       ca-certificates \

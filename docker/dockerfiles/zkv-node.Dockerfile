@@ -46,11 +46,7 @@ LABEL io.image.authors="${AUTHORS}" \
 USER root
 WORKDIR /app
 
-COPY --from=builder "/usr/src/node/target/${PROFILE}/${BINARY}" "/usr/local/bin/"
-COPY --from=builder "/usr/src/node/target/${PROFILE}/wbuild/zkv-runtime/zkv_runtime.compact.compressed.wasm" "./zkv_runtime.compact.compressed.wasm"
-RUN chmod -R a+rx "/usr/local/bin"
-
-RUN apt-get update \
+RUN apt-get update -qq \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
       aria2 \
       ca-certificates \
@@ -65,9 +61,12 @@ RUN apt-get update \
     && apt-get -y autoremove \
     && rm -rf /var/{lib/apt/lists/*,cache/apt/archives/*.deb} /tmp/*
 
+COPY --from=builder "/usr/src/node/target/${PROFILE}/${BINARY}" "/usr/local/bin/"
+COPY --from=builder "/usr/src/node/target/${PROFILE}/wbuild/zkv-runtime/zkv_runtime.compact.compressed.wasm" "./zkv_runtime.compact.compressed.wasm"
+RUN chmod -R a+rx "/usr/local/bin"
+
 COPY docker/scripts/entrypoint.sh .
-COPY docker/scripts/remove_password_file.sh .
-RUN chmod +x entrypoint.sh remove_password_file.sh
+RUN chmod +x entrypoint.sh
 
 USER "${RUN_USER}"
 

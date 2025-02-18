@@ -16,12 +16,12 @@ inputs:
     required: false
     type: string
   image_name:
-    description: 'Docker image name to use for the cargo commands'
+    description: 'Docker image name to use for the command(s) to run in'
     required: false
     type: string
     default: 'zencash/sc-ci-base'
   image_tag:
-    description: 'Docker image tag to use for the cargo commands'
+    description: 'Docker image tag to use for the command(s) to run in'
     required: false
     type: string
     default: 'noble_rust-stable_latest'

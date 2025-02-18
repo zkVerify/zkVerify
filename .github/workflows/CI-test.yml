@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Cargo unit test
-        uses: ./.github/actions/cargo-cmd
+        uses: ./.github/actions/cmd-in-docker
         with:
           command: "cargo test --lib --bins --all-features --no-fail-fast --release 2>&1 | tee unit_test_output.txt"
           use_cache: 'yes'
@@ -40,9 +40,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Cargo unit test WITHOUT relay feature
-        uses: ./.github/actions/cargo-cmd
+        uses: ./.github/actions/cmd-in-docker
         with:
-          command: "cargo test --lib --bins --all-features --no-fail-fast --release 2>&1 | tee unit_test_no_relay_output.txt"
+          command: "cargo test -p zkv-runtime --lib --bins --features runtime-benchmarks --no-fail-fast --release 2>&1 | tee unit_test_no_relay_output.txt"
           use_cache: 'yes'
           cache_key: 'unit-test-no-relay'
           cmake_install: 'yes'
@@ -65,7 +65,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Cargo integration test
-        uses: ./.github/actions/cargo-cmd
+        uses: ./.github/actions/cmd-in-docker
         with:
           command: "cargo test --test '*' --all-features --no-fail-fast --release 2>&1 | tee integration_test_output.txt"
           use_cache: 'yes'

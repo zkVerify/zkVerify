@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Cargo lint
-        uses: ./.github/actions/cargo-cmd
+        uses: ./.github/actions/cmd-in-docker
         with:
           command: "cargo clippy --release -- --deny warnings 2>&1 | tee linting_output.txt"
           use_cache: 'yes'
@@ -33,7 +33,7 @@ jobs:
           overwrite: true
 
       - name: Cargo format
-        uses: ./.github/actions/cargo-cmd
+        uses: ./.github/actions/cmd-in-docker
         with:
           command: "cargo fmt --check 2>&1 | tee formatting_output.txt"
           use_cache: 'yes'
