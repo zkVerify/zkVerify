@@ -168,16 +168,6 @@ fn pallet_referenda() {
 }
 
 #[test]
-fn pallet_whitelist() {
-    use pallet_whitelist::WeightInfo;
-
-    assert_eq!(
-        <Runtime as pallet_whitelist::Config>::WeightInfo::whitelist_call(),
-        crate::weights::pallet_whitelist::ZKVWeight::<Runtime>::whitelist_call()
-    );
-}
-
-#[test]
 fn pallet_conviction_voting() {
     use pallet_conviction_voting::WeightInfo;
 

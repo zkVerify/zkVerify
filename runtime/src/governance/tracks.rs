@@ -29,19 +29,6 @@ const SUP_STAKING_ADMIN: Curve =
     Curve::make_reciprocal(12, 28, percent(1), percent(0), percent(50));
 const APP_TREASURER: Curve = Curve::make_reciprocal(4, 28, percent(80), percent(50), percent(100));
 const SUP_TREASURER: Curve = Curve::make_linear(28, 28, percent(0), percent(50));
-const APP_FELLOWSHIP_ADMIN: Curve = Curve::make_linear(17, 28, percent(50), percent(100));
-const SUP_FELLOWSHIP_ADMIN: Curve =
-    Curve::make_reciprocal(12, 28, percent(1), percent(0), percent(50));
-const APP_GENERAL_ADMIN: Curve =
-    Curve::make_reciprocal(4, 28, percent(80), percent(50), percent(100));
-const SUP_GENERAL_ADMIN: Curve =
-    Curve::make_reciprocal(7, 28, percent(10), percent(0), percent(50));
-const APP_AUCTION_ADMIN: Curve =
-    Curve::make_reciprocal(4, 28, percent(80), percent(50), percent(100));
-const SUP_AUCTION_ADMIN: Curve =
-    Curve::make_reciprocal(7, 28, percent(10), percent(0), percent(50));
-const APP_LEASE_ADMIN: Curve = Curve::make_linear(17, 28, percent(50), percent(100));
-const SUP_LEASE_ADMIN: Curve = Curve::make_reciprocal(12, 28, percent(1), percent(0), percent(50));
 const APP_REFERENDUM_CANCELLER: Curve = Curve::make_linear(17, 28, percent(50), percent(100));
 const SUP_REFERENDUM_CANCELLER: Curve =
     Curve::make_reciprocal(12, 28, percent(1), percent(0), percent(50));
@@ -60,12 +47,9 @@ const SUP_MEDIUM_SPENDER: Curve =
     Curve::make_reciprocal(16, 28, percent(1), percent(0), percent(50));
 const APP_BIG_SPENDER: Curve = Curve::make_linear(28, 28, percent(50), percent(100));
 const SUP_BIG_SPENDER: Curve = Curve::make_reciprocal(20, 28, percent(1), percent(0), percent(50));
-const APP_WHITELISTED_CALLER: Curve =
-    Curve::make_reciprocal(16, 28 * 24, percent(96), percent(50), percent(100));
-const SUP_WHITELISTED_CALLER: Curve =
-    Curve::make_reciprocal(1, 28, percent(20), percent(5), percent(50));
 
-const TRACKS_DATA: [(u16, pallet_referenda::TrackInfo<Balance, BlockNumber>); 16] = [
+const TRACKS_DATA: &[(u16, pallet_referenda::TrackInfo<Balance, BlockNumber>)] = &[
+    #[cfg(feature = "runtime-benchmarks")]
     (
         0,
         pallet_referenda::TrackInfo {
@@ -78,20 +62,6 @@ const TRACKS_DATA: [(u16, pallet_referenda::TrackInfo<Balance, BlockNumber>); 16
             min_enactment_period: 24 * HOURS,
             min_approval: APP_ROOT,
             min_support: SUP_ROOT,
-        },
-    ),
-    (
-        1,
-        pallet_referenda::TrackInfo {
-            name: "whitelisted_caller",
-            max_deciding: 100,
-            decision_deposit: 10 * THOUSANDS,
-            prepare_period: 30 * MINUTES,
-            decision_period: 28 * DAYS,
-            confirm_period: 10 * MINUTES,
-            min_enactment_period: 10 * MINUTES,
-            min_approval: APP_WHITELISTED_CALLER,
-            min_support: SUP_WHITELISTED_CALLER,
         },
     ),
     (
@@ -134,62 +104,6 @@ const TRACKS_DATA: [(u16, pallet_referenda::TrackInfo<Balance, BlockNumber>); 16
             min_enactment_period: 24 * HOURS,
             min_approval: APP_TREASURER,
             min_support: SUP_TREASURER,
-        },
-    ),
-    (
-        12,
-        pallet_referenda::TrackInfo {
-            name: "lease_admin",
-            max_deciding: 10,
-            decision_deposit: 5 * THOUSANDS,
-            prepare_period: 2 * HOURS,
-            decision_period: 28 * DAYS,
-            confirm_period: 3 * HOURS,
-            min_enactment_period: 10 * MINUTES,
-            min_approval: APP_LEASE_ADMIN,
-            min_support: SUP_LEASE_ADMIN,
-        },
-    ),
-    (
-        13,
-        pallet_referenda::TrackInfo {
-            name: "fellowship_admin",
-            max_deciding: 10,
-            decision_deposit: 5 * THOUSANDS,
-            prepare_period: 2 * HOURS,
-            decision_period: 28 * DAYS,
-            confirm_period: 3 * HOURS,
-            min_enactment_period: 10 * MINUTES,
-            min_approval: APP_FELLOWSHIP_ADMIN,
-            min_support: SUP_FELLOWSHIP_ADMIN,
-        },
-    ),
-    (
-        14,
-        pallet_referenda::TrackInfo {
-            name: "general_admin",
-            max_deciding: 10,
-            decision_deposit: 5 * THOUSANDS,
-            prepare_period: 2 * HOURS,
-            decision_period: 28 * DAYS,
-            confirm_period: 3 * HOURS,
-            min_enactment_period: 10 * MINUTES,
-            min_approval: APP_GENERAL_ADMIN,
-            min_support: SUP_GENERAL_ADMIN,
-        },
-    ),
-    (
-        15,
-        pallet_referenda::TrackInfo {
-            name: "auction_admin",
-            max_deciding: 10,
-            decision_deposit: 5 * THOUSANDS,
-            prepare_period: 2 * HOURS,
-            decision_period: 28 * DAYS,
-            confirm_period: 3 * HOURS,
-            min_enactment_period: 10 * MINUTES,
-            min_approval: APP_AUCTION_ADMIN,
-            min_support: SUP_AUCTION_ADMIN,
         },
     ),
     (
@@ -297,25 +211,21 @@ impl pallet_referenda::TracksInfo<Balance, BlockNumber> for TracksInfo {
     type Id = u16;
     type RuntimeOrigin = <RuntimeOrigin as frame_support::traits::OriginTrait>::PalletsOrigin;
     fn tracks() -> &'static [(Self::Id, pallet_referenda::TrackInfo<Balance, BlockNumber>)] {
-        &TRACKS_DATA[..]
+        TRACKS_DATA
     }
     fn track_for(id: &Self::RuntimeOrigin) -> Result<Self::Id, ()> {
-        if let Ok(system_origin) = frame_system::RawOrigin::try_from(id.clone()) {
-            match system_origin {
+        let system_origin = frame_system::RawOrigin::try_from(id.clone());
+        if cfg!(feature = "runtime-benchmarks") && system_origin.is_ok() {
+            match system_origin.unwrap() {
                 frame_system::RawOrigin::Root => Ok(0),
                 _ => Err(()),
             }
         } else if let Ok(custom_origin) = origins::Origin::try_from(id.clone()) {
             match custom_origin {
-                origins::Origin::WhitelistedCaller => Ok(1),
                 origins::Origin::WishForChange => Ok(2),
                 // General admin
                 origins::Origin::StakingAdmin => Ok(10),
                 origins::Origin::Treasurer => Ok(11),
-                origins::Origin::LeaseAdmin => Ok(12),
-                origins::Origin::FellowshipAdmin => Ok(13),
-                origins::Origin::GeneralAdmin => Ok(14),
-                origins::Origin::AuctionAdmin => Ok(15),
                 // Referendum admins
                 origins::Origin::ReferendumCanceller => Ok(20),
                 origins::Origin::ReferendumKiller => Ok(21),
