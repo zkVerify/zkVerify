@@ -17,7 +17,8 @@ Start a _**solo**_ chain with 2 validators (Alice and Bob) and a simple client n
 > docker compose -f docker/dockerfiles/zkv-docker-compose.yaml up
 ```
 
-**TO BE SUPPORTED:** Start a _**relay**_ chain with a test _**parachain**_ with:
+Start a _**relay**_ chain with a test _**parachain**_ with:
+> ⚠️ First generate `raw-chainspec.json` following the instructions [here](../RELAY.md#generate-relay-chain-spec-file):
 - 2 relay chain validators (Alice and Bob) and a simple relay chain client node
 - 2 parachain collators (Alice and Bob) and a simple parachain client node
 
