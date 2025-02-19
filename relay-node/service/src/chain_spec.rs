@@ -38,9 +38,9 @@ pub struct Extensions {
 
 // The connection strings for bootnodes
 const BOOTNODE_1_DNS: &str = "bootnode-tn-1.zkverify.io";
-const BOOTNODE_1_PEER_ID: &str = "12D3KooWNhvf6iSowraUY4tZnjpNZXEe85oy9zDWYRKFBnWivukc";
+const BOOTNODE_1_PEER_ID: &str = "TBD";
 const BOOTNODE_2_DNS: &str = "bootnode-tn-2.zkverify.io";
-const BOOTNODE_2_PEER_ID: &str = "12D3KooWEjVadU1YWyfDGvyRXPbCq2rXhzJtXaG4RxJZBkGE9Aug";
+const BOOTNODE_2_PEER_ID: &str = "TBD";
 
 // The URL for the telemetry server.
 const STAGING_TELEMETRY_URL: &str = "wss://testnet-telemetry.zkverify.io/submit/";
@@ -285,90 +285,14 @@ pub fn testnet_config() -> Result<ChainSpec, String> {
     .with_genesis_config_patch(genesis(
         // Initial PoA authorities
         vec![
-            // nh-validator-t1
-            (
-                authority_ids_from_ss58(
-                    "5ETuZEyLnfVzQCaDM8aQCcsNnz6xjPKvQCtqynCLqwng8QLd",
-                    "5CbPYnSSw7KpKAJR3caCYv7KP3ChaAUgw5BgC3GPppnfiK5E",
-                )?,
-                280 * currency::MILLIONS,
-            ),
-            // nh-validator-t2
-            (
-                authority_ids_from_ss58(
-                    "5D29UEzgStCBTnjKNdkurDNvd3FHePHgTkPEUvjXYvg3brJj",
-                    "5H5XnaSsh5eebN2BSTx19qCUweMziyJATuUVb9qdWVDhHQ3K",
-                )?,
-                280 * currency::MILLIONS,
-            ),
-            // nh-validator-t3
-            (
-                authority_ids_from_ss58(
-                    "5DiMVAp8WmFyWAwaTwAr7sU4K3brXcgNCBDbHoBWj3M46PiP",
-                    "5CYcXe9bodJ31HE6pLT9EyUK5mrB3otXDNhDXVFSSmTAYm4f",
-                )?,
-                140 * currency::MILLIONS,
-            ),
+            // TBD
         ],
         // Sudo account [nh-sudo-t1]
         from_ss58check("5D9txxK9DTvgCznTjJo7q1cxAgmWa83CzHvcz8zhBtLgaLBV")
             .map_err(|error| error.to_string())?,
         // Initial balances
         vec![
-            // nh-validator-t1
-            (
-                from_ss58check("5ETuZEyLnfVzQCaDM8aQCcsNnz6xjPKvQCtqynCLqwng8QLd")
-                    .map_err(|error| error.to_string())?,
-                280 * currency::MILLIONS + 1000 * currency::ACME,
-            ),
-            // nh-validator-t2
-            (
-                from_ss58check("5D29UEzgStCBTnjKNdkurDNvd3FHePHgTkPEUvjXYvg3brJj")
-                    .map_err(|error| error.to_string())?,
-                280 * currency::MILLIONS + 1000 * currency::ACME,
-            ),
-            // nh-validator-t3
-            (
-                from_ss58check("5DiMVAp8WmFyWAwaTwAr7sU4K3brXcgNCBDbHoBWj3M46PiP")
-                    .map_err(|error| error.to_string())?,
-                140 * currency::MILLIONS + 1000 * currency::ACME,
-            ),
-            // nh-sudo-t1
-            (
-                from_ss58check("5EhREncHsntgJaax9YQphk1xN3LxPu2Rzbz4A3g7Ut8cRXWq")
-                    .map_err(|error| error.to_string())?,
-                7 * currency::MILLIONS,
-            ),
-            // nh-wallet-custody-t1
-            (
-                from_ss58check("5C84NU2477uHCUF1A8rHb89sP2D2ZsnquPaGa2Htv75FN9gm")
-                    .map_err(|error| error.to_string())?,
-                70 * currency::MILLIONS,
-            ),
-            // nh-wallet-custody-t2
-            (
-                from_ss58check("5HdZjrmNAkWQhYQUPNv7YRYnT4vyQswjbNm8eXBvULNQz5wH")
-                    .map_err(|error| error.to_string())?,
-                70 * currency::MILLIONS,
-            ),
-            // nh-wallet-automated-t1
-            (
-                from_ss58check("5HjFLKpiCStQgRm6ZM1fT1R5pLKAqQdUG3uh7pvzaQfhdFuB")
-                    .map_err(|error| error.to_string())?,
-                35 * currency::MILLIONS,
-            ),
-            // nh-wallet-user-t1
-            (
-                from_ss58check("5ECktCamcAtBFJirEzvvJmXFxgLMCTAejhqZwLT1Dxn2fwB1")
-                    .map_err(|error| error.to_string())?,
-                7 * currency::MILLIONS,
-            ),
-            // nh-wallet-faucet-t1
-            (
-                from_ss58check("5EZbvFqx3j7ejqBSPWseif8xL3PwoqMQHdMT8rs9qWoHcdR3")
-                    .map_err(|error| error.to_string())?,
-                70 * currency::MILLIONS,
-            ),
+            // TBD
         ],
         true,
     ))
