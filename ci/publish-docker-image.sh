@@ -1,4 +1,6 @@
 #!/bin/bash
+# --image-artifact argument and its value are required
+
 set -eEuo pipefail
 
 workdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." &> /dev/null && pwd )"
@@ -13,6 +15,7 @@ test_release="${TEST_RELEASE:-false}"
 github_ref_name="${GITHUB_REF_NAME:-}"
 common_file_location="${COMMON_FILE_LOCATION:-not-set}"
 image_artifact=""
+docker_tag_full=""
 
 # Requirement
 if ! [ -f "${common_file_location}" ]; then
@@ -24,16 +27,23 @@ else
 fi
 
 # Check for command-line options
-while [[ $# -gt 0 ]]; do
-  case "$1" in
+while [ $# -gt 0 ]; do
+  case "${1:-}" in
     --image-artifact)
-      echo "Option --image-artifact was triggered with value: $2"
-      image_artifact="$2"
-      shift ;;
-    *) shift ;;
+      if [ -z "${2:-}" ]; then  # Check if the value for --image-artifact is empty
+        fn_die "ERROR: --image-artifact argument's value CAN NOT be empty !!!"
+      fi
+      echo "Option --image-artifact argument has value: ${2}"
+      image_artifact="${2}"
+      shift 2 ;;  # Skip both the option and its value
+    *) shift ;;  # Shift for any other options
   esac
-  shift
 done
+
+# Check if image_artifact is still empty (i.e., the option was not provided or had no value)
+if [ -z "${image_artifact}" ]; then
+  fn_die "ERROR: --image-artifact is a required argument"
+fi
 
 ####
 # Main
@@ -48,20 +58,13 @@ if [ -z "${docker_hub_username:-}" ]; then
   fn_die "ERROR: DOCKER_HUB_USERNAME variable is not set. Exiting ..."
 fi
 
-docker_tag_full=""
+# Load docker image
 if [ "${is_a_release}" = "true" ]; then
   docker_tag_full="${github_ref_name}"
-fi
 
-# Load docker image
-if [ -n "${docker_tag_full:-}" ]; then
-  if [ -n "${image_artifact:-}" ]; then
-    log_info "=== Using Docker image artifact from upstream ==="
-    image_name="$(docker load -i "${GITHUB_WORKSPACE}/${image_artifact}.tar" | awk '/Loaded image:/ { print $3 }')"
-    log_info "=== Loaded image ${image_name} ==="
-  else
-    fn_die "ERROR: No artifact specified with --image-artifact. Exiting ..."
-  fi
+  log_info "=== Using Docker image artifact from upstream ==="
+  image_name="$(docker load -i "${GITHUB_WORKSPACE}/${image_artifact}.tar" | awk '/Loaded image:/ { print $3 }')"
+  log_info "=== Loaded already built image '${image_name}' ==="
 
   # Publishing to DockerHub
   log_info "=== Publishing Docker image(s) on Docker Hub ==="
@@ -95,11 +98,10 @@ if [ -n "${docker_tag_full:-}" ]; then
   # Extract runtime artifact
   log_info "=== Extract runtime artifact ==="
   container_id="$(docker create "index.docker.io/${docker_hub_org}/${docker_image_build_name}:${docker_tag_full}")"
-  docker cp ${container_id}:/app/zkv_runtime.compact.compressed.wasm ./zkv_runtime.compact.compressed.wasm
-  docker rm ${container_id}  # Clean up the container
-
+  docker cp "${container_id}":/app/zkv_runtime.compact.compressed.wasm ./zkv_runtime.compact.compressed.wasm
+  docker rm "${container_id}"  # Clean up the container
 else
-  fn_die "ERROR: the build did NOT satisfy RELEASE build requirements. Docker image(s) was(were) NOT build and/or published."
+  fn_die "ERROR: the build did NOT satisfy RELEASE build requirements(IS_A_RELEASE variable=${is_a_release}). Docker image(s) was(were) NOT published."
 fi
 
 exit 0

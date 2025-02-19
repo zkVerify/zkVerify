@@ -4,83 +4,80 @@ run-name: "Workflow CI/CD Steps: build, unit and integration testing"
 
 on:
   workflow_call:
-    inputs:
-      CACHING_MODE:
-        required: true
-        type: string
-        
-env:
-  IMAGE_NAME: zencash/sc-ci-base
-  IMAGE_TAG: noble_rust-stable_latest
-  DOCKER_COMPOSE_CMD: "docker compose -f ${GITHUB_WORKSPACE}/ci/docker-compose.yml run --rm cargo-container"
-  DOCKER_BUILD_DIR: /build
-  DOCKER_CARGO_HOME: /tmp/.cargo
-  CMAKE_INSTALL: true
-  LLD_INSTALL: true
+  workflow_dispatch:
 
 jobs:
-  test:
-    runs-on:
-      group: ${{ vars.RUNNER_GROUP }}
+  unit-test:
+    runs-on: warp-ubuntu-latest-x64-8x
+    name: Cargo unit test
     steps:
-      - name: Git checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up deps cache
-        run: mkdir deps
-
-      - name: Restore test cache
-        if: ${{ !env.ACT && inputs.CACHING_MODE == 'CACHE_RESTORE' }}
-        uses: buildjet/cache/restore@v3
+      - name: Cargo unit test
+        uses: ./.github/actions/cmd-in-docker
         with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-            deps/
-          key: test-cache
+          command: "cargo test --lib --bins --all-features --no-fail-fast --release 2>&1 | tee unit_test_output.txt"
+          use_cache: 'yes'
+          cache_key: 'unit-test'
+          cmake_install: 'yes'
+          lld_install: 'yes'
 
-      - name: Set docker env vars
-        run: |
-          echo "USER_ID=$(id -u)" >> $GITHUB_ENV
-          echo "GRP_ID=$(id -g)" >> $GITHUB_ENV
-
-      - name: Cargo unit tests
-        shell: bash
-        run: ${{ env.DOCKER_COMPOSE_CMD }} cargo test --lib --bins --all-features --no-fail-fast --release 2>&1 | tee unit_tests_output.txt
-
-      - name: Cargo unit tests for runtime WITHOUT relay feature
-        shell: bash
-        run: ${{ env.DOCKER_COMPOSE_CMD }} cargo test -p zkv-runtime --lib --bins --features runtime-benchmarks --no-fail-fast --release 2>&1 | tee -a unit_tests_output.txt
-
-      - name: Cargo integration tests
-        shell: bash
-        run: ${{ env.DOCKER_COMPOSE_CMD }} cargo test --test '*' --all-features --no-fail-fast --release 2>&1 | tee integration_tests_output.txt
-
-      - name: Save test cache
-        if: ${{ !env.ACT && inputs.CACHING_MODE == 'CACHE_SAVE' }}
-        uses: buildjet/cache/save@v3
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-            deps/
-          key: test-cache
-
-      - name: Upload output(s)
-        if: ${{ !env.ACT }}
+      - name: Upload unit test output
         uses: actions/upload-artifact@v4
         with:
-          name: test-output
-          path: |
-            unit_tests_output.txt
-            integration_tests_output.txt
-          if-no-files-found: warn
+          name: unit-test-output
+          path: unit_test_output.txt
+          retention-days: 1
+          compression-level: 0
+          overwrite: true
+
+  unit-test-no-relay:
+    runs-on: warp-ubuntu-latest-x64-8x
+    name: Cargo unit test WITHOUT relay feature
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Cargo unit test WITHOUT relay feature
+        uses: ./.github/actions/cmd-in-docker
+        with:
+          command: "cargo test -p zkv-runtime --lib --bins --features runtime-benchmarks --no-fail-fast --release 2>&1 | tee unit_test_no_relay_output.txt"
+          use_cache: 'yes'
+          cache_key: 'unit-test-no-relay'
+          cmake_install: 'yes'
+          lld_install: 'yes'
+
+      - name: Upload unit test WITHOUT relay feature output
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-no-relay-output
+          path: unit_test_no_relay_output.txt
+          retention-days: 1
+          compression-level: 0
+          overwrite: true
+
+  integration-test:
+    runs-on: warp-ubuntu-latest-x64-8x
+    name: Cargo integration test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Cargo integration test
+        uses: ./.github/actions/cmd-in-docker
+        with:
+          command: "cargo test --test '*' --all-features --no-fail-fast --release 2>&1 | tee integration_test_output.txt"
+          use_cache: 'yes'
+          cache_key: 'integration-test'
+          cmake_install: 'yes'
+          lld_install: 'yes'
+
+      - name: Upload integration test output
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-output
+          path: integration_test_output.txt
           retention-days: 1
           compression-level: 0
           overwrite: true

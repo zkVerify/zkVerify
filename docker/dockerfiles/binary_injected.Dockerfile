@@ -1,51 +1,45 @@
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 SHELL ["/bin/bash", "-c"]
 
-# metadata
-ARG VCS_REF
-ARG BUILD_DATE
-ARG IMAGE_NAME
-
 # That can be a single one or a comma separated list
-ARG BINARY=zkv-node
+ARG BINARY="zkv-node"
+ARG DESCRIPTION="zkVerify Development"
+ARG AUTHORS="infrastructure@zkverify.io"
+ARG VENDOR="zkVerify"
 
-ARG BIN_FOLDER=.
-ARG DOC_URL=https://github.com/HorizenLabs/zkVerify
-ARG DESCRIPTION="zkVerify"
-ARG AUTHORS="mainchain-team@horizenlabs.io"
-ARG VENDOR="Horizen Labs"
+ENV BINARY="${BINARY}" \
+    RUN_USER="user"
 
-LABEL io.hl.image.authors=${AUTHORS} \
-	io.hl.image.vendor="${VENDOR}" \
-	io.hl.image.revision="${VCS_REF}" \
-	io.hl.image.title="${IMAGE_NAME}" \
-	io.hl.image.created="${BUILD_DATE}" \
-	io.hl.image.documentation="${DOC_URL}" \
-	io.hl.image.description="${DESCRIPTION}" \
-	io.hl.image.source="https://github.com/HorizenLabs/zkVerify/blob/${VCS_REF}/docker/dockerfiles/binary_injected.Dockerfile"
+LABEL io.image.authors="${AUTHORS}" \
+      io.image.vendor="${VENDOR}" \
+      io.image.description="${DESCRIPTION}"
 
 USER root
 WORKDIR /app
 
-COPY entrypoint.sh .
 COPY "bin/*" "/usr/local/bin/"
 RUN chmod -R a+rx "/usr/local/bin"
 
-ENV RUN_USER hl
+RUN apt-get update -qq \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      aria2 \
+      ca-certificates \
+      curl \
+      jq \
+    && useradd -m -U -s /bin/bash -d "/${RUN_USER}" "${RUN_USER}" \
+    && mkdir -p /data "/${RUN_USER}/.local/share" \
+    && chown -R "${RUN_USER}:${RUN_USER}" /data "/${RUN_USER}" \
+    && ln -s /data "/${RUN_USER}/.local/share" \
+    && apt-get -y clean \
+    && apt-get -y autoclean \
+    && apt-get -y autoremove \
+    && rm -rf /var/{lib/apt/lists/*,cache/apt/archives/*.deb} /tmp/*
 
-RUN apt-get update && 	\
-	DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-	libssl3 ca-certificates gnupg curl && \
-	apt-get autoremove -y && \
-	apt-get clean && \
-	useradd -m -u 1001 -U -s /bin/sh -d /${RUN_USER} ${RUN_USER} && \
-	rm -rf /var/lib/apt/lists/* ; 	mkdir -p /data /${RUN_USER}/.local/share && \
-	chown -R ${RUN_USER}:${RUN_USER} /data /${RUN_USER} && \
-	ln -s /data /${RUN_USER}/.local/share
+COPY entrypoint.sh .
+RUN chmod +x entrypoint.sh
 
-USER ${RUN_USER}
-ENV BINARY=${BINARY}
+USER "${RUN_USER}"
 
 # ENTRYPOINT
 ENTRYPOINT ["/app/entrypoint.sh"]

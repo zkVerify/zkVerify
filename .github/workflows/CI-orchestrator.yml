@@ -7,59 +7,45 @@ on:
 
 jobs:
   build-job:
+    name: Cargo build job
     uses: ./.github/workflows/CI-build.yml
-    with:
-      CACHING_MODE: "CACHE_RESTORE"
 
   test-job:
+    name: Cargo test job
     uses: ./.github/workflows/CI-test.yml
-    with:
-      CACHING_MODE: "CACHE_RESTORE"
 
   try-runtime-job:
+    name: Try runtime job
     uses: ./.github/workflows/CI-try-runtime.yml
-    with:
-      CACHING_MODE: "CACHE_RESTORE"
 
   coverage-job:
+    name: Coverage job
     uses: ./.github/workflows/CI-coverage.yml
-    with:
-      CACHING_MODE: "CACHE_RESTORE"
 
   lint-format-job:
+    name: Lint and format job
     uses: ./.github/workflows/CI-lint-format.yml
-    with:
-      CACHING_MODE: "CACHE_RESTORE"
 
+  # Requires artifacts from the build job
   zombienet-test-job:
+    name: Zombienet test job
+    needs: [build-job]
     uses: ./.github/workflows/CI-zombienet-test.yml
-    with:
-      CACHING_MODE: "CACHE_RESTORE"
-  
+
   audit-job:
+    name: Cargo audit job
     uses: ./.github/workflows/CI-audit.yml
 
   feature-propagation-job:
+    name: Feature propagation job
     uses: ./.github/workflows/CI-feature-propagation.yml
 
-  check-act:
-    runs-on: ubuntu-latest
-    outputs:
-      act: ${{ steps.check.outputs.act }}
-    steps:
-      - name: Check if ACT exists
-        id: check
-        run: |
-          if [ -n "${{ env.ACT }}" ]; then
-            echo "act=true" >> $GITHUB_OUTPUT
-          else
-            echo "act=false" >> $GITHUB_OUTPUT
-          fi
-
+  # Only for pull requests and if not canceled
   set-overall-result:
-    runs-on: ubuntu-latest
-    needs: [build-job, test-job, try-runtime-job, coverage-job, lint-format-job, zombienet-test-job, audit-job, feature-propagation-job, check-act]
-    if: ${{ !cancelled() && needs.check-act.outputs.act == 'false' }}
+    runs-on: warp-ubuntu-latest-x64-2x
+    name: Set overall status
+    needs: [build-job, test-job, try-runtime-job, coverage-job, lint-format-job, zombienet-test-job, audit-job, feature-propagation-job]
+    if: ${{ github.event_name == 'pull_request' && !cancelled() }}
     outputs:
       branch-name: ${{ steps.get-info.outputs.BRANCH_NAME }}
       last-commit-sha: ${{ steps.get-info.outputs.LAST_COMMIT_SHA }}
@@ -68,40 +54,47 @@ jobs:
     steps:
       - name: Get target PR info
         id: get-info
+        env:
+          BRANCH_NAME: "${{ github.head_ref || github.ref_name }}"
         run: |
-          BRANCH_NAME=${{ github.head_ref || github.ref_name }}
-          echo BRANCH_NAME is ${BRANCH_NAME}
-          echo "BRANCH_NAME=${BRANCH_NAME}" >> $GITHUB_OUTPUT
-          ALL_PRS=$(curl -s --fail \
-                    -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-                    "https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls?state=open")         
-          LAST_COMMIT_SHA=$(echo ${ALL_PRS} | jq ".[] | select(.head.label == \"${GITHUB_REPOSITORY_OWNER}:${BRANCH_NAME}\")" | jq -r ".head.sha")
-          echo LAST_COMMIT_SHA is ${LAST_COMMIT_SHA}
-          echo "LAST_COMMIT_SHA=${LAST_COMMIT_SHA}" >> $GITHUB_OUTPUT
-          echo "LAST_COMMIT_SHA=${LAST_COMMIT_SHA}" >> $GITHUB_ENV
-          PR_URL=$(echo ${ALL_PRS} | jq ".[] | select(.head.label == \"${GITHUB_REPOSITORY_OWNER}:${BRANCH_NAME}\")" | jq -r ".html_url")
-          echo PR_URL is ${PR_URL}
-          echo "PR_URL=${PR_URL}" >> $GITHUB_OUTPUT
+          echo "BRANCH_NAME is ${{ env.BRANCH_NAME }}"
+          echo "BRANCH_NAME=${BRANCH_NAME}" >> "${GITHUB_OUTPUT}"
+
+          ALL_PRS="$(curl -s --fail \
+                      -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+                      "https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls?state=open")"
+
+          LAST_COMMIT_SHA="$(echo "${ALL_PRS}" | jq ".[] | select(.head.label == \"${GITHUB_REPOSITORY_OWNER}:${BRANCH_NAME}\")" | jq -r ".head.sha")"
+          echo "LAST_COMMIT_SHA is ${LAST_COMMIT_SHA}"
+          echo "LAST_COMMIT_SHA=${LAST_COMMIT_SHA}" >> "${GITHUB_OUTPUT}"
+          echo "LAST_COMMIT_SHA=${LAST_COMMIT_SHA}" >> "${GITHUB_ENV}"
+
+          PR_URL="$(echo "${ALL_PRS}" | jq ".[] | select(.head.label == \"${GITHUB_REPOSITORY_OWNER}:${BRANCH_NAME}\")" | jq -r ".html_url")"
+          echo "PR_URL is ${PR_URL}"
+          echo "PR_URL=${PR_URL}" >> "${GITHUB_OUTPUT}"
+
       - name: Set overall result
         id: set-status
+        shell: bash
         run: |
           if [ "${{ github.event.workflow_run.conclusion }}" == "cancelled" ]; then
             OVERALL_STATUS="cancelled"
           else
             OVERALL_STATUS="success"
-            if [ "${{ needs.build-job.result }}" != "success" ] || 
+            if [ "${{ needs.build-job.result }}" != "success" ] ||
                 [ "${{ needs.test-job.result }}" != "success" ] ||
                 [ "${{ needs.try-runtime-job.result }}" != "success" ] ||
                 [ "${{ needs.coverage-job.result }}" != "success" ] ||
-                [ "${{ needs.lint-format-job.result }}" != "success" ] || 
+                [ "${{ needs.lint-format-job.result }}" != "success" ] ||
                 [ "${{ needs.feature-propagation-job.result }}" != "success" ] ||
+                [ "${{ needs.audit-job.result }}" != "success" ] ||
                 [ "${{ needs.zombienet-test-job.result }}" != "success" ]; then
               OVERALL_STATUS="failure"
             fi
-          
-            if [ ${LAST_COMMIT_SHA} != "" ]; then
-              echo Setting overall result
-              curl -L --fail \
+
+            if [ "${LAST_COMMIT_SHA:-}" != "" ]; then
+              echo "Setting overall result"
+              curl -s -L --fail \
               -X POST \
               -H "Accept: application/vnd.github+json" \
               -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
@@ -109,6 +102,6 @@ jobs:
               "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${LAST_COMMIT_SHA}" \
               -d '{"state":"'${OVERALL_STATUS}'","context":"Orchestrator"}'
             else
-              echo Unable to set overall result
+              echo "ERROR: 'LAST_COMMIT_SHA' variable is empty. Unable to set overall result"
             fi
           fi

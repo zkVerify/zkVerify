@@ -4,34 +4,36 @@ on:
   workflow_dispatch:
     inputs:
       chain:
-        description: "Solo or relay"
+        description: "solo or relay"
         required: true
         type: string
   workflow_call:
     inputs:
       chain:
-        description: "Solo or relay"
+        description: "solo or relay"
         required: true
         type: string
+
 env:
   DOCKER_HUB_ORG: horizenlabs
   DOCKER_IMAGE_BUILD_NAME: ${{ vars.DOCKER_IMAGE_BUILD_NAME }}
 
 jobs:
-  build:
-    runs-on:
-      group: ${{ vars.RUNNER_GROUP }}
+  build-docker:
+    runs-on: warp-ubuntu-latest-x64-8x
     name: Build Docker image
     steps:
-      - uses: actions/checkout@v4
-      - id: create-docker-images
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Docker build
+        id: build-docker-image
         uses: ./.github/actions/build-docker-image
         with:
           chain: ${{ inputs.chain }}
           ref: ${{ github.ref }}
           docker_hub_org: ${{ env.DOCKER_HUB_ORG }}
           docker_image_name: ${{ env.DOCKER_IMAGE_BUILD_NAME }}
-      - run: echo random-number "$RANDOM_NUMBER"
-        shell: bash
-        env:
-          ARTIFACT_NAME: ${{ steps.create-docker-images.outputs.artifact_name }}
+
+    outputs:
+      artifact_name: ${{ steps.build-docker-image.outputs.artifact_name }}

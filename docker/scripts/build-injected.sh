@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -e
 
-
 # This script allows building a Container Image starting from a
 # base image (define in DOCKERFILE env variable) that inject 
 # a list of Linux binaries where the first will be the entrypoint.
@@ -23,7 +22,7 @@ PROJECT_ROOT=${PROJECT_ROOT:-$(git rev-parse --show-toplevel)}
 DOCKERFILE=${DOCKERFILE:-docker/dockerfiles/binary_injected.Dockerfile}
 VERSION_TOML=$(grep "^version " "${PROJECT_ROOT}/node/Cargo.toml" | grep -oE "([0-9\.]+-?[0-9]+)")
 
-#n The following VAR have default that can be overriden
+#n The following VAR have default that can be overridden
 DOCKER_OWNER=${DOCKER_OWNER:-horizenlabs}
 
 # We may get 1..n binaries, comma separated
@@ -37,8 +36,6 @@ SPEC_FOLDER=${SPEC_FOLDER:-${ARTIFACTS_FOLDER}/specs}
 IMAGE=${IMAGE:-${REGISTRY}/${DOCKER_OWNER}/zkverify}
 DESCRIPTION_DEFAULT="Injected Container image built for ${BINARY}"
 DESCRIPTION=${DESCRIPTION:-$DESCRIPTION_DEFAULT}
-
-VCS_REF=${VCS_REF:-01234567}
 
 # Build the image
 echo "Using engine: $ENGINE"
@@ -77,9 +74,6 @@ IMAGES_PRE=$(docker image ls -q -f 'dangling=true')
 # shellcheck disable=SC2086
 $ENGINE build \
     ${ENGINE_FLAGS} \
-    --build-arg VCS_REF="${VCS_REF}" \
-    --build-arg BUILD_DATE="$(date -u '+%Y-%m-%dT%H:%M:%SZ')" \
-    --build-arg IMAGE_NAME="${IMAGE}" \
     --build-arg BINARY="${BINARY}" \
     --build-arg DESCRIPTION="${DESCRIPTION}" \
     ${TAG_ARGS} \

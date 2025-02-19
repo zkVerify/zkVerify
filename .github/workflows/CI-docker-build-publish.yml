@@ -1,20 +1,22 @@
-name: Build, Test and Publish Docker Image
+name: Docker image build and publish
+
+run-name: "Workflow CI/CD Steps: Docker image build and publish"
 
 on:
   workflow_call:
     inputs:
       chain:
-        description: "Solo or relay"
+        description: "solo or relay"
+        required: true
+        type: string
+      release_branch:
+        description: "Github branch name release can be created from"
         required: true
         type: string
     secrets:
       DOCKER_HUB_USERNAME:
         required: true
       DOCKER_HUB_TOKEN:
-        required: true
-      GH_TOKEN:
-        required: true
-      QA_SLACK_WEBHOOK_URL:
         required: true
       RELEASES_PROD_SLACK_WEBHOOK_URL:
         required: true
@@ -24,29 +26,29 @@ env:
   DOCKER_IMAGE_BUILD_NAME: ${{ vars.DOCKER_IMAGE_BUILD_NAME }}
 
 jobs:
-  build:
-    runs-on:
-      group: ${{ vars.RUNNER_GROUP }}
-    name: Build Docker image
+  build-docker:
+    runs-on: warp-ubuntu-latest-x64-8x
+    name: Build Docker Image ${{ inputs.chain }}
     steps:
-      - uses: actions/checkout@v4
-      - id: create-docker-images
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Docker build
+        id: build-docker-image
         uses: ./.github/actions/build-docker-image
         with:
           chain: ${{ inputs.chain }}
           ref: ${{ github.ref }}
           docker_hub_org: ${{ env.DOCKER_HUB_ORG }}
           docker_image_name: ${{ env.DOCKER_IMAGE_BUILD_NAME }}
+
     outputs:
-      artifact_name: ${{ steps.create-docker-images.outputs.artifact_name }}
+      artifact_name: ${{ steps.build-docker-image.outputs.artifact_name }}
 
   publish-docker-image:
-    name: Publish Docker Image
-    runs-on: ubuntu-latest
-    # needs: [ build, execute-e2e-tests ] # Wait for e2e tests to finish
-    # if: always()
-    needs: [ build ]
-
+    runs-on: warp-ubuntu-latest-x64-2x
+    name: Publish Docker Image ${{ inputs.chain }}
+    needs: [build-docker]
     steps:
       - name: Git checkout
         uses: actions/checkout@v4
@@ -57,25 +59,28 @@ jobs:
       - name: Download zkVerify Docker image artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{ needs.build.outputs.artifact_name }}
+          name: ${{ needs.build-docker.outputs.artifact_name }}
           path: ./
 
-      - name: Publish Docker image
+      - name: Publish Docker image(s)
         env:
-          RELEASE_BRANCH: release
+          RELEASE_BRANCH: ${{ inputs.release_branch }}
           MAINTAINERS_KEYS: ${{ vars.MAINTAINERS_KEYS }}
           DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
           DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
-        run: |
-          source "${GITHUB_WORKSPACE}/ci/setup_env.sh"
-          "${GITHUB_WORKSPACE}/ci/docker.sh" --image-artifact ${{ needs.build.outputs.artifact_name }}
         shell: bash
+        run: |
+          # shellcheck disable=SC1090
+          source "${GITHUB_WORKSPACE}/ci/setup_env.sh"
+          "${GITHUB_WORKSPACE}/ci/publish-docker-image.sh" --image-artifact ${{ needs.build-docker.outputs.artifact_name }}
 
-      - name: Upload runtime artifact
+      - name: Upload runtime artifacts
         uses: actions/upload-artifact@v4
         with:
           name: "zkv_runtime.${{ inputs.chain }}.compact.compressed.wasm"
           path: ./zkv_runtime.compact.compressed.wasm
+          retention-days: 7
+          overwrite: true
 
       - name: Notify Slack Production Releases
         uses: slackapi/slack-github-action@v1.25.0
@@ -87,7 +92,7 @@ jobs:
                   "type": "header",
                   "text": {
                     "type": "plain_text",
-                    "text": "🎉 ${{ env.DOCKER_IMAGE_BUILD_NAME }} Docker Image v${{ github.ref_name }}-${{ inputs.chain }} Released! 🎉"
+                    "text": ":tada:  :zk-logo-icon-square-black:  ${{ env.DOCKER_IMAGE_BUILD_NAME }} Docker Image Released  :zk-logo-icon-square-black:  :tada:"
                   }
                 },
                 {
@@ -95,7 +100,7 @@ jobs:
                   "fields": [
                     {
                       "type": "mrkdwn",
-                      "text": "*Docker Image:*  <https://hub.docker.com/r/${{ env.DOCKER_HUB_ORG }}/${{ env.DOCKER_IMAGE_BUILD_NAME }}/tags?page=1&name=${{ github.ref_name }}-${{ inputs.chain }}| v${{ github.ref_name }}-${{ inputs.chain }}>\n"
+                      "text": "*Docker Image Tag:*  <https://hub.docker.com/r/${{ env.DOCKER_HUB_ORG }}/${{ env.DOCKER_IMAGE_BUILD_NAME }}/tags?page=1&name=${{ github.ref_name }}-${{ inputs.chain }}| ${{ github.ref_name }}-${{ inputs.chain }}>\n"
                     },
                     {
                       "type": "mrkdwn",
