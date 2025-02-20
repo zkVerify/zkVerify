@@ -214,13 +214,14 @@ impl pallet_referenda::TracksInfo<Balance, BlockNumber> for TracksInfo {
         TRACKS_DATA
     }
     fn track_for(id: &Self::RuntimeOrigin) -> Result<Self::Id, ()> {
-        let system_origin = frame_system::RawOrigin::try_from(id.clone());
-        if cfg!(feature = "runtime-benchmarks") && system_origin.is_ok() {
-            match system_origin.unwrap() {
-                frame_system::RawOrigin::Root => Ok(0),
-                _ => Err(()),
+        if cfg!(feature = "runtime-benchmarks") {
+            match frame_system::RawOrigin::try_from(id.clone()) {
+                Ok(frame_system::RawOrigin::Root) => return Ok(0),
+                Ok(_) => return Err(()),
+                _ => {}
             }
-        } else if let Ok(custom_origin) = origins::Origin::try_from(id.clone()) {
+        }
+        if let Ok(custom_origin) = origins::Origin::try_from(id.clone()) {
             match custom_origin {
                 origins::Origin::WishForChange => Ok(2),
                 // General admin
