@@ -210,7 +210,14 @@ pub fn development_config() -> Result<ChainSpec, String> {
                 ),
             ])
             .collect::<Vec<_>>(),
-        true,
+        // min validator count
+        1,
+        // max validator count
+        None,
+        // min validator bond
+        0,
+        // min nominator bond
+        0,
     ))
     .build())
 }
@@ -239,7 +246,14 @@ pub fn local_config() -> Result<ChainSpec, String> {
             .into_iter()
             .map(|seed| (get_account_id_from_seed::<sr25519::Public>(seed), ENDOWMENT))
             .collect::<Vec<_>>(),
-        true,
+        // min validator count
+        1,
+        // max validator count
+        None,
+        // min validator bond
+        0,
+        // min nominator bond
+        0,
     ))
     .build())
 }
@@ -254,6 +268,7 @@ pub fn testnet_config() -> Result<ChainSpec, String> {
     .with_id("zkv_testnet")
     .with_protocol_id("tzkv")
     .with_chain_type(ChainType::Live)
+    /*
     .with_boot_nodes(vec![
         format!("/dns/{BOOTNODE_1_DNS}/tcp/30333/p2p/{BOOTNODE_1_PEER_ID}")
             .parse()
@@ -274,6 +289,7 @@ pub fn testnet_config() -> Result<ChainSpec, String> {
             .parse()
             .expect("MultiaddrWithPeerId"),
     ])
+    */
     .with_telemetry_endpoints(
         TelemetryEndpoints::new(vec![(
             STAGING_TELEMETRY_URL.to_string(),
@@ -294,7 +310,14 @@ pub fn testnet_config() -> Result<ChainSpec, String> {
         vec![
             // TBD
         ],
-        true,
+        // min validator count
+        3,
+        // max validator count
+        Some(200),
+        // min validator bond
+        10_000 * ACME,
+        // min nominator bond
+        10 * ACME,
     ))
     .build())
 }
@@ -314,7 +337,10 @@ fn genesis(
     )>,
     root_key: AccountId,
     endowed_accounts: Vec<(AccountId, Balance)>,
-    _enable_println: bool,
+    min_validator_count: u32,
+    max_validator_count: Option<u32>,
+    min_validator_bond: Balance,
+    min_nominator_bond: Balance,
 ) -> serde_json::Value {
     serde_json::json!({
         "balances": {
@@ -331,7 +357,10 @@ fn genesis(
                 .collect::<Vec<_>>(),
         },
         "staking": {
-            "minimumValidatorCount": initial_authorities.len(), // must be 1 for pallet-session benchmarks
+            "minimumValidatorCount": min_validator_count,
+            "maxValidatorCount": max_validator_count,
+            "minValidatorBond": min_validator_bond,
+            "minNominatorBond": min_nominator_bond,
             "validatorCount": 10,
             "stakers": initial_authorities.iter()
                 .cloned()
