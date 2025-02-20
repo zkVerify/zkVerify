@@ -30,11 +30,11 @@ use sp_core::{crypto::KeyTypeId, Get, OpaqueMetadata, H256};
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
     traits::{
-        AccountIdConversion, BlakeTwo256, Block as BlockT, ConvertInto, IdentifyAccount,
+        AccountIdConversion, BlakeTwo256, Block as BlockT, Bounded, ConvertInto, IdentifyAccount,
         IdentityLookup, NumberFor, One, OpaqueKeys, Verify,
     },
     transaction_validity::{TransactionSource, TransactionValidity},
-    ApplyExtrinsicResult, MultiSignature,
+    ApplyExtrinsicResult, FixedPointNumber, MultiSignature, Perquintill,
 };
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
@@ -81,7 +81,7 @@ use static_assertions::const_assert;
 use weights::block_weights::BlockExecutionWeight;
 use weights::extrinsic_weights::ExtrinsicBaseWeight;
 
-use pallet_transaction_payment::{ConstFeeMultiplier, FungibleAdapter, Multiplier};
+use pallet_transaction_payment::{FungibleAdapter, Multiplier, TargetedFeeAdjustment};
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
@@ -142,7 +142,7 @@ pub mod currency {
     pub const THOUSANDS: Balance = 1_000 * ACME;
     pub const MILLIONS: Balance = 1_000 * THOUSANDS;
     pub const MILLICENTS: Balance = CENTS / 1_000;
-    pub const EXISTENTIAL_DEPOSIT: Balance = MILLICENTS;
+    pub const EXISTENTIAL_DEPOSIT: Balance = CENTS;
     pub const fn deposit(items: u32, bytes: u32) -> Balance {
         items as Balance * 200 * CENTS + (bytes as Balance) * 100 * MILLICENTS
     }
@@ -177,7 +177,7 @@ pub mod opaque {
 // https://docs.substrate.io/main-docs/build/upgrade#runtime-versioning
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-    spec_name: create_runtime_str!("nh-node"), // TODO: change to zkv-node when ok with regenesis
+    spec_name: create_runtime_str!("tzkv-runtime"),
     impl_name: create_runtime_str!("zkv-node"),
     authoring_version: 1,
     // The version of the runtime specification. A full node will not attempt to use its native
@@ -228,7 +228,7 @@ const MAXIMUM_BLOCK_WEIGHT: Weight =
     Weight::from_parts(WEIGHT_REF_TIME_PER_SECOND.saturating_mul(2), u64::MAX);
 
 parameter_types! {
-    pub const BlockHashCount: BlockNumber = 2400;
+    pub const BlockHashCount: BlockNumber = 4096;
     pub const Version: RuntimeVersion = VERSION;
 
     pub BlockWeights: frame_system::limits::BlockWeights =
@@ -326,13 +326,17 @@ impl pallet_bags_list::Config<VoterBagsListInstance> for Runtime {
     type Score = sp_npos_elections::VoteWeight;
 }
 
+parameter_types! {
+    pub MaxSetIdSessionEntries: u32 = BondingDuration::get() * SessionsPerEra::get();
+}
+
 impl pallet_grandpa::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
 
     type WeightInfo = weights::pallet_grandpa::ZKVWeight<Runtime>;
     type MaxAuthorities = MaxAuthorities;
     type MaxNominators = ConstU32<MAX_VOTERS>;
-    type MaxSetIdSessionEntries = ConstU64<0>;
+    type MaxSetIdSessionEntries = MaxSetIdSessionEntries;
 
     type KeyOwnerProof = sp_session::MembershipProof;
     type EquivocationReportSystem =
@@ -396,11 +400,6 @@ impl pallet_balances::Config for Runtime {
     type RuntimeFreezeReason = RuntimeFreezeReason;
 }
 
-parameter_types! {
-    pub FeeMultiplier: Multiplier = Multiplier::one();
-    pub TransactionByteFee: Balance = 10 * MILLICENTS;
-}
-
 impl_opaque_keys! {
     pub struct SessionKeysRelay {
         pub babe: Babe,
@@ -413,13 +412,32 @@ impl_opaque_keys! {
 
 pub type SessionKeys = SessionKeysRelay;
 
+parameter_types! {
+    pub const TransactionPicosecondFee: Balance = 5000000;
+    pub const TransactionByteFee: Balance = 5000000;
+    pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(75);
+    // AdjustmentVariable computed to result in a desired cost for filling n blocks in a row. See
+    // block_cost_after_k_full_blocks test for more info.
+    pub AdjustmentVariable: Multiplier = Multiplier::saturating_from_rational(1313646132342424i64, 10000000000000000i64);
+    pub MinimumMultiplier: Multiplier = Multiplier::one();
+    pub MaximumMultiplier: Multiplier = Bounded::max_value();
+}
+
+pub type ZKVFeeUpdate<R> = TargetedFeeAdjustment<
+    R,
+    TargetBlockFullness,
+    AdjustmentVariable,
+    MinimumMultiplier,
+    MaximumMultiplier,
+>;
+
 impl pallet_transaction_payment::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type OnChargeTransaction = FungibleAdapter<Balances, payout::DealWithFees<Runtime>>;
     type OperationalFeeMultiplier = ConstU8<5>;
-    type WeightToFee = IdentityFee<Balance>;
-    type LengthToFee = IdentityFee<Balance>;
-    type FeeMultiplierUpdate = ConstFeeMultiplier<FeeMultiplier>;
+    type WeightToFee = ConstantMultiplier<Balance, TransactionPicosecondFee>;
+    type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
+    type FeeMultiplierUpdate = ZKVFeeUpdate<Self>;
 }
 
 impl pallet_sudo::Config for Runtime {
@@ -435,6 +453,7 @@ parameter_types! {
     pub const MultisigDepositFactor: Balance = currency::deposit(0, 32);
     pub const MaxSignatories: u32 = 100;
 }
+
 impl pallet_multisig::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type RuntimeCall = RuntimeCall;
@@ -714,9 +733,9 @@ impl pallet_session::Config for Runtime {
 parameter_types! {
     pub SessionsPerEra: sp_staking::SessionIndex = 6 * HOURS / EpochDurationInBlocks::get(); // number of sessions in 1 era, 6h
 
-    pub const BondingDuration: sp_staking::EraIndex = 1; // number of sessions for which staking
+    pub const BondingDuration: sp_staking::EraIndex = 28; // number of sessions for which staking
                                                          // remains locked
-    pub const SlashDeferDuration: sp_staking::EraIndex = 0; // eras to wait before slashing is
+    pub const SlashDeferDuration: sp_staking::EraIndex = 24; // eras to wait before slashing is
                                                             // applied
     pub HistoryDepth: u32 = 30; // Number of eras to keep in history. Older eras cannot be claimed.
 }
@@ -726,6 +745,9 @@ parameter_types! {
 pub const MAX_TARGETS: u32 = 1_000;
 // Maximum number of voters. This also includes targets, which implicitly vote for themselves.
 pub const MAX_VOTERS: u32 = 5_000;
+// The maximum number of number of active validators that we want to handle.
+// This *must always be greater or equal* to staking.validatorCount storage value.
+pub const MAX_ACTIVE_VALIDATORS: u32 = 20;
 
 parameter_types! {
     // Maximum number of election voters and targets that can be handled by OnChainSeqPhragmen
@@ -733,7 +755,7 @@ parameter_types! {
     pub ElectionBoundsOnChain: ElectionBounds = ElectionBoundsBuilder::default().voters_count((MAX_VOTERS).into()).targets_count(MAX_TARGETS.into()).build();
     // Maximum number of election winners, and thus of authorities that can be active in a given
     // era.
-    pub const MaxActiveValidators: u32 = MAX_TARGETS;
+    pub const MaxActiveValidators: u32 = MAX_ACTIVE_VALIDATORS;
 }
 
 pub struct OnChainSeqPhragmen;
