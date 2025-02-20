@@ -80,7 +80,7 @@ impl SubstrateCli for Cli {
 }
 
 fn set_default_ss58_version(_spec: &dyn service::ChainSpec) {
-    sp_core::crypto::set_default_ss58_version(Ss58AddressFormatRegistry::SubstrateAccount.into());
+    sp_core::crypto::set_default_ss58_version(zkv_runtime::SS58Prefix::get().into());
 }
 
 fn run_node_inner<F>(

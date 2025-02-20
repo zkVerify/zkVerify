@@ -170,6 +170,10 @@ pub fn authority_ids_from_ss58(
 
 fn chain_properties() -> Properties {
     [
+        (
+            "ss58Format".to_string(),
+            serde_json::Value::from(zkv_runtime::SS58Prefix::get()),
+        ),
         ("tokenSymbol".to_string(), serde_json::Value::from("ACME")),
         ("tokenDecimals".to_string(), serde_json::Value::from(18_u8)),
     ]
@@ -268,7 +272,6 @@ pub fn testnet_config() -> Result<ChainSpec, String> {
     .with_id("zkv_testnet")
     .with_protocol_id("tzkv")
     .with_chain_type(ChainType::Live)
-    /*
     .with_boot_nodes(vec![
         format!("/dns/{BOOTNODE_1_DNS}/tcp/30333/p2p/{BOOTNODE_1_PEER_ID}")
             .parse()
@@ -289,7 +292,6 @@ pub fn testnet_config() -> Result<ChainSpec, String> {
             .parse()
             .expect("MultiaddrWithPeerId"),
     ])
-    */
     .with_telemetry_endpoints(
         TelemetryEndpoints::new(vec![(
             STAGING_TELEMETRY_URL.to_string(),
