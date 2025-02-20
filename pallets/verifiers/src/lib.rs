@@ -192,6 +192,8 @@ pub mod pallet {
         data_to_hash.extend_from_slice(vk_hash.as_bytes());
         if let Some(h) = version_hash {
             data_to_hash.extend_from_slice(h.as_bytes());
+        } else {
+            data_to_hash.extend_from_slice(&Vec::new());
         }
         data_to_hash.extend_from_slice(keccak_256(pubs.as_bytes_ref()).as_bytes_ref());
         H256(keccak_256(data_to_hash.as_slice()))
