@@ -22,8 +22,7 @@ use frame_system::EnsureRootWithSuccess;
 
 mod origins;
 pub use origins::{
-    pallet_custom_origins, AuctionAdmin, FellowshipAdmin, GeneralAdmin, LeaseAdmin,
-    ReferendumCanceller, ReferendumKiller, Spender, StakingAdmin, Treasurer, WhitelistedCaller,
+    pallet_custom_origins, ReferendumCanceller, ReferendumKiller, Spender, StakingAdmin, Treasurer,
 };
 mod tracks;
 pub use tracks::TracksInfo;
@@ -56,15 +55,6 @@ parameter_types! {
 pub type TreasurySpender = EitherOf<EnsureRootWithSuccess<AccountId, MaxBalance>, Spender>;
 
 impl origins::pallet_custom_origins::Config for Runtime {}
-
-impl pallet_whitelist::Config for Runtime {
-    type WeightInfo = weights::pallet_whitelist::ZKVWeight<Runtime>;
-    type RuntimeCall = RuntimeCall;
-    type RuntimeEvent = RuntimeEvent;
-    type WhitelistOrigin = EnsureRoot<Self::AccountId>;
-    type DispatchWhitelistedOrigin = EitherOf<EnsureRoot<Self::AccountId>, WhitelistedCaller>;
-    type Preimages = Preimage;
-}
 
 impl pallet_referenda::Config for Runtime {
     type WeightInfo = weights::pallet_referenda::ZKVWeight<Runtime>;

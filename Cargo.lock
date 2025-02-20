@@ -21296,7 +21296,6 @@ dependencies = [
  "pallet-utility",
  "pallet-verifiers",
  "pallet-vesting",
- "pallet-whitelist",
  "pallet-xcm",
  "pallet-xcm-benchmarks",
  "parity-scale-codec",

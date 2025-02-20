@@ -142,7 +142,6 @@ pallet-referenda = { version = "38.0.0", default-features = false }
 pallet-utility = { version = "38.0.0", default-features = false }
 pallet-vesting = { version = "38.0.0", default-features = false }
 sp-mmr-primitives = { version = "34.1.0", default-features = false }
-pallet-whitelist = { version = "37.0.0", default-features = false }
 pallet-conviction-voting = { version = "38.0.0", default-features = false }
 pallet-treasury = { version = "37.0.0", default-features = false }
 pallet-bounties = { version = "37.0.2", default-features = false }
