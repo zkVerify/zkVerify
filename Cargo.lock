@@ -19187,6 +19187,7 @@ dependencies = [
  "jsonrpsee",
  "pallet-ultraplonk-verifier",
  "parity-scale-codec",
+ "serde",
  "sp-core",
 ]
 

@@ -14,9 +14,11 @@ codec = { default-features = false, workspace = true }
 jsonrpsee = { workspace = true, features = ["client-core", "server", "macros"] }
 sp-core = { default-features = false, workspace = true }
 hp-verifiers = { workspace = true }
+serde = { default-features = false, workspace = true }
 
 [features]
 default = ["std"]
 std = [
-    "pallet-ultraplonk-verifier/std"
+    "pallet-ultraplonk-verifier/std",
+    "serde/std"
 ]

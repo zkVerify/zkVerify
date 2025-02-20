@@ -37,8 +37,8 @@ use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_consensus::SelectChain;
 use sp_core::H256;
 use sp_keystore::KeystorePtr;
+use ultraplonk_vk_hash::{VKHash, VKHashApiServer};
 use zkv_runtime::{currency::Balance, opaque::Block, AccountId, BlockNumber, Hash, Nonce};
-use ultraplonk_vk_hash::VKHash;
 
 pub use sc_rpc_api::DenyUnsafe;
 
@@ -157,7 +157,7 @@ where
     )?;
     module.merge(PoE::new(client.clone()).into_rpc())?;
     module.merge(Aggregate::new(client.clone()).into_rpc())?;
-    module.merge(VKHash::new(client.clone()).into_rpc())?;
+    module.merge(VKHash::new().into_rpc())?;
     module.merge(IsmpRpcHandler::new(client, backend.clone())?.into_rpc())?;
 
     // Extend this RPC with a custom API by using the following syntax.
