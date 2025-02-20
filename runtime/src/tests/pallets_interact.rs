@@ -21,6 +21,8 @@ use frame_support::{
     dispatch::GetDispatchInfo,
     traits::{EstimateNextNewSession, EstimateNextSessionRotation, Hooks, QueryPreimage},
 };
+use pallet_session::historical::SessionManager;
+use pallet_staking::ActiveEraInfo;
 use pallet_verifiers::VkOrHash;
 use sp_consensus_babe::Slot;
 use sp_core::{Pair, H256};
@@ -338,6 +340,18 @@ mod staking {
                 &[Perbill::from_percent(100)],
                 0,
             );
+
+            // Pretend we are just starting the era in which the slash is actually applied
+            pallet_staking::ActiveEra::<Runtime>::put(ActiveEraInfo {
+                index: SlashDeferDuration::get(),
+                start: None,
+            });
+            let session = SlashDeferDuration::get() * SessionsPerEra::get();
+            pallet_staking::ErasStartSessionIndex::<Runtime>::insert(
+                SlashDeferDuration::get() + 1,
+                session,
+            );
+            Staking::start_session(session);
 
             // Check that treasury balance increased
             assert!(pre_balance < Balances::free_balance(&Treasury::account_id()))
