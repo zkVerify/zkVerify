@@ -36,14 +36,6 @@ pub mod pallet_custom_origins {
         /// Origin for spending up to TBD ACMEs from the treasury as well as generally
         /// administering it.
         Treasurer,
-        /// Origin for managing the composition of the fellowship.
-        FellowshipAdmin,
-        /// Origin for managing the registrar and permissioned HRMP channel operations.
-        GeneralAdmin,
-        /// Origin for starting auctions.
-        AuctionAdmin,
-        /// Origin able to force slot leases.
-        LeaseAdmin,
         /// Origin able to cancel referenda.
         ReferendumCanceller,
         /// Origin able to kill referenda.
@@ -58,8 +50,6 @@ pub mod pallet_custom_origins {
         MediumSpender,
         /// Origin able to spend up to $1,000,000 ACME from the treasury at once.
         BigSpender,
-        /// Origin able to dispatch a whitelisted call.
-        WhitelistedCaller,
         /// Origin for signaling that the network wishes for some change.
         WishForChange,
     }
@@ -97,13 +87,8 @@ pub mod pallet_custom_origins {
     decl_unit_ensures!(
         StakingAdmin,
         Treasurer,
-        FellowshipAdmin,
-        GeneralAdmin,
-        AuctionAdmin,
-        LeaseAdmin,
         ReferendumCanceller,
         ReferendumKiller,
-        WhitelistedCaller,
         WishForChange,
     );
 

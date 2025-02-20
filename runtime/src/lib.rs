@@ -1067,7 +1067,6 @@ construct_runtime!(
         ConvictionVoting: pallet_conviction_voting = 15,
         Referenda: pallet_referenda = 16,
         Origins: pallet_custom_origins = 17,
-        Whitelist: pallet_whitelist = 18,
         VoterList: pallet_bags_list::<Instance1> = 19,
 
         // Bounties modules.
@@ -1197,7 +1196,6 @@ mod benches {
         [pallet_referenda, Referenda]
         [pallet_utility, Utility]
         [pallet_vesting, Vesting]
-        [pallet_whitelist, Whitelist]
         [pallet_proxy, Proxy]
         [pallet_aggregate, Aggregate]
         [pallet_hyperbridge_aggregations, HyperbridgeAggregations]

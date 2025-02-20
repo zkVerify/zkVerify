@@ -144,22 +144,6 @@ fn pallet_referenda_and_conviction_voting() {
 }
 
 #[test]
-fn pallet_whitelist() {
-    test().execute_with(|| {
-        let origin = RuntimeOrigin::root();
-        let call = RuntimeCall::Balances(BalancesCall::transfer_allow_death {
-            dest: MultiAddress::Id(testsfixtures::SAMPLE_USERS[1].raw_account.into()),
-            value: 5000 * currency::ACME,
-        });
-
-        let encoded_call = call.encode();
-        let call_hash = <Runtime as frame_system::Config>::Hashing::hash_of(&encoded_call);
-
-        assert_ok!(Whitelist::whitelist_call(origin, call_hash));
-    });
-}
-
-#[test]
 fn pallet_treasury() {
     test().execute_with(|| {
         let asset_kind = Box::new(());

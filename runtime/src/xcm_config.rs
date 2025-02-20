@@ -21,7 +21,7 @@ use super::{
     AccountId, AllPalletsWithSystem, Balances, Dmp, ParaId, Runtime, RuntimeCall, RuntimeEvent,
     RuntimeOrigin, TransactionByteFee, XcmPallet,
 };
-use crate::{governance::GeneralAdmin, parachains::parachains_origin};
+use crate::parachains::parachains_origin;
 use frame_support::{
     parameter_types,
     traits::{Contains, Equals, Everything, Nothing},
@@ -40,7 +40,7 @@ use xcm_builder::{
     AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
     AllowTopLevelPaidExecutionFrom, ChildParachainAsNative, ChildParachainConvertsVia,
     DescribeAllTerminal, DescribeFamily, FrameTransactionalProcessor, FungibleAdapter,
-    HashedDescription, IsConcrete, MintLocation, OriginToPluralityVoice, SendXcmFeeToAccount,
+    HashedDescription, IsConcrete, MintLocation, SendXcmFeeToAccount,
     SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
     TrailingSetTopicAsId, UsingComponents, WeightInfoBounds, WithComputedOrigin, WithUniqueTopic,
     XcmFeeManagerFromComponents,
@@ -244,15 +244,11 @@ parameter_types! {
     pub const TreasurerBodyId: BodyId = BodyId::Treasury;
 }
 
-/// Type to convert the `GeneralAdmin` origin to a Plurality `Location` value.
-pub type GeneralAdminToPlurality =
-    OriginToPluralityVoice<RuntimeOrigin, GeneralAdmin, GeneralAdminBodyId>;
 
 /// Type to convert an `Origin` type value into a `Location` value which represents an interior
 /// location of this chain.
 pub type LocalOriginToLocation = (
-    GeneralAdminToPlurality,
-    // And a usual Signed origin to be used in XCM as a corresponding AccountId32
+    // A signed origin to be used in XCM as a corresponding AccountId32
     SignedToAccountId32<RuntimeOrigin, AccountId, ThisNetwork>,
 );
 
