@@ -358,8 +358,12 @@ mod parachains {
         use inclusion::WeightInfo;
 
         assert_eq!(
-            <<Runtime as inclusion::Config>::WeightInfo as inclusion::WeightInfo>::receive_upward_messages(42),
-            crate::weights::parachains::inclusion::ZKVWeight::<Runtime>::receive_upward_messages(42)
+            <<Runtime as inclusion::Config>::WeightInfo as inclusion::WeightInfo>::enact_candidate(
+                42, 42, 42
+            ),
+            crate::weights::parachains::inclusion::ZKVWeight::<Runtime>::enact_candidate(
+                42, 42, 42
+            )
         )
     }
 

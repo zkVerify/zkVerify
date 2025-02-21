@@ -52,6 +52,8 @@ sp-keyring = { workspace = true }
 sp-runtime = { workspace = true }
 sp-state-machine = { workspace = true }
 substrate-test-client = { workspace = true }
+sc-sync-state-rpc = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
 
 [dev-dependencies]
 pallet-balances = { workspace = true }

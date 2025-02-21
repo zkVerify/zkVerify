@@ -24,7 +24,6 @@ use service::{
     benchmarking::{benchmark_inherent_data, RemarkBuilder, TransferKeepAliveBuilder},
     HeaderBackend, IdentifyVariant,
 };
-use sp_core::crypto::Ss58AddressFormatRegistry;
 use sp_keyring::Sr25519Keyring;
 use std::net::ToSocketAddrs;
 

@@ -19,6 +19,7 @@ use polkadot_primitives::{AccountId, Balance, Block, BlockNumber, Hash, Nonce};
 use sc_client_api::AuxStore;
 use sc_consensus_grandpa::FinalityProofProvider;
 pub use sc_rpc::SubscriptionTaskExecutor;
+use sc_sync_state_rpc::{SyncState, SyncStateApiServer};
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
@@ -106,7 +107,6 @@ where
     use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
     use sc_consensus_babe_rpc::{Babe, BabeApiServer};
     use sc_consensus_grandpa_rpc::{Grandpa, GrandpaApiServer};
-    use sc_rpc_spec_v2::chain_spec::{ChainSpec, ChainSpecApiServer};
     use substrate_state_trie_migration_rpc::{StateMigration, StateMigrationApiServer};
 
     let mut io = RpcModule::new(());
@@ -122,15 +122,6 @@ where
         finality_provider,
     } = grandpa;
 
-    let chain_name = chain_spec.name().to_string();
-    let genesis_hash = client
-        .hash(0)
-        .ok()
-        .flatten()
-        .expect("Genesis block exists; qed");
-    let properties = chain_spec.properties();
-
-    io.merge(ChainSpec::new(chain_name, genesis_hash, properties).into_rpc())?;
     io.merge(StateMigration::new(client.clone(), backend.clone()).into_rpc())?;
     io.merge(System::new(client.clone(), pool.clone()).into_rpc())?;
     io.merge(TransactionPayment::new(client.clone()).into_rpc())?;
@@ -151,6 +142,15 @@ where
             justification_stream,
             finality_provider,
         )
+        .into_rpc(),
+    )?;
+    io.merge(
+        SyncState::new(
+            chain_spec,
+            client.clone(),
+            shared_authority_set,
+            babe_worker_handle,
+        )?
         .into_rpc(),
     )?;
     io.merge(Aggregate::new(client).into_rpc())?;
