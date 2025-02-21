@@ -18,7 +18,7 @@
 use core::marker::PhantomData;
 
 use frame_support::{ensure, pallet_prelude::*, weights::Weight};
-use hp_verifiers::Verifier;
+use hp_verifiers::{Verifier, VerifyError};
 use risc0_verifier::{CircuitCoreDef, Journal, VerifierContext, Vk as Risc0Vk};
 use sp_core::{Get, H256};
 use sp_std::vec::Vec;
@@ -159,7 +159,7 @@ impl<T: Config> Verifier for Risc0<T> {
         vk: &Self::Vk,
         proof: &Self::Proof,
         pubs: &Self::Pubs,
-    ) -> Result<(), hp_verifiers::VerifyError> {
+    ) -> Result<Option<Weight>, VerifyError> {
         log::trace!("Checking size");
         ensure!(
             proof.len() <= T::MaxProofSize::get() as usize,
@@ -171,7 +171,7 @@ impl<T: Config> Verifier for Risc0<T> {
         );
         log::trace!("Verifying (native)");
         let journal = Journal::new(pubs.to_vec());
-        proof.verify(vk, journal)
+        proof.verify(vk, journal).map(|_| None)
     }
 
     fn pubs_bytes(pubs: &Self::Pubs) -> hp_verifiers::Cow<[u8]> {

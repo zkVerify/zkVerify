@@ -5,6 +5,7 @@
 use crate::{Config, VkEntry};
 use frame_benchmarking::whitelisted_caller;
 use frame_support::traits::{Consideration, Footprint};
+pub use frame_support::weights::Weight;
 pub use hp_verifiers::{Verifier, VerifyError};
 use sp_core::H256;
 

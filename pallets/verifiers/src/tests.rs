@@ -407,7 +407,7 @@ mod submit_proof_should {
     fn use_submit_proof_weight_to_compute_the_weight() {
         let vk_or_hash = VkOrHash::from_vk(24);
         let expected_weight =
-            crate::submit_proof_weight::<Test, FakeVerifier>(&vk_or_hash, &42, &24, &None);
+            crate::submit_proof_weight::<Test, FakeVerifier>(&vk_or_hash, &42, &24, &None, None);
 
         let info = Call::<Test, FakeVerifier>::submit_proof {
             vk_or_hash,
@@ -421,11 +421,81 @@ mod submit_proof_should {
         assert_eq!(info.weight, expected_weight);
     }
 
+    #[test]
+    fn return_a_corrected_weight_if_verify_proof_return_it() {
+        test_ext().execute_with(|| {
+            // Dispatch a signed extrinsic.
+            let vk = VkOrHash::Vk(Box::new(MAGIC_VK_VERIFY_PROOF_WEIGHT));
+            let proof = Box::new(42);
+            let pubs = Box::new(42);
+            let post_dispatch_info = FakeVerifierPallet::submit_proof(
+                RuntimeOrigin::signed(42),
+                vk.clone(),
+                proof.clone(),
+                pubs.clone(),
+                None,
+            )
+            .unwrap();
+            assert!(
+                post_dispatch_info.actual_weight.is_some(),
+                "Should return a weight"
+            );
+            assert!(
+                matches!(post_dispatch_info.pays_fee, Pays::Yes),
+                "Should always pay"
+            );
+            let w = post_dispatch_info.actual_weight.unwrap();
+            assert_eq!(
+                w,
+                submit_proof_weight::<Test, FakeVerifier>(
+                    &vk,
+                    &proof,
+                    &pubs,
+                    &None,
+                    FakeVerifier::compute_dyn_verify_weight(
+                        MAGIC_VK_VERIFY_PROOF_WEIGHT,
+                        *proof,
+                        *pubs
+                    )
+                )
+            );
+
+            // Sanity checks :
+            // 1. compute_dyn_verify_weight return not None in this case
+            // 2. If verify_proof return Ok(None) dispatch info should have none weight
+
+            assert!(
+                FakeVerifier::compute_dyn_verify_weight(
+                    MAGIC_VK_VERIFY_PROOF_WEIGHT,
+                    *proof,
+                    *pubs
+                )
+                .is_some(),
+                "Fake verifier should return a valid weight for MAGIC_VK_VERIFY_PROOF_WEIGHT"
+            );
+
+            assert!(
+                FakeVerifierPallet::submit_proof(
+                    RuntimeOrigin::signed(42),
+                    VkOrHash::Vk(Box::new(12)),
+                    proof.clone(),
+                    pubs.clone(),
+                    None,
+                )
+                .unwrap()
+                .actual_weight
+                .is_none(),
+                "Unexpected weight"
+            );
+        })
+    }
+
     #[rstest]
     #[case::no_domain(
         VkOrHash::from_vk(24),
         5,
         6,
+        None,
         None,
         Weight::from_parts(6506050024001000, 0)
     )]
@@ -434,12 +504,14 @@ mod submit_proof_should {
         5,
         6,
         None,
+        None,
         Weight::from_parts(6506050000001100, 10)
     )]
     #[case::no_domain(
         VkOrHash::from_vk(24),
         12,
         24,
+        None,
         None,
         Weight::from_parts(25224120024001000, 0)
     )]
@@ -448,6 +520,7 @@ mod submit_proof_should {
         5,
         6,
         Some(12),
+        None,
         Weight::from_parts(6506050024001042, 24)
     )]
     #[case::domain(
@@ -455,6 +528,7 @@ mod submit_proof_should {
         5,
         6,
         Some(12),
+        None,
         Weight::from_parts(6506050000001142, 24)
     )]
     #[case::domain(
@@ -462,13 +536,23 @@ mod submit_proof_should {
         12,
         24,
         Some(12),
+        None,
         Weight::from_parts(25224120024001042, 24)
+    )]
+    #[case::override_weight(
+        VkOrHash::from_vk(24),
+        12,
+        24,
+        Some(12),
+        Some(Weight::from_parts(97_000_000_000_000_000, 1_000_000_000_000)),
+        Weight::from_parts(122200000024001042, 1_000_000_000_000)
     )]
     fn submit_proof_expected_weights(
         #[case] vk_or_hash: VkOrHash,
         #[case] proof: u64,
         #[case] pubs: u64,
         #[case] domain_id: Option<u32>,
+        #[case] override_weight: Option<Weight>,
         #[case] expected: Weight,
     ) {
         let weight = crate::submit_proof_weight::<Test, FakeVerifier>(
@@ -476,6 +560,7 @@ mod submit_proof_should {
             &proof,
             &pubs,
             &domain_id,
+            override_weight,
         );
 
         assert_eq!(expected, weight);

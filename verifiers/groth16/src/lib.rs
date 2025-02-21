@@ -25,7 +25,7 @@ use frame_support::pallet_prelude::Weight;
 use groth16::Curve;
 pub use groth16::{ProofWithCurve as Proof, VerificationKeyWithCurve as Vk};
 use hp_groth16::Scalar;
-use hp_verifiers::Verifier;
+use hp_verifiers::{Verifier, VerifyError};
 use sp_std::vec::Vec;
 
 pub const MAX_NUM_INPUTS: u32 = 32;
@@ -55,7 +55,7 @@ impl<T: Config> Verifier for Groth16<T> {
         vk: &Self::Vk,
         proof: &Self::Proof,
         pubs: &Self::Pubs,
-    ) -> Result<(), hp_verifiers::VerifyError> {
+    ) -> Result<Option<Weight>, VerifyError> {
         if pubs.len() > T::MAX_NUM_INPUTS as usize {
             return Err(hp_verifiers::VerifyError::InvalidInput);
         }
@@ -69,6 +69,7 @@ impl<T: Config> Verifier for Groth16<T> {
                 r.then_some(())
                     .ok_or(hp_verifiers::VerifyError::VerifyError)
             })
+            .map(|_| None)
     }
 
     fn pubs_bytes(pubs: &Self::Pubs) -> hp_verifiers::Cow<[u8]> {

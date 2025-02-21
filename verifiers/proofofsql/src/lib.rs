@@ -101,7 +101,7 @@ impl<T: Config> Verifier for ProofOfSql<T> {
         vk: &Self::Vk,
         proof: &Self::Proof,
         pubs: &Self::Pubs,
-    ) -> Result<(), VerifyError> {
+    ) -> Result<Option<Weight>, VerifyError> {
         vk.validate_size()?;
         if proof.len() > MAX_PROOF_SIZE as usize {
             return Err(VerifyError::InvalidProofData);
@@ -117,7 +117,7 @@ impl<T: Config> Verifier for ProofOfSql<T> {
             .map_err(Into::<LibraryError>::into)?;
         proof_of_sql_verifier::verify_proof(&proof, &pubs, &vk)
             .map_err(Into::<LibraryError>::into)?;
-        Ok(())
+        Ok(None)
     }
 
     fn validate_vk(vk: &Self::Vk) -> Result<(), VerifyError> {

@@ -188,7 +188,7 @@ pub fn benchmarking_utils(input: proc_macro::TokenStream) -> proc_macro::TokenSt
             vk: &#vk_of,
             proof: &#proof_of,
             pubs: &#pubs_of,
-        ) -> Result<(), #crate_name::benchmarking_utils::VerifyError>
+        ) -> Result<Option<#crate_name::benchmarking_utils::Weight>, #crate_name::benchmarking_utils::VerifyError>
         where
             T: #crate_name::Config<#verifier> #opt_cfg_bound,
         {

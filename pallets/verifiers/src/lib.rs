@@ -204,6 +204,7 @@ pub mod pallet {
         proof: &I::Proof,
         pubs: &I::Pubs,
         domain_id: &Option<u32>,
+        override_verify_proof: Option<Weight>,
     ) -> Weight {
         // Check disable: we din't consider any time cost about checking boolean
         // variable and proof size: we consider them negligible
@@ -219,7 +220,8 @@ pub mod pallet {
             }
         };
         // ensure_signed is just a struct unwrapping.
-        let verify = T::WeightInfo::verify_proof(proof, pubs);
+        let verify =
+            override_verify_proof.unwrap_or_else(|| T::WeightInfo::verify_proof(proof, pubs));
         let statement = T::WeightInfo::compute_statement_hash(proof, pubs);
         base.compose(vk_weight)
             .compose(verify)
@@ -316,7 +318,7 @@ pub mod pallet {
         /// with `register_vk` extrinsic.
         #[pallet::call_index(0)]
         #[pallet::weight(
-            submit_proof_weight::<T, I>(vk_or_hash, proof, pubs, domain_id)
+            submit_proof_weight::<T, I>(vk_or_hash, proof, pubs, domain_id, None)
         )]
         pub fn submit_proof(
             origin: OriginFor<T>,
@@ -343,18 +345,22 @@ pub mod pallet {
                 }
             };
             let account = ensure_signed(origin).ok();
-            I::verify_proof(&vk, &proof, &pubs)
-                .map(|_| compute_statement_hash::<I>(&vk_or_hash, &proof, &pubs))
-                .inspect(|statement| {
-                    Self::deposit_event(Event::ProofVerified {
-                        statement: *statement,
-                    })
+            let verify_proof_weight =
+                I::verify_proof(&vk, &proof, &pubs).map_err(Error::<T, I>::from)?;
+            let statement = compute_statement_hash::<I>(&vk_or_hash, &proof, &pubs);
+            Self::deposit_event(Event::ProofVerified { statement });
+            T::OnProofVerified::on_proof_verified(account, domain_id, statement);
+            Ok(verify_proof_weight
+                .map(|new_weight| {
+                    submit_proof_weight::<T, I>(
+                        &vk_or_hash,
+                        &proof,
+                        &pubs,
+                        &domain_id,
+                        Some(new_weight),
+                    )
                 })
-                .map(|statement| {
-                    T::OnProofVerified::on_proof_verified(account, domain_id, statement)
-                })
-                .map_err(Error::<T, I>::from)?;
-            Ok(().into())
+                .into())
         }
 
         /// Register a new verification key.
@@ -481,7 +487,7 @@ pub mod pallet {
                 vk: &Self::Vk,
                 proof: &Self::Proof,
                 pubs: &Self::Pubs,
-            ) -> Result<(), VerifyError> {
+            ) -> Result<Option<Weight>, VerifyError> {
                 FakeVerifier::verify_proof(vk, proof, pubs)
             }
             fn pubs_bytes(pubs: &Self::Pubs) -> sp_std::borrow::Cow<[u8]> {
@@ -586,8 +592,8 @@ pub mod pallet {
                 _vk: &Self::Vk,
                 _proof: &Self::Proof,
                 _pubs: &Self::Pubs,
-            ) -> Result<(), VerifyError> {
-                Ok(())
+            ) -> Result<Option<Weight>, VerifyError> {
+                Ok(None)
             }
 
             fn pubs_bytes(_pubs: &Self::Pubs) -> hp_verifiers::Cow<[u8]> {
@@ -613,8 +619,8 @@ pub mod pallet {
                 _vk: &Self::Vk,
                 _proof: &Self::Proof,
                 _pubs: &Self::Pubs,
-            ) -> Result<(), VerifyError> {
-                Ok(())
+            ) -> Result<Option<Weight>, VerifyError> {
+                Ok(None)
             }
 
             fn pubs_bytes(_pubs: &Self::Pubs) -> hp_verifiers::Cow<[u8]> {
@@ -625,8 +631,10 @@ pub mod pallet {
         #[rstest]
         #[case::vk_used_in_test(PhantomData::<FakeVerifier>, REGISTERED_VK, REGISTERED_VK_HASH)]
         #[should_panic]
-        #[case::u256_vk_changed(PhantomData::<Other2Verifier>, U256::from(REGISTERED_VK), REGISTERED_VK_HASH)]
-        #[case::forward_vk(PhantomData::<VerifierWithoutHash>, REGISTERED_VK_HASH, REGISTERED_VK_HASH)]
+        #[case::u256_vk_changed(PhantomData::<Other2Verifier>, U256::from(REGISTERED_VK), REGISTERED_VK_HASH
+        )]
+        #[case::forward_vk(PhantomData::<VerifierWithoutHash>, REGISTERED_VK_HASH, REGISTERED_VK_HASH
+        )]
         fn hash_vk_as_expected<V: Verifier>(
             #[case] _verifier: PhantomData<V>,
             #[case] vk: V::Vk,

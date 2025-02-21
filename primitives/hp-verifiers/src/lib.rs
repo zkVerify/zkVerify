@@ -64,7 +64,7 @@ pub trait Verifier: 'static {
         vk: &Self::Vk,
         proof: &Self::Proof,
         pubs: &Self::Pubs,
-    ) -> Result<(), VerifyError>;
+    ) -> Result<Option<Weight>, VerifyError>;
 
     /// Validate the verification key: Should return `Ok(())` if the verification key is valid.
     /// The default implementation accept all verification keys: our business logic could
@@ -144,7 +144,7 @@ impl Verifier for () {
         _vk: &Self::Vk,
         _proof: &Self::Proof,
         _pubs: &Self::Pubs,
-    ) -> Result<(), VerifyError> {
+    ) -> Result<Option<Weight>, VerifyError> {
         Err(VerifyError::VerifyError)
     }
 

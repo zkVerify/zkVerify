@@ -49,7 +49,7 @@ impl Verifier for Fflonk {
         vk: &Self::Vk,
         raw_proof: &Self::Proof,
         raw_pubs: &Self::Pubs,
-    ) -> Result<(), VerifyError> {
+    ) -> Result<Option<Weight>, VerifyError> {
         let vk: fflonk_verifier::VerificationKey = vk
             .clone()
             .try_into_fflonk_vk_unchecked()
@@ -70,6 +70,7 @@ impl Verifier for Fflonk {
         fflonk_verifier::verify(&vk, &proof, &pubs)
             .map_err(|e| log::debug!("Cannot verify proof: {:?}", e))
             .map_err(|_| VerifyError::VerifyError)
+            .map(|_| None)
     }
 
     fn validate_vk(vk: &Self::Vk) -> Result<(), hp_verifiers::VerifyError> {
