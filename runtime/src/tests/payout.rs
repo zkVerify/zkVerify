@@ -16,9 +16,7 @@
 //! This module tests the correct computation of rewards for validators.
 
 use super::*;
-use crate::{
-    payout::*, AccountId, Balance, Balances, Perbill, Runtime, Treasury, ACME,
-};
+use crate::{payout::*, AccountId, Balance, Balances, Perbill, Runtime, Treasury, ACME};
 use pallet_staking::EraPayout;
 use sp_runtime::traits::Convert;
 

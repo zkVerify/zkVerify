@@ -278,22 +278,22 @@ impl MockConsideration {
 }
 
 impl Consideration<AccountId, Footprint> for MockConsideration {
-    fn new(who: &AccountId, new: Footprint) -> Result<Option<Self>, sp_runtime::DispatchError> {
+    fn new(who: &AccountId, new: Footprint) -> Result<Self, sp_runtime::DispatchError> {
         if who == &USER_DOMAIN_ERROR_NEW {
             Err(sp_runtime::DispatchError::from("User Domain Error New"))?
         }
-        Ok(Some(Self {
+        Ok(Self {
             who: *who,
             count: new.count,
             size: new.size,
-        }))
+        })
     }
 
     fn update(
         self,
         _who: &AccountId,
         _new: frame_support::traits::Footprint,
-    ) -> Result<Option<Self>, sp_runtime::DispatchError> {
+    ) -> Result<Self, sp_runtime::DispatchError> {
         unimplemented!("We don't support it by now")
     }
 
@@ -303,6 +303,10 @@ impl Consideration<AccountId, Footprint> for MockConsideration {
             Err(sp_runtime::DispatchError::from("User Domain Error Drop"))?
         }
         Ok(())
+    }
+
+    fn ensure_successful(_: &u64, _: Footprint) {
+        unimplemented!("Not needed by now")
     }
 }
 

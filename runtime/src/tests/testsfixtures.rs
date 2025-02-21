@@ -99,6 +99,7 @@ pub fn test() -> sp_io::TestExternalities {
 
     // Add authorities
     pallet_session::GenesisConfig::<super::Runtime> {
+        non_authority_keys: vec![],
         keys: SAMPLE_USERS
             .iter()
             .cloned()

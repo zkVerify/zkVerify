@@ -40,9 +40,9 @@ use xcm_builder::{
     AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
     AllowTopLevelPaidExecutionFrom, ChildParachainAsNative, ChildParachainConvertsVia,
     DescribeAllTerminal, DescribeFamily, FrameTransactionalProcessor, FungibleAdapter,
-    HashedDescription, IsConcrete, MintLocation, SendXcmFeeToAccount,
-    SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
-    TrailingSetTopicAsId, UsingComponents, WeightInfoBounds, WithComputedOrigin, WithUniqueTopic,
+    HashedDescription, IsConcrete, MintLocation, SendXcmFeeToAccount, SignedAccountId32AsNative,
+    SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, TrailingSetTopicAsId,
+    UsingComponents, WeightInfoBounds, WithComputedOrigin, WithUniqueTopic,
     XcmFeeManagerFromComponents,
 };
 
@@ -243,7 +243,6 @@ parameter_types! {
     // `Treasurer` pluralistic body.
     pub const TreasurerBodyId: BodyId = BodyId::Treasury;
 }
-
 
 /// Type to convert an `Origin` type value into a `Location` value which represents an interior
 /// location of this chain.

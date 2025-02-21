@@ -27,8 +27,10 @@ use sp_consensus_grandpa::AuthorityId as GrandpaId;
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use telemetry::TelemetryEndpoints;
-use zkv_runtime::currency::{Balance, ACME};
-use zkv_runtime::{currency, AccountId, SessionKeysRelay as SessionKeys, Signature, WASM_BINARY};
+use zkv_runtime::{
+    currency::{Balance, ACME},
+    AccountId, SessionKeysRelay as SessionKeys, Signature, WASM_BINARY,
+};
 
 /// The extensions for the [`ChainSpec`].
 #[derive(Default, Clone, Serialize, Deserialize, ChainSpecExtension)]
@@ -272,6 +274,7 @@ pub fn testnet_config() -> Result<ChainSpec, String> {
     .with_id("zkv_testnet")
     .with_protocol_id("tzkv")
     .with_chain_type(ChainType::Live)
+    /*
     .with_boot_nodes(vec![
         format!("/dns/{BOOTNODE_1_DNS}/tcp/30333/p2p/{BOOTNODE_1_PEER_ID}")
             .parse()
@@ -292,6 +295,7 @@ pub fn testnet_config() -> Result<ChainSpec, String> {
             .parse()
             .expect("MultiaddrWithPeerId"),
     ])
+    */
     .with_telemetry_endpoints(
         TelemetryEndpoints::new(vec![(
             STAGING_TELEMETRY_URL.to_string(),
@@ -436,10 +440,11 @@ mod tests {
     // by checking that the json returned by testnet_genesis() contains the field "session"
     #[test]
     fn testnet_genesis_should_set_session_keys() {
-        let initial_authorities = vec![(authority_keys_from_seed("Alice"), 7 * currency::ACME)];
+        let initial_authorities = vec![(authority_keys_from_seed("Alice"), 7 * ACME)];
         let root_key = get_account_id_from_seed::<sr25519::Public>("Alice");
 
-        let ret_val: serde_json::Value = genesis(initial_authorities, root_key, vec![], false);
+        let ret_val: serde_json::Value =
+            genesis(initial_authorities, root_key, vec![], 1, None, 0, 0);
 
         let session_config = &ret_val["session"];
 

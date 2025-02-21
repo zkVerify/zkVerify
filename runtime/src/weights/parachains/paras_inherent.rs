@@ -332,6 +332,6 @@ impl<T: frame_system::Config> crate::parachains::paras_inherent::WeightInfo for 
             .saturating_add(T::DbWeight::get().writes(15_u64))
     }
     fn enter_empty() -> Weight {
-        todo!()
+       Default::default() 
     }
 }

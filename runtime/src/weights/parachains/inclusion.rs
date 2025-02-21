@@ -57,6 +57,6 @@ pub struct ZKVWeight<T>(PhantomData<T>);
 
 impl<T: frame_system::Config> crate::parachains::inclusion::WeightInfo for ZKVWeight<T> {
     fn enact_candidate(u: u32, h: u32, c: u32) -> Weight {
-        todo!()
+        Default::default()
     }
 }

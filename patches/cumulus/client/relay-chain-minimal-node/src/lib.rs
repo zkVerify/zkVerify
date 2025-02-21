@@ -187,7 +187,13 @@ async fn new_minimal_relay_chain<Block: BlockT, Network: NetworkBackend<RelayBlo
 ) -> Result<NewMinimalNode, RelayChainError> {
 	let role = config.role.clone();
 	let mut net_config =
-		sc_network::config::FullNetworkConfiguration::<_, _, Network>::new(&config.network);
+		sc_network::config::FullNetworkConfiguration::<_, _, Network>::new(
+        &config.network,
+        config
+            .prometheus_config
+            .as_ref()
+            .map(|cfg| cfg.registry.clone()),
+        );
 	let metrics = Network::register_notification_metrics(
 		config.prometheus_config.as_ref().map(|cfg| &cfg.registry),
 	);
