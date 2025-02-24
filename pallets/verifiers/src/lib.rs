@@ -194,7 +194,7 @@ pub mod pallet {
         if let Some(h) = version_hash {
             data_to_hash.extend_from_slice(h.as_bytes());
         } else {
-            data_to_hash.extend_from_slice(&Vec::new());
+            data_to_hash.extend_from_slice(<&[u8] as Default>::default());
         }
         data_to_hash.extend_from_slice(keccak_256(pubs.as_bytes_ref()).as_bytes_ref());
         H256(keccak_256(data_to_hash.as_slice()))
@@ -460,6 +460,7 @@ pub mod pallet {
         };
 
         use super::*;
+        use hex_literal::hex;
         use hp_verifiers::Verifier;
         use rstest::rstest;
         use sp_core::U256;
@@ -560,6 +561,15 @@ pub mod pallet {
             42,
             VkOrHash::from_vk(REGISTERED_VK),
             VALID_HASH_REGISTERED_VK
+        )]
+        #[case::should_take_care_of_missing_verification_version(
+            PhantomData::<FakeVerifier>,
+            None,
+            42,
+            VkOrHash::from_vk(REGISTERED_VK),
+            H256(hex!(
+                "a65dc57cd8f1e436aaa8a8a473005040a4594f5411e0d9c7c5d7f20630217b79"
+            ))
         )]
         fn hash_statement_as_expected<V: Verifier>(
             #[case] _verifier: PhantomData<V>,
