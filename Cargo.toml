@@ -189,7 +189,7 @@ aggregate-rpc-runtime-api = { default-features = false, path = "rpc/aggregate/ru
 
 # Hyperbridge dependencies
 ismp = { default-features = false, version = "0.2.2" }
-pallet-ismp = { default-features = false, version = "16.1.0" }
+pallet-ismp = { default-features = false, version = "=16.0.0" }
 pallet-ismp-rpc = { default-features = false, version = "16.0.0" }
 pallet-ismp-runtime-api = { default-features = false, version = "16.0.0" }
 ismp-grandpa = { default-features = false, version = "16.0.0" }
@@ -331,6 +331,8 @@ substrate-rpc-client = { version = "0.44.0" }
 [patch.crates-io]
 cumulus-relay-chain-inprocess-interface = { path = "patches/cumulus/client/relay-chain-inprocess-interface" }
 cumulus-relay-chain-minimal-node = { path = "patches/cumulus/client/relay-chain-minimal-node" }
+polkadot-parachain-lib = { path = "patches/cumulus/polkadot-parachain/polkadot-parachain-lib" }
+
 [profile.release]
 # Polkadot runtime requires unwinding.
 panic = "unwind"
