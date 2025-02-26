@@ -20627,6 +20627,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "zkv-benchmarks"
+version = "11.0.0"
+dependencies = [
+ "sc-sysinfo",
+ "serde_json",
+]
+
+[[package]]
 name = "zkv-cli"
 version = "11.0.0"
 dependencies = [
@@ -20653,6 +20661,7 @@ dependencies = [
  "sp-runtime",
  "substrate-build-script-utils",
  "thiserror 1.0.69",
+ "zkv-benchmarks",
  "zkv-runtime",
  "zkv-service",
 ]

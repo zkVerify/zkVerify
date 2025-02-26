@@ -15,7 +15,7 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use crate::cli::{Cli, Subcommand, NODE_VERSION};
-use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
+use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory};
 use futures::future::TryFutureExt;
 use native::HLNativeHostFunctions;
 use sc_cli::SubstrateCli;
@@ -122,7 +122,7 @@ where
         let hwbench = (!cli.run.no_hardware_benchmarks)
             .then_some(config.database.path().map(|database_path| {
                 let _ = std::fs::create_dir_all(database_path);
-                sc_sysinfo::gather_hwbench(Some(database_path), &SUBSTRATE_REFERENCE_HARDWARE)
+                sc_sysinfo::gather_hwbench(Some(database_path), &zkv_benchmarks::hardware::zkv_reference_hardware())
             }))
             .flatten();
 
@@ -376,7 +376,7 @@ pub fn run() -> Result<()> {
                     }
                 }
                 BenchmarkCmd::Machine(cmd) => runner.sync_run(|config| {
-                    cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone())
+                    cmd.run(&config, zkv_benchmarks::hardware::zkv_reference_hardware().clone())
                         .map_err(Error::SubstrateCli)
                 }),
                 // NOTE: this allows the zkVerify client to leniently implement

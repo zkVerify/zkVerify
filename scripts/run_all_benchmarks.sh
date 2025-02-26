@@ -83,8 +83,8 @@ else
   SKIP_LINES=4
 fi
 
-DEFAULT_DEPLOY_WEIGHT_TEMPLATE="${PROJECT_ROOT}/node/zkv-deploy-weight-template.hbs"
-DEFAULT_DEPLOY_WEIGHT_TEMPLATE_XCM="${PROJECT_ROOT}/node/zkv-deploy-weight-template-xcm.hbs"
+DEFAULT_DEPLOY_WEIGHT_TEMPLATE="${PROJECT_ROOT}/relay-node/benchmarks/zkv-deploy-weight-template.hbs"
+DEFAULT_DEPLOY_WEIGHT_TEMPLATE_XCM="${PROJECT_ROOT}/relay-node/benchmarks/zkv-deploy-weight-template-xcm.hbs"
 
 WEIGTH_TEMPLATE="${WEIGTH_TEMPLATE:-${DEFAULT_DEPLOY_WEIGHT_TEMPLATE}}"
 WEIGTH_TEMPLATE_XCM="${WEIGTH_TEMPLATE_XCM:-${DEFAULT_DEPLOY_WEIGHT_TEMPLATE_XCM}}"
