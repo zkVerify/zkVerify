@@ -679,14 +679,14 @@ pub mod pallet {
             let ticket = owner
                 .clone()
                 .owner()
-                .and_then(|a| {
-                    Some(T::Consideration::new(
+                .map(|a| {
+                    T::Consideration::new(
                         a,
                         Footprint::from_parts(
                             1,
                             Domain::<T>::compute_encoded_size(aggregation_size, queue_size),
                         ),
-                    ))
+                    )
                 })
                 .transpose()?;
             let domain = Domain::<T>::try_create(

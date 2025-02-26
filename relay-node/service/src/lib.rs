@@ -707,7 +707,7 @@ pub fn new_full<
     use polkadot_node_network_protocol::request_response::IncomingRequest;
     use sc_network_sync::WarpSyncConfig;
 
-    let role = config.role.clone();
+    let role = config.role;
     let force_authoring = config.force_authoring;
     let backoff_authoring_blocks = force_authoring_backoff
         .then(sc_consensus_slots::BackoffAuthoringOnFinalizedHeadLagging::default);
