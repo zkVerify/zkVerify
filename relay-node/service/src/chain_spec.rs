@@ -274,7 +274,6 @@ pub fn testnet_config() -> Result<ChainSpec, String> {
     .with_id("zkv_testnet")
     .with_protocol_id("tzkv")
     .with_chain_type(ChainType::Live)
-    /*
     .with_boot_nodes(vec![
         format!("/dns/{BOOTNODE_1_DNS}/tcp/30333/p2p/{BOOTNODE_1_PEER_ID}")
             .parse()
@@ -295,7 +294,6 @@ pub fn testnet_config() -> Result<ChainSpec, String> {
             .parse()
             .expect("MultiaddrWithPeerId"),
     ])
-    */
     .with_telemetry_endpoints(
         TelemetryEndpoints::new(vec![(
             STAGING_TELEMETRY_URL.to_string(),

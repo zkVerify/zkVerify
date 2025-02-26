@@ -787,8 +787,8 @@ pub mod pallet {
             let ticket = caller
                 .clone()
                 .account()
-                .and_then(|a| {
-                    Some(T::Consideration::new(
+                .map(|a| {
+                    T::Consideration::new(
                         a,
                         Footprint::from_parts(
                             1,
@@ -798,7 +798,7 @@ pub mod pallet {
                                 &destination,
                             ),
                         ),
-                    ))
+                    )
                 })
                 .transpose()?;
 
