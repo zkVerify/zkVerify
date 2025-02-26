@@ -40,9 +40,9 @@ pub struct Extensions {
 
 // The connection strings for bootnodes
 const BOOTNODE_1_DNS: &str = "bootnode-tn-1.zkverify.io";
-const BOOTNODE_1_PEER_ID: &str = "TBD";
+const BOOTNODE_1_PEER_ID: &str = "12D3KooWNhvf6iSowraUY4tZnjpNZXEe85oy9zDWYRKFBnWivukc";
 const BOOTNODE_2_DNS: &str = "bootnode-tn-2.zkverify.io";
-const BOOTNODE_2_PEER_ID: &str = "TBD";
+const BOOTNODE_2_PEER_ID: &str = "12D3KooWEjVadU1YWyfDGvyRXPbCq2rXhzJtXaG4RxJZBkGE9Aug";
 
 // The URL for the telemetry server.
 const STAGING_TELEMETRY_URL: &str = "wss://testnet-telemetry.zkverify.io/submit/";
