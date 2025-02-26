@@ -68,8 +68,8 @@ mod benchmarks {
         let vk = VALID_VK;
         let inner_proof =
             include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_24.bin").to_vec();
-        let proof = Proof::V1_0(inner_proof).into();
-        let pubs = VALID_PUBS_CYCLE_2_POW_24.to_vec().into();
+        let proof = Proof::V1_0(inner_proof);
+        let pubs = VALID_PUBS_CYCLE_2_POW_24.to_vec();
 
         let vk = VkOrHash::Vk(vk.into());
 
@@ -85,7 +85,7 @@ mod benchmarks {
         let vk: VkOf<T> = VALID_VK;
 
         #[extrinsic_call]
-        register_vk(RawOrigin::Signed(caller), vk.clone().into());
+        register_vk(RawOrigin::Signed(caller), vk.into());
 
         // Verify
         assert!(do_get_vk::<T>(&do_vk_hash::<T>(&vk)).is_some());
@@ -96,7 +96,7 @@ mod benchmarks {
         // setup code
         let caller: T::AccountId = funded_account::<T>();
         let hash = sp_core::H256::repeat_byte(2);
-        let vk = VALID_VK.into();
+        let vk = VALID_VK;
 
         insert_vk::<T>(caller.clone(), vk, hash);
 

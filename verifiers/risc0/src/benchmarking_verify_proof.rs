@@ -39,8 +39,8 @@ mod benchmarks {
     fn verify_proof_succinct() {
         let vk = VALID_VK_SUCCINCT;
         let inner_proof = include_bytes!("resources_benchmarking/SUCCINCT.bin").to_vec();
-        let proof = Proof::V1_2(inner_proof).into();
-        let pubs = VALID_PUBS_SUCCINCT.to_vec().into();
+        let proof = Proof::V1_2(inner_proof);
+        let pubs = VALID_PUBS_SUCCINCT.to_vec();
 
         let r;
         #[block]
@@ -54,8 +54,8 @@ mod benchmarks {
     fn verify_proof_segment_poseidon2_16() {
         let vk = VALID_VK_BLOCKS;
         let inner_proof = include_bytes!("resources_benchmarking/POSEIDON2_BLOCK_16.bin").to_vec();
-        let proof = Proof::V1_2(inner_proof).into();
-        let pubs = VALID_PUBS_BLOCK_16.to_vec().into();
+        let proof = Proof::V1_2(inner_proof);
+        let pubs = VALID_PUBS_BLOCK_16.to_vec();
 
         let r;
         #[block]
@@ -69,8 +69,8 @@ mod benchmarks {
     fn verify_proof_segment_sha_256_16() {
         let vk = VALID_VK_BLOCKS;
         let inner_proof = include_bytes!("resources_benchmarking/SHA_256_BLOCK_16.bin").to_vec();
-        let proof = Proof::V1_2(inner_proof).into();
-        let pubs = VALID_PUBS_BLOCK_16.to_vec().into();
+        let proof = Proof::V1_2(inner_proof);
+        let pubs = VALID_PUBS_BLOCK_16.to_vec();
 
         let r;
         #[block]
@@ -84,8 +84,8 @@ mod benchmarks {
     fn verify_proof_segment_poseidon2_17() {
         let vk = VALID_VK_BLOCKS;
         let inner_proof = include_bytes!("resources_benchmarking/POSEIDON2_BLOCK_17.bin").to_vec();
-        let proof = Proof::V1_2(inner_proof).into();
-        let pubs = VALID_PUBS_BLOCK_17.to_vec().into();
+        let proof = Proof::V1_2(inner_proof);
+        let pubs = VALID_PUBS_BLOCK_17.to_vec();
 
         let r;
         #[block]
@@ -99,8 +99,8 @@ mod benchmarks {
     fn verify_proof_segment_sha_256_17() {
         let vk = VALID_VK_BLOCKS;
         let inner_proof = include_bytes!("resources_benchmarking/SHA_256_BLOCK_17.bin").to_vec();
-        let proof = Proof::V1_2(inner_proof).into();
-        let pubs = VALID_PUBS_BLOCK_17.to_vec().into();
+        let proof = Proof::V1_2(inner_proof);
+        let pubs = VALID_PUBS_BLOCK_17.to_vec();
 
         let r;
         #[block]
@@ -114,8 +114,8 @@ mod benchmarks {
     fn verify_proof_segment_poseidon2_18() {
         let vk = VALID_VK_BLOCKS;
         let inner_proof = include_bytes!("resources_benchmarking/POSEIDON2_BLOCK_18.bin").to_vec();
-        let proof = Proof::V1_2(inner_proof).into();
-        let pubs = VALID_PUBS_BLOCK_18.to_vec().into();
+        let proof = Proof::V1_2(inner_proof);
+        let pubs = VALID_PUBS_BLOCK_18.to_vec();
 
         let r;
         #[block]
@@ -129,8 +129,8 @@ mod benchmarks {
     fn verify_proof_segment_sha_256_18() {
         let vk = VALID_VK_BLOCKS;
         let inner_proof = include_bytes!("resources_benchmarking/SHA_256_BLOCK_18.bin").to_vec();
-        let proof = Proof::V1_2(inner_proof).into();
-        let pubs = VALID_PUBS_BLOCK_18.to_vec().into();
+        let proof = Proof::V1_2(inner_proof);
+        let pubs = VALID_PUBS_BLOCK_18.to_vec();
 
         let r;
         #[block]
@@ -144,8 +144,8 @@ mod benchmarks {
     fn verify_proof_segment_poseidon2_19() {
         let vk = VALID_VK_BLOCKS;
         let inner_proof = include_bytes!("resources_benchmarking/POSEIDON2_BLOCK_19.bin").to_vec();
-        let proof = Proof::V1_2(inner_proof).into();
-        let pubs = VALID_PUBS_BLOCK_19.to_vec().into();
+        let proof = Proof::V1_2(inner_proof);
+        let pubs = VALID_PUBS_BLOCK_19.to_vec();
 
         let r;
         #[block]
@@ -159,8 +159,8 @@ mod benchmarks {
     fn verify_proof_segment_sha_256_19() {
         let vk = VALID_VK_BLOCKS;
         let inner_proof = include_bytes!("resources_benchmarking/SHA_256_BLOCK_19.bin").to_vec();
-        let proof = Proof::V1_2(inner_proof).into();
-        let pubs = VALID_PUBS_BLOCK_19.to_vec().into();
+        let proof = Proof::V1_2(inner_proof);
+        let pubs = VALID_PUBS_BLOCK_19.to_vec();
 
         let r;
         #[block]
@@ -174,8 +174,8 @@ mod benchmarks {
     fn verify_proof_segment_poseidon2_20() {
         let vk = VALID_VK_BLOCKS;
         let inner_proof = include_bytes!("resources_benchmarking/POSEIDON2_BLOCK_20.bin").to_vec();
-        let proof = Proof::V1_2(inner_proof).into();
-        let pubs = VALID_PUBS_BLOCK_20.to_vec().into();
+        let proof = Proof::V1_2(inner_proof);
+        let pubs = VALID_PUBS_BLOCK_20.to_vec();
 
         let r;
         #[block]
@@ -189,8 +189,8 @@ mod benchmarks {
     fn verify_proof_segment_sha_256_20() {
         let vk = VALID_VK_BLOCKS;
         let inner_proof = include_bytes!("resources_benchmarking/SHA_256_BLOCK_20.bin").to_vec();
-        let proof = Proof::V1_2(inner_proof).into();
-        let pubs = VALID_PUBS_BLOCK_20.to_vec().into();
+        let proof = Proof::V1_2(inner_proof);
+        let pubs = VALID_PUBS_BLOCK_20.to_vec();
 
         let r;
         #[block]
@@ -204,8 +204,8 @@ mod benchmarks {
     fn verify_proof_segment_poseidon2_21() {
         let vk = VALID_VK_BLOCKS;
         let inner_proof = include_bytes!("resources_benchmarking/POSEIDON2_BLOCK_21.bin").to_vec();
-        let proof = Proof::V1_2(inner_proof).into();
-        let pubs = VALID_PUBS_BLOCK_21.to_vec().into();
+        let proof = Proof::V1_2(inner_proof);
+        let pubs = VALID_PUBS_BLOCK_21.to_vec();
 
         let r;
         #[block]
@@ -219,8 +219,8 @@ mod benchmarks {
     fn verify_proof_segment_sha_256_21() {
         let vk = VALID_VK_BLOCKS;
         let inner_proof = include_bytes!("resources_benchmarking/SHA_256_BLOCK_21.bin").to_vec();
-        let proof = Proof::V1_2(inner_proof).into();
-        let pubs = VALID_PUBS_BLOCK_21.to_vec().into();
+        let proof = Proof::V1_2(inner_proof);
+        let pubs = VALID_PUBS_BLOCK_21.to_vec();
 
         let r;
         #[block]

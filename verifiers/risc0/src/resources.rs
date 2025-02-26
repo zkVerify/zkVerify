@@ -18,10 +18,9 @@ pub mod v1_0 {
         "32e1a33f3988c3cdf127e709cc0323a258b28df750b7a2d5ddc4c5e37f007d99"
     ));
 
-    pub static VALID_PROOF: [u8; include_bytes!("resources/valid_proof_v1_0.bin").len()] =
-        *include_bytes!("resources/valid_proof_v1_0.bin");
+    pub static VALID_PROOF: &[u8] = include_bytes!("resources/valid_proof_v1_0.bin");
 
-    pub static VALID_PUBS: [u8; 4] = hex_literal::hex!("01000078");
+    pub static VALID_PUBS: &[u8] = &hex_literal::hex!("01000078");
 }
 
 pub mod v1_1 {
@@ -29,10 +28,9 @@ pub mod v1_1 {
         "2addbbeb4ddb2f2ec2b4a0a8a21c03f7d3bf42cfd2ee9f4a69d2ebd9974218b6"
     ));
 
-    pub static VALID_PROOF: [u8; include_bytes!("resources/v_1_1_poseidon2_16.bin").len()] =
-        *include_bytes!("resources/v_1_1_poseidon2_16.bin");
+    pub static VALID_PROOF: &[u8] = include_bytes!("resources/v_1_1_poseidon2_16.bin");
 
-    pub static VALID_PUBS: [u8; 8] = hex_literal::hex!("8105000000000000");
+    pub static VALID_PUBS: &[u8] = &hex_literal::hex!("8105000000000000");
 }
 
 pub mod v1_2 {
@@ -40,10 +38,9 @@ pub mod v1_2 {
         "9db9988d9fbcacadf2bd29fc7c60b98bc4234342fe536eb983169eb6cc248009"
     ));
 
-    pub static VALID_PROOF: [u8; include_bytes!("resources/v_1_2_succinct_22.bin").len()] =
-        *include_bytes!("resources/v_1_2_succinct_22.bin");
+    pub static VALID_PROOF: &[u8] = include_bytes!("resources/v_1_2_succinct_22.bin");
 
-    pub static VALID_PUBS: [u8; 8] = hex_literal::hex!("1d64010000000000");
+    pub static VALID_PUBS: &[u8] = &hex_literal::hex!("1d64010000000000");
 
     pub static VALID_PROOF_FULL_PROOF: &[u8] = include_bytes!("resources/v_1_2_poseidon2_22.bin");
 

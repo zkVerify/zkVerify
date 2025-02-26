@@ -68,20 +68,20 @@ mod reject {
 
     #[test]
     fn invalid_proof() {
-        let mut invalid_pubs = v1_0::VALID_PUBS.clone();
-        invalid_pubs[invalid_pubs.len() - 1] = invalid_pubs[invalid_pubs.len() - 1].wrapping_add(1);
+        let mut invalid_pubs = v1_0::VALID_PUBS.to_vec();
+        invalid_pubs[0] = invalid_pubs[0].wrapping_add(1);
         let proof = Proof::V1_0(v1_0::VALID_PROOF.to_vec());
         assert_eq!(
-            Risc0::<Mock>::verify_proof(&v1_0::VALID_VK, &proof, &invalid_pubs.to_vec()),
+            Risc0::<Mock>::verify_proof(&v1_0::VALID_VK, &proof, &invalid_pubs),
             Err(VerifyError::VerifyError)
         )
     }
 
     #[test]
     fn undeserializable_proof() {
-        let mut malformed_proof = v1_0::VALID_PROOF.clone();
+        let mut malformed_proof = v1_0::VALID_PROOF.to_vec();
         malformed_proof[0] = malformed_proof[0].wrapping_add(1);
-        let proof = Proof::V1_0(malformed_proof.to_vec());
+        let proof = Proof::V1_0(malformed_proof);
         assert_eq!(
             Risc0::<Mock>::verify_proof(&v1_0::VALID_VK, &proof, &v1_0::VALID_PUBS.to_vec()),
             Err(VerifyError::InvalidProofData)
