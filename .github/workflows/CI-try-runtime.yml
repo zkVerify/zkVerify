@@ -9,14 +9,14 @@ on:
         description: 'Whether to execute try-runtime step or not'
         required: false
         type: string
-        default: 'yes'
+        default: 'no'
   workflow_dispatch:
     inputs:
       execute-try-runtime:
         description: 'Whether to execute try-runtime step or not'
         required: false
         type: string
-        default: 'yes'
+        default: 'no'
 
 jobs:
   try-runtime:
