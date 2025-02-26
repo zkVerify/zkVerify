@@ -32,31 +32,6 @@ jobs:
           compression-level: 0
           overwrite: true
 
-  unit-test-no-relay:
-    runs-on: warp-ubuntu-latest-x64-8x
-    name: Cargo unit test WITHOUT relay feature
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Cargo unit test WITHOUT relay feature
-        uses: ./.github/actions/cmd-in-docker
-        with:
-          command: "cargo test -p zkv-runtime --lib --bins --features runtime-benchmarks --no-fail-fast --release 2>&1 | tee unit_test_no_relay_output.txt"
-          use_cache: 'yes'
-          cache_key: 'unit-test-no-relay'
-          cmake_install: 'yes'
-          lld_install: 'yes'
-
-      - name: Upload unit test WITHOUT relay feature output
-        uses: actions/upload-artifact@v4
-        with:
-          name: unit-test-no-relay-output
-          path: unit_test_no_relay_output.txt
-          retention-days: 1
-          compression-level: 0
-          overwrite: true
-
   integration-test:
     runs-on: warp-ubuntu-latest-x64-8x
     name: Cargo integration test

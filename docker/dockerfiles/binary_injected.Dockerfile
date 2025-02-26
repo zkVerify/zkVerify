@@ -3,7 +3,7 @@ FROM ubuntu:24.04
 SHELL ["/bin/bash", "-c"]
 
 # That can be a single one or a comma separated list
-ARG BINARY="zkv-node"
+ARG BINARY="zkv-relay"
 ARG DESCRIPTION="zkVerify Development"
 ARG AUTHORS="infrastructure@zkverify.io"
 ARG VENDOR="zkVerify"

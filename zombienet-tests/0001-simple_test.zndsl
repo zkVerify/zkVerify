@@ -2,7 +2,7 @@ Description: Small Network test
 Network: ./network_defs/two_nodes.toml
 Creds: config
 
-# simple test using zkv-node executable and zombienet DSL
+# simple test using zkv-relay executable and zombienet DSL
 # Launch as:
 #       zombienet -p native test 0001-simple_test.zndsl
 # The first three lines of any .zndsl files should be like these! Refrain from writing

@@ -7,13 +7,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-mainchain:
-    runs-on: warp-ubuntu-latest-x64-8x
-    name: Build mainchain
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
   build-relay-paratest:
     runs-on: warp-ubuntu-latest-x64-8x
     name: Build relay chain and paratest
