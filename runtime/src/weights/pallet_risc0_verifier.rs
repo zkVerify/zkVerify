@@ -57,97 +57,10 @@ use core::marker::PhantomData;
 pub struct ZKVWeight<T>(PhantomData<T>);
 
 impl<T: frame_system::Config> pallet_risc0_verifier::WeightInfo for ZKVWeight<T> {
-    fn verify_proof_cycle_2_pow_12() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 18_876_949_000 picoseconds.
-        Weight::from_parts(18_899_660_000, 0)
+    fn verify_proof_upper_bound() -> Weight {
+        Default::default()
     }
-    fn verify_proof_cycle_2_pow_13() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 18_844_677_000 picoseconds.
-        Weight::from_parts(18_865_176_000, 0)
-    }
-    fn verify_proof_cycle_2_pow_14() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 20_035_862_000 picoseconds.
-        Weight::from_parts(20_075_465_000, 0)
-    }
-    fn verify_proof_cycle_2_pow_15() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 20_460_879_000 picoseconds.
-        Weight::from_parts(20_509_500_000, 0)
-    }
-    fn verify_proof_cycle_2_pow_16() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 20_036_312_000 picoseconds.
-        Weight::from_parts(20_057_271_000, 0)
-    }
-    fn verify_proof_cycle_2_pow_17() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 20_043_697_000 picoseconds.
-        Weight::from_parts(20_071_128_000, 0)
-    }
-    fn verify_proof_cycle_2_pow_18() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 21_258_285_000 picoseconds.
-        Weight::from_parts(21_279_685_000, 0)
-    }
-    fn verify_proof_cycle_2_pow_19() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 23_123_553_000 picoseconds.
-        Weight::from_parts(23_169_600_000, 0)
-    }
-    fn verify_proof_cycle_2_pow_20() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 24_185_264_000 picoseconds.
-        Weight::from_parts(24_210_552_000, 0)
-    }
-    fn verify_proof_cycle_2_pow_21() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 44_212_590_000 picoseconds.
-        Weight::from_parts(44_274_867_000, 0)
-    }
-    fn verify_proof_cycle_2_pow_22() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 68_363_801_000 picoseconds.
-        Weight::from_parts(68_439_824_000, 0)
-    }
-    fn verify_proof_cycle_2_pow_23() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 117_907_802_000 picoseconds.
-        Weight::from_parts(118_055_709_000, 0)
-    }
-    fn verify_proof_cycle_2_pow_24() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 214_571_285_000 picoseconds.
-        Weight::from_parts(214_817_858_000, 0)
-    }
+
     /// Storage: `SettlementRisc0Pallet::Vks` (r:1 w:0)
     /// Proof: `SettlementRisc0Pallet::Vks` (`max_values`: None, `max_size`: Some(72), added: 2547, mode: `MaxEncodedLen`)
     fn get_vk() -> Weight {

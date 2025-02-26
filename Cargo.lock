@@ -11780,12 +11780,11 @@ dependencies = [
 
 [[package]]
 name = "risc0-verifier"
-version = "0.4.0"
-source = "git+https://github.com/HorizenLabs/risc0-verifier.git?tag=v0.4.0#6b44a07f016357f9794128a1cf8d18cd58c3fc19"
+version = "0.5.0"
+source = "git+https://github.com/HorizenLabs/risc0-verifier.git?branch=md/proof_segment_po_size#ee75a1571a8a2deb48e2d2180832dd648a8ca75b"
 dependencies = [
  "anyhow",
  "bytemuck",
- "digest 0.10.7",
  "hex",
  "log",
  "risc0-binfmt",
