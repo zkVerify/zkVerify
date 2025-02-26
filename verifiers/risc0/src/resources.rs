@@ -42,6 +42,6 @@ pub mod v1_2 {
 
     pub static VALID_PUBS: &[u8] = &hex_literal::hex!("1d64010000000000");
 
-    pub static VALID_PROOF_FULL_PROOF: &[u8] = include_bytes!("resources/v_1_2_poseidon2_22.bin");
+    pub static VALID_PROOF_COMPOSITE_3_SLOTS: &[u8] = include_bytes!("resources/v_1_2_poseidon2_22.bin");
 
 }

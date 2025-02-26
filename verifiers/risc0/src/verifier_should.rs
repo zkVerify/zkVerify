@@ -111,7 +111,7 @@ mod reject {
     #[test]
     fn too_weight_proof() {
         let vk = v1_2::VALID_VK;
-        let proof = Proof::V1_2(v1_2::VALID_PROOF_FULL_PROOF.to_vec());
+        let proof = Proof::V1_2(v1_2::VALID_PROOF_COMPOSITE_3_SLOTS.to_vec());
         let pubs = v1_2::VALID_PUBS.to_vec();
         assert!(Risc0::<Mock>::verify_proof(&vk, &proof, &pubs).is_ok());
 
@@ -126,7 +126,7 @@ mod reject {
         assert_eq!(
             Risc0::<PassSizeButNotWeight>::verify_proof(
                 &vk,
-                &Proof::V1_2(v1_2::VALID_PROOF_FULL_PROOF.to_vec()),
+                &Proof::V1_2(v1_2::VALID_PROOF_COMPOSITE_3_SLOTS.to_vec()),
                 &pubs
             ),
             Err(VerifyError::InvalidProofData)
@@ -137,7 +137,7 @@ mod reject {
 #[test]
 fn compute_correct_weight_for_composite_proof() {
     let vk = v1_2::VALID_VK;
-    let proof = Proof::V1_2(v1_2::VALID_PROOF_FULL_PROOF.to_vec());
+    let proof = Proof::V1_2(v1_2::VALID_PROOF_COMPOSITE_3_SLOTS.to_vec());
     let pubs = v1_2::VALID_PUBS.to_vec();
 
     // This proof is composed by two 2^20 segments and one 2^17 segment
