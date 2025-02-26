@@ -75,7 +75,7 @@ else
     docker image prune -f
   fi
   # The executable to use.
-  ZKV_NODE="docker compose -f ${compose_file} run -T --rm --remove-orphans zkverify-bench /usr/local/bin/zkv-node"
+  ZKV_NODE="docker compose -f ${compose_file} run -T --rm --remove-orphans zkverify-bench /usr/local/bin/zkv-relay"
   ZKV_WASM="/app/zkv_runtime.compact.compressed.wasm"
 
   # Now PROJECT_ROOT become the docker folder

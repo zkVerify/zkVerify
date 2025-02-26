@@ -62,7 +62,7 @@ To run a testnet node:
 
 ```bash
 cd target/release
-./zkv-node --chain test
+./zkv-relay --chain test
 ```
 
 The client will connect to `ZKV Testnet` and start syncing blockchain data, with default path at `$HOME/.local/share/` (double check with log `💾 Database: RocksDb at`).
@@ -71,7 +71,7 @@ For entirely removing blockchain data:
 
 ```bash
 cd target/release
-./zkv-node purge --chain test
+./zkv-relay purge --chain test
 ```
 
 ### Run dev node
@@ -80,7 +80,7 @@ To run a local dev node:
 
 ```bash
 cd target/release
-./zkv-node --dev
+./zkv-relay --dev
 ```
 
 The client will run a chain with a single validator (Alice) and start producing blocks.

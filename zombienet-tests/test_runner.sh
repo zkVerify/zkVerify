@@ -6,10 +6,10 @@
 # - npm
 # - yarn
 # The script automatically downloads zombienet binary and saves it into the zombienet-tests/bin folder.
-# It also looks for a compiled zkv-node binary in the folder target/release, hence make sure to 
-# have a freshly compiled version of zkv-node in this folder.
+# It also looks for a compiled zkv-relay binary in the folder target/release, hence make sure to 
+# have a freshly compiled version of zkv-relay in this folder.
 # Optionally, this script can be launched with the '--debug' switch, which makes it look for
-# the zkv-node binary in the target/debug folder instead.
+# the zkv-relay binary in the target/debug folder instead.
 
 # ANSI color handles
 TXT_BIBLU="\033[94;1m"
@@ -89,35 +89,30 @@ FULLBUILDPATH="../target/${PROFILE}"
 NETWORK_DEFS_FOLDER="network_defs"
 
 # GO! GO! GO!
-for NODE in "${NODES[@]}"; do
-    echo -e "============================================================"
-    echo -e "${TXT_BIBLK} TEST NODE impl:  ${TXT_NORML} ${NODE}"
-    echo -e "============================================================"
-    rm -f "${NETWORK_DEFS_FOLDER}";
-    ln -s "${NETWORK_DEFS_FOLDER}_${NODE}" "${NETWORK_DEFS_FOLDER}";
-    for TESTNAME in "${TEST_LIST[@]}"; do
-        if grep -q -P "^#\s*SKIP.*\s${NODE}.*$" "${TESTNAME}" ; then  
-            echo -e "\n\n"
-            echo -e "============================================================"
-            echo -e "${TXT_BIYLW}SKIP test:${TXT_BIBLK}  ${TXT_NORML} ${TESTNAME} on ${NODE} chain"
-            echo -e "============================================================"
-            continue
-        fi
+echo -e "============================================================"
+echo -e "${TXT_BIBLK} TEST NODE impl:  ${TXT_NORML} ${NODE}"
+echo -e "============================================================"
+for TESTNAME in "${TEST_LIST[@]}"; do
+    if grep -q -P "^#\s*SKIP.*\s${NODE}.*$" "${TESTNAME}" ; then
         echo -e "\n\n"
         echo -e "============================================================"
-        echo -e "${TXT_BIBLK} Running test:  ${TXT_NORML} ${TESTNAME} on ${NODE} chain"
+        echo -e "${TXT_BIYLW}SKIP test:${TXT_BIBLK}  ${TXT_NORML} ${TESTNAME} on ${NODE} chain"
         echo -e "============================================================"
-        ( PATH=${PATH}:${FULLBUILDPATH}; bin/$ZOMBIENET_BINARY -p native test ./"${TESTNAME}" )
-        current_exit_code=$?
-        TOT_EXEC_TESTS=$((TOT_EXEC_TESTS+1))
-        if [ ${current_exit_code} -ne 0 ]; then
-            FAILED_TESTS+=("${NODE}:${TESTNAME}")
-            TOT_FAIL_TESTS=$((TOT_FAIL_TESTS+1))
-            EXIT_STATUS=1
-        fi
-    done
+        continue
+    fi
+    echo -e "\n\n"
+    echo -e "============================================================"
+    echo -e "${TXT_BIBLK} Running test:  ${TXT_NORML} ${TESTNAME} on ${NODE} chain"
+    echo -e "============================================================"
+    ( PATH=${PATH}:${FULLBUILDPATH}; bin/$ZOMBIENET_BINARY -p native test ./"${TESTNAME}" )
+    current_exit_code=$?
+    TOT_EXEC_TESTS=$((TOT_EXEC_TESTS+1))
+    if [ ${current_exit_code} -ne 0 ]; then
+        FAILED_TESTS+=("${NODE}:${TESTNAME}")
+        TOT_FAIL_TESTS=$((TOT_FAIL_TESTS+1))
+        EXIT_STATUS=1
+    fi
 done
-rm -f "${NETWORK_DEFS_FOLDER}";
 
 # Print a fancy table summarizing the test suit run
 echo -e "\n\n\n"

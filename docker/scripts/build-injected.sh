@@ -20,13 +20,13 @@ REGISTRY=${REGISTRY:-docker.io}
 # The following line ensure we know the project root
 PROJECT_ROOT=${PROJECT_ROOT:-$(git rev-parse --show-toplevel)}
 DOCKERFILE=${DOCKERFILE:-docker/dockerfiles/binary_injected.Dockerfile}
-VERSION_TOML=$(grep "^version " "${PROJECT_ROOT}/node/Cargo.toml" | grep -oE "([0-9\.]+-?[0-9]+)")
+VERSION_TOML=$(grep "^version " "${PROJECT_ROOT}/relay-node/Cargo.toml" | grep -oE "([0-9\.]+-?[0-9]+)")
 
 #n The following VAR have default that can be overridden
 DOCKER_OWNER=${DOCKER_OWNER:-horizenlabs}
 
 # We may get 1..n binaries, comma separated
-BINARY=${BINARY:-zkv-node}
+BINARY=${BINARY:-zkv-relay}
 IFS=',' read -r -a BINARIES <<< "$BINARY"
 
 VERSION=${VERSION:-$VERSION_TOML}

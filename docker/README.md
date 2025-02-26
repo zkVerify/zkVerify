@@ -4,17 +4,11 @@ We provide some scripts and Dockerfiles to simplify developing and testing.
 
 ## TLDR
 
-Compile all the different node implementations (*solo*, *relay*, *parachain*):
+Compile all the different node implementations (*relay*, *parachain*):
 
 ```bash
 > . cfg
 > ./docker/scripts/bootstrap.sh
-```
-
-Start a _**solo**_ chain with 2 validators (Alice and Bob) and a simple client node with:
-
-```bash
-> docker compose -f docker/compose/zkv-docker-compose.yaml up
 ```
 
 Start a _**relay**_ chain with a test _**parachain**_ with:
@@ -33,7 +27,6 @@ Start a _**relay**_ chain with a test _**parachain**_ with:
 ├── docker
 │   └── scripts
 │       ├── bootstrap.sh  # Compile and generate an image with injected node binary
-│       ├── build-chain-image-injected.sh # Create an image with injected solo node binary
 │       ├── build-zkv-relay-image-injected.sh # Create an image with injected relay chain node binary
 │       ├── build-paratest-image-injected.sh # Create an image with injected parachain node binary
 │       ├── build-injected.sh # Create an image with injected binary
@@ -53,13 +46,6 @@ The simple workflow is:
 > ./docker/scripts/bootstrap.sh
 ```
 
-Once you have the docker images on your local docker repository, you can run:
-- a _**solo**_ chain with
-
-```bash
-> docker run -ti --rm -p 9944:9944 horizenlabs/zkverify --dev --rpc-cors all --rpc-external
-```
-
 - a _**relay**_ chain with
 
 ```bash
@@ -77,7 +63,7 @@ Where:
 * `-p 9944:9944`: provide the access to the rpc interface on your host
 * `--rpc-cors all --rpc-external`: enable the access from _polkadot.js_ by relaxing the cors policy
 
-The `zkv-node`, `zkv-relay`, and `paratest-node` binaries are also available on your host environment at `target/release/` location.
+The `zkv-relay`, and `paratest-node` binaries are also available on your host environment at `target/release/` location.
 
 ### `my_cargo`
 
@@ -93,27 +79,13 @@ All Dockerfiles are located in `docker/dockerfiles` folder.
 
 * `zkv-builder.Dockerfile`: create an image with all dependencies needed to compile the node and is used by `my_cargo` script
 * `binary_injected.Dockerfile`: Is mainly used by the scripts and inject one or more binaries in a standard ubuntu image
-* `zkv-node.Dockerfile`: generate a solo node image with a fresh source compilation (leverage on docker layers to create a small docker image)
+* `zkv-docker-compose.yaml`: the cluster definition that runs
 2 validator nodes (Alice and Bob) and a simple node that expose its rpc and P2P ports on localhost.
 * `zkv-relay.Dockerfile`: generate a relay node image with a fresh source compilation (leverage on docker layers to create a small docker image)
 
 All compose definitions are located in `docker/compose` folder.
 
-* `zkv-docker-compose.yaml`: the cluster definition that runs
-2 validator nodes (Alice and Bob) and a simple node that expose its rpc and P2P ports on localhost.
 * `zkv-relay-docker-compose.yaml`: the cluster definition that runs 3 relay chain nodes (Alice, Bob, and rpc on port 9944), and 3 parachain nodes (Alice, Bob, and rpc on port 8844)
-
-To generate a solo node image without bothering about local resources, Rust installation and so on you can simply use:
-
-```bash
-> docker build -f docker/dockerfiles/zkv-node.Dockerfile -t horizenlabs/zkverify:latest .
-```
-
-and run it with
-
-```bash
-> docker run -ti --rm horizenlabs/zkverify --dev
-```
 
 To generate a relay node image without bothering about local resources, Rust installation and so on you can simply use:
 
