@@ -24,6 +24,7 @@ members = [
     "verifiers/proofofsql",
     "utils/native-cache",
     "relay-node",
+    "relay-node/benchmarks",
     "relay-node/cli",
     "relay-node/service",
     "relay-node/test/client",
@@ -102,6 +103,7 @@ pallet-ultraplonk-verifier = { path = "verifiers/ultraplonk", default-features =
 pallet-proofofsql-verifier = { path = "verifiers/proofofsql", default-features = false }
 risc0-verifier = { git = "https://github.com/HorizenLabs/risc0-verifier.git", tag="v0.5.0", default-features = false }
 
+zkv-benchmarks = { path = "relay-node/benchmarks" }
 native-cache = { path = "utils/native-cache" }
 zkv-runtime = { path = "runtime", default-features = false }
 

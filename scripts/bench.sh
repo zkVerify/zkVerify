@@ -8,7 +8,7 @@ SOURCE_ROOT=${SOURCE_ROOT:-${PROJECT_ROOT}}
 
 . "${SOURCE_ROOT}/scripts/bench_cfg.sh"
 
-DEFAULT_LOCAL_WEIGHT_TEMPLATE="${PROJECT_ROOT}/node/zkv-pallets-weight-template.hbs"
+DEFAULT_LOCAL_WEIGHT_TEMPLATE="${PROJECT_ROOT}/relay-node/benchmarks/zkv-pallets-weight-template.hbs"
 DEFAULT_SKIP_BUILD="false"
 DEFAULT_CODE_HEADER="${PROJECT_ROOT}/HEADER-APACHE2"
 
