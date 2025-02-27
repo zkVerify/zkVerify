@@ -183,10 +183,14 @@ fn segment_weight_return_error_if_unsupported_size_or_hash() {
 }
 
 #[rstest]
-fn segment_weight_return_different_weights(#[values(16,17,18,19,20,21)] po2: u32) {
+fn segment_weight_return_different_weights(#[values(16, 17, 18, 19, 20, 21)] po2: u32) {
     assert_ne!(
-        Risc0::<Mock>::segment_weight(SegmentInfo::new("sha-256".to_owned(), po2)).unwrap().ref_time(),
-        Risc0::<Mock>::segment_weight(SegmentInfo::new("poseidon2".to_owned(), po2)).unwrap().ref_time()
+        Risc0::<Mock>::segment_weight(SegmentInfo::new("sha-256".to_owned(), po2))
+            .unwrap()
+            .ref_time(),
+        Risc0::<Mock>::segment_weight(SegmentInfo::new("poseidon2".to_owned(), po2))
+            .unwrap()
+            .ref_time()
     )
 }
 

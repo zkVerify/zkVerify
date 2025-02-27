@@ -48,11 +48,13 @@ mod benchmarks {
     static PROOF_SUCCINCT: &[u8] = include_bytes!("resources/v_1_2_succinct_22.bin");
 
     static PUBS_RISC0_VERIFIER_22: [u8; 8] = hex_literal::hex!("1d64010000000000");
-    static PROOF_RISC0_VERIFIER_POSEIDON2_22_VM_1_2: &[u8] = include_bytes!("resources/v_1_2_poseidon2_22.bin");
+    static PROOF_RISC0_VERIFIER_POSEIDON2_22_VM_1_2: &[u8] =
+        include_bytes!("resources/v_1_2_poseidon2_22.bin");
 
     static VK_RISC0_VERIFIER_VM_1_1_3: &[u8; 32] =
         &hex_literal::hex!("2addbbeb4ddb2f2ec2b4a0a8a21c03f7d3bf42cfd2ee9f4a69d2ebd9974218b6");
-    static PROOF_RISC0_VERIFIER_POSEIDON2_16_VM_1_1: &[u8] = include_bytes!("resources/v_1_1_poseidon2_16.bin");
+    static PROOF_RISC0_VERIFIER_POSEIDON2_16_VM_1_1: &[u8] =
+        include_bytes!("resources/v_1_1_poseidon2_16.bin");
 
     static PUBS_RISC0_VERIFIER_16: [u8; 8] = hex_literal::hex!("8105000000000000");
 

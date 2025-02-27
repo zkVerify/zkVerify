@@ -44,7 +44,7 @@ members = [
     "paratest/node",
     "paratest/pallets/template",
     "patches/cumulus/client/relay-chain-inprocess-interface",
-    "patches/cumulus/client/relay-chain-minimal-node/",
+    "patches/cumulus/client/relay-chain-minimal-node",
 ]
 
 exclude = ["utils/generate-bags/node-runtime"]
@@ -109,7 +109,7 @@ pallet-groth16-verifier = { path = "verifiers/groth16", default-features = false
 pallet-risc0-verifier = { path = "verifiers/risc0", default-features = false }
 pallet-ultraplonk-verifier = { path = "verifiers/ultraplonk", default-features = false }
 pallet-proofofsql-verifier = { path = "verifiers/proofofsql", default-features = false }
-risc0-verifier = { git = "https://github.com/HorizenLabs/risc0-verifier.git", branch="md/proof_segment_po_size", default-features = false }
+risc0-verifier = { git = "https://github.com/HorizenLabs/risc0-verifier.git", tag="v0.5.0", default-features = false }
 
 native-cache = { path = "utils/native-cache" }
 zkv-runtime = { path = "runtime", default-features = false }

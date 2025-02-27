@@ -296,8 +296,8 @@ impl<T: Config> Risc0<T> {
     }
 
     fn segment_weight(info: SegmentInfo) -> Result<Weight, ()> {
-        let SegmentInfo { hashfn, po2 } = info;
-        let w = match (hashfn.as_str(), po2) {
+        let SegmentInfo { hash, po2 } = info;
+        let w = match (hash.as_str(), po2) {
             ("poseidon2", p) if p <= 16 => T::WeightInfo::verify_proof_segment_poseidon2_16(),
             ("poseidon2", 17) => T::WeightInfo::verify_proof_segment_poseidon2_17(),
             ("poseidon2", 18) => T::WeightInfo::verify_proof_segment_poseidon2_18(),
@@ -320,9 +320,7 @@ impl<T: Config> Risc0<T> {
 /// benchmarks to the weight needed by the `pallet-verifiers`.
 pub struct Risc0Weight<W: weight::WeightInfo>(PhantomData<W>);
 
-impl<T: Config, W: weight::WeightInfo>
-    pallet_verifiers::WeightInfo<Risc0<T>> for Risc0Weight<W>
-{
+impl<T: Config, W: weight::WeightInfo> pallet_verifiers::WeightInfo<Risc0<T>> for Risc0Weight<W> {
     fn verify_proof(
         _proof: &<Risc0<T> as hp_verifiers::Verifier>::Proof,
         _pubs: &<Risc0<T> as hp_verifiers::Verifier>::Pubs,
