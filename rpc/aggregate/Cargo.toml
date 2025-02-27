@@ -8,6 +8,9 @@ repository.workspace = true
 homepage.workspace = true
 license = "Apache-2.0"
 
+[lints]
+workspace = true
+
 [dependencies]
 codec = { default-features = false, workspace = true }
 jsonrpsee = { workspace = true, features = ["client-core", "server", "macros"] }

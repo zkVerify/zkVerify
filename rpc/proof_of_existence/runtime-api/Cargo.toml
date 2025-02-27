@@ -7,6 +7,9 @@ edition.workspace = true
 repository.workspace = true
 license = "Apache-2.0"
 
+[lints]
+workspace = true
+
 [dependencies]
 pallet-poe         = { default-features = false, workspace = true }
 codec              = { default-features = false, workspace = true, features = ["derive"] }

@@ -100,7 +100,6 @@ where
         api.get_proof_path(at_hash, attestation_id, proof_hash)
             .map_err(|e| map_err(e, "Unable to query dispatch info."))
             .and_then(|r| r.map_err(convert_attestation_error))
-            .map_err(Into::into)
     }
 }
 
