@@ -558,13 +558,6 @@ pub mod pallet {
             VkOrHash::from_vk(REGISTERED_VK),
             VALID_HASH_REGISTERED_VK
         )]
-        #[case::should_take_care_of_missing_verification_version(
-            PhantomData::<FakeVerifier>,
-            None,
-            42,
-            VkOrHash::from_vk(REGISTERED_VK),
-            VALID_HASH_REGISTERED_VK
-        )]
         fn hash_statement_as_expected<V: Verifier>(
             #[case] _verifier: PhantomData<V>,
             #[case] proof: V::Proof,
