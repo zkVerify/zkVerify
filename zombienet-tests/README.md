@@ -28,9 +28,7 @@ This folder contains the `zkVerify` tests written for the Polkadot zombienet tes
 Each zombienet test requires the following files:
 
 - A network configuration specification file, in `.toml` format; these are stored in `zombienet-tests/network_defs`
-- The test description, written in zombienet DSL and stored in a `.zndsl` file. If the test description contains
-  a comment line of the form `# SKIP <node>` placed after the network description, this test will be skipped for 
-  this kind of node.
+- The test description, written in zombienet DSL and stored in a `.zndsl` file.
 - (optional) One or more Javascript / Typescript file containing complex tests whose logic cannot be expressed 
   in zombienet DSL language; these are stored in the `zombienet-tests/js_scripts` directory.
 

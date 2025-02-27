@@ -21,7 +21,6 @@ async function run(nodeName, networkInfo, args) {
     const alice = keyring.addFromUri('//Alice');
     const bob = keyring.addFromUri('//Bob');
     const charlie = keyring.addFromUri('//Charlie');
-    const ACME = 1_000_000_000_000_000_000n;
 
     /*****************************************************************************************************
      *************************************** CREATE MULTISIG ACCOUNT *************************************
