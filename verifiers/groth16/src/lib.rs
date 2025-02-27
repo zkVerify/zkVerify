@@ -64,7 +64,6 @@ impl<T: Config> Verifier for Groth16<T> {
         }
 
         groth16::Groth16::verify_proof(proof.clone().into(), vk.clone(), pubs)
-            .map_err(Into::into)
             .and_then(|r| {
                 r.then_some(())
                     .ok_or(hp_verifiers::VerifyError::VerifyError)

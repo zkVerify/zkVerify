@@ -339,6 +339,11 @@ polkadot-parachain-lib = { path = "patches/cumulus/polkadot-parachain/polkadot-p
 panic = "unwind"
 opt-level = 3
 
+[workspace.lints.clippy]
+unnecessary_cast = { level = "allow", priority = 2 }                 # Types may change
+useless_conversion = { level = "allow", priority = 2 }               # Types may change
+zero-prefixed-literal = { level = "allow", priority = 2 }            # 00_1000_000
+
 # make sure dev builds with backtrace do
 # not slow us down
 [profile.dev.package.backtrace]
