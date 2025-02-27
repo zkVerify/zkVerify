@@ -94,7 +94,7 @@ impl<T: frame_system::Config> pallet_risc0_verifier::WeightInfoVerifyProof for Z
     }
 
     fn verify_proof_segment_poseidon2_20() -> Weight {
-        Weight::from_parts(10, 0)
+        Default::default()
     }
 
     fn verify_proof_segment_sha_256_20() -> Weight {
