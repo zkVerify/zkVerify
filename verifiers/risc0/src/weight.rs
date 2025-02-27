@@ -54,7 +54,6 @@ use core::marker::PhantomData;
 
 /// Weight functions needed for `pallet_risc0_verifier`.
 pub trait WeightInfo {
-    fn verify_proof_upper_bound() -> Weight;
     fn get_vk() -> Weight;
     fn validate_vk() -> Weight;
     fn compute_statement_hash() -> Weight;
@@ -64,13 +63,6 @@ pub trait WeightInfo {
 
 // For backwards compatibility and tests.
 impl WeightInfo for () {
-    fn verify_proof_upper_bound() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 120_488_293_000 picoseconds.
-        Weight::from_parts(120_798_443_000, 0)
-    }
     /// Storage: `SettlementRisc0Pallet::Vks` (r:1 w:0)
     /// Proof: `SettlementRisc0Pallet::Vks` (`max_values`: None, `max_size`: Some(72), added: 2547, mode: `MaxEncodedLen`)
     fn get_vk() -> Weight {

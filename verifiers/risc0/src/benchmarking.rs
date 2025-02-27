@@ -67,9 +67,9 @@ mod benchmarks {
     fn compute_statement_hash() {
         let vk = VALID_VK;
         let inner_proof =
-            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_24.bin").to_vec();
-        let proof = Proof::V1_0(inner_proof);
-        let pubs = VALID_PUBS_CYCLE_2_POW_24.to_vec();
+            include_bytes!("resources_benchmarking/POSEIDON2_BLOCK_21.bin").to_vec();
+        let proof = Proof::V1_2(inner_proof);
+        let pubs = VALID_PUBS_BLOCK_21.to_vec();
 
         let vk = VkOrHash::Vk(vk.into());
 
