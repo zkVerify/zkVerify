@@ -2,8 +2,6 @@ Description: Test update runtime via multisig sudo account
 Network: ./network_defs/single_node.toml
 Creds: config
 
-# SKIP relay
-
 alice: is up
 
 alice: reports node_roles is 4

@@ -93,13 +93,6 @@ echo -e "============================================================"
 echo -e "${TXT_BIBLK} TEST NODE impl:  ${TXT_NORML} ${NODE}"
 echo -e "============================================================"
 for TESTNAME in "${TEST_LIST[@]}"; do
-    if grep -q -P "^#\s*SKIP.*\s${NODE}.*$" "${TESTNAME}" ; then
-        echo -e "\n\n"
-        echo -e "============================================================"
-        echo -e "${TXT_BIYLW}SKIP test:${TXT_BIBLK}  ${TXT_NORML} ${TESTNAME} on ${NODE} chain"
-        echo -e "============================================================"
-        continue
-    fi
     echo -e "\n\n"
     echo -e "============================================================"
     echo -e "${TXT_BIBLK} Running test:  ${TXT_NORML} ${TESTNAME} on ${NODE} chain"

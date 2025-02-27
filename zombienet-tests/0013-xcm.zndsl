@@ -2,8 +2,6 @@ Description: Run relay chain and paratest parachain. The parachain should forge 
 Network: ./network_defs/paratest.toml
 Creds: config
 
-# SKIP solo
-
 alice: is up
 bob: is up
 
