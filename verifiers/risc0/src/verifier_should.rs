@@ -40,21 +40,21 @@ fn verify_valid_proof(#[case] vk: &Vk, #[case] proof: Proof, #[case] pubs: &[u8]
 #[rstest]
 #[case::v1_0(
     Proof::V1_0(Default::default()),
-    Some(H256::from(sp_io::hashing::sha2_256(b"risc0:v1.0")))
+    H256::from(sp_io::hashing::sha2_256(b"risc0:v1.0"))
 )]
 #[case::v1_1(
     Proof::V1_1(Default::default()),
-    Some(H256::from(sp_io::hashing::sha2_256(b"risc0:v1.1")))
+    H256::from(sp_io::hashing::sha2_256(b"risc0:v1.1"))
 )]
 #[case::v1_2(
     Proof::V1_2(Default::default()),
-    Some(H256::from(sp_io::hashing::sha2_256(b"risc0:v1.2")))
+    H256::from(sp_io::hashing::sha2_256(b"risc0:v1.2"))
 )]
 #[case::do_not_depend_on_proof_content(
     Proof::V1_2([0xde;16].to_vec()),
-    Some(H256::from(sp_io::hashing::sha2_256(b"risc0:v1.2")))
+    H256::from(sp_io::hashing::sha2_256(b"risc0:v1.2"))
 )]
-fn return_the_correct_verifier_version_hash(#[case] proof: Proof, #[case] expected: Option<H256>) {
+fn return_the_correct_verifier_version_hash(#[case] proof: Proof, #[case] expected: H256) {
     let h = Risc0::<Mock>::verifier_version_hash(&proof);
 
     assert_eq!(h, expected)
