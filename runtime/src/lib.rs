@@ -142,7 +142,10 @@ pub mod currency {
     pub const THOUSANDS: Balance = 1_000 * ACME;
     pub const MILLIONS: Balance = 1_000 * THOUSANDS;
     pub const MILLICENTS: Balance = CENTS / 1_000;
+    #[cfg(not(feature = "runtime-benchmarks"))]
     pub const EXISTENTIAL_DEPOSIT: Balance = CENTS;
+    #[cfg(feature = "runtime-benchmarks")]
+    pub const EXISTENTIAL_DEPOSIT: Balance = MILLICENTS; // hardcoded values in staking bench
     pub const fn deposit(items: u32, bytes: u32) -> Balance {
         items as Balance * 200 * CENTS + (bytes as Balance) * 100 * MILLICENTS
     }
@@ -756,6 +759,7 @@ parameter_types! {
     // Maximum number of election winners, and thus of authorities that can be active in a given
     // era.
     pub const MaxActiveValidators: u32 = MAX_ACTIVE_VALIDATORS;
+    pub const MaxWinners: u32 = MAX_TARGETS;
 }
 
 pub struct OnChainSeqPhragmen;
@@ -764,7 +768,7 @@ impl onchain::Config for OnChainSeqPhragmen {
     type Solver = SequentialPhragmen<AccountId, sp_runtime::Perbill>;
     type DataProvider = Staking;
     type WeightInfo = weights::frame_election_provider_support::ZKVWeight<Runtime>;
-    type MaxWinners = MaxActiveValidators; // max that can be handled by OnChainSeqPhragmen
+    type MaxWinners = MaxWinners;  // must be >= MAX_TARGETS because of the staking benchmark
     type Bounds = ElectionBoundsOnChain;
 }
 
