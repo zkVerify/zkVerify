@@ -85,7 +85,7 @@ exports.init_api = async (zombie, nodeName, networkInfo) => {
 exports.submitProof = async (pallet, signer, ...verifierArgs) => {
     const validProofSubmission = (verifierArgs.length < 4) ? pallet.submitProof(...verifierArgs, null) : pallet.submitProof(...verifierArgs);
     return await submitExtrinsic(api, validProofSubmission, signer, BlockUntil.InBlock, (event) =>
-        (event.section == "system" && event.method == "ExtrinsicSuccess") ||
+        (event.method == "ProofVerified") ||
         (event.section == "aggregate" && event.method == "NewProof") ||
         (event.section == "aggregate" && event.method == "AggregationComplete")
     );

@@ -34,12 +34,17 @@ async function run(nodeName, networkInfo, _args) {
         return ReturnCode.ErrAcceptAnUnregisteredHash;
     };
 
+    console.log(`Registering VK`);
+
     events = (await registerVk(api.tx.settlementUltraplonkPallet, alice, VK_ULTRAPLONK)).events;
     if (!receivedEvents(events)) {
+        console.log(`Failed register VK`);
         return ReturnCode.ErrVkRegistrationFailed;
     };
+
     const vkHash = events[0].data[0];
     if (ULTRAPLONK_VKEY_HASH != vkHash) {
+        console.log(`Wrong statement vkhash ${ULTRAPLONK_VKEY_HASH} != ${vkHash}`);
         return ReturnCode.ErrWrongKeyHash;
     }
 
