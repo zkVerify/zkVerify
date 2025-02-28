@@ -15,6 +15,7 @@
 
 #![cfg(test)]
 
+use hex_literal::hex;
 use serial_test::serial;
 
 use super::*;
@@ -48,6 +49,17 @@ fn verify_valid_proof_with_8_public_inputs() {
     let vk = *include_bytes!("resources/08_vk");
 
     assert!(Ultraplonk::<MockRuntime>::verify_proof(&vk, &proof, &pubs).is_ok());
+}
+
+#[test]
+fn verify_vk_hash() {
+    let vk = VALID_VK;
+    let vk_hash = Ultraplonk::<MockRuntime>::vk_hash(&vk);
+
+    assert_eq!(
+        vk_hash.as_bytes(),
+        hex!("79bbe3df4d7cf7b3222e16f61b3869bfe33fcfac70c90fbd12dc4ccaea3db0e9")
+    );
 }
 
 mod reject {
