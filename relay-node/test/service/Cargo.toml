@@ -57,6 +57,7 @@ sp-state-machine = { workspace = true }
 substrate-test-client = { workspace = true }
 sc-sync-state-rpc = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
+polkadot-service = { workspace = true }
 
 [dev-dependencies]
 pallet-balances = { workspace = true }

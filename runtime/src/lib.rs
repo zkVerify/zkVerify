@@ -22,6 +22,7 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+use authority_discovery_primitives::AuthorityId as AuthorityDiscoveryId;
 use codec::MaxEncodedLen;
 use pallet_babe::AuthorityId as BabeId;
 use pallet_grandpa::AuthorityId as GrandpaId;
@@ -118,6 +119,7 @@ pub mod parachains;
 pub mod xcm_config;
 
 mod bag_thresholds;
+mod genesis_config_presets;
 mod migrations;
 mod payout;
 mod proxy;
@@ -768,7 +770,7 @@ impl onchain::Config for OnChainSeqPhragmen {
     type Solver = SequentialPhragmen<AccountId, sp_runtime::Perbill>;
     type DataProvider = Staking;
     type WeightInfo = weights::frame_election_provider_support::ZKVWeight<Runtime>;
-    type MaxWinners = MaxWinners;  // must be >= MAX_TARGETS because of the staking benchmark
+    type MaxWinners = MaxWinners; // must be >= MAX_TARGETS because of the staking benchmark
     type Bounds = ElectionBoundsOnChain;
 }
 
@@ -1375,7 +1377,7 @@ impl_runtime_apis! {
     }
 
     impl authority_discovery_primitives::AuthorityDiscoveryApi<Block> for Runtime {
-        fn authorities() -> Vec<polkadot_primitives::AuthorityDiscoveryId> {
+        fn authorities() -> Vec<AuthorityDiscoveryId> {
             polkadot_runtime_parachains::runtime_api_impl::v10::relevant_authority_ids::<Runtime>()
         }
     }
@@ -1935,11 +1937,11 @@ impl_runtime_apis! {
         }
 
         fn get_preset(id: &Option<sp_genesis_builder::PresetId>) -> Option<Vec<u8>> {
-            get_preset::<RuntimeGenesisConfig>(id, |_| None)
+            get_preset::<RuntimeGenesisConfig>(id, &genesis_config_presets::get_preset)
         }
 
         fn preset_names() -> Vec<sp_genesis_builder::PresetId> {
-            vec![]
+           genesis_config_presets::preset_names()
         }
     }
 

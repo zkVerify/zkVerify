@@ -13,9 +13,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-
-use std::sync::OnceLock;
 use sc_sysinfo::Requirements;
+use std::sync::OnceLock;
 
 /// The hardware requirements as measured on reference hardware.
 ///
