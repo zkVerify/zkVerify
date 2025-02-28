@@ -147,14 +147,14 @@ checksum = "683d7910e743518b0e34f1186f92494becacb047c7b6bf616c96772180fef923"
 
 [[package]]
 name = "alloy-dyn-abi"
-version = "0.8.21"
+version = "0.8.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "555896f0b8578adb522b1453b6e6cc6704c3027bd0af20058befdde992cee8e9"
+checksum = "00e08c581811006021970bf07f2ecf3213f6237c125f7fd99607004b23627b61"
 dependencies = [
  "alloy-json-abi",
- "alloy-primitives 0.8.21",
+ "alloy-primitives 0.8.22",
  "alloy-sol-type-parser",
- "alloy-sol-types 0.8.21",
+ "alloy-sol-types 0.8.22",
  "const-hex",
  "itoa",
  "serde",
@@ -164,11 +164,11 @@ dependencies = [
 
 [[package]]
 name = "alloy-json-abi"
-version = "0.8.21"
+version = "0.8.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4012581681b186ba0882007ed873987cc37f86b1b488fe6b91d5efd0b585dc41"
+checksum = "125601804507fef5ae7debcbf800906b12741f19800c1c05b953d0f1b990131a"
 dependencies = [
- "alloy-primitives 0.8.21",
+ "alloy-primitives 0.8.22",
  "alloy-sol-type-parser",
  "serde",
  "serde_json",
@@ -196,15 +196,15 @@ dependencies = [
 
 [[package]]
 name = "alloy-primitives"
-version = "0.8.21"
+version = "0.8.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "478bedf4d24e71ea48428d1bc278553bd7c6ae07c30ca063beb0b09fe58a9e74"
+checksum = "8c66bb6715b7499ea755bde4c96223ae8eb74e05c014ab38b9db602879ffb825"
 dependencies = [
  "alloy-rlp",
  "bytes",
  "cfg-if",
  "const-hex",
- "derive_more 1.0.0",
+ "derive_more 2.0.1",
  "foldhash",
  "hashbrown 0.15.2",
  "indexmap 2.7.1",
@@ -250,9 +250,9 @@ dependencies = [
 
 [[package]]
 name = "alloy-sol-macro"
-version = "0.8.21"
+version = "0.8.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2708e27f58d747423ae21d31b7a6625159bd8d867470ddd0256f396a68efa11"
+checksum = "c7f9c3c7bc1f4e334e5c5fc59ec8dac894973a71b11da09065affc6094025049"
 dependencies = [
  "alloy-sol-macro-expander",
  "alloy-sol-macro-input",
@@ -264,9 +264,9 @@ dependencies = [
 
 [[package]]
 name = "alloy-sol-macro-expander"
-version = "0.8.21"
+version = "0.8.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c6b7984d7e085dec382d2c5ef022b533fcdb1fe6129200af30ebf5afddb6a361"
+checksum = "46ff7aa715eb2404cb87fa94390d2c5d5addd70d9617e20b2398ee6f48cb21f0"
 dependencies = [
  "alloy-sol-macro-input",
  "const-hex",
@@ -276,15 +276,15 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.98",
- "syn-solidity 0.8.21",
+ "syn-solidity 0.8.22",
  "tiny-keccak",
 ]
 
 [[package]]
 name = "alloy-sol-macro-input"
-version = "0.8.21"
+version = "0.8.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "33d6a9fc4ed1a3c70bdb2357bec3924551c1a59f24e5a04a74472c755b37f87d"
+checksum = "6f105fa700140c0cc6e2c3377adef650c389ac57b8ead8318a2e6bd52f1ae841"
 dependencies = [
  "const-hex",
  "dunce",
@@ -292,14 +292,14 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.98",
- "syn-solidity 0.8.21",
+ "syn-solidity 0.8.22",
 ]
 
 [[package]]
 name = "alloy-sol-type-parser"
-version = "0.8.21"
+version = "0.8.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b1b3e9a48a6dd7bb052a111c8d93b5afc7956ed5e2cb4177793dc63bb1d2a36"
+checksum = "c649acc6c9d3893e392c737faeadce30b4a1751eed148ae43bc2f27f29c4480c"
 dependencies = [
  "serde",
  "winnow",
@@ -319,13 +319,13 @@ dependencies = [
 
 [[package]]
 name = "alloy-sol-types"
-version = "0.8.21"
+version = "0.8.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6044800da35c38118fd4b98e18306bd3b91af5dedeb54c1b768cf1b4fb68f549"
+checksum = "5f819635439ebb06aa13c96beac9b2e7360c259e90f5160a6848ae0d94d10452"
 dependencies = [
  "alloy-json-abi",
- "alloy-primitives 0.8.21",
- "alloy-sol-macro 0.8.21",
+ "alloy-primitives 0.8.22",
+ "alloy-sol-macro 0.8.22",
  "const-hex",
  "serde",
 ]
@@ -1324,9 +1324,9 @@ checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
 
 [[package]]
 name = "base64ct"
-version = "1.7.0"
+version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c103cbbedac994e292597ab79342dbd5b306a362045095db54917d92a9fdfd92"
+checksum = "8c3c1a368f70d6cf7302d78f8f7093da241fb8e8807c05cc9e51a125895a6d5b"
 
 [[package]]
 name = "bigdecimal"
@@ -1508,16 +1508,15 @@ dependencies = [
 
 [[package]]
 name = "blake3"
-version = "1.6.0"
+version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1230237285e3e10cde447185e8975408ae24deaa67205ce684805c25bc0c7937"
+checksum = "675f87afced0413c9bb02843499dbbd3882a237645883f71a2b59644a6d2f753"
 dependencies = [
  "arrayref",
  "arrayvec 0.7.6",
  "cc",
  "cfg-if",
  "constant_time_eq 0.3.1",
- "memmap2 0.9.5",
 ]
 
 [[package]]
@@ -2018,9 +2017,9 @@ dependencies = [
 
 [[package]]
 name = "cc"
-version = "1.2.15"
+version = "1.2.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c736e259eea577f443d5c86c304f9f4ae0295c43f3ba05c21f1d66b5f06001af"
+checksum = "be714c154be609ec7f5dad223a33bf1482fff90472de28f7362806e6d4832b8c"
 dependencies = [
  "jobserver",
  "libc",
@@ -3448,9 +3447,9 @@ dependencies = [
 
 [[package]]
 name = "cxx"
-version = "1.0.141"
+version = "1.0.142"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8bc580dceb395cae0efdde0a88f034cfd8a276897e40c693a7b87bed17971d33"
+checksum = "44b9d01bd4ff172d858d01718965cc4b202898ac48d8e2333daae0e78b2a5f77"
 dependencies = [
  "cc",
  "cxxbridge-cmd",
@@ -3462,9 +3461,9 @@ dependencies = [
 
 [[package]]
 name = "cxx-build"
-version = "1.0.141"
+version = "1.0.142"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "49d8c1baedad72a7efda12ad8d7ad687b3e7221dfb304a12443fd69e9de8bb30"
+checksum = "3e556ff0cbcb04ea8c36bd0957f0ac441af50398dcc4feaceaa23c0d816bd853"
 dependencies = [
  "cc",
  "codespan-reporting",
@@ -3476,9 +3475,9 @@ dependencies = [
 
 [[package]]
 name = "cxxbridge-cmd"
-version = "1.0.141"
+version = "1.0.142"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e43afb0e3b2ef293492a31ecd796af902112460d53e5f923f7804f348a769f9c"
+checksum = "d9809e273c94453de6f358dc3c3e6c71a9fe11666ad2bb75087354db4842c809"
 dependencies = [
  "clap",
  "codespan-reporting",
@@ -3489,15 +3488,15 @@ dependencies = [
 
 [[package]]
 name = "cxxbridge-flags"
-version = "1.0.141"
+version = "1.0.142"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0257ad2096a2474fe877e9e055ab69603851c3d6b394efcc7e0443899c2492ce"
+checksum = "1291d693f408e4c9f94c3cd446ff394dbb31b753d49d27f2ef9ec57daeb0e51f"
 
 [[package]]
 name = "cxxbridge-macro"
-version = "1.0.141"
+version = "1.0.142"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b46cbd7358a46b760609f1cb5093683328e58ca50e594a308716f5403fdc03e5"
+checksum = "e1e2fdba2e8d8cfa1c8dd2b4abe36be3551f4f79b32c9f04ae34f5c2d4ddfacd"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3677,7 +3676,16 @@ version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4a9b99b9cbbe49445b21764dc0625032a89b145a2642e67603e1c936f5458d05"
 dependencies = [
- "derive_more-impl",
+ "derive_more-impl 1.0.0",
+]
+
+[[package]]
+name = "derive_more"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "093242cf7570c207c83073cf82f79706fe7b8317e98620a47d5be7c3d8497678"
+dependencies = [
+ "derive_more-impl 2.0.1",
 ]
 
 [[package]]
@@ -3685,6 +3693,18 @@ name = "derive_more-impl"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cb7330aeadfbe296029522e6c40f315320aba36fc43a5b3632f3795348f3bd22"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.98",
+ "unicode-xid",
+]
+
+[[package]]
+name = "derive_more-impl"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bda628edc44c4bb645fbe0f758797143e4e07926f7ebf4e9bdfbd3d2ce621df3"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -7083,9 +7103,9 @@ dependencies = [
 
 [[package]]
 name = "litemap"
-version = "0.7.4"
+version = "0.7.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ee93343901ab17bd981295f2cf0026d4ad018c7c31ba84549a4ddbb47a45104"
+checksum = "23fb14cb19457329c82206317a5663005a4d404783dc74f4252769b0d5f42856"
 
 [[package]]
 name = "litep2p"
@@ -9090,7 +9110,7 @@ name = "pallet-hyperbridge-aggregations"
 version = "0.1.0"
 dependencies = [
  "alloy-dyn-abi",
- "alloy-primitives 0.8.21",
+ "alloy-primitives 0.8.22",
  "anyhow",
  "frame-benchmarking",
  "frame-support",
@@ -12292,14 +12312,38 @@ dependencies = [
  "futures",
  "is_executable",
  "kvdb",
+ "kvdb-rocksdb",
  "log",
  "mmr-gadget",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
+ "parity-db",
  "parity-scale-codec",
  "parking_lot 0.12.3",
+ "polkadot-approval-distribution",
+ "polkadot-availability-bitfield-distribution",
+ "polkadot-availability-distribution",
+ "polkadot-availability-recovery",
+ "polkadot-collator-protocol",
  "polkadot-core-primitives",
+ "polkadot-dispute-distribution",
+ "polkadot-gossip-support",
+ "polkadot-network-bridge",
+ "polkadot-node-collation-generation",
+ "polkadot-node-core-approval-voting",
+ "polkadot-node-core-av-store",
+ "polkadot-node-core-backing",
+ "polkadot-node-core-bitfield-signing",
+ "polkadot-node-core-candidate-validation",
+ "polkadot-node-core-chain-api",
+ "polkadot-node-core-chain-selection",
+ "polkadot-node-core-dispute-coordinator",
  "polkadot-node-core-parachains-inherent",
+ "polkadot-node-core-prospective-parachains",
+ "polkadot-node-core-provisioner",
+ "polkadot-node-core-pvf",
+ "polkadot-node-core-pvf-checker",
+ "polkadot-node-core-runtime-api",
  "polkadot-node-network-protocol",
  "polkadot-node-primitives",
  "polkadot-node-subsystem",
@@ -12309,6 +12353,7 @@ dependencies = [
  "polkadot-primitives 16.0.0",
  "polkadot-rpc",
  "polkadot-runtime-parachains",
+ "polkadot-statement-distribution",
  "rococo-runtime",
  "sc-authority-discovery",
  "sc-basic-authorship",
@@ -13774,9 +13819,9 @@ dependencies = [
 
 [[package]]
 name = "risc0-zkvm-platform"
-version = "1.2.4"
+version = "1.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6b81a773bbaae6f499c0c82a4d29a5aa205b542c47cb062b738085603e51e682"
+checksum = "778e0235c87d8e18f13da5c71bfe69b1beb7c08694c75d19eae9dbed09a59c57"
 dependencies = [
  "cfg-if",
  "stability",
@@ -18147,9 +18192,9 @@ dependencies = [
 
 [[package]]
 name = "syn-solidity"
-version = "0.8.21"
+version = "0.8.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c2de690018098e367beeb793991c7d4dc7270f42c9d2ac4ccc876c1368ca430"
+checksum = "ac9f9798a84bca5cd4d1760db691075fda8f2c3a5d9647e8bfd29eb9b3fabb87"
 dependencies = [
  "paste",
  "proc-macro2",
@@ -18395,6 +18440,7 @@ dependencies = [
  "polkadot-primitives 16.0.0",
  "polkadot-runtime-common",
  "polkadot-runtime-parachains",
+ "polkadot-service",
  "rand",
  "sc-authority-discovery",
  "sc-chain-spec",
@@ -19265,9 +19311,9 @@ checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
 
 [[package]]
 name = "uuid"
-version = "1.15.0"
+version = "1.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bd8dcafa1ca14750d8d7a05aa05988c17aab20886e1f3ae33a40223c58d92ef7"
+checksum = "e0f540e3240398cce6128b64ba83fdbdd86129c16a3aa1a3a252efd66eb3d587"
 
 [[package]]
 name = "valuable"
@@ -20565,18 +20611,18 @@ dependencies = [
 
 [[package]]
 name = "zerofrom"
-version = "0.1.5"
+version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cff3ee08c995dee1859d998dea82f7374f2826091dd9cd47def953cae446cd2e"
+checksum = "50cc42e0333e05660c3587f3bf9d0478688e15d870fab3346451ce7f8c9fbea5"
 dependencies = [
  "zerofrom-derive",
 ]
 
 [[package]]
 name = "zerofrom-derive"
-version = "0.1.5"
+version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "595eed982f7d355beb85837f651fa22e90b3c044842dc7f2c2842c086f295808"
+checksum = "d71e5d6e06ab090c67b5e44993ec16b72dcbaabc526db883a360057678b48502"
 dependencies = [
  "proc-macro2",
  "quote",

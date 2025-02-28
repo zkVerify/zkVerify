@@ -122,7 +122,10 @@ where
         let hwbench = (!cli.run.no_hardware_benchmarks)
             .then_some(config.database.path().map(|database_path| {
                 let _ = std::fs::create_dir_all(database_path);
-                sc_sysinfo::gather_hwbench(Some(database_path), &zkv_benchmarks::hardware::zkv_reference_hardware())
+                sc_sysinfo::gather_hwbench(
+                    Some(database_path),
+                    zkv_benchmarks::hardware::zkv_reference_hardware(),
+                )
             }))
             .flatten();
 
@@ -376,8 +379,11 @@ pub fn run() -> Result<()> {
                     }
                 }
                 BenchmarkCmd::Machine(cmd) => runner.sync_run(|config| {
-                    cmd.run(&config, zkv_benchmarks::hardware::zkv_reference_hardware().clone())
-                        .map_err(Error::SubstrateCli)
+                    cmd.run(
+                        &config,
+                        zkv_benchmarks::hardware::zkv_reference_hardware().clone(),
+                    )
+                    .map_err(Error::SubstrateCli)
                 }),
                 // NOTE: this allows the zkVerify client to leniently implement
                 // new benchmark commands.
