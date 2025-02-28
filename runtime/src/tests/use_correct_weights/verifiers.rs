@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-//! Here vwe implement just the test about verifiers weights linking.
+//! Here we implement just the test about verifiers weights linking.
 
 use super::*;
 
@@ -108,5 +108,20 @@ fn pallet_settlement_proofofsql() {
             &Vec::new()
         ),
         crate::weights::pallet_proofofsql_verifier::ZKVWeight::<Runtime>::verify_proof()
+    );
+}
+
+#[test]
+fn pallet_settlement_plonky2() {
+    use pallet_plonky2_verifier::{Plonky2, WeightInfo};
+
+    assert_eq!(
+        <<Runtime as pallet_verifiers::Config<Plonky2<Runtime>>>::WeightInfo as
+        pallet_verifiers::WeightInfo<Plonky2<Runtime>>>
+        ::submit_proof(
+            &Vec::new(),
+            &Vec::new()
+        ),
+        crate::weights::pallet_plonky2_verifier::ZKVWeight::<Runtime>::submit_proof()
     );
 }
