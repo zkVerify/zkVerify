@@ -31,6 +31,8 @@ pub type Pubs = Vec<[u8; PUBS_SIZE]>;
 pub type Vk = [u8; VK_SIZE];
 pub use weight::WeightInfo;
 
+const PADDED_VK_SIZE: usize = VK_SIZE + (15 << 5);
+
 pub trait Config: 'static {
     /// Maximum supported number of public inputs.
     type MaxPubs: Get<u32>;
@@ -121,9 +123,8 @@ impl<T: Config> Verifier for Ultraplonk<T> {
 
 impl<T: Config> Ultraplonk<T> {
     fn encode_vk(vk: &Vk) -> Cow<[u8]> {
-        const PAD_SIZE: usize = 15 << 5;
         let mut buffer: Vec<u8> = Vec::from(vk);
-        buffer.resize(buffer.len() + PAD_SIZE, 0u8);
+        buffer.resize(PADDED_VK_SIZE, 0u8);
 
         Cow::Owned(buffer)
     }
