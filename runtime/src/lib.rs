@@ -1115,6 +1115,10 @@ construct_runtime!(
         ParasSlashing: parachains::slashing = 113,
         ParachainsAssignmentProvider: parachains::parachains_assigner_parachains = 114,
 
+        // Parachain onboarding; visualization only, not intended for actual usage.
+        Registrar: parachains::paras_registrar = 120,
+        Slots: parachains::slots = 121,
+
         // Parachain chain (removable) pallets. Start indices at 130.
         ParasSudoWrapper: parachains::paras_sudo_wrapper = 130,
 
