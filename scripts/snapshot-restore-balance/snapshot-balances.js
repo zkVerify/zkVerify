@@ -1,6 +1,6 @@
 const { ApiPromise, WsProvider, Keyring } = require('@polkadot/api');
 const fs = require('fs');
-const { decodeAddress, encodeAddress } = require('@polkadot/util-crypto');
+const {decodeAddress} = require('@polkadot/util-crypto');
 const { u8aToHex } = require('@polkadot/util');
 
 const WS_ENDPOINT = 'wss://testnet-rpc.zkverify.io';
@@ -14,7 +14,8 @@ const DISCARDED_ACCOUNTS_PUBLIC_KEYS = [
         "0xf63cf0a167de0d342750a7187a961407ad7d74cb67ce93631e93636646a15c69",
         "0xfa9273ff2780b6b2923670792ad5899e9c72ac0dc59526160974f61231177e05",
         "0x5e9c9e3190de7f188613ac26948cd2708b35866704e6bcd5f4180d0275a6d151",
-        "0x6e8298157ef6835a12a28c7b13e82e5bc3d327a88a4cffbc5c810223f3a2a91c"
+    "0x6e8298157ef6835a12a28c7b13e82e5bc3d327a88a4cffbc5c810223f3a2a91c",
+    "0x6d6f646c7a6b2f74727372790000000000000000000000000000000000000000", // Treasury
     ]
 
 function ss58ToPublicKey(ss58Address) {
@@ -24,13 +25,12 @@ function ss58ToPublicKey(ss58Address) {
 
 async function takeSnapshot(api, snapshotBalancesFile) {
     const balances = {};
-    const accounts = await api.query.system.account.keys();
+    const accounts = await api.query.system.account.entries();
 
-    for (const key of accounts) {
-        const account = key.args[0].toString();
-        const account_public_key = ss58ToPublicKey(account);
+    for (const [account, data] of accounts) {
+        const account_public_key = ss58ToPublicKey(account.slice(-32));
         if (DISCARDED_ACCOUNTS_PUBLIC_KEYS.includes(account_public_key)) continue;
-        const { data:  { free: freeBalance, reserved: reservedBalance } } = await api.query.system.account(account_public_key);
+        const {data: {free: freeBalance, reserved: reservedBalance}} = data;
         const totalBalance = BigInt(freeBalance.toString()) + BigInt(reservedBalance.toString());
         balances[account_public_key] = totalBalance.toString();
     }
