@@ -24,6 +24,8 @@
 
 set -eEuo pipefail
 
+RUN_USER="${RUN_USER:-}"
+
 ####
 # Function(s)
 ####
@@ -91,13 +93,28 @@ validate_and_download() {
   echo "  ${CHAIN_VAR_NAME}=${CHAIN_VALUE}"
 
   # Check if CHAIN_VALUE points to an existing .json file and download it otherwise
-  if [[ "${CHAIN_VALUE}" == *.json ]] && [ ! -f "${CHAIN_VALUE}" ] ; then
+  if [[ "${CHAIN_VALUE}" == *.json ]] && { [ ! -f "${CHAIN_VALUE}" ] || [ ! -s "${CHAIN_VALUE}" ]; }; then
     # Attempt to download the file if it doesn't exist
     if [ -n "${SPEC_FILE_URL}" ]; then
       log_green "INFO: Spec file '${CHAIN_VALUE}' does not exist. Downloading it from '${SPEC_FILE_URL}' ..."
-      mkdir -p "$(dirname "${CHAIN_VALUE}")" || fn_die "ERROR: could not create directory '$(dirname "${CHAIN_VALUE}")' for spec file. Aborting ..."
+      gosu "${RUN_USER}" mkdir -p "$(dirname "${CHAIN_VALUE}")" || fn_die "ERROR: could not create directory '$(dirname "${CHAIN_VALUE}")' for spec file. Aborting ..."
       cd "$(dirname "${CHAIN_VALUE}")"
-      aria2c --file-allocation=none -s16 -x16 --max-tries=3 --continue=true "${SPEC_FILE_URL}" -o "$(basename "${CHAIN_VALUE}")" || fn_die "ERROR: Failed to download spec file from '${SPEC_FILE_URL}' url. Aborting ..."
+      # Retry mechanism for downloading the spec file
+      MAX_RETRIES=3
+      RETRY_DELAY=5
+      for ((i=1; i<=MAX_RETRIES; i++)); do
+        log_green "INFO: Attempt #${i} of ${MAX_RETRIES} to download spec file ..."
+        if gosu "${RUN_USER}" aria2c --file-allocation=none -s16 -x16 --max-tries=3 --continue=true "${SPEC_FILE_URL}" -o "$(basename "${CHAIN_VALUE}")"; then
+          log_green "INFO: Spec file downloaded successfully."
+          break  # Exit loop on success
+        fi
+        if [ "${i}" -lt "${MAX_RETRIES}" ]; then
+          log_yellow "WARNING: Download failed. Retrying in ${RETRY_DELAY} seconds ..."
+          sleep "${RETRY_DELAY}"
+        else
+          fn_die "ERROR: Failed to download spec file from '${SPEC_FILE_URL}' after ${MAX_RETRIES} attempts. Aborting ..."
+        fi
+      done
     else
       fn_die "ERROR: The variable '${CHAIN_VAR_NAME}' (spec file) is set to '${CHAIN_VALUE}', which is a .json file that does not exist. The variable '${URL_VAR_NAME}' is empty, therefore the file can not be downloaded. Aborting ..."
     fi
@@ -129,9 +146,11 @@ log_bold_green "=== zkVerify node's configuration:"
 ZKV_CONF_BASE_PATH=${ZKV_CONF_BASE_PATH:-}
 ZKV_CONF_CHAIN=${ZKV_CONF_CHAIN:-}
 ZKV_SPEC_FILE_URL="${ZKV_SPEC_FILE_URL:-}"
-### TO BE IMPLEMENTED
-#ZKV_SECRET_PASSWORD="${ZKV_SECRET_PASSWORD:-}"
-#ZKV_SECRET_PASSWORD_FILE_PATH=""
+# ZKV_NODE_KEY and ZKV_SECRET_PHRASE are coming from environmental variables
+ZKV_NODE_KEY="${ZKV_NODE_KEY:-}"
+ZKV_NODE_KEY_FILE=""
+ZKV_SECRET_PHRASE="${ZKV_SECRET_PHRASE:-}"
+ZKV_SECRET_PHRASE_FILE=""
 
 # Loop through all arguments to check for --dev
 for arg in "$@"; do
@@ -148,10 +167,27 @@ if [ "${DEV_MODE:-false}" != "true" ]; then
   validate_and_download "ZKV_CONF_CHAIN" "ZKV_SPEC_FILE_URL"
 fi
 
-ZKV_SECRET_PHRASE_PATH=${ZKV_SECRET_PHRASE_PATH:-"/data/config/secret_phrase.dat"}
-ZKV_NODE_KEY_FILE=${ZKV_NODE_KEY_FILE:-"/data/config/node_key.dat"}
-echo "  ZKV_SECRET_PHRASE_PATH=${ZKV_SECRET_PHRASE_PATH}"
-echo -e "  ZKV_NODE_KEY_FILE=${ZKV_NODE_KEY_FILE}\n"
+# Creating node key file if node key is provided
+if [ -n "${ZKV_NODE_KEY}" ]; then
+  ZKV_NODE_KEY_FILE="/tmp/node_key.dat"
+
+  printf "%s" "${ZKV_NODE_KEY}" > "${ZKV_NODE_KEY_FILE}"
+  chmod 0400 "${ZKV_NODE_KEY_FILE}" && chown "${RUN_USER}" "${ZKV_NODE_KEY_FILE}"
+  echo -e "  ZKV_NODE_KEY_FILE=${ZKV_NODE_KEY_FILE}\n"
+
+  unset ZKV_NODE_KEY
+fi
+
+# Creating secret phrase file if secret phrase is provided
+if [ -n "${ZKV_SECRET_PHRASE}" ]; then
+  ZKV_SECRET_PHRASE_FILE="/tmp/secret_phrase.dat"
+
+  printf "%s" "${ZKV_SECRET_PHRASE}" > "${ZKV_SECRET_PHRASE_FILE}"
+  chmod 0400 "${ZKV_SECRET_PHRASE_FILE}" && chown "${RUN_USER}" "${ZKV_SECRET_PHRASE_FILE}"
+  echo -e "  ZKV_SECRET_PHRASE_FILE=${ZKV_SECRET_PHRASE_FILE}\n"
+
+  unset ZKV_SECRET_PHRASE
+fi
 
 prefix="ZKV_CONF_"
 conf_args=()
@@ -183,22 +219,8 @@ while IFS='=' read -r -d '' var_name var_value; do
   fi
 done < <(env -0)
 
-### TO BE IMPLEMENTED
-## Password file mgmt if provided. Saving under on tmpfs device
-#if [ -n "${ZKV_SECRET_PASSWORD}" ]; then
-#  ZKV_SECRET_PASSWORD_FILE_PATH="/tmp/password.txt"
-#  printf "%s" "${ZKV_SECRET_PASSWORD}" > "${ZKV_SECRET_PASSWORD_FILE_PATH}"
-#
-#  if [ -f "${ZKV_SECRET_PASSWORD_FILE_PATH}" ] && [ -s "${ZKV_SECRET_PASSWORD_FILE_PATH}" ]; then
-#    sed -i -z 's/\n$//' "${ZKV_SECRET_PASSWORD_FILE_PATH}" # make sure there is no ending newline
-#    conf_args+=("--password-filename" "$(get_arg_value_from_env_value "${ZKV_SECRET_PASSWORD_FILE_PATH}")")
-#  else
-#    fn_die "ERROR: The 'ZKV_SECRET_PASSWORD' environment variable is set, but the ${ZKV_SECRET_PASSWORD_FILE} file could not be created or populated. Exiting..."
-#  fi
-#fi
-
 # Keys handling
-if [ -f "${ZKV_SECRET_PHRASE_PATH}" ]; then
+if [ -f "${ZKV_SECRET_PHRASE_FILE}" ] && [ -s "${ZKV_SECRET_PHRASE_FILE}" ]; then
   injection_args=()
   if [ -n "${ZKV_CONF_BASE_PATH}" ]; then
     injection_args+=("$(get_arg_name_from_env_name ZKV_CONF_BASE_PATH ${prefix})")
@@ -208,63 +230,54 @@ if [ -f "${ZKV_SECRET_PHRASE_PATH}" ]; then
     injection_args+=("$(get_arg_name_from_env_name ZKV_CONF_CHAIN ${prefix})")
     injection_args+=("$(get_arg_value_from_env_value "${ZKV_CONF_CHAIN}")")
   fi
-  ### TO BE IMPLEMENTED
-#  if [ -f "${ZKV_SECRET_PASSWORD_FILE_PATH}" ] && [ -s "${ZKV_SECRET_PASSWORD_FILE_PATH}" ]; then
-#    injection_args+=("--password-filename" "$(get_arg_value_from_env_value "${ZKV_SECRET_PASSWORD_FILE_PATH}")")
-#  fi
+
   log_green "INFO: injecting keys with ${injection_args[*]} ..."
 
   log_green "INFO: injecting key (Babe) ..."
-  ${ZKV_NODE} key insert "${injection_args[@]}" \
+  gosu "${RUN_USER}" "${ZKV_NODE}" key insert "${injection_args[@]}" \
     --scheme Sr25519 \
-    --suri "${ZKV_SECRET_PHRASE_PATH}" \
+    --suri "${ZKV_SECRET_PHRASE_FILE}" \
     --key-type babe
 
   log_green "INFO: injecting key (Grandpa) ..."
-  ${ZKV_NODE} key insert "${injection_args[@]}" \
+  gosu "${RUN_USER}" "${ZKV_NODE}" key insert "${injection_args[@]}" \
     --scheme Ed25519 \
-    --suri "${ZKV_SECRET_PHRASE_PATH}" \
+    --suri "${ZKV_SECRET_PHRASE_FILE}" \
     --key-type gran
 
   log_green "INFO: injecting key (Imonline) ..."
-  ${ZKV_NODE} key insert "${injection_args[@]}" \
+  gosu "${RUN_USER}" "${ZKV_NODE}" key insert "${injection_args[@]}" \
     --scheme Sr25519 \
-    --suri "${ZKV_SECRET_PHRASE_PATH}" \
+    --suri "${ZKV_SECRET_PHRASE_FILE}" \
     --key-type imon
 
   log_green "INFO: injecting key (Parachain) ..."
-  ${ZKV_NODE} key insert "${injection_args[@]}" \
+  gosu "${RUN_USER}" "${ZKV_NODE}" key insert "${injection_args[@]}" \
     --scheme Sr25519 \
-    --suri "${ZKV_SECRET_PHRASE_PATH}" \
+    --suri "${ZKV_SECRET_PHRASE_FILE}" \
     --key-type para
 
   log_green "INFO: injecting key (Authorities Discovery) ..."
-  ${ZKV_NODE} key insert "${injection_args[@]}" \
+  gosu "${RUN_USER}" "${ZKV_NODE}" key insert "${injection_args[@]}" \
     --scheme Sr25519 \
-    --suri "${ZKV_SECRET_PHRASE_PATH}" \
+    --suri "${ZKV_SECRET_PHRASE_FILE}" \
     --key-type audi
 fi
 
 # Node-key (used for p2p) handling
-if [[ (-n "${ZKV_CONF_BASE_PATH}") && (-n "${ZKV_CONF_CHAIN}") && (-f "${ZKV_NODE_KEY_FILE}") ]]; then
+if [[ (-n "${ZKV_CONF_BASE_PATH}") && (-n "${ZKV_CONF_CHAIN}") && (-f "${ZKV_NODE_KEY_FILE}") && (-s "${ZKV_NODE_KEY_FILE}") ]]; then
   base_path="$(get_arg_value_from_env_value "${ZKV_CONF_BASE_PATH}")"
   chain="$(get_arg_value_from_env_value "${ZKV_CONF_CHAIN}")"
-  chain_id="$("${ZKV_NODE}" build-spec --chain "${chain}" 2>/dev/null | jq -r '.id')" || chain_id='null'
+  chain_id="$(gosu "${RUN_USER}" "${ZKV_NODE}" build-spec --chain "${chain}" 2>/dev/null | jq -r '.id')" || chain_id='null'
   if [ -z "${chain_id}" ] || [ "${chain_id}" == 'null' ]; then
     fn_die "ERROR: could not find 'id' under node's spec file. Aborting ..."
   fi
   destination="${base_path}/chains/${chain_id}/network"
 
-  mkdir -p "${destination}"
+  gosu "${RUN_USER}" mkdir -p "${destination}"
   log_green "INFO: copying node's key file to ${destination} location ..."
-  cp "${ZKV_NODE_KEY_FILE}" "${destination}/secret_ed25519"
+  cp -p "${ZKV_NODE_KEY_FILE}" "${destination}/secret_ed25519"
 fi
-
-### TO BE IMPLEMENTED
-#if [ -f "${ZKV_SECRET_PASSWORD_FILE_PATH}" ] && [ -s "${ZKV_SECRET_PASSWORD_FILE_PATH}" ]; then
-#  log_green "INFO: launching password file remover ..."
-#  ./remove_password_file.sh "${ZKV_NODE}" "${ZKV_SECRET_PASSWORD_FILE_PATH}" >> "/${RUN_USER}/remove_password_file_$(date +%Y-%m-%d_%H-%M-%S).log" 2>&1 &
-#fi
 
 ####
 # Relaychain collator's configuration (env->arg)
@@ -311,4 +324,4 @@ fi
 log_green "INFO: launching ${ZKV_NODE} with the following args:"
 echo "  ${conf_args[*]}" "$@"
 
-exec "${ZKV_NODE}" "${conf_args[@]}" "$@"
+exec gosu "${RUN_USER}" "${ZKV_NODE}" "${conf_args[@]}" "$@"
