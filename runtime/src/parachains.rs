@@ -87,7 +87,7 @@ impl slashing::Config for Runtime {
     type HandleReports =
         slashing::SlashingReportHandler<Self::KeyOwnerIdentification, Offences, ReportLongevity>;
     type WeightInfo = weights::parachains::slashing::ZKVWeight<Runtime>;
-    type BenchmarkingConfig = slashing::BenchConfig<{ crate::MAX_TARGETS }>;
+    type BenchmarkingConfig = slashing::BenchConfig<{ crate::MAX_ACTIVE_VALIDATORS }>;
 }
 
 impl parachains_dmp::Config for Runtime {}
