@@ -357,7 +357,6 @@ pub fn get_preset(id: &sp_genesis_builder::PresetId) -> Option<sp_std::vec::Vec<
     )
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -384,5 +383,4 @@ mod tests {
         // Check that we have one "keys" set
         assert_eq!(1, auth_len);
     }
-
 }
