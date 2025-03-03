@@ -46,8 +46,10 @@ impl Verifier for Zksync {
         _vk: &Self::Vk,
         proof: &Self::Proof,
         pubs: &Self::Pubs,
-    ) -> Result<(), VerifyError> {
-        native::zksync_verify::verify(proof, *pubs).map_err(Into::into)
+    ) -> Result<Option<Weight>, VerifyError> {
+        native::zksync_verify::verify(proof, *pubs)
+            .map_err(Into::into)
+            .map(|_| None)
     }
 
     fn pubs_bytes(pubs: &Self::Pubs) -> Cow<[u8]> {

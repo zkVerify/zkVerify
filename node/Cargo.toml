@@ -10,6 +10,9 @@ repository.workspace = true
 build = "build.rs"
 license = "GPL-3.0"
 
+[lints]
+workspace = true
+
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
 

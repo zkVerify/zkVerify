@@ -46,7 +46,7 @@ pub enum VerifyError {
     InvalidVerificationKey,
 }
 
-/// The trait that characterize a verifier.
+/// The trait that characterizes a verifier.
 pub trait Verifier: 'static {
     /// The proof format type accepted by the verifier
     type Proof: Arg;
@@ -55,19 +55,27 @@ pub trait Verifier: 'static {
     /// The verification key format
     type Vk: VkArg;
 
-    /// The context used to generate the statements hash.
+    /// The context used to generate the statement hash.
     fn hash_context_data() -> &'static [u8];
 
-    /// Verify the proof: Should return `Ok(())` if the proof is coherent with the verification
-    /// key and the it's valid against the provided public inputs `pubs`.   
+    /// Verify the proof: Should return `Ok(post_info_weight)` if the proof is coherent with
+    /// the verification key, and it's valid against the provided public inputs `pubs`.
+    ///
+    /// The `post_info_weight` should contain an optional weight that will replace the original
+    /// estimated weight if it's lower.
+    ///
+    /// It's useful to leverage on `post_info_weight` every time that you cannot compute good weight
+    /// estimation without parsing the proof: so you can provide an upper-bound estimation based on
+    /// a simple `proof` and `pubs` analysis with `WeightInfo::<V>::verify_proof()` and then return
+    /// a more precise value here.
     fn verify_proof(
         vk: &Self::Vk,
         proof: &Self::Proof,
         pubs: &Self::Pubs,
-    ) -> Result<(), VerifyError>;
+    ) -> Result<Option<Weight>, VerifyError>;
 
     /// Validate the verification key: Should return `Ok(())` if the verification key is valid.
-    /// The default implementation accept all verification keys: our business logic could
+    /// The default implementations accept all verification keys: our business logic could
     /// need something different.
     fn validate_vk(_vk: &Self::Vk) -> Result<(), VerifyError> {
         Ok(())
@@ -79,13 +87,13 @@ pub trait Verifier: 'static {
     }
 
     /// A vk's byte serialization used to compute the verification key hash. The default implementation
-    /// use the `scale::encode()` one, but you can customize it.
+    /// uses the `scale::encode()` one, but you can customize it.
     fn vk_bytes(vk: &Self::Vk) -> Cow<[u8]> {
         Cow::Owned(vk.encode())
     }
 
-    /// A public inputs byte serialization used to compute the statement hash. There isn't any
-    /// default implementation: you should implement it.
+    /// Public inputs byte serialization used to compute the statement hash.
+    /// There isn't any default implementation: you should implement it.
     fn pubs_bytes(pubs: &Self::Pubs) -> Cow<[u8]>;
 
     /// Return a hash that represents the verifier version used to verify the proof.
@@ -96,15 +104,18 @@ pub trait Verifier: 'static {
 }
 
 /// The trait used to map the `pallet-verifiers` extrinsic in you verifier implementation
-/// weights. The methods provide a borrowed proof, public inputs or vk but your code should
+/// weights.
+///
+/// The methods provide a borrowed proof, public inputs or vk, but your code should
 /// use them just to guess the _size_ of your verification and map the method in the weights
 /// that you computed for your own verifier implementation.
 ///
 /// Any implementation SHOULD be as plain as possible (ideally static mappings) without
 /// any logic and without any dependencies on some values that cannot be extracted
-/// in a fast way like type or a vector length. As an example of a non trivial
-/// implementation look at `pallet-groth16-verifier` where almost all functions
-/// depends on number of public inputs.
+/// in a fast way like type or a vector length.
+///
+/// As an example of a non-trivial implementation, look at `pallet-groth16-verifier`
+/// where almost all functions depend on the number of public inputs.
 pub trait WeightInfo<V: Verifier> {
     /// Here you should map the given request to a weight computed with your verifier.
     fn verify_proof(proof: &V::Proof, pubs: &V::Pubs) -> Weight;
@@ -117,12 +128,12 @@ pub trait WeightInfo<V: Verifier> {
     fn unregister_vk() -> Weight;
 
     /// The weight about retrieving the vk from `Vks` storage. You should overestimate
-    /// it at the bigger vk that your pallet use.
+    /// it at the bigger vk that your pallet uses.
     fn get_vk() -> Weight;
 
-    /// This is the weight about execute [`Verifier::validate_vk`]. In the case that you
-    /// cannot get enough information to estimate it correctly you should return the worst
-    /// case value.
+    /// This is the weight about executing [`Verifier::validate_vk`].
+    /// In the case that you cannot get enough information to estimate it correctly,
+    /// you should return the worst case value.
     fn validate_vk(vk: &V::Vk) -> Weight;
 
     /// Estimate the weight about `pallet_verifiers`'s `compute_statement_hash()`
@@ -144,7 +155,7 @@ impl Verifier for () {
         _vk: &Self::Vk,
         _proof: &Self::Proof,
         _pubs: &Self::Pubs,
-    ) -> Result<(), VerifyError> {
+    ) -> Result<Option<Weight>, VerifyError> {
         Err(VerifyError::VerifyError)
     }
 
@@ -152,11 +163,11 @@ impl Verifier for () {
         Ok(())
     }
 
-    fn pubs_bytes(_pubs: &Self::Pubs) -> sp_std::borrow::Cow<[u8]> {
+    fn pubs_bytes(_pubs: &Self::Pubs) -> Cow<[u8]> {
         static EMPTY: [u8; 0] = [];
-        // Example: If you would use something computed here you can use
-        // sp_std::borrow::Cow::Owned(_pubs.encode())
-        sp_std::borrow::Cow::Borrowed(&EMPTY)
+        // Example: If you would use something computed here, you can use
+        // Cow::Owned(_pubs.encode())
+        Cow::Borrowed(&EMPTY)
     }
 }
 

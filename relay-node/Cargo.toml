@@ -20,6 +20,9 @@ edition.workspace = true
 version = "16.0.0"
 default-run = "zkv-relay"
 
+[lints]
+workspace = true
+
 [dependencies]
 color-eyre = { version = "0.6.1", default-features = false }
 tikv-jemallocator = { version = "0.5.0", optional = true, features = [

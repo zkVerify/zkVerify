@@ -30,6 +30,8 @@ pub type Balance = u128;
 pub type AccountId = u64;
 pub type Origin = RawOrigin<AccountId>;
 
+pub const MAGIC_VK_VERIFY_PROOF_WEIGHT: u64 = 1_234_567;
+
 /// A on_proof_verifier fake pallet
 pub mod on_proof_verified {
     pub use pallet::*;
@@ -123,6 +125,19 @@ pub mod fake_pallet {
         }
     }
 
+    impl FakeVerifier {
+        pub fn compute_dyn_verify_weight(vk: u64, proof: u64, pubs: u64) -> Option<Weight> {
+            if vk == MAGIC_VK_VERIFY_PROOF_WEIGHT {
+                Some(Weight::from_parts(
+                    1000 * proof + 10_000 * pubs,
+                    1_000_000 * pubs,
+                ))
+            } else {
+                None
+            }
+        }
+    }
+
     impl Verifier for FakeVerifier {
         type Proof = u64;
 
@@ -138,12 +153,14 @@ pub mod fake_pallet {
             vk: &Self::Vk,
             proof: &Self::Proof,
             pubs: &Self::Pubs,
-        ) -> Result<(), VerifyError> {
+        ) -> Result<Option<Weight>, VerifyError> {
             match (*vk, *proof, *pubs) {
                 (0, _, _) => Err(VerifyError::InvalidVerificationKey),
                 (_, 0, _) => Err(VerifyError::InvalidProofData),
                 (_, _, 0) => Err(VerifyError::InvalidInput),
-                (_vk, proof, pubs) if proof == pubs => Ok(()),
+                (vk, proof, pubs) if proof == pubs => {
+                    Ok(Self::compute_dyn_verify_weight(vk, proof, pubs))
+                }
                 _ => Err(VerifyError::VerifyError),
             }
         }

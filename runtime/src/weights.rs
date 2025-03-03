@@ -41,6 +41,7 @@ pub mod pallet_proofofsql_verifier;
 pub mod pallet_proxy;
 pub mod pallet_referenda;
 pub mod pallet_risc0_verifier;
+pub mod pallet_risc0_verifier_verify_proof;
 pub mod pallet_scheduler;
 pub mod pallet_session;
 pub mod pallet_staking;

@@ -7,6 +7,9 @@ edition.workspace = true
 license = "GPL-3.0"
 description = "test client helper"
 
+[lints]
+workspace = true
+
 [dependencies]
 codec = { workspace = true, features = ["derive"] }
 test-runtime = { path = "../runtime" }

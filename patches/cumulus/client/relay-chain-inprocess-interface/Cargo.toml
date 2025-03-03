@@ -6,6 +6,9 @@ edition.workspace = true
 description = "Implementation of the RelayChainInterface trait for Polkadot full-nodes. (polkadot v1.15.0)"
 license = "GPL-3.0-or-later WITH Classpath-exception-2.0"
 
+[lints]
+workspace = true
+
 [dependencies]
 async-trait = { workspace = true }
 futures = { workspace = true }

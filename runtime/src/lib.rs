@@ -931,14 +931,18 @@ impl pallet_verifiers::Config<pallet_groth16_verifier::Groth16<Runtime>> for Run
 }
 
 parameter_types! {
-    pub const Risc0MaxProofSize: u32 = 3067823; // 3067823: risc0 proof size for a 2^24 cycle-count run
+    pub const Risc0MaxNSegment: u32 = 4;             // 4 segment of 2^20
+    pub const Risc0Segment20MaxSize: u32 = 350_000; // risc0 2^20 segment size (a standard 2^22)
+                                                    // proof is ~1_400_000
     pub const Risc0MaxPubsSize: u32 = 4 + 32 * 64;  // 4: bytes for payload length,
                                                     // 32 * 64: sufficient multiple of 32 bytes
 }
 
 impl pallet_risc0_verifier::Config for Runtime {
-    type MaxProofSize = Risc0MaxProofSize;
+    type MaxNSegment = Risc0MaxNSegment;
+    type Segment20MaxSize = Risc0Segment20MaxSize;
     type MaxPubsSize = Risc0MaxPubsSize;
+    type WeightInfo = weights::pallet_risc0_verifier_verify_proof::ZKVWeight<Runtime>;
 }
 
 impl pallet_verifiers::Config<pallet_risc0_verifier::Risc0<Runtime>> for Runtime {
@@ -1267,6 +1271,7 @@ mod benches {
         [pallet_fflonk_verifier, FflonkVerifierBench::<Runtime>]
         [pallet_groth16_verifier, Groth16VerifierBench::<Runtime>]
         [pallet_risc0_verifier, Risc0VerifierBench::<Runtime>]
+        [pallet_risc0_verifier_verify_proof, Risc0VerifierVerifyProofBench::<Runtime>]
         [pallet_risc0_verifier_extend, Risc0VerifierExtendBench::<Runtime>]
         [pallet_ultraplonk_verifier, UltraplonkVerifierBench::<Runtime>]
         [pallet_proofofsql_verifier, ProofOfSqlVerifierBench::<Runtime>]
@@ -1308,6 +1313,7 @@ mod benches {
         [pallet_fflonk_verifier, FflonkVerifierBench::<Runtime>]
         [pallet_groth16_verifier, Groth16VerifierBench::<Runtime>]
         [pallet_risc0_verifier, Risc0VerifierBench::<Runtime>]
+        [pallet_risc0_verifier_verify_proof, Risc0VerifierVerifyProofBench::<Runtime>]
         [pallet_risc0_verifier_extend, Risc0VerifierExtendBench::<Runtime>]
         [pallet_ultraplonk_verifier, UltraplonkVerifierBench::<Runtime>]
         [pallet_proofofsql_verifier, ProofOfSqlVerifierBench::<Runtime>]
@@ -1809,6 +1815,7 @@ impl_runtime_apis! {
             use pallet_zksync_verifier::benchmarking::Pallet as ZksyncVerifierBench;
             use pallet_groth16_verifier::benchmarking::Pallet as Groth16VerifierBench;
             use pallet_risc0_verifier::benchmarking::Pallet as Risc0VerifierBench;
+            use pallet_risc0_verifier::benchmarking_verify_proof::Pallet as Risc0VerifierVerifyProofBench;
             use pallet_risc0_verifier::extend_benchmarking::Pallet as Risc0VerifierExtendBench;
             use pallet_ultraplonk_verifier::benchmarking::Pallet as UltraplonkVerifierBench;
             use pallet_proofofsql_verifier::benchmarking::Pallet as ProofOfSqlVerifierBench;
@@ -1841,6 +1848,7 @@ impl_runtime_apis! {
             use pallet_zksync_verifier::benchmarking::Pallet as ZksyncVerifierBench;
             use pallet_groth16_verifier::benchmarking::Pallet as Groth16VerifierBench;
             use pallet_risc0_verifier::benchmarking::Pallet as Risc0VerifierBench;
+            use pallet_risc0_verifier::benchmarking_verify_proof::Pallet as Risc0VerifierVerifyProofBench;
             use pallet_risc0_verifier::extend_benchmarking::Pallet as Risc0VerifierExtendBench;
             use pallet_ultraplonk_verifier::benchmarking::Pallet as UltraplonkVerifierBench;
             use pallet_proofofsql_verifier::benchmarking::Pallet as ProofOfSqlVerifierBench;

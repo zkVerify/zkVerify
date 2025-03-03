@@ -58,7 +58,7 @@ impl<T: Config> Verifier for Ultraplonk<T> {
         vk: &Self::Vk,
         proof: &Self::Proof,
         pubs: &Self::Pubs,
-    ) -> Result<(), VerifyError> {
+    ) -> Result<Option<Weight>, VerifyError> {
         ensure!(
             proof.len() == PROOF_SIZE,
             hp_verifiers::VerifyError::InvalidInput
@@ -91,6 +91,7 @@ impl<T: Config> Verifier for Ultraplonk<T> {
                     hp_verifiers::VerifyError::VerifyError
                 }
             })
+            .map(|_| None)
     }
 
     fn validate_vk(vk: &Self::Vk) -> Result<(), VerifyError> {

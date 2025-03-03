@@ -37,214 +37,6 @@ mod benchmarks {
     benchmarking_utils!(Verifier<T>, crate::Config);
 
     #[benchmark]
-    fn verify_proof_cycle_2_pow_12() {
-        let vk = VALID_VK;
-        let inner_proof =
-            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_12.bin").to_vec();
-        let proof = Proof::V1_0(inner_proof).into();
-        let pubs = VALID_PUBS_CYCLE_2_POW_12.to_vec().into();
-
-        let r;
-        #[block]
-        {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
-        };
-        assert!(r.is_ok());
-    }
-
-    #[benchmark]
-    fn verify_proof_cycle_2_pow_13() {
-        let vk = VALID_VK;
-        let inner_proof =
-            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_13.bin").to_vec();
-        let proof = Proof::V1_0(inner_proof).into();
-        let pubs = VALID_PUBS_CYCLE_2_POW_13.to_vec().into();
-
-        let r;
-        #[block]
-        {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
-        };
-        assert!(r.is_ok());
-    }
-
-    #[benchmark]
-    fn verify_proof_cycle_2_pow_14() {
-        let vk = VALID_VK;
-        let inner_proof =
-            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_14.bin").to_vec();
-        let proof = Proof::V1_0(inner_proof).into();
-        let pubs = VALID_PUBS_CYCLE_2_POW_14.to_vec().into();
-
-        let r;
-        #[block]
-        {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
-        };
-        assert!(r.is_ok());
-    }
-
-    #[benchmark]
-    fn verify_proof_cycle_2_pow_15() {
-        let vk = VALID_VK;
-        let inner_proof =
-            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_15.bin").to_vec();
-        let proof = Proof::V1_0(inner_proof).into();
-        let pubs = VALID_PUBS_CYCLE_2_POW_15.to_vec().into();
-
-        let r;
-        #[block]
-        {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
-        };
-        assert!(r.is_ok());
-    }
-
-    #[benchmark]
-    fn verify_proof_cycle_2_pow_16() {
-        let vk = VALID_VK;
-        let inner_proof =
-            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_16.bin").to_vec();
-        let proof = Proof::V1_0(inner_proof).into();
-        let pubs = VALID_PUBS_CYCLE_2_POW_16.to_vec().into();
-
-        let r;
-        #[block]
-        {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
-        };
-        assert!(r.is_ok());
-    }
-
-    #[benchmark]
-    fn verify_proof_cycle_2_pow_17() {
-        let vk = VALID_VK;
-        let inner_proof =
-            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_17.bin").to_vec();
-        let proof = Proof::V1_0(inner_proof).into();
-        let pubs = VALID_PUBS_CYCLE_2_POW_17.to_vec().into();
-
-        let r;
-        #[block]
-        {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
-        };
-        assert!(r.is_ok());
-    }
-
-    #[benchmark]
-    fn verify_proof_cycle_2_pow_18() {
-        let vk = VALID_VK;
-        let inner_proof =
-            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_18.bin").to_vec();
-        let proof = Proof::V1_0(inner_proof).into();
-        let pubs = VALID_PUBS_CYCLE_2_POW_18.to_vec().into();
-
-        let r;
-        #[block]
-        {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
-        };
-        assert!(r.is_ok());
-    }
-
-    #[benchmark]
-    fn verify_proof_cycle_2_pow_19() {
-        let vk = VALID_VK;
-        let inner_proof =
-            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_19.bin").to_vec();
-        let proof = Proof::V1_0(inner_proof).into();
-        let pubs = VALID_PUBS_CYCLE_2_POW_19.to_vec().into();
-
-        let r;
-        #[block]
-        {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
-        };
-        assert!(r.is_ok());
-    }
-
-    #[benchmark]
-    fn verify_proof_cycle_2_pow_20() {
-        let vk = VALID_VK;
-        let inner_proof =
-            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_20.bin").to_vec();
-        let proof = Proof::V1_0(inner_proof).into();
-        let pubs = VALID_PUBS_CYCLE_2_POW_20.to_vec().into();
-
-        let r;
-        #[block]
-        {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
-        };
-        assert!(r.is_ok());
-    }
-
-    #[benchmark]
-    fn verify_proof_cycle_2_pow_21() {
-        let vk = VALID_VK;
-        let inner_proof =
-            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_21.bin").to_vec();
-        let proof = Proof::V1_0(inner_proof).into();
-        let pubs = VALID_PUBS_CYCLE_2_POW_21.to_vec().into();
-
-        let r;
-        #[block]
-        {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
-        };
-        assert!(r.is_ok());
-    }
-
-    #[benchmark]
-    fn verify_proof_cycle_2_pow_22() {
-        let vk = VALID_VK;
-        let inner_proof =
-            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_22.bin").to_vec();
-        let proof = Proof::V1_0(inner_proof).into();
-        let pubs = VALID_PUBS_CYCLE_2_POW_22.to_vec().into();
-
-        let r;
-        #[block]
-        {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
-        };
-        assert!(r.is_ok());
-    }
-
-    #[benchmark]
-    fn verify_proof_cycle_2_pow_23() {
-        let vk = VALID_VK;
-        let inner_proof =
-            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_23.bin").to_vec();
-        let proof = Proof::V1_0(inner_proof).into();
-        let pubs = VALID_PUBS_CYCLE_2_POW_23.to_vec().into();
-
-        let r;
-        #[block]
-        {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
-        };
-        assert!(r.is_ok());
-    }
-
-    #[benchmark]
-    fn verify_proof_cycle_2_pow_24() {
-        let vk = VALID_VK;
-        let inner_proof =
-            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_24.bin").to_vec();
-        let proof = Proof::V1_0(inner_proof).into();
-        let pubs = VALID_PUBS_CYCLE_2_POW_24.to_vec().into();
-
-        let r;
-        #[block]
-        {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
-        };
-        assert!(r.is_ok());
-    }
-
-    #[benchmark]
     fn get_vk() {
         let vk = VALID_VK;
         let hash = sp_core::H256::repeat_byte(2);
@@ -274,10 +66,9 @@ mod benchmarks {
     #[benchmark]
     fn compute_statement_hash() {
         let vk = VALID_VK;
-        let inner_proof =
-            include_bytes!("resources_benchmarking/VALID_PROOF_CYCLE_2_POW_24.bin").to_vec();
-        let proof = Proof::V1_0(inner_proof).into();
-        let pubs = VALID_PUBS_CYCLE_2_POW_24.to_vec().into();
+        let inner_proof = include_bytes!("resources_benchmarking/POSEIDON2_BLOCK_21.bin").to_vec();
+        let proof = Proof::V1_2(inner_proof);
+        let pubs = VALID_PUBS_BLOCK_21.to_vec();
 
         let vk = VkOrHash::Vk(vk.into());
 
@@ -293,7 +84,7 @@ mod benchmarks {
         let vk: VkOf<T> = VALID_VK;
 
         #[extrinsic_call]
-        register_vk(RawOrigin::Signed(caller), vk.clone().into());
+        register_vk(RawOrigin::Signed(caller), vk.into());
 
         // Verify
         assert!(do_get_vk::<T>(&do_vk_hash::<T>(&vk)).is_some());
@@ -304,7 +95,7 @@ mod benchmarks {
         // setup code
         let caller: T::AccountId = funded_account::<T>();
         let hash = sp_core::H256::repeat_byte(2);
-        let vk = VALID_VK.into();
+        let vk = VALID_VK;
 
         insert_vk::<T>(caller.clone(), vk, hash);
 
@@ -342,8 +133,10 @@ pub mod mock {
     );
 
     impl crate::Config for Test {
-        type MaxProofSize = ConstU32<3067823>;
-        type MaxPubsSize = ConstU32<2060>;
+        type MaxNSegment = ConstU32<4>;
+        type Segment20MaxSize = ConstU32<10000>; // Doesn't matter: never verify proof
+        type MaxPubsSize = ConstU32<100>;
+        type WeightInfo = ();
     }
 
     #[derive_impl(frame_system::config_preludes::SolochainDefaultConfig as frame_system::DefaultConfig)]

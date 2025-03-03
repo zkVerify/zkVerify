@@ -100,7 +100,6 @@ where
         api.get_statement_path(at, domain_id, aggregation_id, statement)
             .map_err(|e| map_err(e, "Unable to query dispatch info."))
             .and_then(|r| r.map_err(convert_attestation_error))
-            .map_err(Into::into)
     }
 }
 

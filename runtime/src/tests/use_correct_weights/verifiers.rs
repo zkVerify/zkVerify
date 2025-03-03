@@ -16,6 +16,7 @@
 //! Here vwe implement just the test about verifiers weights linking.
 
 use super::*;
+use sp_core::H256;
 
 #[test]
 fn pallet_fflonk_verifier() {
@@ -73,11 +74,20 @@ fn pallet_settlement_risc0() {
     assert_eq!(
         <<Runtime as pallet_verifiers::Config<Risc0<Runtime>>>::WeightInfo as
             pallet_verifiers::WeightInfo<Risc0<Runtime>>>
-            ::verify_proof(
-            &pallet_risc0_verifier::Proof::V1_1(Vec::new()),
-            &Vec::new()
-        ),
-        crate::weights::pallet_risc0_verifier::ZKVWeight::<Runtime>::verify_proof_cycle_2_pow_13()
+            ::register_vk(&H256::default())
+        ,
+        crate::weights::pallet_risc0_verifier::ZKVWeight::<Runtime>::register_vk()
+    );
+}
+
+#[test]
+fn pallet_settlement_risc0_verify_proof() {
+    use pallet_risc0_verifier::WeightInfoVerifyProof;
+
+    assert_eq!(
+        <Runtime as pallet_risc0_verifier::Config>::WeightInfo::verify_proof_segment_poseidon2_20()
+        ,
+        crate::weights::pallet_risc0_verifier_verify_proof::ZKVWeight::<Runtime>::verify_proof_segment_poseidon2_20()
     );
 }
 
