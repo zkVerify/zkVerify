@@ -21,4 +21,6 @@ pub mod inclusion;
 pub mod initializer;
 pub mod paras;
 pub mod paras_inherent;
+pub mod registrar;
 pub mod slashing;
+pub mod slots;
