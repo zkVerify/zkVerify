@@ -22,12 +22,11 @@
 //! WASM-EXECUTION: `Compiled`, CHAIN: `None`, DB CACHE: `1024`
 
 // Executed Command:
-// /usr/local/bin/zkv-node
+// /usr/local/bin/zkv-relay
 // benchmark
 // pallet
-// --runtime
-// /app/zkv_runtime.compact.compressed.wasm
-// --genesis-builder=runtime
+// --chain
+// dev
 // --pallet
 // pallet-risc0-verifier
 // --extrinsic
@@ -61,7 +60,7 @@ impl<T: frame_system::Config> pallet_risc0_verifier::WeightInfo for ZKVWeight<T>
     /// Proof: `SettlementRisc0Pallet::Vks` (`max_values`: None, `max_size`: Some(72), added: 2547, mode: `MaxEncodedLen`)
     fn get_vk() -> Weight {
         // Proof Size summary in bytes:
-        //  Measured:  `116`
+        //  Measured:  `115`
         //  Estimated: `3537`
         // Minimum execution time: 3_938_000 picoseconds.
         Weight::from_parts(4_188_000, 3537)
@@ -84,14 +83,14 @@ impl<T: frame_system::Config> pallet_risc0_verifier::WeightInfo for ZKVWeight<T>
     /// Storage: `SettlementRisc0Pallet::Disabled` (r:1 w:0)
     /// Proof: `SettlementRisc0Pallet::Disabled` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
     /// Storage: `SettlementRisc0Pallet::Tickets` (r:1 w:1)
-    /// Proof: `SettlementRisc0Pallet::Tickets` (`max_values`: None, `max_size`: Some(97), added: 2572, mode: `MaxEncodedLen`)
+    /// Proof: `SettlementRisc0Pallet::Tickets` (`max_values`: None, `max_size`: Some(96), added: 2571, mode: `MaxEncodedLen`)
     /// Storage: `Balances::Holds` (r:1 w:1)
     /// Proof: `Balances::Holds` (`max_values`: None, `max_size`: Some(121), added: 2596, mode: `MaxEncodedLen`)
     /// Storage: `SettlementRisc0Pallet::Vks` (r:1 w:1)
     /// Proof: `SettlementRisc0Pallet::Vks` (`max_values`: None, `max_size`: Some(72), added: 2547, mode: `MaxEncodedLen`)
     fn register_vk() -> Weight {
         // Proof Size summary in bytes:
-        //  Measured:  `0`
+        //  Measured:  `4`
         //  Estimated: `3586`
         // Minimum execution time: 41_628_000 picoseconds.
         Weight::from_parts(42_911_000, 3586)
@@ -99,14 +98,14 @@ impl<T: frame_system::Config> pallet_risc0_verifier::WeightInfo for ZKVWeight<T>
             .saturating_add(T::DbWeight::get().writes(3_u64))
     }
     /// Storage: `SettlementRisc0Pallet::Tickets` (r:1 w:1)
-    /// Proof: `SettlementRisc0Pallet::Tickets` (`max_values`: None, `max_size`: Some(97), added: 2572, mode: `MaxEncodedLen`)
+    /// Proof: `SettlementRisc0Pallet::Tickets` (`max_values`: None, `max_size`: Some(96), added: 2571, mode: `MaxEncodedLen`)
     /// Storage: `Balances::Holds` (r:1 w:1)
     /// Proof: `Balances::Holds` (`max_values`: None, `max_size`: Some(121), added: 2596, mode: `MaxEncodedLen`)
     /// Storage: `SettlementRisc0Pallet::Vks` (r:1 w:1)
     /// Proof: `SettlementRisc0Pallet::Vks` (`max_values`: None, `max_size`: Some(72), added: 2547, mode: `MaxEncodedLen`)
     fn unregister_vk() -> Weight {
         // Proof Size summary in bytes:
-        //  Measured:  `258`
+        //  Measured:  `280`
         //  Estimated: `3586`
         // Minimum execution time: 37_971_000 picoseconds.
         Weight::from_parts(38_612_000, 3586)
