@@ -110,7 +110,6 @@ pub mod pallet {
 
     #[pallet::pallet]
     #[pallet::storage_version(STORAGE_VERSION)]
-
     /// The pallet component.
     pub struct Pallet<T, I = ()>(_);
 
@@ -199,6 +198,22 @@ pub mod pallet {
         H256(keccak_256(data_to_hash.as_slice()))
     }
 
+    /// Compute the weight for the given proof, pubs, and domain.
+    ///
+    /// 1. Extract the vk weight both if it was provided by hash (db retrieves) or
+    ///   directly (validate its weight)
+    /// 2. Get the verify proof weight or replace it with the override one if present
+    ///   `override_verify_proof`
+    /// 3. Compute statement weight
+    /// 4. Dispatch statement weight
+    ///
+    /// Even if this fuction takes proof, pubs, vk and domain, it should never use these values
+    /// in some algorithm that doesn't have a constant cost.
+    ///
+    /// This function is designed to be used both in the preemptive weight computation (extrisic
+    /// annotation by use `None` as `override_verify_proof` value) and to compute the `PostInfo`
+    /// weight by passing the weight returned by `verify_proof()`
+    ///
     pub(crate) fn submit_proof_weight<T: Config<I>, I: 'static + Verifier>(
         vk_or_hash: &VkOrHash<I::Vk>,
         proof: &I::Proof,
@@ -206,7 +221,7 @@ pub mod pallet {
         domain_id: &Option<u32>,
         override_verify_proof: Option<Weight>,
     ) -> Weight {
-        // Check disable: we din't consider any time cost about checking boolean
+        // Check the disabled state: we didn't consider any time cost about checking boolean
         // variable and proof size: we consider them negligible
         let base = T::DbWeight::get().reads(1);
         let vk_weight = match vk_or_hash {
