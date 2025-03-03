@@ -31,7 +31,7 @@ pub type Pubs = Vec<[u8; PUBS_SIZE]>;
 pub type Vk = [u8; VK_SIZE];
 pub use weight::WeightInfo;
 
-const PADDED_VK_SIZE: usize = VK_SIZE + (15 << 5);
+const PADDED_VK_SIZE: usize = VK_SIZE + 15 * 32;
 
 pub trait Config: 'static {
     /// Maximum supported number of public inputs.
