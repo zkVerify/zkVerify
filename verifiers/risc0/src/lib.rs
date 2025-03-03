@@ -63,7 +63,7 @@ pub trait Config: 'static {
     }
 
     fn max_verify_proof_weight() -> Weight {
-        Self::WeightInfo::verify_proof_segment_poseidon2_16() * Self::MaxNSegment::get() as u64
+        Self::WeightInfo::verify_proof_segment_poseidon2_20() * Self::MaxNSegment::get() as u64
     }
 }
 

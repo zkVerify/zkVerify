@@ -42,6 +42,12 @@ pub mod v1_2 {
 
     pub static VALID_PUBS: &[u8] = &hex_literal::hex!("1d64010000000000");
 
-    pub static VALID_PROOF_COMPOSITE_3_SLOTS: &[u8] = include_bytes!("resources/v_1_2_poseidon2_22.bin");
+    pub static VALID_PROOF_COMPOSITE_3_SLOTS: &[u8] =
+        include_bytes!("resources/v_1_2_poseidon2_22.bin");
 
+    pub static VALID_VK_UPPER_BOUND: sp_core::H256 = sp_core::H256(hex_literal::hex!(
+        "f9ac6bf258c7e19a574346ff57fec724c087a7dc5f1541a71b4504ebba82cb2f"
+    ));
+    pub static VALID_PUBS_UPPER_BOUND: &[u8] = &hex_literal::hex!("0d003c0000000000");
+    pub static VALID_PROOF_UPPER_BOUND: &[u8] = include_bytes!("resources/upper_bound.bin");
 }

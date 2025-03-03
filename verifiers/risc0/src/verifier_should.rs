@@ -34,6 +34,8 @@ include!("resources.rs");
 #[case(&v1_0::VALID_VK, Proof::V1_0(v1_0::VALID_PROOF.to_vec()), &v1_0::VALID_PUBS)]
 #[case(&v1_1::VALID_VK, Proof::V1_1(v1_1::VALID_PROOF.to_vec()), &v1_1::VALID_PUBS)]
 #[case(&v1_2::VALID_VK, Proof::V1_2(v1_2::VALID_PROOF.to_vec()), &v1_2::VALID_PUBS)]
+#[case::accept_and_verify_the_upper_bound_proof(&v1_2::VALID_VK_UPPER_BOUND, Proof::V1_2(v1_2::VALID_PROOF_UPPER_BOUND.to_vec()), &v1_2::VALID_PUBS_UPPER_BOUND
+)]
 fn verify_valid_proof(#[case] vk: &Vk, #[case] proof: Proof, #[case] pubs: &[u8]) {
     assert!(Risc0::<Mock>::verify_proof(vk, &proof, &pubs.to_vec()).is_ok());
 }
