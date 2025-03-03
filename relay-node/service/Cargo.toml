@@ -1,6 +1,6 @@
 [package]
 name = "zkv-service"
-rust-version = "1.60"
+rust-version = "1.70"
 version = "11.0.0"
 authors.workspace = true
 edition.workspace = true
