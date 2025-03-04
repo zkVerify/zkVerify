@@ -31,8 +31,6 @@ pub type Pubs = Vec<[u8; PUBS_SIZE]>;
 pub type Vk = [u8; VK_SIZE];
 pub use weight::WeightInfo;
 
-const PADDED_VK_SIZE: usize = VK_SIZE + 15 * 32;
-
 pub trait Config: 'static {
     /// Maximum supported number of public inputs.
     type MaxPubs: Get<u32>;
@@ -122,7 +120,10 @@ impl<T: Config> Verifier for Ultraplonk<T> {
 }
 
 impl<T: Config> Ultraplonk<T> {
+    // The encode_vk function transforms a given Vk into a format that matches:
+    // https://github.com/AztecProtocol/aztec-packages/blob/barretenberg-v0.47.1/barretenberg/cpp/src/barretenberg/plonk/proof_system/verification_key/verification_key.cpp#L139-L154
     fn encode_vk(vk: &Vk) -> Cow<[u8]> {
+        const PADDED_VK_SIZE: usize = VK_SIZE + 15 * 32;
         let mut buffer: Vec<u8> = Vec::from(vk);
         buffer.resize(PADDED_VK_SIZE, 0u8);
 
