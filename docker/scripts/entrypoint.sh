@@ -24,8 +24,6 @@
 
 set -eEuo pipefail
 
-RUN_USER="${RUN_USER:-}"
-
 ####
 # Function(s)
 ####
@@ -125,6 +123,10 @@ validate_and_download() {
 # Main
 ####
 # Sanity check
+if [ -z "${RUN_USER:-}" ]; then
+  fn_die "ERROR: Required environment variable 'RUN_USER' is not defined. This should never happen. It must be set under a 'Dockerfile' used to build the image. Aborting ..."
+fi
+
 if [ -z "${BINARY:-}" ]; then
   fn_die "ERROR: Required environment variable 'BINARY' is not defined. This should never happen. Aborting ..."
 else
@@ -151,6 +153,7 @@ ZKV_NODE_KEY="${ZKV_NODE_KEY:-}"
 ZKV_NODE_KEY_FILE=""
 ZKV_SECRET_PHRASE="${ZKV_SECRET_PHRASE:-}"
 ZKV_SECRET_PHRASE_FILE=""
+ZKV_KEYSTORE_PATH=""
 
 # Loop through all arguments to check for --dev
 for arg in "$@"; do
@@ -165,28 +168,6 @@ done
 if [ "${DEV_MODE:-false}" != "true" ]; then
   # Call the function for ZKV_CONF_CHAIN
   validate_and_download "ZKV_CONF_CHAIN" "ZKV_SPEC_FILE_URL"
-fi
-
-# Creating node key file if node key is provided
-if [ -n "${ZKV_NODE_KEY}" ]; then
-  ZKV_NODE_KEY_FILE="/tmp/node_key.dat"
-
-  printf "%s" "${ZKV_NODE_KEY}" > "${ZKV_NODE_KEY_FILE}"
-  chmod 0400 "${ZKV_NODE_KEY_FILE}" && chown "${RUN_USER}" "${ZKV_NODE_KEY_FILE}"
-  echo -e "  ZKV_NODE_KEY_FILE=${ZKV_NODE_KEY_FILE}\n"
-
-  unset ZKV_NODE_KEY
-fi
-
-# Creating secret phrase file if secret phrase is provided
-if [ -n "${ZKV_SECRET_PHRASE}" ]; then
-  ZKV_SECRET_PHRASE_FILE="/tmp/secret_phrase.dat"
-
-  printf "%s" "${ZKV_SECRET_PHRASE}" > "${ZKV_SECRET_PHRASE_FILE}"
-  chmod 0400 "${ZKV_SECRET_PHRASE_FILE}" && chown "${RUN_USER}" "${ZKV_SECRET_PHRASE_FILE}"
-  echo -e "  ZKV_SECRET_PHRASE_FILE=${ZKV_SECRET_PHRASE_FILE}\n"
-
-  unset ZKV_SECRET_PHRASE
 fi
 
 prefix="ZKV_CONF_"
@@ -219,7 +200,35 @@ while IFS='=' read -r -d '' var_name var_value; do
   fi
 done < <(env -0)
 
-# Keys handling
+# Creating node key file on RAMDISK if node key is provided
+if [ -n "${ZKV_NODE_KEY}" ]; then
+  ZKV_NODE_KEY_FILE="/dev/shm/node_key.dat"
+
+  printf "%s" "${ZKV_NODE_KEY}" > "${ZKV_NODE_KEY_FILE}" || fn_die "ERROR: was not able to create '${ZKV_NODE_KEY_FILE}' file.  Exiting ..."
+  chmod 0400 "${ZKV_NODE_KEY_FILE}" && chown "${RUN_USER}" "${ZKV_NODE_KEY_FILE}"
+  echo -e "  ZKV_NODE_KEY_FILE=${ZKV_NODE_KEY_FILE}\n"
+
+  conf_args+=(--node-key-file "${ZKV_NODE_KEY_FILE}")
+  unset ZKV_NODE_KEY
+fi
+
+# Creating secret phrase file and keystore location on RAMDISK if secret phrase is provided
+if [ -n "${ZKV_SECRET_PHRASE}" ]; then
+  ZKV_KEYSTORE_PATH="/dev/shm/keystore"
+  mkdir -p "${ZKV_KEYSTORE_PATH}" || fn_die "ERROR: was not able to create '${ZKV_KEYSTORE_PATH}' directory for keystore location.  Exiting ..."
+  chmod 700 "${ZKV_KEYSTORE_PATH}" && chown "${RUN_USER}" "${ZKV_KEYSTORE_PATH}"
+
+  conf_args+=(--keystore-path "${ZKV_KEYSTORE_PATH}")
+
+  ZKV_SECRET_PHRASE_FILE="/dev/shm/secret_phrase.dat"
+  printf "%s" "${ZKV_SECRET_PHRASE}" > "${ZKV_SECRET_PHRASE_FILE}" || fn_die "ERROR: was not able to create '${ZKV_SECRET_PHRASE_FILE}' file.  Exiting ..."
+  chmod 0400 "${ZKV_SECRET_PHRASE_FILE}" && chown "${RUN_USER}" "${ZKV_SECRET_PHRASE_FILE}"
+  echo -e "  ZKV_SECRET_PHRASE_FILE=${ZKV_SECRET_PHRASE_FILE}\n"
+
+  unset ZKV_SECRET_PHRASE
+fi
+
+# Session keys handling
 if [ -f "${ZKV_SECRET_PHRASE_FILE}" ] && [ -s "${ZKV_SECRET_PHRASE_FILE}" ]; then
   injection_args=()
   if [ -n "${ZKV_CONF_BASE_PATH}" ]; then
@@ -231,7 +240,12 @@ if [ -f "${ZKV_SECRET_PHRASE_FILE}" ] && [ -s "${ZKV_SECRET_PHRASE_FILE}" ]; the
     injection_args+=("$(get_arg_value_from_env_value "${ZKV_CONF_CHAIN}")")
   fi
 
-  log_green "INFO: injecting keys with ${injection_args[*]} ..."
+  injection_args+=(--keystore-path "${ZKV_KEYSTORE_PATH}")
+
+  log_green "INFO: injecting keys with the following args:"
+  echo "---------------------------------"
+  echo "  ${injection_args[*]}"
+  echo -e "---------------------------------\n"
 
   log_green "INFO: injecting key (Babe) ..."
   gosu "${RUN_USER}" "${ZKV_NODE}" key insert "${injection_args[@]}" \
@@ -262,21 +276,6 @@ if [ -f "${ZKV_SECRET_PHRASE_FILE}" ] && [ -s "${ZKV_SECRET_PHRASE_FILE}" ]; the
     --scheme Sr25519 \
     --suri "${ZKV_SECRET_PHRASE_FILE}" \
     --key-type audi
-fi
-
-# Node-key (used for p2p) handling
-if [[ (-n "${ZKV_CONF_BASE_PATH}") && (-n "${ZKV_CONF_CHAIN}") && (-f "${ZKV_NODE_KEY_FILE}") && (-s "${ZKV_NODE_KEY_FILE}") ]]; then
-  base_path="$(get_arg_value_from_env_value "${ZKV_CONF_BASE_PATH}")"
-  chain="$(get_arg_value_from_env_value "${ZKV_CONF_CHAIN}")"
-  chain_id="$(gosu "${RUN_USER}" "${ZKV_NODE}" build-spec --chain "${chain}" 2>/dev/null | jq -r '.id')" || chain_id='null'
-  if [ -z "${chain_id}" ] || [ "${chain_id}" == 'null' ]; then
-    fn_die "ERROR: could not find 'id' under node's spec file. Aborting ..."
-  fi
-  destination="${base_path}/chains/${chain_id}/network"
-
-  gosu "${RUN_USER}" mkdir -p "${destination}"
-  log_green "INFO: copying node's key file to ${destination} location ..."
-  cp -p "${ZKV_NODE_KEY_FILE}" "${destination}/secret_ed25519"
 fi
 
 ####
@@ -321,7 +320,9 @@ if env | grep -q "^${prefix}"; then
   done < <(env -0)
 fi
 
-log_green "INFO: launching ${ZKV_NODE} with the following args:"
+log_green "INFO: launching '${ZKV_NODE}' with the following args:"
+echo "---------------------------------"
 echo "  ${conf_args[*]}" "$@"
+echo -e "---------------------------------\n"
 
 exec gosu "${RUN_USER}" "${ZKV_NODE}" "${conf_args[@]}" "$@"
