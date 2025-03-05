@@ -27,6 +27,7 @@ RUN apt-get update -qq \
       ca-certificates \
       curl \
       jq \
+      gosu \
     && useradd -m -U -s /bin/bash -d "/${RUN_USER}" "${RUN_USER}" \
     && mkdir -p /data "/${RUN_USER}/.local/share" \
     && chown -R "${RUN_USER}:${RUN_USER}" /data "/${RUN_USER}" \
@@ -38,8 +39,6 @@ RUN apt-get update -qq \
 
 COPY entrypoint.sh .
 RUN chmod +x entrypoint.sh
-
-USER "${RUN_USER}"
 
 # ENTRYPOINT
 ENTRYPOINT ["/app/entrypoint.sh"]
