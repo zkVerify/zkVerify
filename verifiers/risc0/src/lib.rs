@@ -186,7 +186,7 @@ impl<T: Config> Verifier for Risc0<T> {
         panic!("Risc0 vk is already hashed and we cannot know its preimage: use vk_hash() instead")
     }
 
-    fn verifier_version_hash(proof: &Self::Proof) -> Option<H256> {
+    fn verifier_version_hash(proof: &Self::Proof) -> H256 {
         let h = match proof {
             Proof::V1_0(_) => hex_literal::hex!(
                 "df801e3397d2a8fbb77c2fa30c7f7806ee8a60de44cb536108e7ef272618e2da"
@@ -198,7 +198,7 @@ impl<T: Config> Verifier for Risc0<T> {
                 "5f39e7751602fc8dbc1055078b61e2704565e3271312744119505ab26605a942"
             ),
         };
-        H256(h).into()
+        H256(h)
     }
 }
 
