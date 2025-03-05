@@ -93,7 +93,6 @@ pub mod pallet {
         Identity,
     };
     use frame_system::pallet_prelude::*;
-    use hex_literal::hex;
     use hp_on_proof_verified::{Compose as _, OnProofVerified};
     use sp_core::{hexdisplay::AsBytesRef, H256};
     use sp_io::hashing::keccak_256;
@@ -107,10 +106,6 @@ pub mod pallet {
 
     /// Type alias for AccountId
     pub type AccountOf<T> = <T as frame_system::Config>::AccountId;
-
-    // SHA256("no version")
-    const NO_VERSION_HASH: [u8; 32] =
-        hex!("095e3003b3ac6f127a38e32aa923675e842a7cbaae42b3d97e919d1f02da0ec3");
 
     #[pallet::pallet]
     #[pallet::storage_version(STORAGE_VERSION)]
@@ -496,18 +491,14 @@ pub mod pallet {
             0,
             42,
             VkOrHash::from_vk(REGISTERED_VK),
-            H256(hex!(
-                "a3f38d8db1ff6c75d6977b5a5b23a375df6f1defc9bd13742d50e5547ab02b4f"
-            ))
+            VALID_HASH_REGISTERED_VK
         )]
         #[case::same_from_vk_hash(
             PhantomData::<FakeVerifier>,
             0,
             42,
             VkOrHash::from_hash(REGISTERED_VK_HASH),
-            H256(hex!(
-                "a3f38d8db1ff6c75d6977b5a5b23a375df6f1defc9bd13742d50e5547ab02b4f"
-            ))
+            VALID_HASH_REGISTERED_VK
         )]
         #[case::hash_as_documented(
             PhantomData::<FakeVerifier>,
@@ -530,11 +521,7 @@ pub mod pallet {
             {
                 let mut data_to_hash = keccak_256(b"fake").to_vec();
                 data_to_hash.extend_from_slice(REGISTERED_VK_HASH.as_bytes());
-<<<<<<< HEAD
-                data_to_hash.extend_from_slice(&NO_VERSION_HASH);
-=======
                 data_to_hash.extend_from_slice(&NO_VERSION_HASH.as_bytes());
->>>>>>> 675f80a (Dimitris/version in statement hash (#235))
                 data_to_hash.extend_from_slice(&keccak_256(42_u64.to_be_bytes().as_ref()));
                 H256(keccak_256(data_to_hash.as_slice()))
             }
