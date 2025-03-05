@@ -105,6 +105,7 @@ pallet-groth16-verifier = { workspace = true }
 pallet-risc0-verifier = { workspace = true, features = ["inject-native-poseidon2"] }
 pallet-ultraplonk-verifier = { workspace = true }
 pallet-proofofsql-verifier = { workspace = true }
+hp-dispatch = {workspace = true}
 
 authority-discovery-primitives = { workspace = true, optional = true }
 
@@ -178,7 +179,8 @@ runtime-benchmarks = [
 	"pallet-ismp/runtime-benchmarks",
 	"pallet-message-queue/runtime-benchmarks",
 	"pallet-offences/runtime-benchmarks",
-	"sp-staking/runtime-benchmarks"
+	"sp-staking/runtime-benchmarks",
+	"hp-dispatch/runtime-benchmarks"
 ]
 fast-runtime = []
 metadata-hash = ["substrate-wasm-builder/metadata-hash"]
@@ -287,7 +289,8 @@ std = [
 	"sp-mmr-primitives/std",
 	"xcm?/std",
 	"xcm-builder?/std",
-	"xcm-executor?/std"
+	"xcm-executor?/std",
+	"hp-dispatch/std"
 ]
 try-runtime = [
 	"frame-executive/try-runtime",
@@ -333,7 +336,8 @@ try-runtime = [
 	"polkadot-runtime-common?/try-runtime",
 	"pallet-xcm?/try-runtime",
 	"pallet-message-queue/try-runtime",
-	"pallet-zksync-verifier/try-runtime"
+	"pallet-zksync-verifier/try-runtime",
+	"hp-dispatch/try-runtime"
 ]
 extend-benchmarks = [
 	"pallet-risc0-verifier/extend-benchmarks"

@@ -14,10 +14,12 @@ const ReturnCode = {
     ErrProofOnUnregisteredDomain: 9,
     ErrWrongDomainId: 10,
     ErrPublishShouldNotPay: 11,
+    ErrDomainHyperbridgeRegistrationOk: 12,
+    ErrDomainHyperbridgeRegistrationErr: 13,
 };
 
-const { init_api, submitProof, receivedEvents, registerDomain, holdDomain, unregisterDomain,
-    aggregate, getBalance } = require('zkv-lib');
+const { init_api, submitProof, receivedEvents, registerDomain, sudoRegisterDomain, 
+    holdDomain, unregisterDomain, aggregate, getBalance } = require('zkv-lib');
 const { PROOF: ZKSYNC_PROOF, PUBS: ZKSYNC_PUBS } = require('./zksync_data.js');
 const { PROOF: FFLONK_PROOF, PUBS: FFLONK_PUBS, VK: FFLONK_VK } = require('./fflonk_data.js');
 const { PROOF: GROTH16_PROOF, PUBS: GROTH16_PUBS, VK: GROTH16_VK } = require('./groth16_data.js');
@@ -35,6 +37,7 @@ async function run(nodeName, networkInfo, _args) {
 
     // Create the proof submission extrinsics...
     let proofHashesArray = [];
+    const destination = { None: null };
 
     verifiers = [
         {
@@ -69,7 +72,33 @@ async function run(nodeName, networkInfo, _args) {
         }
     ];
 
-    let events = await registerDomain(bob, verifiers.length, null);
+    // Only manager can register a Hyperbridge delivery domain.
+    let hyperbridge = {
+        destination: {
+            Hyperbridge: {
+                destinationChain: { Evm: 11155111 },
+                destination_module: "0x1234567890123456789012345678901234567890",
+                timeout: 3600
+            },
+        },
+        price: 1_000_000_000
+
+    };
+
+    let events = await registerDomain(bob, 4, 8, "OnlyOwnerUncompleted", hyperbridge, null);
+    if (receivedEvents(events)) {
+        console.log(`Normal user should not register a Hyperbridge delivery domain`);
+        return ReturnCode.ErrDomainHyperbridgeRegistrationOk;
+    }
+
+    events = await sudoRegisterDomain(alice, 4, 8, "OnlyOwnerUncompleted", hyperbridge, bob.address);
+    if (!receivedEvents(events)) {
+        console.log(`Manager cannot register a Hyperbridge delivery domain`);
+        return ReturnCode.ErrDomainHyperbridgeRegistrationErr;
+    }
+    console.log(`Domain SUDO registered successfully: ${events.events}`);
+
+    events = await registerDomain(bob, verifiers.length, null, "Untrusted", destination, null);
     if (!receivedEvents(events)) {
         console.log(`Register Domain Error`);
         return ReturnCode.ErrDomainRegistrationFailed;
@@ -195,7 +224,7 @@ async function run(nodeName, networkInfo, _args) {
         return ReturnCode.ErrProofOnUnregisteredDomain;
     }
 
-    data = await registerDomain(bob, 4, 8);
+    data = await registerDomain(bob, 4, 8, "Untrusted", destination, null);
     if (!receivedEvents(data)) {
         console.log(`Register Domain Error`);
         return ReturnCode.ErrDomainRegistrationFailed;
@@ -215,7 +244,7 @@ async function run(nodeName, networkInfo, _args) {
         console.log(`Verify proof error on hold state machine`);
         return ReturnCode.ErrProofVerificationFailed;
     }
-    let aggId = data.events.filter((event) => event.method === 'NewProof')[0].data[1];
+    let aggId = data.events.filter((event) => event.method === 'NewProof')[0].data[2];
     data = await holdDomain(bob, newDomainId);
     if (!receivedEvents(data)) {
         console.log(`Hold Domain Error: on verify hold state machine`);

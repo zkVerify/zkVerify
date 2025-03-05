@@ -52,6 +52,7 @@ use frame_election_provider_support::{
 
 use frame_support::genesis_builder_helper::{build_state, get_preset};
 
+use frame_support::dispatch::DispatchResult;
 pub use frame_support::{
     construct_runtime, derive_impl,
     dispatch::DispatchClass,
@@ -609,6 +610,48 @@ where
     }
 }
 
+impl DispatchAggregation for Runtime {
+    fn dispatch_aggregation(
+        domain_id: u32,
+        aggregation_id: u64,
+        aggregation: H256,
+        destination_params: Destination,
+    ) -> DispatchResult {
+        match destination_params {
+            Destination::None => Ok(()),
+            Destination::Hyperbridge(params) => {
+                pallet_hyperbridge_aggregations::Pallet::<Runtime>::dispatch_aggregation(
+                    pallet_hyperbridge_aggregations::PALLET_ID.into_account_truncating(),
+                    Params {
+                        domain_id,
+                        aggregation_id,
+                        aggregation,
+                        module: params.destination_module,
+                        destination: StateMachine::from(params.destination_chain),
+                        timeout: params.timeout,
+                        fee: Balance::zero(),
+                    },
+                )
+            }
+        }
+    }
+
+    fn max_weight() -> Weight {
+        use pallet_hyperbridge_aggregations::WeightInfo;
+        <Runtime as pallet_hyperbridge_aggregations::Config>::WeightInfo::dispatch_aggregation()
+    }
+
+    fn dispatch_weight(destination: &Destination) -> Weight {
+        match destination {
+            Destination::None => Default::default(),
+            Destination::Hyperbridge(_) => {
+                use pallet_hyperbridge_aggregations::WeightInfo;
+                <Runtime as pallet_hyperbridge_aggregations::Config>::WeightInfo::dispatch_aggregation()
+            }
+        }
+    }
+}
+
 impl pallet_aggregate::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type RuntimeHoldReason = RuntimeHoldReason;
@@ -638,6 +681,8 @@ impl pallet_aggregate::Config for Runtime {
 
     #[cfg(feature = "runtime-benchmarks")]
     type Currency = Balances;
+
+    type DispatchAggregation = Self;
 }
 
 parameter_types! {
@@ -1350,11 +1395,13 @@ use polkadot_primitives::{
     ValidationCodeHash, ValidatorId, ValidatorIndex, PARACHAIN_KEY_TYPE_ID,
 };
 
-use pallet_hyperbridge_aggregations::ZKV_MODULE_ID;
+use hp_dispatch::{Destination, DispatchAggregation};
+use pallet_hyperbridge_aggregations::{Params, ZKV_MODULE_ID};
 #[cfg(feature = "relay")]
 pub use polkadot_runtime_parachains::runtime_api_impl::{
     v10 as parachains_runtime_api_impl, vstaging as parachains_staging_runtime_api_impl,
 };
+use sp_runtime::traits::Zero;
 
 // Used for testing purposes only.
 sp_api::decl_runtime_apis! {

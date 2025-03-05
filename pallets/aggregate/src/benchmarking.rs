@@ -29,12 +29,18 @@ type BalanceOf<T> =
 
 pub mod utils {
     use super::*;
+    use crate::data::{Delivery, DeliveryParams};
+    use hp_dispatch::Destination;
 
     /// Return a whitelisted account with enough founds to do anything.
     pub fn funded_account<T: Config>() -> T::AccountId {
         let caller: T::AccountId = whitelisted_caller();
         T::Currency::set_balance(&caller, BalanceOf::<T>::max_value() / 2u32.into());
         caller
+    }
+
+    pub(crate) fn delivery<T: Config>(destination: Destination) -> Delivery<crate::BalanceOf<T>> {
+        Delivery::new(destination, 1_000_000_000_u32.into())
     }
 
     /// Insert a domain into the system.
@@ -47,13 +53,18 @@ pub mod utils {
             .unwrap_or_else(|| <T as Config>::AggregationSize::get() as u32)
             .try_into()
             .unwrap();
+
+        let delivery = DeliveryParams::new(account.clone(), delivery::<T>(Destination::None));
+
         let domain = Domain::<T>::try_create(
             domain_id,
             account.into(),
             1,
             aggregation_size,
             <T as Config>::MaxPendingPublishQueueSize::get(),
+            data::AggregateSecurityRules::Untrusted,
             None,
+            delivery,
         )
         .unwrap();
         Domains::<T>::insert(domain_id, domain);
@@ -76,11 +87,11 @@ fn fill_aggregation<T: Config>(caller: AccountOf<T>, domain_id: u32) {
 
 #[benchmarks]
 mod benchmarks {
+    use super::{utils::*, *};
     use __private::traits::UnfilteredDispatchable;
     use codec::{Decode, Encode};
     use data::DomainState;
-
-    use super::{utils::*, *};
+    use hp_dispatch::Destination;
 
     #[benchmark]
     fn on_proof_verified() {
@@ -171,11 +182,16 @@ mod benchmarks {
     fn register_domain() {
         let caller: T::AccountId = funded_account::<T>();
 
+        let delivery = delivery::<T>(Destination::None);
+
         #[extrinsic_call]
         register_domain(
             RawOrigin::Signed(caller),
             <T as Config>::AggregationSize::get(),
             Some(<T as Config>::MaxPendingPublishQueueSize::get()),
+            AggregateSecurityRules::Untrusted,
+            delivery,
+            Some(caller.clone()),
         );
     }
 
@@ -220,6 +236,22 @@ mod benchmarks {
         assert!(Domains::<T>::get(domain_id).is_none());
     }
 
+    #[benchmark]
+    fn set_delivery_price() {
+        let caller: T::AccountId = funded_account::<T>();
+        let domain_id = 1;
+        insert_domain::<T>(domain_id, caller.clone(), None);
+
+        #[extrinsic_call]
+        set_delivery_price(RawOrigin::Signed(caller), domain_id, 12345_u32.into());
+
+        // Sanity check: we consumed the aggregation
+        let domain = Domains::<T>::get(domain_id).unwrap();
+
+        assert_eq!(domain.delivery.price(), &12345_u32.into());
+    }
+
+    use crate::data::AggregateSecurityRules;
     #[cfg(test)]
     use crate::Pallet as Poe;
     impl_benchmark_test_suite!(Poe, crate::mock::test(), crate::mock::Test,);

@@ -17,12 +17,35 @@ use core::marker::PhantomData;
 
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{PartialEqNoBound, RuntimeDebugNoBound};
+use hp_dispatch::Destination;
 use scale_info::TypeInfo;
 use sp_core::{Get, H256};
 use sp_runtime::{traits::Keccak256, BoundedBTreeMap, BoundedVec};
 
 /// Type used for the size of the aggregation.
 pub type AggregationSize = u32;
+
+#[derive(Debug, Clone, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
+/// Reserved currency.
+///
+/// Types:
+/// - `A`: The type of the account identifier.
+/// - `B`: The type of the balance.
+pub struct Reserve<B> {
+    /// Balance reserved for aggregation
+    pub aggregate: B,
+    /// Balance reserved for delivery
+    pub delivery: B,
+}
+
+impl<B> Reserve<B> {
+    pub fn new(aggregate: B, delivery: B) -> Self {
+        Self {
+            aggregate,
+            delivery,
+        }
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
 /// The statement data.
@@ -33,14 +56,14 @@ pub type AggregationSize = u32;
 pub struct StatementEntry<A, B> {
     /// The statement owner: the one who submits the proof and holds his funds for publishing the aggregation.
     pub account: A,
-    /// The amount of the reserve that the statement owner holds, it's the amount he will be used for the aggregation.
-    pub reserve: B,
+    /// The amount of the reserve that the statement owner holds, it's the amount he will be used for the aggregation and delivering.
+    pub reserve: Reserve<B>,
     /// The hash of the statement that will be used in the aggregation.
     pub statement: H256, // IMPORTANT NOTE: Must NOT be 64 bytes in length in order to avoid risks of proof forgery and leaf-branch ambiguity.
 }
 
 impl<A, B> StatementEntry<A, B> {
-    pub fn new(account: A, reserve: B, statement: H256) -> Self {
+    pub fn new(account: A, reserve: Reserve<B>, statement: H256) -> Self {
         Self {
             account,
             reserve,
@@ -114,6 +137,10 @@ impl<
         (self.size as usize).saturating_sub(self.statements.len())
     }
 
+    pub fn completed(&self) -> bool {
+        self.space_left() == 0
+    }
+
     pub fn compute(&self) -> H256 {
         binary_merkle_tree::merkle_root::<Keccak256, _>(
             self.statements.iter().map(|s| s.statement.as_ref()),
@@ -162,6 +189,62 @@ impl<
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
+/// The rules that describe the when accept or reject the aggregate extrinsic call.
+pub enum AggregateSecurityRules {
+    /// Accept any aggregate extrinsic call from any user.
+    Untrusted,
+    /// Only owner and manager can call aggregate on this domain.
+    OnlyOwner,
+    /// Only owner and manager can call aggregate on this domain for uncompleted aggregations.
+    OnlyOwnerUncompleted,
+}
+
+/// Delivering aggregations data
+#[derive(Clone, PartialEq, Eq, Encode, Decode, TypeInfo, MaxEncodedLen, Debug)]
+pub struct Delivery<B: sp_std::fmt::Debug + sp_std::cmp::PartialEq> {
+    /// Destination
+    pub destination: Destination,
+    /// Price
+    pub price: B,
+}
+
+impl<B: sp_std::fmt::Debug + sp_std::cmp::PartialEq> Delivery<B> {
+    pub fn new(destination: Destination, price: B) -> Self {
+        Self { destination, price }
+    }
+}
+
+/// Configuration for delivering aggregations
+#[derive(Clone, PartialEq, Eq, Encode, Decode, TypeInfo, MaxEncodedLen, Debug)]
+pub struct DeliveryParams<A, B: sp_std::fmt::Debug + sp_std::cmp::PartialEq> {
+    /// The delivery channel owner
+    pub owner: A,
+    /// The delivery data
+    data: Delivery<B>,
+}
+
+impl<A, B: sp_std::fmt::Debug + sp_std::cmp::PartialEq> DeliveryParams<A, B> {
+    pub fn new(owner: A, data: Delivery<B>) -> Self {
+        Self { owner, data }
+    }
+
+    /// The delivery aggregation price
+    pub fn price(&self) -> &B {
+        &self.data.price
+    }
+
+    /// Set the delivery aggregation price
+    pub fn set_price(&mut self, price: B) {
+        self.data.price = price
+    }
+
+    /// The delivery destination
+    pub fn destination(&self) -> &Destination {
+        &self.data.destination
+    }
+}
+
 #[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
 #[scale_info(skip_type_params(S, M))]
 /// The data stored for a domain.
@@ -197,6 +280,10 @@ pub struct DomainEntry<
     /// The consideration ticket used to hold the balance for the space used by domain storage. The manager will
     /// not hold any balance.
     pub ticket: Option<T>,
+    /// Configure the rules that describe the when accept or reject the aggregate extrinsic call.
+    pub aggregate_rules: AggregateSecurityRules,
+    /// Configuration params for destination chain to delivery aggregations
+    pub delivery: DeliveryParams<A, B>,
 }
 
 impl<
@@ -209,13 +296,16 @@ impl<
 {
     /// Create a new domain.
     ///
+    #[allow(clippy::too_many_arguments)]
     pub fn create(
         id: u32,
         owner: User<A>,
         next_aggregation_id: u64,
         max_aggregation_size: AggregationSize,
         publish_queue_size: u32,
+        aggregate_rules: AggregateSecurityRules,
         ticket: Option<Ticket>,
+        delivery: DeliveryParams<A, B>,
     ) -> Self {
         assert!(
             max_aggregation_size <= S::get(),
@@ -233,7 +323,9 @@ impl<
             max_aggregation_size,
             should_publish: Default::default(),
             publish_queue_size,
+            aggregate_rules,
             ticket,
+            delivery,
         }
     }
 
@@ -257,16 +349,19 @@ impl<
     /// Return the size in bytes for this domain that should be reserved in the storage.
     ///
     /// - `max_aggregation_size`: The maximum size of the aggregations for this domain.
-    /// - `publish_queue_size`: the publish queue size for this domain.
+    /// - `publish_queue_size`: The publish queue size for this domain.
+    /// - `destination`: The destination chain to delivery aggregations.
     pub fn compute_encoded_size(
         max_aggregation_size: AggregationSize,
         publish_queue_size: u32,
+        destination: &Destination,
     ) -> usize
     where
         AggregationEntry<A, B, S>: MaxEncodedLen,
         Self: MaxEncodedLen,
         BoundedVec<StatementEntry<A, B>, VecSize<S>>: MaxEncodedLen,
         StatementEntry<A, B>: MaxEncodedLen,
+        Destination: MaxEncodedLen,
     {
         let upper = Self::max_encoded_len();
         let aggregation_size =
@@ -274,6 +369,8 @@ impl<
         upper
             .saturating_sub(AggregationEntry::<A, B, S>::max_encoded_len())
             .saturating_sub(BoundedBTreeMap::<u64, AggregationEntry<A, B, S>, M>::max_encoded_len())
+            .saturating_sub(Destination::max_encoded_len())
+            .saturating_add(destination.encoded_size())
             .saturating_add(aggregation_size)
             .saturating_add(
                 (publish_queue_size as usize)
@@ -289,22 +386,22 @@ impl<
 /// `A` is the account type
 pub enum User<A> {
     /// A account owner
-    Owner(A),
+    Account(A),
     /// The manager
     Manager,
 }
 
 impl<A> From<A> for User<A> {
     fn from(value: A) -> Self {
-        User::Owner(value)
+        User::Account(value)
     }
 }
 
 impl<A> User<A> {
     /// return the owner account if any
-    pub fn owner(&self) -> Option<&A> {
+    pub fn account(&self) -> Option<&A> {
         match self {
-            User::Owner(owner) => Some(owner),
+            User::Account(account) => Some(account),
             _ => None,
         }
     }

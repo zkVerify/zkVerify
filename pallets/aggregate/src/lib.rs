@@ -16,31 +16,49 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![deny(missing_docs)]
 
-//! This pallet provides a mechanism for tracking and aggregating statements (i.e. proof
-//! verification submissions) from users. It is possible to define different aggregation
-//! sizes and thresholds for different domains.
+//! This pallet provides a mechanism for tracking, aggregating statements (i.e. proof
+//! verification submissions) from users and dispatch them to another chain. It is possible
+//! to define different aggregation
+//! sizes and thresholds for different domains, moreover for every domain it's  possible to
+//! define a _channel_: and endpoint for dispatching the aggregations to other chains.
 //!
-//! Every proof should indicate in which domain should be aggregated. The publish extrinsic
-//! `aggregate` a permission-less call and there is a tip for the user calling it:
-//! this tip (should) cover all costs about executing aggregate and a configurable optional extra.
+//! Every proof should indicate in which domain should be aggregated and then dispatched. The
+//! publish extrinsic `aggregate` a semi-permission-less call and there is a tip for the user
+//! calling it: this tip (should) cover all costs about executing aggregate and a configurable
+//! optional extra. If a domain also define a destination chain for dispatching the aggregations, the
+//! aggregations will be delivered to this chain and every submitter should pay for this job.
 //!
-//! Register a new domain with `register_domain` needs to hold some balance to cover the cost of storage space
-//! used by all proofs hash that living in this domain while waiting for the `aggregate` call. All hold
-//! balance will be freed after the `unregister_domain` call (if any): the `unregister_domain` can be done
-//! only after call `hold_domain` extrinsic and there are no pending aggregations. When you put a domain in `Hold`
-//! state it cannot even receive no more statements and it's just possible to aggregate all pending aggregations.
-//! The domain state become `Removable` when there are no more pending aggregation and only now is to possible
-//! call `unregister_domain` and free the held balance.
+//! Register a new domain with `register_domain` needs to hold some balance to cover the cost
+//! of storage space used by all proofs hash that living in this domain while waiting for the
+//! `aggregate` call. All hold balance will be freed after the `unregister_domain` call (if any):
+//! the `unregister_domain` can be done only after call `hold_domain` extrinsic and there are no
+//! pending aggregations. When you put a domain in `Hold` state it cannot even receive no more
+//! statements and it's just possible to aggregate all pending aggregations. The domain state become
+//! `Removable` when there are no more pending aggregation and only now is to possible call
+//! `unregister_domain` and free the held balance.
+//!
+//! The domain owner can change the delivery price for dispatching the aggregations by invoking
+//! `set_delivery_price` extrinsic. All the statements add to the domain compute their delivery price
+//! according to this price divided by the aggregation size declared in the domain.
+//!
+//! The `aggregate` extrinsic is a semi-permission-less call because domain owner could decide
+//! if:
+//!
+//! - Everyone can call it
+//! - Everyone can call it only on the completed aggregations (otherwise only owner and manager can call it)
+//! - Just owner and manager can call it
 //!
 
 pub use pallet::*;
 pub use weight::WeightInfo;
 
+mod data;
+pub mod migrations;
+
 mod benchmarking;
 mod mock;
 mod should;
 
-mod data;
 mod weight;
 
 // Export the benchmarking utils.
@@ -50,9 +68,13 @@ pub use benchmarking::utils::*;
 #[frame_support::pallet]
 pub mod pallet {
     use core::ops::Deref;
+    use sp_std::fmt::Debug;
 
     pub use crate::data::AggregationSize;
-    use crate::data::{DomainState, StatementEntry, User};
+    use crate::data::{
+        AggregateSecurityRules, Delivery, DeliveryParams, DomainState, Reserve, StatementEntry,
+        User,
+    };
 
     use super::WeightInfo;
     use frame_support::{
@@ -69,6 +91,7 @@ pub mod pallet {
         ensure_signed,
         pallet_prelude::{BlockNumberFor, OriginFor},
     };
+    use hp_dispatch::{Destination, DispatchAggregation};
     use hp_on_proof_verified::OnProofVerified;
     use sp_core::H256;
     use sp_runtime::traits::{BadOrigin, Keccak256};
@@ -84,7 +107,13 @@ pub mod pallet {
     /// Given a `Configuration` return the Consideration type.
     pub(crate) type TicketOf<T> = <T as Config>::Consideration;
 
+    /// The in-code storage version.
+    const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+
     #[pallet::pallet]
+    #[pallet::storage_version(STORAGE_VERSION)]
+
+    /// The pallet component.
     pub struct Pallet<T>(_);
 
     /// This trait defines how the pallet should compute the tip for the publisher.
@@ -138,6 +167,8 @@ pub mod pallet {
         /// The weight definition for this pallet
         #[cfg(feature = "runtime-benchmarks")]
         type Currency: frame_support::traits::fungible::Mutate<AccountOf<Self>>;
+        /// Handler for when an aggregation is completed
+        type DispatchAggregation: DispatchAggregation;
     }
 
     impl<T: Config> OnProofVerified<<T as frame_system::Config>::AccountId> for Pallet<T> {
@@ -199,17 +230,14 @@ pub mod pallet {
                 }
 
                 // Reserve balance for publication: if not raise a fail event
-                let Ok(reserve) = domain
-                    .reserve_currency_for_publication(&account)
-                    .inspect_err(|err| {
-                        Self::deposit_event(Event::<T>::CannotAggregate {
-                            statement,
-                            cause: CannotAggregateCause::InsufficientFunds,
-                        });
+                let Ok(reserve) = domain.reserve_currency(&account).inspect_err(|err| {
+                    Self::deposit_event(Event::<T>::CannotAggregate {
+                        statement,
+                        cause: CannotAggregateCause::InsufficientFunds,
+                    });
 
-                        log::debug!("Failed to reserve balance {err:?}");
-                    })
-                else {
+                    log::debug!("Failed to reserve balance {err:?} [aggregation]");
+                }) else {
                     return;
                 };
 
@@ -246,6 +274,8 @@ pub mod pallet {
         InvalidDomainParams,
         /// Try to remove or hold a domain in a invalid state.
         InvalidDomainState,
+        /// Try to register a domain without any defined ownership (maybe a manager that didn't provide the delivery owner).
+        MissedDeliveryOwnership,
     }
 
     #[derive(Debug, Clone, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
@@ -347,7 +377,7 @@ pub mod pallet {
     /// Shortcut to get the Domain type from config.
     #[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
     #[scale_info(skip_type_params(T))]
-    pub(crate) struct Domain<T: Config>(DomainType<T>);
+    pub(crate) struct Domain<T: Config>(pub(crate) DomainType<T>);
 
     impl<T: Config> Domain<T> {
         /// Create a new domain
@@ -357,14 +387,19 @@ pub mod pallet {
         /// - `next_aggregation_id`: the id of the first aggregation of the domain
         /// - `max_aggregation_size`: the maximum number of statements per aggregation for this domain.
         /// - `publish_queue_size`: the maximum number of unpublished aggregations for this domain.
+        /// - `aggregate_rules`: the rules for securing the aggregate.
         /// - `ticket`: a tracker for the deposit associated with this domain.
+        /// - `delivery`: delivery parameters for the domain.
+        #[allow(clippy::too_many_arguments)]
         pub fn try_create(
             id: u32,
             owner: User<AccountOf<T>>,
             next_aggregation_id: u64,
             max_aggregation_size: AggregationSize,
             publish_queue_size: u32,
+            aggregate_rules: AggregateSecurityRules,
             ticket: Option<TicketOf<T>>,
+            delivery: DeliveryParams<AccountOf<T>, BalanceOf<T>>,
         ) -> Result<Self, Error<T>> {
             if max_aggregation_size == 0
                 || publish_queue_size == 0
@@ -379,21 +414,36 @@ pub mod pallet {
                     next_aggregation_id,
                     max_aggregation_size,
                     publish_queue_size,
+                    aggregate_rules,
                     ticket,
+                    delivery,
                 )))
             }
         }
 
         /// Compute and reserve the currency for further publication
-        fn reserve_currency_for_publication(
+        fn reserve_currency(
             &self,
             account: &AccountOf<T>,
-        ) -> Result<BalanceOf<T>, DispatchError> {
+        ) -> Result<Reserve<BalanceOf<T>>, DispatchError> {
             let estimated = estimate_publish_aggregation_fee::<T>(self.max_aggregation_size);
-            let hold = (estimated.defensive_saturating_add(
+            let aggregate = (estimated.defensive_saturating_add(
                 <T as Config>::ComputePublisherTip::compute_tip(estimated).unwrap_or_default(),
             )) / self.next.size.into();
-            T::Hold::hold(&HoldReason::Aggregation.into(), account, hold).map(|_| hold)
+            let delivery = *self.delivery.price() / self.next.size.into();
+
+            T::Hold::hold(&HoldReason::Aggregation.into(), account, aggregate)?;
+            T::Hold::hold(&HoldReason::Delivery.into(), account, delivery).inspect_err(|_| {
+                T::Hold::release(
+                    &HoldReason::Aggregation.into(),
+                    account,
+                    aggregate,
+                    Precision::Exact,
+                )
+                .expect("Should be present because we hold it just before: qed");
+            })?;
+
+            Ok(Reserve::new(aggregate, delivery))
         }
 
         /// Return the aggregation `id`, removing it from the queue of aggregations to be
@@ -409,12 +459,18 @@ pub mod pallet {
         /// Return the size in bytes for this domain that should be reserved in the storage.
         ///
         /// - `max_aggregation_size`: The maximum size of the aggregations for this domain.
-        /// - `publish_queue_size`: the publish queue size for this domain.
+        /// - `publish_queue_size`: The publish queue size for this domain.
+        /// - `destination`: The destination chain to delivery aggregations.
         pub fn compute_encoded_size(
             max_aggregation_size: AggregationSize,
             publish_queue_size: u32,
+            destination: &Destination,
         ) -> usize {
-            DomainType::<T>::compute_encoded_size(max_aggregation_size, publish_queue_size)
+            DomainType::<T>::compute_encoded_size(
+                max_aggregation_size,
+                publish_queue_size,
+                destination,
+            )
         }
 
         /// Return the next non-empty aggregation to be published, or none if the aggregation is empty.
@@ -441,7 +497,7 @@ pub mod pallet {
         fn append_statement(
             &mut self,
             account: T::AccountId,
-            reserve: BalanceOf<T>,
+            reserve: Reserve<BalanceOf<T>>,
             statement: H256,
         ) -> Option<Aggregation<T>> {
             self.next
@@ -507,10 +563,12 @@ pub mod pallet {
     /// A reason for this pallet placing a hold on funds.
     #[pallet::composite_enum]
     pub enum HoldReason {
-        /// The funds are held as storage deposit for a aggregation pay.
+        /// The funds are held for a aggregation pay.
         Aggregation,
-        /// The funds are held as storage deposit for a domain registration.
+        /// The funds are held as storage deposit for anything related to a domain.
         Domain,
+        /// The funds are held for delivery.
+        Delivery,
     }
 
     /// Domains storage
@@ -587,26 +645,37 @@ pub mod pallet {
     #[pallet::call(weight(<T as Config>::WeightInfo))]
     impl<T: Config> Pallet<T> {
         /// Publish the aggregation. This call is used to publish a new aggregation that is in
-        /// the domain to be published queue or is still not completed. Can be called *just by signed account* and
-        /// if conditions are met, move the funds held for this publication to the caller account. If the aggregation
-        /// id is not valid (in _to be published_ queue or in filling stage), the call will fail but the weight cost
-        /// will be still the one needed to do the check.
+        /// the domain to be published queue or is still not completed. Can be called according to the
+        /// [`AggregateSecurityRules`] configured for the domain and, if conditions are met
+        ///
+        /// - move the funds held for aggregation to the caller account or return them to the submitters
+        ///   if the caller is a manager;
+        /// - move the funds held for delivery to the delivery owner.
+        ///
+        /// If the aggregation id is not valid (in _to be published_ queue or in filling stage), the call will
+        /// fail but the weight cost will be still the one needed to do the check.
         ///
         /// If conditions are met a `Event::NewAggregationReceipt` is emitted.
         ///
         /// Arguments:
-        /// - domain_id: The domain identifier.
-        /// - id: The identifier of the aggregation.
-        #[pallet::weight(T::WeightInfo::aggregate(T::AggregationSize::get()))]
+        /// - `domain_id`: The domain identifier.
+        /// - `aggregation_id`: The identifier of the aggregation.
+        ///
+        /// Errors:
+        /// - `BadOrigin`: If the origin is not valid or it's not authorized to do it according to
+        ///   the domain's [`AggregateSecurityRules`].
+        /// - `UnknownDomainId`: If the domain id doesn't exists.
+        /// - `InvalidAggregationId`: If the aggregation id doesn't exists.
+        /// - Any error related to the delivery channel.
+        #[pallet::weight(T::WeightInfo::aggregate(T::AggregationSize::get()) + T::DispatchAggregation::max_weight())]
         #[pallet::call_index(0)]
         pub fn aggregate(
             origin: OriginFor<T>,
             domain_id: u32,
             aggregation_id: u64,
         ) -> DispatchResultWithPostInfo {
-            use frame_support::traits::DefensiveSaturating;
-            let origin = ensure_signed(origin)?;
-            let (root, size) = Domains::<T>::try_mutate(domain_id, |domain| {
+            let aggregator = User::<T::AccountId>::from_origin::<T>(origin)?;
+            let (root, size, destination) = Domains::<T>::try_mutate(domain_id, |domain| {
                 let domain = domain.as_mut().ok_or_else(|| {
                     dispatch_post_error(
                         T::WeightInfo::aggregate_on_invalid_domain(),
@@ -619,7 +688,13 @@ pub mod pallet {
                         Error::<T>::InvalidAggregationId,
                     )
                 })?;
-
+                if !domain.aggregate_rules.can_user_aggregate_it::<T>(
+                    &aggregator,
+                    &domain.owner,
+                    &aggregation,
+                ) {
+                    Err(BadOrigin)?
+                }
                 let root = aggregation.compute();
                 let size = aggregation.statements.len() as u32;
                 Published::<T>::mutate(|published: &mut _| {
@@ -628,81 +703,121 @@ pub mod pallet {
 
                 if let Some((_, published)) = Published::<T>::get().last() {
                     for s in published.statements.iter() {
-                        let account = &s.account;
-                        let remain = T::Hold::transfer_on_hold(
-                            &HoldReason::Aggregation.into(),
-                            account,
-                            &origin,
-                            s.reserve,
-                            Precision::BestEffort,
-                            Restriction::Free,
-                            Fortitude::Polite,
-                        )
-                        .expect("Call user should exists. qed")
-                        .defensive_saturating_sub(s.reserve);
-                        if remain > 0_u32.into() {
-                            log::warn!(
-                                "Cannot refund all funds from {account:?} to {origin:?}: missed {remain:?}"
-                            )
-                        }
+                        handle_held_founds::<T>(
+                            HoldReason::Aggregation,
+                            &s.account,
+                            aggregator.account(),
+                            s.reserve.aggregate,
+                        );
+                        handle_held_founds::<T>(
+                            HoldReason::Delivery,
+                            &s.account,
+                            Some(&domain.delivery.owner),
+                            s.reserve.delivery,
+                        );
                     }
                 }
 
                 domain.handle_hold_state();
 
-                Result::<_, DispatchErrorWithPostInfo>::Ok((root, size))
+                Result::<_, DispatchErrorWithPostInfo>::Ok((
+                    root,
+                    size,
+                    domain.delivery.destination().clone(),
+                ))
             })?;
             Self::deposit_event(Event::NewAggregationReceipt {
                 domain_id,
                 aggregation_id,
                 receipt: root,
             });
-            Ok(Some(T::WeightInfo::aggregate(size)).into())
+
+            let dispatch_weight = T::DispatchAggregation::dispatch_weight(&destination);
+
+            T::DispatchAggregation::dispatch_aggregation(
+                domain_id,
+                aggregation_id,
+                root,
+                destination,
+            )?;
+
+            Ok(aggregator.post_info((T::WeightInfo::aggregate(size) + dispatch_weight).into()))
         }
 
         #[pallet::call_index(1)]
+        #[allow(clippy::too_many_arguments)]
         /// Register a new domain. It holds a deposit for all the storage that the domain need. The account that
         /// requested this domain will be the owner and is the only one that can unregister it. Unregister the domain
         /// will unlock the deposit and remove the domain from the system.
         ///
+        /// Just manager can register a domain that use bridge delivery.
+        ///
+        /// Arguments
         /// - aggregation_size: The size of the aggregation, in other words how many statements any aggregation have.
         /// - queue_size: The maximum number of aggregations that can be in the queue for this domain.
+        /// - aggregate_rules: The rules permission to call `aggregate` on this domain (see [`AggregateSecurityRules`])
+        /// - delivery: Params defining aggregation delivery (price, destination ... [`Delivery`])
+        /// - delivery_owner: An optional account that will receive the delivery price when the aggregations are delivered.
+        ///   If not provided, the delivery owner will be the caller.
+        ///
+        /// Errors:
+        /// - `BadOrigin`: If the origin cannot register a new domain.
+        /// - `FundsUnavailable`: If the caller does not have enough funds to register the domain.
+        ///
         pub fn register_domain(
             origin: OriginFor<T>,
             aggregation_size: AggregationSize,
             queue_size: Option<u32>,
+            aggregate_rules: AggregateSecurityRules,
+            delivery: Delivery<BalanceOf<T>>,
+            delivery_owner: Option<AccountOf<T>>,
         ) -> DispatchResultWithPostInfo {
-            let owner = User::<T::AccountId>::from_origin::<T>(origin)?;
+            let caller = User::<T::AccountId>::from_origin::<T>(origin)?;
+            let destination = delivery.destination.clone();
+            if !caller.can_create_domain(&destination) {
+                Err(BadOrigin)?
+            }
+            let delivery_owner = delivery_owner
+                .or_else(|| caller.account().cloned())
+                .ok_or(Error::<T>::MissedDeliveryOwnership)?;
             let id = Self::next_domain_id();
             let queue_size = queue_size.unwrap_or(T::MaxPendingPublishQueueSize::get());
+            let delivery = DeliveryParams::new(delivery_owner, delivery);
 
-            let ticket = owner
+            let ticket = caller
                 .clone()
-                .owner()
+                .account()
                 .and_then(|a| {
                     T::Consideration::new(
                         a,
                         Footprint::from_parts(
                             1,
-                            Domain::<T>::compute_encoded_size(aggregation_size, queue_size),
+                            Domain::<T>::compute_encoded_size(
+                                aggregation_size,
+                                queue_size,
+                                &destination,
+                            ),
                         ),
                     )
                     .transpose()
                 })
                 .transpose()?;
+
             let domain = Domain::<T>::try_create(
                 id,
-                owner.clone(),
+                caller.clone(),
                 1,
                 aggregation_size,
                 queue_size,
+                aggregate_rules,
                 ticket,
+                delivery,
             )?;
             Domains::<T>::insert(id, domain);
             NextDomainId::<T>::put(id + 1);
             Self::deposit_event(Event::NewDomain { id });
 
-            Ok(owner.post_info(None))
+            Ok(caller.post_info(None))
         }
 
         /// Hold a domain. Put the domain in `Hold` or `Removable` state. Only the domain owner
@@ -771,7 +886,7 @@ pub mod pallet {
                         if domain.state != DomainState::Removable {
                             Err(Error::<T>::InvalidDomainState)?
                         } else {
-                            if let (Some(o), Some(t)) = (owner.owner(), domain.ticket.take()) {
+                            if let (Some(o), Some(t)) = (owner.account(), domain.ticket.take()) {
                                 let _ =
                                     t.drop(o).defensive_proof("Drop should always succeed: qed");
                             }
@@ -788,6 +903,66 @@ pub mod pallet {
 
             Ok(owner.post_info(None))
         }
+
+        /// Set the delivery attestation price. Every submitter will hold this price (at the time of proof submission)
+        /// divided by the aggregation size. When the aggregation is dispatched all this held founds will be
+        /// transferred to the delivery owner.
+        ///
+        /// Only domain owner, delivery owner or manager can set the price.
+        ///
+        /// Arguments
+        /// - domain_id: The domain identifier.
+        /// - price: The delivery price.
+        ///
+        /// Errors:
+        /// - `BadOrigin`: If the origin is not authorized.
+        /// - `UnknownDomainId`: If the domain doesn't exists.
+        ///
+        #[pallet::call_index(4)]
+        pub fn set_delivery_price(
+            origin: OriginFor<T>,
+            domain_id: u32,
+            price: BalanceOf<T>,
+        ) -> DispatchResult {
+            let owner = User::<T::AccountId>::from_origin::<T>(origin)?;
+            Domains::<T>::try_mutate_exists(domain_id, |domain| {
+                match domain {
+                    Some(domain) if owner.can_set_delivery_price::<T>(domain) => {
+                        domain.delivery.set_price(price);
+                    }
+                    Some(_) => Err(BadOrigin)?,
+                    None => Err(Error::<T>::UnknownDomainId)?,
+                };
+                Ok::<_, DispatchError>(())
+            })?;
+            Ok(())
+        }
+    }
+
+    fn handle_held_founds<T: Config>(
+        reason: HoldReason,
+        account: &AccountOf<T>,
+        dest: Option<&AccountOf<T>>,
+        amount: BalanceOf<T>,
+    ) {
+        let remain = if let Some(dest) = dest {
+            T::Hold::transfer_on_hold(
+                &reason.into(),
+                account,
+                dest,
+                amount,
+                Precision::BestEffort,
+                Restriction::Free,
+                Fortitude::Polite,
+            )
+        } else {
+            T::Hold::release(&reason.into(), account, amount, Precision::BestEffort)
+        }
+        .expect("Call user should exists. qed")
+        .defensive_saturating_sub(amount);
+        if remain > 0_u32.into() {
+            log::warn!("Cannot refund all funds from {account:?} to {dest:?}: missed {remain:?}")
+        };
     }
 
     fn estimate_publish_aggregation_fee<T: Config>(size: AggregationSize) -> BalanceOf<T> {
@@ -800,9 +975,9 @@ pub mod pallet {
         )
     }
 
-    fn dispatch_post_error<T: Config>(
+    fn dispatch_post_error(
         weight: Weight,
-        error: Error<T>,
+        error: impl Into<DispatchError>,
     ) -> DispatchErrorWithPostInfo {
         DispatchErrorWithPostInfo {
             post_info: Some(weight).into(),
@@ -816,8 +991,12 @@ pub mod pallet {
         ) -> Result<Self, BadOrigin> {
             match T::ManagerOrigin::ensure_origin(origin.clone()) {
                 Ok(_) => Ok(User::Manager),
-                Err(_) => ensure_signed(origin.clone()).map(User::Owner),
+                Err(_) => ensure_signed(origin).map(User::Account),
             }
+        }
+
+        pub fn is_manager(&self) -> bool {
+            matches!(self, User::Manager)
         }
 
         pub fn can_handle_domain<T: Config<AccountId = A>>(&self, domain: &Domain<T>) -> bool
@@ -825,9 +1004,28 @@ pub mod pallet {
             A: PartialEq + sp_std::fmt::Debug,
         {
             match self {
-                User::Owner(_) => &domain.owner == self,
+                User::Account(_) => &domain.owner == self,
                 User::Manager => true,
             }
+        }
+
+        pub fn can_set_delivery_price<T: Config<AccountId = A>>(&self, domain: &Domain<T>) -> bool
+        where
+            A: PartialEq + sp_std::fmt::Debug,
+        {
+            match self {
+                User::Account(account) => {
+                    &domain.owner == self || &domain.delivery.owner == account
+                }
+                User::Manager => true,
+            }
+        }
+
+        pub fn can_create_domain(&self, destination: &Destination) -> bool {
+            matches!(
+                (self, destination),
+                (_, Destination::None) | (User::Manager, _)
+            )
         }
 
         pub fn post_info(&self, actual_weight: Option<Weight>) -> PostDispatchInfo {
@@ -839,8 +1037,27 @@ pub mod pallet {
 
         pub fn pays(&self) -> Pays {
             match self {
-                User::Owner(_owner) => Pays::Yes,
+                User::Account(_owner) => Pays::Yes,
                 _ => Pays::No,
+            }
+        }
+    }
+
+    impl AggregateSecurityRules {
+        fn can_user_aggregate_it<T: Config>(
+            &self,
+            aggregator: &User<T::AccountId>,
+            domain_owner: &User<T::AccountId>,
+            aggregation: &Aggregation<T>,
+        ) -> bool {
+            match self {
+                AggregateSecurityRules::Untrusted => true,
+                AggregateSecurityRules::OnlyOwner => {
+                    aggregator == domain_owner || aggregator.is_manager()
+                }
+                AggregateSecurityRules::OnlyOwnerUncompleted => {
+                    aggregation.completed() || aggregator == domain_owner || aggregator.is_manager()
+                }
             }
         }
     }
