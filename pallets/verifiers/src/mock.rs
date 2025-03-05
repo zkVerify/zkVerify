@@ -177,12 +177,12 @@ pub mod fake_pallet {
             sp_std::borrow::Cow::Owned(pubs.to_be_bytes().into())
         }
 
-        fn verifier_version_hash(proof: &Self::Proof) -> Option<sp_core::H256> {
+        fn verifier_version_hash(proof: &Self::Proof) -> sp_core::H256 {
             match *proof {
                 n if [24, 100].contains(&n) || n >= PROOF_WITH_FAKE_VERSION_LOWER_BOUND => {
-                    Some(sp_core::H256::from_low_u64_be(n))
+                    sp_core::H256::from_low_u64_be(n)
                 }
-                _ => None,
+                _ => hp_verifiers::NO_VERSION_HASH,
             }
         }
     }

@@ -35,6 +35,7 @@ pallet-verifiers-macros = { workspace = true }
 hex-literal = { workspace = true }
 
 [dev-dependencies]
+hex-literal = { workspace = true }
 pallet-balances = { workspace = true, features = ["std"] }
 rstest = { workspace = true }
 

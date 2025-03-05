@@ -20,11 +20,17 @@
 //! parametric pallet.
 
 use codec::{Decode, Encode, EncodeLike};
+use hex_literal::hex;
 use scale_info::TypeInfo;
 use sp_core::{MaxEncodedLen, H256};
 pub use sp_std::borrow::Cow;
 use sp_std::fmt::Debug;
 use sp_weights::Weight;
+
+/// No version provided.
+pub const NO_VERSION_HASH: H256 = H256(hex!(
+    "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" // = SHA256("")
+));
 
 /// Define the minimum traits that proofs and public inputs should implement.
 pub trait Arg: Debug + Clone + PartialEq + Encode + Decode + TypeInfo {}
@@ -98,8 +104,8 @@ pub trait Verifier: 'static {
 
     /// Return a hash that represents the verifier version used to verify the proof.
     /// This value, if present, will be included in the computation of the statement hash.
-    fn verifier_version_hash(_proof: &Self::Proof) -> Option<H256> {
-        None
+    fn verifier_version_hash(_proof: &Self::Proof) -> H256 {
+        NO_VERSION_HASH
     }
 }
 
