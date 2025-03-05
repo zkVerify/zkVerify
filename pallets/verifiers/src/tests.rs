@@ -329,8 +329,8 @@ mod submit_proof_should {
     use registered_vk::*;
 
     #[rstest]
-    #[case::vk(42, VkOrHash::Vk(Box::new(REGISTERED_VK)), H256(hex!("a3f38d8db1ff6c75d6977b5a5b23a375df6f1defc9bd13742d50e5547ab02b4f")))]
-    #[case::use_registered_vk(42, VkOrHash::Hash(REGISTERED_VK_HASH), H256(hex!("a3f38d8db1ff6c75d6977b5a5b23a375df6f1defc9bd13742d50e5547ab02b4f")))]
+    #[case::vk(42, VkOrHash::Vk(Box::new(REGISTERED_VK)), VALID_HASH_REGISTERED_VK)]
+    #[case::use_registered_vk(42, VkOrHash::Hash(REGISTERED_VK_HASH), VALID_HASH_REGISTERED_VK)]
     #[case::use_version(fake_pallet::PROOF_WITH_FAKE_VERSION_LOWER_BOUND + 42, VkOrHash::Vk(Box::new(REGISTERED_VK)), H256(hex!(
         "02975e6536d4cb401ba480feffe98e1e579169bfa7e67e65b0f73494b92206d3"
     )))]
@@ -374,9 +374,7 @@ mod submit_proof_should {
 
             System::assert_has_event(
                 Event::<Test, FakeVerifier>::ProofVerified {
-                    statement: H256(hex!(
-                        "a3f38d8db1ff6c75d6977b5a5b23a375df6f1defc9bd13742d50e5547ab02b4f"
-                    )),
+                    statement: VALID_HASH_REGISTERED_VK,
                 }
                 .into(),
             );
@@ -400,14 +398,7 @@ mod submit_proof_should {
             assert!(System::events().len() >= 1);
 
             System::assert_last_event(
-                new_proof_event(
-                    None,
-                    Some(1),
-                    H256(hex!(
-                        "a3f38d8db1ff6c75d6977b5a5b23a375df6f1defc9bd13742d50e5547ab02b4f"
-                    )),
-                )
-                .into(),
+                new_proof_event(None, Some(1), VALID_HASH_REGISTERED_VK).into(),
             );
         });
     }
