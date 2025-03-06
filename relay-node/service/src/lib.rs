@@ -91,7 +91,6 @@ use sc_telemetry::TelemetryWorker;
 use sc_telemetry::{Telemetry, TelemetryWorkerHandle};
 use telemetry as sc_telemetry;
 
-use frame_benchmarking_cli::SUBSTRATE_REFERENCE_HARDWARE;
 use polkadot_node_subsystem_types::DefaultSubsystemClient;
 pub use polkadot_primitives::{BlockId, BlockNumber, CollatorPair, Hash, Id as ParaId};
 pub use sc_client_api::{Backend, CallExecutor};
@@ -109,6 +108,7 @@ pub use sp_runtime::{
     generic,
     traits::{self as runtime_traits, BlakeTwo256, Block as BlockT, Header as HeaderT, NumberFor},
 };
+use zkv_benchmarks::hardware::zkv_reference_hardware;
 
 pub use zkv_runtime::{self, opaque::Block, RuntimeApi};
 
@@ -979,7 +979,7 @@ pub fn new_full<
 
     if let Some(hwbench) = hwbench {
         sc_sysinfo::print_hwbench(&hwbench);
-        match SUBSTRATE_REFERENCE_HARDWARE.check_hardware(&hwbench, role.is_authority()) {
+        match zkv_reference_hardware().check_hardware(&hwbench, role.is_authority()) {
             Err(err) if role.is_authority() => {
                 log::warn!(
 				"⚠️  The hardware does not meet the minimal requirements {} for role 'Authority' find out more at:\n\
