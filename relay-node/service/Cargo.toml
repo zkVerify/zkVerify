@@ -12,6 +12,7 @@ workspace = true
 
 [dependencies]
 zkv-runtime = { workspace = true, features = ["std"] }
+zkv-benchmarks = { workspace = true }
 native = { workspace = true, features = ["std"] }
 aggregate-rpc = { workspace = true, features = ["std"] }
 
