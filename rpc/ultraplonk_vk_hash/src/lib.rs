@@ -15,7 +15,7 @@
 
 use hp_verifiers::Verifier;
 use jsonrpsee::{core::RpcResult, proc_macros::rpc, types::ErrorObject};
-use pallet_ultraplonk_verifier::Ultraplonk;
+use pallet_ultraplonk_verifier::{Ultraplonk, VK_SIZE};
 use sp_core::{Get, H256};
 
 type VkOf<V> = <V as hp_verifiers::Verifier>::Vk;
@@ -36,9 +36,9 @@ impl pallet_ultraplonk_verifier::Config for MockType {
 #[rpc(client, server)]
 pub trait VKHashApi<ResponseType> {
     #[method(name = "compute_vk_hash_ultraplonk")]
-    fn compute_vk_hash_ultraplonk(
+    fn ultraplonk(
         &self,
-        vk: &VkOf<Ultraplonk<MockType>>,
+        vk: &[u8], // &VkOf<Ultraplonk<MockType>>,
     ) -> RpcResult<ResponseType>;
 }
 
@@ -52,10 +52,17 @@ impl VKHash {
 }
 
 impl VKHashApiServer<H256> for VKHash {
-    fn ultraplonk(&self, vk: Vec<u8>) -> RpcResult<H256> {
+    fn ultraplonk(&self, vk: &[u8]) -> RpcResult<H256> {
+        if vk.len() != VK_SIZE {
+            return Err(ErrorObject::owned(
+                1,
+                "Incorrect Slice Length",
+                Some("Incorrect Slice Length".to_string()),
+            ));
+        }
         let vk: VkOf<Ultraplonk<MockType>> = vk.try_into().map_err(|_| {
             ErrorObject::owned(
-                1,
+                2,
                 "Deserialize error",
                 Some("Deserialize error".to_string()),
             )

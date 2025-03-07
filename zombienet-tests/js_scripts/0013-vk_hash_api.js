@@ -1,0 +1,38 @@
+// This script is used to test the proofPath RPC call.
+// It also shows how to properly register custom data types and RPC calls
+// to Polkadot.js, in order to use its interface to interact with the blockchain.
+// Finally, it also demonstrate:
+// - how to submit an extrinsic and wait for its inclusion in a block
+// - how to wait for a specific event to be emitted
+// Both operations are performed through the use of polkadot.js observer pattern
+// and promise-based async/await syntax.
+
+const Keccak256 = require('keccak256')
+
+const ReturnCode = {
+    Ok: 1,
+    ErrProofVerificationFailed: 2,
+    ErrNoAttestation: 3,
+    ErrAttProofVerificationFailed: 4,
+    ErrWrongAttestationTiming: 5,
+    ErrIncorrectHash: 6,
+};
+
+const { PROOF: ULTRAPLONK_PROOF, PUBS: ULTRAPLONK_PUBS, VK: VK_ULTRAPLONK, VKEY_HASH: ULTRAPLONK_VKEY_HASH,
+    STATEMENT_HASH: ULTRAPLONK_STATEMENT_HASH } = require('./ultraplonk_data.js');
+
+async function run(nodeName, networkInfo, _args) {
+    const api = await init_api(zombie, nodeName, networkInfo);
+
+    verifier.hash = await api.rpc.computeVkHash.ultraplonk(ULTRAPLONK_VK);
+    console.log(`##### UltraPLONK RPC returned (hash ${verifier.hash}): ` + JSON.stringify(verifier.hash));
+
+    if (verifier.hash != VKEY_HASH) {
+        return ReturnCode.ErrIncorrectHash;
+    }
+
+    // Any return value different from 1 is considered an error
+    return ReturnCode.Ok;
+}
+
+module.exports = { run }
