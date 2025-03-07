@@ -199,23 +199,59 @@ while IFS='=' read -r -d '' var_name var_value; do
   fi
 done < <(env -0)
 
-# Validator node sanity check
-if [[ " ${conf_args[*]} " =~ " --validator " ]]; then
-  if [ -z "${ZKV_SECRET_PHRASE}" ]; then
-    fn_die "ERROR: A 'validator' node requires the 'ZKV_SECRET_PHRASE' environment variable to be set. Exiting..."
-  else
-    # Creating secret phrase file and keystore location secret phrase is provided
-    mkdir -p "${ZKV_KEYSTORE_PATH}" || fn_die "ERROR: was not able to create '${ZKV_KEYSTORE_PATH}' directory for keystore location.  Exiting ..."
-    chmod 700 "${ZKV_KEYSTORE_PATH}" && chown "${RUN_USER}" "${ZKV_KEYSTORE_PATH}"
+# Validator node configure and sanity check
+if [[ " ${conf_args[*]} " =~ " --validator " ]] && [ -z "${ZKV_SECRET_PHRASE}" ]; then
+  fn_die "ERROR: A 'validator' node requires the 'ZKV_SECRET_PHRASE' environment variable to be set. Exiting..."
+fi
 
-    conf_args+=(--keystore-path "${ZKV_KEYSTORE_PATH}")
+# Session keys handling
+if [ -n "${ZKV_SECRET_PHRASE}" ]; then
+  # Creating secret phrase file and keystore location secret phrase is provided
+  mkdir -p "${ZKV_KEYSTORE_PATH}" || fn_die "ERROR: was not able to create keystore '${ZKV_KEYSTORE_PATH}' directory for storing session keys.  Exiting ..."
+  chmod 700 "${ZKV_KEYSTORE_PATH}" && chown "${RUN_USER}" "${ZKV_KEYSTORE_PATH}"
 
-    printf "%s" "${ZKV_SECRET_PHRASE}" > "${ZKV_SECRET_PHRASE_FILE}" || fn_die "ERROR: was not able to create '${ZKV_SECRET_PHRASE_FILE}' file.  Exiting ..."
-    chmod 0400 "${ZKV_SECRET_PHRASE_FILE}" && chown "${RUN_USER}" "${ZKV_SECRET_PHRASE_FILE}"
-    echo -e "  ZKV_SECRET_PHRASE_FILE=${ZKV_SECRET_PHRASE_FILE}\n"
+  conf_args+=(--keystore-path "${ZKV_KEYSTORE_PATH}")
 
-    unset ZKV_SECRET_PHRASE
+  printf "%s" "${ZKV_SECRET_PHRASE}" > "${ZKV_SECRET_PHRASE_FILE}" || fn_die "ERROR: was not able to create '${ZKV_SECRET_PHRASE_FILE}' file.  Exiting ..."
+  chmod 0400 "${ZKV_SECRET_PHRASE_FILE}" && chown "${RUN_USER}" "${ZKV_SECRET_PHRASE_FILE}"
+  echo -e "  ZKV_SECRET_PHRASE_FILE=${ZKV_SECRET_PHRASE_FILE}\n"
+
+  unset ZKV_SECRET_PHRASE
+
+  injection_args=()
+  if [ -n "${ZKV_CONF_BASE_PATH}" ]; then
+    injection_args+=("$(get_arg_name_from_env_name ZKV_CONF_BASE_PATH ${prefix})")
+    injection_args+=("$(get_arg_value_from_env_value "${ZKV_CONF_BASE_PATH}")")
   fi
+  if [ -n "${ZKV_CONF_CHAIN}" ]; then
+    injection_args+=("$(get_arg_name_from_env_name ZKV_CONF_CHAIN ${prefix})")
+    injection_args+=("$(get_arg_value_from_env_value "${ZKV_CONF_CHAIN}")")
+  fi
+
+  injection_args+=(--keystore-path "${ZKV_KEYSTORE_PATH}")
+
+  log_green "INFO: injecting session keys with the following args:"
+  echo "---------------------------------"
+  echo "  ${injection_args[*]}"
+  echo -e "---------------------------------\n"
+
+  declare -A session_keys=(
+    ["babe"]="Sr25519"
+    ["gran"]="Ed25519"
+    ["imon"]="Sr25519"
+    ["para"]="Sr25519"
+    ["audi"]="Sr25519"
+  )
+
+  # Loop through the keys and inject each one
+  for key_type in "${!session_keys[@]}"; do
+    log_green "INFO: injecting session key '${key_type}' ..."
+
+    gosu "${RUN_USER}" "${ZKV_NODE}" key insert "${injection_args[@]}" \
+      --scheme "${session_keys["${key_type}"]}" \
+      --suri "${ZKV_SECRET_PHRASE_FILE}" \
+      --key-type "${key_type}" || fn_die "ERROR: could not inject ''${key_type}' session key. Exiting ..."
+  done
 fi
 
 # Creating node key file if node key is provided via environmental variable or generating random one if doesn't already exist
@@ -237,56 +273,6 @@ echo -e "  ZKV_NODE_KEY_FILE=${ZKV_NODE_KEY_FILE}\n"
 
 conf_args+=(--node-key-file "${ZKV_NODE_KEY_FILE}")
 unset ZKV_NODE_KEY
-
-# Session keys handling
-if [ -s "${ZKV_SECRET_PHRASE_FILE}" ]; then
-  injection_args=()
-  if [ -n "${ZKV_CONF_BASE_PATH}" ]; then
-    injection_args+=("$(get_arg_name_from_env_name ZKV_CONF_BASE_PATH ${prefix})")
-    injection_args+=("$(get_arg_value_from_env_value "${ZKV_CONF_BASE_PATH}")")
-  fi
-  if [ -n "${ZKV_CONF_CHAIN}" ]; then
-    injection_args+=("$(get_arg_name_from_env_name ZKV_CONF_CHAIN ${prefix})")
-    injection_args+=("$(get_arg_value_from_env_value "${ZKV_CONF_CHAIN}")")
-  fi
-
-  injection_args+=(--keystore-path "${ZKV_KEYSTORE_PATH}")
-
-  log_green "INFO: injecting keys with the following args:"
-  echo "---------------------------------"
-  echo "  ${injection_args[*]}"
-  echo -e "---------------------------------\n"
-
-  log_green "INFO: injecting key (Babe) ..."
-  gosu "${RUN_USER}" "${ZKV_NODE}" key insert "${injection_args[@]}" \
-    --scheme Sr25519 \
-    --suri "${ZKV_SECRET_PHRASE_FILE}" \
-    --key-type babe
-
-  log_green "INFO: injecting key (Grandpa) ..."
-  gosu "${RUN_USER}" "${ZKV_NODE}" key insert "${injection_args[@]}" \
-    --scheme Ed25519 \
-    --suri "${ZKV_SECRET_PHRASE_FILE}" \
-    --key-type gran
-
-  log_green "INFO: injecting key (Imonline) ..."
-  gosu "${RUN_USER}" "${ZKV_NODE}" key insert "${injection_args[@]}" \
-    --scheme Sr25519 \
-    --suri "${ZKV_SECRET_PHRASE_FILE}" \
-    --key-type imon
-
-  log_green "INFO: injecting key (Parachain) ..."
-  gosu "${RUN_USER}" "${ZKV_NODE}" key insert "${injection_args[@]}" \
-    --scheme Sr25519 \
-    --suri "${ZKV_SECRET_PHRASE_FILE}" \
-    --key-type para
-
-  log_green "INFO: injecting key (Authorities Discovery) ..."
-  gosu "${RUN_USER}" "${ZKV_NODE}" key insert "${injection_args[@]}" \
-    --scheme Sr25519 \
-    --suri "${ZKV_SECRET_PHRASE_FILE}" \
-    --key-type audi
-fi
 
 ####
 # Relaychain collator's configuration (env->arg)
