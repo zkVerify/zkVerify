@@ -256,7 +256,9 @@ fi
 
 # Creating node key file if node key is provided via environmental variable or generating random one if doesn't already exist
 if [ ! -s "${ZKV_NODE_KEY_FILE}" ] ; then
+  log_yellow "WARNING: node key file '${ZKV_NODE_KEY_FILE}' does not exist. Creating one ..."
   if [ -n "${ZKV_NODE_KEY}" ]; then
+    log_green "INFO: creating node key file using 'ZKV_NODE_KEY' environmental variable ..."
     printf "%s" "${ZKV_NODE_KEY}" > "${ZKV_NODE_KEY_FILE}" || fn_die "ERROR: was not able to create '${ZKV_NODE_KEY_FILE}' file.  Exiting ..."
   else
     injection_args=()
