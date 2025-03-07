@@ -91,7 +91,7 @@ validate_and_download() {
   echo "  ${CHAIN_VAR_NAME}=${CHAIN_VALUE}"
 
   # Check if CHAIN_VALUE points to an existing .json file and download it otherwise
-  if [[ "${CHAIN_VALUE}" == *.json ]] && { [ ! -f "${CHAIN_VALUE}" ] || [ ! -s "${CHAIN_VALUE}" ]; }; then
+  if [[ "${CHAIN_VALUE}" == *.json ]] && [ ! -s "${CHAIN_VALUE}" ]; then
     # Attempt to download the file if it doesn't exist
     if [ -n "${SPEC_FILE_URL}" ]; then
       log_green "INFO: Spec file '${CHAIN_VALUE}' does not exist. Downloading it from '${SPEC_FILE_URL}' ..."
@@ -148,12 +148,11 @@ log_bold_green "=== zkVerify node's configuration:"
 ZKV_CONF_BASE_PATH=${ZKV_CONF_BASE_PATH:-}
 ZKV_CONF_CHAIN=${ZKV_CONF_CHAIN:-}
 ZKV_SPEC_FILE_URL="${ZKV_SPEC_FILE_URL:-}"
-# ZKV_NODE_KEY and ZKV_SECRET_PHRASE are coming from environmental variables
 ZKV_NODE_KEY="${ZKV_NODE_KEY:-}"
-ZKV_NODE_KEY_FILE=""
+ZKV_NODE_KEY_FILE="${ZKV_NODE_KEY_FILE:-/data/node_key.dat}"
 ZKV_SECRET_PHRASE="${ZKV_SECRET_PHRASE:-}"
-ZKV_SECRET_PHRASE_FILE=""
-ZKV_KEYSTORE_PATH=""
+ZKV_SECRET_PHRASE_FILE="${ZKV_SECRET_PHRASE_FILE:-/data/secret_phrase.dat}"
+ZKV_KEYSTORE_PATH="${ZKV_KEYSTORE_PATH:-/data/keystore}"
 
 # Loop through all arguments to check for --dev
 for arg in "$@"; do
@@ -200,36 +199,47 @@ while IFS='=' read -r -d '' var_name var_value; do
   fi
 done < <(env -0)
 
-# Creating node key file on RAMDISK if node key is provided
+# Validator node sanity check
+if [[ " ${conf_args[*]} " =~ " --validator " ]]; then
+  if [ -z "${ZKV_SECRET_PHRASE}" ]; then
+    fn_die "ERROR: A 'validator' node requires the 'ZKV_SECRET_PHRASE' environment variable to be set. Exiting..."
+  else
+    # Creating secret phrase file and keystore location secret phrase is provided
+    mkdir -p "${ZKV_KEYSTORE_PATH}" || fn_die "ERROR: was not able to create '${ZKV_KEYSTORE_PATH}' directory for keystore location.  Exiting ..."
+    chmod 700 "${ZKV_KEYSTORE_PATH}" && chown "${RUN_USER}" "${ZKV_KEYSTORE_PATH}"
+
+    conf_args+=(--keystore-path "${ZKV_KEYSTORE_PATH}")
+
+    printf "%s" "${ZKV_SECRET_PHRASE}" > "${ZKV_SECRET_PHRASE_FILE}" || fn_die "ERROR: was not able to create '${ZKV_SECRET_PHRASE_FILE}' file.  Exiting ..."
+    chmod 0400 "${ZKV_SECRET_PHRASE_FILE}" && chown "${RUN_USER}" "${ZKV_SECRET_PHRASE_FILE}"
+    echo -e "  ZKV_SECRET_PHRASE_FILE=${ZKV_SECRET_PHRASE_FILE}\n"
+
+    unset ZKV_SECRET_PHRASE
+  fi
+fi
+
+# Creating node key file if node key is provided via environmental variable or generating random one if doesn't already exist
 if [ -n "${ZKV_NODE_KEY}" ]; then
-  ZKV_NODE_KEY_FILE="/dev/shm/node_key.dat"
-
   printf "%s" "${ZKV_NODE_KEY}" > "${ZKV_NODE_KEY_FILE}" || fn_die "ERROR: was not able to create '${ZKV_NODE_KEY_FILE}' file.  Exiting ..."
-  chmod 0400 "${ZKV_NODE_KEY_FILE}" && chown "${RUN_USER}" "${ZKV_NODE_KEY_FILE}"
-  echo -e "  ZKV_NODE_KEY_FILE=${ZKV_NODE_KEY_FILE}\n"
-
-  conf_args+=(--node-key-file "${ZKV_NODE_KEY_FILE}")
-  unset ZKV_NODE_KEY
+else
+  if [ ! -s "${ZKV_NODE_KEY_FILE}" ]; then
+    injection_args=()
+    if [ -n "${ZKV_CONF_CHAIN}" ]; then
+      injection_args+=("$(get_arg_name_from_env_name ZKV_CONF_CHAIN ${prefix})")
+      injection_args+=("$(get_arg_value_from_env_value "${ZKV_CONF_CHAIN}")")
+    fi
+    log_green "INFO: generating RANDOM node key since 'ZKV_NODE_KEY' environmental variable was not set ..."
+    gosu "${RUN_USER}" "${ZKV_NODE}" key generate-node-key "${injection_args[@]}" --file "${ZKV_NODE_KEY_FILE}" || fn_die "ERROR: was not able to generate node key file. Exiting ..."
+  fi
 fi
+chmod 0400 "${ZKV_NODE_KEY_FILE}" && chown "${RUN_USER}" "${ZKV_NODE_KEY_FILE}"
+echo -e "  ZKV_NODE_KEY_FILE=${ZKV_NODE_KEY_FILE}\n"
 
-# Creating secret phrase file and keystore location on RAMDISK if secret phrase is provided
-if [ -n "${ZKV_SECRET_PHRASE}" ]; then
-  ZKV_KEYSTORE_PATH="/dev/shm/keystore"
-  mkdir -p "${ZKV_KEYSTORE_PATH}" || fn_die "ERROR: was not able to create '${ZKV_KEYSTORE_PATH}' directory for keystore location.  Exiting ..."
-  chmod 700 "${ZKV_KEYSTORE_PATH}" && chown "${RUN_USER}" "${ZKV_KEYSTORE_PATH}"
-
-  conf_args+=(--keystore-path "${ZKV_KEYSTORE_PATH}")
-
-  ZKV_SECRET_PHRASE_FILE="/dev/shm/secret_phrase.dat"
-  printf "%s" "${ZKV_SECRET_PHRASE}" > "${ZKV_SECRET_PHRASE_FILE}" || fn_die "ERROR: was not able to create '${ZKV_SECRET_PHRASE_FILE}' file.  Exiting ..."
-  chmod 0400 "${ZKV_SECRET_PHRASE_FILE}" && chown "${RUN_USER}" "${ZKV_SECRET_PHRASE_FILE}"
-  echo -e "  ZKV_SECRET_PHRASE_FILE=${ZKV_SECRET_PHRASE_FILE}\n"
-
-  unset ZKV_SECRET_PHRASE
-fi
+conf_args+=(--node-key-file "${ZKV_NODE_KEY_FILE}")
+unset ZKV_NODE_KEY
 
 # Session keys handling
-if [ -f "${ZKV_SECRET_PHRASE_FILE}" ] && [ -s "${ZKV_SECRET_PHRASE_FILE}" ]; then
+if [ -s "${ZKV_SECRET_PHRASE_FILE}" ]; then
   injection_args=()
   if [ -n "${ZKV_CONF_BASE_PATH}" ]; then
     injection_args+=("$(get_arg_name_from_env_name ZKV_CONF_BASE_PATH ${prefix})")
