@@ -255,17 +255,17 @@ if [ -n "${ZKV_SECRET_PHRASE}" ]; then
 fi
 
 # Creating node key file if node key is provided via environmental variable or generating random one if doesn't already exist
-if [ -n "${ZKV_NODE_KEY}" ]; then
-  printf "%s" "${ZKV_NODE_KEY}" > "${ZKV_NODE_KEY_FILE}" || fn_die "ERROR: was not able to create '${ZKV_NODE_KEY_FILE}' file.  Exiting ..."
-else
-  if [ ! -s "${ZKV_NODE_KEY_FILE}" ]; then
+if [ ! -s "${ZKV_NODE_KEY_FILE}" ] ; then
+  if [ -n "${ZKV_NODE_KEY}" ]; then
+    printf "%s" "${ZKV_NODE_KEY}" > "${ZKV_NODE_KEY_FILE}" || fn_die "ERROR: was not able to create '${ZKV_NODE_KEY_FILE}' file.  Exiting ..."
+  else
     injection_args=()
     if [ -n "${ZKV_CONF_CHAIN}" ]; then
       injection_args+=("$(get_arg_name_from_env_name ZKV_CONF_CHAIN ${prefix})")
       injection_args+=("$(get_arg_value_from_env_value "${ZKV_CONF_CHAIN}")")
     fi
     log_green "INFO: generating RANDOM node key since 'ZKV_NODE_KEY' environmental variable was not set ..."
-    gosu "${RUN_USER}" "${ZKV_NODE}" key generate-node-key "${injection_args[@]}" --file "${ZKV_NODE_KEY_FILE}" || fn_die "ERROR: was not able to generate node key file. Exiting ..."
+    gosu "${RUN_USER}" "${ZKV_NODE}" key generate-node-key "${injection_args[@]}" --file "${ZKV_NODE_KEY_FILE}" || fn_die "ERROR: was not able to generate RANDOM node key file. Exiting ..."
   fi
 fi
 chmod 0400 "${ZKV_NODE_KEY_FILE}" && chown "${RUN_USER}" "${ZKV_NODE_KEY_FILE}"
