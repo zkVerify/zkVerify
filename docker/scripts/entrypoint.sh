@@ -199,14 +199,14 @@ while IFS='=' read -r -d '' var_name var_value; do
   fi
 done < <(env -0)
 
-# Validator node configure and sanity check
+# Validator node sanity check
 if [[ " ${conf_args[*]} " =~ " --validator " ]] && [ -z "${ZKV_SECRET_PHRASE}" ]; then
   fn_die "ERROR: A 'validator' node requires the 'ZKV_SECRET_PHRASE' environment variable to be set. Exiting..."
 fi
 
 # Session keys handling
 if [ -n "${ZKV_SECRET_PHRASE}" ]; then
-  # Creating secret phrase file and keystore location secret phrase is provided
+  # Creating secret phrase file and keystore location if secret phrase environmental variable is provided
   mkdir -p "${ZKV_KEYSTORE_PATH}" || fn_die "ERROR: was not able to create keystore '${ZKV_KEYSTORE_PATH}' directory for storing session keys.  Exiting ..."
   chmod 700 "${ZKV_KEYSTORE_PATH}" && chown "${RUN_USER}" "${ZKV_KEYSTORE_PATH}"
 
@@ -250,7 +250,7 @@ if [ -n "${ZKV_SECRET_PHRASE}" ]; then
     gosu "${RUN_USER}" "${ZKV_NODE}" key insert "${injection_args[@]}" \
       --scheme "${session_keys["${key_type}"]}" \
       --suri "${ZKV_SECRET_PHRASE_FILE}" \
-      --key-type "${key_type}" || fn_die "ERROR: could not inject ''${key_type}' session key. Exiting ..."
+      --key-type "${key_type}" || fn_die "ERROR: could not inject '${key_type}' session key. Exiting ..."
   done
 fi
 
