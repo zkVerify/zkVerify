@@ -49,7 +49,7 @@ jobs:
                   "type": "header",
                   "text": {
                     "type": "plain_text",
-                    "text": "🚨 ALERT - ${GITHUB_WORKFLOW} Job Failed! 🚨"
+                    "text": "🚨 ALERT - ${{ github.workflow }} Job Failed! 🚨"
                   }
                 },
                 {

@@ -14,7 +14,7 @@ Compile all the different node implementations (*solo*, *relay*, *parachain*):
 Start a _**solo**_ chain with 2 validators (Alice and Bob) and a simple client node with:
 
 ```bash
-> docker compose -f docker/dockerfiles/zkv-docker-compose.yaml up
+> docker compose -f docker/compose/zkv-docker-compose.yaml up
 ```
 
 Start a _**relay**_ chain with a test _**parachain**_ with:
@@ -23,7 +23,7 @@ Start a _**relay**_ chain with a test _**parachain**_ with:
 - 2 parachain collators (Alice and Bob) and a simple parachain client node
 
 ```bash
-> docker compose -f docker/dockerfiles/zkv-relay-docker-compose.yaml up
+> docker compose -f docker/compose/zkv-relay-docker-compose.yaml up
 ```
 
 ## Scripts
@@ -89,14 +89,18 @@ A script that generate a docker image with the base dependencies and the given e
 
 ## Docker and Compose
 
-All Dockerfile and compose definitions are located in `docker/dockerfile` folder.
+All Dockerfiles are located in `docker/dockerfiles` folder.
 
 * `zkv-builder.Dockerfile`: create an image with all dependencies needed to compile the node and is used by `my_cargo` script
 * `binary_injected.Dockerfile`: Is mainly used by the scripts and inject one or more binaries in a standard ubuntu image
 * `zkv-node.Dockerfile`: generate a solo node image with a fresh source compilation (leverage on docker layers to create a small docker image)
-* `zkv-docker-compose.yaml`: the cluster definition that runs
 2 validator nodes (Alice and Bob) and a simple node that expose its rpc and P2P ports on localhost.
 * `zkv-relay.Dockerfile`: generate a relay node image with a fresh source compilation (leverage on docker layers to create a small docker image)
+
+All compose definitions are located in `docker/compose` folder.
+
+* `zkv-docker-compose.yaml`: the cluster definition that runs
+2 validator nodes (Alice and Bob) and a simple node that expose its rpc and P2P ports on localhost.
 * `zkv-relay-docker-compose.yaml`: the cluster definition that runs 3 relay chain nodes (Alice, Bob, and rpc on port 9944), and 3 parachain nodes (Alice, Bob, and rpc on port 8844)
 
 To generate a solo node image without bothering about local resources, Rust installation and so on you can simply use:
