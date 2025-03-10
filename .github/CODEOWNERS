@@ -1,2 +1,4 @@
 # DevOps team ownership
-/.github/ @zkVerify/devops
+/.github/                @zkVerify/devops
+/docker/dockerfiles/     @zkVerify/devops
+/docker/entrypoint.sh    @zkVerify/devops
