@@ -54,7 +54,7 @@ docker/scripts/build-paratest-image-injected.sh
 ## Start compose file
 
 ```sh
-docker compose -f docker/dockerfiles/zkv-relay-docker-compose.yaml up -d --remove-orphans
+docker compose -f docker/compose/zkv-relay-docker-compose.yaml up -d --remove-orphans
 ```
 
 This compose starts 3 relaychain nodes and 3 parachain nodes:
@@ -81,9 +81,9 @@ You can access the parachain interface through polkadot.js at `ws://localhost:88
 
 ## Extra
 
-- To stop the chain use `docker compose -f docker/dockerfiles/zkv-relay-docker-compose.yaml down` with `-v` flag
+- To stop the chain use `docker compose -f docker/compose/zkv-relay-docker-compose.yaml down` with `-v` flag
   if you need also clear the chain
-- To inspect the logs of a service use `docker compose -f docker/dockerfiles/zkv-relay-docker-compose.yaml logs <service>`
+- To inspect the logs of a service use `docker compose -f docker/compose/zkv-relay-docker-compose.yaml logs <service>`
   where the available services are
   - `node_alice` relay chain alice validator
   - `node_bob` relay chain bob validator
