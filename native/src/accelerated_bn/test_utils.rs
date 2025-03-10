@@ -16,7 +16,7 @@
 use ark_ec::{
     pairing::Pairing,
     short_weierstrass::{Affine, SWCurveConfig},
-    AffineRepr, CurveGroup, Group,
+    AffineRepr, CurveGroup, PrimeGroup,
 };
 
 pub fn multi_pairing<P: Pairing>() -> P::TargetField {

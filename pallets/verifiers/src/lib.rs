@@ -16,11 +16,11 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![deny(missing_docs)]
 
-//! This crate abstract the implementation of a new verifier pallet.
+//! This crate abstracts the implementation of a new verifier pallet.
 //! ```ignore
 //! use pallet_verifiers::verifier;
 //! use hp_verifiers::{Verifier, VerifyError};
-//! /// Follow attribute generate a new verifier pallet in this crate.
+//! /// The following attribute generates a new verifier pallet in this crate.
 //! #[verifier]
 //! pub struct MyVerifier;
 //!
@@ -57,7 +57,7 @@
 //!     }
 //! }
 //! ```
-//! Your crate should also implement a struct that implement `hp_verifiers::WeightInfo<YourVerifierStruct>`
+//! Your crate should also implement a struct that implements the `hp_verifiers::WeightInfo<YourVerifierStruct>`
 //! trait. This struct is used to define the weight of the verifier pallet and should map the generic
 //! request in you weight implementation computed with your benchmark.
 
