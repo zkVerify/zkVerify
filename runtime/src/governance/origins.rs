@@ -19,7 +19,7 @@ pub use pallet_custom_origins::*;
 
 #[frame_support::pallet]
 pub mod pallet_custom_origins {
-    use crate::{Balance, ACME, THOUSANDS};
+    use crate::{Balance, THOUSANDS, VFY};
     use frame_support::pallet_prelude::*;
 
     #[pallet::config]
@@ -33,7 +33,7 @@ pub mod pallet_custom_origins {
     pub enum Origin {
         /// Origin able to cancel slashes and manage minimum commission.
         StakingAdmin,
-        /// Origin for spending up to TBD ACMEs from the treasury as well as generally
+        /// Origin for spending up to TBD VFYs from the treasury as well as generally
         /// administering it.
         Treasurer,
         /// Origin able to cancel referenda.
@@ -48,7 +48,7 @@ pub mod pallet_custom_origins {
         SmallSpender,
         /// Origin able to spend around $100,000 from the treasury at once.
         MediumSpender,
-        /// Origin able to spend up to $1,000,000 ACME from the treasury at once.
+        /// Origin able to spend up to $1,000,000 VFY from the treasury at once.
         BigSpender,
         /// Origin for signaling that the network wishes for some change.
         WishForChange,
@@ -127,7 +127,7 @@ pub mod pallet_custom_origins {
 
     decl_ensure! {
         pub type Spender: EnsureOrigin<Success = Balance> {
-            SmallTipper = 250 * ACME,
+            SmallTipper = 250 * VFY,
             BigTipper = THOUSANDS,
             SmallSpender = 10 * THOUSANDS,
             MediumSpender = 100 * THOUSANDS,

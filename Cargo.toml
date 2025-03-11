@@ -43,7 +43,7 @@ members = [
 ]
 
 exclude = ["utils/generate-bags/node-runtime"]
-# default-members = ["zkv-relay"]
+default-members = ["relay-node"]
 
 [workspace.dependencies]
 anyhow = { version = "1.0", default-features = false }

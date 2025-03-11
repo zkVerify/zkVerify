@@ -139,9 +139,9 @@ pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::Account
 
 pub mod currency {
     pub type Balance = u128;
-    pub const ACME: Balance = 1_000_000_000_000_000_000;
-    pub const CENTS: Balance = ACME / 100;
-    pub const THOUSANDS: Balance = 1_000 * ACME;
+    pub const VFY: Balance = 1_000_000_000_000_000_000;
+    pub const CENTS: Balance = VFY / 100;
+    pub const THOUSANDS: Balance = 1_000 * VFY;
     pub const MILLIONS: Balance = 1_000 * THOUSANDS;
     pub const MILLICENTS: Balance = CENTS / 1_000;
     #[cfg(not(feature = "runtime-benchmarks"))]
@@ -544,14 +544,14 @@ impl pallet_treasury::Config for Runtime {
 }
 
 parameter_types! {
-    pub const BountyDepositBase: Balance = ACME;
+    pub const BountyDepositBase: Balance = VFY;
     pub const BountyDepositPayoutDelay: BlockNumber = 8 * DAYS;
     pub const BountyUpdatePeriod: BlockNumber = 90 * DAYS;
     pub const MaximumReasonLength: u32 = 16384;
     pub const CuratorDepositMultiplier: Permill = Permill::from_percent(50);
-    pub const CuratorDepositMin: Balance = 10 * ACME;
-    pub const CuratorDepositMax: Balance = 200 * ACME;
-    pub const BountyValueMinimum: Balance = 10 * ACME;
+    pub const CuratorDepositMin: Balance = 10 * VFY;
+    pub const CuratorDepositMax: Balance = 200 * VFY;
+    pub const BountyValueMinimum: Balance = 10 * VFY;
     pub DataDepositPerByte: Balance = deposit(0, 1);
 }
 impl pallet_bounties::Config for Runtime {
@@ -1801,7 +1801,7 @@ impl_runtime_apis! {
                     fn worst_case_holding(_depositable_count: u32) -> Assets {
                         vec![Asset {
                             id: AssetId(xcm_config::TokenLocation::get()),
-                            fun: Fungible(ACME),
+                            fun: Fungible(VFY),
                         }].into()
                     }
                 }
@@ -1860,7 +1860,7 @@ impl_runtime_apis! {
                     fn claimable_asset() -> Result<(Location, Location, Assets), BenchmarkError> {
                         // an asset that can be trapped and claimed
                         let origin = xcm_config::TestParaLocation::get();
-                        let assets: Assets = (AssetId(xcm_config::TokenLocation::get()), ACME).into();
+                        let assets: Assets = (AssetId(xcm_config::TokenLocation::get()), VFY).into();
                         let ticket = Location { parents: 0, interior: Here };
                         Ok((origin, ticket, assets))
                     }

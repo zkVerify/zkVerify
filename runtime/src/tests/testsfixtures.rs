@@ -26,7 +26,7 @@ use crate::*;
 // Existential deposit used in pallet_balances
 pub const EXISTENTIAL_DEPOSIT_REMAINDER: Balance = 1;
 pub const NUM_TEST_ACCOUNTS: u32 = 4;
-pub const STASH_DEPOSIT: Balance = 1 * currency::ACME; // MUST not be smaller than EXISTENTIAL_DEPOSIT
+pub const STASH_DEPOSIT: Balance = 1 * currency::VFY; // MUST not be smaller than EXISTENTIAL_DEPOSIT
 pub const NUM_VALIDATORS: u32 = 2;
 
 pub fn get_from_seed<TPublic: Public>(seed: u8) -> TPublic::Pair {
@@ -196,7 +196,7 @@ pub static SAMPLE_USERS: [SampleAccount; NUM_TEST_ACCOUNTS as usize] = [
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 1,
         ],
-        starting_balance: 1000001 * currency::ACME,
+        starting_balance: 1000001 * currency::VFY,
         session_key_seed: 1,
     },
     SampleAccount {
@@ -204,7 +204,7 @@ pub static SAMPLE_USERS: [SampleAccount; NUM_TEST_ACCOUNTS as usize] = [
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 2,
         ],
-        starting_balance: 12345432 * currency::ACME,
+        starting_balance: 12345432 * currency::VFY,
         session_key_seed: 2,
     },
     SampleAccount {
@@ -212,7 +212,7 @@ pub static SAMPLE_USERS: [SampleAccount; NUM_TEST_ACCOUNTS as usize] = [
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 3,
         ],
-        starting_balance: 9955223 * currency::ACME,
+        starting_balance: 9955223 * currency::VFY,
         session_key_seed: 3,
     },
     SampleAccount {
