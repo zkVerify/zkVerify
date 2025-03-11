@@ -40,7 +40,7 @@ fn pallet_multisig() {
             .collect();
         let call = Box::new(RuntimeCall::Balances(BalancesCall::transfer_allow_death {
             dest: MultiAddress::Id(issuer.clone()),
-            value: 5000 * currency::ACME,
+            value: 5000 * currency::VFY,
         }));
         assert_ok!(Multisig::as_multi(
             RuntimeOrigin::signed(issuer),
@@ -61,11 +61,11 @@ fn pallet_utility() {
 
         let call_1 = RuntimeCall::Balances(BalancesCall::transfer_allow_death {
             dest: MultiAddress::Id(dest_1.clone()),
-            value: 5000 * currency::ACME,
+            value: 5000 * currency::VFY,
         });
         let call_2 = RuntimeCall::Balances(BalancesCall::transfer_allow_death {
             dest: MultiAddress::Id(dest_2.clone()),
-            value: 5000 * currency::ACME,
+            value: 5000 * currency::VFY,
         });
         assert_ok!(Utility::batch(RuntimeOrigin::root(), vec![call_1, call_2]));
     });
@@ -95,7 +95,7 @@ fn pallet_scheduler() {
     test().execute_with(|| {
         let call = Box::new(RuntimeCall::Balances(BalancesCall::transfer_allow_death {
             dest: MultiAddress::Id(testsfixtures::SAMPLE_USERS[2].raw_account.into()),
-            value: 5000 * currency::ACME,
+            value: 5000 * currency::VFY,
         }));
 
         assert_ok!(Scheduler::schedule(
@@ -123,7 +123,7 @@ fn pallet_referenda_and_conviction_voting() {
     test().execute_with(|| {
         let call = RuntimeCall::Balances(BalancesCall::transfer_allow_death {
             dest: MultiAddress::Id(testsfixtures::SAMPLE_USERS[1].raw_account.into()),
-            value: 5000 * currency::ACME,
+            value: 5000 * currency::VFY,
         });
         let proposal = <Preimage as StorePreimage>::bound(call).unwrap();
 
@@ -147,12 +147,12 @@ fn pallet_referenda_and_conviction_voting() {
 fn pallet_treasury() {
     test().execute_with(|| {
         let asset_kind = Box::new(());
-        let amount = 1000 * ACME;
+        let amount = 1000 * VFY;
         let beneficiary = Box::new(testsfixtures::SAMPLE_USERS[2].raw_account.into());
         let valid_from = None;
 
         let treasury_account = Treasury::account_id();
-        let _ = Balances::make_free_balance_be(&treasury_account, 10000 * ACME);
+        let _ = Balances::make_free_balance_be(&treasury_account, 10000 * VFY);
 
         assert_ok!(Treasury::spend(
             RuntimeOrigin::root(),
@@ -181,7 +181,7 @@ fn pallet_bounties() {
         let proposer = testsfixtures::SAMPLE_USERS[2].raw_account.into();
         let origin = RuntimeOrigin::signed(proposer);
 
-        let value = 1000 * ACME;
+        let value = 1000 * VFY;
         let description = vec![0; 100];
 
         assert_ok!(Bounties::propose_bounty(origin, value, description.clone()));

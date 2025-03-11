@@ -24,7 +24,7 @@ fn main() {
         // variable.
         #[cfg(feature = "metadata-hash")]
         let builder = if std::env::var_os("ZKV_FORCE_DISABLE_METADATA_HASH").is_none() {
-            builder.enable_metadata_hash("ACME", 18)
+            builder.enable_metadata_hash("VFY", 18)
         } else {
             builder
         };

@@ -54,7 +54,7 @@ const ZKV_GENESIS_HASH: [u8; 32] =
 
 parameter_types! {
     pub const RootLocation: Location = Here.into_location();
-    /// The location of the ACME token, from the context of this chain. Since this token is native to this
+    /// The location of the VFY token, from the context of this chain. Since this token is native to this
     /// chain, we make it synonymous with it and thus it is the `Here` location, which means "equivalent to
     /// the context".
     pub const TokenLocation: Location = Here.into_location();
@@ -146,7 +146,7 @@ parameter_types! {
     pub const MaxAssetsIntoHolding: u32 = 64;
 }
 
-/// ZKV Relay recognizes/respects Test parachain as teleporter for ACME.
+/// ZKV Relay recognizes/respects Test parachain as teleporter for VFY.
 pub type TrustedTeleporters = xcm_builder::Case<AcmeForTest>;
 
 pub struct OnlyParachains;
