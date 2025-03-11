@@ -12,8 +12,8 @@ publish = false
 [dependencies]
 zkv-runtime = { path = "../../../runtime" }
 generate-bags = { path = ".." }
-tokio = { version = "1.22.0", features = ["full"] }
+tokio = { workspace = true, features = ["full"] }
 subxt = "0.37.0"
 
 # third-party
-clap = { version = "4.5.3", features = ["derive"] }
+clap = { workspace = true, features = ["derive"] }

@@ -11,9 +11,9 @@ license = "GPL-3.0"
 workspace = true
 
 [dependencies]
-async-trait = "0.1.57"
-futures = "0.3.21"
-parking_lot = "0.12.0"
+async-trait = { workspace = true }
+futures = { workspace = true }
+parking_lot = { workspace = true }
 polkadot-node-subsystem = { workspace = true }
 polkadot-node-subsystem-util = { workspace = true }
 polkadot-primitives = { workspace = true }

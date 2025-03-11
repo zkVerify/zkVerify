@@ -16,12 +16,12 @@ bitvec = { version = "1.0.0", default-features = false, features = ["alloc"] }
 parity-scale-codec = { version = "3.6.1", default-features = false, features = [
 	"derive",
 ] }
-log = { version = "0.4.17", default-features = false }
+log = { workspace = true, default-features = false }
 rustc-hex = { version = "2.1.0", default-features = false }
-scale-info = { version = "2.10.0", default-features = false, features = [
+scale-info = { workspace = true, default-features = false, features = [
 	"derive",
 ] }
-serde = { version = "1.0.193", default-features = false }
+serde = { workspace = true, default-features = false }
 serde_derive = { version = "1.0.117", optional = true }
 smallvec = "1.8.0"
 
@@ -73,11 +73,11 @@ xcm-executor = { workspace = true }
 xcm = { workspace = true }
 
 [dev-dependencies]
-hex-literal = "0.4.1"
+hex-literal = { workspace = true }
 tiny-keccak = { version = "2.0.2", features = ["keccak"] }
 sp-keyring = { workspace = true }
 sp-trie = { workspace = true }
-serde_json = "1.0.108"
+serde_json = { workspace = true }
 
 [build-dependencies]
 substrate-wasm-builder = { workspace = true }
@@ -165,6 +165,7 @@ std = [
 	"xcm-builder/std",
 	"xcm-executor/std",
 	"xcm/std",
+	"serde_json/std"
 ]
 
 runtime-benchmarks = [

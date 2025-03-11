@@ -21,7 +21,7 @@ risc0-verifier = { workspace = true }
 
 sp-runtime-interface = { workspace = true }
 codec = { workspace = true }
-log = "0.4.11"
+log = { workspace = true }
 hp-verifiers = { workspace = true }
 hp-groth16 = { workspace = true }
 

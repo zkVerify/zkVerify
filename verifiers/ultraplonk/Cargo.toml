@@ -19,7 +19,7 @@ frame-support = { workspace = true }
 frame-system = { workspace = true }
 pallet-verifiers = { workspace = true }
 frame-benchmarking = { workspace = true, optional = true }
-log = "0.4.21"
+log = { workspace = true }
 hex-literal = { workspace = true, optional = true }
 native = { workspace = true }
 sp-io = { workspace = true }

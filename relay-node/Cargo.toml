@@ -44,7 +44,7 @@ tikv-jemallocator = { version = "0.5.0", features = [
 [dev-dependencies]
 assert_cmd = "2.0.4"
 nix = { version = "0.27.1", features = ["signal"] }
-tempfile = "3.2.0"
+tempfile = { workspace = true }
 tokio = { workspace = true }
 substrate-rpc-client = { workspace = true }
 polkadot-core-primitives = { workspace = true }
