@@ -56,6 +56,18 @@ zkvRpc = {
             ],
             type: 'MerkleProof'
         }
+    },
+    compute: {
+        ultraplonk: {
+            description: 'Get the hash of an UltraPLONK verification key',
+            params: [
+                {
+                    name: 'vk',
+                    type: 'Bytes',
+                },
+            ],
+            type: 'H256'
+        }
     }
 };
 

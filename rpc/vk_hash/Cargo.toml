@@ -1,5 +1,5 @@
 [package]
-name = "ultraplonk-vk-hash"
+name = "vk-hash"
 version = "0.1.0"
 description = "Add runtime API for computing the vk hash"
 edition.workspace = true

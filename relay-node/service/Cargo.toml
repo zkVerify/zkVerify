@@ -136,7 +136,7 @@ polkadot-statement-distribution = { workspace = true, optional = true }
 sc-rpc = { workspace = true }
 sc-rpc-spec-v2 = { workspace = true }
 
-ultraplonk-vk-hash = { workspace = true }
+vk-hash = { workspace = true }
 
 [dev-dependencies]
 test-client = { path = "../test/client", features = ["runtime-benchmarks"] }
