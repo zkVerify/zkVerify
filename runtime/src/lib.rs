@@ -76,6 +76,7 @@ use ismp::module::IsmpModule;
 use ismp::router::{IsmpRouter, Request, Response};
 use ismp::Error;
 pub use pallet_balances::Call as BalancesCall;
+use pallet_hyperbridge::PALLET_HYPERBRIDGE_ID;
 use pallet_session::historical as pallet_session_historical;
 pub use pallet_timestamp::Call as TimestampCall;
 use static_assertions::const_assert;
@@ -88,6 +89,7 @@ pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
 pub mod governance;
+mod pallet_assets_mock;
 use governance::{pallet_custom_origins, Treasurer, TreasurySpender};
 
 pub mod macros {
@@ -1007,7 +1009,7 @@ impl pallet_ismp::Config for Runtime {
 
 impl pallet_hyperbridge_aggregations::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
-    type IsmpDispatcher = pallet_ismp::Pallet<Runtime>;
+    type IsmpDispatcher = pallet_hyperbridge::Pallet<Runtime>;
     type WeightInfo = weights::pallet_hyperbridge_aggregations::ZKVWeight<Runtime>;
 }
 
@@ -1015,6 +1017,44 @@ impl ismp_grandpa::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type IsmpHost = Ismp;
     type WeightInfo = weights::ismp_grandpa::ZKVWeight<Runtime>;
+}
+
+impl pallet_hyperbridge::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type IsmpHost = Ismp;
+}
+
+impl pallet_assets_mock::Config for Runtime {
+    type Currency = Balances;
+    type AssetId = u32;
+    type Balance = Balance;
+}
+
+parameter_types! {
+    pub const Decimals: u8 = 18;
+    pub const NativeAssetId: u32 = 0;
+}
+
+/// Should provide an account that is funded and can be used to pay for asset creation
+pub struct AssetAdmin;
+
+impl Get<AccountId> for AssetAdmin {
+    fn get() -> AccountId {
+        Treasury::account_id()
+    }
+}
+
+impl pallet_token_gateway::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type Dispatcher = Ismp;
+    type Assets = pallet_assets_mock::Pallet<Runtime>;
+    type NativeCurrency = Balances;
+    type AssetAdmin = AssetAdmin;
+    type CreateOrigin = EnsureRoot<AccountId>;
+    type NativeAssetId = NativeAssetId;
+    type Decimals = Decimals;
+    type EvmToSubstrate = ();
+    type WeightInfo = weights::pallet_token_gateway::ZKVWeight<Runtime>;
 }
 
 #[derive(Default)]
@@ -1025,6 +1065,10 @@ impl IsmpRouter for ModuleRouter {
             id if id == ZKV_MODULE_ID.to_bytes().as_slice() => Ok(Box::new(
                 pallet_hyperbridge_aggregations::Pallet::<Runtime>::default(),
             )),
+            id if TokenGateway::is_token_gateway(&id) => Ok(Box::new(TokenGateway::default())),
+            id if id == PALLET_HYPERBRIDGE_ID => {
+                Ok(Box::new(pallet_hyperbridge::Pallet::<Runtime>::default()))
+            }
             _ => Err(Error::ModuleNotFound(id))?,
         }
     }
@@ -1086,6 +1130,8 @@ construct_runtime!(
         Ismp: pallet_ismp = 90,
         IsmpGrandpa: ismp_grandpa = 91,
         HyperbridgeAggregations: pallet_hyperbridge_aggregations = 92,
+        TokenGateway: pallet_token_gateway = 93,
+        Hyperbridge: pallet_hyperbridge = 94,
 
         // Parachain pallets. Start indices at 100 to leave room.
         ParachainsOrigin: parachains::parachains_origin = 101,
@@ -1198,6 +1244,7 @@ mod benches {
         [pallet_aggregate, Aggregate]
         [pallet_hyperbridge_aggregations, HyperbridgeAggregations]
         [ismp_grandpa, IsmpGrandpa]
+        [pallet_token_gateway, TokenGateway]
         [pallet_claim, Claim]
         [pallet_groth16_verifier, Groth16VerifierBench::<Runtime>]
         [pallet_risc0_verifier, Risc0VerifierBench::<Runtime>]
