@@ -195,6 +195,28 @@ dependencies = [
 
 [[package]]
 name = "alloy-primitives"
+version = "0.7.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ccb3ead547f4532bc8af961649942f0b9c16ee9226e26caa3f38420651cc0bf4"
+dependencies = [
+ "alloy-rlp",
+ "bytes",
+ "cfg-if",
+ "const-hex",
+ "derive_more 0.99.19",
+ "hex-literal",
+ "itoa",
+ "k256",
+ "keccak-asm",
+ "proptest",
+ "rand",
+ "ruint",
+ "serde",
+ "tiny-keccak",
+]
+
+[[package]]
+name = "alloy-primitives"
 version = "0.8.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8c66bb6715b7499ea755bde4c96223ae8eb74e05c014ab38b9db602879ffb825"
@@ -249,12 +271,26 @@ dependencies = [
 
 [[package]]
 name = "alloy-sol-macro"
+version = "0.7.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2b40397ddcdcc266f59f959770f601ce1280e699a91fc1862f29cef91707cd09"
+dependencies = [
+ "alloy-sol-macro-expander 0.7.7",
+ "alloy-sol-macro-input 0.7.7",
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.100",
+]
+
+[[package]]
+name = "alloy-sol-macro"
 version = "0.8.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c7f9c3c7bc1f4e334e5c5fc59ec8dac894973a71b11da09065affc6094025049"
 dependencies = [
- "alloy-sol-macro-expander",
- "alloy-sol-macro-input",
+ "alloy-sol-macro-expander 0.8.22",
+ "alloy-sol-macro-input 0.8.22",
  "proc-macro-error2",
  "proc-macro2",
  "quote",
@@ -263,11 +299,29 @@ dependencies = [
 
 [[package]]
 name = "alloy-sol-macro-expander"
+version = "0.7.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "867a5469d61480fea08c7333ffeca52d5b621f5ca2e44f271b117ec1fc9a0525"
+dependencies = [
+ "alloy-sol-macro-input 0.7.7",
+ "const-hex",
+ "heck 0.5.0",
+ "indexmap 2.8.0",
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.100",
+ "syn-solidity 0.7.7",
+ "tiny-keccak",
+]
+
+[[package]]
+name = "alloy-sol-macro-expander"
 version = "0.8.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "46ff7aa715eb2404cb87fa94390d2c5d5addd70d9617e20b2398ee6f48cb21f0"
 dependencies = [
- "alloy-sol-macro-input",
+ "alloy-sol-macro-input 0.8.22",
  "const-hex",
  "heck 0.5.0",
  "indexmap 2.8.0",
@@ -277,6 +331,21 @@ dependencies = [
  "syn 2.0.100",
  "syn-solidity 0.8.22",
  "tiny-keccak",
+]
+
+[[package]]
+name = "alloy-sol-macro-input"
+version = "0.7.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2e482dc33a32b6fadbc0f599adea520bd3aaa585c141a80b404d0a3e3fa72528"
+dependencies = [
+ "const-hex",
+ "dunce",
+ "heck 0.5.0",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.100",
+ "syn-solidity 0.7.7",
 ]
 
 [[package]]
@@ -314,6 +383,17 @@ dependencies = [
  "alloy-sol-macro 0.4.2",
  "const-hex",
  "serde",
+]
+
+[[package]]
+name = "alloy-sol-types"
+version = "0.7.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a91ca40fa20793ae9c3841b83e74569d1cc9af29a2f5237314fd3452d51e38c7"
+dependencies = [
+ "alloy-primitives 0.7.7",
+ "alloy-sol-macro 0.7.7",
+ "const-hex",
 ]
 
 [[package]]
@@ -9306,6 +9386,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-hyperbridge"
+version = "16.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7b7d0c1b1f2395dddf8033c787b94e780423627b42380cb78533b72ec7126607"
+dependencies = [
+ "anyhow",
+ "ismp",
+ "pallet-ismp",
+ "parity-scale-codec",
+ "polkadot-sdk",
+ "primitive-types",
+ "scale-info",
+]
+
+[[package]]
 name = "pallet-hyperbridge-aggregations"
 version = "0.1.0"
 dependencies = [
@@ -10339,6 +10434,27 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
+]
+
+[[package]]
+name = "pallet-token-gateway"
+version = "16.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2c17357388a6e6440e7b0784b24e114d8cb34a698142cd00d6200731053a2dfc"
+dependencies = [
+ "alloy-primitives 0.7.7",
+ "alloy-sol-macro 0.7.7",
+ "alloy-sol-types 0.7.7",
+ "anyhow",
+ "ismp",
+ "log",
+ "pallet-hyperbridge",
+ "pallet-ismp",
+ "parity-scale-codec",
+ "polkadot-sdk",
+ "primitive-types",
+ "scale-info",
+ "token-gateway-primitives",
 ]
 
 [[package]]
@@ -18400,6 +18516,18 @@ dependencies = [
 
 [[package]]
 name = "syn-solidity"
+version = "0.7.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c837dc8852cb7074e46b444afb81783140dab12c58867b49fb3898fbafedf7ea"
+dependencies = [
+ "paste",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.100",
+]
+
+[[package]]
+name = "syn-solidity"
 version = "0.8.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ac9f9798a84bca5cd4d1760db691075fda8f2c3a5d9647e8bfd29eb9b3fabb87"
@@ -18890,6 +19018,25 @@ name = "tinyvec_macros"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
+
+[[package]]
+name = "token-gateway-primitives"
+version = "16.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2b2460ce8eabbf9f120d6d43350d6591a8a9e1f1d2c71854f35d81ad1026ca82"
+dependencies = [
+ "alloy-primitives 0.7.7",
+ "alloy-sol-macro 0.7.7",
+ "alloy-sol-types 0.7.7",
+ "anyhow",
+ "ismp",
+ "log",
+ "pallet-ismp",
+ "parity-scale-codec",
+ "polkadot-sdk",
+ "primitive-types",
+ "scale-info",
+]
 
 [[package]]
 name = "tokio"
@@ -20983,6 +21130,7 @@ dependencies = [
  "pallet-election-provider-support-benchmarking",
  "pallet-grandpa",
  "pallet-groth16-verifier",
+ "pallet-hyperbridge",
  "pallet-hyperbridge-aggregations",
  "pallet-ismp",
  "pallet-ismp-runtime-api",
@@ -21000,6 +21148,7 @@ dependencies = [
  "pallet-staking",
  "pallet-sudo",
  "pallet-timestamp",
+ "pallet-token-gateway",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",

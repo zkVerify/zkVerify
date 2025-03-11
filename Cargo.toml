@@ -197,6 +197,8 @@ pallet-ismp = { default-features = false, version = "=16.0.0" }
 pallet-ismp-rpc = { default-features = false, version = "16.0.0" }
 pallet-ismp-runtime-api = { default-features = false, version = "16.0.0" }
 ismp-grandpa = { default-features = false, version = "16.0.0" }
+pallet-token-gateway = { default-features = false, version = "16.0.0" }
+pallet-hyperbridge = { default-features = false, version = "16.0.0" }
 frame-metadata-hash-extension = { version = "0.6.0", default-features = false }
 pallet-hyperbridge-aggregations = { path = "pallets/hyperbridge_aggregations", default-features = false }
 alloy-dyn-abi = { default-features = false, version = "0.8.14" }
