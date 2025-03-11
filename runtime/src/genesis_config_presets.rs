@@ -23,12 +23,13 @@ use sp_consensus_grandpa::AuthorityId as GrandpaId;
 use sp_core::{sr25519, Pair, Public};
 use sp_genesis_builder::PresetId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
+use sp_staking::StakerStatus;
 #[cfg(not(feature = "std"))]
 use sp_std::alloc::format;
 use sp_std::vec;
 use sp_std::vec::Vec;
 
-const ENDOWMENT: Balance = 1_000_000 * ACME;
+const ENDOWMENT: Balance = 1_000_000 * VFY;
 const STASH_BOND: Balance = ENDOWMENT / 100;
 const DEFAULT_ENDOWED_SEEDS: [&str; 6] = ["Alice", "Bob", "Charlie", "Dave", "Eve", "Ferdie"];
 const LOCAL_N_AUTH: usize = 2;
@@ -41,6 +42,15 @@ pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Pu
 }
 
 type AccountPublic = <Signature as Verify>::Signer;
+
+type Ids = (
+    AccountId,
+    BabeId,
+    GrandpaId,
+    ValidatorId,
+    AssignmentId,
+    AuthorityDiscoveryId,
+);
 
 /// Generate an account ID from seed.
 pub fn get_account_id_from_seed<TPublic: Public>(seed: &str) -> AccountId
@@ -73,16 +83,7 @@ fn session_keys(
 }
 
 /// Generate a session authority key.
-pub fn authority_keys_from_seed(
-    s: &str,
-) -> (
-    AccountId,
-    BabeId,
-    GrandpaId,
-    ValidatorId,
-    AssignmentId,
-    AuthorityDiscoveryId,
-) {
+pub fn authority_keys_from_seed(s: &str) -> Ids {
     (
         get_account_id_from_seed::<sr25519::Public>(s),
         get_from_seed::<BabeId>(s),
@@ -93,78 +94,56 @@ pub fn authority_keys_from_seed(
     )
 }
 
-/*
 // Generate authority IDs from SS58 addresses.
 pub fn authority_ids_from_ss58(
-    sr25519_key: &str,
+    sr25519_account_key: &str,
+    sr25519_common_key: &str,
     ed25519_key: &str,
-) -> Result<
-    (
-        AccountId,
-        BabeId,
-        GrandpaId,
-        ValidatorId,
-        AssignmentId,
-        AuthorityDiscoveryId,
-    ),
-    String,
-> {
+) -> Result<Ids, sp_core::crypto::PublicError> {
     Ok((
-        from_ss58check(sr25519_key).map_err(|error| {
-            format!(
-                "An error occurred while converting SS58 to AccountId: {}",
-                error
-            )
-        })?,
-        from_ss58check(sr25519_key).map_err(|error| {
-            format!(
-                "An error occurred while converting SS58 to BabeId: {}",
-                error
-            )
-        })?,
-        from_ss58check(ed25519_key).map_err(|error| {
-            format!(
-                "An error occurred while converting SS58 to GrandpaId: {}",
-                error
-            )
-        })?,
-        from_ss58check(sr25519_key).map_err(|error| {
-            format!(
-                "An error occurred while converting SS58 to ValidatorId: {}",
-                error
-            )
-        })?,
-        from_ss58check(sr25519_key).map_err(|error| {
-            format!(
-                "An error occurred while converting SS58 to AssignmentId: {}",
-                error
-            )
-        })?,
-        from_ss58check(sr25519_key).map_err(|error| {
-            format!(
-                "An error occurred while converting SS58 to AuthorityDiscoveryId: {}",
-                error
-            )
-        })?,
+        from_ss58check(sr25519_account_key)?,
+        from_ss58check(sr25519_common_key)?,
+        from_ss58check(ed25519_key)?,
+        from_ss58check(sr25519_common_key)?,
+        from_ss58check(sr25519_common_key)?,
+        from_ss58check(sr25519_common_key)?,
     ))
 }
-*/
+
+trait StakerData {
+    fn staker_data(
+        &self,
+    ) -> (
+        AccountId,
+        AccountId,
+        Balance,
+        sp_staking::StakerStatus<AccountId>,
+    );
+}
+
+impl StakerData for Box<dyn StakerData> {
+    fn staker_data(&self) -> (AccountId, AccountId, Balance, StakerStatus<AccountId>) {
+        self.as_ref().staker_data()
+    }
+}
+
+impl StakerData for (AccountId, Balance) {
+    fn staker_data(&self) -> (AccountId, AccountId, Balance, StakerStatus<AccountId>) {
+        (
+            self.0.clone(),
+            self.0.clone(),
+            self.1,
+            StakerStatus::Validator,
+        )
+    }
+}
 
 /// Configure initial storage state for FRAME modules.
 fn genesis(
-    initial_authorities: Vec<(
-        (
-            AccountId,
-            BabeId,
-            GrandpaId,
-            ValidatorId,
-            AssignmentId,
-            AuthorityDiscoveryId,
-        ),
-        Balance,
-    )>,
+    initial_authorities: Vec<(Ids, Balance)>,
     root_key: AccountId,
     endowed_accounts: Vec<(AccountId, Balance)>,
+    stakers: Vec<Box<dyn StakerData>>,
     min_validator_count: u32,
     max_validator_count: Option<u32>,
     min_validator_bond: Balance,
@@ -190,9 +169,8 @@ fn genesis(
             "minValidatorBond": min_validator_bond,
             "minNominatorBond": min_nominator_bond,
             "validatorCount": 10,
-            "stakers": initial_authorities.iter()
-                .cloned()
-                .map(|((account, ..), staking)| (account.clone(), account, staking, sp_staking::StakerStatus::Validator::<AccountId>))
+            "stakers": stakers.iter()
+                .map(StakerData::staker_data)
                 .collect::<Vec<_>>(),
         },
         "sudo": {
@@ -250,30 +228,408 @@ fn default_parachains_host_configuration(
     }
 }
 
-pub fn zkv_testnet_config_genesis() -> serde_json::Value {
-    genesis(
+#[derive(Clone)]
+struct FoundedAccount<'a> {
+    /// The account-id sr25519 public key
+    _account: &'a str,
+    /// The account-id
+    account_id: AccountId,
+    /// Initial balance
+    balance: Balance,
+}
+
+impl<'a> FoundedAccount<'a> {
+    fn from_id(
+        sr25519_key: &'a str,
+        balance: Balance,
+    ) -> Result<Self, sp_core::crypto::PublicError> {
+        Ok(Self {
+            _account: sr25519_key,
+            account_id: from_ss58check(sr25519_key)?,
+            balance,
+        })
+    }
+
+    fn json_data(&self) -> (AccountId, Balance) {
+        (self.account_id.clone(), self.balance)
+    }
+}
+
+#[derive(Clone)]
+struct ValidatorData<'a> {
+    /// The account-id sr25519 public key
+    account: FoundedAccount<'a>,
+    /// The common sr25519 public key (used for others key instead of grandpa and account)
+    _sr: &'a str,
+    /// The ed25519 public key (used for grandpa)
+    _ed: &'a str,
+    ///  Bonded data
+    bonded: Balance,
+
+    babe_id: BabeId,
+    grandpa_id: GrandpaId,
+    validator_id: ValidatorId,
+    assignment_id: AssignmentId,
+    authority_discovery_id: AuthorityDiscoveryId,
+}
+
+impl<'a> StakerData for ValidatorData<'a> {
+    fn staker_data(&self) -> (AccountId, AccountId, Balance, StakerStatus<AccountId>) {
+        (
+            self.account.account_id.clone(),
+            self.account.account_id.clone(),
+            self.bonded,
+            StakerStatus::Validator,
+        )
+    }
+}
+
+impl<'a> ValidatorData<'a> {
+    fn from_ids(
+        sr25519_account_key: &'a str,
+        sr25519_common_key: &'a str,
+        ed25519_key: &'a str,
+        balance: Balance,
+        bonded: Balance,
+    ) -> Result<Self, sp_core::crypto::PublicError> {
+        let (account_id, babe_id, grandpa_id, validator_id, assignment_id, authority_discovery_id) =
+            authority_ids_from_ss58(sr25519_account_key, sr25519_common_key, ed25519_key)?;
+        Ok(Self {
+            account: FoundedAccount {
+                _account: sr25519_account_key,
+                account_id,
+                balance,
+            },
+            _sr: sr25519_common_key,
+            _ed: ed25519_key,
+            bonded,
+            babe_id,
+            grandpa_id,
+            validator_id,
+            assignment_id,
+            authority_discovery_id,
+        })
+    }
+
+    fn ids(&self) -> Ids {
+        (
+            self.account.account_id.clone(),
+            self.babe_id.clone(),
+            self.grandpa_id.clone(),
+            self.validator_id.clone(),
+            self.assignment_id.clone(),
+            self.authority_discovery_id.clone(),
+        )
+    }
+    fn as_initial_authority(&self) -> (Ids, Balance) {
+        (self.ids(), self.account.balance)
+    }
+}
+
+#[derive(Clone)]
+struct NominatorData<'a> {
+    /// The account-id sr25519 public key
+    account: FoundedAccount<'a>,
+    bonded: Balance,
+    voted: Vec<AccountId>,
+}
+
+impl<'a> StakerData for NominatorData<'a> {
+    fn staker_data(&self) -> (AccountId, AccountId, Balance, StakerStatus<AccountId>) {
+        (
+            self.account.account_id.clone(),
+            self.account.account_id.clone(),
+            self.bonded,
+            StakerStatus::Nominator(self.voted.clone()),
+        )
+    }
+}
+
+pub fn zkv_testnet_config_genesis() -> Result<serde_json::Value, sp_core::crypto::PublicError> {
+    const COMMUNITY_CUSTODIAL_BASE_BALANCE: Balance = 100 * MILLIONS;
+    const COMMUNITY_CUSTODIAL_BUFFER_BALANCE: Balance = 50 * MILLIONS;
+    const FOUNDATION_BASE_BALANCE: Balance = (313 * MILLIONS + 750 * THOUSANDS) / 2;
+    const CONTRIBUTOR_BALANCE: Balance = (196 * MILLIONS + 250 * THOUSANDS) / 2;
+    const INVESTOR_BALANCE: Balance = (140 * MILLIONS) / 2;
+    const VALIDATOR_BALANCE: Balance = 100 * THOUSANDS;
+    const VALIDATOR_BOND: Balance = VALIDATOR_BALANCE;
+    const NOMINATOR_BALANCE: Balance = 10 * MILLIONS;
+    const NOMINATOR_BOND: Balance = NOMINATOR_BALANCE;
+    const TREASURY_BALANCE: Balance = MILLIONS;
+    const SUDO_BALANCE: Balance = 50 * VFY;
+
+    // From "modlzk/trsry" padded right with zeros.
+    let treasury_account = FoundedAccount::from_id(
+        "5EYCAe5kjJEU9CJ4QMep83WeQNvGwkWpknkU7r3Q3w7n13iV",
+        TREASURY_BALANCE,
+    )?;
+
+    let community_custodians = [
+        FoundedAccount::from_id(
+            "5DfhBXU2nzQeGtx7fNkRdRC3vajrfLPvVGsDKQ6jbHiiUJqa",
+            COMMUNITY_CUSTODIAL_BASE_BALANCE,
+        )?,
+        FoundedAccount::from_id(
+            "5FpQiJJXZFGGGUBiX6xS81igb6qQANrPnX9FKPaGuBqb3Zay",
+            COMMUNITY_CUSTODIAL_BASE_BALANCE,
+        )?,
+        // Used to found the old owners, treasury and claim pallets
+        FoundedAccount::from_id(
+            "5CPfe6NMYzy4HH4sYvjRnubCu5yfhY8AXhaYkoM5CeuYFT5c",
+            COMMUNITY_CUSTODIAL_BASE_BALANCE + COMMUNITY_CUSTODIAL_BUFFER_BALANCE
+                - (TREASURY_BALANCE + EXISTENTIAL_DEPOSIT),
+        )?,
+    ];
+
+    let contributors_custody = [
+        FoundedAccount::from_id(
+            "5Fhb9daJKNaASmVdsM4pmsLDtJv5zS8W7Kemh4iyFWgtnYgt",
+            CONTRIBUTOR_BALANCE,
+        )?,
+        FoundedAccount::from_id(
+            "5CaLGMj5FkpnoBfTkXBT4gHXZLzdmqPeTWE1tyuYZB3EcyEE",
+            CONTRIBUTOR_BALANCE,
+        )?,
+    ];
+
+    let investors_custody = [
+        FoundedAccount::from_id(
+            "5FZboFp74WMi3ogERtYbmLwiZmbhTbxhfApAmf4jSgdw98kR",
+            INVESTOR_BALANCE,
+        )?,
+        FoundedAccount::from_id(
+            "5FTyReguLB6VN2iWzv9ZqHfM8ZtsE9CPiXyWS89A3xaheEF7",
+            INVESTOR_BALANCE,
+        )?,
+    ];
+
+    let initial_authorities = [
+        ValidatorData::from_ids(
+            "5Hb48vxYpQZQHRbzLMak1AKhtuww6wNK1oMFyigysK8zvHyW",
+            "5Hb48vxYpQZQHRbzLMak1AKhtuww6wNK1oMFyigysK8zvHyW",
+            "5CpBzkEqzW5RPjDqMMqJuTSkaNrdbo3WxYC8arVjysd96DCN",
+            VALIDATOR_BALANCE,
+            VALIDATOR_BOND,
+        )?,
+        ValidatorData::from_ids(
+            "5G6win2P1ty9X6DYuvfSFkijHGVx8yceVp1uNFntENyu7H4j",
+            "5G6win2P1ty9X6DYuvfSFkijHGVx8yceVp1uNFntENyu7H4j",
+            "5CkhLKX285NbSy4FioEBTwF7Q5X69wmr2d8z58tWr1V8sZK4",
+            VALIDATOR_BALANCE,
+            VALIDATOR_BOND,
+        )?,
+        ValidatorData::from_ids(
+            "5DXDWSgAioftJk5CBhnE1WM7hJVAiCsXALSLxzcV5ouKLo5p",
+            "5DXDWSgAioftJk5CBhnE1WM7hJVAiCsXALSLxzcV5ouKLo5p",
+            "5E6s3Ho4svXABHokXUCcVpZ6UraRR7JpA6VBmYHDau1ZLep1",
+            VALIDATOR_BALANCE,
+            VALIDATOR_BOND,
+        )?,
+        ValidatorData::from_ids(
+            "5C5PKzsRhThtFNbUTeKAaaubFK862Pg75AQM4GavWfghvVK5",
+            "5C5PKzsRhThtFNbUTeKAaaubFK862Pg75AQM4GavWfghvVK5",
+            "5HHKm8QwxoogA1crujuDLQhjxAcGX6VCACqhjYTffBW2nENj",
+            VALIDATOR_BALANCE,
+            VALIDATOR_BOND,
+        )?,
+        ValidatorData::from_ids(
+            "5H6TGvsWATCc6YzJD4iNdeLE54RMvDcy5BgbqamNPJNNbr5L",
+            "5H6TGvsWATCc6YzJD4iNdeLE54RMvDcy5BgbqamNPJNNbr5L",
+            "5G5pgFvQJXiQph63HbtAQey6bNRdzpqbJezt2iAe3xGYtRyt",
+            VALIDATOR_BALANCE,
+            VALIDATOR_BOND,
+        )?,
+        ValidatorData::from_ids(
+            "5CuCBRRajfFFBwRTJ4EPjyPMgoMDKzRSfBa6ktcw8DVcydwM",
+            "5CuCBRRajfFFBwRTJ4EPjyPMgoMDKzRSfBa6ktcw8DVcydwM",
+            "5HdvRwJirHLhC98fkyp22EK5XXfD6dxGe9o45UT49JEES712",
+            VALIDATOR_BALANCE,
+            VALIDATOR_BOND,
+        )?,
+        ValidatorData::from_ids(
+            "5FgWmvTtUMBTKaMa53MgJskPXUwakJwyx61VGxEjP8YPEyQv",
+            "5FgWmvTtUMBTKaMa53MgJskPXUwakJwyx61VGxEjP8YPEyQv",
+            "5GcR9PeGmeFzKpkbVEbP95U4WWSK4z6CWGC9pN6tQpTxbVGS",
+            VALIDATOR_BALANCE,
+            VALIDATOR_BOND,
+        )?,
+        ValidatorData::from_ids(
+            "5C5XGEVmFv7NE6tZ4yJjvCHaaGFxPoTCTURP6WBPxVmppbx2",
+            "5C5XGEVmFv7NE6tZ4yJjvCHaaGFxPoTCTURP6WBPxVmppbx2",
+            "5Cum65qBcju8KnLjxog66kJ7dtbZE92iA3SbDNuL6CPgPqWq",
+            VALIDATOR_BALANCE,
+            VALIDATOR_BOND,
+        )?,
+        ValidatorData::from_ids(
+            "5DeewRqTpr6wm5HZKDRikWpcZ3B6z9ESRFgaqacJEhFAK5Gy",
+            "5DeewRqTpr6wm5HZKDRikWpcZ3B6z9ESRFgaqacJEhFAK5Gy",
+            "5GyiGjs9udrpQEZcS3aFYtHQ7vHHbwkkVEtwce3vHzHpSvZ9",
+            VALIDATOR_BALANCE,
+            VALIDATOR_BOND,
+        )?,
+        ValidatorData::from_ids(
+            "5Cd7HLhDtvzUsmsmBZ7tvGHCdtCofEiAfcVnxWW9U1SyaU9C",
+            "5Cd7HLhDtvzUsmsmBZ7tvGHCdtCofEiAfcVnxWW9U1SyaU9C",
+            "5Euet7r4REQogSfNwBjqvwweFPq7hHsTgaU91dZf2xG9eskf",
+            VALIDATOR_BALANCE,
+            VALIDATOR_BOND,
+        )?,
+    ];
+
+    let nominators = [
+        NominatorData {
+            account: FoundedAccount::from_id(
+                "5Dc9XT96gctHvspnq7inTTGQJBVhwH3Tb97Pxstn4sjeR72y",
+                NOMINATOR_BALANCE,
+            )?,
+            bonded: NOMINATOR_BOND,
+            voted: vec![initial_authorities[0].account.account_id.clone()],
+        },
+        NominatorData {
+            account: FoundedAccount::from_id(
+                "5Ew9SswxvsvMkAQNGbAKdzZwkoTw1QeAwX8fz3yH6VJKtqyK",
+                NOMINATOR_BALANCE,
+            )?,
+            bonded: NOMINATOR_BOND,
+            voted: vec![initial_authorities[1].account.account_id.clone()],
+        },
+        NominatorData {
+            account: FoundedAccount::from_id(
+                "5EA4oAqUH7e5P8hdtqAk3yDBNMkrgF3Qj3nUP78Fkxb1aEUZ",
+                NOMINATOR_BALANCE,
+            )?,
+            bonded: NOMINATOR_BOND,
+            voted: vec![initial_authorities[2].account.account_id.clone()],
+        },
+        NominatorData {
+            account: FoundedAccount::from_id(
+                "5Hgk8p2rzTrvyVseuwTrn4EWoiPfY68Kps4znEPaywQeW29m",
+                NOMINATOR_BALANCE,
+            )?,
+            bonded: NOMINATOR_BOND,
+            voted: vec![initial_authorities[3].account.account_id.clone()],
+        },
+        NominatorData {
+            account: FoundedAccount::from_id(
+                "5CarZooki5J2RHBfDxMXV5MLEUzNLSz5THsvCEzVAP3iBztX",
+                NOMINATOR_BALANCE,
+            )?,
+            bonded: NOMINATOR_BOND,
+            voted: vec![initial_authorities[4].account.account_id.clone()],
+        },
+        NominatorData {
+            account: FoundedAccount::from_id(
+                "5GxYV6EKP6fxmw6L12xBVmiqjsC7PsZ31dKXuCeT5cTbet3N",
+                NOMINATOR_BALANCE,
+            )?,
+            bonded: NOMINATOR_BOND,
+            voted: vec![initial_authorities[5].account.account_id.clone()],
+        },
+        NominatorData {
+            account: FoundedAccount::from_id(
+                "5HjY1KMZsw85ZtYoPUVgeQgLA2HWgzxAhn43aNyzMgYFdGxz",
+                NOMINATOR_BALANCE,
+            )?,
+            bonded: NOMINATOR_BOND,
+            voted: vec![initial_authorities[6].account.account_id.clone()],
+        },
+        NominatorData {
+            account: FoundedAccount::from_id(
+                "5HGWZp8ZubwmgeWAKXPKxdSiLqNEYCXqBF99buybGGJR7Jar",
+                NOMINATOR_BALANCE,
+            )?,
+            bonded: NOMINATOR_BOND,
+            voted: vec![initial_authorities[7].account.account_id.clone()],
+        },
+        NominatorData {
+            account: FoundedAccount::from_id(
+                "5EqZcGnZXmDEqLEk4YxAPQh389GS5iB91fxAPG8hMgyLDn1C",
+                NOMINATOR_BALANCE,
+            )?,
+            bonded: NOMINATOR_BOND,
+            voted: vec![initial_authorities[8].account.account_id.clone()],
+        },
+        NominatorData {
+            account: FoundedAccount::from_id(
+                "5GebkgMMqQGGE8dRkWySirUhu798xTNyq9ku2XmuvWeHw11H",
+                NOMINATOR_BALANCE,
+            )?,
+            bonded: NOMINATOR_BOND,
+            voted: vec![initial_authorities[9].account.account_id.clone()],
+        },
+    ];
+
+    let foundation_custody = [
+        FoundedAccount::from_id(
+            "5DHe8Sm15RHkdWztyyStTqyjMfo7mdkWaHNaUWn6vqtx9a9j",
+            FOUNDATION_BASE_BALANCE,
+        )?,
+        FoundedAccount::from_id(
+            "5D57RN5zN3KdEaWgFQMuriAPSH6KbZjwCjRYaAELyGexxK9a",
+            FOUNDATION_BASE_BALANCE
+                - (VALIDATOR_BALANCE * initial_authorities.len() as Balance
+                    + NOMINATOR_BALANCE * nominators.len() as Balance
+                    + SUDO_BALANCE),
+        )?,
+    ];
+
+    let sudo_account = FoundedAccount::from_id(
+        "5DaF8tEbzij76QpxHK9jnjoVDAFRuwcwCisswN5iAyss5CqR",
+        SUDO_BALANCE,
+    )?;
+
+    let balances = initial_authorities
+        .iter()
+        .map(|a| &a.account)
+        .chain(nominators.iter().map(|n| &n.account))
+        .chain(community_custodians.iter())
+        .chain(foundation_custody.iter())
+        .chain(contributors_custody.iter())
+        .chain(investors_custody.iter())
+        .chain(sp_std::iter::once(&treasury_account))
+        .chain(sp_std::iter::once(&sudo_account))
+        .map(FoundedAccount::json_data)
+        .collect::<Vec<_>>();
+    let staker = initial_authorities
+        .iter()
+        .cloned()
+        .map(|v| Box::new(v) as Box<dyn StakerData>)
+        .chain(
+            nominators
+                .iter()
+                .cloned()
+                .map(|v| Box::new(v) as Box<dyn StakerData>),
+        )
+        .collect();
+
+    Ok(genesis(
         // Initial PoA authorities
-        vec![
-            // TBD
-        ],
+        initial_authorities
+            .iter()
+            .map(ValidatorData::as_initial_authority)
+            .collect::<Vec<_>>(),
         // Sudo account [nh-sudo-t1]
-        from_ss58check("5D9txxK9DTvgCznTjJo7q1cxAgmWa83CzHvcz8zhBtLgaLBV").unwrap(),
+        sudo_account.account_id.clone(),
         // Initial balances
-        vec![
-            // TBD
-        ],
+        balances,
+        staker,
         // min validator count
         3,
         // max validator count
         Some(200),
         // min validator bond
-        10_000 * ACME,
+        10 * THOUSANDS,
         // min nominator bond
-        10 * ACME,
-    )
+        10 * VFY,
+    ))
 }
 
 pub fn zkv_local_config_genesis() -> serde_json::Value {
+    let balances = DEFAULT_ENDOWED_SEEDS
+        .into_iter()
+        .map(|seed| (get_account_id_from_seed::<sr25519::Public>(seed), ENDOWMENT))
+        .collect::<Vec<_>>();
+
     genesis(
         // Initial PoA authorities
         DEFAULT_ENDOWED_SEEDS
@@ -284,10 +640,11 @@ pub fn zkv_local_config_genesis() -> serde_json::Value {
         // Sudo account
         get_account_id_from_seed::<sr25519::Public>(DEFAULT_ENDOWED_SEEDS[0]),
         // Pre-funded accounts
-        DEFAULT_ENDOWED_SEEDS
+        balances.clone(),
+        balances
             .into_iter()
-            .map(|seed| (get_account_id_from_seed::<sr25519::Public>(seed), ENDOWMENT))
-            .collect::<Vec<_>>(),
+            .map(|v| Box::new(v) as Box<dyn StakerData>)
+            .collect(),
         // min validator count
         1,
         // max validator count
@@ -300,6 +657,21 @@ pub fn zkv_local_config_genesis() -> serde_json::Value {
 }
 
 pub fn zkv_development_config_genesis() -> serde_json::Value {
+    let balances = DEFAULT_ENDOWED_SEEDS
+        .into_iter()
+        .map(|seed| (get_account_id_from_seed::<sr25519::Public>(seed), ENDOWMENT))
+        .take(2)
+        .chain([
+            // The following is a workaround for pallet_treasury benchmarks which hardcode
+            // a payment of 100 (lower than EXISTENTIAL_DEPOSIT) to a given address ([0x0])
+            #[cfg(feature = "runtime-benchmarks")]
+            (
+                from_ss58check("5C4hrfjw9DjXZTzV3MwzrrAr9P1MJhSrvWGWqi1eSuyUpnhM").unwrap(),
+                ENDOWMENT,
+            ),
+        ])
+        .collect::<Vec<_>>();
+
     genesis(
         // Initial PoA authorities
         DEFAULT_ENDOWED_SEEDS
@@ -310,20 +682,11 @@ pub fn zkv_development_config_genesis() -> serde_json::Value {
         // Sudo account
         get_account_id_from_seed::<sr25519::Public>(DEFAULT_ENDOWED_SEEDS[0]),
         // Pre-funded accounts
-        DEFAULT_ENDOWED_SEEDS
+        balances.clone(),
+        balances
             .into_iter()
-            .map(|seed| (get_account_id_from_seed::<sr25519::Public>(seed), ENDOWMENT))
-            .take(2)
-            .chain([
-                // The following is a workaround for pallet_treasury benchmarks which hardcode
-                // a payment of 100 (lower than EXISTENTIAL_DEPOSIT) to a given address ([0x0])
-                #[cfg(feature = "runtime-benchmarks")]
-                (
-                    from_ss58check("5C4hrfjw9DjXZTzV3MwzrrAr9P1MJhSrvWGWqi1eSuyUpnhM").unwrap(),
-                    ENDOWMENT,
-                ),
-            ])
-            .collect::<Vec<_>>(),
+            .map(|v| Box::new(v) as Box<dyn StakerData>)
+            .collect(),
         // min validator count
         1,
         // max validator count
@@ -347,7 +710,7 @@ pub fn get_preset(id: &sp_genesis_builder::PresetId) -> Option<sp_std::vec::Vec<
     let cfg = match id.try_into() {
         Ok("development") => zkv_development_config_genesis(),
         Ok("local") => zkv_local_config_genesis(),
-        Ok("testnet") => zkv_testnet_config_genesis(),
+        Ok("testnet") => zkv_testnet_config_genesis().unwrap(),
         _ => return None,
     };
     Some(
@@ -365,11 +728,11 @@ mod tests {
     // by checking that the json returned by testnet_genesis() contains the field "session"
     #[test]
     fn testnet_genesis_should_set_session_keys() {
-        let initial_authorities = vec![(authority_keys_from_seed("Alice"), 7 * ACME)];
+        let initial_authorities = vec![(authority_keys_from_seed("Alice"), 7 * VFY)];
         let root_key = get_account_id_from_seed::<sr25519::Public>("Alice");
 
         let ret_val: serde_json::Value =
-            genesis(initial_authorities, root_key, vec![], 1, None, 0, 0);
+            genesis(initial_authorities, root_key, vec![], vec![], 1, None, 0, 0);
 
         let session_config = &ret_val["session"];
 

@@ -378,7 +378,7 @@ mod sudo {
             assert_ok!(Balances::transfer_allow_death(
                 RuntimeOrigin::signed(account_ids[0].clone()),
                 MultiAddress::Id(multi.clone()),
-                1 * currency::ACME
+                1 * currency::VFY
             ));
 
             // Setting the multisig account as the new sudo account
