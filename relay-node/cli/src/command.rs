@@ -69,9 +69,12 @@ impl SubstrateCli for Cli {
         id: &str,
     ) -> std::result::Result<Box<dyn sc_service::ChainSpec + 'static>, String> {
         Ok(match id {
-            "dev" => Box::new(service::chain_spec::development_config()?),
+            "dev" | "development" => Box::new(service::chain_spec::development_config()?),
             "local" => Box::new(service::chain_spec::local_config()?),
-            "" | "test" => Box::new(service::chain_spec::testnet_config()?),
+            "" | "test" | "testnet" => Box::new(service::chain_spec::ChainSpec::from_json_bytes(
+                &include_bytes!("../chain-specs/zkverify_testnet.json")[..],
+            )?),
+            "testnet_build" => Box::new(service::chain_spec::testnet_config()?),
             path => Box::new(service::chain_spec::ChainSpec::from_json_file(
                 std::path::PathBuf::from(path),
             )?),
