@@ -1065,7 +1065,7 @@ impl IsmpRouter for ModuleRouter {
             id if id == ZKV_MODULE_ID.to_bytes().as_slice() => Ok(Box::new(
                 pallet_hyperbridge_aggregations::Pallet::<Runtime>::default(),
             )),
-            id if TokenGateway::is_token_gateway(&id) => Ok(Box::new(TokenGateway::default())),
+            id if TokenGateway::is_token_gateway(id) => Ok(Box::new(TokenGateway::default())),
             id if id == PALLET_HYPERBRIDGE_ID => {
                 Ok(Box::new(pallet_hyperbridge::Pallet::<Runtime>::default()))
             }
