@@ -100,7 +100,7 @@ mod reject {
     }
 
     #[apply(curves)]
-    fn incoherent_vk_and_num_inputs(curve: Curve) {
+    fn inconsistent_vk_and_num_inputs(curve: Curve) {
         let (proof, vk, _) = groth16::Groth16::get_instance(4, Some(0), curve);
         let (_, _, inputs) = groth16::Groth16::get_instance(5, Some(0), curve);
 
