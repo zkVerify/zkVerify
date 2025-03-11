@@ -1,0 +1,21 @@
+name: Check Cargo.lock
+
+run-name: "Workflow CI/CD Step: check Cargo.lock"
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  check-cargo-lock:
+    runs-on: warp-ubuntu-latest-x64-2x
+    name: Check lockfile
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check lockfile
+        uses: ./.github/actions/cmd-in-docker
+        with:
+          command: "cargo update --workspace --locked"
+          use_cache: "no"

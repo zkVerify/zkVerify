@@ -6,6 +6,10 @@ on:
   workflow_dispatch:
 
 jobs:
+  check-lockfile-job:
+    name: Check lockfile job
+    uses: ./.github/workflows/CI-check-lockfile.yml
+
   build-job:
     name: Cargo build job
     uses: ./.github/workflows/CI-build.yml
@@ -44,7 +48,18 @@ jobs:
   set-overall-result:
     runs-on: warp-ubuntu-latest-x64-2x
     name: Set overall status
-    needs: [build-job, test-job, try-runtime-job, coverage-job, lint-format-job, zombienet-test-job, audit-job, feature-propagation-job]
+    needs:
+      [
+        check-lockfile-job,
+        build-job,
+        test-job,
+        try-runtime-job,
+        coverage-job,
+        lint-format-job,
+        zombienet-test-job,
+        audit-job,
+        feature-propagation-job,
+      ]
     if: ${{ github.event_name == 'pull_request' && !cancelled() }}
     outputs:
       branch-name: ${{ steps.get-info.outputs.BRANCH_NAME }}
@@ -81,7 +96,8 @@ jobs:
             OVERALL_STATUS="cancelled"
           else
             OVERALL_STATUS="success"
-            if [ "${{ needs.build-job.result }}" != "success" ] ||
+            if [ "${{ needs.check-lockfile-job.result }}" != "success" ] ||
+                [ "${{ needs.build-job.result }}" != "success" ] ||
                 [ "${{ needs.test-job.result }}" != "success" ] ||
                 [ "${{ needs.try-runtime-job.result }}" != "success" ] ||
                 [ "${{ needs.coverage-job.result }}" != "success" ] ||
