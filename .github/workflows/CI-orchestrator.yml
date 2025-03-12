@@ -12,22 +12,27 @@ jobs:
 
   build-job:
     name: Cargo build job
+    needs: [check-lockfile-job]
     uses: ./.github/workflows/CI-build.yml
 
   test-job:
     name: Cargo test job
+    needs: [check-lockfile-job]
     uses: ./.github/workflows/CI-test.yml
 
   try-runtime-job:
     name: Try runtime job
+    needs: [check-lockfile-job]
     uses: ./.github/workflows/CI-try-runtime.yml
 
   coverage-job:
     name: Coverage job
+    needs: [check-lockfile-job]
     uses: ./.github/workflows/CI-coverage.yml
 
   lint-format-job:
     name: Lint and format job
+    needs: [check-lockfile-job]
     uses: ./.github/workflows/CI-lint-format.yml
 
   # Requires artifacts from the build job
@@ -38,10 +43,12 @@ jobs:
 
   audit-job:
     name: Cargo audit job
+    needs: [check-lockfile-job]
     uses: ./.github/workflows/CI-audit.yml
 
   feature-propagation-job:
     name: Feature propagation job
+    needs: [check-lockfile-job]
     uses: ./.github/workflows/CI-feature-propagation.yml
 
   # Only for pull requests and if not canceled
