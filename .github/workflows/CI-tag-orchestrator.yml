@@ -9,13 +9,10 @@ jobs:
   docker-image:
     name: Docker image
     strategy:
-      matrix:
-        chain: [solo, relay]
       fail-fast: false
 
     uses: ./.github/workflows/CI-docker-build-publish.yml
     with:
-      chain: ${{ matrix.chain }}
       release_branch: release
     secrets:
       DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}

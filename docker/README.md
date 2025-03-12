@@ -78,9 +78,7 @@ A script that generate a docker image with the base dependencies and the given e
 All Dockerfiles are located in `docker/dockerfiles` folder.
 
 * `zkv-builder.Dockerfile`: create an image with all dependencies needed to compile the node and is used by `my_cargo` script
-* `binary_injected.Dockerfile`: Is mainly used by the scripts and inject one or more binaries in a standard ubuntu image
-* `zkv-docker-compose.yaml`: the cluster definition that runs
-2 validator nodes (Alice and Bob) and a simple node that expose its rpc and P2P ports on localhost.
+* `binary_injected.Dockerfile`: mainly used by the scripts and inject one or more binaries in a standard ubuntu image
 * `zkv-relay.Dockerfile`: generate a relay node image with a fresh source compilation (leverage on docker layers to create a small docker image)
 
 All compose definitions are located in `docker/compose` folder.
