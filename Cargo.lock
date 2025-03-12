@@ -84,7 +84,6 @@ dependencies = [
  "aggregate-rpc-runtime-api",
  "jsonrpsee",
  "parity-scale-codec",
- "sc-rpc-api",
  "sp-api",
  "sp-blockchain",
  "sp-core",
@@ -5458,17 +5457,10 @@ dependencies = [
 name = "hp-dispatch"
 version = "0.1.0"
 dependencies = [
- "binary-merkle-tree",
- "frame-benchmarking",
  "frame-support",
- "frame-system",
- "hex-literal",
- "hp-on-proof-verified",
  "ismp",
  "log",
- "pallet-balances",
  "parity-scale-codec",
- "rstest",
  "scale-info",
  "sp-core",
  "sp-io",
@@ -7803,7 +7795,6 @@ name = "native-cache"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "regex",
  "toml 0.8.20",
  "walkdir",
 ]
@@ -9160,7 +9151,6 @@ dependencies = [
  "pallet-ismp",
  "pallet-timestamp",
  "parity-scale-codec",
- "rstest",
  "scale-info",
  "sp-core",
  "sp-io",
@@ -9636,7 +9626,6 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "hex-literal",
  "hp-verifiers",
  "log",
  "pallet-balances",
@@ -10364,7 +10353,6 @@ dependencies = [
 name = "pallet-verifiers-macros"
 version = "0.1.0"
 dependencies = [
- "derive-syn-parse",
  "pretty_assertions",
  "proc-macro-crate 3.3.0",
  "proc-macro2",
@@ -10614,7 +10602,6 @@ name = "paratest-runtime"
 version = "0.6.0"
 dependencies = [
  "cumulus-pallet-aura-ext",
- "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
  "cumulus-pallet-session-benchmarking",
  "cumulus-pallet-xcm",
@@ -18121,7 +18108,6 @@ dependencies = [
  "sc-client-db",
  "sc-consensus",
  "sc-executor",
- "sc-offchain",
  "sc-service",
  "serde",
  "serde_json",
@@ -18443,7 +18429,6 @@ dependencies = [
  "sp-genesis-builder",
  "sp-inherents",
  "sp-io",
- "sp-keyring",
  "sp-offchain",
  "sp-runtime",
  "sp-session",
@@ -18457,7 +18442,6 @@ dependencies = [
  "staging-xcm-executor",
  "substrate-wasm-builder",
  "test-runtime-constants",
- "tiny-keccak",
 ]
 
 [[package]]
@@ -18466,7 +18450,6 @@ version = "0.1.0"
 dependencies = [
  "frame-support",
  "polkadot-primitives 16.0.0",
- "polkadot-runtime-common",
  "smallvec",
  "sp-core",
  "sp-runtime",
@@ -20855,7 +20838,6 @@ dependencies = [
  "pallet-session",
  "pallet-session-benchmarking",
  "pallet-staking",
- "pallet-staking-reward-curve",
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-transaction-payment",
