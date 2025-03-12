@@ -102,7 +102,6 @@ pub fn handle_dependencies<'a>(
     if skip_native_cache() {
         return Ok(());
     }
-    println!("Handling {:?}", target_root.as_ref());
     let mut config = cargo_config()?;
     for dependency in dependencies {
         handle_dependency_inner(&mut config, target_root.as_ref(), dependency, profile)?

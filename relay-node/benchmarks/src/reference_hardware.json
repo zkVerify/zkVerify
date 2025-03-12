@@ -13,10 +13,10 @@
     },
     {
         "metric": "DiskSeqWrite",
-        "minimum": 220.0
+        "minimum": 536.40
     },
     {
         "metric": "DiskRndWrite",
-        "minimum": 110.28
+        "minimum": 188.28
     }
 ]

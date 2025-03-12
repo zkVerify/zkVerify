@@ -406,7 +406,7 @@ impl pallet_balances::Config for Runtime {
 }
 
 impl_opaque_keys! {
-    pub struct SessionKeysRelay {
+    pub struct SessionKeys {
         pub babe: Babe,
         pub grandpa: Grandpa,
         pub para_validator: Initializer,
@@ -414,8 +414,6 @@ impl_opaque_keys! {
         pub authority_discovery: AuthorityDiscovery,
     }
 }
-
-pub type SessionKeys = SessionKeysRelay;
 
 parameter_types! {
     pub const TransactionPicosecondFee: Balance = 5000000;
@@ -705,16 +703,6 @@ static_assertions::const_assert!(
     <Runtime as pallet_aggregate::Config>::AggregationSize::get() as u32
         == <Runtime as pallet_aggregate::Config>::AGGREGATION_SIZE,
 );
-
-pub const MILLISECS_PER_PROOF_ROOT_PUBLISHING: u64 = MILLISECS_PER_BLOCK * 10;
-pub const MIN_PROOFS_FOR_ROOT_PUBLISHING: u32 = 16;
-pub const MAX_STORAGE_ATTESTATIONS: u64 = 100_000;
-
-// We should avoid publishing attestations for empty trees
-static_assertions::const_assert!(MIN_PROOFS_FOR_ROOT_PUBLISHING > 0);
-
-// We should keep in memory at least one attestation
-static_assertions::const_assert!(MAX_STORAGE_ATTESTATIONS > 1);
 
 pub struct ValidatorIdOf;
 impl sp_runtime::traits::Convert<AccountId, Option<AccountId>> for ValidatorIdOf {

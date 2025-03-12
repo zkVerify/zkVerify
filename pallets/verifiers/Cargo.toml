@@ -32,8 +32,6 @@ hp-on-proof-verified = { workspace = true }
 hp-verifiers = { workspace = true }
 pallet-verifiers-macros = { workspace = true }
 
-hex-literal = { workspace = true }
-
 [dev-dependencies]
 hex-literal = { workspace = true }
 pallet-balances = { workspace = true, features = ["std"] }
