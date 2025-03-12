@@ -80,7 +80,7 @@ parameter_types! {
     /// The target precions for exp(); impacts on the final precision for inflation computation.
     pub const ExpPrecision: f64 = 10e-15f64;
     /// Base inflation (I_b).
-    pub InflationBase: Perquintill = Perquintill::from_percent(3);
+    pub InflationBase: Perquintill = Perquintill::from_rational(25u128, 1000u128);
     /// The optimal staking rate (s_t).
     pub StakingTarget: Percent = Percent::from_percent(50);
     /// Sensitivity coefficient (K).
