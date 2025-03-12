@@ -20,8 +20,6 @@ const ReturnCode = {
 
 const { init_api, submitProof, receivedEvents, registerDomain, sudoRegisterDomain, 
     holdDomain, unregisterDomain, aggregate, getBalance } = require('zkv-lib');
-const { PROOF: ZKSYNC_PROOF, PUBS: ZKSYNC_PUBS } = require('./zksync_data.js');
-const { PROOF: FFLONK_PROOF, PUBS: FFLONK_PUBS, VK: FFLONK_VK } = require('./fflonk_data.js');
 const { PROOF: GROTH16_PROOF, PUBS: GROTH16_PUBS, VK: GROTH16_VK } = require('./groth16_data.js');
 const { PROOF: RISC0_PROOF, PUBS: RISC0_PUBS, VK: RISC0_VK } = require('./risc0_data.js');
 const { PROOF: ULTRAPLONK_PROOF, PUBS: ULTRAPLONK_PUBS, VK: ULTRAPLONK_VK } = require('./ultraplonk_data.js');
