@@ -18,8 +18,10 @@ const VKEY = `{
         "0x254fe8f76591c219562ede7a5807212abc9427bdb012a9145fe48fe49077711d36bef432122d026d20ed95a2c1e3d7f0c63e6349e112d6786722f40fa6589811"
     ]
 }`;
+const VKEY_HASH = "0x0b73d0a95f9b4ce2ab7bb7fd474a4cb9cd5e04086526c0c873d0bdd5a61e23d7";
 
 
 exports.PROOF = JSON.parse(PROOF);
 exports.PUBS = JSON.parse(PUBS);
 exports.VK = JSON.parse(VKEY);
+exports.VKEY_HASH = VKEY_HASH;

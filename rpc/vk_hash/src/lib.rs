@@ -15,8 +15,14 @@
 
 use hp_verifiers::Verifier;
 use jsonrpsee::{core::RpcResult, proc_macros::rpc, types::ErrorObject};
+use pallet_proofofsql_verifier::ProofOfSql;
 use pallet_ultraplonk_verifier::{Ultraplonk, VK_SIZE};
 use sp_core::{Bytes, Get, H256};
+
+// use jsonrpc_core::Result;
+// use jsonrpc_derive::rpc as other_rpc;
+// use serde::Deserialize;
+// use sp_std::vec::Vec;
 
 type VkOf<V> = <V as hp_verifiers::Verifier>::Vk;
 
@@ -33,13 +39,16 @@ impl pallet_ultraplonk_verifier::Config for MockType {
     type MaxPubs = MaxPubs;
 }
 
+impl pallet_proofofsql_verifier::Config for MockType {
+    type LargestMaxNu = MaxPubs; // this shouldn't matter
+}
+
 #[rpc(client, server)]
 pub trait VKHashApi<ResponseType> {
     #[method(name = "compute_ultraplonk")]
-    fn ultraplonk(
-        &self,
-        vk: Bytes, // &VkOf<Ultraplonk<MockType>>,
-    ) -> RpcResult<ResponseType>;
+    fn ultraplonk(&self, vk: Bytes) -> RpcResult<ResponseType>;
+    #[method(name = "compute_proofofsql")]
+    fn proofofsql(&self, vk: Bytes) -> RpcResult<ResponseType>;
 }
 
 pub struct VKHash;
@@ -53,11 +62,6 @@ impl VKHash {
 
 impl VKHashApiServer<H256> for VKHash {
     fn ultraplonk(&self, vk: Bytes) -> RpcResult<H256> {
-        println!("UltraPLONK RPC called!");
-        println!("Received vk.len() = {}", vk.len());
-        println!("Expected vk size: {}", VK_SIZE);
-        println!("Received vk: {:?}", vk);
-
         if vk.len() != VK_SIZE {
             return Err(ErrorObject::owned(
                 1,
@@ -73,5 +77,10 @@ impl VKHashApiServer<H256> for VKHash {
             )
         })?;
         Ok(Ultraplonk::<MockType>::vk_hash(&vk))
+    }
+
+    fn proofofsql(&self, vk: Bytes) -> RpcResult<H256> {
+        let vk: VkOf<ProofOfSql<MockType>> = pallet_proofofsql_verifier::Vk::from(vk.0);
+        Ok(ProofOfSql::vk_hash(&vk))
     }
 }

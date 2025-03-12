@@ -156,7 +156,6 @@ where
     )?;
     io.merge(Aggregate::new(client.clone()).into_rpc())?;
     io.merge(VKHash::new().into_rpc())?;
-    // io.merge(VKHash::new(client).into_rpc())?;
 
     Ok(io)
 }
