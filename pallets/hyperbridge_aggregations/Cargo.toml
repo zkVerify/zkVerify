@@ -35,7 +35,6 @@ alloy-primitives = { workspace = true }
 
 [dev-dependencies]
 pallet-balances = { workspace = true, features = ["std"] }
-rstest = { workspace = true }
 ismp-grandpa = { workspace = true }
 
 [features]

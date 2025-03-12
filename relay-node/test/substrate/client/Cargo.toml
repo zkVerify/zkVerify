@@ -25,7 +25,6 @@ sc-client-api = { workspace = true }
 sc-client-db = { workspace = true, features = ["test-helpers"] }
 sc-consensus = { workspace = true }
 sc-executor = { workspace = true }
-sc-offchain = { workspace = true }
 sc-service = { workspace = true, features = ["test-helpers"] }
 sp-blockchain = { workspace = true }
 sp-consensus = { workspace = true }

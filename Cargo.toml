@@ -131,7 +131,6 @@ scale-info = { version = "2.10.0", default-features = false, features = [
 ] }
 
 pallet-offences = { version = "37.0.0", default-features = false }
-pallet-im-online = { version = "37.0.0", default-features = false }
 pallet-authorship = { version = "38.0.0", default-features = false }
 pallet-bags-list = { version = "37.0.0", default-features = false }
 pallet-session = { version = "38.0.0", default-features = false }

@@ -20,7 +20,6 @@ sp-api = { default-features = false, workspace = true }
 sp-core = { default-features = false, workspace = true }
 sp-runtime = { default-features = false, workspace = true }
 sp-blockchain = { workspace = true }
-sc-rpc-api = { workspace = true }
 
 
 [features]
