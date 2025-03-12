@@ -63,11 +63,12 @@ impl<T: Config> Verifier for Groth16<T> {
             return Err(hp_verifiers::VerifyError::InvalidInput);
         }
 
-        groth16::Groth16::verify_proof(proof.clone().into(), vk.clone(), pubs).and_then(|r| {
-            r.then_some(())
-                .ok_or(hp_verifiers::VerifyError::VerifyError)
-        })
-        .map(|_| None)
+        groth16::Groth16::verify_proof(proof.clone().into(), vk.clone(), pubs)
+            .and_then(|r| {
+                r.then_some(())
+                    .ok_or(hp_verifiers::VerifyError::VerifyError)
+            })
+            .map(|_| None)
     }
 
     fn pubs_bytes(pubs: &Self::Pubs) -> hp_verifiers::Cow<[u8]> {
