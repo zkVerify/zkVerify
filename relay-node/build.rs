@@ -22,9 +22,10 @@ fn main() {
     substrate_build_script_utils::generate_cargo_keys();
     // For the node/worker version check, make sure we always rebuild the node and binary workers
     // when the version changes.
+    substrate_build_script_utils::rerun_if_git_head_changed();
 
     let profile = env::var("PROFILE").expect("Should have a PROFILE environment variable");
-    let cache_root: PathBuf = PathBuf::from(env::var("CARGO_WORKSPACE_DIR").unwrap()).join("deps");
+    let cache_root: PathBuf = env::current_dir().unwrap().join("../deps");
     native_cache::handle_dependencies("../target", &rocksdb(&cache_root, &profile), &profile)
         .expect("Cannot handle cache");
 }
