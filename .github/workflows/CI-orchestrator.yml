@@ -51,6 +51,10 @@ jobs:
     needs: [check-lockfile-job]
     uses: ./.github/workflows/CI-feature-propagation.yml
 
+  udeps-job:
+    name: Udeps job
+    uses: ./.github/workflows/CI-udeps.yml
+
   # Only for pull requests and if not canceled
   set-overall-result:
     runs-on: warp-ubuntu-latest-x64-2x
@@ -66,6 +70,7 @@ jobs:
         zombienet-test-job,
         audit-job,
         feature-propagation-job,
+        udeps-job,
       ]
     if: ${{ github.event_name == 'pull_request' && !cancelled() }}
     outputs:
@@ -111,6 +116,7 @@ jobs:
                 [ "${{ needs.lint-format-job.result }}" != "success" ] ||
                 [ "${{ needs.feature-propagation-job.result }}" != "success" ] ||
                 [ "${{ needs.audit-job.result }}" != "success" ] ||
+                [ "${{ needs.udeps-job.result }}" != "success" ] ||
                 [ "${{ needs.zombienet-test-job.result }}" != "success" ]; then
               OVERALL_STATUS="failure"
             fi
