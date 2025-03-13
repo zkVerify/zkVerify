@@ -325,7 +325,7 @@ pub mod pallet {
         I: Verifier,
     {
         /// Submit a proof and accept it if and only if is valid.
-        /// On success emit a `poe::NewElement` event.
+        /// On success emit a `ProofVerified` event.
         /// Accept either a Vk or its hash. If you use the Vk hash the Vk should be already registered
         /// with `register_vk` extrinsic.
         #[pallet::call_index(0)]
