@@ -2021,14 +2021,15 @@ dependencies = [
 
 [[package]]
 name = "bp-xcm-bridge-hub-router"
-version = "0.14.0"
+version = "0.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a7a8db232b5330d750760bd830c3c836b9ec37922753d3446d5242367a682f05"
+checksum = "9284820ca704f5c065563cad77d2e3d069a23cc9cb3a29db9c0de8dd3b173a87"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-core",
  "sp-runtime",
+ "staging-xcm",
 ]
 
 [[package]]
@@ -18094,9 +18095,9 @@ checksum = "af6c3c1ace30eab195a92723747a69344a328442f72c1de871c66460c091c34d"
 
 [[package]]
 name = "staging-xcm"
-version = "14.1.0"
+version = "14.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2b7b5f531c6bf9629514ef8e5fda0e9e80dd84516957f710940d0e01d3fb36c"
+checksum = "250c5290c308d1f462403dc4e7926976727917e98a196de1ea4a49c86341f21c"
 dependencies = [
  "array-bytes",
  "bounded-collections",
@@ -18107,6 +18108,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
+ "sp-runtime",
  "sp-weights",
  "xcm-procedural",
 ]
