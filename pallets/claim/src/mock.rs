@@ -25,6 +25,8 @@ use frame_system::{EnsureRoot, RawOrigin};
 use sp_core::ConstU128;
 use sp_runtime::{traits::IdentityLookup, BuildStorage};
 
+use crate::utils;
+
 pub type Balance = u128;
 pub type AccountId = u64;
 pub type Origin = RawOrigin<AccountId>;
@@ -153,6 +155,7 @@ impl crate::Config for Test {
     type Currency = Balances;
     type UnclaimedDestination = UnclaimedDestinationMockAccount;
     type WeightInfo = MockWeightInfo;
+    type MaxBeneficiaries = MaxBeneficiaries;
     #[cfg(feature = "runtime-benchmarks")]
     const MAX_BENEFICIARIES: u32 = MaxBeneficiaries::get();
 }
@@ -220,6 +223,35 @@ pub fn test_with_configs(
             GenesisClaimBalance::Insufficient => INSUFFICIENT_GENESIS_BALANCE,
             GenesisClaimBalance::None => 0,
         },
+    }
+    .assimilate_storage(&mut t)
+    .unwrap();
+
+    let mut ext = sp_io::TestExternalities::from(t);
+
+    ext.execute_with(|| {
+        System::set_block_number(1);
+    });
+    ext
+}
+
+pub fn test_genesis_too_many_beneficiaries() -> sp_io::TestExternalities {
+    let mut t = frame_system::GenesisConfig::<Test>::default()
+        .build_storage()
+        .unwrap();
+
+    pallet_balances::GenesisConfig::<Test> {
+        balances: vec![(MANAGER_USER, 42_000_000_000)],
+    }
+    .assimilate_storage(&mut t)
+    .unwrap();
+
+    crate::GenesisConfig::<Test> {
+        beneficiaries: utils::get_beneficiaries_map::<Test>(MaxBeneficiaries::get() + 1)
+            .0
+            .into_iter()
+            .collect(),
+        genesis_balance: 0, // It doesn't matter
     }
     .assimilate_storage(&mut t)
     .unwrap();

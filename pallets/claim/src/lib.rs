@@ -31,6 +31,8 @@ mod mock;
 #[cfg(test)]
 mod tests;
 mod weight;
+#[cfg(any(test, feature = "runtime-benchmarks"))]
+mod utils;
 use core::marker::PhantomData;
 
 extern crate alloc;
@@ -86,6 +88,10 @@ pub mod pallet {
         /// Weight information for extrinsics in this pallet.
         type WeightInfo: WeightInfo;
 
+        /// The maximum number of allowed beneficiaries.
+        #[pallet::constant]
+        type MaxBeneficiaries: Get<u32>;
+
         /// The maximum number of beneficiaries used in benchmarks.
         #[cfg(feature = "runtime-benchmarks")]
         const MAX_BENEFICIARIES: u32;
@@ -93,7 +99,8 @@ pub mod pallet {
 
     /// Candidates eligible to receive an airdrop with the associated balance they have right to
     #[pallet::storage]
-    pub type Beneficiaries<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, BalanceOf<T>>;
+    pub type Beneficiaries<T: Config> =
+        CountedStorageMap<_, Twox64Concat, T::AccountId, BalanceOf<T>>;
 
     /// Total tokens claimable from the current airdrop.  
     #[pallet::storage]
@@ -182,6 +189,8 @@ pub mod pallet {
         NotEligible,
         /// Added a beneficiary without balance to claim
         NothingToClaim,
+        /// Maximum number of beneficiaries reached
+        TooManyBeneficiaries,
         /// Attempt to modify the balance of an already added beneficiary
         AlreadyPresent,
         /// Attempt to perform an action implying an open airdrop, while it has already ended
@@ -254,6 +263,12 @@ pub mod pallet {
         fn do_add_beneficiaries(
             beneficiaries: BTreeMap<T::AccountId, BalanceOf<T>>,
         ) -> DispatchResult {
+            // Check we have space for all the beneficiaries we are trying to add
+            if Beneficiaries::<T>::count() + beneficiaries.len() as u32 > T::MaxBeneficiaries::get()
+            {
+                Err(Error::<T>::TooManyBeneficiaries)?;
+            }
+
             // Check that the pot has enough funds to cover for all the beneficiaries
             let available_amount = Self::pot();
             let mut required_amount = TotalClaimable::<T>::get();
@@ -271,6 +286,7 @@ pub mod pallet {
                         log::warn!("Beneficiary {account:?} with nothing to claim.");
                         Err(Error::<T>::NothingToClaim)?;
                     }
+
                     // Account doesn't exist. Add its token amount to the required amount this pallet's account should have
                     required_amount = required_amount.defensive_saturating_add(*amount);
                     log::trace!("Added beneficiary {account:?}. Can claim: {amount:?}");
@@ -403,7 +419,7 @@ pub mod pallet {
             })?;
 
             // Remove all beneficiaries entries
-            let _ = Beneficiaries::<T>::clear(u32::MAX, None);
+            let _ = Beneficiaries::<T>::clear(Beneficiaries::<T>::count(), None);
 
             // Deal with any remaining balance in the pallet's account
             let unclaimed_destination = T::UnclaimedDestination::get();
