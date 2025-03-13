@@ -29,7 +29,7 @@ fn check_params_sanity() {
     );
     // base inflation is not too high
     assert!(
-        InflationBase::get() * 100u64 == 3u64,
+        InflationBase::get() * 1000u64 == 25u64, // 2.5%
         "unexpected base inflation"
     );
 }

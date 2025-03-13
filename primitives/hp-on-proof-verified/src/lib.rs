@@ -19,7 +19,7 @@ use sp_core::H256;
 use sp_weights::Weight;
 
 /// Trait used by proof verifier pallets to signal that a successful proof verification happened.
-/// This must be implemented by proof storage pallets (e.g. pallet-poe) to subscribe to proof verification events.
+/// This must be implemented by proof storage pallets (e.g. pallet-aggregate) to subscribe to proof verification events.
 pub trait OnProofVerified<A> {
     fn on_proof_verified(account: Option<A>, domain_id: Option<u32>, pubs_hash: H256);
     fn weight(domain_id: &Option<u32>) -> Weight;

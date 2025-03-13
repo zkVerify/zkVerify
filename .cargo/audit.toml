@@ -5,6 +5,7 @@ ignore = [
     # once we update Polkadot packages to latest version
     "RUSTSEC-2024-0421",
     "RUSTSEC-2024-0336",
+    "RUSTSEC-2025-0009",
 ]
 informational_warnings = ["unmaintained", "yanked"]
 

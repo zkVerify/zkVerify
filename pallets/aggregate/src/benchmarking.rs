@@ -253,6 +253,6 @@ mod benchmarks {
 
     use crate::data::AggregateSecurityRules;
     #[cfg(test)]
-    use crate::Pallet as Poe;
-    impl_benchmark_test_suite!(Poe, crate::mock::test(), crate::mock::Test,);
+    use crate::Pallet as Aggregate;
+    impl_benchmark_test_suite!(Aggregate, crate::mock::test(), crate::mock::Test,);
 }

@@ -12,27 +12,6 @@ zkvTypes = {
 
 // This one defines the metadata for the arguments and return value of proofPath RPC call
 zkvRpc = {
-    poe: {
-        proofPath: {
-            description: 'Get the Merkle root and path of a stored proof',
-            params: [
-                {
-                    name: 'root_id',
-                    type: 'u64'
-                },
-                {
-                    name: 'proof_hash',
-                    type: 'H256'
-                },
-                {
-                    name: 'at',
-                    type: 'BlockHash',
-                    isOptional: true
-                }
-            ],
-            type: 'MerkleProof'
-        }
-    },
     aggregate: {
         statementPath: {
             description: 'Get the Merkle root and path of a aggregate statement',
@@ -118,11 +97,6 @@ exports.aggregate = async (signer, domain_id, aggregation_id) => {
 
 exports.waitForEvent = async (api, timeout, pallet, name) => {
     return await waitForEvent(api, timeout, pallet, name);
-}
-
-// Wait for the next attestaion id to be published
-exports.waitForNewAttestation = async (api, timeout) => {
-    return await waitForEvent(api, timeout, "poe", "NewAttestation");
 }
 
 // Wait for the next attestaion id to be published
