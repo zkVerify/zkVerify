@@ -335,7 +335,7 @@ fn reserve_at_least_the_publish_proof_price_fraction_when_on_proof_verified() {
 }
 
 const DELIVERY_PRICE: u128 = 64 * 10000;
-const EXPECTED_DELIVERY_HOLD_FOUNDS: u128 = DELIVERY_PRICE / DOMAIN_SIZE as u128;
+const EXPECTED_DELIVERY_HOLD_FUNDS: u128 = DELIVERY_PRICE / DOMAIN_SIZE as u128;
 
 fn set_delivery_price(domain_id: u32, price: Balance) {
     Domains::<Test>::mutate_extant(domain_id, |d| {
@@ -355,7 +355,7 @@ fn reserve_the_delivery_price_fraction_when_on_proof_verified() {
 
         assert_eq!(
             Balances::reserved_balance(account),
-            DOMAIN_FEE + EXPECTED_DELIVERY_HOLD_FOUNDS
+            DOMAIN_FEE + EXPECTED_DELIVERY_HOLD_FUNDS
         );
     })
 }
@@ -382,10 +382,10 @@ fn not_fail_but_raise_just_an_event_if_a_user_doesn_t_have_enough_found_to_reser
         let statement = H256::from_low_u64_be(123);
         set_delivery_price(DOMAIN_ID, DELIVERY_PRICE);
 
-        Aggregate::on_proof_verified(Some(NO_DELIVERY_FOUND_USER), DOMAIN, statement);
+        Aggregate::on_proof_verified(Some(NO_DELIVERY_FUND_USER), DOMAIN, statement);
 
         assert_eq!(
-            Balances::reserved_balance(NO_DELIVERY_FOUND_USER),
+            Balances::reserved_balance(NO_DELIVERY_FUND_USER),
             0,
             "Should not reserve any balance"
         );
@@ -400,10 +400,10 @@ fn not_fail_but_raise_just_an_event_if_a_user_doesn_t_have_enough_found_to_reser
     test().execute_with(|| {
         let statement = H256::from_low_u64_be(123);
 
-        Aggregate::on_proof_verified(Some(NO_DOMAIN_FEE_FOUND_USER), DOMAIN, statement);
+        Aggregate::on_proof_verified(Some(NO_DOMAIN_FEE_FUND_USER), DOMAIN, statement);
 
         assert_eq!(
-            Balances::reserved_balance(NO_DOMAIN_FEE_FOUND_USER),
+            Balances::reserved_balance(NO_DOMAIN_FEE_FUND_USER),
             0,
             "Should not reserve any balance"
         );
@@ -535,7 +535,7 @@ mod aggregate {
     }
 
     #[test]
-    fn refound_the_publisher_from_the_reserved_founds() {
+    fn refund_the_publisher_from_the_reserved_funds() {
         test().execute_with(|| {
             let accounts = [USER_1, USER_2];
             let elements = (0..DOMAIN_SIZE as u64)
@@ -563,7 +563,7 @@ mod aggregate {
     }
 
     #[test]
-    fn un_hold_the_submitters_aggregation_founds_if_called_by_the_manager() {
+    fn un_hold_the_submitters_aggregation_funds_if_called_by_the_manager() {
         test().execute_with(|| {
             let accounts = [USER_1, USER_2];
             let elements = (0..DOMAIN_SIZE as u64)
@@ -609,7 +609,7 @@ mod aggregate {
     }
 
     #[rstest]
-    fn pay_the_delivery_owner_for_delivering_from_the_reserved_founds(
+    fn pay_the_delivery_owner_for_delivering_from_the_reserved_funds(
         #[values(PUBLISHER_USER, ROOT_USER)] executor: AccountId,
     ) {
         test().execute_with(|| {
@@ -643,7 +643,7 @@ mod aggregate {
     }
 
     #[rstest]
-    fn after_aggregate_submitter_user_should_not_have_any_founds_on_hold(
+    fn after_aggregate_submitter_user_should_not_have_any_funds_on_hold(
         #[values(PUBLISHER_USER, ROOT_USER)] executor: AccountId,
     ) {
         test().execute_with(|| {

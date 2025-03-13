@@ -704,13 +704,13 @@ pub mod pallet {
 
                 if let Some((_, published)) = Published::<T>::get().last() {
                     for s in published.statements.iter() {
-                        handle_held_founds::<T>(
+                        handle_held_funds::<T>(
                             HoldReason::Aggregation,
                             &s.account,
                             aggregator.account(),
                             s.reserve.aggregate,
                         );
-                        handle_held_founds::<T>(
+                        handle_held_funds::<T>(
                             HoldReason::Delivery,
                             &s.account,
                             Some(&domain.delivery.owner),
@@ -905,7 +905,7 @@ pub mod pallet {
         }
 
         /// Set the delivery attestation price. Every submitter will hold this price (at the time of proof submission)
-        /// divided by the aggregation size. When the aggregation is dispatched all this held founds will be
+        /// divided by the aggregation size. When the aggregation is dispatched all this held funds will be
         /// transferred to the delivery owner.
         ///
         /// Only domain owner, delivery owner or manager can set the price.
@@ -939,7 +939,7 @@ pub mod pallet {
         }
     }
 
-    fn handle_held_founds<T: Config>(
+    fn handle_held_funds<T: Config>(
         reason: HoldReason,
         account: &AccountOf<T>,
         dest: Option<&AccountOf<T>>,

@@ -32,7 +32,7 @@ pub mod utils {
     use crate::data::{Delivery, DeliveryParams};
     use hp_dispatch::Destination;
 
-    /// Return a whitelisted account with enough founds to do anything.
+    /// Return a whitelisted account with enough funds to do anything.
     pub fn funded_account<T: Config>() -> T::AccountId {
         let caller: T::AccountId = whitelisted_caller();
         T::Currency::set_balance(&caller, BalanceOf::<T>::max_value() / 2u32.into());
