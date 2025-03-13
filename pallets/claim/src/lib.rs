@@ -338,8 +338,8 @@ pub mod pallet {
             Ok(Pays::No.into())
         }
 
-        /// Claim token airdrop for 'origin' or 'dest' (if specified).
-        /// Fails if 'origin' or 'dest' are not entitled to any airdrop.
+        /// Claim token airdrop for 'origin' and send the tokens to 'dest' (if specified).
+        /// Fails if 'origin' is not entitled to any airdrop.
         /// 'origin' must be signed.
         #[pallet::call_index(1)]
         #[pallet::weight(T::WeightInfo::claim())]
@@ -353,9 +353,8 @@ pub mod pallet {
             Ok(Pays::No.into())
         }
 
-        /// Claim token airdrop for 'origin' or 'dest' (if specified).
-        /// Fails if 'origin' or 'dest' are not entitled to any airdrop.
-        /// 'origin' must be signed.
+        /// Claim token airdrop for 'dest' (if specified).
+        /// Fails if 'dest' is not entitled to any airdrop.
         #[pallet::call_index(2)]
         #[pallet::weight(T::WeightInfo::claim_for())]
         pub fn claim_for(_origin: OriginFor<T>, dest: T::AccountId) -> DispatchResultWithPostInfo {
