@@ -139,6 +139,7 @@ impl StakerData for (AccountId, Balance) {
 }
 
 /// Configure initial storage state for FRAME modules.
+#[allow(clippy::too_many_arguments)]
 fn genesis(
     initial_authorities: Vec<(Ids, Balance)>,
     root_key: AccountId,
@@ -273,7 +274,7 @@ struct ValidatorData<'a> {
     authority_discovery_id: AuthorityDiscoveryId,
 }
 
-impl<'a> StakerData for ValidatorData<'a> {
+impl StakerData for ValidatorData<'_> {
     fn staker_data(&self) -> (AccountId, AccountId, Balance, StakerStatus<AccountId>) {
         (
             self.account.account_id.clone(),
@@ -334,7 +335,7 @@ struct NominatorData<'a> {
     voted: Vec<AccountId>,
 }
 
-impl<'a> StakerData for NominatorData<'a> {
+impl StakerData for NominatorData<'_> {
     fn staker_data(&self) -> (AccountId, AccountId, Balance, StakerStatus<AccountId>) {
         (
             self.account.account_id.clone(),
