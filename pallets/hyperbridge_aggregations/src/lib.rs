@@ -86,10 +86,11 @@ pub mod pallet {
     pub struct Params<Balance> {
         /// Domain id
         pub domain_id: u32,
-        /// Attestation id
+
+        /// Aggregation id
         pub aggregation_id: u64,
 
-        /// Attestation of Merkle tree
+        /// Aggregation Recepit
         pub aggregation: sp_core::H256,
 
         /// Destination contract
