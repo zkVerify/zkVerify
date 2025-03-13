@@ -11,7 +11,7 @@ use sp_core::H256;
 
 pub use pallet_verifiers_macros::benchmarking_utils;
 
-/// Return a whitelisted account with enough founds to do anything.
+/// Return a whitelisted account with enough funds to do anything.
 pub fn funded_account<T, I>() -> T::AccountId
 where
     T: Config<I>,

@@ -36,7 +36,7 @@ pub mod utils {
 
     pub static TEST_CONTRACT: [u8; 20] = hex!("d9145CCE52D386f254917e481eB44e9943F39138");
 
-    /// Return a whitelisted account with enough founds to do anything.
+    /// Return a whitelisted account with enough funds to do anything.
     pub fn funded_account<T: Config>() -> T::AccountId {
         let caller: T::AccountId = whitelisted_caller();
         T::Currency::set_balance(&caller, BalanceOf::<T>::max_value() / 2u32.into());
