@@ -305,6 +305,7 @@ impl Consideration<AccountId, Footprint> for MockConsideration {
         Ok(())
     }
 
+    #[cfg(feature = "runtime-benchmarks")]
     fn ensure_successful(_: &u64, _: Footprint) {
         unimplemented!("Not needed by now")
     }

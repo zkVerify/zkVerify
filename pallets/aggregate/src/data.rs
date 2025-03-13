@@ -141,7 +141,7 @@ impl<
         self.space_left() == 0
     }
 
-    pub fn compute(&self) -> H256 {
+    pub fn compute_receipt(&self) -> H256 {
         binary_merkle_tree::merkle_root::<Keccak256, _>(
             self.statements.iter().map(|s| s.statement.as_ref()),
         )

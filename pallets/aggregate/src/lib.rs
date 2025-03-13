@@ -696,7 +696,7 @@ pub mod pallet {
                 ) {
                     Err(BadOrigin)?
                 }
-                let root = aggregation.compute();
+                let root = aggregation.compute_receipt();
                 let size = aggregation.statements.len() as u32;
                 Published::<T>::mutate(|published: &mut _| {
                     published.push((domain_id, aggregation))
