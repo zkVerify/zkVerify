@@ -683,7 +683,7 @@ impl pallet_aggregate::Config for Runtime {
 
 parameter_types! {
     pub const ClaimPalletId: PalletId = PalletId(*b"zkv/pclm");
-    pub const MaxBeneficiaries: u32 = 1_000;
+    pub const MaxBeneficiaries: u32 = 1_000_000;
 }
 
 impl pallet_claim::Config for Runtime {
@@ -693,6 +693,7 @@ impl pallet_claim::Config for Runtime {
     type Currency = Balances;
     type UnclaimedDestination = ZKVerifyTreasuryAccount;
     type WeightInfo = weights::pallet_claim::ZKVWeight<Runtime>;
+    type MaxBeneficiaries = MaxBeneficiaries;
     #[cfg(feature = "runtime-benchmarks")]
     const MAX_BENEFICIARIES: u32 = MaxBeneficiaries::get();
 }
