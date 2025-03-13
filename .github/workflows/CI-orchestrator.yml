@@ -6,24 +6,33 @@ on:
   workflow_dispatch:
 
 jobs:
+  check-lockfile-job:
+    name: Check lockfile job
+    uses: ./.github/workflows/CI-check-lockfile.yml
+
   build-job:
     name: Cargo build job
+    needs: [check-lockfile-job]
     uses: ./.github/workflows/CI-build.yml
 
   test-job:
     name: Cargo test job
+    needs: [check-lockfile-job]
     uses: ./.github/workflows/CI-test.yml
 
   try-runtime-job:
     name: Try runtime job
+    needs: [check-lockfile-job]
     uses: ./.github/workflows/CI-try-runtime.yml
 
   coverage-job:
     name: Coverage job
+    needs: [check-lockfile-job]
     uses: ./.github/workflows/CI-coverage.yml
 
   lint-format-job:
     name: Lint and format job
+    needs: [check-lockfile-job]
     uses: ./.github/workflows/CI-lint-format.yml
 
   # Requires artifacts from the build job
@@ -34,17 +43,30 @@ jobs:
 
   audit-job:
     name: Cargo audit job
+    needs: [check-lockfile-job]
     uses: ./.github/workflows/CI-audit.yml
 
   feature-propagation-job:
     name: Feature propagation job
+    needs: [check-lockfile-job]
     uses: ./.github/workflows/CI-feature-propagation.yml
 
   # Only for pull requests and if not canceled
   set-overall-result:
     runs-on: warp-ubuntu-latest-x64-2x
     name: Set overall status
-    needs: [build-job, test-job, try-runtime-job, coverage-job, lint-format-job, zombienet-test-job, audit-job, feature-propagation-job]
+    needs:
+      [
+        check-lockfile-job,
+        build-job,
+        test-job,
+        try-runtime-job,
+        coverage-job,
+        lint-format-job,
+        zombienet-test-job,
+        audit-job,
+        feature-propagation-job,
+      ]
     if: ${{ github.event_name == 'pull_request' && !cancelled() }}
     outputs:
       branch-name: ${{ steps.get-info.outputs.BRANCH_NAME }}
@@ -81,7 +103,8 @@ jobs:
             OVERALL_STATUS="cancelled"
           else
             OVERALL_STATUS="success"
-            if [ "${{ needs.build-job.result }}" != "success" ] ||
+            if [ "${{ needs.check-lockfile-job.result }}" != "success" ] ||
+                [ "${{ needs.build-job.result }}" != "success" ] ||
                 [ "${{ needs.test-job.result }}" != "success" ] ||
                 [ "${{ needs.try-runtime-job.result }}" != "success" ] ||
                 [ "${{ needs.coverage-job.result }}" != "success" ] ||
