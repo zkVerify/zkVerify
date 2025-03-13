@@ -411,7 +411,7 @@ pub mod pallet {
                 let remaining_funds = Self::pot();
                 T::Currency::transfer(
                     &Self::account_id(),
-                    &T::UnclaimedDestination::get(),
+                    &unclaimed_destination,
                     remaining_funds,
                     Preservation::Preserve,
                 )?;
