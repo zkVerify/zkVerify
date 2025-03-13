@@ -3,20 +3,14 @@ const fs = require('fs');
 const {decodeAddress} = require('@polkadot/util-crypto');
 const {u8aToHex} = require('@polkadot/util');
 
-const WS_ENDPOINT = 'wss://testnet-rpc.zkverify.io';
-const DISCARDED_ACCOUNTS_PUBLIC_KEYS = [
-    "0x3031dac6e5d70594a193a32fbfd9424953861ef4f348c6150d2576bab660ce7b",
-    "0x6a2a7ecf13da1ee5dce50684fd2e4059ccaca63c9b3354e076fead78b648b069",
-    "0x2a48b82b0a451b221f21d310a30229eba4aea938e826a229af08b5cc91577132",
-    "0x48f2fc2b628c75d8f297b558725f262f13e072d984c61f6a4a1491db363ad432",
-    "0x74789a7fb9b37cc6e74cf9599d829a0d8d99b4d9c7bc33388ffda50715218d57",
-    "0x028ecaab2910ec4b076999d8af270c7d46b46d493cce8ecf6bdda9cf8a68b66c",
-    "0xf63cf0a167de0d342750a7187a961407ad7d74cb67ce93631e93636646a15c69",
-    "0xfa9273ff2780b6b2923670792ad5899e9c72ac0dc59526160974f61231177e05",
-    "0x5e9c9e3190de7f188613ac26948cd2708b35866704e6bcd5f4180d0275a6d151",
-    "0x6e8298157ef6835a12a28c7b13e82e5bc3d327a88a4cffbc5c810223f3a2a91c",
-    "0x6d6f646c7a6b2f74727372790000000000000000000000000000000000000000", // Treasury
-]
+const DEFAULT_WS_ENDPOINT = 'wss://testnet-rpc.zkverify.io';
+const DEFAULT_SNAPSHOT_PATH = 'snapshot_balances.json';
+const DEFAULT_FILTERING_PATH = 'filter_account.json';
+// const WS_ENDPOINT = 'ws://localhost:9944';
+const EXISTENTIAL_DEPOSIT = 10000000000000000; //0.01
+// Don't recover all accounts that ends with "0000000000000000000000000000000000000000"
+const MODULE_ACCOUNT_ENDS = "0000000000000000000000000000000000000000";
+const FILTER_MODULE_ACCOUNT = true;
 
 function ss58ToPublicKey(ss58Address) {
     const publicKeyU8a = decodeAddress(ss58Address);
@@ -29,7 +23,6 @@ async function takeSnapshot(api, snapshotBalancesFile) {
 
     for (const [account, data] of accounts) {
         const account_public_key = ss58ToPublicKey(account.slice(-32));
-        if (DISCARDED_ACCOUNTS_PUBLIC_KEYS.includes(account_public_key)) continue;
         const {data: {free: freeBalance, reserved: reservedBalance}} = data;
         const totalBalance = BigInt(freeBalance.toString()) + BigInt(reservedBalance.toString());
         balances[account_public_key] = totalBalance.toString();
@@ -46,13 +39,40 @@ async function takeSnapshot(api, snapshotBalancesFile) {
     console.log('Snapshot saved.');
 }
 
+function filterBalance(account, balance, blockList) {
+    if (balance < EXISTENTIAL_DEPOSIT) {
+        console.log(`===> Skip '${account}' for lower balance ${balance} < ${EXISTENTIAL_DEPOSIT}`);
+        return true;
+    }
+    if (blockList.includes(account)) {
+        console.log(`===> Filter blockList '${account}'`)
+        return true;
+    }
+    if (FILTER_MODULE_ACCOUNT && account.endsWith(MODULE_ACCOUNT_ENDS)) {
+        console.log(`===> Skip module account '${account}'`)
+        return true;
+    }
+    return false;
+}
+
 // Restore balances from the snapshot
-async function restoreBalances(api, keyring, snapshotBalancesFile, custodySeed) {
-    const balances = JSON.parse(fs.readFileSync(snapshotBalancesFile));
+async function restoreBalances(api, keyring, snapshotBalancesFile, custodySeed, filterFile) {
+    let balances = JSON.parse(fs.readFileSync(snapshotBalancesFile));
+    const filter = JSON.parse(fs.readFileSync(filterFile));
     const custodyAccount = keyring.addFromUri(custodySeed);
     let nonce = (await api.query.system.account(custodyAccount.address)).nonce.toNumber();
 
+    const newBalances = {};
+
+    for (const [account, balance] of Object.entries(balances)) {
+        if (filterBalance(account, balance, filter)) continue;
+        newBalances[account] = balance;
+    }
+
+    balances = newBalances;
+
     const totalAmount = Object.values(balances).reduce((acc, balance) => acc + BigInt(balance), BigInt(0));
+    console.log(`Total balance: ${totalAmount.toString()}`);
     const {data: {free: custodyFreeBalance}} = await api.query.system.account(custodyAccount.address);
 
     if (BigInt(custodyFreeBalance.toString()) < totalAmount) {
@@ -61,6 +81,7 @@ async function restoreBalances(api, keyring, snapshotBalancesFile, custodySeed) 
     }
 
     for (const [account, balance] of Object.entries(balances)) {
+        console.log(`Transfer '${balance}' to ${account} [${nonce}] `)
         const transfer = api.tx.balances.transferAllowDeath(account, balance);
         try {
             const hash = await transfer.signAndSend(custodyAccount, {nonce});
@@ -72,28 +93,70 @@ async function restoreBalances(api, keyring, snapshotBalancesFile, custodySeed) 
     }
 }
 
+function usage() {
+    console.error(`Usage : snapshot or restore
+    node snapshot-balances.js [-e ] snapshot
+        or 
+    node snapshot-balances.js restore "//Alice"
+    
+    -e, --end-point [${DEFAULT_WS_ENDPOINT}]
+    -s, --snapshot [${DEFAULT_SNAPSHOT_PATH}]
+    -f, --filter [${DEFAULT_FILTERING_PATH}]
+    `);
+    process.exit(1);
+}
+
 async function main() {
-    const provider = new WsProvider(WS_ENDPOINT);
+    let args = process.argv.slice(2)
+    let wsEndpoint = DEFAULT_WS_ENDPOINT;
+    let filter = DEFAULT_FILTERING_PATH;
+    let snapshotFile = DEFAULT_SNAPSHOT_PATH;
+    // Skipping command and remove general options like -e
+    const newArgs = []
+    for (let i = 0; i < args.length - 1; i += 1) {
+        if (args[i] === '-e' || args[i] === '--end-point') {
+            wsEndpoint = args[++i];
+            continue
+        }
+        if (args[i] === '-f' || args[i] === '--filter') {
+            filter = args[++i];
+            continue
+        }
+        if (args[i] === '-s' || args[i] === '--snapshot') {
+            snapshotFile = args[++i];
+            continue
+        }
+        if (args[i] === '-h' || args[i] === '--help') {
+            usage();
+        }
+        newArgs.push(args[i]);
+    }
+    newArgs.push(args[args.length - 1]);
+    args = newArgs;
+    if (args.length < 1) {
+        usage();
+    }
+    const command = args[0].toLowerCase();
+    args = args.slice(1);
+    console.log(`command: ${command}`);
+    console.log(`Using WS endpoint: ${wsEndpoint}`);
+    console.log(`Using snapshot: ${snapshotFile}`);
+    console.log(`Using filter: ${filter}`);
+    const provider = new WsProvider(wsEndpoint);
     const api = await ApiPromise.create({provider});
     const keyring = new Keyring({type: 'sr25519'});
 
-    const [, , command, arg1, arg2] = process.argv;
-
     if (command === 'snapshot') {
-        if (!arg1) {
-            console.error('Please provide the snapshot file name.');
-            process.exit(1);
-        }
-        await takeSnapshot(api, arg1);
+        console.log(`Dump balances on ${snapshotFile}`);
+        await takeSnapshot(api, snapshotFile);
     } else if (command === 'restore') {
-        if (!arg1 || !arg2) {
-            console.error('Please provide the custody seed and snapshot balances file name.');
-            process.exit(1);
+        if (args.length !== 1) {
+            usage();
         }
-        await restoreBalances(api, keyring, arg2, arg1);
+        const custodySeed = args[0];
+        await restoreBalances(api, keyring, snapshotFile, custodySeed, filter);
     } else {
-        console.error('Unknown command. Use "snapshot" i.e. "node snapshot-balances.js snapshot snapshot_balances.json" or "restore" i.e. "node snapshot-balances.js restore "//Alice" snapshot_balances.json".');
-        process.exit(1);
+        usage();
     }
 
     process.exit(0);
