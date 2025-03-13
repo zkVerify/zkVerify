@@ -21,54 +21,17 @@ use frame_support::{
     dispatch::GetDispatchInfo,
     traits::{EstimateNextNewSession, EstimateNextSessionRotation, Hooks, QueryPreimage},
 };
+use pallet_session::historical::SessionManager;
+use pallet_staking::ActiveEraInfo;
 use pallet_verifiers::VkOrHash;
 use sp_consensus_babe::Slot;
-use sp_core::{crypto::VrfSecret, Pair, H256};
+use sp_core::{Pair, H256};
 use sp_runtime::{
     traits::{Hash, Header as _},
-    AccountId32, Digest, DigestItem,
+    AccountId32, DigestItem,
 };
-use testsfixtures::get_from_seed;
 
 use super::*;
-
-// Any random values for these constants should do
-const BLOCK_NUMBER: BlockNumber = 1;
-const SLOT_ID: u64 = 87;
-const BABE_AUTHOR_ID: u32 = 1;
-
-// Initialize block #BLOCK_NUMBER, authored at slot SLOT_ID by BABE_AUTHOR_ID using Babe
-fn initialize() {
-    let slot = Slot::from(SLOT_ID);
-    let authority_index = BABE_AUTHOR_ID;
-    let transcript = sp_consensus_babe::VrfTranscript::new(b"test", &[]);
-    let pair: &sp_consensus_babe::AuthorityPair = &get_from_seed::<BabeId>(
-        testsfixtures::SAMPLE_USERS[BABE_AUTHOR_ID as usize].session_key_seed,
-    );
-    let vrf_signature = pair.as_ref().vrf_sign(&transcript.into());
-    let digest_data = sp_consensus_babe::digests::PreDigest::Primary(
-        sp_consensus_babe::digests::PrimaryPreDigest {
-            authority_index,
-            slot,
-            vrf_signature,
-        },
-    );
-    let pre_digest = Digest {
-        logs: vec![DigestItem::PreRuntime(
-            sp_consensus_babe::BABE_ENGINE_ID,
-            digest_data.encode(),
-        )],
-    };
-    System::reset_events();
-    System::initialize(&BLOCK_NUMBER, &Default::default(), &pre_digest);
-    Babe::on_initialize(BLOCK_NUMBER);
-}
-
-fn test() -> sp_io::TestExternalities {
-    let mut ex = super::test();
-    ex.execute_with(initialize);
-    ex
-}
 
 mod session {
     use super::*;
@@ -107,17 +70,6 @@ mod authorship {
                     testsfixtures::SAMPLE_USERS[BABE_AUTHOR_ID as usize].raw_account
                 ))
             );
-        });
-    }
-
-    // Check that Authorship calls back on ImOnline
-    #[test]
-    #[cfg(not(feature = "relay"))]
-    fn notifies_imonline() {
-        test().execute_with(|| {
-            assert!(!ImOnline::is_online(BABE_AUTHOR_ID));
-            Authorship::on_initialize(BLOCK_NUMBER);
-            assert!(ImOnline::is_online(BABE_AUTHOR_ID));
         });
     }
 
@@ -230,43 +182,11 @@ mod offences {
     }
 
     #[test]
-    #[cfg(not(feature = "relay"))]
-    fn notified_by_imonline() {
-        test().execute_with(|| {
-            let session = Session::current_index();
-            let offender_account =
-                AccountId32::new(testsfixtures::SAMPLE_USERS[BABE_AUTHOR_ID as usize].raw_account);
-
-            const EQUIVOCATION_KIND: &offence::Kind = b"im-online:offlin";
-            // Check that no previous offences were reported
-            assert!(!is_offender(
-                session.encode(),
-                &offender_account,
-                EQUIVOCATION_KIND
-            ));
-
-            // BABE_AUTHOR_ID is considered offline
-            assert!(!ImOnline::is_online(BABE_AUTHOR_ID));
-
-            // Advance to next session w/o offender being online
-            System::set_block_number(System::block_number() + 1);
-            Session::rotate_session();
-
-            // Check that the offline offence for the last session was received by pallet_offences
-            assert!(is_offender(
-                session.encode(),
-                &offender_account,
-                EQUIVOCATION_KIND
-            ));
-        });
-    }
-
-    #[test]
     fn notified_by_grandpa() {
         test().execute_with(|| {
             let offender_account =
                 AccountId32::new(testsfixtures::SAMPLE_USERS[BABE_AUTHOR_ID as usize].raw_account);
-            let offender = get_from_seed::<GrandpaId>(
+            let offender = testsfixtures::get_from_seed::<GrandpaId>(
                 testsfixtures::SAMPLE_USERS[BABE_AUTHOR_ID as usize].session_key_seed,
             );
 
@@ -330,7 +250,7 @@ mod offences {
         test().execute_with(|| {
             let offender_account =
                 AccountId32::new(testsfixtures::SAMPLE_USERS[BABE_AUTHOR_ID as usize].raw_account);
-            let offender = get_from_seed::<BabeId>(
+            let offender = testsfixtures::get_from_seed::<BabeId>(
                 testsfixtures::SAMPLE_USERS[BABE_AUTHOR_ID as usize].session_key_seed,
             );
 
@@ -346,7 +266,7 @@ mod offences {
             // Produce two different block headers for the same height
             let h1 = seal_header(System::finalize());
             // Need to initialize again
-            initialize();
+            testsfixtures::initialize();
             let h2 = seal_header(System::finalize());
 
             let slot = Slot::from(SLOT_ID);
@@ -420,6 +340,18 @@ mod staking {
                 &[Perbill::from_percent(100)],
                 0,
             );
+
+            // Pretend we are just starting the era in which the slash is actually applied
+            pallet_staking::ActiveEra::<Runtime>::put(ActiveEraInfo {
+                index: SlashDeferDuration::get(),
+                start: None,
+            });
+            let session = SlashDeferDuration::get() * SessionsPerEra::get();
+            pallet_staking::ErasStartSessionIndex::<Runtime>::insert(
+                SlashDeferDuration::get() + 1,
+                session,
+            );
+            Staking::start_session(session);
 
             // Check that treasury balance increased
             assert!(pre_balance < Balances::free_balance(&Treasury::account_id()))
@@ -497,13 +429,16 @@ mod scheduler {
         test().execute_with(|| {
             // We need a call bigger than 128 bytes to trigger preimage usage
             let call = Box::new(
-                RuntimeCall::SettlementFFlonkPallet(pallet_verifiers::Call::<
+                RuntimeCall::SettlementUltraplonkPallet(pallet_verifiers::Call::<
                     Runtime,
-                    pallet_fflonk_verifier::Fflonk,
+                    pallet_ultraplonk_verifier::Ultraplonk<Runtime>,
                 >::new_call_variant_submit_proof(
                     VkOrHash::from_hash(H256::zero()),
-                    [0; pallet_fflonk_verifier::PROOF_SIZE].into(),
-                    [0; pallet_fflonk_verifier::PUBS_SIZE].into(),
+                    [0u8; pallet_ultraplonk_verifier::PROOF_SIZE]
+                        .into_iter()
+                        .collect::<Vec<_>>()
+                        .into(),
+                    Vec::new().into(),
                     None,
                 )),
             );

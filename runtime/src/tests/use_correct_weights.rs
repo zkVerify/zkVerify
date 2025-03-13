@@ -168,16 +168,6 @@ fn pallet_referenda() {
 }
 
 #[test]
-fn pallet_whitelist() {
-    use pallet_whitelist::WeightInfo;
-
-    assert_eq!(
-        <Runtime as pallet_whitelist::Config>::WeightInfo::whitelist_call(),
-        crate::weights::pallet_whitelist::ZKVWeight::<Runtime>::whitelist_call()
-    );
-}
-
-#[test]
 fn pallet_conviction_voting() {
     use pallet_conviction_voting::WeightInfo;
 
@@ -218,33 +208,12 @@ fn pallet_timestamp() {
 }
 
 #[test]
-#[cfg(not(feature = "relay"))]
-fn pallet_im_online() {
-    use pallet_im_online::WeightInfo;
-
-    assert_eq!(
-        <Runtime as pallet_im_online::Config>::WeightInfo::validate_unsigned_and_then_heartbeat(42),
-        crate::weights::pallet_im_online::ZKVWeight::<Runtime>::validate_unsigned_and_then_heartbeat(42)
-    );
-}
-
-#[test]
 fn pallet_proxy() {
     use pallet_proxy::WeightInfo;
 
     assert_eq!(
         <Runtime as pallet_proxy::Config>::WeightInfo::create_pure(1),
         crate::weights::pallet_proxy::ZKVWeight::<Runtime>::create_pure(1)
-    );
-}
-
-#[test]
-fn pallet_poe() {
-    use pallet_poe::WeightInfo;
-
-    assert_eq!(
-        <Runtime as pallet_poe::Config>::WeightInfo::publish_attestation(),
-        crate::weights::pallet_poe::ZKVWeight::<Runtime>::publish_attestation()
     );
 }
 
@@ -309,7 +278,6 @@ fn pallet_claim() {
     );
 }
 
-#[cfg(feature = "relay")]
 #[test]
 fn pallet_message_queue() {
     use pallet_message_queue::WeightInfo;
@@ -321,8 +289,6 @@ fn pallet_message_queue() {
 }
 
 mod parachains {
-    #![cfg(feature = "relay")]
-
     use super::*;
     use crate::parachains::*;
 
@@ -392,8 +358,12 @@ mod parachains {
         use inclusion::WeightInfo;
 
         assert_eq!(
-            <<Runtime as inclusion::Config>::WeightInfo as inclusion::WeightInfo>::receive_upward_messages(42),
-            crate::weights::parachains::inclusion::ZKVWeight::<Runtime>::receive_upward_messages(42)
+            <<Runtime as inclusion::Config>::WeightInfo as inclusion::WeightInfo>::enact_candidate(
+                42, 42, 42
+            ),
+            crate::weights::parachains::inclusion::ZKVWeight::<Runtime>::enact_candidate(
+                42, 42, 42
+            )
         )
     }
 

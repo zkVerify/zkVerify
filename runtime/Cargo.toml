@@ -7,7 +7,7 @@ homepage = "https://github.com/HorizenLabs/zkVerify"
 edition.workspace = true
 publish = false
 repository.workspace = true
-license = "GPL-3.0"
+license = "Apache-2.0"
 
 [lints]
 workspace = true
@@ -45,7 +45,6 @@ pallet-ismp = { workspace = true, features = ["unsigned"] }
 pallet-ismp-runtime-api = { workspace = true }
 ismp-grandpa = { workspace = true }
 frame-metadata-hash-extension = { workspace = true }
-pallet-whitelist = { workspace = true }
 pallet-conviction-voting = { workspace = true }
 pallet-treasury = { workspace = true }
 pallet-proxy = { workspace = true }
@@ -92,35 +91,31 @@ frame-system-benchmarking = { workspace = true, optional = true }
 pallet-aggregate = { workspace = true }
 pallet-claim = { workspace = true }
 pallet-hyperbridge-aggregations = { workspace = true }
-pallet-poe = { workspace = true }
 static_assertions = "1.1.0"
-proof-of-existence-rpc-runtime-api = { workspace = true }
 aggregate-rpc-runtime-api = { workspace = true }
 
 pallet-verifiers = { workspace = true }
 hp-verifiers = { workspace = true }
-pallet-fflonk-verifier = { workspace = true }
-pallet-zksync-verifier = { workspace = true }
 pallet-groth16-verifier = { workspace = true }
 pallet-risc0-verifier = { workspace = true, features = ["inject-native-poseidon2"] }
 pallet-ultraplonk-verifier = { workspace = true }
 pallet-proofofsql-verifier = { workspace = true }
 hp-dispatch = {workspace = true}
 
-authority-discovery-primitives = { workspace = true, optional = true }
+authority-discovery-primitives = { workspace = true }
 
-polkadot-primitives = { workspace = true, optional = true }
-polkadot-runtime-parachains = { workspace = true, optional = true }
-pallet-authority-discovery = { workspace = true, optional = true }
+polkadot-primitives = { workspace = true }
+polkadot-runtime-parachains = { workspace = true }
+pallet-authority-discovery = { workspace = true }
 
-polkadot-runtime-common = { workspace = true, optional = true }
+polkadot-runtime-common = { workspace = true }
 
 pallet-message-queue = { workspace = true }
-pallet-xcm = { workspace = true, optional = true }
+pallet-xcm = { workspace = true }
 pallet-xcm-benchmarks = { workspace = true, optional = true }
-xcm-builder = { workspace = true, optional = true }
-xcm-executor = { workspace = true, optional = true }
-xcm = { workspace = true, optional = true }
+xcm-builder = { workspace = true }
+xcm-executor = { workspace = true }
+xcm = { workspace = true }
 xcm-procedural = { workspace = true }
 hex-literal = { workspace = true }
 
@@ -147,7 +142,6 @@ runtime-benchmarks = [
 	"pallet-scheduler/runtime-benchmarks",
 	"pallet-preimage/runtime-benchmarks",
 	"pallet-referenda/runtime-benchmarks",
-	"pallet-whitelist/runtime-benchmarks",
 	"pallet-conviction-voting/runtime-benchmarks",
 	"pallet-treasury/runtime-benchmarks",
 	"pallet-session-benchmarking/runtime-benchmarks",
@@ -158,24 +152,21 @@ runtime-benchmarks = [
 	"pallet-claim/runtime-benchmarks",
 	"pallet-hyperbridge-aggregations/runtime-benchmarks",
 	"ismp-grandpa/runtime-benchmarks",
-	"pallet-poe/runtime-benchmarks",
 	"pallet-staking/runtime-benchmarks",
 	"pallet-proxy/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
 	"pallet-verifiers/runtime-benchmarks",
-	"pallet-fflonk-verifier/runtime-benchmarks",
-	"pallet-zksync-verifier/runtime-benchmarks",
 	"pallet-groth16-verifier/runtime-benchmarks",
 	"pallet-risc0-verifier/runtime-benchmarks",
 	"pallet-ultraplonk-verifier/runtime-benchmarks",
 	"pallet-proofofsql-verifier/runtime-benchmarks",
-	"polkadot-primitives?/runtime-benchmarks",
-	"polkadot-runtime-parachains?/runtime-benchmarks",
-	"polkadot-runtime-common?/runtime-benchmarks",
-	"xcm-builder?/runtime-benchmarks",
-	"xcm-executor?/runtime-benchmarks",
-	"pallet-xcm?/runtime-benchmarks",
-	"pallet-xcm-benchmarks?/runtime-benchmarks",
+	"polkadot-primitives/runtime-benchmarks",
+	"polkadot-runtime-parachains/runtime-benchmarks",
+	"polkadot-runtime-common/runtime-benchmarks",
+	"xcm-builder/runtime-benchmarks",
+	"xcm-executor/runtime-benchmarks",
+	"pallet-xcm/runtime-benchmarks",
+	"pallet-xcm-benchmarks/runtime-benchmarks",
 	"pallet-ismp/runtime-benchmarks",
 	"pallet-message-queue/runtime-benchmarks",
 	"pallet-offences/runtime-benchmarks",
@@ -184,18 +175,6 @@ runtime-benchmarks = [
 ]
 fast-runtime = []
 metadata-hash = ["substrate-wasm-builder/metadata-hash"]
-relay = [
-	"dep:polkadot-primitives",
-	"dep:polkadot-runtime-parachains",
-	"dep:pallet-authority-discovery",
-	"dep:authority-discovery-primitives",
-	"dep:polkadot-runtime-common",
-	"dep:xcm",
-	"dep:xcm-builder",
-	"dep:xcm-executor",
-	"dep:pallet-xcm",
-	"dep:pallet-xcm-benchmarks",
-]
 default = ["std"]
 std = [
 	"anyhow/std",
@@ -225,7 +204,6 @@ std = [
 	"pallet-scheduler/std",
 	"pallet-preimage/std",
 	"pallet-referenda/std",
-	"pallet-whitelist/std",
 	"pallet-conviction-voting/std",
 	"pallet-treasury/std",
 	"pallet-utility/std",
@@ -240,14 +218,12 @@ std = [
 	"pallet-transaction-payment-rpc-runtime-api/std",
 	"pallet-transaction-payment/std",
 	"pallet-message-queue/std",
-	"pallet-xcm?/std",
+	"pallet-xcm/std",
 	"pallet-xcm-benchmarks?/std",
 	"pallet-proxy/std",
 	"pallet-verifiers/std",
 	"pallet-aggregate/std",
 	"pallet-claim/std",
-	"pallet-poe/std",
-	"proof-of-existence-rpc-runtime-api/std",
 	"aggregate-rpc-runtime-api/std",
 	"scale-info/std",
 	"serde_json/std",
@@ -270,27 +246,25 @@ std = [
 	"sp-version/std",
 	"sp-weights/std",
 	"pallet-verifiers/std",
-	"pallet-fflonk-verifier/std",
-	"pallet-zksync-verifier/std",
 	"pallet-groth16-verifier/std",
 	"pallet-risc0-verifier/std",
 	"pallet-ultraplonk-verifier/std",
 	"pallet-proofofsql-verifier/std",
 	"hp-verifiers/std",
 	"substrate-wasm-builder",
-	"polkadot-primitives?/std",
-	"polkadot-runtime-parachains?/std",
-	"pallet-authority-discovery?/std",
-	"authority-discovery-primitives?/std",
-	"polkadot-runtime-common?/std",
+	"polkadot-primitives/std",
+	"polkadot-runtime-parachains/std",
+	"pallet-authority-discovery/std",
+	"authority-discovery-primitives/std",
+	"polkadot-runtime-common/std",
 	"log/std",
 	"pallet-election-provider-support-benchmarking?/std",
 	"pallet-session-benchmarking?/std",
 	"sp-mmr-primitives/std",
-	"xcm?/std",
-	"xcm-builder?/std",
-	"xcm-executor?/std",
-	"hp-dispatch/std"
+	"hp-dispatch/std",
+	"xcm/std",
+	"xcm-builder/std",
+	"xcm-executor/std"
 ]
 try-runtime = [
 	"frame-executive/try-runtime",
@@ -317,7 +291,6 @@ try-runtime = [
 	"pallet-ismp/try-runtime",
 	"pallet-hyperbridge-aggregations/try-runtime",
 	"ismp-grandpa/try-runtime",
-	"pallet-whitelist/try-runtime",
 	"pallet-conviction-voting/try-runtime",
 	"pallet-treasury/try-runtime",
 	"pallet-bounties/try-runtime",
@@ -328,15 +301,13 @@ try-runtime = [
 	"pallet-verifiers/try-runtime",
 	"pallet-aggregate/try-runtime",
 	"pallet-claim/try-runtime",
-	"pallet-poe/try-runtime",
 	"sp-runtime/try-runtime",
 	"pallet-verifiers/try-runtime",
-	"polkadot-runtime-parachains?/try-runtime",
-	"pallet-authority-discovery?/try-runtime",
-	"polkadot-runtime-common?/try-runtime",
-	"pallet-xcm?/try-runtime",
+	"polkadot-runtime-parachains/try-runtime",
+	"pallet-authority-discovery/try-runtime",
+	"polkadot-runtime-common/try-runtime",
+	"pallet-xcm/try-runtime",
 	"pallet-message-queue/try-runtime",
-	"pallet-zksync-verifier/try-runtime",
 	"hp-dispatch/try-runtime"
 ]
 extend-benchmarks = [

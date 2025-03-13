@@ -2,17 +2,7 @@ name: Build Docker Image
 
 on:
   workflow_dispatch:
-    inputs:
-      chain:
-        description: "solo or relay"
-        required: true
-        type: string
   workflow_call:
-    inputs:
-      chain:
-        description: "solo or relay"
-        required: true
-        type: string
 
 env:
   DOCKER_HUB_ORG: horizenlabs
@@ -30,7 +20,6 @@ jobs:
         id: build-docker-image
         uses: ./.github/actions/build-docker-image
         with:
-          chain: ${{ inputs.chain }}
           ref: ${{ github.ref }}
           docker_hub_org: ${{ env.DOCKER_HUB_ORG }}
           docker_image_name: ${{ env.DOCKER_IMAGE_BUILD_NAME }}

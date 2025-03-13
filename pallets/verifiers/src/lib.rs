@@ -69,7 +69,6 @@ pub use pallet::*;
 pub use pallet_verifiers_macros::*;
 
 pub mod common;
-pub mod migrations;
 #[allow(missing_docs)]
 pub mod mock;
 
@@ -191,9 +190,7 @@ pub mod pallet {
 
         let mut data_to_hash = keccak_256(ctx).to_vec();
         data_to_hash.extend_from_slice(vk_hash.as_bytes());
-        if let Some(h) = version_hash {
-            data_to_hash.extend_from_slice(h.as_bytes());
-        }
+        data_to_hash.extend_from_slice(version_hash.as_bytes());
         data_to_hash.extend_from_slice(keccak_256(pubs.as_bytes_ref()).as_bytes_ref());
         H256(keccak_256(data_to_hash.as_slice()))
     }
@@ -317,7 +314,7 @@ pub mod pallet {
     pub type Tickets<T: Config<I>, I: 'static = ()>
     where
         I: Verifier,
-    = StorageMap<Hasher = Blake2_128Concat, Key = (T::AccountId, H256), Value = Option<T::Ticket>>;
+    = StorageMap<Hasher = Blake2_128Concat, Key = (T::AccountId, H256), Value = T::Ticket>;
 
     // Dispatchable functions allows users to interact with the pallet and invoke state changes.
     // These functions materialize as "extrinsics", which are often compared to transactions.
@@ -328,7 +325,7 @@ pub mod pallet {
         I: Verifier,
     {
         /// Submit a proof and accept it if and only if is valid.
-        /// On success emit a `poe::NewElement` event.
+        /// On success emit a `ProofVerified` event.
         /// Accept either a Vk or its hash. If you use the Vk hash the Vk should be already registered
         /// with `register_vk` extrinsic.
         #[pallet::call_index(0)]
@@ -437,26 +434,25 @@ pub mod pallet {
         pub fn unregister_vk(origin: OriginFor<T>, vk_hash: H256) -> DispatchResult {
             log::trace!("Unregister vk");
             let account_id = ensure_signed(origin)?;
+            // Drop ticket if present
             if let Some(ticket) = Tickets::<T, I>::take((&account_id, vk_hash)) {
-                if let Some(ticket) = ticket {
-                    ticket.drop(&account_id)?;
-                }
-                Vks::<T, I>::mutate_exists(vk_hash, |vk_entry| match vk_entry {
-                    Some(v) => {
-                        v.ref_count = v.ref_count.saturating_sub(1);
-                        if v.ref_count == 0 {
-                            *vk_entry = None;
-                            Self::deposit_event(Event::VkUnregistered { hash: vk_hash });
-                        }
-                    }
-                    None => unreachable!(),
-                });
-                Ok(())
+                ticket.drop(&account_id)?;
             } else if Vks::<T, I>::contains_key(vk_hash) {
                 Err(BadOrigin)?
             } else {
                 Err(Error::<T, I>::VerificationKeyNotFound)?
             }
+            Vks::<T, I>::mutate_exists(vk_hash, |vk_entry| match vk_entry {
+                Some(v) => {
+                    v.ref_count = v.ref_count.saturating_sub(1);
+                    if v.ref_count == 0 {
+                        *vk_entry = None;
+                        Self::deposit_event(Event::VkUnregistered { hash: vk_hash });
+                    }
+                }
+                None => unreachable!(),
+            });
+            Ok(())
         }
     }
 
@@ -481,7 +477,7 @@ pub mod pallet {
         };
 
         use super::*;
-        use hp_verifiers::Verifier;
+        use hp_verifiers::{Verifier, NO_VERSION_HASH};
         use rstest::rstest;
         use sp_core::U256;
 
@@ -546,6 +542,7 @@ pub mod pallet {
             {
                 let mut data_to_hash = keccak_256(b"fake").to_vec();
                 data_to_hash.extend_from_slice(REGISTERED_VK_HASH.as_bytes());
+                data_to_hash.extend_from_slice(&NO_VERSION_HASH.as_bytes());
                 data_to_hash.extend_from_slice(&keccak_256(42_u64.to_be_bytes().as_ref()));
                 H256(keccak_256(data_to_hash.as_slice()))
             }

@@ -20,9 +20,11 @@ use babe_primitives::AuthorityId as BabeId;
 use grandpa::AuthorityId as GrandpaId;
 use pallet_staking::Forcing;
 use polkadot_primitives::{AccountId, AssignmentId, ValidatorId, MAX_CODE_SIZE, MAX_POV_SIZE};
-use sc_chain_spec::{ChainSpec, ChainType};
+use polkadot_service::chain_spec::{get_account_id_from_seed, get_from_seed};
+use sc_chain_spec::{ChainSpec, ChainSpecExtension, ChainType};
 pub use sc_consensus_grandpa as grandpa;
-use service::chain_spec::{get_account_id_from_seed, get_from_seed};
+use sc_sync_state_rpc::LightSyncStateExtension;
+use serde::{Deserialize, Serialize};
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 pub use sp_consensus_babe as babe_primitives;
 use sp_core::sr25519;
@@ -32,8 +34,14 @@ use test_runtime_constants::currency::DOTS;
 
 const DEFAULT_PROTOCOL_ID: &str = "dot";
 
+/// The extensions for the [`ChainSpec`].
+#[derive(Default, Clone, Serialize, Deserialize, ChainSpecExtension)]
+pub struct Extensions {
+    light_sync_state: LightSyncStateExtension,
+}
+
 /// The `ChainSpec` parameterized for polkadot test runtime.
-pub type PolkadotChainSpec = sc_service::GenericChainSpec;
+pub type PolkadotChainSpec = sc_service::GenericChainSpec<Extensions>;
 
 /// Returns the properties for the [`PolkadotChainSpec`].
 pub fn polkadot_chain_spec_properties() -> serde_json::map::Map<String, serde_json::Value> {

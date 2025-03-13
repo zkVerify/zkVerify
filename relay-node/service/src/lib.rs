@@ -91,7 +91,6 @@ use sc_telemetry::TelemetryWorker;
 use sc_telemetry::{Telemetry, TelemetryWorkerHandle};
 use telemetry as sc_telemetry;
 
-use frame_benchmarking_cli::SUBSTRATE_REFERENCE_HARDWARE;
 use polkadot_node_subsystem_types::DefaultSubsystemClient;
 pub use polkadot_primitives::{BlockId, BlockNumber, CollatorPair, Hash, Id as ParaId};
 pub use sc_client_api::{Backend, CallExecutor};
@@ -109,6 +108,7 @@ pub use sp_runtime::{
     generic,
     traits::{self as runtime_traits, BlakeTwo256, Block as BlockT, Header as HeaderT, NumberFor},
 };
+use zkv_benchmarks::hardware::zkv_reference_hardware;
 
 pub use zkv_runtime::{self, opaque::Block, RuntimeApi};
 
@@ -387,17 +387,18 @@ fn new_partial_basics(
         .transpose()?;
 
     let heap_pages = config
+        .executor
         .default_heap_pages
         .map_or(DEFAULT_HEAP_ALLOC_STRATEGY, |h| HeapAllocStrategy::Static {
             extra_pages: h as _,
         });
 
     let executor = WasmExecutor::builder()
-        .with_execution_method(config.wasm_method)
+        .with_execution_method(config.executor.wasm_method)
         .with_onchain_heap_alloc_strategy(heap_pages)
         .with_offchain_heap_alloc_strategy(heap_pages)
-        .with_max_runtime_instances(config.max_runtime_instances)
-        .with_runtime_cache_size(config.runtime_cache_size)
+        .with_max_runtime_instances(config.executor.max_runtime_instances)
+        .with_runtime_cache_size(config.executor.runtime_cache_size)
         .build();
 
     let (client, backend, keystore_container, task_manager) =
@@ -449,10 +450,7 @@ fn new_partial<ChainSelection>(
         sc_consensus::DefaultImportQueue<Block>,
         sc_transaction_pool::FullPool<Block, FullClient>,
         (
-            impl Fn(
-                rpc::DenyUnsafe,
-                rpc::SubscriptionTaskExecutor,
-            ) -> Result<rpc::RpcExtension, SubstrateServiceError>,
+            impl Fn(rpc::SubscriptionTaskExecutor) -> Result<rpc::RpcExtension, SubstrateServiceError>,
             (
                 babe::BabeBlockImport<Block, FullClient, FullGrandpaBlockImport<ChainSelection>>,
                 sc_consensus_grandpa::LinkHalf<Block, FullClient, ChainSelection>,
@@ -494,8 +492,8 @@ where
         sc_consensus_babe::block_import(babe_config.clone(), grandpa_block_import, client.clone())?;
 
     let slot_duration = babe_link.config().slot_duration();
-    let (import_queue, babe_worker_handle) =
-        sc_consensus_babe::import_queue(sc_consensus_babe::ImportQueueParams {
+    let (import_queue, babe_worker_handle) = sc_consensus_babe::import_queue(
+        sc_consensus_babe::ImportQueueParams {
             link: babe_link.clone(),
             block_import: block_import.clone(),
             justification_import: Some(Box::new(justification_import)),
@@ -505,20 +503,19 @@ where
                 let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
 
                 let slot =
-				sp_consensus_babe::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
-					*timestamp,
-					slot_duration,
-				);
+                    sp_consensus_babe::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
+                    	*timestamp,
+                    	slot_duration,
+                    );
 
-                let poe = hp_poe::InherentDataProvider::default();
-
-                Ok((slot, timestamp, poe))
+                Ok((slot, timestamp))
             },
             spawner: &task_manager.spawn_essential_handle(),
             registry: config.prometheus_registry(),
             telemetry: telemetry.as_ref().map(|x| x.handle()),
             offchain_tx_pool_factory: OffchainTransactionPoolFactory::new(transaction_pool.clone()),
-        })?;
+        },
+    )?;
 
     let justification_stream = grandpa_link.justification_stream();
     let shared_authority_set = grandpa_link.shared_authority_set().clone();
@@ -539,7 +536,7 @@ where
         let chain_spec = config.chain_spec.cloned_box();
         let backend = backend.clone();
 
-        move |deny_unsafe,
+        move |
               subscription_executor: rpc::SubscriptionTaskExecutor|
               -> Result<rpc::RpcExtension, sc_service::Error> {
             let deps = rpc::FullDeps {
@@ -547,7 +544,6 @@ where
                 pool: transaction_pool.clone(),
                 select_chain: select_chain.clone(),
                 chain_spec: chain_spec.cloned_box(),
-                deny_unsafe,
                 babe: rpc::BabeDeps {
                     babe_worker_handle: babe_worker_handle.clone(),
                     keystore: keystore.clone(),
@@ -709,9 +705,9 @@ pub fn new_full<
 ) -> Result<NewFull, Error> {
     use polkadot_availability_recovery::FETCH_CHUNKS_THRESHOLD;
     use polkadot_node_network_protocol::request_response::IncomingRequest;
-    use sc_network_sync::WarpSyncParams;
+    use sc_network_sync::WarpSyncConfig;
 
-    let role = config.role.clone();
+    let role = config.role;
     let force_authoring = config.force_authoring;
     let backoff_authoring_blocks = force_authoring_backoff
         .then(sc_consensus_slots::BackoffAuthoringOnFinalizedHeadLagging::default);
@@ -761,8 +757,13 @@ pub fn new_full<
     let auth_disc_publish_non_global_ips = config.network.allow_non_globals_in_dht;
     let auth_disc_public_addresses = config.network.public_addresses.clone();
 
-    let mut net_config =
-        sc_network::config::FullNetworkConfiguration::<_, _, Network>::new(&config.network);
+    let mut net_config = sc_network::config::FullNetworkConfiguration::<_, _, Network>::new(
+        &config.network,
+        config
+            .prometheus_config
+            .as_ref()
+            .map(|cfg| cfg.registry.clone()),
+    );
 
     let genesis_hash = client
         .block_hash(0)
@@ -933,7 +934,7 @@ pub fn new_full<
             spawn_handle: task_manager.spawn_handle(),
             import_queue,
             block_announce_validator_builder: None,
-            warp_sync_params: Some(WarpSyncParams::WithProvider(warp_sync)),
+            warp_sync_config: Some(WarpSyncConfig::WithProvider(warp_sync)),
             block_relay: None,
             metrics,
         })?;
@@ -978,7 +979,7 @@ pub fn new_full<
 
     if let Some(hwbench) = hwbench {
         sc_sysinfo::print_hwbench(&hwbench);
-        match SUBSTRATE_REFERENCE_HARDWARE.check_hardware(&hwbench) {
+        match zkv_reference_hardware().check_hardware(&hwbench, role.is_authority()) {
             Err(err) if role.is_authority() => {
                 log::warn!(
 				"⚠️  The hardware does not meet the minimal requirements {} for role 'Authority' find out more at:\n\
@@ -1154,14 +1155,12 @@ pub fn new_full<
                     let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
 
                     let slot =
-						sp_consensus_babe::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
-							*timestamp,
-							slot_duration,
-						);
+                        sp_consensus_babe::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
+                        	*timestamp,
+                        	slot_duration,
+                        );
 
-                    let poe = hp_poe::InherentDataProvider::default();
-
-                    Ok((slot, timestamp, parachain, poe))
+                    Ok((slot, timestamp, parachain))
                 }
             },
             force_authoring,

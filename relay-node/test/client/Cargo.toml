@@ -36,7 +36,7 @@ frame-benchmarking = { workspace = true }
 
 [dev-dependencies]
 sp-keyring = { workspace = true }
-futures = "0.3.21"
+futures = { workspace = true }
 
 [features]
 runtime-benchmarks = [

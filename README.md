@@ -62,7 +62,7 @@ To run a testnet node:
 
 ```bash
 cd target/release
-./zkv-node --chain test
+./zkv-relay --chain test
 ```
 
 The client will connect to `ZKV Testnet` and start syncing blockchain data, with default path at `$HOME/.local/share/` (double check with log `💾 Database: RocksDb at`).
@@ -71,7 +71,7 @@ For entirely removing blockchain data:
 
 ```bash
 cd target/release
-./zkv-node purge --chain test
+./zkv-relay purge --chain test
 ```
 
 ### Run dev node
@@ -80,7 +80,7 @@ To run a local dev node:
 
 ```bash
 cd target/release
-./zkv-node --dev
+./zkv-relay --dev
 ```
 
 The client will run a chain with a single validator (Alice) and start producing blocks.
@@ -140,18 +140,7 @@ The official documentation is available at [docs.zkverify.io](https://docs.zkver
 
 ## License
 
-zkVerify as a whole is released under the [GPL 3.0 license](LICENSE-GPL3). This is mostly due to the fact that the proof verification implemented by the `settlement-fflonk` pallet is based on GPL 3.0 software.
-
-For this reason, all the crates that include such dependency are GPL 3.0 licensed:
-
-- `pallet-settlement-fflonk`
-- `zkv-runtime`
-- `mainchain`
-
-The remaining crates, which are independent of the FFLONK verifier implementation, are released under the [APACHE 2.0 license](LICENSE-APACHE2):
-
-- `pallet-poe`
-- `hp-poe`
-- `proof-of-existence-rpc`
-- `proof-of-existence-rpc-runtime-api`
-- `pallet-settlement-zksync`
+zkVerify is released under the following licenses:
+- [GPL-3](LICENSE-GPL3) for all the crates under the `zkv-relay` package.
+- GPL-3 with CLASSPATH exception for `cumulus-relay-chain-inprocess-interface` and `cumulus-relay-chain-minimal-node` crates.
+- [Apache 2.0](LICENSE-APACHE2) for all the other crates.

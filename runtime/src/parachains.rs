@@ -13,8 +13,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-#![cfg(feature = "relay")]
-
 //! Parachain modules configurations.
 //! FIXME: this configuration is meant for testing only, and MUST not deployed to a production
 //! network without proper assessment.
@@ -41,14 +39,13 @@ pub use polkadot_runtime_parachains::{
     shared as parachains_shared,
 };
 
-//use polkadot_runtime_common::{paras_registrar, paras_sudo_wrapper, prod_or_fast, slots};
-pub use polkadot_runtime_common::paras_sudo_wrapper;
+pub use polkadot_runtime_common::{paras_registrar, paras_sudo_wrapper, slots, traits::Registrar};
 
 use super::{
-    weights, xcm_config, AccountId, Babe, Balances, BlockWeights, Historical, KeyOwnerProofSystem,
-    KeyTypeId, MaxAuthorities, MessageQueue, Offences, ParaInclusion, ParachainsAssignmentProvider,
-    ParasDisputes, ParasSlashing, Perbill, ReportLongevity, Runtime, RuntimeCall, RuntimeEvent,
-    RuntimeOrigin, Session, Weight,
+    currency::Balance, weights, xcm_config, AccountId, Babe, Balances, BlockNumber, BlockWeights,
+    Historical, KeyOwnerProofSystem, KeyTypeId, MaxAuthorities, MessageQueue, Offences,
+    ParaInclusion, ParachainsAssignmentProvider, ParasDisputes, ParasSlashing, Perbill,
+    ReportLongevity, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, Session, Weight,
 };
 use sp_runtime::transaction_validity::TransactionPriority;
 
@@ -89,7 +86,7 @@ impl slashing::Config for Runtime {
     type HandleReports =
         slashing::SlashingReportHandler<Self::KeyOwnerIdentification, Offences, ReportLongevity>;
     type WeightInfo = weights::parachains::slashing::ZKVWeight<Runtime>;
-    type BenchmarkingConfig = slashing::BenchConfig<{ crate::MAX_TARGETS }>;
+    type BenchmarkingConfig = slashing::BenchConfig<{ crate::MAX_ACTIVE_VALIDATORS }>;
 }
 
 impl parachains_dmp::Config for Runtime {}
@@ -153,8 +150,7 @@ impl paras::Config for Runtime {
     type UnsignedPriority = ParasUnsignedPriority;
     type QueueFootprinter = ParaInclusion;
     type NextSessionRotation = Babe;
-    // type OnNewHead = Registrar;
-    type OnNewHead = ();
+    type OnNewHead = crate::Registrar;
     type AssignCoretime = ();
     type WeightInfo = weights::parachains::paras::ZKVWeight<Runtime>;
 }
@@ -217,57 +213,34 @@ impl pallet_authority_discovery::Config for Runtime {
 
 impl paras_sudo_wrapper::Config for Runtime {}
 
-// parameter_types! {
-//     pub const ParaDeposit: Balance = 40 * ACME;
-//     pub const DataDepositPerByte: Balance = 1 * CENTS;
-// }
+parameter_types! {
+    pub const ParaDeposit: Balance = Balance::MAX; // deliberately high
+    pub const DataDepositPerByte: Balance = Balance::MAX; // deliberately high
+}
 
-// impl paras_registrar::Config for Runtime {
-//     type RuntimeOrigin = RuntimeOrigin;
-//     type RuntimeEvent = RuntimeEvent;
-//     type Currency = Balances;
-//     // type OnSwap = (Crowdloan, Slots);
-//     type OnSwap = Slots;
-//     type ParaDeposit = ParaDeposit;
-//     type DataDepositPerByte = DataDepositPerByte;
-//     type WeightInfo = paras_registrar::TestWeightInfo;
-// }
+impl paras_registrar::Config for Runtime {
+    type RuntimeOrigin = RuntimeOrigin;
+    type RuntimeEvent = RuntimeEvent;
+    type Currency = Balances;
+    type OnSwap = ();
+    type ParaDeposit = ParaDeposit;
+    type DataDepositPerByte = DataDepositPerByte;
+    type WeightInfo = weights::parachains::registrar::ZKVWeight<Runtime>;
+}
 
-// parameter_types! {
-//     pub LeasePeriod: BlockNumber = prod_or_fast!(1 * DAYS, 1 * DAYS, "ZKV_LEASE_PERIOD");
-// }
+parameter_types! {
+    pub LeasePeriod: BlockNumber = BlockNumber::MAX; // deliberately high
+}
 
-// impl slots::Config for Runtime {
-//     type RuntimeEvent = RuntimeEvent;
-//     type Currency = Balances;
-//     type Registrar = Registrar;
-//     type LeasePeriod = LeasePeriod;
-//     type LeaseOffset = ();
-//     //type ForceOrigin = EitherOf<EnsureRoot<Self::AccountId>, LeaseAdmin>;
-//     type ForceOrigin = EnsureRoot<Self::AccountId>;
-//     type WeightInfo = slots::TestWeightInfo;
-// }
-
-// /// System Parachains.
-// pub mod system_parachain {
-//     use xcm::latest::prelude::*;
-
-//     // /// Network's Asset Hub parachain ID.
-//     // pub const ASSET_HUB_ID: u32 = 1000;
-//     // /// Contracts parachain ID.
-//     // pub const CONTRACTS_ID: u32 = 1002;
-//     // /// Encointer parachain ID.
-//     // pub const ENCOINTER_ID: u32 = 1003;
-//     // /// BridgeHub parachain ID.
-//     // pub const BRIDGE_HUB_ID: u32 = 1013;
-
-//     frame_support::match_types! {
-//         pub type SystemParachains: impl Contains<MultiLocation> = {
-//             MultiLocation { parents: 0, interior: X1(Parachain(1000)) }
-//             // MultiLocation { parents: 0, interior: X1(Parachain(ASSET_HUB_ID | CONTRACTS_ID | ENCOINTER_ID | BRIDGE_HUB_ID)) }
-//         };
-//     }
-// }
+impl slots::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type Currency = Balances;
+    type Registrar = crate::Registrar;
+    type LeasePeriod = LeasePeriod;
+    type LeaseOffset = ();
+    type ForceOrigin = EnsureRoot<Self::AccountId>;
+    type WeightInfo = weights::parachains::slots::ZKVWeight<Runtime>;
+}
 
 /// All migrations that will run on the next runtime upgrade.
 ///

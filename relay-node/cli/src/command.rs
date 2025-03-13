@@ -15,7 +15,7 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use crate::cli::{Cli, Subcommand, NODE_VERSION};
-use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
+use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory};
 use futures::future::TryFutureExt;
 use native::HLNativeHostFunctions;
 use sc_cli::SubstrateCli;
@@ -24,9 +24,9 @@ use service::{
     benchmarking::{benchmark_inherent_data, RemarkBuilder, TransferKeepAliveBuilder},
     HeaderBackend, IdentifyVariant,
 };
-use sp_core::crypto::Ss58AddressFormatRegistry;
 use sp_keyring::Sr25519Keyring;
 use std::net::ToSocketAddrs;
+use zkv_benchmarks::hardware::zkv_reference_hardware;
 
 pub use crate::{error::Error, service::BlockId};
 #[cfg(feature = "pyroscope")]
@@ -80,7 +80,7 @@ impl SubstrateCli for Cli {
 }
 
 fn set_default_ss58_version(_spec: &dyn service::ChainSpec) {
-    sp_core::crypto::set_default_ss58_version(Ss58AddressFormatRegistry::SubstrateAccount.into());
+    sp_core::crypto::set_default_ss58_version(zkv_runtime::SS58Prefix::get().into());
 }
 
 fn run_node_inner<F>(
@@ -123,7 +123,7 @@ where
         let hwbench = (!cli.run.no_hardware_benchmarks)
             .then_some(config.database.path().map(|database_path| {
                 let _ = std::fs::create_dir_all(database_path);
-                sc_sysinfo::gather_hwbench(Some(database_path))
+                sc_sysinfo::gather_hwbench(Some(database_path), zkv_reference_hardware())
             }))
             .flatten();
 
@@ -377,7 +377,7 @@ pub fn run() -> Result<()> {
                     }
                 }
                 BenchmarkCmd::Machine(cmd) => runner.sync_run(|config| {
-                    cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone())
+                    cmd.run(&config, zkv_reference_hardware().clone())
                         .map_err(Error::SubstrateCli)
                 }),
                 // NOTE: this allows the zkVerify client to leniently implement

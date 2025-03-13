@@ -6,10 +6,10 @@
 # - npm
 # - yarn
 # The script automatically downloads zombienet binary and saves it into the zombienet-tests/bin folder.
-# It also looks for a compiled zkv-node binary in the folder target/release, hence make sure to 
-# have a freshly compiled version of zkv-node in this folder.
+# It also looks for a compiled zkv-relay binary in the folder target/release, hence make sure to 
+# have a freshly compiled version of zkv-relay in this folder.
 # Optionally, this script can be launched with the '--debug' switch, which makes it look for
-# the zkv-node binary in the target/debug folder instead.
+# the zkv-relay binary in the target/debug folder instead.
 
 # ANSI color handles
 TXT_BIBLU="\033[94;1m"
@@ -57,14 +57,9 @@ declare -a TEST_LIST=()
 
 # Check if we requested a run over a debug build
 PROFILE="release"
-NODES=("solo" "relay")
 for ARG in "$@"; do
     if [[ "${ARG}" == "--debug" ]]; then
         PROFILE="debug"
-    elif [[ "${ARG}" == "--solo" ]]; then
-        NODES=("solo")
-    elif [[ "${ARG}" == "--relay" ]]; then
-        NODES=("relay")
     else
         TEST_LIST+=("${ARG}")    
     fi
@@ -78,11 +73,7 @@ fi
 echo -e "${TXT_BIGRN}INFO: ${TXT_BIBLK}Running tests with a ${PROFILE} build${TXT_NORML}"
 
 HAS_BINARIES="true"
-if [[ ${NODES[*]} =~ "solo" && ! -f "../target/${PROFILE}/zkv-node" ]]; then
-    echo -e "${TXT_BIRED}ERROR: ${TXT_BIBLK}zkv-node binary not found. Compile zkv-node in ${PROFILE} mode and re-launch this script${TXT_NORML}"
-    HAS_BINARIES="false"
-fi
-if [[ ${NODES[*]} =~ "relay" &&  ! ( -f "../target/${PROFILE}/zkv-relay" && -f "../target/${PROFILE}/paratest-node" ) ]]; then
+if [[ ! ( -f "../target/${PROFILE}/zkv-relay" && -f "../target/${PROFILE}/paratest-node" ) ]]; then
     echo -e "${TXT_BIRED}ERROR: ${TXT_BIBLK}zkv-relay and/or paratest-node binary not found. Compile zkv-relay and paratest-node in ${PROFILE} mode and re-launch this script${TXT_NORML}"
     echo -e "       ${TXT_BIBLK}cargo build -p zkv-relay -p paratest-node --${PROFILE} --features fast-runtime${TXT_NORML}"
     HAS_BINARIES="false"
@@ -98,35 +89,23 @@ FULLBUILDPATH="../target/${PROFILE}"
 NETWORK_DEFS_FOLDER="network_defs"
 
 # GO! GO! GO!
-for NODE in "${NODES[@]}"; do
+echo -e "============================================================"
+echo -e "${TXT_BIBLK} TEST NODE impl:  ${TXT_NORML} ${NODE}"
+echo -e "============================================================"
+for TESTNAME in "${TEST_LIST[@]}"; do
+    echo -e "\n\n"
     echo -e "============================================================"
-    echo -e "${TXT_BIBLK} TEST NODE impl:  ${TXT_NORML} ${NODE}"
+    echo -e "${TXT_BIBLK} Running test:  ${TXT_NORML} ${TESTNAME} on ${NODE} chain"
     echo -e "============================================================"
-    rm -f "${NETWORK_DEFS_FOLDER}";
-    ln -s "${NETWORK_DEFS_FOLDER}_${NODE}" "${NETWORK_DEFS_FOLDER}";
-    for TESTNAME in "${TEST_LIST[@]}"; do
-        if grep -q -P "^#\s*SKIP.*\s${NODE}.*$" "${TESTNAME}" ; then  
-            echo -e "\n\n"
-            echo -e "============================================================"
-            echo -e "${TXT_BIYLW}SKIP test:${TXT_BIBLK}  ${TXT_NORML} ${TESTNAME} on ${NODE} chain"
-            echo -e "============================================================"
-            continue
-        fi
-        echo -e "\n\n"
-        echo -e "============================================================"
-        echo -e "${TXT_BIBLK} Running test:  ${TXT_NORML} ${TESTNAME} on ${NODE} chain"
-        echo -e "============================================================"
-        ( PATH=${PATH}:${FULLBUILDPATH}; bin/$ZOMBIENET_BINARY -p native test ./"${TESTNAME}" )
-        current_exit_code=$?
-        TOT_EXEC_TESTS=$((TOT_EXEC_TESTS+1))
-        if [ ${current_exit_code} -ne 0 ]; then
-            FAILED_TESTS+=("${NODE}:${TESTNAME}")
-            TOT_FAIL_TESTS=$((TOT_FAIL_TESTS+1))
-            EXIT_STATUS=1
-        fi
-    done
+    ( PATH=${PATH}:${FULLBUILDPATH}; bin/$ZOMBIENET_BINARY -p native test ./"${TESTNAME}" )
+    current_exit_code=$?
+    TOT_EXEC_TESTS=$((TOT_EXEC_TESTS+1))
+    if [ ${current_exit_code} -ne 0 ]; then
+        FAILED_TESTS+=("${NODE}:${TESTNAME}")
+        TOT_FAIL_TESTS=$((TOT_FAIL_TESTS+1))
+        EXIT_STATUS=1
+    fi
 done
-rm -f "${NETWORK_DEFS_FOLDER}";
 
 # Print a fancy table summarizing the test suit run
 echo -e "\n\n\n"

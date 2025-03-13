@@ -14,8 +14,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#![cfg(feature = "relay")]
-
 pub mod configuration;
 pub mod disputes;
 pub mod hrmp;
@@ -23,4 +21,6 @@ pub mod inclusion;
 pub mod initializer;
 pub mod paras;
 pub mod paras_inherent;
+pub mod registrar;
 pub mod slashing;
+pub mod slots;

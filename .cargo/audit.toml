@@ -1,16 +1,11 @@
 [advisories]
 ignore = [
-    # Coming from bellman_ce dependency of zksyncera_verifier. 
-    # Likely cannot update without potentially breaking compatibility
-    # and currently reworking not in scope
-    "RUSTSEC-2022-0041",
-    "RUSTSEC-2023-0045",
-
     # Coming from outdated libp2p and litep2p dependencies from which
     # some Polkadot libraries are dependent on. They will be updated
     # once we update Polkadot packages to latest version
     "RUSTSEC-2024-0421",
     "RUSTSEC-2024-0336",
+    "RUSTSEC-2025-0009",
 ]
 informational_warnings = ["unmaintained", "yanked"]
 

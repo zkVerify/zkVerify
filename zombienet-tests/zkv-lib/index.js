@@ -12,27 +12,6 @@ zkvTypes = {
 
 // This one defines the metadata for the arguments and return value of proofPath RPC call
 zkvRpc = {
-    poe: {
-        proofPath: {
-            description: 'Get the Merkle root and path of a stored proof',
-            params: [
-                {
-                    name: 'root_id',
-                    type: 'u64'
-                },
-                {
-                    name: 'proof_hash',
-                    type: 'H256'
-                },
-                {
-                    name: 'at',
-                    type: 'BlockHash',
-                    isOptional: true
-                }
-            ],
-            type: 'MerkleProof'
-        }
-    },
     aggregate: {
         statementPath: {
             description: 'Get the Merkle root and path of a aggregate statement',
@@ -85,7 +64,7 @@ exports.init_api = async (zombie, nodeName, networkInfo) => {
 exports.submitProof = async (pallet, signer, ...verifierArgs) => {
     const validProofSubmission = (verifierArgs.length < 4) ? pallet.submitProof(...verifierArgs, null) : pallet.submitProof(...verifierArgs);
     return await submitExtrinsic(api, validProofSubmission, signer, BlockUntil.InBlock, (event) =>
-        (event.section == "poe" && event.method == "NewElement") ||
+        (event.method == "ProofVerified") ||
         (event.section == "aggregate" && event.method == "NewProof") ||
         (event.section == "aggregate" && event.method == "AggregationComplete")
     );
@@ -118,11 +97,6 @@ exports.aggregate = async (signer, domain_id, aggregation_id) => {
 
 exports.waitForEvent = async (api, timeout, pallet, name) => {
     return await waitForEvent(api, timeout, pallet, name);
-}
-
-// Wait for the next attestaion id to be published
-exports.waitForNewAttestation = async (api, timeout) => {
-    return await waitForEvent(api, timeout, "poe", "NewAttestation");
 }
 
 // Wait for the next attestaion id to be published
@@ -171,7 +145,7 @@ async function waitForEvent(api, timeout, pallet, name) {
 
 exports.registerVk = async (pallet, signer, vk) => {
     return await submitExtrinsic(api, pallet.registerVk(vk), signer, BlockUntil.InBlock,
-        (event) => event.section == "settlementFFlonkPallet" && event.method == "VkRegistered"
+        (event) => event.section == "settlementUltraplonkPallet" && event.method == "VkRegistered"
     )
 }
 
@@ -261,7 +235,7 @@ async function submitExtrinsic(api, extrinsic, signer, blockUntil, filter) {
                     events: records.map((record) => record.event).filter(filter)
                 };
             },
-            async function(error) {
+            async function (error) {
                 if (error !== "retry") {
                     console.log("Not retrying!");
                     return -1;

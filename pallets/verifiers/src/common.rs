@@ -5,7 +5,7 @@ pub use pallet::*;
 use frame_support::weights::Weight;
 use sp_core::Get;
 
-/// Weight functions needed for `pallet_poe`.
+/// Weight functions needed for `pallet_aggregate`.
 #[allow(missing_docs)]
 pub trait WeightInfo {
     fn disable_verifier() -> Weight;

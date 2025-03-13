@@ -10,10 +10,10 @@ const ReturnCode = {
 };
 
 const { init_api, submitProof, getBalance, receivedEvents, submitExtrinsic } = require('zkv-lib')
-const { PROOF, PUBS, VK } = require('./fflonk_data.js');
+const { PROOF, PUBS, VK } = require('./ultraplonk_data.js');
 
 // Call verify on a disable verifier should cost at most FACTOR times the cost of the proof.
-const FACTOR = 100;
+const FACTOR = 20;
 
 async function run(nodeName, networkInfo, _args) {
     const api = await init_api(zombie, nodeName, networkInfo);
@@ -25,7 +25,7 @@ async function run(nodeName, networkInfo, _args) {
     let balanceAlice = await getBalance(alice);
     console.log('Alice\'s balance: ' + balanceAlice.toHuman());
 
-    if (!receivedEvents(await submitProof(api.tx.settlementFFlonkPallet, alice, { 'Vk': VK }, PROOF, PUBS))) {
+    if (!receivedEvents(await submitProof(api.tx.settlementUltraplonkPallet, alice, { 'Vk': VK }, PROOF, PUBS))) {
         return ReturnCode.ErrProofVerificationFailed;
     };
 
@@ -36,7 +36,7 @@ async function run(nodeName, networkInfo, _args) {
 
     console.log('Alice paid for a valid proof: ' + paidBalanceOnVerify);
 
-    const disableTx = api.tx.settlementFFlonkPallet.disable(true);
+    const disableTx = api.tx.settlementUltraplonkPallet.disable(true);
     const sudoDisableTx = api.tx.sudo.sudo(disableTx)
 
     if (!receivedEvents(await submitExtrinsic(api, sudoDisableTx, alice, BlockUntil.InBlock))) {
@@ -46,8 +46,8 @@ async function run(nodeName, networkInfo, _args) {
     balanceAlice = await getBalance(alice);
     console.log('Alice\'s balance before verify a proof on disabled verifier: ' + balanceAlice.toHuman());
 
-    // This should fails
-    if (receivedEvents(await submitProof(api.tx.settlementFFlonkPallet, alice, { 'Vk': VK }, PROOF, PUBS))) {
+    // This should fail
+    if (receivedEvents(await submitProof(api.tx.settlementUltraplonkPallet, alice, { 'Vk': VK }, PROOF, PUBS))) {
         return ReturnCode.ErrVerifiedOnDisable;
     };
 
@@ -60,7 +60,7 @@ async function run(nodeName, networkInfo, _args) {
     console.log('Alice paid for a disable verifier: ' + paidBalanceOnDisable);
 
     if (paidBalanceOnDisable > paidBalanceOnVerify / FACTOR) {
-        console.log(`ERROR: Alice should pay at most ${FACTOR} times what she paid for a valid verify`);
+        console.log(`ERROR: Alice should pay a valid verify at most ${FACTOR} times what she paid for a disabled verify`);
         return ReturnCode.ErrDisableProofTooCostly;
     }
     console.log(`INFO: Alice paid less than ${FACTOR} times`);

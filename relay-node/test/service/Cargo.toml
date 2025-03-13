@@ -11,12 +11,12 @@ description = "Test service"
 workspace = true
 
 [dependencies]
-futures = "0.3.21"
+futures = { workspace = true }
 hex = "0.4.3"
 gum = { workspace = true }
-rand = "0.8.5"
-serde_json = "1.0.108"
-tempfile = "3.2.0"
+rand = { workspace = true }
+serde_json = { workspace = true }
+tempfile = { workspace = true }
 tokio = { workspace = true }
 polkadot-overseer = { workspace = true }
 polkadot-primitives = { workspace = true }
@@ -55,10 +55,12 @@ sp-keyring = { workspace = true }
 sp-runtime = { workspace = true }
 sp-state-machine = { workspace = true }
 substrate-test-client = { workspace = true }
+sc-sync-state-rpc = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+polkadot-service = { workspace = true }
 
 [dev-dependencies]
 pallet-balances = { workspace = true }
-substrate-test-utils = { workspace = true }
 tokio = { workspace = true, features = ["macros"] }
 
 [features]
@@ -75,4 +77,5 @@ runtime-benchmarks = [
 	"test-runtime/runtime-benchmarks",
 	"sc-service/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
+	"polkadot-service/runtime-benchmarks"
 ]

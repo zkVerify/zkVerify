@@ -36,5 +36,6 @@ std = [
 	"scale-info/std",
 	"binary-merkle-tree/std",
 	"serde",
-	"sp-core/std"
+	"sp-core/std",
+	"serde?/std"
 ]

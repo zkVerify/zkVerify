@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! This crate provide a some tool to handle native dependency caching. The main entry point are
+//! This crate provides a tool to handle native dependency caching. The main entry point are
 //! [`handle_dependency`] and [`handle_dependencies`] functions.
 
 use std::{
@@ -31,15 +31,12 @@ pub use helpers::{is_dyn_or_static_lib, is_name};
 pub use lib_dependency::{DependencyImpl, LibFilesDependency, ProfileLibFilesDependencyBuilder};
 #[cfg(feature = "rocksdb")]
 pub use rocksdb::rocksdb;
-#[cfg(feature = "ultraplonk")]
-pub use ultraplonk::ultraplonk;
 
 mod config;
 mod dependency;
 mod helpers;
 mod lib_dependency;
 mod rocksdb;
-mod ultraplonk;
 
 /// Enable logging.
 pub const ENABLE_LOGS: bool = false;

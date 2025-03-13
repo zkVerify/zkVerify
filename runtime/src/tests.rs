@@ -16,9 +16,8 @@
 #![cfg(test)]
 
 use super::*;
-
 /// Reexport `test` runner
-pub use testsfixtures::test;
+pub use testsfixtures::{test, BABE_AUTHOR_ID, BLOCK_NUMBER, SLOT_ID};
 
 mod availability;
 mod misc;

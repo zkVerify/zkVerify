@@ -3,7 +3,7 @@ services:
     image: ${IMAGE:-zkverify}:${TAG:-bench}
     build:
       context: ${SOURCE_ROOT?err_unset}
-      dockerfile: ./docker/dockerfiles/zkv-node.Dockerfile
+      dockerfile: ./docker/dockerfiles/zkv-relay.Dockerfile
       args:
         - PROFILE=production
         - FEATURES=runtime-benchmarks

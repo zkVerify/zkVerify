@@ -16,7 +16,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 proof-of-sql-verifier = { git = "https://github.com/HorizenLabs/proof-of-sql-verifier.git", default-features = false, tag = "v0.2.0" }
-log = "0.4.21"
+log = { workspace = true }
 hex-literal = { workspace = true, optional = true }
 codec = { workspace = true }
 scale-info = { workspace = true }

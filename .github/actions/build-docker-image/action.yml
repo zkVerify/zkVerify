@@ -3,10 +3,6 @@ name: 'Build Docker Image'
 description: 'Generate and save the given docker image'
 
 inputs:
-  chain:
-    description: "solo or relay"
-    required: true
-    type: string
   ref:
     description: "Git ref"
     required: true
@@ -37,25 +33,19 @@ runs:
     - name: Build docker image
       shell: bash
       run: |
-        if [[ "${{ inputs.chain }}" == "solo" ]]; then
-          DOCKERFILE="zkv-node.Dockerfile"
-        elif [[ "${{ inputs.chain }}" == "relay" ]]; then
-          DOCKERFILE="zkv-relay.Dockerfile"
-        fi
-
-        echo "Building ${{ inputs.chain }} chain Docker image"
+        echo "Building relay chain Docker image"
         docker build --build-arg PROFILE=production \
           --build-arg FEATURES=metadata-hash \
-          -f "docker/dockerfiles/${DOCKERFILE}" \
-          -t ${{ inputs.docker_hub_org }}/${{ inputs.docker_image_name }}-${{ inputs.chain }} .
+          -f "docker/dockerfiles/zkv-relay.Dockerfile" \
+          -t ${{ inputs.docker_hub_org }}/${{ inputs.docker_image_name }}-relay .
 
-        echo "DOCKER_IMAGE_NAME=${{ inputs.docker_hub_org }}/${{ inputs.docker_image_name }}-${{ inputs.chain }}" >> "${GITHUB_ENV}"
+        echo "DOCKER_IMAGE_NAME=${{ inputs.docker_hub_org }}/${{ inputs.docker_image_name }}-relay" >> "${GITHUB_ENV}"
 
     - name: Save the Docker image as a tarball
       id: create-tar-file
       shell: bash
       run: |
-        ARTIFACT_NAME="${{ inputs.docker_image_name }}-${{ inputs.chain }}"
+        ARTIFACT_NAME="${{ inputs.docker_image_name }}-relay"
         TAR_FILE="${{github.workspace}}/${ARTIFACT_NAME}.tar"
 
         echo "artifact_name=$ARTIFACT_NAME" >> "${GITHUB_OUTPUT}"

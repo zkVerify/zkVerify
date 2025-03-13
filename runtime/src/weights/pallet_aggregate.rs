@@ -22,12 +22,11 @@
 //! WASM-EXECUTION: `Compiled`, CHAIN: `Some("dev")`, DB CACHE: `1024`
 
 // Executed Command:
-// /usr/local/bin/zkv-node
+// /usr/local/bin/zkv-relay
 // benchmark
 // pallet
-// --runtime
-// /app/zkv_runtime.compact.compressed.wasm
-// --genesis-builder=runtime
+// --chain
+// dev
 // --pallet
 // pallet-aggregate
 // --extrinsic
@@ -65,10 +64,10 @@ impl<T: frame_system::Config> pallet_aggregate::WeightInfo for ZKVWeight<T> {
     /// Proof: `Balances::Holds` (`max_values`: None, `max_size`: Some(121), added: 2596, mode: `MaxEncodedLen`)
     fn on_proof_verified() -> Weight {
         // Proof Size summary in bytes:
-        //  Measured:  `1344`
+        //  Measured:  `1436`
         //  Estimated: `177995`
-        // Minimum execution time: 48_360_000 picoseconds.
-        Weight::from_parts(49_102_000, 177995)
+        // Minimum execution time: 56_296_000 picoseconds.
+        Weight::from_parts(57_588_000, 177995)
             .saturating_add(T::DbWeight::get().reads(3_u64))
             .saturating_add(T::DbWeight::get().writes(2_u64))
     }

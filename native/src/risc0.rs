@@ -13,54 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::VerifyError;
 use sp_runtime_interface::runtime_interface;
 
 use risc0_verifier::poseidon2_injection::{BabyBearElem, POSEIDON2_CELLS};
-
-#[cfg(feature = "std")]
-mod legacy_impl {
-    use crate::VerifyError;
-
-    fn deserialize_proof(proof: &[u8]) -> Result<risc0_verifier::InnerReceipt, VerifyError> {
-        bincode::deserialize(proof).map_err(|_x| {
-            if is_fake_proof(proof) {
-                VerifyError::VerifyError
-            } else {
-                VerifyError::InvalidProofData
-            }
-        })
-    }
-
-    fn deserialize_pubs(pubs: &[u8]) -> Result<risc0_verifier::Journal, VerifyError> {
-        bincode::deserialize(pubs).map_err(|_x| VerifyError::InvalidInput)
-    }
-
-    pub fn verify(vk: [u8; 32], proof: &[u8], pubs: &[u8]) -> Result<(), VerifyError> {
-        use risc0_verifier::Digestible;
-
-        let inner_receipt = deserialize_proof(proof)?;
-        let journal = deserialize_pubs(pubs)?;
-
-        let ctx = risc0_verifier::VerifierContext::v1_0();
-        let proof = risc0_verifier::Proof::new(inner_receipt);
-        proof
-            .verify(&ctx, vk, journal.digest())
-            .map_err(|_| VerifyError::VerifyError)
-    }
-
-    /// Return if the proof is a `Fake` proof
-    fn is_fake_proof(proof: &[u8]) -> bool {
-        proof.starts_with(&[0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
-    }
-}
-
-#[runtime_interface]
-pub trait Risc0Verify {
-    fn verify(vk: [u8; 32], proof: &[u8], pubs: &[u8]) -> Result<(), VerifyError> {
-        legacy_impl::verify(vk, proof, pubs)
-    }
-}
 
 /// Define the byte slice for poseidon2 mix call argument type.
 pub type Poseidon2ArgBytes = [u8; (u32::BITS as usize / u8::BITS as usize) * POSEIDON2_CELLS];

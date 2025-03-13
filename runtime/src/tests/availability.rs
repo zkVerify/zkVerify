@@ -30,24 +30,6 @@ use sp_runtime::traits::Zero;
 use sp_runtime::{traits::Hash, AccountId32, MultiAddress};
 
 #[test]
-fn pallet_fflonk() {
-    test().execute_with(|| {
-        let dummy_origin = AccountId32::new([0; 32]);
-        let dummy_proof: pallet_fflonk_verifier::Proof = [0; pallet_fflonk_verifier::PROOF_SIZE];
-        let dummy_pubs: pallet_fflonk_verifier::Pubs = [0; pallet_fflonk_verifier::PUBS_SIZE];
-        assert!(SettlementFFlonkPallet::submit_proof(
-            RuntimeOrigin::signed(dummy_origin),
-            VkOrHash::from_hash(H256::zero()),
-            dummy_proof.into(),
-            dummy_pubs.into(),
-            None,
-        )
-        .is_err());
-        // just checking code builds, hence the pallet is available to the runtime
-    });
-}
-
-#[test]
 fn pallet_multisig() {
     test().execute_with(|| {
         let issuer: AccountId32 = testsfixtures::SAMPLE_USERS[0].raw_account.into();
@@ -162,22 +144,6 @@ fn pallet_referenda_and_conviction_voting() {
 }
 
 #[test]
-fn pallet_whitelist() {
-    test().execute_with(|| {
-        let origin = RuntimeOrigin::root();
-        let call = RuntimeCall::Balances(BalancesCall::transfer_allow_death {
-            dest: MultiAddress::Id(testsfixtures::SAMPLE_USERS[1].raw_account.into()),
-            value: 5000 * currency::ACME,
-        });
-
-        let encoded_call = call.encode();
-        let call_hash = <Runtime as frame_system::Config>::Hashing::hash_of(&encoded_call);
-
-        assert_ok!(Whitelist::whitelist_call(origin, call_hash));
-    });
-}
-
-#[test]
 fn pallet_treasury() {
     test().execute_with(|| {
         let asset_kind = Box::new(());
@@ -219,24 +185,6 @@ fn pallet_bounties() {
         let description = vec![0; 100];
 
         assert_ok!(Bounties::propose_bounty(origin, value, description.clone()));
-    });
-}
-
-#[test]
-fn pallet_zksync() {
-    test().execute_with(|| {
-        let dummy_origin = AccountId32::new([0; 32]);
-        let dummy_proof = [0; pallet_zksync_verifier::PROOF_SIZE];
-        let dummy_pubs = [0; pallet_zksync_verifier::PUBS_SIZE];
-        assert!(SettlementZksyncPallet::submit_proof(
-            RuntimeOrigin::signed(dummy_origin),
-            VkOrHash::from_hash(H256::zero()),
-            dummy_proof.into(),
-            dummy_pubs.into(),
-            None,
-        )
-        .is_err());
-        // just checking code builds, hence the pallet is available to the runtime
     });
 }
 
@@ -320,14 +268,6 @@ fn pallet_proofofsql_availability() {
 }
 
 // Test definition and execution. Test body must be written in the execute_with closure.
-#[test]
-fn pallet_poe() {
-    test().execute_with(|| {
-        assert_ok!(Poe::publish_attestation(RuntimeOrigin::root()));
-        // just checking code builds, hence the pallet is available to the runtime
-    });
-}
-
 #[test]
 fn pallet_bags_list() {
     test().execute_with(|| {

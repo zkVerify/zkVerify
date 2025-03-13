@@ -5,10 +5,6 @@ run-name: "Workflow CI/CD Steps: Docker image build and publish"
 on:
   workflow_call:
     inputs:
-      chain:
-        description: "solo or relay"
-        required: true
-        type: string
       release_branch:
         description: "Github branch name release can be created from"
         required: true
@@ -28,7 +24,7 @@ env:
 jobs:
   build-docker:
     runs-on: warp-ubuntu-latest-x64-8x
-    name: Build Docker Image ${{ inputs.chain }}
+    name: Build Docker Image relay
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -37,7 +33,6 @@ jobs:
         id: build-docker-image
         uses: ./.github/actions/build-docker-image
         with:
-          chain: ${{ inputs.chain }}
           ref: ${{ github.ref }}
           docker_hub_org: ${{ env.DOCKER_HUB_ORG }}
           docker_image_name: ${{ env.DOCKER_IMAGE_BUILD_NAME }}
@@ -47,7 +42,7 @@ jobs:
 
   publish-docker-image:
     runs-on: warp-ubuntu-latest-x64-2x
-    name: Publish Docker Image ${{ inputs.chain }}
+    name: Publish Docker Image relay
     needs: [build-docker]
     steps:
       - name: Git checkout
@@ -77,7 +72,7 @@ jobs:
       - name: Upload runtime artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: "zkv_runtime.${{ inputs.chain }}.compact.compressed.wasm"
+          name: "zkv_runtime.relay.compact.compressed.wasm"
           path: ./zkv_runtime.compact.compressed.wasm
           retention-days: 7
           overwrite: true
@@ -100,7 +95,7 @@ jobs:
                   "fields": [
                     {
                       "type": "mrkdwn",
-                      "text": "*Docker Image Tag:*  <https://hub.docker.com/r/${{ env.DOCKER_HUB_ORG }}/${{ env.DOCKER_IMAGE_BUILD_NAME }}/tags?page=1&name=${{ github.ref_name }}-${{ inputs.chain }}| ${{ github.ref_name }}-${{ inputs.chain }}>\n"
+                      "text": "*Docker Image Tag:*  <https://hub.docker.com/r/${{ env.DOCKER_HUB_ORG }}/${{ env.DOCKER_IMAGE_BUILD_NAME }}/tags?page=1&name=${{ github.ref_name }}-relay| ${{ github.ref_name }}-relay>\n"
                     },
                     {
                       "type": "mrkdwn",
@@ -112,7 +107,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "```docker pull ${{ env.DOCKER_HUB_ORG }}/${{ env.DOCKER_IMAGE_BUILD_NAME }}:${{ github.ref_name }}-${{ inputs.chain }}```"
+                    "text": "```docker pull ${{ env.DOCKER_HUB_ORG }}/${{ env.DOCKER_IMAGE_BUILD_NAME }}:${{ github.ref_name }}-relay```"
                   }
                 }
               ]

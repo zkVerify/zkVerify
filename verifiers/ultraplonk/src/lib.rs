@@ -107,7 +107,7 @@ impl<T: Config> Verifier for Ultraplonk<T> {
     }
 
     fn vk_bytes(vk: &Self::Vk) -> Cow<[u8]> {
-        Cow::Borrowed(vk)
+        Self::encode_vk(vk)
     }
 
     fn pubs_bytes(pubs: &Self::Pubs) -> Cow<[u8]> {
@@ -116,6 +116,18 @@ impl<T: Config> Verifier for Ultraplonk<T> {
             .flat_map(|s| s.iter().cloned())
             .collect::<Vec<_>>();
         Cow::Owned(data)
+    }
+}
+
+impl<T: Config> Ultraplonk<T> {
+    // The encode_vk function transforms a given Vk into a format that matches:
+    // https://github.com/AztecProtocol/aztec-packages/blob/barretenberg-v0.47.1/barretenberg/cpp/src/barretenberg/plonk/proof_system/verification_key/verification_key.cpp#L139-L154
+    fn encode_vk(vk: &Vk) -> Cow<[u8]> {
+        const PADDED_VK_SIZE: usize = VK_SIZE + 15 * 32;
+        let mut buffer: Vec<u8> = Vec::from(vk);
+        buffer.resize(PADDED_VK_SIZE, 0u8);
+
+        Cow::Owned(buffer)
     }
 }
 

@@ -13,11 +13,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! This module contains a custom implementation for the pallet_staking::EraPayout trait, which
+//! This module contains custom implementations that regulate the distribution of tokens
+//! following inflation and fees/tips.
+//!
+//! Concretely, ZKVPayout implements the pallet_staking::EraPayout trait, which
 //! provides a custom inflation model which tries to drive the staking rate toward an ideal target.
 //! Details on the actual formula and its parameters are given below.
+//!
+//! DealWithFees, instead, implements the OnUnbalanced trait, and redirects fees and tips to the
+//! block author and to the treasury with a configurable ratio.
 
 use super::*;
+pub use frame_support::traits::{
+    fungible::{Balanced, Credit},
+    tokens::imbalance::ResolveTo,
+    Imbalance, OnUnbalanced,
+};
 pub use sp_runtime::{Percent, Perquintill};
 
 fn abs(v: f64) -> f64 {
@@ -69,16 +80,16 @@ parameter_types! {
     /// The target precions for exp(); impacts on the final precision for inflation computation.
     pub const ExpPrecision: f64 = 10e-15f64;
     /// Base inflation (I_b).
-    pub InflationBase: Perquintill = Perquintill::from_percent(5);
+    pub InflationBase: Perquintill = Perquintill::from_rational(25u128, 1000u128);
     /// The optimal staking rate (s_t).
     pub StakingTarget: Percent = Percent::from_percent(50);
     /// Sensitivity coefficient (K).
     pub const K: f64 = 1f64;
     /// Multiplier (C).
-    pub const C: f64 = 1f64;
+    pub const C: f64 = 0f64; // zero I_var
     /// Percentage of the minted tokens that goes to the validators (leaving the rest to the
     /// others).
-    pub ValidatorsSplit: Percent = Percent::from_percent(50);
+    pub ValidatorsSplit: Percent = Percent::from_percent(80);
 }
 
 impl pallet_staking::EraPayout<Balance> for ZKVPayout {
@@ -102,10 +113,14 @@ impl pallet_staking::EraPayout<Balance> for ZKVPayout {
         let s = StakingTarget::get().saturating_reciprocal_mul(staking_current * SCALE as u128);
 
         // exp_arg = k * (1 - s)
-        let exp_arg = (SCALE - s as f64) * K::get() / SCALE;
-
-        // inflation_arg = C * e^(exp_arg)
-        let inflation_arg = C::get() * exp(exp_arg);
+        let inflation_arg = if C::get() != 0f64 {
+            let exp_arg = (SCALE - s as f64) * K::get() / SCALE;
+            // inflation_arg = C * e^(exp_arg)
+            C::get() * exp(exp_arg)
+        } else {
+            // will be zeroed by C, so do not bother to compute exp
+            0f64
+        };
 
         let inflation_var = to_inflation(inflation_arg);
 
@@ -116,6 +131,52 @@ impl pallet_staking::EraPayout<Balance> for ZKVPayout {
             ValidatorsSplit::get() * inflation_tot,
             (Percent::from_percent(100) - ValidatorsSplit::get()) * inflation_tot,
         )
+    }
+}
+
+/// Logic for the author to get a portion of fees.
+pub struct ToAuthor<R>(core::marker::PhantomData<R>);
+impl<R> OnUnbalanced<Credit<R::AccountId, pallet_balances::Pallet<R>>> for ToAuthor<R>
+where
+    R: pallet_balances::Config + pallet_authorship::Config,
+    <R as frame_system::Config>::AccountId: From<polkadot_primitives::AccountId>,
+    <R as frame_system::Config>::AccountId: Into<polkadot_primitives::AccountId>,
+{
+    fn on_nonzero_unbalanced(
+        amount: Credit<<R as frame_system::Config>::AccountId, pallet_balances::Pallet<R>>,
+    ) {
+        if let Some(author) = <pallet_authorship::Pallet<R>>::author() {
+            let _ = <pallet_balances::Pallet<R>>::resolve(&author, amount);
+        }
+    }
+}
+
+parameter_types! {
+    pub FeesValidatorsSplit: Percent = Percent::from_percent(20);
+}
+
+pub struct DealWithFees<R>(core::marker::PhantomData<R>);
+impl<R> OnUnbalanced<Credit<R::AccountId, pallet_balances::Pallet<R>>> for DealWithFees<R>
+where
+    R: pallet_balances::Config + pallet_authorship::Config + pallet_treasury::Config,
+    <R as frame_system::Config>::AccountId: From<polkadot_primitives::AccountId>,
+    <R as frame_system::Config>::AccountId: Into<polkadot_primitives::AccountId>,
+{
+    fn on_unbalanceds(
+        mut fees_then_tips: impl Iterator<Item = Credit<R::AccountId, pallet_balances::Pallet<R>>>,
+    ) {
+        if let Some(fees) = fees_then_tips.next() {
+            // for fees, 80% to treasury, 20% to author
+            let val_split = FeesValidatorsSplit::get() * 100u32;
+            let others_split = 100u32 - val_split;
+            let mut split = fees.ration(others_split, val_split);
+            if let Some(tips) = fees_then_tips.next() {
+                // for tips, if any, 100% to author
+                tips.merge_into(&mut split.1);
+            }
+            ResolveTo::<pallet_treasury::TreasuryAccountId<R>, pallet_balances::Pallet<R>>::on_unbalanced(split.0);
+            <ToAuthor<R> as OnUnbalanced<_>>::on_unbalanced(split.1);
+        }
     }
 }
 

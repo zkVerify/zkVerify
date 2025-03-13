@@ -13,8 +13,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-#![cfg(feature = "relay")]
-
 //! XCM configuration for zkVerify.
 //! FIXME: this configuration is meant for testing only, and MUST not deployed to a production
 //! network without proper assessment.
@@ -23,7 +21,7 @@ use super::{
     AccountId, AllPalletsWithSystem, Balances, Dmp, ParaId, Runtime, RuntimeCall, RuntimeEvent,
     RuntimeOrigin, TransactionByteFee, XcmPallet,
 };
-use crate::{governance::GeneralAdmin, parachains::parachains_origin};
+use crate::parachains::parachains_origin;
 use frame_support::{
     parameter_types,
     traits::{Contains, Equals, Everything, Nothing},
@@ -42,10 +40,10 @@ use xcm_builder::{
     AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
     AllowTopLevelPaidExecutionFrom, ChildParachainAsNative, ChildParachainConvertsVia,
     DescribeAllTerminal, DescribeFamily, FrameTransactionalProcessor, FungibleAdapter,
-    HashedDescription, IsConcrete, MintLocation, OriginToPluralityVoice, SignedAccountId32AsNative,
+    HashedDescription, IsConcrete, MintLocation, SendXcmFeeToAccount, SignedAccountId32AsNative,
     SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, TrailingSetTopicAsId,
     UsingComponents, WeightInfoBounds, WithComputedOrigin, WithUniqueTopic,
-    XcmFeeManagerFromComponents, XcmFeeToAccount,
+    XcmFeeManagerFromComponents,
 };
 
 use crate::weights::pallet_xcm::ZKVWeight as XcmPalletZKVWeight;
@@ -219,7 +217,7 @@ impl xcm_executor::Config for XcmConfig {
     type MaxAssetsIntoHolding = MaxAssetsIntoHolding;
     type FeeManager = XcmFeeManagerFromComponents<
         WaivedLocations,
-        XcmFeeToAccount<Self::AssetTransactor, AccountId, TreasuryAccount>,
+        SendXcmFeeToAccount<Self::AssetTransactor, TreasuryAccount>,
     >;
     // No bridges on the Relay Chain
     type MessageExporter = ();
@@ -246,15 +244,10 @@ parameter_types! {
     pub const TreasurerBodyId: BodyId = BodyId::Treasury;
 }
 
-/// Type to convert the `GeneralAdmin` origin to a Plurality `Location` value.
-pub type GeneralAdminToPlurality =
-    OriginToPluralityVoice<RuntimeOrigin, GeneralAdmin, GeneralAdminBodyId>;
-
 /// Type to convert an `Origin` type value into a `Location` value which represents an interior
 /// location of this chain.
 pub type LocalOriginToLocation = (
-    GeneralAdminToPlurality,
-    // And a usual Signed origin to be used in XCM as a corresponding AccountId32
+    // A signed origin to be used in XCM as a corresponding AccountId32
     SignedToAccountId32<RuntimeOrigin, AccountId, ThisNetwork>,
 );
 

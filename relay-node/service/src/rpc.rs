@@ -18,7 +18,8 @@ use jsonrpsee::RpcModule;
 use polkadot_primitives::{AccountId, Balance, Block, BlockNumber, Hash, Nonce};
 use sc_client_api::AuxStore;
 use sc_consensus_grandpa::FinalityProofProvider;
-pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
+pub use sc_rpc::SubscriptionTaskExecutor;
+use sc_sync_state_rpc::{SyncState, SyncStateApiServer};
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
@@ -63,8 +64,6 @@ pub struct FullDeps<C, P, SC, B> {
     pub select_chain: SC,
     /// A copy of the chain spec.
     pub chain_spec: Box<dyn sc_chain_spec::ChainSpec>,
-    /// Whether to deny unsafe calls
-    pub deny_unsafe: DenyUnsafe,
     /// BABE specific dependencies.
     pub babe: BabeDeps,
     /// GRANDPA specific dependencies.
@@ -80,7 +79,6 @@ pub fn create_full<C, P, SC, B>(
         pool,
         select_chain,
         chain_spec,
-        deny_unsafe,
         babe,
         grandpa,
         backend,
@@ -96,7 +94,6 @@ where
         + 'static,
     C::Api: frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
     C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
-    C::Api: proof_of_existence_rpc::PoERuntimeApi<Block>,
     C::Api: aggregate_rpc::AggregateRuntimeApi<Block>,
     C::Api: BabeApi<Block>,
     C::Api: BlockBuilder<Block>,
@@ -108,10 +105,8 @@ where
     use aggregate_rpc::{Aggregate, AggregateApiServer};
     use frame_rpc_system::{System, SystemApiServer};
     use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
-    use proof_of_existence_rpc::{PoE, PoEApiServer};
     use sc_consensus_babe_rpc::{Babe, BabeApiServer};
     use sc_consensus_grandpa_rpc::{Grandpa, GrandpaApiServer};
-    use sc_rpc_spec_v2::chain_spec::{ChainSpec, ChainSpecApiServer};
     use substrate_state_trie_migration_rpc::{StateMigration, StateMigrationApiServer};
 
     let mut io = RpcModule::new(());
@@ -127,17 +122,8 @@ where
         finality_provider,
     } = grandpa;
 
-    let chain_name = chain_spec.name().to_string();
-    let genesis_hash = client
-        .hash(0)
-        .ok()
-        .flatten()
-        .expect("Genesis block exists; qed");
-    let properties = chain_spec.properties();
-
-    io.merge(ChainSpec::new(chain_name, genesis_hash, properties).into_rpc())?;
-    io.merge(StateMigration::new(client.clone(), backend.clone(), deny_unsafe).into_rpc())?;
-    io.merge(System::new(client.clone(), pool.clone(), deny_unsafe).into_rpc())?;
+    io.merge(StateMigration::new(client.clone(), backend.clone()).into_rpc())?;
+    io.merge(System::new(client.clone(), pool.clone()).into_rpc())?;
     io.merge(TransactionPayment::new(client.clone()).into_rpc())?;
     io.merge(
         Babe::new(
@@ -145,7 +131,6 @@ where
             babe_worker_handle.clone(),
             keystore,
             select_chain,
-            deny_unsafe,
         )
         .into_rpc(),
     )?;
@@ -159,7 +144,15 @@ where
         )
         .into_rpc(),
     )?;
-    io.merge(PoE::new(client.clone()).into_rpc())?;
+    io.merge(
+        SyncState::new(
+            chain_spec,
+            client.clone(),
+            shared_authority_set,
+            babe_worker_handle,
+        )?
+        .into_rpc(),
+    )?;
     io.merge(Aggregate::new(client).into_rpc())?;
 
     Ok(io)
