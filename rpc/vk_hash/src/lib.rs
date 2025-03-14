@@ -16,7 +16,7 @@
 use codec::{Decode, Encode};
 use hp_verifiers::Verifier;
 use jsonrpsee::{core::RpcResult, proc_macros::rpc, types::ErrorObject};
-use pallet_groth16_verifier::{Groth16, Groth16CurveType};
+use pallet_groth16_verifier::Groth16;
 use pallet_proofofsql_verifier::ProofOfSql;
 use pallet_ultraplonk_verifier::{Ultraplonk, VK_SIZE};
 use sp_core::{serde::Deserialize, serde::Serialize, Bytes, Get, H256};
@@ -27,28 +27,21 @@ struct MockType;
 struct MaxPubs;
 
 #[derive(Debug, Encode, Decode, Serialize, Deserialize)]
+pub enum Groth16Curve {
+    Bls12_381,
+    Bn254,
+}
+
+#[derive(Debug, Encode, Decode, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Groth16Vk {
-    pub curve: Groth16CurveType,
+    pub curve: Groth16Curve,
     pub alpha_g1: Bytes,
     pub beta_g2: Bytes,
     pub gamma_g2: Bytes,
     pub delta_g2: Bytes,
     pub gamma_abc_g1: Vec<Bytes>,
 }
-
-// #[derive(Debug, Serialize, Deserialize)]
-// #[serde(untagged)]
-// pub enum Groth16VkFieldValue {
-//     Bytes(Bytes),
-//     PlainString(String),
-//     BytesList(Vec<Bytes>),
-// }
-
-// #[derive(Debug, Serialize, Deserialize)]
-// pub struct Groth16Vk {
-//     pub data: BTreeMap<String, Groth16VkFieldValue>,
-// }
 
 impl Get<u32> for MaxPubs {
     fn get() -> u32 {
@@ -115,7 +108,10 @@ impl VKHashApiServer<H256> for VKHash {
         // println!("Received: {:?}", vk);
 
         let vk: VkOf<Groth16<MockType>> = pallet_groth16_verifier::Vk {
-            curve: vk.curve,
+            curve: match vk.curve {
+                Groth16Curve::Bls12_381 => pallet_groth16_verifier::Curve::Bls12_381,
+                Groth16Curve::Bn254 => pallet_groth16_verifier::Curve::Bn254,
+            },
             alpha_g1: hp_groth16::G1(vk.alpha_g1.0),
             beta_g2: hp_groth16::G2(vk.beta_g2.0),
             gamma_g2: hp_groth16::G2(vk.gamma_g2.0),

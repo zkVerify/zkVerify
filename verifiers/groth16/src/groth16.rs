@@ -17,47 +17,15 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use core::fmt::Debug;
 use hp_verifiers::VerifyError;
 use scale_info::TypeInfo;
-use sp_core::serde::{Deserialize, Deserializer, Serialize, Serializer};
 use sp_std::vec::Vec;
 
 pub use hp_groth16::{vec_max_encoded_len, Proof, Scalar, VerificationKey, G1, G2};
 
-#[derive(
-    Copy, Clone, Debug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo, Serialize, Deserialize,
-)]
+#[derive(Copy, Clone, Debug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub enum Curve {
     Bn254,
     Bls12_381,
 }
-
-// impl Serialize for Curve {
-//     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-//     where
-//         S: Serializer,
-//     {
-//         match self {
-//             Curve::Bn254 => serializer.serialize_str("Bn254"),
-//             Curve::Bls12_381 => serializer.serialize_str("Bls12_381"),
-//         }
-//     }
-// }
-
-// impl<'de> Deserialize<'de> for Curve {
-//     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-//     where
-//         D: Deserializer<'de>,
-//     {
-//         let s: &str = Deserialize::deserialize(deserializer)?;
-//         match s {
-//             "Bn254" => Ok(Curve::Bn254),
-//             "Bls12_381" => Ok(Curve::Bls12_381),
-//             _ => Err(serde::de::Error::unknown_variant(
-//                 s,
-//                 &["Bn254", "Bls12_381"],
-//             )),
-//         }
-//     }
-// }
 
 #[derive(Clone, Debug, PartialEq, Encode, Decode, TypeInfo)]
 pub struct VerificationKeyWithCurve {
