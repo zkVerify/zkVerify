@@ -57,14 +57,16 @@ impl VerificationKeyWithCurve {
             gamma_abc_g1: vk.gamma_abc_g1,
         }
     }
+}
 
-    pub fn vk(self) -> VerificationKey {
-        VerificationKey {
-            alpha_g1: self.alpha_g1,
-            beta_g2: self.beta_g2,
-            gamma_g2: self.gamma_g2,
-            delta_g2: self.delta_g2,
-            gamma_abc_g1: self.gamma_abc_g1,
+impl From<VerificationKeyWithCurve> for VerificationKey {
+    fn from(value: VerificationKeyWithCurve) -> Self {
+        Self {
+            alpha_g1: value.alpha_g1,
+            beta_g2: value.beta_g2,
+            gamma_g2: value.gamma_g2,
+            delta_g2: value.delta_g2,
+            gamma_abc_g1: value.gamma_abc_g1,
         }
     }
 }
@@ -109,7 +111,7 @@ impl Groth16 {
         inputs: &[Scalar],
     ) -> Result<bool, VerifyError> {
         let curve = vk.curve;
-        let vk = vk.vk();
+        let vk: VerificationKey = vk.into();
         match curve {
             Curve::Bn254 => {
                 native::groth_16_bn_254_verify::verify(vk, proof, inputs).map_err(Into::into)
