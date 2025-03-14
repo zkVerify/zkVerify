@@ -35,6 +35,11 @@ const BOOTNODE_1_PEER_ID: &str = "12D3KooWNhvf6iSowraUY4tZnjpNZXEe85oy9zDWYRKFBn
 const BOOTNODE_2_DNS: &str = "bootnode-tn-2.zkverify.io";
 const BOOTNODE_2_PEER_ID: &str = "12D3KooWEjVadU1YWyfDGvyRXPbCq2rXhzJtXaG4RxJZBkGE9Aug";
 
+const PRIVATE_BOOTNODE_1_IP4: &str = "135.181.61.42";
+const PRIVATE_BOOTNODE_1_PEER_ID: &str = "12D3KooWFLcm9ir6mz7yrnWgqxC3qM33rReADusWPTtxCPUDMFgE";
+const PRIVATE_BOOTNODE_2_IP4: &str = "116.202.224.17";
+const PRIVATE_BOOTNODE_2_PEER_ID: &str = "12D3KooWAoyV6sg2cWpDHuC7UkDmYfMU2zg4YHG12WCJackQn2NF";
+
 // The URL for the telemetry server.
 const STAGING_TELEMETRY_URL: &str = "wss://testnet-telemetry.zkverify.io/submit/";
 
@@ -47,7 +52,7 @@ fn chain_properties() -> Properties {
             "ss58Format".to_string(),
             serde_json::Value::from(zkv_runtime::SS58Prefix::get()),
         ),
-        ("tokenSymbol".to_string(), serde_json::Value::from("VFY")),
+        ("tokenSymbol".to_string(), serde_json::Value::from("tVFY")),
         ("tokenDecimals".to_string(), serde_json::Value::from(18_u8)),
     ]
     .into_iter()
@@ -82,6 +87,40 @@ pub fn local_config() -> Result<ChainSpec, String> {
 }
 
 /// To be used when building new testnet chain-spec
+pub fn private_testnet_config() -> Result<ChainSpec, String> {
+    Ok(ChainSpec::builder(
+        WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?,
+        Default::default(),
+    )
+    .with_name("zkVerify Private Testnet")
+    .with_id("zkv_private_testnet")
+    .with_protocol_id("tpzkv")
+    .with_chain_type(ChainType::Live)
+    .with_boot_nodes(vec![
+        format!("/ip4/{PRIVATE_BOOTNODE_1_IP4}/tcp/30333/p2p/{PRIVATE_BOOTNODE_1_PEER_ID}")
+            .parse()
+            .expect("MultiaddrWithPeerId"),
+        format!("/ip4/{PRIVATE_BOOTNODE_1_IP4}/tcp/30334/ws/p2p/{PRIVATE_BOOTNODE_1_PEER_ID}")
+            .parse()
+            .expect("MultiaddrWithPeerId"),
+        format!("/ip4/{PRIVATE_BOOTNODE_1_IP4}/tcp/443/wss/p2p/{PRIVATE_BOOTNODE_1_PEER_ID}")
+            .parse()
+            .expect("MultiaddrWithPeerId"),
+        format!("/ip4/{PRIVATE_BOOTNODE_2_IP4}/tcp/30333/p2p/{PRIVATE_BOOTNODE_2_PEER_ID}")
+            .parse()
+            .expect("MultiaddrWithPeerId"),
+        format!("/ip4/{PRIVATE_BOOTNODE_2_IP4}/tcp/30334/ws/p2p/{PRIVATE_BOOTNODE_2_PEER_ID}")
+            .parse()
+            .expect("MultiaddrWithPeerId"),
+        format!("/ip4/{PRIVATE_BOOTNODE_2_IP4}/tcp/443/wss/p2p/{PRIVATE_BOOTNODE_2_PEER_ID}")
+            .parse()
+            .expect("MultiaddrWithPeerId"),
+    ])
+    .with_properties(chain_properties())
+    .with_genesis_config_preset_name("private_testnet")
+    .build())
+}
+
 pub fn testnet_config() -> Result<ChainSpec, String> {
     Ok(ChainSpec::builder(
         WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?,

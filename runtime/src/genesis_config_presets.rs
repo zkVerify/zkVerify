@@ -139,6 +139,7 @@ impl StakerData for (AccountId, Balance) {
 }
 
 /// Configure initial storage state for FRAME modules.
+#[allow(clippy::too_many_arguments)]
 fn genesis(
     initial_authorities: Vec<(Ids, Balance)>,
     root_key: AccountId,
@@ -273,7 +274,7 @@ struct ValidatorData<'a> {
     authority_discovery_id: AuthorityDiscoveryId,
 }
 
-impl<'a> StakerData for ValidatorData<'a> {
+impl StakerData for ValidatorData<'_> {
     fn staker_data(&self) -> (AccountId, AccountId, Balance, StakerStatus<AccountId>) {
         (
             self.account.account_id.clone(),
@@ -334,7 +335,7 @@ struct NominatorData<'a> {
     voted: Vec<AccountId>,
 }
 
-impl<'a> StakerData for NominatorData<'a> {
+impl StakerData for NominatorData<'_> {
     fn staker_data(&self) -> (AccountId, AccountId, Balance, StakerStatus<AccountId>) {
         (
             self.account.account_id.clone(),
@@ -343,6 +344,211 @@ impl<'a> StakerData for NominatorData<'a> {
             StakerStatus::Nominator(self.voted.clone()),
         )
     }
+}
+
+pub fn zkv_private_testnet_config_genesis(
+) -> Result<serde_json::Value, sp_core::crypto::PublicError> {
+    const COMMUNITY_CUSTODIAL_BASE_BALANCE: Balance = 100 * MILLIONS;
+    const COMMUNITY_CUSTODIAL_BUFFER_BALANCE: Balance = 50 * MILLIONS;
+    const FOUNDATION_BASE_BALANCE: Balance = (313 * MILLIONS + 750 * THOUSANDS) / 2;
+    const CONTRIBUTOR_BALANCE: Balance = (196 * MILLIONS + 250 * THOUSANDS) / 2;
+    const INVESTOR_BALANCE: Balance = (140 * MILLIONS) / 2;
+    const VALIDATOR_BALANCE: Balance = 200 * THOUSANDS;
+    const VALIDATOR_BOND: Balance = VALIDATOR_BALANCE;
+    const NOMINATOR_BALANCE: Balance = 20 * MILLIONS;
+    const NOMINATOR_BOND: Balance = NOMINATOR_BALANCE;
+    const TREASURY_BALANCE: Balance = MILLIONS;
+    const SUDO_BALANCE: Balance = 50 * VFY;
+
+    // From "modlzk/trsry" padded right with zeros.
+    let treasury_account = FoundedAccount::from_id(
+        "5EYCAe5kjJEU9CJ4QMep83WeQNvGwkWpknkU7r3Q3w7n13iV",
+        TREASURY_BALANCE,
+    )?;
+
+    let community_custodians = [
+        FoundedAccount::from_id(
+            "5FjVotBv8nAYAmfU4Jh3PaStLCwNYZx9mnN43zr7bQDNkw9g",
+            COMMUNITY_CUSTODIAL_BASE_BALANCE,
+        )?,
+        FoundedAccount::from_id(
+            "5DSBKxMwWGibjdVhrUoWDrPcNJ3421gDTzpn16t6tERa3gi1",
+            COMMUNITY_CUSTODIAL_BASE_BALANCE,
+        )?,
+        // Used to found the old owners, treasury and claim pallets
+        FoundedAccount::from_id(
+            "5EcfkGiYNbX5R3e2J85LwqFfCHFq4CP8XSv97usfeS6n4gDs",
+            COMMUNITY_CUSTODIAL_BASE_BALANCE + COMMUNITY_CUSTODIAL_BUFFER_BALANCE
+                - (TREASURY_BALANCE + EXISTENTIAL_DEPOSIT),
+        )?,
+    ];
+
+    let contributors_custody = [
+        FoundedAccount::from_id(
+            "5GzejQFVpj7kDNehMsrrCn7611DVvNQV72rKxhfqbeiNLfny",
+            CONTRIBUTOR_BALANCE,
+        )?,
+        FoundedAccount::from_id(
+            "5DJHqVEedqBvikpUTuEtrfQAtrP5VuyaRZ8wYCFE1D1SzQpv",
+            CONTRIBUTOR_BALANCE,
+        )?,
+    ];
+
+    let investors_custody = [
+        FoundedAccount::from_id(
+            "5F46jFR9jToWYCCqaVaBjo8ksZrnfosfEFhgRr7A9H4KLYZN",
+            INVESTOR_BALANCE,
+        )?,
+        FoundedAccount::from_id(
+            "5CyNr8L2g3efaETvLZiQdmxWhfvB1WayetrUWYAQWRAQPWog",
+            INVESTOR_BALANCE,
+        )?,
+    ];
+
+    let initial_authorities = [
+        ValidatorData::from_ids(
+            "5DDCbBACRxv9ag2SbVCAsi2vfZ1Ywbk6v2Nrjhs4QzLMwjds",
+            "5ELpp5mfqPNxEWzUph5oLH8aT7MZSGSLiuxVKucTiCVUUQ62",
+            "5GzEnzt5qLwJKZAAZhtQv6Yo4uqgBzB4hZDUhhKgQC17RLv9",
+            VALIDATOR_BALANCE,
+            VALIDATOR_BOND,
+        )?,
+        ValidatorData::from_ids(
+            "5FZkWZiNKnDt9wGuLQ7p8NxxGZkiCvVJ7qDyLzhPXKdcaYqs",
+            "5DD7k1iRvAUsTYQBxBxf3vr5Qq1163tWwYtWqr2NqdE7nf4U",
+            "5EEgYyfRutgP8iU6BpHK5Ngs7WMaysVd3UjcazUWBQoem5UG",
+            VALIDATOR_BALANCE,
+            VALIDATOR_BOND,
+        )?,
+        ValidatorData::from_ids(
+            "5DJFaX6x9hFeMfcPb5Nrojy3xkDmCCeKW8nJ7LSZt3cE3i2k",
+            "5FNYo9QvBGDH6JpfJgvvb9775JBMr8fMx7Mkp8VLhHGxTLqK",
+            "5F732z5kqXJK5s1dL5kmE9v5P9q62zGhQgPiJdN2jXSCU4Pv",
+            VALIDATOR_BALANCE,
+            VALIDATOR_BOND,
+        )?,
+        ValidatorData::from_ids(
+            "5GZ4crEX53z7XwRZxqGiFtoMnBeWJ8VoXpwVNk9R7dnK2jEq",
+            "5H3CrM1SjccPqrkc1KH2tb7vY6nuDs8TEyz7K7MfmTwYCtLs",
+            "5Dt7RgF9jC7WwTqJWxD87aNP7cUYdJXYJjEo5nFu8xgQD6aX",
+            VALIDATOR_BALANCE,
+            VALIDATOR_BOND,
+        )?,
+        ValidatorData::from_ids(
+            "5DeivCaLhox4AzStLsEpoWNkNMeG7AbejCzN28gQG4HM8EEt",
+            "5DviSep4qDvcopVeWxA13wTAuQ8EPLiNxks5nhDq9XJR62g4",
+            "5DMTpHg9KwQN4yt8B7vDA5KXhypUaddfa1XYDfzex7PLYs52",
+            VALIDATOR_BALANCE,
+            VALIDATOR_BOND,
+        )?,
+    ];
+
+    let nominators = [
+        NominatorData {
+            account: FoundedAccount::from_id(
+                "5HZAXgBDovDMbGoXkNXDrwch8wRcet5gJV3XaaPz5mRXnyny",
+                NOMINATOR_BALANCE,
+            )?,
+            bonded: NOMINATOR_BOND,
+            voted: vec![initial_authorities[0].account.account_id.clone()],
+        },
+        NominatorData {
+            account: FoundedAccount::from_id(
+                "5D2GzkLFSq6yx9TW6M868LuY6rx8fVyFYjQxqUpVymUsJ1rv",
+                NOMINATOR_BALANCE,
+            )?,
+            bonded: NOMINATOR_BOND,
+            voted: vec![initial_authorities[1].account.account_id.clone()],
+        },
+        NominatorData {
+            account: FoundedAccount::from_id(
+                "5E4a2VJvgsbsFro1ZE6cNWdvg4NwjdbAwRHma8vuAAEK28Bt",
+                NOMINATOR_BALANCE,
+            )?,
+            bonded: NOMINATOR_BOND,
+            voted: vec![initial_authorities[2].account.account_id.clone()],
+        },
+        NominatorData {
+            account: FoundedAccount::from_id(
+                "5CDLDriy3tgtc8uqwvbMXSE7isKCSLwCqqr1tC34zPXp4h2Z",
+                NOMINATOR_BALANCE,
+            )?,
+            bonded: NOMINATOR_BOND,
+            voted: vec![initial_authorities[3].account.account_id.clone()],
+        },
+        NominatorData {
+            account: FoundedAccount::from_id(
+                "5HnHqWSGgacPy5cuaDnavSnSpo9e8iFjnnAgh7kHv5RqKZS8",
+                NOMINATOR_BALANCE,
+            )?,
+            bonded: NOMINATOR_BOND,
+            voted: vec![initial_authorities[4].account.account_id.clone()],
+        },
+    ];
+
+    let foundation_custody = [
+        FoundedAccount::from_id(
+            "5FqCs62rP2ed59HxZ88DZkmRdyN2ZaaRr5jAZbHkD9UpwrfY",
+            FOUNDATION_BASE_BALANCE,
+        )?,
+        FoundedAccount::from_id(
+            "5FQmxAS4wSG34p7hS2nrkff75ANyntz8SWzFBiPjCbnKT9HD",
+            FOUNDATION_BASE_BALANCE
+                - (VALIDATOR_BALANCE * initial_authorities.len() as Balance
+                    + NOMINATOR_BALANCE * nominators.len() as Balance
+                    + SUDO_BALANCE),
+        )?,
+    ];
+
+    let sudo_account = FoundedAccount::from_id(
+        "5HTL6d8FScifpGzjEXhVELHwYgg7rHTwH1xYbRp99j6RzhWk",
+        SUDO_BALANCE,
+    )?;
+
+    let balances = initial_authorities
+        .iter()
+        .map(|a| &a.account)
+        .chain(nominators.iter().map(|n| &n.account))
+        .chain(community_custodians.iter())
+        .chain(foundation_custody.iter())
+        .chain(contributors_custody.iter())
+        .chain(investors_custody.iter())
+        .chain(sp_std::iter::once(&treasury_account))
+        .chain(sp_std::iter::once(&sudo_account))
+        .map(FoundedAccount::json_data)
+        .collect::<Vec<_>>();
+    let staker = initial_authorities
+        .iter()
+        .cloned()
+        .map(|v| Box::new(v) as Box<dyn StakerData>)
+        .chain(
+            nominators
+                .iter()
+                .cloned()
+                .map(|v| Box::new(v) as Box<dyn StakerData>),
+        )
+        .collect();
+
+    Ok(genesis(
+        // Initial PoA authorities
+        initial_authorities
+            .iter()
+            .map(ValidatorData::as_initial_authority)
+            .collect::<Vec<_>>(),
+        // Sudo account [nh-sudo-t1]
+        sudo_account.account_id.clone(),
+        // Initial balances
+        balances,
+        staker,
+        // min validator count
+        3,
+        // max validator count
+        Some(200),
+        // min validator bond
+        10 * THOUSANDS,
+        // min nominator bond
+        10 * VFY,
+    ))
 }
 
 pub fn zkv_testnet_config_genesis() -> Result<serde_json::Value, sp_core::crypto::PublicError> {
@@ -703,6 +909,7 @@ pub fn preset_names() -> Vec<PresetId> {
         PresetId::from("development"),
         PresetId::from("local"),
         PresetId::from("testnet"),
+        PresetId::from("private_testnet"),
     ]
 }
 
@@ -711,6 +918,7 @@ pub fn get_preset(id: &sp_genesis_builder::PresetId) -> Option<sp_std::vec::Vec<
         Ok("development") => zkv_development_config_genesis(),
         Ok("local") => zkv_local_config_genesis(),
         Ok("testnet") => zkv_testnet_config_genesis().unwrap(),
+        Ok("private_testnet") => zkv_private_testnet_config_genesis().unwrap(),
         _ => return None,
     };
     Some(
