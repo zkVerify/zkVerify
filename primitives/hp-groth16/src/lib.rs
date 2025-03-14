@@ -19,10 +19,6 @@
 //! Provide a base interface and the std lib implementation for groth16
 //! verifier via arkworks library
 
-use ark_ec::pairing::Pairing;
-use ark_groth16::prepare_verifying_key;
-use sp_std::vec::Vec;
-
 mod data_structures;
 
 /// Rexported Bls curve
@@ -32,6 +28,9 @@ pub use ark_bn254::Bn254;
 
 pub mod dummy_circuit;
 pub use data_structures::*;
+
+#[cfg(feature = "implementation")]
+pub use implementation::*;
 
 /// Errors that can occur during groth16 verification.
 #[derive(Debug, PartialEq)]
@@ -59,33 +58,41 @@ impl From<Groth16Error> for hp_verifiers::VerifyError {
     }
 }
 
-/// Verify a groth16 proof against the `E` elliptic curve using the provided verification key and inputs.
 #[cfg(feature = "implementation")]
-pub fn verify_proof<E: Pairing>(
-    vk: VerificationKey,
-    proof: Proof,
-    inputs: &[Scalar],
-) -> Result<bool, Groth16Error> {
-    let proof: ark_groth16::Proof<E> = proof.try_into().map_err(|_| Groth16Error::InvalidProof)?;
-    let vk: ark_groth16::VerifyingKey<E> = vk
-        .try_into_ark_unchecked()
-        .map_err(|_| Groth16Error::InvalidVerificationKey)?;
-    let pvk = prepare_verifying_key::<E>(&vk);
-    let inputs = inputs
-        .iter()
-        .map(|v| v.clone().try_into_scalar::<E::ScalarField>())
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(|_| Groth16Error::InvalidInput)?;
-    ark_groth16::Groth16::<E>::verify_proof(&pvk, &proof, &inputs)
-        .map_err(|_| Groth16Error::VerifyError)
-}
+mod implementation {
+    use crate::*;
 
-/// Verify a groth16 verification key against the `E` elliptic curve.
-#[cfg(feature = "implementation")]
-pub fn validate_key<E: Pairing>(vk: VerificationKey) -> Result<(), Groth16Error> {
-    ark_groth16::VerifyingKey::<E>::try_from(vk)
-        .map(|_| ())
-        .map_err(|_| Groth16Error::InvalidVerificationKey)
+    use ark_ec::pairing::Pairing;
+    use ark_groth16::prepare_verifying_key;
+    use sp_std::vec::Vec;
+
+    /// Verify a groth16 proof against the `E` elliptic curve using the provided verification key and inputs.
+    pub fn verify_proof<E: Pairing>(
+        vk: VerificationKey,
+        proof: Proof,
+        inputs: &[Scalar],
+    ) -> Result<bool, Groth16Error> {
+        let proof: ark_groth16::Proof<E> =
+            proof.try_into().map_err(|_| Groth16Error::InvalidProof)?;
+        let vk: ark_groth16::VerifyingKey<E> = vk
+            .try_into_ark_unchecked()
+            .map_err(|_| Groth16Error::InvalidVerificationKey)?;
+        let pvk = prepare_verifying_key::<E>(&vk);
+        let inputs = inputs
+            .iter()
+            .map(|v| v.clone().try_into_scalar::<E::ScalarField>())
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|_| Groth16Error::InvalidInput)?;
+        ark_groth16::Groth16::<E>::verify_proof(&pvk, &proof, &inputs)
+            .map_err(|_| Groth16Error::VerifyError)
+    }
+
+    /// Verify a groth16 verification key against the `E` elliptic curve.
+    pub fn validate_key<E: Pairing>(vk: VerificationKey) -> Result<(), Groth16Error> {
+        ark_groth16::VerifyingKey::<E>::try_from(vk)
+            .map(|_| ())
+            .map_err(|_| Groth16Error::InvalidVerificationKey)
+    }
 }
 
 #[cfg(test)]

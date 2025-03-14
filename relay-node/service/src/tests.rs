@@ -92,7 +92,6 @@ fn test_harness<T: Future<Output = VirtualOverseer>>(
             .await
             .unwrap();
         finality_target_tx.send(Some(best)).unwrap();
-        ()
     };
 
     let test_fut = test(TestHarness {
@@ -114,7 +113,7 @@ fn test_harness<T: Future<Output = VirtualOverseer>>(
 async fn overseer_recv(overseer: &mut VirtualOverseer) -> AllMessages {
     let msg = overseer_recv_with_timeout(overseer, TIMEOUT)
         .await
-        .expect(&format!("{:?} is enough to receive messages.", TIMEOUT));
+        .unwrap_or_else(|| panic!("{:?} is enough to receive messages.", TIMEOUT));
 
     gum::trace!("Received message:\n{:?}", &msg);
 
@@ -266,7 +265,7 @@ impl ChainBuilder {
         self.0
             .blocks_at_height
             .entry(number)
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(hash);
         self
     }
@@ -511,8 +510,8 @@ struct CaseVars {
 
 /// ```raw
 /// genesis -- 0xA1 --- 0xA2 --- 0xA3 --- 0xA4(!avail) --- 0xA5(!avail)
-/// 			   \
-/// 				`- 0xB2
+///                \
+///                 `- 0xB2
 /// ```
 fn chain_undisputed() -> CaseVars {
     let head: Hash = ChainBuilder::GENESIS_HASH;
@@ -542,8 +541,8 @@ fn chain_undisputed() -> CaseVars {
 
 /// ```raw
 /// genesis -- 0xA1 --- 0xA2 --- 0xA3(disputed) --- 0xA4(!avail) --- 0xA5(!avail)
-/// 			   \
-/// 				`- 0xB2
+///                \
+///                 `- 0xB2
 /// ```
 fn chain_0() -> CaseVars {
     let head: Hash = ChainBuilder::GENESIS_HASH;
@@ -573,8 +572,8 @@ fn chain_0() -> CaseVars {
 
 /// ```raw
 /// genesis -- 0xA1 --- 0xA2(disputed) --- 0xA3
-/// 			   \
-/// 				`- 0xB2 --- 0xB3(!available)
+///                \
+///                 `- 0xB2 --- 0xB3(!available)
 /// ```
 fn chain_1() -> CaseVars {
     let head: Hash = ChainBuilder::GENESIS_HASH;
@@ -601,8 +600,8 @@ fn chain_1() -> CaseVars {
 
 /// ```raw
 /// genesis -- 0xA1 --- 0xA2(disputed) --- 0xA3
-/// 			   \
-/// 				`- 0xB2 --- 0xB3
+///                \
+///                 `- 0xB2 --- 0xB3
 /// ```
 fn chain_2() -> CaseVars {
     let head: Hash = ChainBuilder::GENESIS_HASH;
@@ -629,8 +628,8 @@ fn chain_2() -> CaseVars {
 
 /// ```raw
 /// genesis -- 0xA1 --- 0xA2 --- 0xA3(disputed)
-/// 			   \
-/// 				`- 0xB2 --- 0xB3
+///                \
+///                 `- 0xB2 --- 0xB3
 /// ```
 fn chain_3() -> CaseVars {
     let head: Hash = ChainBuilder::GENESIS_HASH;
@@ -657,10 +656,10 @@ fn chain_3() -> CaseVars {
 
 /// ```raw
 /// genesis -- 0xA1 --- 0xA2 --- 0xA3(disputed)
-/// 			   \
-/// 				`- 0xB2 --- 0xB3
+///                \
+///                 `- 0xB2 --- 0xB3
 ///
-/// 	            ? --- NEX(does_not_exist)
+///                 ? --- NEX(does_not_exist)
 /// ```
 fn chain_4() -> CaseVars {
     let head: Hash = ChainBuilder::GENESIS_HASH;

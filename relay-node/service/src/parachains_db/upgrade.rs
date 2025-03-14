@@ -71,14 +71,14 @@ pub(crate) fn try_upgrade_db(
     const MAX_MIGRATIONS: u32 = 30;
 
     #[cfg(test)]
-    remove_file_lock(&db_path);
+    remove_file_lock(db_path);
 
     // Loop migrations until we reach the target version.
     for _ in 0..MAX_MIGRATIONS {
         let version = try_upgrade_db_to_next_version(db_path, db_kind)?;
 
         #[cfg(test)]
-        remove_file_lock(&db_path);
+        remove_file_lock(db_path);
 
         if version == target_version {
             return Ok(());
@@ -169,15 +169,14 @@ pub fn remove_file_lock(path: &std::path::Path) {
 
     for _ in 0..10 {
         let result = std::fs::remove_file(lock_path.as_path());
-        match result {
-            Err(error) => match error.kind() {
+        if let Err(error) = result {
+            match error.kind() {
                 ErrorKind::WouldBlock => {
                     sleep(Duration::from_millis(100));
                     continue;
                 }
                 _ => return,
-            },
-            Ok(_) => {}
+            }
         }
     }
 

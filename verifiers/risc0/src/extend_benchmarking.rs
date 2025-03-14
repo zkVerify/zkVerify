@@ -27,9 +27,9 @@ pub struct Pallet<T: Config>(crate::Pallet<T>);
 
 pub use crate::benchmarking::{Call, Config};
 
+#[allow(clippy::multiple_bound_locations)]
 #[benchmarks(where T: pallet_verifiers::Config<Risc0<T>>)]
 mod benchmarks {
-    use crate::benchmarking::VALID_VK;
     use crate::{InjectNativePoseidon2IfNeeded, Proof, R0Proof};
     use risc0_verifier::Verifier;
 

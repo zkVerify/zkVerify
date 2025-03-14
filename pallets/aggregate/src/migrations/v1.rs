@@ -106,7 +106,6 @@ mod test {
     // use self::InnerMigrateV0ToV1;
     use super::*;
     use crate::mock::*;
-    use frame_support::assert_ok;
     use frame_support::{pallet_prelude::*, weights::RuntimeDbWeight};
 
     fn create_old_domain(

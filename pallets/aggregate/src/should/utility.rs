@@ -69,15 +69,14 @@ pub fn assert_no_state_changed_evt() {
 pub fn assert_new_receipt(domain: u32, id: u64, expected_receipt: Option<H256>) {
     let matched = mock::System::events()
     .iter()
-    .find(|record| {
+    .any(|record| {
         matches!(record.event, TestEvent::Aggregate(Event::<Test>::NewAggregationReceipt {
                 domain_id,
                 aggregation_id,
                 receipt,
             }
         ) if domain_id == domain && aggregation_id == id && expected_receipt.map(|h| h == receipt).unwrap_or(true))
-    })
-    .is_some();
+    });
     assert!(
         matched,
         "Cannot find aggregation receipt [{domain}-{id}]-{expected_receipt:?}"

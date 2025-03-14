@@ -19,11 +19,7 @@
 // curve may be excluded by the build we resort to `#[allow(unused)]` to
 // suppress the expected warning.
 
-use ark_ec::{
-    pairing::{MillerLoopOutput, Pairing},
-    short_weierstrass::{Affine as SWAffine, Projective as SWProjective, SWCurveConfig},
-    CurveConfig, VariableBaseMSM,
-};
+use ark_ec::short_weierstrass::{Projective as SWProjective, SWCurveConfig};
 use ark_scale::{
     ark_serialize::{CanonicalDeserialize, CanonicalSerialize, Compress, Validate},
     scale::{Decode, Encode},
@@ -62,6 +58,12 @@ pub fn decode_proj_sw<T: SWCurveConfig>(mut buf: &[u8]) -> Result<SWProjective<T
 #[cfg(feature = "std")]
 pub mod native {
     use super::*;
+
+    use ark_ec::{
+        pairing::{MillerLoopOutput, Pairing},
+        short_weierstrass::Affine as SWAffine,
+        CurveConfig, VariableBaseMSM,
+    };
 
     pub fn multi_miller_loop<T: Pairing>(g1: &[u8], g2: &[u8]) -> Result<Vec<u8>, ()> {
         let g1 = decode::<Vec<<T as Pairing>::G1Affine>>(g1)?;

@@ -69,11 +69,13 @@ mod tests {
 
     use super::*;
 
+    type CallParameters = (Option<u64>, Option<u32>, H256);
+
     struct Mock<const ID: u64>;
 
     impl<const ID: u64> Mock<ID> {
         thread_local! {
-            pub static CALLED : RefCell<HashMap<u64, (Option<u64>, Option<u32>, H256)>> = RefCell::new(HashMap::new());
+            pub static CALLED : RefCell<HashMap<u64, CallParameters                >> = RefCell::new(HashMap::new());
         }
 
         pub fn called() -> (Option<u64>, Option<u32>, H256) {
