@@ -44,6 +44,8 @@ ismp = { workspace = true }
 pallet-ismp = { workspace = true, features = ["unsigned"] }
 pallet-ismp-runtime-api = { workspace = true }
 ismp-grandpa = { workspace = true }
+pallet-token-gateway = { workspace = true }
+pallet-hyperbridge = { workspace = true }
 frame-metadata-hash-extension = { workspace = true }
 pallet-conviction-voting = { workspace = true }
 pallet-treasury = { workspace = true }
@@ -168,6 +170,7 @@ runtime-benchmarks = [
 	"pallet-xcm/runtime-benchmarks",
 	"pallet-xcm-benchmarks/runtime-benchmarks",
 	"pallet-ismp/runtime-benchmarks",
+	"pallet-token-gateway/runtime-benchmarks",
 	"pallet-message-queue/runtime-benchmarks",
 	"pallet-offences/runtime-benchmarks",
 	"sp-staking/runtime-benchmarks",
@@ -209,6 +212,8 @@ std = [
 	"pallet-utility/std",
 	"pallet-vesting/std",
 	"pallet-ismp/std",
+	"pallet-token-gateway/std",
+	"pallet-hyperbridge/std",
 	"ismp/std",
 	"pallet-hyperbridge-aggregations/std",
 	"pallet-ismp-runtime-api/std",
@@ -289,6 +294,8 @@ try-runtime = [
 	"pallet-utility/try-runtime",
 	"pallet-vesting/try-runtime",
 	"pallet-ismp/try-runtime",
+	"pallet-token-gateway/try-runtime",
+	"pallet-hyperbridge/try-runtime",
 	"pallet-hyperbridge-aggregations/try-runtime",
 	"ismp-grandpa/try-runtime",
 	"pallet-conviction-voting/try-runtime",

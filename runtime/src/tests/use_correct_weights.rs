@@ -228,6 +228,16 @@ fn pallet_aggregate() {
 }
 
 #[test]
+fn pallet_token_gateway() {
+    use pallet_token_gateway::WeightInfo;
+
+    assert_eq!(
+        <Runtime as pallet_token_gateway::Config>::WeightInfo::set_token_gateway_addresses(42),
+        crate::weights::pallet_token_gateway::ZKVWeight::<Runtime>::set_token_gateway_addresses(42)
+    );
+}
+
+#[test]
 fn pallet_hyperbridge_aggregations() {
     use pallet_hyperbridge_aggregations::WeightInfo;
 
