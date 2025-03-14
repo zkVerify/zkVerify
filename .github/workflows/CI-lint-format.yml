@@ -17,11 +17,11 @@ jobs:
       - name: Cargo lint
         uses: ./.github/actions/cmd-in-docker
         with:
-          command: "cargo clippy --release -- --deny warnings 2>&1 | tee linting_output.txt"
-          use_cache: 'yes'
-          cache_key: 'lint-format'
-          cmake_install: 'yes'
-          lld_install: 'yes'
+          command: "cargo clippy --release --all-targets -- --deny warnings 2>&1 | tee linting_output.txt"
+          use_cache: "yes"
+          cache_key: "lint-format"
+          cmake_install: "yes"
+          lld_install: "yes"
 
       - name: Upload lint artifacts
         uses: actions/upload-artifact@v4
@@ -36,10 +36,10 @@ jobs:
         uses: ./.github/actions/cmd-in-docker
         with:
           command: "cargo fmt --check 2>&1 | tee formatting_output.txt"
-          use_cache: 'yes'
-          cache_key: 'lint-format'
-          cmake_install: 'yes'
-          lld_install: 'yes'
+          use_cache: "yes"
+          cache_key: "lint-format"
+          cmake_install: "yes"
+          lld_install: "yes"
 
       - name: Upload format artifacts
         uses: actions/upload-artifact@v4

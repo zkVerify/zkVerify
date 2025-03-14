@@ -22,7 +22,7 @@ const EXECUTE_WORKER_EXE: &str = env!("CARGO_BIN_EXE_zkv-relay-execute-worker");
 
 #[test]
 fn worker_binaries_have_same_version_as_node() {
-    let prep_worker_version = Command::new(&PREPARE_WORKER_EXE)
+    let prep_worker_version = Command::new(PREPARE_WORKER_EXE)
         .args(["--version"])
         .output()
         .unwrap()
@@ -32,7 +32,7 @@ fn worker_binaries_have_same_version_as_node() {
         .trim();
     assert_eq!(prep_worker_version, NODE_VERSION);
 
-    let exec_worker_version = Command::new(&EXECUTE_WORKER_EXE)
+    let exec_worker_version = Command::new(EXECUTE_WORKER_EXE)
         .args(["--version"])
         .output()
         .unwrap()

@@ -195,7 +195,7 @@ impl MockDispatchAggregation {
     }
 
     thread_local! {
-        pub static RETURN: RefCell<DispatchResult> = RefCell::new(Ok(()));
+        pub static RETURN: RefCell<DispatchResult> = const { RefCell::new(Ok(())) };
     }
 
     pub fn pop() -> Option<Self> {
@@ -298,7 +298,7 @@ impl Consideration<AccountId, Footprint> for MockConsideration {
     }
 
     fn drop(self, who: &AccountId) -> Result<(), sp_runtime::DispatchError> {
-        Self::push(self, who.clone());
+        Self::push(self, *who);
         if who == &USER_DOMAIN_ERROR_DROP {
             Err(sp_runtime::DispatchError::from("User Domain Error Drop"))?
         }
@@ -433,6 +433,7 @@ impl pallet_balances::Config for Test {
 }
 
 impl crate::Domain<Test> {
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn create(
         id: u32,
         owner: crate::data::User<crate::AccountOf<Test>>,

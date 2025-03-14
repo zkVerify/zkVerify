@@ -19,7 +19,7 @@ use codec::{Decode, Encode};
 
 pub use pallet_aggregate::PathRequestError;
 use scale_info::TypeInfo;
-use sp_runtime::{Deserialize, SaturatedConversion, Serialize};
+use sp_runtime::SaturatedConversion;
 use sp_std::vec::Vec;
 
 sp_api::decl_runtime_apis! {
@@ -31,7 +31,10 @@ sp_api::decl_runtime_apis! {
     }
 }
 
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "std",
+    derive(sp_runtime::Serialize, sp_runtime::Deserialize)
+)]
 #[derive(Debug, Clone, PartialEq, Eq, Encode, Decode, TypeInfo)]
 pub struct MerkleProof {
     pub root: sp_core::H256,

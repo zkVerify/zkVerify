@@ -30,6 +30,7 @@ pub type Call<T> = pallet_verifiers::Call<T, Verifier<T>>;
 
 include!("resources_benchmarking/vk_pubs.rs");
 
+#[allow(clippy::multiple_bound_locations)]
 #[benchmarks(where T: pallet_verifiers::Config<Verifier<T>>)]
 mod benchmarks {
     use super::*;

@@ -13,8 +13,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-#![cfg(test)]
-
 use super::*;
 /// Reexport `test` runner
 pub use testsfixtures::{test, BABE_AUTHOR_ID, BLOCK_NUMBER, SLOT_ID};

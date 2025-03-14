@@ -236,7 +236,7 @@ mod tests {
     use serial_test::serial;
     use std::{env::temp_dir, fs, os::unix::fs::PermissionsExt, path::Path};
 
-    const TEST_NODE_VERSION: &'static str = "v0.1.2";
+    const TEST_NODE_VERSION: &str = "v0.1.2";
 
     /// Write a dummy executable to the path which satisfies the version check.
     fn write_worker_exe(path: impl AsRef<Path>) -> Result<(), Box<dyn std::error::Error>> {

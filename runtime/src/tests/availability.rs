@@ -16,7 +16,6 @@
 //! Here we write the integration tests that just check pallets are available to the runtime.
 
 use super::*;
-use codec::Encode;
 use frame_support::{
     assert_ok,
     traits::{schedule::DispatchTime, Currency, StorePreimage, VestingSchedule},
@@ -27,7 +26,7 @@ use pallet_hyperbridge_aggregations::Params;
 use pallet_verifiers::VkOrHash;
 use sp_core::H256;
 use sp_runtime::traits::Zero;
-use sp_runtime::{traits::Hash, AccountId32, MultiAddress};
+use sp_runtime::{AccountId32, MultiAddress};
 
 #[test]
 fn pallet_multisig() {

@@ -145,11 +145,8 @@ pub mod pallet {
                         fee: params.fee,
                     },
                 )
-                .map_err(|e| {
-                    log::error!("ISMP dispatch failed with error: {:?}", e);
-                    Error::<T>::MessageDispatchFailed
-                })?;
-
+                .inspect_err(|e| log::error!("ISMP dispatch failed with error: {:?}", e))
+                .map_err(|_| Error::<T>::MessageDispatchFailed)?;
             Ok(())
         }
     }

@@ -169,14 +169,14 @@ pub fn test() -> sp_io::TestExternalities {
             .cloned()
             .map(|user| (user.raw_account.into(), user.starting_balance))
             .collect(),
-        genesis_balance: TOTAL_BALANCE.clone(),
+        genesis_balance: *TOTAL_BALANCE,
     }
     .assimilate_storage(&mut t)
     .unwrap();
 
     let mut ext = sp_io::TestExternalities::from(t);
 
-    ext.execute_with(|| initialize());
+    ext.execute_with(initialize);
 
     // Return the test externalities
     ext

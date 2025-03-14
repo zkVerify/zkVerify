@@ -218,9 +218,9 @@ mod benchmarks {
         insert_domain::<T>(domain_id, caller.clone(), None);
 
         Domains::<T>::try_mutate(domain_id, |domain| {
-            domain.as_mut().map(|d| {
+            if let Some(d) = domain.as_mut() {
                 d.state = DomainState::Removable;
-            });
+            }
             Ok::<(), ()>(())
         })
         .unwrap();

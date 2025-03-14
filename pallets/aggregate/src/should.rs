@@ -310,7 +310,7 @@ fn queue_a_new_aggregation_when_is_complete() {
             .map(|i| statement_entry(None, USER_1, H256::from_low_u64_be(i.into())))
             .collect::<Vec<_>>();
         for s in elements.clone().into_iter() {
-            Aggregate::on_proof_verified(Some(s.account.clone()), DOMAIN, s.statement);
+            Aggregate::on_proof_verified(Some(s.account), DOMAIN, s.statement);
         }
 
         assert_complete_evt(DOMAIN_ID, 1);
@@ -418,7 +418,7 @@ mod clean_the_published_storage_on_initialize {
     #[test]
     fn in_base_case() {
         test().execute_with(|| {
-            assert_eq!(Published::<Test>::get().is_empty(), true);
+            assert!(Published::<Test>::get().is_empty());
         })
     }
 
@@ -431,7 +431,7 @@ mod clean_the_published_storage_on_initialize {
             });
 
             Aggregate::on_initialize(36);
-            assert_eq!(Published::<Test>::get().is_empty(), true);
+            assert!(Published::<Test>::get().is_empty());
         })
     }
 
@@ -1073,7 +1073,7 @@ mod register_domain {
                 let aggregation_size = values[pos].0;
                 let queue_size = values[pos]
                     .1
-                    .unwrap_or_else(|| <Test as Config>::MaxPendingPublishQueueSize::get());
+                    .unwrap_or_else(<Test as Config>::MaxPendingPublishQueueSize::get);
                 assert_eq!(id, domain.id);
                 assert_eq!(aggregation_size, domain.max_aggregation_size);
                 assert_eq!(queue_size, domain.publish_queue_size);

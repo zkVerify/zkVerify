@@ -38,7 +38,7 @@ fn benchmark_overhead(runtime: &str) -> Result<(), String> {
 
     // Invoke `benchmark overhead` with all options to make sure that they are valid.
     let status = Command::new(cargo_bin(common::NODE))
-        .args(["benchmark", "overhead", "--chain", &runtime])
+        .args(["benchmark", "overhead", "--chain", runtime])
         .arg("-d")
         .arg(base_path)
         .arg("--weight-path")

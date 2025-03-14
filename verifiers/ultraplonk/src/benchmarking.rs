@@ -28,6 +28,7 @@ pub type Call<T> = pallet_verifiers::Call<T, Verifier<T>>;
 
 include!("resources.rs");
 
+#[allow(clippy::multiple_bound_locations)]
 #[benchmarks(where T: pallet_verifiers::Config<Verifier<T>>)]
 pub mod benchmarks {
 
@@ -105,7 +106,7 @@ pub mod benchmarks {
         let vk = VALID_VK;
 
         #[extrinsic_call]
-        register_vk(RawOrigin::Signed(caller), vk.clone().into());
+        register_vk(RawOrigin::Signed(caller), vk.into());
 
         // Verify
         assert!(do_get_vk::<T>(&do_vk_hash::<T>(&vk)).is_some());

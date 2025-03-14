@@ -218,7 +218,7 @@ impl WeightInfo<FakeVerifier> for MockWeightInfo {
         pubs: &<FakeVerifier as Verifier>::Pubs,
     ) -> Weight {
         Weight::from_parts(
-            100_000_000_000_000 * proof + 10_00_000_000_000_000 * pubs,
+            100_000_000_000_000 * proof + 1_000_000_000_000_000 * pubs,
             0,
         )
     }
