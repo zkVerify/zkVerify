@@ -144,7 +144,7 @@ impl<O: Into<Result<RawOrigin<AccountId>, O>> + From<RawOrigin<AccountId>>> Ensu
 
 parameter_types! {
     pub const ClaimPalletId: PalletId = PalletId(*b"zkvt/clm");
-    pub const MaxBeneficiaries: u32 = 100;
+    pub const MaxBeneficiaries: u32 = 1_000;
     pub UnclaimedDestinationMockAccount: AccountId = 111;
 }
 
@@ -247,10 +247,14 @@ pub fn test_genesis_too_many_beneficiaries() -> sp_io::TestExternalities {
     .unwrap();
 
     crate::GenesisConfig::<Test> {
-        beneficiaries: utils::get_beneficiaries_map::<Test>(MaxBeneficiaries::get() + 1)
-            .0
-            .into_iter()
-            .collect(),
+        beneficiaries: utils::deserialize_beneficiaries::<Test>(
+            MaxBeneficiaries::get() + 1,
+            utils::BENEFICIARIES_FILE,
+        )
+        .unwrap()
+        .0
+        .into_iter()
+        .collect(),
         genesis_balance: 0, // It doesn't matter
     }
     .assimilate_storage(&mut t)

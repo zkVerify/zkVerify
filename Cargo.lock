@@ -8759,6 +8759,7 @@ dependencies = [
 name = "pallet-claim"
 version = "0.1.0"
 dependencies = [
+ "bincode",
  "frame-benchmarking",
  "frame-support",
  "frame-system",

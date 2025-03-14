@@ -23,7 +23,8 @@ fn init_airdrop_state<T: Config>(
     n: u32,
     begin_airdrop: bool,
 ) -> BTreeMap<T::AccountId, BalanceOf<T>> {
-    let (beneficiaries, total_amount) = get_beneficiaries_map::<T>(n);
+    let (beneficiaries, total_amount) =
+        deserialize_beneficiaries::<T>(n, BENEFICIARIES_FILE).unwrap();
     let _ = T::Currency::mint_into(
         &Pallet::<T>::account_id(),
         total_amount.saturating_mul(2u32.into()), // Just to be extra safe
@@ -51,10 +52,9 @@ mod benchmarks {
 
     #[benchmark]
     fn claim() {
-        let _ = init_airdrop_state::<T>(100, true);
+        let beneficiaries = init_airdrop_state::<T>(100, true);
 
-        let beneficiary: T::AccountId = account("", 10, 10);
-        assert!(Beneficiaries::<T>::get(beneficiary.clone()).is_some());
+        let (beneficiary, _) = beneficiaries.iter().take(1).next().unwrap();
 
         let dest = whitelisted_caller();
 
@@ -67,10 +67,9 @@ mod benchmarks {
 
     #[benchmark]
     fn claim_for() {
-        let _ = init_airdrop_state::<T>(100, true);
+        let beneficiaries = init_airdrop_state::<T>(100, true);
 
-        let beneficiary: T::AccountId = account("", 10, 10);
-        assert!(Beneficiaries::<T>::get(beneficiary.clone()).is_some());
+        let (beneficiary, _) = beneficiaries.iter().take(1).next().unwrap();
 
         #[extrinsic_call]
         claim_for(RawOrigin::None, beneficiary.clone());

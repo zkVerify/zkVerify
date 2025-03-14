@@ -184,7 +184,8 @@ fn new_airdrop_too_many_beneficiaries() {
     test_with_configs(
         WithGenesisBeneficiaries::No,
         GenesisClaimBalance::Sufficient,
-    ).execute_with(|| {
+    )
+    .execute_with(|| {
         assert_ok!(Claim::begin_airdrop(
             Origin::Signed(MANAGER_USER).into(),
             GENESIS_BENEFICIARIES_MAP.clone()
@@ -192,7 +193,12 @@ fn new_airdrop_too_many_beneficiaries() {
         assert_noop!(
             Claim::add_beneficiaries(
                 Origin::Signed(MANAGER_USER).into(),
-                utils::get_beneficiaries_map::<Test>(MaxBeneficiaries::get()).0
+                utils::deserialize_beneficiaries::<Test>(
+                    MaxBeneficiaries::get(),
+                    utils::BENEFICIARIES_FILE
+                )
+                .unwrap()
+                .0
             ),
             Error::<Test>::TooManyBeneficiaries
         );
@@ -472,7 +478,12 @@ fn cannot_add_too_many_beneficiaries() {
         assert_noop!(
             Claim::add_beneficiaries(
                 Origin::Signed(MANAGER_USER).into(),
-                utils::get_beneficiaries_map::<Test>(MaxBeneficiaries::get()).0
+                utils::deserialize_beneficiaries::<Test>(
+                    MaxBeneficiaries::get(),
+                    utils::BENEFICIARIES_FILE
+                )
+                .unwrap()
+                .0
             ),
             Error::<Test>::TooManyBeneficiaries
         );
