@@ -16,15 +16,12 @@ codec = { default-features = false, workspace = true }
 jsonrpsee = { workspace = true, features = ["client-core", "server", "macros"] }
 sp-core = { default-features = false, workspace = true }
 hp-verifiers = { workspace = true }
+hp-groth16 = { workspace = true }
 serde = { default-features = false, workspace = true }
-
-sp-std = { workspace = true }
-jsonrpc-derive = { version = "18.0.0", default-features = false }
-jsonrpc-core = { version = "18.0.0", default-features = false }
 
 [features]
 default = ["std"]
 std = [
     "pallet-ultraplonk-verifier/std",
-    "serde/std"
+    "serde/std",
 ]

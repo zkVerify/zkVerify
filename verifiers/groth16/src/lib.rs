@@ -23,7 +23,9 @@ mod weight;
 use core::marker::PhantomData;
 use frame_support::pallet_prelude::Weight;
 use groth16::Curve;
-pub use groth16::{ProofWithCurve as Proof, VerificationKeyWithCurve as Vk};
+pub use groth16::{
+    Curve as Groth16CurveType, ProofWithCurve as Proof, VerificationKeyWithCurve as Vk,
+};
 use hp_groth16::Scalar;
 use hp_verifiers::Verifier;
 use sp_std::vec::Vec;

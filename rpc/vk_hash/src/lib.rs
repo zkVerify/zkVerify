@@ -13,21 +13,42 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use codec::{Decode, Encode};
 use hp_verifiers::Verifier;
 use jsonrpsee::{core::RpcResult, proc_macros::rpc, types::ErrorObject};
+use pallet_groth16_verifier::{Groth16, Groth16CurveType};
 use pallet_proofofsql_verifier::ProofOfSql;
 use pallet_ultraplonk_verifier::{Ultraplonk, VK_SIZE};
-use sp_core::{Bytes, Get, H256};
-
-// use jsonrpc_core::Result;
-// use jsonrpc_derive::rpc as other_rpc;
-// use serde::Deserialize;
-// use sp_std::vec::Vec;
+use sp_core::{serde::Deserialize, serde::Serialize, Bytes, Get, H256};
 
 type VkOf<V> = <V as hp_verifiers::Verifier>::Vk;
 
 struct MockType;
 struct MaxPubs;
+
+#[derive(Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Groth16Vk {
+    pub curve: Groth16CurveType,
+    pub alpha_g1: Bytes,
+    pub beta_g2: Bytes,
+    pub gamma_g2: Bytes,
+    pub delta_g2: Bytes,
+    pub gamma_abc_g1: Vec<Bytes>,
+}
+
+// #[derive(Debug, Serialize, Deserialize)]
+// #[serde(untagged)]
+// pub enum Groth16VkFieldValue {
+//     Bytes(Bytes),
+//     PlainString(String),
+//     BytesList(Vec<Bytes>),
+// }
+
+// #[derive(Debug, Serialize, Deserialize)]
+// pub struct Groth16Vk {
+//     pub data: BTreeMap<String, Groth16VkFieldValue>,
+// }
 
 impl Get<u32> for MaxPubs {
     fn get() -> u32 {
@@ -40,7 +61,11 @@ impl pallet_ultraplonk_verifier::Config for MockType {
 }
 
 impl pallet_proofofsql_verifier::Config for MockType {
-    type LargestMaxNu = MaxPubs; // this shouldn't matter
+    type LargestMaxNu = MaxPubs;
+}
+
+impl pallet_groth16_verifier::Config for MockType {
+    const MAX_NUM_INPUTS: u32 = pallet_groth16_verifier::MAX_NUM_INPUTS;
 }
 
 #[rpc(client, server)]
@@ -49,6 +74,8 @@ pub trait VKHashApi<ResponseType> {
     fn ultraplonk(&self, vk: Bytes) -> RpcResult<ResponseType>;
     #[method(name = "compute_proofofsql")]
     fn proofofsql(&self, vk: Bytes) -> RpcResult<ResponseType>;
+    #[method(name = "compute_groth16")]
+    fn groth16(&self, vk: Groth16Vk) -> RpcResult<ResponseType>;
 }
 
 pub struct VKHash;
@@ -82,5 +109,26 @@ impl VKHashApiServer<H256> for VKHash {
     fn proofofsql(&self, vk: Bytes) -> RpcResult<H256> {
         let vk: VkOf<ProofOfSql<MockType>> = pallet_proofofsql_verifier::Vk::from(vk.0);
         Ok(ProofOfSql::vk_hash(&vk))
+    }
+
+    fn groth16(&self, vk: Groth16Vk) -> RpcResult<H256> {
+        // println!("Received: {:?}", vk);
+
+        let vk: VkOf<Groth16<MockType>> = pallet_groth16_verifier::Vk {
+            curve: vk.curve,
+            alpha_g1: hp_groth16::G1(vk.alpha_g1.0),
+            beta_g2: hp_groth16::G2(vk.beta_g2.0),
+            gamma_g2: hp_groth16::G2(vk.gamma_g2.0),
+            delta_g2: hp_groth16::G2(vk.delta_g2.0),
+            gamma_abc_g1: vk
+                .gamma_abc_g1
+                .iter()
+                .map(|v| hp_groth16::G1(v.0.clone()))
+                .collect(),
+        };
+
+        // println!("Groth16 vk: {:#?}", vk);
+
+        Ok(Groth16::<MockType>::vk_hash(&vk))
     }
 }

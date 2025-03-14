@@ -22,6 +22,7 @@ const { init_api, submitProof, registerVk, receivedEvents } = require('zkv-lib')
 const { PROOF: ULTRAPLONK_PROOF, PUBS: ULTRAPLONK_PUBS, VK: VK_ULTRAPLONK, VKEY_HASH: ULTRAPLONK_VKEY_HASH,
     STATEMENT_HASH: ULTRAPLONK_STATEMENT_HASH } = require('./ultraplonk_data.js');
 const { PROOF: PROOFOFSQL_PROOF, PUBS: PROOFOFSQL_PUBS, VK: VK_PROOFOFSQL, VKEY_HASH: PROOFOFSQL_VKEY_HASH } = require('./proofofsql_data.js');
+const { PROOF: GROTH16_PROOF, PUBS: GROTH16_PUBS, VK: VK_GROTH16, VKEY_HASH: GROTH16_VKEY_HASH } = require('./groth16_data.js');
 
 async function run(nodeName, networkInfo, _args) {
     const api = await init_api(zombie, nodeName, networkInfo);
@@ -37,6 +38,15 @@ async function run(nodeName, networkInfo, _args) {
     console.log(`##### ProofOfSQL RPC returned (hash ${verifier_hash}): ` + JSON.stringify(verifier_hash));
 
     if (verifier_hash != PROOFOFSQL_VKEY_HASH) {
+        return ReturnCode.ErrIncorrectHash;
+    }
+
+    console.log(`VK_GROTH16:\n`, VK_GROTH16);
+
+    verifier_hash = await api.rpc.compute.groth16(VK_GROTH16);
+    console.log(`##### Groth16 RPC returned (hash ${verifier_hash}): ` + JSON.stringify(verifier_hash));
+
+    if (verifier_hash != GROTH16_VKEY_HASH) {
         return ReturnCode.ErrIncorrectHash;
     }
 
