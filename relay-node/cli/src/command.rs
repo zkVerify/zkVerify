@@ -75,6 +75,10 @@ impl SubstrateCli for Cli {
                 &include_bytes!("../chain-specs/zkverify_testnet.json")[..],
             )?),
             "testnet_build" => Box::new(service::chain_spec::testnet_config()?),
+            "private_testnet" => Box::new(service::chain_spec::ChainSpec::from_json_bytes(
+                &include_bytes!("../chain-specs/zkverify_private_testnet.json")[..],
+            )?),
+            "private_testnet_build" => Box::new(service::chain_spec::private_testnet_config()?),
             path => Box::new(service::chain_spec::ChainSpec::from_json_file(
                 std::path::PathBuf::from(path),
             )?),
