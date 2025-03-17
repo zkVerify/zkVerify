@@ -69,7 +69,7 @@ pub use frame_support::{
     Blake2_128Concat, Identity, PalletId, StorageHasher, StorageValue,
 };
 pub use frame_system::Call as SystemCall;
-use frame_system::EnsureRoot;
+use frame_system::{EnsureRoot, EnsureSigned};
 use ismp::consensus::{ConsensusClientId, StateMachineHeight, StateMachineId};
 use ismp::host::StateMachine;
 use ismp::module::IsmpModule;
