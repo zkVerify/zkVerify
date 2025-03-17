@@ -65,8 +65,7 @@ log_info "Release branch is: ${release_branch}"
 log_info "Github tag is: ${github_tag}"
 
 # Checking if it is a release build
-#if git branch -r --contains "${github_tag}" | grep -xqE ". origin\/${release_branch}\/${github_tag}"; then
-if git branch -r --contains "${github_tag}" | grep -xqE ". origin\/${release_branch}"; then
+if git branch -r --contains "${github_tag}" | grep -xqE ". origin\/${release_branch}\/${github_tag}$"; then
   IS_A_RELEASE="true"
 
   if [ -z "${maintainers_keys:-}" ]; then
