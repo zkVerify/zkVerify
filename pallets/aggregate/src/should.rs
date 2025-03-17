@@ -1800,3 +1800,77 @@ fn return_the_correct_weigh_on_proof_verified() {
         <Test as crate::Config>::WeightInfo::on_proof_verified()
     );
 }
+
+mod aggregation_id_max {
+
+    use super::*;
+
+    const MAX_AGGREGATE_ID: u64 = u64::MAX;
+
+    #[test]
+    fn fail_on_aggregate() {
+        test().execute_with(|| {
+            let domain = Domain::<Test>::try_create(
+                DOMAIN_ID,
+                USER_DOMAIN_1.into(),
+                MAX_AGGREGATE_ID,
+                16,
+                8,
+                AggregateSecurityRules::OnlyOwnerUncompleted,
+                None,
+                DeliveryParams::<AccountId, Balance>::new(
+                    USER_DOMAIN_1,
+                    Delivery::new(none_destination(), 1234),
+                ),
+            )
+            .unwrap();
+            Domains::<Test>::insert(DOMAIN_ID, domain);
+
+            let statement = H256::from_low_u64_be(123);
+
+            Aggregate::on_proof_verified(Some(USER_1), DOMAIN, statement);
+
+            assert_noop!(
+                Aggregate::aggregate(
+                    Origin::Signed(USER_DOMAIN_1).into(),
+                    DOMAIN_ID,
+                    MAX_AGGREGATE_ID
+                ),
+                Error::<Test>::NextAggregationIdUnavailable
+            );
+        })
+    }
+
+    #[test]
+    fn fail_on_on_proof_verified() {
+        test().execute_with(|| {
+            let domain = Domain::<Test>::try_create(
+                DOMAIN_ID,
+                USER_DOMAIN_1.into(),
+                MAX_AGGREGATE_ID,
+                16,
+                1,
+                AggregateSecurityRules::OnlyOwnerUncompleted,
+                None,
+                DeliveryParams::<AccountId, Balance>::new(
+                    USER_DOMAIN_1,
+                    Delivery::new(none_destination(), 1234),
+                ),
+            )
+            .unwrap();
+            Domains::<Test>::insert(DOMAIN_ID, domain);
+
+            let statement = H256::from_low_u64_be(123);
+
+            Aggregate::on_proof_verified(Some(USER_DOMAIN_1), Some(DOMAIN_ID), statement);
+
+            assert_not_evt(
+                Event::AggregationComplete {
+                    domain_id: DOMAIN_ID,
+                    aggregation_id: MAX_AGGREGATE_ID,
+                },
+                "",
+            );
+        })
+    }
+}

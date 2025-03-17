@@ -129,8 +129,10 @@ impl<
 
     /// Create a new aggregation entry with the given size. Just increment
     /// the id.
-    pub fn create_next(&self, size: AggregationSize) -> Self {
-        Self::create(self.id + 1, size)
+    pub fn create_next(&self, size: AggregationSize) -> Option<Self> {
+        self.id
+            .checked_add(1)
+            .map(|next_id| Self::create(next_id, size))
     }
 
     fn space_left(&self) -> usize {

@@ -247,7 +247,12 @@ pub mod pallet {
                     domain_id,
                     aggregation_id: domain.next.id,
                 });
-                let to_publish = domain.append_statement(account.clone(), reserve, statement);
+                let to_publish = domain
+                    .append_statement(account.clone(), reserve, statement)
+                    .unwrap_or_else(|err| {
+                        log::debug!("Failed adding proof to a given aggregation queue: {err:?}");
+                        None
+                    });
                 if let Some(aggregation) = to_publish {
                     domain.available_aggregation(aggregation);
                 }
@@ -276,6 +281,8 @@ pub mod pallet {
         InvalidDomainState,
         /// Try to register a domain without any defined ownership (maybe a manager that didn't provide the delivery owner).
         MissedDeliveryOwnership,
+        /// Cannot create a new, unique, aggregation id anymore
+        NextAggregationIdUnavailable,
     }
 
     #[derive(Debug, Clone, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
@@ -448,11 +455,11 @@ pub mod pallet {
 
         /// Return the aggregation `id`, removing it from the queue of aggregations to be
         /// published.
-        fn take_aggregation(&mut self, id: u64) -> Option<Aggregation<T>> {
+        fn take_aggregation(&mut self, id: u64) -> Result<Option<Aggregation<T>>, Error<T>> {
             if self.next.id == id {
                 self.pop_next_aggregation()
             } else {
-                self.should_publish.remove(&id)
+                Ok(self.should_publish.remove(&id))
             }
         }
 
@@ -475,16 +482,15 @@ pub mod pallet {
 
         /// Return the next non-empty aggregation to be published, or none if the aggregation is empty.
         /// If successful, a new aggregation is created as next to be published.
-        fn pop_next_aggregation(&mut self) -> Option<Aggregation<T>> {
+        fn pop_next_aggregation(&mut self) -> Result<Option<Aggregation<T>>, Error<T>> {
             if self.next.statements.is_empty() {
-                None
+                Ok(None)
             } else {
                 let aggregation = &mut self.next;
-                // Create a new aggregation as next, and return the old one
-                Some(sp_std::mem::replace(
-                    aggregation,
-                    aggregation.create_next(aggregation.size),
-                ))
+                aggregation.create_next(aggregation.size).map_or(
+                    Err(Error::<T>::NextAggregationIdUnavailable),
+                    |new_aggregation| Ok(Some(sp_std::mem::replace(aggregation, new_aggregation))),
+                )
             }
         }
 
@@ -499,7 +505,7 @@ pub mod pallet {
             account: T::AccountId,
             reserve: Reserve<BalanceOf<T>>,
             statement: H256,
-        ) -> Option<Aggregation<T>> {
+        ) -> Result<Option<Aggregation<T>>, Error<T>> {
             self.next
                 .statements
                 .try_push(StatementEntry::new(account.clone(), reserve, statement))
@@ -507,7 +513,7 @@ pub mod pallet {
             if self.is_next_aggregation_complete() {
                 self.pop_next_aggregation()
             } else {
-                None
+                Ok(None)
             }
         }
 
@@ -682,7 +688,7 @@ pub mod pallet {
                         Error::<T>::UnknownDomainId,
                     )
                 })?;
-                let aggregation = domain.take_aggregation(aggregation_id).ok_or_else(|| {
+                let aggregation = domain.take_aggregation(aggregation_id)?.ok_or_else(|| {
                     dispatch_post_error(
                         T::WeightInfo::aggregate_on_invalid_id(),
                         Error::<T>::InvalidAggregationId,
@@ -959,7 +965,7 @@ pub mod pallet {
             } else {
                 T::Hold::release(&reason.into(), account, amount, Precision::BestEffort)
             }
-            .expect("Call user should exists. qed")
+            .expect("Call user should exists. qed"),
         );
         if remain > 0_u32.into() {
             log::warn!("Cannot refund all funds from {account:?} to {dest:?}: missed {remain:?}")
