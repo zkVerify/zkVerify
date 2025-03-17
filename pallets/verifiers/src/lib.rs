@@ -542,7 +542,7 @@ pub mod pallet {
             {
                 let mut data_to_hash = keccak_256(b"fake").to_vec();
                 data_to_hash.extend_from_slice(REGISTERED_VK_HASH.as_bytes());
-                data_to_hash.extend_from_slice(&NO_VERSION_HASH.as_bytes());
+                data_to_hash.extend_from_slice(NO_VERSION_HASH.as_bytes());
                 data_to_hash.extend_from_slice(&keccak_256(42_u64.to_be_bytes().as_ref()));
                 H256(keccak_256(data_to_hash.as_slice()))
             }

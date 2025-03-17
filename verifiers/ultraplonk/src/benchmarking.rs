@@ -105,7 +105,7 @@ pub mod benchmarks {
         let vk = VALID_VK;
 
         #[extrinsic_call]
-        register_vk(RawOrigin::Signed(caller), vk.clone().into());
+        register_vk(RawOrigin::Signed(caller), vk.into());
 
         // Verify
         assert!(do_get_vk::<T>(&do_vk_hash::<T>(&vk)).is_some());

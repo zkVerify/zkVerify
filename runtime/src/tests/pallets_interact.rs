@@ -322,7 +322,7 @@ mod staking {
             let offender_balance =
                 testsfixtures::SAMPLE_USERS[BABE_AUTHOR_ID as usize].starting_balance;
 
-            let pre_balance = Balances::free_balance(&Treasury::account_id());
+            let pre_balance = Balances::free_balance(Treasury::account_id());
 
             // Let Staking slash offender's balance
             Staking::on_offence(
@@ -354,7 +354,7 @@ mod staking {
             Staking::start_session(session);
 
             // Check that treasury balance increased
-            assert!(pre_balance < Balances::free_balance(&Treasury::account_id()))
+            assert!(pre_balance < Balances::free_balance(Treasury::account_id()))
         });
     }
 }
@@ -463,14 +463,14 @@ mod claim {
     #[test]
     fn unclaimed_go_to_treasury() {
         test().execute_with(|| {
-            let pre_balance = Balances::free_balance(&Treasury::account_id());
+            let pre_balance = Balances::free_balance(Treasury::account_id());
 
             assert_ok!(Claim::end_airdrop(RuntimeOrigin::root()));
 
             // Check that treasury balance increased
             assert_eq!(
-                pre_balance.saturating_add(testsfixtures::TOTAL_BALANCE.clone()),
-                Balances::free_balance(&Treasury::account_id())
+                pre_balance.saturating_add(*testsfixtures::TOTAL_BALANCE),
+                Balances::free_balance(Treasury::account_id())
             )
         });
     }

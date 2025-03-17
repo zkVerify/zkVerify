@@ -54,7 +54,7 @@ pub static GENESIS_BENEFICIARIES: [(AccountId, Balance); 3] = [
 ];
 
 pub static EMPTY_BENEFICIARIES_MAP: LazyLock<BTreeMap<AccountId, Balance>> =
-    LazyLock::new(|| BTreeMap::new());
+    LazyLock::new(BTreeMap::new);
 
 pub static GENESIS_BENEFICIARIES_MAP: LazyLock<BTreeMap<AccountId, Balance>> =
     LazyLock::new(|| GENESIS_BENEFICIARIES.into_iter().collect());

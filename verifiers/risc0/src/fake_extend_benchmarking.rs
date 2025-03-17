@@ -33,8 +33,6 @@ mod benchmarks {
     fn fake() {
         log::error!("ERROR: ***** You should enable extend-benchmarks feature to run these benchmarks. ***** ");
         #[block]
-        {
-            ()
-        }
+        {}
     }
 }

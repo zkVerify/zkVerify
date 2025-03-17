@@ -78,6 +78,10 @@ pub mod registered_vk {
     }
 }
 
+fn reserved_balance(vk: &Vk) -> Balance {
+    BaseDeposit::get() + PerByteDeposit::get() * vk.encoded_size() as Balance
+}
+
 mod register_should {
     use hex_literal::hex;
     use registered_vk::*;
@@ -271,12 +275,9 @@ mod unregister_should {
                 .unwrap();
             FakeVerifierPallet::unregister_vk(RuntimeOrigin::signed(USER_1), REGISTERED_VK_HASH)
                 .unwrap();
-            assert!(System::events()
-                .into_iter()
-                .find(|e| {
-                    matches!(e.event.clone().try_into(), Ok(Event::VkUnregistered { .. }))
-                })
-                .is_none());
+            assert!(System::events().into_iter().all(|e| {
+                !matches!(e.event.clone().try_into(), Ok(Event::VkUnregistered { .. }))
+            }));
         })
     }
 
@@ -352,7 +353,7 @@ mod submit_proof_should {
                 Some(666),
             ));
 
-            assert!(System::events().len() >= 1);
+            assert!(!System::events().is_empty());
 
             System::assert_last_event(new_proof_event(Some(42), Some(666), expected_hash).into());
         });
@@ -370,7 +371,7 @@ mod submit_proof_should {
                 Some(1),
             ));
 
-            assert!(System::events().len() >= 1);
+            assert!(!System::events().is_empty());
 
             System::assert_has_event(
                 Event::<Test, FakeVerifier>::ProofVerified {
@@ -395,7 +396,7 @@ mod submit_proof_should {
                 Some(1),
             ));
 
-            assert!(System::events().len() >= 1);
+            assert!(!System::events().is_empty());
 
             System::assert_last_event(
                 new_proof_event(None, Some(1), VALID_HASH_REGISTERED_VK).into(),
@@ -788,8 +789,4 @@ mod disable_should {
             );
         });
     }
-}
-
-fn reserved_balance(vk: &Vk) -> Balance {
-    BaseDeposit::get() + PerByteDeposit::get() * vk.encoded_size() as Balance
 }
