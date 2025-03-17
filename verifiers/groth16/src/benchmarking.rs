@@ -27,7 +27,6 @@ impl<T: crate::Config> Config for T {}
 pub type Call<T> = pallet_verifiers::Call<T, Verifier<T>>;
 use crate::groth16::{Curve, Groth16 as Groth16Circuits};
 
-#[allow(clippy::multiple_bound_locations)]
 #[benchmarks(where T: pallet_verifiers::Config<Verifier<T>>)]
 mod benchmarks {
 

@@ -27,7 +27,6 @@ pub trait Config: crate::Config {}
 impl<T: crate::Config> Config for T {}
 pub type Call<T> = pallet_verifiers::Call<T, Verifier<T>>;
 
-#[allow(clippy::multiple_bound_locations)]
 #[benchmarks(where T: pallet_verifiers::Config<Verifier<T>>)]
 mod benchmarks {
 
