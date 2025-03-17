@@ -346,6 +346,7 @@ impl StakerData for NominatorData<'_> {
     }
 }
 
+#[allow(unused)]
 pub fn zkv_testnet_config_genesis() -> Result<serde_json::Value, sp_core::crypto::PublicError> {
     const COMMUNITY_CUSTODIAL_BASE_BALANCE: Balance = 100 * MILLIONS;
     const COMMUNITY_CUSTODIAL_BUFFER_BALANCE: Balance = 50 * MILLIONS;
@@ -454,111 +455,9 @@ pub fn zkv_testnet_config_genesis() -> Result<serde_json::Value, sp_core::crypto
             VALIDATOR_BALANCE,
             VALIDATOR_BOND,
         )?,
-        ValidatorData::from_ids(
-            "5C5XGEVmFv7NE6tZ4yJjvCHaaGFxPoTCTURP6WBPxVmppbx2",
-            "5C5XGEVmFv7NE6tZ4yJjvCHaaGFxPoTCTURP6WBPxVmppbx2",
-            "5Cum65qBcju8KnLjxog66kJ7dtbZE92iA3SbDNuL6CPgPqWq",
-            VALIDATOR_BALANCE,
-            VALIDATOR_BOND,
-        )?,
-        ValidatorData::from_ids(
-            "5DeewRqTpr6wm5HZKDRikWpcZ3B6z9ESRFgaqacJEhFAK5Gy",
-            "5DeewRqTpr6wm5HZKDRikWpcZ3B6z9ESRFgaqacJEhFAK5Gy",
-            "5GyiGjs9udrpQEZcS3aFYtHQ7vHHbwkkVEtwce3vHzHpSvZ9",
-            VALIDATOR_BALANCE,
-            VALIDATOR_BOND,
-        )?,
-        ValidatorData::from_ids(
-            "5Cd7HLhDtvzUsmsmBZ7tvGHCdtCofEiAfcVnxWW9U1SyaU9C",
-            "5Cd7HLhDtvzUsmsmBZ7tvGHCdtCofEiAfcVnxWW9U1SyaU9C",
-            "5Euet7r4REQogSfNwBjqvwweFPq7hHsTgaU91dZf2xG9eskf",
-            VALIDATOR_BALANCE,
-            VALIDATOR_BOND,
-        )?,
     ];
 
-    let nominators = [
-        NominatorData {
-            account: FoundedAccount::from_id(
-                "5Dc9XT96gctHvspnq7inTTGQJBVhwH3Tb97Pxstn4sjeR72y",
-                NOMINATOR_BALANCE,
-            )?,
-            bonded: NOMINATOR_BOND,
-            voted: vec![initial_authorities[0].account.account_id.clone()],
-        },
-        NominatorData {
-            account: FoundedAccount::from_id(
-                "5Ew9SswxvsvMkAQNGbAKdzZwkoTw1QeAwX8fz3yH6VJKtqyK",
-                NOMINATOR_BALANCE,
-            )?,
-            bonded: NOMINATOR_BOND,
-            voted: vec![initial_authorities[1].account.account_id.clone()],
-        },
-        NominatorData {
-            account: FoundedAccount::from_id(
-                "5EA4oAqUH7e5P8hdtqAk3yDBNMkrgF3Qj3nUP78Fkxb1aEUZ",
-                NOMINATOR_BALANCE,
-            )?,
-            bonded: NOMINATOR_BOND,
-            voted: vec![initial_authorities[2].account.account_id.clone()],
-        },
-        NominatorData {
-            account: FoundedAccount::from_id(
-                "5Hgk8p2rzTrvyVseuwTrn4EWoiPfY68Kps4znEPaywQeW29m",
-                NOMINATOR_BALANCE,
-            )?,
-            bonded: NOMINATOR_BOND,
-            voted: vec![initial_authorities[3].account.account_id.clone()],
-        },
-        NominatorData {
-            account: FoundedAccount::from_id(
-                "5CarZooki5J2RHBfDxMXV5MLEUzNLSz5THsvCEzVAP3iBztX",
-                NOMINATOR_BALANCE,
-            )?,
-            bonded: NOMINATOR_BOND,
-            voted: vec![initial_authorities[4].account.account_id.clone()],
-        },
-        NominatorData {
-            account: FoundedAccount::from_id(
-                "5GxYV6EKP6fxmw6L12xBVmiqjsC7PsZ31dKXuCeT5cTbet3N",
-                NOMINATOR_BALANCE,
-            )?,
-            bonded: NOMINATOR_BOND,
-            voted: vec![initial_authorities[5].account.account_id.clone()],
-        },
-        NominatorData {
-            account: FoundedAccount::from_id(
-                "5HjY1KMZsw85ZtYoPUVgeQgLA2HWgzxAhn43aNyzMgYFdGxz",
-                NOMINATOR_BALANCE,
-            )?,
-            bonded: NOMINATOR_BOND,
-            voted: vec![initial_authorities[6].account.account_id.clone()],
-        },
-        NominatorData {
-            account: FoundedAccount::from_id(
-                "5HGWZp8ZubwmgeWAKXPKxdSiLqNEYCXqBF99buybGGJR7Jar",
-                NOMINATOR_BALANCE,
-            )?,
-            bonded: NOMINATOR_BOND,
-            voted: vec![initial_authorities[7].account.account_id.clone()],
-        },
-        NominatorData {
-            account: FoundedAccount::from_id(
-                "5EqZcGnZXmDEqLEk4YxAPQh389GS5iB91fxAPG8hMgyLDn1C",
-                NOMINATOR_BALANCE,
-            )?,
-            bonded: NOMINATOR_BOND,
-            voted: vec![initial_authorities[8].account.account_id.clone()],
-        },
-        NominatorData {
-            account: FoundedAccount::from_id(
-                "5GebkgMMqQGGE8dRkWySirUhu798xTNyq9ku2XmuvWeHw11H",
-                NOMINATOR_BALANCE,
-            )?,
-            bonded: NOMINATOR_BOND,
-            voted: vec![initial_authorities[9].account.account_id.clone()],
-        },
-    ];
+    let nominators: &[NominatorData] = &[];
 
     let foundation_custody = [
         FoundedAccount::from_id(
