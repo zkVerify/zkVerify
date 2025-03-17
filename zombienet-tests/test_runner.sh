@@ -29,15 +29,34 @@ EXIT_STATUS=0
 
 # Check operating system and set variables for binary name
 OS="$(uname)"
+ARCH="$(uname -m)"
 BASE_URL="https://github.com/paritytech/zombienet/releases/download/v1.3.109"
-if [ "$OS" == "Linux" ]; then
-    ZOMBIENET_BINARY="zombienet-linux-x64"
-elif [ "$OS" == "Darwin" ]; then
-    ZOMBIENET_BINARY="zombienet-macos"
-else
-    echo -e "${TXT_BIRED}ERROR: ${TXT_BIBLK}Unsupported operating system.${TXT_NORML}"
-    exit 4
-fi
+case "$OS" in
+    "Linux")
+        case "$ARCH" in
+            "x86_64") ZOMBIENET_BINARY="zombienet-linux-x64" ;;
+            "aarch64") ZOMBIENET_BINARY="zombienet-linux-arm64" ;;
+            *)
+                echo -e "${TXT_BIRED}ERROR: ${TXT_BIBLK}Unsupported architecture on Linux: $ARCH${TXT_NORML}"
+                exit 4
+                ;;
+        esac
+        ;;
+    "Darwin")
+        case "$ARCH" in
+            "x86_64") ZOMBIENET_BINARY="zombienet-macos-x64" ;;
+            "arm64") ZOMBIENET_BINARY="zombienet-macos-arm64" ;;
+            *)
+                echo -e "${TXT_BIRED}ERROR: ${TXT_BIBLK}Unsupported architecture on macOS: $ARCH${TXT_NORML}"
+                exit 4
+                ;;
+        esac
+        ;;
+    *)
+        echo -e "${TXT_BIRED}ERROR: ${TXT_BIBLK}Unsupported operating system: $OS${TXT_NORML}"
+        exit 4
+        ;;
+esac
 
 ZOMBIENET_URL="${BASE_URL}/${ZOMBIENET_BINARY}"
 
