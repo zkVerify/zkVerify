@@ -945,21 +945,22 @@ pub mod pallet {
         dest: Option<&AccountOf<T>>,
         amount: BalanceOf<T>,
     ) {
-        let remain = if let Some(dest) = dest {
-            T::Hold::transfer_on_hold(
-                &reason.into(),
-                account,
-                dest,
-                amount,
-                Precision::BestEffort,
-                Restriction::Free,
-                Fortitude::Polite,
-            )
-        } else {
-            T::Hold::release(&reason.into(), account, amount, Precision::BestEffort)
-        }
-        .expect("Call user should exists. qed")
-        .defensive_saturating_sub(amount);
+        let remain = amount.defensive_saturating_sub(
+            if let Some(dest) = dest {
+                T::Hold::transfer_on_hold(
+                    &reason.into(),
+                    account,
+                    dest,
+                    amount,
+                    Precision::BestEffort,
+                    Restriction::Free,
+                    Fortitude::Polite,
+                )
+            } else {
+                T::Hold::release(&reason.into(), account, amount, Precision::BestEffort)
+            }
+            .expect("Call user should exists. qed")
+        );
         if remain > 0_u32.into() {
             log::warn!("Cannot refund all funds from {account:?} to {dest:?}: missed {remain:?}")
         };
