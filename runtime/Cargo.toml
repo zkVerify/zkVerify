@@ -21,7 +21,6 @@ codec = { workspace = true, features = ["derive"] }
 scale-info = { workspace = true, features = ["derive", "serde"] }
 
 pallet-offences = { workspace = true }
-pallet-im-online = { workspace = true }
 pallet-authorship = { workspace = true }
 pallet-session = { workspace = true }
 pallet-staking = { workspace = true }
@@ -29,7 +28,6 @@ pallet-babe = { workspace = true }
 pallet-bags-list = { workspace = true }
 pallet-bounties = { workspace = true }
 pallet-child-bounties = { workspace = true }
-pallet-staking-reward-curve = { workspace = true }
 pallet-balances = { workspace = true }
 frame-support = { workspace = true }
 pallet-grandpa = { workspace = true }
@@ -130,7 +128,6 @@ runtime-benchmarks = [
 	"frame-system/runtime-benchmarks",
 	"frame-election-provider-support/runtime-benchmarks",
 	"pallet-election-provider-support-benchmarking/runtime-benchmarks",
-	"pallet-im-online/runtime-benchmarks",
 	"pallet-balances/runtime-benchmarks",
 	"pallet-bags-list/runtime-benchmarks",
 	"pallet-bounties/runtime-benchmarks",
@@ -189,7 +186,6 @@ std = [
 	"frame-try-runtime?/std",
 	"frame-election-provider-support/std",
 	"pallet-offences/std",
-	"pallet-im-online/std",
 	"pallet-authorship/std",
 	"pallet-babe/std",
 	"pallet-bags-list/std",
@@ -273,7 +269,6 @@ try-runtime = [
 	"frame-try-runtime/try-runtime",
 	"frame-election-provider-support/try-runtime",
 	"pallet-offences/try-runtime",
-	"pallet-im-online/try-runtime",
 	"pallet-authorship/try-runtime",
 	"pallet-babe/try-runtime",
 	"pallet-bags-list/try-runtime",

@@ -61,7 +61,6 @@ sp-state-machine = { workspace = true }
 sp-weights = { workspace = true }
 sp-version = { workspace = true }
 pallet-babe = { workspace = true }
-pallet-im-online = { workspace = true, default-features = true }
 pallet-staking = { workspace = true }
 pallet-transaction-payment-rpc-runtime-api = { workspace = true }
 frame-system = { workspace = true }
@@ -187,7 +186,6 @@ runtime-benchmarks = [
 	"frame-support/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
 	"pallet-babe/runtime-benchmarks",
-	"pallet-im-online/runtime-benchmarks",
 	"pallet-staking/runtime-benchmarks",
 	"polkadot-parachain-primitives/runtime-benchmarks",
 	"polkadot-primitives/runtime-benchmarks",
@@ -204,7 +202,6 @@ try-runtime = [
 	"frame-support/try-runtime",
 	"frame-system/try-runtime",
 	"pallet-babe/try-runtime",
-	"pallet-im-online/try-runtime",
 	"pallet-staking/try-runtime",
 	"pallet-transaction-payment/try-runtime",
 	"polkadot-runtime-parachains/try-runtime",

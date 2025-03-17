@@ -74,8 +74,6 @@ xcm = { workspace = true }
 
 [dev-dependencies]
 hex-literal = { workspace = true }
-tiny-keccak = { version = "2.0.2", features = ["keccak"] }
-sp-keyring = { workspace = true }
 sp-trie = { workspace = true }
 serde_json = { workspace = true }
 

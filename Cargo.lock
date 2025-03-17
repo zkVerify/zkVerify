@@ -84,7 +84,6 @@ dependencies = [
  "aggregate-rpc-runtime-api",
  "jsonrpsee",
  "parity-scale-codec",
- "sc-rpc-api",
  "sp-api",
  "sp-blockchain",
  "sp-core",
@@ -1555,29 +1554,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bindgen"
-version = "0.69.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "271383c67ccabffb7381723dea0672a673f292304fcb45c01cc648c7a8d58088"
-dependencies = [
- "bitflags 2.9.0",
- "cexpr",
- "clang-sys",
- "itertools 0.12.1",
- "lazy_static",
- "lazycell",
- "log",
- "prettyplease 0.2.30",
- "proc-macro2",
- "quote",
- "regex",
- "rustc-hash 1.1.0",
- "shlex",
- "syn 2.0.100",
- "which",
-]
-
-[[package]]
 name = "bip39"
 version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2444,15 +2420,6 @@ name = "clap_lex"
 version = "0.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f46ad14479a25103f283c0f10005961cf086d8dc42205bb44c46ac563475dca6"
-
-[[package]]
-name = "cmake"
-version = "0.1.54"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e7caa3f9de89ddbe2c607f4101924c5abec803763ae9534e4f4d7d8f84aa81f0"
-dependencies = [
- "cc",
-]
 
 [[package]]
 name = "coarsetime"
@@ -5662,17 +5629,10 @@ dependencies = [
 name = "hp-dispatch"
 version = "0.1.0"
 dependencies = [
- "binary-merkle-tree",
- "frame-benchmarking",
  "frame-support",
- "frame-system",
- "hex-literal",
- "hp-on-proof-verified",
  "ismp",
  "log",
- "pallet-balances",
  "parity-scale-codec",
- "rstest",
  "scale-info",
  "sp-core",
  "sp-io",
@@ -6702,9 +6662,6 @@ name = "lazy_static"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
-dependencies = [
- "spin 0.9.8",
-]
 
 [[package]]
 name = "lazycell"
@@ -7205,7 +7162,7 @@ version = "0.11.0+8.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d3386f101bcb4bd252d8e9d2fb41ec3b0862a15a62b478c355b2982efa469e3e"
 dependencies = [
- "bindgen 0.65.1",
+ "bindgen",
  "bzip2-sys",
  "cc",
  "glob",
@@ -8003,7 +7960,6 @@ dependencies = [
  "parity-scale-codec",
  "risc0-verifier",
  "sp-runtime-interface",
- "ultraplonk_verifier",
 ]
 
 [[package]]
@@ -8011,7 +7967,6 @@ name = "native-cache"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "regex",
  "toml 0.8.20",
  "walkdir",
 ]
@@ -9368,7 +9323,6 @@ dependencies = [
  "pallet-ismp",
  "pallet-timestamp",
  "parity-scale-codec",
- "rstest",
  "scale-info",
  "sp-core",
  "sp-io",
@@ -9844,7 +9798,6 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "hex-literal",
  "hp-verifiers",
  "log",
  "pallet-balances",
@@ -10572,7 +10525,6 @@ dependencies = [
 name = "pallet-verifiers-macros"
 version = "0.1.0"
 dependencies = [
- "derive-syn-parse",
  "pretty_assertions",
  "proc-macro-crate 3.3.0",
  "proc-macro2",
@@ -10822,7 +10774,6 @@ name = "paratest-runtime"
 version = "0.6.0"
 dependencies = [
  "cumulus-pallet-aura-ext",
- "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
  "cumulus-pallet-session-benchmarking",
  "cumulus-pallet-xcm",
@@ -18228,19 +18179,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "substrate-bn"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "72b5bbfa79abbae15dd642ea8176a21a635ff3c00059961d1ea27ad04e5b441c"
-dependencies = [
- "byteorder",
- "crunchy",
- "lazy_static",
- "rand",
- "rustc-hex",
-]
-
-[[package]]
 name = "substrate-build-script-utils"
 version = "11.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -18342,7 +18280,6 @@ dependencies = [
  "sc-client-db",
  "sc-consensus",
  "sc-executor",
- "sc-offchain",
  "sc-service",
  "serde",
  "serde_json",
@@ -18664,7 +18601,6 @@ dependencies = [
  "sp-genesis-builder",
  "sp-inherents",
  "sp-io",
- "sp-keyring",
  "sp-offchain",
  "sp-runtime",
  "sp-session",
@@ -18678,7 +18614,6 @@ dependencies = [
  "staging-xcm-executor",
  "substrate-wasm-builder",
  "test-runtime-constants",
- "tiny-keccak",
 ]
 
 [[package]]
@@ -18687,7 +18622,6 @@ version = "0.1.0"
 dependencies = [
  "frame-support",
  "polkadot-primitives 16.0.0",
- "polkadot-runtime-common",
  "smallvec",
  "sp-core",
  "sp-runtime",
@@ -19437,21 +19371,6 @@ dependencies = [
  "hex-literal",
  "sha3",
  "snafu",
-]
-
-[[package]]
-name = "ultraplonk_verifier"
-version = "0.2.0"
-source = "git+https://github.com/HorizenLabs/ultraplonk_verifier.git?tag=v0.2.0#bcb1842a98f5e5f5b0894f94b4fb924d923a798e"
-dependencies = [
- "bindgen 0.69.5",
- "byteorder",
- "cc",
- "cmake",
- "hex-literal",
- "regex",
- "substrate-bn",
- "thiserror 1.0.69",
 ]
 
 [[package]]
@@ -21065,7 +20984,6 @@ dependencies = [
  "pallet-grandpa",
  "pallet-groth16-verifier",
  "pallet-hyperbridge-aggregations",
- "pallet-im-online",
  "pallet-ismp",
  "pallet-ismp-runtime-api",
  "pallet-message-queue",
@@ -21080,7 +20998,6 @@ dependencies = [
  "pallet-session",
  "pallet-session-benchmarking",
  "pallet-staking",
- "pallet-staking-reward-curve",
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-transaction-payment",
@@ -21150,7 +21067,6 @@ dependencies = [
  "native",
  "node-subsystem-test-helpers",
  "pallet-babe",
- "pallet-im-online",
  "pallet-staking",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc",
