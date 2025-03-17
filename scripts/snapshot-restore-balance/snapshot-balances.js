@@ -6,11 +6,13 @@ const {u8aToHex} = require('@polkadot/util');
 const DEFAULT_WS_ENDPOINT = 'wss://testnet-rpc.zkverify.io';
 const DEFAULT_SNAPSHOT_PATH = 'snapshot_balances.json';
 const DEFAULT_FILTERING_PATH = 'filter_account.json';
+const DEFAULT_CAP = 1000000000000000000000 // 1000
 // const WS_ENDPOINT = 'ws://localhost:9944';
 const EXISTENTIAL_DEPOSIT = 10000000000000000; //0.01
 // Don't recover all accounts that ends with "0000000000000000000000000000000000000000"
 const MODULE_ACCOUNT_ENDS = "0000000000000000000000000000000000000000";
 const FILTER_MODULE_ACCOUNT = true;
+
 
 function ss58ToPublicKey(ss58Address) {
     const publicKeyU8a = decodeAddress(ss58Address);
@@ -56,22 +58,30 @@ function filterBalance(account, balance, blockList) {
 }
 
 // Restore balances from the snapshot
-async function restoreBalances(api, keyring, snapshotBalancesFile, custodySeed, filterFile) {
+async function restoreBalances(api, keyring, snapshotBalancesFile, custodySeed, filterFile, capValue) {
     let balances = JSON.parse(fs.readFileSync(snapshotBalancesFile));
     const filter = JSON.parse(fs.readFileSync(filterFile));
     const custodyAccount = keyring.addFromUri(custodySeed);
+    capValue = BigInt(capValue)
     let nonce = (await api.query.system.account(custodyAccount.address)).nonce.toNumber();
 
     const newBalances = {};
 
-    for (const [account, balance] of Object.entries(balances)) {
+    for (let [account, balance] of Object.entries(balances)) {
         if (filterBalance(account, balance, filter)) continue;
+        balance = BigInt(balance);
+        if (capValue > 0) {
+            if (balance > capValue) {
+                console.log(`===> Capping '${account}' for exceeding cap: set it to ${capValue}`);
+                balance = capValue;
+            }
+        }
         newBalances[account] = balance;
     }
 
     balances = newBalances;
 
-    const totalAmount = Object.values(balances).reduce((acc, balance) => acc + BigInt(balance), BigInt(0));
+    const totalAmount = Object.values(balances).reduce((acc, balance) => acc + balance, BigInt(0));
     console.log(`Total balance: ${totalAmount.toString()}`);
     const {data: {free: custodyFreeBalance}} = await api.query.system.account(custodyAccount.address);
 
@@ -102,6 +112,7 @@ function usage() {
     -e, --end-point [${DEFAULT_WS_ENDPOINT}]
     -s, --snapshot [${DEFAULT_SNAPSHOT_PATH}]
     -f, --filter [${DEFAULT_FILTERING_PATH}]
+    -c, --cap [${DEFAULT_CAP}] = 0 => No cap
     `);
     process.exit(1);
 }
@@ -111,6 +122,7 @@ async function main() {
     let wsEndpoint = DEFAULT_WS_ENDPOINT;
     let filter = DEFAULT_FILTERING_PATH;
     let snapshotFile = DEFAULT_SNAPSHOT_PATH;
+    let capValue = DEFAULT_CAP;
     // Skipping command and remove general options like -e
     const newArgs = []
     for (let i = 0; i < args.length - 1; i += 1) {
@@ -124,6 +136,10 @@ async function main() {
         }
         if (args[i] === '-s' || args[i] === '--snapshot') {
             snapshotFile = args[++i];
+            continue
+        }
+        if (args[i] === '-c' || args[i] === '--cap') {
+            capValue = args[++i];
             continue
         }
         if (args[i] === '-h' || args[i] === '--help') {
@@ -142,6 +158,11 @@ async function main() {
     console.log(`Using WS endpoint: ${wsEndpoint}`);
     console.log(`Using snapshot: ${snapshotFile}`);
     console.log(`Using filter: ${filter}`);
+    if (capValue > 0) {
+        console.log(`Using cap: ${capValue}`);
+    } else {
+        console.log(`No cap`);
+    }
     const provider = new WsProvider(wsEndpoint);
     const api = await ApiPromise.create({provider});
     const keyring = new Keyring({type: 'sr25519'});
@@ -154,7 +175,7 @@ async function main() {
             usage();
         }
         const custodySeed = args[0];
-        await restoreBalances(api, keyring, snapshotFile, custodySeed, filter);
+        await restoreBalances(api, keyring, snapshotFile, custodySeed, filter, capValue);
     } else {
         usage();
     }
