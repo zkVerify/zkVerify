@@ -1044,8 +1044,8 @@ pub mod pallet {
 
         pub fn pays(&self) -> Pays {
             match self {
-                User::Account(_owner) => Pays::Yes,
-                _ => Pays::No,
+                User::Manager => Pays::No,
+                _ => Pays::Yes,
             }
         }
     }
