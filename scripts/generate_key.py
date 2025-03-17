@@ -163,7 +163,7 @@ def main():
     print(f"Separate account validator: {args.separate_account_validator}")
     print(f"Output file: {args.output}")
     print(f"Secrets folder: {args.secrets_folder}")
-    print(f"Base key: {"None" if args.base_key is None else args.base_key}")
+    print(f"Base key: {'None' if args.base_key is None else args.base_key}")
 
     keys = {}
     secrets = {}
