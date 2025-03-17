@@ -30,6 +30,10 @@ jobs:
     name: Lint and format job cache rebuild
     uses: ./.github/workflows/CI-lint-format.yml
 
+  udeps-job-cache:
+    name: Cargo udeps job cache rebuild
+    uses: ./.github/workflows/CI-udeps.yml
+
   try-runtime-job-cache:
     name: Try runtime job cache rebuild
     uses: ./.github/workflows/CI-try-runtime.yml

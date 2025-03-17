@@ -17,10 +17,10 @@ jobs:
       - name: Run cargo udeps
         uses: ./.github/actions/cmd-in-docker
         with:
-          image_tag: 'noble_rust-nightly_latest'
-          command: cargo +nightly udeps --all-targets --all-features
+          image_tag: "noble_rust-nightly_latest"
+          command: "cargo +nightly udeps --all-targets --all-features"
           use_cache: "yes"
           cache_key: "udeps"
-          cargo_binaries_install: cargo-udeps
+          cargo_binaries_install: "cargo-udeps"
           cmake_install: "yes"
           lld_install: "yes"
