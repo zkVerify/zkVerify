@@ -54,19 +54,19 @@ impl<T: Config> fungibles::Inspect<T::AccountId> for Pallet<T> {
     type Balance = T::Balance;
 
     fn total_issuance(_id: Self::AssetId) -> Self::Balance {
-        T::Balance::from(1_000_000u128)
+        unimplemented!("Mock Assets pallet is not meant to be used")
     }
 
     fn minimum_balance(_id: Self::AssetId) -> Self::Balance {
-        T::Balance::from(1u128)
+        unimplemented!("Mock Assets pallet is not meant to be used")
     }
 
     fn balance(_id: Self::AssetId, _who: &T::AccountId) -> Self::Balance {
-        T::Balance::from(1_000u128)
+        unimplemented!("Mock Assets pallet is not meant to be used")
     }
 
     fn total_balance(_id: Self::AssetId, _who: &T::AccountId) -> Self::Balance {
-        T::Balance::from(1_000u128)
+        unimplemented!("Mock Assets pallet is not meant to be used")
     }
 
     fn reducible_balance(
@@ -75,7 +75,7 @@ impl<T: Config> fungibles::Inspect<T::AccountId> for Pallet<T> {
         _keep_alive: Preservation,
         _force: Fortitude,
     ) -> Self::Balance {
-        T::Balance::from(1_000u128)
+        unimplemented!("Mock Assets pallet is not meant to be used")
     }
 
     fn can_deposit(
@@ -84,7 +84,7 @@ impl<T: Config> fungibles::Inspect<T::AccountId> for Pallet<T> {
         _amount: Self::Balance,
         _mint: Provenance,
     ) -> DepositConsequence {
-        DepositConsequence::Success
+        unimplemented!("Mock Assets pallet is not meant to be used")
     }
 
     fn can_withdraw(
@@ -92,18 +92,18 @@ impl<T: Config> fungibles::Inspect<T::AccountId> for Pallet<T> {
         _who: &T::AccountId,
         _amount: Self::Balance,
     ) -> WithdrawConsequence<Self::Balance> {
-        WithdrawConsequence::Success
+        unimplemented!("Mock Assets pallet is not meant to be used")
     }
 
     fn asset_exists(_id: Self::AssetId) -> bool {
-        true
+        unimplemented!("Mock Assets pallet is not meant to be used")
     }
 }
 
 // MOCK: Implementation of fungibles::Unbalanced for Assets (required by Mutate)
 impl<T: Config> fungibles::Unbalanced<T::AccountId> for Pallet<T> {
     fn set_total_issuance(_id: Self::AssetId, _amount: Self::Balance) {
-        // no-op
+        unimplemented!("Mock Assets pallet is not meant to be used")
     }
 
     fn decrease_balance(
@@ -114,7 +114,7 @@ impl<T: Config> fungibles::Unbalanced<T::AccountId> for Pallet<T> {
         _preservation: Preservation,
         _force: Fortitude,
     ) -> Result<Self::Balance, DispatchError> {
-        Ok(T::Balance::from(0u128))
+        unimplemented!("Mock Assets pallet is not meant to be used")
     }
 
     fn increase_balance(
@@ -123,7 +123,7 @@ impl<T: Config> fungibles::Unbalanced<T::AccountId> for Pallet<T> {
         _amount: Self::Balance,
         _precision: Precision,
     ) -> Result<Self::Balance, DispatchError> {
-        Ok(T::Balance::from(0u128))
+        unimplemented!("Mock Assets pallet is not meant to be used")
     }
 
     fn write_balance(
@@ -131,11 +131,11 @@ impl<T: Config> fungibles::Unbalanced<T::AccountId> for Pallet<T> {
         _who: &T::AccountId,
         _balance: Self::Balance,
     ) -> Result<Option<Self::Balance>, DispatchError> {
-        Ok(Some(T::Balance::from(0u128)))
+        unimplemented!("Mock Assets pallet is not meant to be used")
     }
 
     fn handle_dust(_dust: Dust<T::AccountId, Self>) {
-        // no-op
+        unimplemented!("Mock Assets pallet is not meant to be used")
     }
 }
 
@@ -146,7 +146,7 @@ impl<T: Config> fungibles::Mutate<T::AccountId> for Pallet<T> {
         _who: &T::AccountId,
         _amount: Self::Balance,
     ) -> Result<Self::Balance, DispatchError> {
-        Ok(T::Balance::from(0u128))
+        unimplemented!("Mock Assets pallet is not meant to be used")
     }
 
     fn burn_from(
@@ -157,22 +157,22 @@ impl<T: Config> fungibles::Mutate<T::AccountId> for Pallet<T> {
         _precision: Precision,
         _force: Fortitude,
     ) -> Result<Self::Balance, DispatchError> {
-        Ok(T::Balance::from(0u128))
+        unimplemented!("Mock Assets pallet is not meant to be used")
     }
 }
 
 // MOCK: Implementation of fungibles::metadata::Inspect for Assets (required by metadata::Mutate)
 impl<T: Config> fungibles::metadata::Inspect<T::AccountId> for Pallet<T> {
     fn name(_id: Self::AssetId) -> Vec<u8> {
-        b"Mock Asset".to_vec()
+        unimplemented!("Mock Assets pallet is not meant to be used")
     }
 
     fn symbol(_id: Self::AssetId) -> Vec<u8> {
-        b"MOCK".to_vec()
+        unimplemented!("Mock Assets pallet is not meant to be used")
     }
 
     fn decimals(_id: Self::AssetId) -> u8 {
-        18
+        unimplemented!("Mock Assets pallet is not meant to be used")
     }
 }
 
@@ -185,6 +185,6 @@ impl<T: Config> fungibles::metadata::Mutate<T::AccountId> for Pallet<T> {
         _symbol: Vec<u8>,
         _decimals: u8,
     ) -> DispatchResult {
-        Ok(())
+        unimplemented!("Mock Assets pallet is not meant to be used")
     }
 }
