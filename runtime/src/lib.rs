@@ -1046,7 +1046,10 @@ impl pallet_token_gateway::Config for Runtime {
     type Assets = pallet_assets_mock::Pallet<Runtime>;
     type NativeCurrency = Balances;
     type AssetAdmin = AssetAdmin;
+    #[cfg(not(feature = "runtime-benchmarks"))]
     type CreateOrigin = EnsureRoot<AccountId>;
+    #[cfg(feature = "runtime-benchmarks")]
+    type CreateOrigin = EnsureSigned<AccountId>;
     type NativeAssetId = NativeAssetId;
     type Decimals = Decimals;
     type EvmToSubstrate = ();
