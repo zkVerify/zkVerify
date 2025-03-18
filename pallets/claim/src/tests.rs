@@ -184,7 +184,8 @@ fn new_airdrop_too_many_beneficiaries() {
     test_with_configs(
         WithGenesisBeneficiaries::No,
         GenesisClaimBalance::Sufficient,
-    ).execute_with(|| {
+    )
+    .execute_with(|| {
         assert_ok!(Claim::begin_airdrop(
             Origin::Signed(MANAGER_USER).into(),
             GENESIS_BENEFICIARIES_MAP.clone()

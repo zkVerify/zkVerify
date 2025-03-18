@@ -30,9 +30,9 @@ mod benchmarking;
 mod mock;
 #[cfg(test)]
 mod tests;
-mod weight;
 #[cfg(any(test, feature = "runtime-benchmarks"))]
 mod utils;
+mod weight;
 use core::marker::PhantomData;
 
 extern crate alloc;
