@@ -97,16 +97,16 @@ pub fn authority_keys_from_seed(s: &str) -> Ids {
 // Generate authority IDs from SS58 addresses.
 pub fn authority_ids_from_ss58(
     sr25519_account_key: &str,
-    sr25519_common_key: &str,
-    ed25519_key: &str,
+    sr25519_session_key: &str,
+    ed25519_session_key: &str,
 ) -> Result<Ids, sp_core::crypto::PublicError> {
     Ok((
         from_ss58check(sr25519_account_key)?,
-        from_ss58check(sr25519_common_key)?,
-        from_ss58check(ed25519_key)?,
-        from_ss58check(sr25519_common_key)?,
-        from_ss58check(sr25519_common_key)?,
-        from_ss58check(sr25519_common_key)?,
+        from_ss58check(sr25519_session_key)?,
+        from_ss58check(ed25519_session_key)?,
+        from_ss58check(sr25519_session_key)?,
+        from_ss58check(sr25519_session_key)?,
+        from_ss58check(sr25519_session_key)?,
     ))
 }
 
@@ -230,7 +230,7 @@ fn default_parachains_host_configuration(
 }
 
 #[derive(Clone)]
-struct FoundedAccount<'a> {
+struct FundedAccount<'a> {
     /// The account-id sr25519 public key
     _account: &'a str,
     /// The account-id
@@ -239,7 +239,7 @@ struct FoundedAccount<'a> {
     balance: Balance,
 }
 
-impl<'a> FoundedAccount<'a> {
+impl<'a> FundedAccount<'a> {
     fn from_id(
         sr25519_key: &'a str,
         balance: Balance,
@@ -259,7 +259,7 @@ impl<'a> FoundedAccount<'a> {
 #[derive(Clone)]
 struct ValidatorData<'a> {
     /// The account-id sr25519 public key
-    account: FoundedAccount<'a>,
+    account: FundedAccount<'a>,
     /// The common sr25519 public key (used for others key instead of grandpa and account)
     _sr: &'a str,
     /// The ed25519 public key (used for grandpa)
@@ -296,7 +296,7 @@ impl<'a> ValidatorData<'a> {
         let (account_id, babe_id, grandpa_id, validator_id, assignment_id, authority_discovery_id) =
             authority_ids_from_ss58(sr25519_account_key, sr25519_common_key, ed25519_key)?;
         Ok(Self {
-            account: FoundedAccount {
+            account: FundedAccount {
                 _account: sr25519_account_key,
                 account_id,
                 balance,
@@ -330,7 +330,7 @@ impl<'a> ValidatorData<'a> {
 #[derive(Clone)]
 struct NominatorData<'a> {
     /// The account-id sr25519 public key
-    account: FoundedAccount<'a>,
+    account: FundedAccount<'a>,
     bonded: Balance,
     voted: Vec<AccountId>,
 }
@@ -361,22 +361,22 @@ pub fn zkv_testnet_config_genesis() -> Result<serde_json::Value, sp_core::crypto
     const SUDO_BALANCE: Balance = 50 * VFY;
 
     // From "modlzk/trsry" padded right with zeros.
-    let treasury_account = FoundedAccount::from_id(
+    let treasury_account = FundedAccount::from_id(
         "5EYCAe5kjJEU9CJ4QMep83WeQNvGwkWpknkU7r3Q3w7n13iV",
         TREASURY_BALANCE,
     )?;
 
     let community_custodians = [
-        FoundedAccount::from_id(
+        FundedAccount::from_id(
             "5DfhBXU2nzQeGtx7fNkRdRC3vajrfLPvVGsDKQ6jbHiiUJqa",
             COMMUNITY_CUSTODIAL_BASE_BALANCE,
         )?,
-        FoundedAccount::from_id(
+        FundedAccount::from_id(
             "5FpQiJJXZFGGGUBiX6xS81igb6qQANrPnX9FKPaGuBqb3Zay",
             COMMUNITY_CUSTODIAL_BASE_BALANCE,
         )?,
         // Used to found the old owners, treasury and claim pallets
-        FoundedAccount::from_id(
+        FundedAccount::from_id(
             "5CPfe6NMYzy4HH4sYvjRnubCu5yfhY8AXhaYkoM5CeuYFT5c",
             COMMUNITY_CUSTODIAL_BASE_BALANCE + COMMUNITY_CUSTODIAL_BUFFER_BALANCE
                 - (TREASURY_BALANCE + EXISTENTIAL_DEPOSIT),
@@ -384,22 +384,22 @@ pub fn zkv_testnet_config_genesis() -> Result<serde_json::Value, sp_core::crypto
     ];
 
     let contributors_custody = [
-        FoundedAccount::from_id(
+        FundedAccount::from_id(
             "5Fhb9daJKNaASmVdsM4pmsLDtJv5zS8W7Kemh4iyFWgtnYgt",
             CONTRIBUTOR_BALANCE,
         )?,
-        FoundedAccount::from_id(
+        FundedAccount::from_id(
             "5CaLGMj5FkpnoBfTkXBT4gHXZLzdmqPeTWE1tyuYZB3EcyEE",
             CONTRIBUTOR_BALANCE,
         )?,
     ];
 
     let investors_custody = [
-        FoundedAccount::from_id(
+        FundedAccount::from_id(
             "5FZboFp74WMi3ogERtYbmLwiZmbhTbxhfApAmf4jSgdw98kR",
             INVESTOR_BALANCE,
         )?,
-        FoundedAccount::from_id(
+        FundedAccount::from_id(
             "5FTyReguLB6VN2iWzv9ZqHfM8ZtsE9CPiXyWS89A3xaheEF7",
             INVESTOR_BALANCE,
         )?,
@@ -460,11 +460,11 @@ pub fn zkv_testnet_config_genesis() -> Result<serde_json::Value, sp_core::crypto
     let nominators: &[NominatorData] = &[];
 
     let foundation_custody = [
-        FoundedAccount::from_id(
+        FundedAccount::from_id(
             "5DHe8Sm15RHkdWztyyStTqyjMfo7mdkWaHNaUWn6vqtx9a9j",
             FOUNDATION_BASE_BALANCE,
         )?,
-        FoundedAccount::from_id(
+        FundedAccount::from_id(
             "5D57RN5zN3KdEaWgFQMuriAPSH6KbZjwCjRYaAELyGexxK9a",
             FOUNDATION_BASE_BALANCE
                 - (VALIDATOR_BALANCE * initial_authorities.len() as Balance
@@ -473,7 +473,7 @@ pub fn zkv_testnet_config_genesis() -> Result<serde_json::Value, sp_core::crypto
         )?,
     ];
 
-    let sudo_account = FoundedAccount::from_id(
+    let sudo_account = FundedAccount::from_id(
         "5DaF8tEbzij76QpxHK9jnjoVDAFRuwcwCisswN5iAyss5CqR",
         SUDO_BALANCE,
     )?;
@@ -488,7 +488,7 @@ pub fn zkv_testnet_config_genesis() -> Result<serde_json::Value, sp_core::crypto
         .chain(investors_custody.iter())
         .chain(sp_std::iter::once(&treasury_account))
         .chain(sp_std::iter::once(&sudo_account))
-        .map(FoundedAccount::json_data)
+        .map(FundedAccount::json_data)
         .collect::<Vec<_>>();
     let staker = initial_authorities
         .iter()

@@ -7,7 +7,6 @@ const DEFAULT_WS_ENDPOINT = 'wss://testnet-rpc.zkverify.io';
 const DEFAULT_SNAPSHOT_PATH = 'snapshot_balances.json';
 const DEFAULT_FILTERING_PATH = 'filter_account.json';
 const DEFAULT_CAP = 1000000000000000000000 // 1000
-// const WS_ENDPOINT = 'ws://localhost:9944';
 const EXISTENTIAL_DEPOSIT = 10000000000000000; //0.01
 // Don't recover all accounts that ends with "0000000000000000000000000000000000000000"
 const MODULE_ACCOUNT_ENDS = "0000000000000000000000000000000000000000";
@@ -105,14 +104,16 @@ async function restoreBalances(api, keyring, snapshotBalancesFile, custodySeed, 
 
 function usage() {
     console.error(`Usage : snapshot or restore
-    node snapshot-balances.js [-e ] snapshot
+    node snapshot-balances.js [OPTIONS] snapshot
         or 
-    node snapshot-balances.js restore "//Alice"
+    node snapshot-balances.js restore "//CustodyWalletSeed"
     
+    OPTIONS:
     -e, --end-point [${DEFAULT_WS_ENDPOINT}]
     -s, --snapshot [${DEFAULT_SNAPSHOT_PATH}]
     -f, --filter [${DEFAULT_FILTERING_PATH}]
     -c, --cap [${DEFAULT_CAP}] = 0 => No cap
+    -h, --help : Show this help and exists 
     `);
     process.exit(1);
 }
