@@ -145,6 +145,7 @@ impl<O: Into<Result<RawOrigin<AccountId>, O>> + From<RawOrigin<AccountId>>> Ensu
 parameter_types! {
     pub const ClaimPalletId: PalletId = PalletId(*b"zkvt/clm");
     pub const MaxBeneficiaries: u32 = 100;
+    pub const MaxOpBeneficiaries: u32 = MaxBeneficiaries::get() - 1;
     pub UnclaimedDestinationMockAccount: AccountId = 111;
 }
 
@@ -156,8 +157,7 @@ impl crate::Config for Test {
     type UnclaimedDestination = UnclaimedDestinationMockAccount;
     type WeightInfo = MockWeightInfo;
     type MaxBeneficiaries = MaxBeneficiaries;
-    #[cfg(feature = "runtime-benchmarks")]
-    const MAX_BENEFICIARIES: u32 = MaxBeneficiaries::get();
+    const MAX_OP_BENEFICIARIES: u32 = MaxOpBeneficiaries::get();
 }
 
 // Configure a mock runtime to test the pallet.
