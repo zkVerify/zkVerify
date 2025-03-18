@@ -480,6 +480,30 @@ fn cannot_add_too_many_beneficiaries() {
 }
 
 #[test]
+fn cannot_add_beneficiaries_over_the_max() {
+    test().execute_with(|| {
+        assert_ok!(Claim::begin_airdrop(
+            Origin::Signed(MANAGER_USER).into(),
+            EMPTY_BENEFICIARIES_MAP.clone()
+        ));
+
+        let _ = Balances::mint_into(&Claim::account_id(), 1000000000).unwrap(); // Just to be safe
+        assert_ok!(Claim::add_beneficiaries(
+            Origin::Signed(MANAGER_USER).into(),
+            utils::get_beneficiaries_map::<Test>(MaxOpBeneficiaries::get()).0
+        ));
+
+        assert_noop!(
+            Claim::add_beneficiaries(
+                Origin::Signed(MANAGER_USER).into(),
+                NEW_BENEFICIARIES_MAP.clone()
+            ),
+            Error::<Test>::MaxNumBeneficiariesReached
+        );
+    })
+}
+
+#[test]
 fn add_beneficiaries_sufficient_funds() {
     test_with_configs(
         WithGenesisBeneficiaries::Yes,
@@ -662,4 +686,33 @@ fn end_airdrop_new_airdrop() {
         );
         assert_eq!(Claim::pot(), 0);
     });
+}
+
+#[test]
+fn cannot_end_airdrop_if_too_many_beneficiaries() {
+    test().execute_with(|| {
+        assert_ok!(Claim::begin_airdrop(
+            Origin::Signed(MANAGER_USER).into(),
+            EMPTY_BENEFICIARIES_MAP.clone()
+        ));
+
+        let _ = Balances::mint_into(&Claim::account_id(), 1000000000).unwrap(); // Just to be safe
+
+        assert_ok!(Claim::add_beneficiaries(
+            Origin::Signed(MANAGER_USER).into(),
+            utils::get_beneficiaries_map::<Test>(MaxOpBeneficiaries::get()).0
+        ));
+
+        Beneficiaries::<Test>::insert(USER_6, USER_6_AMOUNT);
+
+        assert_noop!(
+            Claim::end_airdrop(Origin::Signed(MANAGER_USER).into(),),
+            Error::<Test>::TooManyBeneficiaries
+        );
+
+        // Remove 1
+        Beneficiaries::<Test>::remove(USER_6);
+
+        assert_ok!(Claim::end_airdrop(Origin::Signed(MANAGER_USER).into()));
+    })
 }
