@@ -333,10 +333,11 @@ fn pallet_token_gateway() {
     let mut addresses = BTreeMap::new();
     addresses.insert(StateMachine::Evm(1), vec![0x01, 0x02, 0x03, 0x04]);
     addresses.insert(StateMachine::Polkadot(1), vec![0x05, 0x06, 0x07, 0x08]);
+    let dummy_origin = AccountId32::new([0; 32]);
 
     test().execute_with(|| {
         assert_ok!(TokenGateway::set_token_gateway_addresses(
-            RuntimeOrigin::root(),
+            RuntimeOrigin::signed(dummy_origin),
             addresses
         ));
     });
