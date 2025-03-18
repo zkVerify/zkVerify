@@ -68,7 +68,7 @@ impl<T: Config> MaxEncodedLen for Vk<T> {
     }
 }
 
-pub trait Config: 'static {
+pub trait Config {
     /// Maximum value allowed for `max_nu` in the verification key
     type LargestMaxNu: Get<u32>;
 }
@@ -86,7 +86,7 @@ impl<T: Config> LargestMaxNu for T {
 #[pallet_verifiers::verifier]
 pub struct ProofOfSql<T>;
 
-impl<T: Config> Verifier for ProofOfSql<T> {
+impl<T: Config + 'static> Verifier for ProofOfSql<T> {
     type Proof = Vec<u8>;
 
     type Pubs = Vec<u8>;
@@ -134,7 +134,7 @@ impl<T: Config> Verifier for ProofOfSql<T> {
 
 pub struct ProofOfSqlWeight<W: weight::WeightInfo>(PhantomData<W>);
 
-impl<T: Config, W: weight::WeightInfo> pallet_verifiers::WeightInfo<ProofOfSql<T>>
+impl<T: Config + 'static, W: weight::WeightInfo> pallet_verifiers::WeightInfo<ProofOfSql<T>>
     for ProofOfSqlWeight<W>
 {
     fn verify_proof(

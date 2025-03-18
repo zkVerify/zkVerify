@@ -456,7 +456,8 @@ pub mod pallet {
         }
     }
 
-    pub(crate) fn on_disable_error<T: Config<I>, I: Verifier>() -> DispatchErrorWithPostInfo {
+    pub(crate) fn on_disable_error<T: Config<I>, I: Verifier + 'static>(
+    ) -> DispatchErrorWithPostInfo {
         use crate::common::WeightInfo;
         DispatchErrorWithPostInfo {
             post_info: PostDispatchInfo {

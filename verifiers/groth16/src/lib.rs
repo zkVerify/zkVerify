@@ -31,7 +31,7 @@ use sp_std::vec::Vec;
 pub const MAX_NUM_INPUTS: u32 = 32;
 pub use weight::WeightInfo;
 
-pub trait Config: 'static {
+pub trait Config {
     /// Maximum supported number of public inputs.
     const MAX_NUM_INPUTS: u32;
 }

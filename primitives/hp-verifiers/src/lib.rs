@@ -53,7 +53,7 @@ pub enum VerifyError {
 }
 
 /// The trait that characterizes a verifier.
-pub trait Verifier: 'static {
+pub trait Verifier {
     /// The proof format type accepted by the verifier
     type Proof: Arg;
     /// The public inputs format
