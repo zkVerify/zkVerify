@@ -39,7 +39,7 @@ mod weight_verify_proof;
 pub use crate::weight_verify_proof::WeightInfo as WeightInfoVerifyProof;
 pub use weight::WeightInfo;
 
-pub trait Config: 'static {
+pub trait Config {
     /// Maximum number of 2^20 segments proof in a composite -> this, combined with
     /// `Segment20MaxSize`, defines also the maximum proof size (proof bigger than
     /// this value will be rejected).
