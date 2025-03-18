@@ -531,7 +531,7 @@ pub fn zkv_local_config_genesis() -> serde_json::Value {
         // Initial PoA authorities
         DEFAULT_ENDOWED_SEEDS
             .into_iter()
-            .map(|seed| authority_keys_from_seed(seed))
+            .map(authority_keys_from_seed)
             .take(LOCAL_N_AUTH)
             .collect::<Vec<_>>(),
         // Sudo account
@@ -573,7 +573,7 @@ pub fn zkv_development_config_genesis() -> serde_json::Value {
         // Initial PoA authorities
         DEFAULT_ENDOWED_SEEDS
             .into_iter()
-            .map(|seed| authority_keys_from_seed(seed))
+            .map(authority_keys_from_seed)
             .take(1)
             .collect::<Vec<_>>(),
         // Sudo account
