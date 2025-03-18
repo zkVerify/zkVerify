@@ -106,6 +106,7 @@ mod test {
     // use self::InnerMigrateV0ToV1;
     use super::*;
     use crate::mock::*;
+    #[cfg(feature = "try-runtime")]
     use frame_support::assert_ok;
     use frame_support::{pallet_prelude::*, weights::RuntimeDbWeight};
 
