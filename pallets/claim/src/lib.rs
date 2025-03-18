@@ -145,7 +145,7 @@ pub mod pallet {
             TotalClaimable::<T>::put(BalanceOf::<T>::zero());
 
             // Add beneficiaries
-            let num_beneficiaries = self.beneficiaries.len() as u32;
+            let num_beneficiaries = self.beneficiaries.len();
 
             if num_beneficiaries > 0 {
                 // Check that we are not adding too many here
@@ -270,10 +270,10 @@ pub mod pallet {
 
         fn do_add_beneficiaries(
             beneficiaries: BTreeMap<T::AccountId, BalanceOf<T>>,
-            num_beneficiaries: u32,
+            num_beneficiaries: usize,
         ) -> DispatchResult {
             // Check we have space for all the beneficiaries we are trying to add
-            if Beneficiaries::<T>::count() + num_beneficiaries > T::MaxBeneficiaries::get() {
+            if Beneficiaries::<T>::count() + num_beneficiaries as u32 > T::MaxBeneficiaries::get() {
                 Err(Error::<T>::MaxNumBeneficiariesReached)?;
             }
 
@@ -323,8 +323,8 @@ pub mod pallet {
             }
         }
 
-        fn check_num_beneficiaries(beneficiaries_len: u32) -> DispatchResult {
-            if beneficiaries_len > T::MAX_OP_BENEFICIARIES {
+        fn check_num_beneficiaries(beneficiaries_len: usize) -> DispatchResult {
+            if beneficiaries_len > T::MAX_OP_BENEFICIARIES as usize {
                 log::warn!(
                     "Too many beneficiaries for this single operation: {beneficiaries_len:?}."
                 );
@@ -355,7 +355,7 @@ pub mod pallet {
             Self::check_airdrop_status(false)?;
             AirdropActive::<T>::put(true);
 
-            let num_beneficiaries = beneficiaries.len() as u32;
+            let num_beneficiaries = beneficiaries.len();
 
             if num_beneficiaries > 0 {
                 // Check that we are not adding too many here
@@ -415,7 +415,7 @@ pub mod pallet {
             Self::check_airdrop_status(true)?;
             T::ManagerOrigin::ensure_origin(origin)?;
 
-            let num_beneficiaries = beneficiaries.len() as u32;
+            let num_beneficiaries = beneficiaries.len();
 
             if num_beneficiaries > 0 {
                 // Check that we are not adding too many here
@@ -445,7 +445,7 @@ pub mod pallet {
 
             if num_beneficiaries > 0 {
                 // Check that we are not removing too many here
-                Self::check_num_beneficiaries(num_beneficiaries)?;
+                Self::check_num_beneficiaries(num_beneficiaries as usize)?;
 
                 // Remove all beneficiaries entries
                 let _ = Beneficiaries::<T>::clear(num_beneficiaries, None);
