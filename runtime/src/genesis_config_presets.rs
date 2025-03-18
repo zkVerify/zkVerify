@@ -141,7 +141,7 @@ impl StakerData for (AccountId, Balance) {
 /// Configure initial storage state for FRAME modules.
 #[allow(clippy::too_many_arguments)]
 fn genesis(
-    initial_authorities: Vec<(Ids, Balance)>,
+    initial_authorities: Vec<Ids>,
     root_key: AccountId,
     endowed_accounts: Vec<(AccountId, Balance)>,
     stakers: Vec<Box<dyn StakerData>>,
@@ -161,7 +161,7 @@ fn genesis(
         "session": {
             "keys": initial_authorities.iter()
                 .cloned()
-                .map(|((account, babe, grandpa, para, assign, auth), _staking)| { (account.clone(), account, session_keys(babe, grandpa, para, assign, auth)) })
+                .map(|(account, babe, grandpa, para, assign, auth)| { (account.clone(), account, session_keys(babe, grandpa, para, assign, auth)) })
                 .collect::<Vec<_>>(),
         },
         "staking": {
@@ -321,9 +321,6 @@ impl<'a> ValidatorData<'a> {
             self.assignment_id.clone(),
             self.authority_discovery_id.clone(),
         )
-    }
-    fn as_initial_authority(&self) -> (Ids, Balance) {
-        (self.ids(), self.account.balance)
     }
 }
 
@@ -506,7 +503,7 @@ pub fn zkv_testnet_config_genesis() -> Result<serde_json::Value, sp_core::crypto
         // Initial PoA authorities
         initial_authorities
             .iter()
-            .map(ValidatorData::as_initial_authority)
+            .map(ValidatorData::ids)
             .collect::<Vec<_>>(),
         // Sudo account [nh-sudo-t1]
         sudo_account.account_id.clone(),
@@ -534,7 +531,7 @@ pub fn zkv_local_config_genesis() -> serde_json::Value {
         // Initial PoA authorities
         DEFAULT_ENDOWED_SEEDS
             .into_iter()
-            .map(|seed| (authority_keys_from_seed(seed), STASH_BOND))
+            .map(|seed| authority_keys_from_seed(seed))
             .take(LOCAL_N_AUTH)
             .collect::<Vec<_>>(),
         // Sudo account
@@ -543,7 +540,7 @@ pub fn zkv_local_config_genesis() -> serde_json::Value {
         balances.clone(),
         balances
             .into_iter()
-            .map(|v| Box::new(v) as Box<dyn StakerData>)
+            .map(|(a, _)| Box::new((a, STASH_BOND)) as Box<dyn StakerData>)
             .collect(),
         // min validator count
         1,
@@ -576,7 +573,7 @@ pub fn zkv_development_config_genesis() -> serde_json::Value {
         // Initial PoA authorities
         DEFAULT_ENDOWED_SEEDS
             .into_iter()
-            .map(|seed| (authority_keys_from_seed(seed), STASH_BOND))
+            .map(|seed| authority_keys_from_seed(seed))
             .take(1)
             .collect::<Vec<_>>(),
         // Sudo account
@@ -585,7 +582,7 @@ pub fn zkv_development_config_genesis() -> serde_json::Value {
         balances.clone(),
         balances
             .into_iter()
-            .map(|v| Box::new(v) as Box<dyn StakerData>)
+            .map(|(a, _)| Box::new((a, STASH_BOND)) as Box<dyn StakerData>)
             .collect(),
         // min validator count
         1,
@@ -623,16 +620,25 @@ pub fn get_preset(id: &sp_genesis_builder::PresetId) -> Option<sp_std::vec::Vec<
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde_json::Value;
 
     // The following test verifies whether we added session configuration in the genesis block
     // by checking that the json returned by testnet_genesis() contains the field "session"
     #[test]
     fn testnet_genesis_should_set_session_keys() {
-        let initial_authorities = vec![(authority_keys_from_seed("Alice"), 7 * VFY)];
+        let initial_authorities = vec![authority_keys_from_seed("Alice")];
         let root_key = get_account_id_from_seed::<sr25519::Public>("Alice");
 
-        let ret_val: serde_json::Value =
-            genesis(initial_authorities, root_key, vec![], vec![], 1, None, 0, 0);
+        let ret_val: serde_json::Value = genesis(
+            initial_authorities.clone(),
+            root_key,
+            vec![],
+            vec![Box::new((initial_authorities[0].0.clone(), 7 * VFY)) as Box<dyn StakerData>],
+            1,
+            None,
+            0,
+            0,
+        );
 
         let session_config = &ret_val["session"];
 
@@ -643,7 +649,14 @@ mod tests {
             .as_object()
             .map(|inner| inner["keys"].as_array().unwrap().len())
             .unwrap();
+        let staker = &ret_val["staking"]["stakers"][0];
+
+        // ret_val.clone()["staking"]["stakers"][0];
         // Check that we have one "keys" set
         assert_eq!(1, auth_len);
+        assert_eq!(
+            Value::Number((7 * VFY).into()),
+            staker.as_array().unwrap()[2]
+        );
     }
 }
