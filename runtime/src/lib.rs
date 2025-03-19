@@ -951,7 +951,9 @@ impl pallet_ultraplonk_verifier::Config for Runtime {
     type MaxPubs = UltraplonkMaxPubs;
 }
 
-impl pallet_verifiers::Config<pallet_ultraplonk_verifier::Ultraplonk<Runtime>> for Runtime {
+pub type UltraplonkVerifier = pallet_ultraplonk_verifier::Ultraplonk<Runtime>;
+
+impl pallet_verifiers::Config<UltraplonkVerifier> for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type OnProofVerified = Aggregate;
     type WeightInfo = pallet_ultraplonk_verifier::UltraplonkWeight<
