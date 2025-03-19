@@ -19,12 +19,9 @@ use jsonrpsee::{core::RpcResult, proc_macros::rpc, types::ErrorObject};
 use pallet_groth16_verifier::{Curve, Groth16};
 use pallet_proofofsql_verifier::ProofOfSql;
 use pallet_ultraplonk_verifier::{Ultraplonk, VK_SIZE};
-use sp_core::{serde::Deserialize, serde::Serialize, Bytes, Get, H256};
+use sp_core::{serde::Deserialize, serde::Serialize, Bytes, H256};
 
 type VkOf<V> = <V as hp_verifiers::Verifier>::Vk;
-
-struct MockType;
-struct MaxPubs;
 
 #[derive(Debug, Encode, Decode, Serialize, Deserialize)]
 #[serde(remote = "Curve")]
@@ -45,33 +42,15 @@ pub struct Groth16Vk {
     pub gamma_abc_g1: Vec<Bytes>,
 }
 
-impl Get<u32> for MaxPubs {
-    fn get() -> u32 {
-        32
-    }
-}
-
-impl pallet_ultraplonk_verifier::Config for MockType {
-    type MaxPubs = MaxPubs;
-}
-
-impl pallet_proofofsql_verifier::Config for MockType {
-    type LargestMaxNu = MaxPubs;
-}
-
-impl pallet_groth16_verifier::Config for MockType {
-    const MAX_NUM_INPUTS: u32 = pallet_groth16_verifier::MAX_NUM_INPUTS;
-}
-
-#[rpc(client, server)]
+#[rpc(client, server, namespace = "vk_hash")]
 pub trait VKHashApi<ResponseType> {
-    #[method(name = "vk_hash_groth16")]
+    #[method(name = "groth16")]
     fn groth16(&self, vk: Groth16Vk) -> RpcResult<ResponseType>;
-    #[method(name = "vk_hash_proofofsql")]
+    #[method(name = "proofofsql")]
     fn proofofsql(&self, vk: Bytes) -> RpcResult<ResponseType>;
-    #[method(name = "vk_hash_risc0")]
+    #[method(name = "risc0")]
     fn risc0(&self, vk: H256) -> RpcResult<ResponseType>;
-    #[method(name = "vk_hash_ultraplonk")]
+    #[method(name = "ultraplonk")]
     fn ultraplonk(&self, vk: Bytes) -> RpcResult<ResponseType>;
 }
 
@@ -87,7 +66,7 @@ impl VKHash {
 
 impl VKHashApiServer<H256> for VKHash {
     fn groth16(&self, vk: Groth16Vk) -> RpcResult<H256> {
-        let vk: VkOf<Groth16<MockType>> = pallet_groth16_verifier::Vk {
+        let vk: VkOf<Groth16<zkv_runtime::Runtime>> = pallet_groth16_verifier::Vk {
             curve: vk.curve,
             alpha_g1: hp_groth16::G1(vk.alpha_g1.0),
             beta_g2: hp_groth16::G2(vk.beta_g2.0),
@@ -100,11 +79,11 @@ impl VKHashApiServer<H256> for VKHash {
                 .collect(),
         };
 
-        Ok(Groth16::<MockType>::vk_hash(&vk))
+        Ok(Groth16::<zkv_runtime::Runtime>::vk_hash(&vk))
     }
 
     fn proofofsql(&self, vk: Bytes) -> RpcResult<H256> {
-        let vk: VkOf<ProofOfSql<MockType>> = pallet_proofofsql_verifier::Vk::from(vk.0);
+        let vk: VkOf<ProofOfSql<zkv_runtime::Runtime>> = pallet_proofofsql_verifier::Vk::from(vk.0);
         Ok(ProofOfSql::vk_hash(&vk))
     }
 
@@ -120,13 +99,13 @@ impl VKHashApiServer<H256> for VKHash {
                 Some("Incorrect Slice Length".to_string()),
             ));
         }
-        let vk: VkOf<Ultraplonk<MockType>> = vk.0.try_into().map_err(|_| {
+        let vk: VkOf<Ultraplonk<zkv_runtime::Runtime>> = vk.0.try_into().map_err(|_| {
             ErrorObject::owned(
                 2,
                 "Deserialize error",
                 Some("Deserialize error".to_string()),
             )
         })?;
-        Ok(Ultraplonk::<MockType>::vk_hash(&vk))
+        Ok(Ultraplonk::<zkv_runtime::Runtime>::vk_hash(&vk))
     }
 }

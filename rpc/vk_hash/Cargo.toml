@@ -18,6 +18,7 @@ sp-core = { default-features = false, workspace = true }
 hp-verifiers = { workspace = true }
 hp-groth16 = { workspace = true }
 serde = { default-features = false, workspace = true }
+zkv-runtime = { default-features = false, workspace = true }
 
 [features]
 default = ["std"]
