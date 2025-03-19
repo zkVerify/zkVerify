@@ -19540,6 +19540,7 @@ dependencies = [
  "parity-scale-codec",
  "serde",
  "sp-core",
+ "zkv-runtime",
 ]
 
 [[package]]
