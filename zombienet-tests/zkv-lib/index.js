@@ -19,6 +19,13 @@ zkvTypes = {
         deltaG2: "Bytes",
         gammaAbcG1: "Vec<Bytes>"
     },
+    Plonky2Config: {
+        _enum: ["Keccak", "Poseidon"]
+    },
+    Plonky2Vk: {
+        config: "Plonky2Config",
+        bytes: "Bytes"
+    },
 };
 
 // This one defines the metadata for the arguments and return value of proofPath RPC call
@@ -54,6 +61,16 @@ zkvRpc = {
                 {
                     name: 'vk',
                     type: 'Groth16Vk',
+                },
+            ],
+            type: 'H256'
+        },
+        plonky2: {
+            description: 'Get the hash of a Plonky2 verification key',
+            params: [
+                {
+                    name: 'vk',
+                    type: 'Plonky2Vk',
                 },
             ],
             type: 'H256'

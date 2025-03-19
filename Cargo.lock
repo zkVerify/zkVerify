@@ -9442,7 +9442,7 @@ dependencies = [
  "pallet-ismp",
  "parity-scale-codec",
  "polkadot-sdk",
- "primitive-types",
+ "primitive-types 0.12.2",
  "scale-info",
 ]
 
@@ -10520,7 +10520,7 @@ dependencies = [
  "pallet-ismp",
  "parity-scale-codec",
  "polkadot-sdk",
- "primitive-types",
+ "primitive-types 0.12.2",
  "scale-info",
  "token-gateway-primitives",
 ]
@@ -19169,7 +19169,7 @@ dependencies = [
  "pallet-ismp",
  "parity-scale-codec",
  "polkadot-sdk",
- "primitive-types",
+ "primitive-types 0.12.2",
  "scale-info",
 ]
 
@@ -19827,6 +19827,7 @@ dependencies = [
  "hp-verifiers",
  "jsonrpsee",
  "pallet-groth16-verifier",
+ "pallet-plonky2-verifier",
  "pallet-proofofsql-verifier",
  "pallet-ultraplonk-verifier",
  "parity-scale-codec",

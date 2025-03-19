@@ -3,8 +3,8 @@
 pub use crate::proof::Proof as MorphProof;
 pub use crate::vk::{Plonky2Config, VkWithConfig};
 
-use frame_support::__private::Get;
 use frame_support::ensure;
+use frame_support::pallet_prelude::Get;
 use frame_support::weights::Weight;
 use hp_verifiers::{Cow, Verifier, VerifyError};
 use plonky2_verifier::validate::validate_vk;

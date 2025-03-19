@@ -19,6 +19,7 @@ use jsonrpsee::{core::RpcResult, proc_macros::rpc, types::ErrorObject};
 use pallet_groth16_verifier::{Curve, Groth16};
 use pallet_proofofsql_verifier::ProofOfSql;
 use pallet_ultraplonk_verifier::{Ultraplonk, VK_SIZE};
+use pallet_plonky2_verifier::{Plonky2, Plonky2Config};
 use sp_core::{serde::Deserialize, serde::Serialize, Bytes, H256};
 
 type VkOf<V> = <V as hp_verifiers::Verifier>::Vk;
@@ -42,10 +43,27 @@ pub struct Groth16Vk {
     pub gamma_abc_g1: Vec<Bytes>,
 }
 
+#[derive(Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(remote = "Plonky2Config")]
+pub enum Plonky2ConfigDef {
+    Keccak,
+    Poseidon,
+}
+
+#[derive(Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Plonky2Vk {
+    #[serde(with = "Plonky2ConfigDef")]
+    pub config: Plonky2Config,
+    pub bytes: Bytes,
+}
+
 #[rpc(client, server, namespace = "vk_hash")]
 pub trait VKHashApi<ResponseType> {
     #[method(name = "groth16")]
     fn groth16(&self, vk: Groth16Vk) -> RpcResult<ResponseType>;
+    #[method(name = "plonky2")]
+    fn plonky2(&self, vk: Plonky2Vk) -> RpcResult<ResponseType>;
     #[method(name = "proofofsql")]
     fn proofofsql(&self, vk: Bytes) -> RpcResult<ResponseType>;
     #[method(name = "risc0")]
@@ -80,6 +98,16 @@ impl VKHashApiServer<H256> for VKHash {
         };
 
         Ok(Groth16::<zkv_runtime::Runtime>::vk_hash(&vk))
+    }
+
+    fn plonky2(&self, vk: Plonky2Vk) -> RpcResult<H256> {
+        let config = pallet_plonky2_verifier::Plonky2Config::from(vk.config);
+        let bytes = vk.bytes.0;
+        let mut vk_with_config = <VkOf<Plonky2::<zkv_runtime::Runtime>> as Default>::default();
+        vk_with_config.config = config;
+        vk_with_config.bytes = bytes;
+        // let vk_with_config: VkOf<Plonky2<zkv_runtime::Runtime>> = pallet_plonky2_verifier::Vk {config, bytes};
+        Ok(Plonky2::<zkv_runtime::Runtime>::vk_hash(&vk_with_config))
     }
 
     fn proofofsql(&self, vk: Bytes) -> RpcResult<H256> {
