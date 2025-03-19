@@ -49,7 +49,8 @@ std = [
     "plonky2-verifier/std",
     "frame-benchmarking/std",
     "log/std",
-    "sp-io/std"
+    "sp-io/std",
+    "sp-std/std"
 ]
 runtime-benchmarks = [
     "frame-benchmarking/runtime-benchmarks",
