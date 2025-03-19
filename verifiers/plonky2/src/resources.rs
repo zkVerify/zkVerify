@@ -8,14 +8,12 @@ impl crate::Config for MockConfig {
     type MaxVkSize = ConstU32<1000000>;
 }
 
-#[cfg(test)]
 struct TestData<T: crate::Config> {
     pub(crate) vk: crate::Vk<T>,
     pub(crate) proof: crate::Proof<T>,
     pub(crate) pubs: crate::Pubs,
 }
 
-#[cfg(test)]
 fn get_valid_test_data<T: crate::Config>() -> TestData<T> {
     TestData {
         vk: crate::VkWithConfig::from_default_with_bytes(
