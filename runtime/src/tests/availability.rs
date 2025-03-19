@@ -21,12 +21,14 @@ use frame_support::{
     traits::{schedule::DispatchTime, Currency, StorePreimage, VestingSchedule},
 };
 use hex_literal::hex;
+use ismp::dispatcher::{DispatchPost, DispatchRequest, FeeMetadata, IsmpDispatcher};
 use pallet_conviction_voting::{AccountVote, Vote};
 use pallet_hyperbridge_aggregations::Params;
 use pallet_verifiers::VkOrHash;
 use sp_core::H256;
 use sp_runtime::traits::Zero;
 use sp_runtime::{AccountId32, MultiAddress};
+use std::collections::BTreeMap;
 
 #[test]
 fn pallet_multisig() {
@@ -299,6 +301,45 @@ fn pallet_ismp_grandpa() {
             Vec::new()
         ));
         // just checking code builds, hence the pallet is available to the runtime
+    });
+}
+
+#[test]
+fn pallet_hyperbridge() {
+    test().execute_with(|| {
+        let dummy_origin = AccountId32::new([0; 32]);
+        let post = DispatchPost {
+            dest: StateMachine::Kusama(4009),
+            from: vec![1, 2, 3],
+            to: vec![4, 5, 6],
+            timeout: 0,
+            body: vec![7, 8, 9],
+        };
+        let request = DispatchRequest::Post(post);
+        let fee = FeeMetadata {
+            payer: dummy_origin.clone(),
+            fee: Zero::zero(),
+        };
+        assert_ok!(Hyperbridge::dispatch_request(
+            &Hyperbridge::default(),
+            request,
+            fee
+        ));
+    });
+}
+
+#[test]
+fn pallet_token_gateway() {
+    let mut addresses = BTreeMap::new();
+    addresses.insert(StateMachine::Evm(1), vec![0x01, 0x02, 0x03, 0x04]);
+    addresses.insert(StateMachine::Polkadot(1), vec![0x05, 0x06, 0x07, 0x08]);
+    let dummy_origin = AccountId32::new([0; 32]);
+
+    test().execute_with(|| {
+        assert_ok!(TokenGateway::set_token_gateway_addresses(
+            RuntimeOrigin::signed(dummy_origin),
+            addresses
+        ));
     });
 }
 
