@@ -43,7 +43,6 @@ members = [
 ]
 
 exclude = ["utils/generate-bags/node-runtime"]
-# default-members = ["zkv-relay"]
 
 [workspace.dependencies]
 anyhow = { version = "1.0", default-features = false }
@@ -52,7 +51,6 @@ futures = { version = "0.3.21", features = ["thread-pool"] }
 futures-timer = { version = "3.0.2" }
 jsonrpsee = { version = "0.24.8", features = ["server"] }
 binary-merkle-tree = { version = "15.0.1", default-features = false }
-snafu = { version = "0.8.0", default-features = false }
 async-trait = { version = "0.1.57" }
 serde = { version = "1.0.197", default-features = false }
 rstest = { version = "0.24.0" }
@@ -112,7 +110,6 @@ zkv-runtime = { path = "runtime", default-features = false }
 
 # These dependencies are used for the node template's RPCs
 sc-rpc = { version = "40.0.0" }
-sc-rpc-api = { version = "0.44.0" }
 sp-blockchain = { version = "37.0.1" }
 sc-basic-authorship = { version = "0.45.0" }
 substrate-frame-rpc-system = { version = "39.0.0" }
@@ -194,7 +191,6 @@ aggregate-rpc-runtime-api = { default-features = false, path = "rpc/aggregate/ru
 # Hyperbridge dependencies
 ismp = { default-features = false, version = "0.2.2" }
 pallet-ismp = { default-features = false, version = "=16.0.0" }
-pallet-ismp-rpc = { default-features = false, version = "16.0.0" }
 pallet-ismp-runtime-api = { default-features = false, version = "16.0.0" }
 ismp-grandpa = { default-features = false, version = "16.0.0" }
 pallet-token-gateway = { default-features = false, version = "16.0.0" }
@@ -217,7 +213,6 @@ substrate-build-script-utils = { version = "11.0.0" }
 
 # Used for relay chain
 
-zkv-relay = { path = "relay-node" }
 zkv-cli = { path = "relay-node/cli" }
 service = { package = "zkv-service", path = "relay-node/service" }
 
@@ -239,7 +234,6 @@ sc-sync-state-rpc = { version = "0.45.0" }
 sc-keystore = { version = "33.0.0" }
 telemetry = { version = "25.0.0", package = "sc-telemetry" }
 sp-authority-discovery = { version = "34.0.0", default-features = false }
-consensus_common = { version = "0.40.0", package = "sp-consensus" }
 sp-state-machine = { version = "0.43.0" }
 prometheus-endpoint = { version = "0.17.0", package = "substrate-prometheus-endpoint" }
 substrate-state-trie-migration-rpc = { version = "38.0.0" }
@@ -280,7 +274,6 @@ polkadot-core-primitives = { version = "15.0.0" }
 polkadot-node-core-parachains-inherent = { version = "18.0.0" }
 polkadot-parachain-primitives = { version = "14.0.0", default-features = false }
 polkadot-primitives = { version = "16.0.0", default-features = false }
-polkadot-rpc = { version = "19.0.0" }
 polkadot-node-subsystem = { version = "18.0.0" }
 polkadot-node-subsystem-util = { version = "18.0.0" }
 polkadot-node-subsystem-types = { version = "18.0.0" }
@@ -321,7 +314,6 @@ cumulus-relay-chain-interface = { version = "0.18.0" }
 cumulus-primitives-aura = { version = "0.15.0", default-features = false }
 
 cumulus-pallet-aura-ext = { version = "0.17.0", default-features = false }
-cumulus-pallet-dmp-queue = { version = "0.17.0", default-features = false }
 cumulus-pallet-parachain-system = { version = "0.17.1", default-features = false }
 cumulus-pallet-session-benchmarking = { version = "19.0.0", default-features = false }
 cumulus-pallet-xcm = { version = "0.17.0", default-features = false }

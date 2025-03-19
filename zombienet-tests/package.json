@@ -1,5 +1,5 @@
 {
-  "name": "zkVerify_ZKV-node_zombienet_tests",
+  "name": "zkverify_zkv-node_zombienet_tests",
   "version": "0.0.1",
   "author": "HorizenLabs' Mainchain team",
   "dependencies": {
