@@ -69,7 +69,7 @@ pub use frame_support::{
     Blake2_128Concat, Identity, PalletId, StorageHasher, StorageValue,
 };
 pub use frame_system::Call as SystemCall;
-use frame_system::{EnsureRoot, EnsureSigned};
+use frame_system::EnsureRoot;
 use ismp::consensus::{ConsensusClientId, StateMachineHeight, StateMachineId};
 use ismp::host::StateMachine;
 use ismp::module::IsmpModule;
@@ -1051,7 +1051,7 @@ impl pallet_token_gateway::Config for Runtime {
     #[cfg(not(feature = "runtime-benchmarks"))]
     type CreateOrigin = EnsureRoot<AccountId>;
     #[cfg(feature = "runtime-benchmarks")]
-    type CreateOrigin = EnsureSigned<AccountId>;
+    type CreateOrigin = frame_system::EnsureSigned<AccountId>;
     type NativeAssetId = NativeAssetId;
     type Decimals = Decimals;
     type EvmToSubstrate = ();
