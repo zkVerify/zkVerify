@@ -38,7 +38,7 @@ fn check_params_sanity() {
 fn check_era_rewards() {
     const ERA_DURATION_MILLIS: u64 = 1000 * 60 * 60 * 24 * 36525 / 100; // 1 year era
     const TOT_ISSUANCE: Balance = 1_000_000_000 * VFY;
-    let others_split = Percent::from_percent(100) - ValidatorsSplit::get();
+    let others_split = Percent::from_percent(100) - EraPayoutValidatorsSplit::get();
 
     // Check the reward for an empty era.
     assert_eq!(
@@ -57,7 +57,7 @@ fn check_era_rewards() {
             ERA_DURATION_MILLIS
         ),
         (
-            ValidatorsSplit::get() * expected_inflation,
+            EraPayoutValidatorsSplit::get() * expected_inflation,
             others_split * expected_inflation
         )
     );
@@ -74,7 +74,7 @@ fn check_era_rewards() {
             ERA_DURATION_MILLIS
         ),
         (
-            ValidatorsSplit::get() * expected_inflation,
+            EraPayoutValidatorsSplit::get() * expected_inflation,
             others_split * expected_inflation
         )
     );
@@ -91,7 +91,7 @@ fn check_era_rewards() {
             ERA_DURATION_MILLIS
         ),
         (
-            ValidatorsSplit::get() * expected_inflation,
+            EraPayoutValidatorsSplit::get() * expected_inflation,
             others_split * expected_inflation
         )
     );
@@ -109,7 +109,7 @@ fn check_era_rewards() {
             ERA_DURATION_MILLIS / 2
         ),
         (
-            ValidatorsSplit::get() * expected_inflation,
+            EraPayoutValidatorsSplit::get() * expected_inflation,
             others_split * expected_inflation
         )
     );
@@ -127,7 +127,7 @@ fn check_era_rewards() {
         ),
         // capped at 1 year
         (
-            ValidatorsSplit::get() * expected_inflation,
+            EraPayoutValidatorsSplit::get() * expected_inflation,
             others_split * expected_inflation
         )
     );
@@ -151,7 +151,7 @@ fn check_era_rewards() {
             ERA_DURATION_MILLIS
         ),
         (
-            ValidatorsSplit::get() * expected_inflation,
+            EraPayoutValidatorsSplit::get() * expected_inflation,
             others_split * expected_inflation
         )
     );

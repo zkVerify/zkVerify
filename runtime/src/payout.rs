@@ -89,7 +89,7 @@ parameter_types! {
     pub const C: f64 = 0f64; // zero I_var
     /// Percentage of the minted tokens that goes to the validators (leaving the rest to the
     /// others).
-    pub ValidatorsSplit: Percent = Percent::from_percent(80);
+    pub EraPayoutValidatorsSplit: Percent = Percent::from_percent(100);
 }
 
 impl pallet_staking::EraPayout<Balance> for ZKVPayout {
@@ -128,8 +128,8 @@ impl pallet_staking::EraPayout<Balance> for ZKVPayout {
             time_portion * (InflationBase::get() + inflation_var) * total_issuance;
 
         (
-            ValidatorsSplit::get() * inflation_tot,
-            (Percent::from_percent(100) - ValidatorsSplit::get()) * inflation_tot,
+            EraPayoutValidatorsSplit::get() * inflation_tot,
+            (Percent::from_percent(100) - EraPayoutValidatorsSplit::get()) * inflation_tot,
         )
     }
 }
