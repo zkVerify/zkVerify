@@ -23,12 +23,13 @@ zkv-runtime = { default-features = false, workspace = true }
 [features]
 default = ["std"]
 std = [
-    "pallet-ultraplonk-verifier/std",
-    "serde/std",
-    "codec/std",
-    "hp-groth16/std",
-    "hp-verifiers/std",
-    "pallet-groth16-verifier/std",
-    "pallet-proofofsql-verifier/std",
-    "sp-core/std"
+	"pallet-ultraplonk-verifier/std",
+	"serde/std",
+	"codec/std",
+	"hp-groth16/std",
+	"hp-verifiers/std",
+	"pallet-groth16-verifier/std",
+	"pallet-proofofsql-verifier/std",
+	"sp-core/std",
+	"zkv-runtime/std"
 ]
