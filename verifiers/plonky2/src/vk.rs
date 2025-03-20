@@ -25,6 +25,16 @@ pub struct VkWithConfig<T> {
     _marker: PhantomData<T>,
 }
 
+impl<T> VkWithConfig<T> {
+    pub fn new(config: Plonky2Config, bytes: Vec<u8>) -> Self {
+        Self {
+            config,
+            bytes,
+            _marker: PhantomData,
+        }
+    }
+}
+
 impl<T: Config> MaxEncodedLen for VkWithConfig<T> {
     fn max_encoded_len() -> usize {
         Plonky2Config::max_encoded_len()

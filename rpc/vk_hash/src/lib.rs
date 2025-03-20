@@ -103,10 +103,7 @@ impl VKHashApiServer<H256> for VKHash {
     fn plonky2(&self, vk: Plonky2Vk) -> RpcResult<H256> {
         let config = pallet_plonky2_verifier::Plonky2Config::from(vk.config);
         let bytes = vk.bytes.0;
-        let mut vk_with_config = <VkOf<Plonky2::<zkv_runtime::Runtime>> as Default>::default();
-        vk_with_config.config = config;
-        vk_with_config.bytes = bytes;
-        // let vk_with_config: VkOf<Plonky2<zkv_runtime::Runtime>> = pallet_plonky2_verifier::Vk {config, bytes};
+        let vk_with_config: VkOf<Plonky2<zkv_runtime::Runtime>> = pallet_plonky2_verifier::Vk::new(config, bytes);
         Ok(Plonky2::<zkv_runtime::Runtime>::vk_hash(&vk_with_config))
     }
 
