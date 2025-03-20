@@ -365,16 +365,16 @@ pub fn zkv_testnet_config_genesis() -> Result<serde_json::Value, sp_core::crypto
 
     let community_custodians = [
         FundedAccount::from_id(
-            "5DfhBXU2nzQeGtx7fNkRdRC3vajrfLPvVGsDKQ6jbHiiUJqa",
+            "5CBFC7PE6rq2UmUvHwXfejTctAP6KHUDdLxS65PDcFWHkoXP",
             COMMUNITY_CUSTODIAL_BASE_BALANCE,
         )?,
         FundedAccount::from_id(
-            "5FpQiJJXZFGGGUBiX6xS81igb6qQANrPnX9FKPaGuBqb3Zay",
+            "5DnrLV6bBntEa65b7NM9RBPJv3jBVgzSFqFG1eUuNUGAze4h",
             COMMUNITY_CUSTODIAL_BASE_BALANCE,
         )?,
         // Used to found the old owners, treasury and claim pallets
         FundedAccount::from_id(
-            "5CPfe6NMYzy4HH4sYvjRnubCu5yfhY8AXhaYkoM5CeuYFT5c",
+            "5EFBAFR49Y2XZ1rBwQXM4Wo2rdenNpi5xyiDEv3oxJmSa2Ut",
             COMMUNITY_CUSTODIAL_BASE_BALANCE + COMMUNITY_CUSTODIAL_BUFFER_BALANCE
                 - (TREASURY_BALANCE + EXISTENTIAL_DEPOSIT),
         )?,
@@ -382,73 +382,73 @@ pub fn zkv_testnet_config_genesis() -> Result<serde_json::Value, sp_core::crypto
 
     let contributors_custody = [
         FundedAccount::from_id(
-            "5Fhb9daJKNaASmVdsM4pmsLDtJv5zS8W7Kemh4iyFWgtnYgt",
+            "5DF9kBMrPbqE3kSjVt4QDHBYZYze8WWmBssrhriXhut4DrKP",
             CONTRIBUTOR_BALANCE,
         )?,
         FundedAccount::from_id(
-            "5CaLGMj5FkpnoBfTkXBT4gHXZLzdmqPeTWE1tyuYZB3EcyEE",
+            "5CtatxhAjwJnsW9kjsuUpuMZazA2EZ9yb85i7xyPWETyy8Wt",
             CONTRIBUTOR_BALANCE,
         )?,
     ];
 
     let investors_custody = [
         FundedAccount::from_id(
-            "5FZboFp74WMi3ogERtYbmLwiZmbhTbxhfApAmf4jSgdw98kR",
+            "5DSVahZ7bhzTyoxkEjQeNJ7yU6M6tidUe89cC2PTSW9FYVaP",
             INVESTOR_BALANCE,
         )?,
         FundedAccount::from_id(
-            "5FTyReguLB6VN2iWzv9ZqHfM8ZtsE9CPiXyWS89A3xaheEF7",
+            "5FHz3zPfdJbDhPesCrVB1vb7EwT6jHWGTYSoQrLpAeWKJXP7",
             INVESTOR_BALANCE,
         )?,
     ];
 
     let initial_authorities = [
         ValidatorData::from_ids(
-            "5Hb48vxYpQZQHRbzLMak1AKhtuww6wNK1oMFyigysK8zvHyW",
-            "5Hb48vxYpQZQHRbzLMak1AKhtuww6wNK1oMFyigysK8zvHyW",
-            "5CpBzkEqzW5RPjDqMMqJuTSkaNrdbo3WxYC8arVjysd96DCN",
+            "5DcJTvFvLUh9qHxdjZmBtXzzG7ttNFSmDtBwohc7ws89gHuW",
+            "5DcJTvFvLUh9qHxdjZmBtXzzG7ttNFSmDtBwohc7ws89gHuW",
+            "5G3Sqt3NqQUDYP5PXzZtiwEaWkVUQ6w6bLd58A729yQdaJ5U",
             VALIDATOR_BALANCE,
             VALIDATOR_BOND,
         )?,
         ValidatorData::from_ids(
-            "5G6win2P1ty9X6DYuvfSFkijHGVx8yceVp1uNFntENyu7H4j",
-            "5G6win2P1ty9X6DYuvfSFkijHGVx8yceVp1uNFntENyu7H4j",
-            "5CkhLKX285NbSy4FioEBTwF7Q5X69wmr2d8z58tWr1V8sZK4",
+            "5CwWnDWg5wLAhyV66Synjjtt2qBDic5F2q1314eivUh8KVXv",
+            "5CwWnDWg5wLAhyV66Synjjtt2qBDic5F2q1314eivUh8KVXv",
+            "5GShazf2w8XURufZJFhtGR1JBUsNhX9LRLjyD7G5Vizem74m",
             VALIDATOR_BALANCE,
             VALIDATOR_BOND,
         )?,
         ValidatorData::from_ids(
-            "5DXDWSgAioftJk5CBhnE1WM7hJVAiCsXALSLxzcV5ouKLo5p",
-            "5DXDWSgAioftJk5CBhnE1WM7hJVAiCsXALSLxzcV5ouKLo5p",
-            "5E6s3Ho4svXABHokXUCcVpZ6UraRR7JpA6VBmYHDau1ZLep1",
+            "5EvNz6NKE6MTSFVZPX7S4tqPExrmgqbELUxSp8ycCGb6UKAH",
+            "5EvNz6NKE6MTSFVZPX7S4tqPExrmgqbELUxSp8ycCGb6UKAH",
+            "5FD8ihBkU7fbMfhKqREfd5htRiqNGpQ8Gy1rUgmoyGuzU1z6",
             VALIDATOR_BALANCE,
             VALIDATOR_BOND,
         )?,
         ValidatorData::from_ids(
-            "5C5PKzsRhThtFNbUTeKAaaubFK862Pg75AQM4GavWfghvVK5",
-            "5C5PKzsRhThtFNbUTeKAaaubFK862Pg75AQM4GavWfghvVK5",
-            "5HHKm8QwxoogA1crujuDLQhjxAcGX6VCACqhjYTffBW2nENj",
+            "5GdnMHVWPJK4rjnDXNd6oLQFGytcUGgrq1zgsWYg7hVZLL2q",
+            "5GdnMHVWPJK4rjnDXNd6oLQFGytcUGgrq1zgsWYg7hVZLL2q",
+            "5Cnu6KyiC3M1FoZx4R39GGxaVbDqDpnW66Vmaqxn9U5hJnHN",
             VALIDATOR_BALANCE,
             VALIDATOR_BOND,
         )?,
         ValidatorData::from_ids(
-            "5H6TGvsWATCc6YzJD4iNdeLE54RMvDcy5BgbqamNPJNNbr5L",
-            "5H6TGvsWATCc6YzJD4iNdeLE54RMvDcy5BgbqamNPJNNbr5L",
-            "5G5pgFvQJXiQph63HbtAQey6bNRdzpqbJezt2iAe3xGYtRyt",
+            "5DM8WWWYvPUJShXV4hhGXWCYjHRzCKKs3mHq4mfiaLJFxetC",
+            "5DM8WWWYvPUJShXV4hhGXWCYjHRzCKKs3mHq4mfiaLJFxetC",
+            "5GHthqbUX4TGAJa72Jdu5BsvU5cRw2EhuaF4PiyFfEoYzb1M",
             VALIDATOR_BALANCE,
             VALIDATOR_BOND,
         )?,
         ValidatorData::from_ids(
-            "5CuCBRRajfFFBwRTJ4EPjyPMgoMDKzRSfBa6ktcw8DVcydwM",
-            "5CuCBRRajfFFBwRTJ4EPjyPMgoMDKzRSfBa6ktcw8DVcydwM",
-            "5HdvRwJirHLhC98fkyp22EK5XXfD6dxGe9o45UT49JEES712",
+            "5HdVFRoy8AGN58rkR3dbd1MHaUSx4uuhdEUrJFzr8FGBJZMB",
+            "5HdVFRoy8AGN58rkR3dbd1MHaUSx4uuhdEUrJFzr8FGBJZMB",
+            "5EPaF1sa2Kt83yz1g8b3LCAw1DrvxE3Hspm9TLdud2ojhdaT",
             VALIDATOR_BALANCE,
             VALIDATOR_BOND,
         )?,
         ValidatorData::from_ids(
-            "5FgWmvTtUMBTKaMa53MgJskPXUwakJwyx61VGxEjP8YPEyQv",
-            "5FgWmvTtUMBTKaMa53MgJskPXUwakJwyx61VGxEjP8YPEyQv",
-            "5GcR9PeGmeFzKpkbVEbP95U4WWSK4z6CWGC9pN6tQpTxbVGS",
+            "5GGygViDPJXaPFRsABSbsuxZvueWLfZGgAin8YoKuLCYF5MZ",
+            "5GGygViDPJXaPFRsABSbsuxZvueWLfZGgAin8YoKuLCYF5MZ",
+            "5HSHuhE2WebrwXZ85Gs4n7vdWzU6PsnK9F3KGoxVeupxoH9X",
             VALIDATOR_BALANCE,
             VALIDATOR_BOND,
         )?,
@@ -458,11 +458,11 @@ pub fn zkv_testnet_config_genesis() -> Result<serde_json::Value, sp_core::crypto
 
     let foundation_custody = [
         FundedAccount::from_id(
-            "5DHe8Sm15RHkdWztyyStTqyjMfo7mdkWaHNaUWn6vqtx9a9j",
+            "5HianRRmyp6HgfTFvbmobPX5YrvzyWRvjeqcWmMMBweEaa6m",
             FOUNDATION_BASE_BALANCE,
         )?,
         FundedAccount::from_id(
-            "5D57RN5zN3KdEaWgFQMuriAPSH6KbZjwCjRYaAELyGexxK9a",
+            "5H4Rcaj63MBL3fuYNoMuM6XFY2EvAPKD4PasFyCCZA4WrAH3",
             FOUNDATION_BASE_BALANCE
                 - (VALIDATOR_BALANCE * initial_authorities.len() as Balance
                     + NOMINATOR_BALANCE * nominators.len() as Balance
@@ -471,7 +471,7 @@ pub fn zkv_testnet_config_genesis() -> Result<serde_json::Value, sp_core::crypto
     ];
 
     let sudo_account = FundedAccount::from_id(
-        "5DaF8tEbzij76QpxHK9jnjoVDAFRuwcwCisswN5iAyss5CqR",
+        "5GReicw1vfMB4Pq9vZfhPc2epjRkAtM1Zch5c3Z5gxfmzM7k",
         SUDO_BALANCE,
     )?;
 
