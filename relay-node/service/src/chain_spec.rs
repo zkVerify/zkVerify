@@ -112,11 +112,8 @@ pub fn testnet_config() -> Result<ChainSpec, String> {
             .expect("MultiaddrWithPeerId"),
     ])
     .with_telemetry_endpoints(
-        TelemetryEndpoints::new(vec![(
-            TELEMETRY_URL.to_string(),
-            telemetry::CONSENSUS_INFO,
-        )])
-        .expect("Horizen Labs telemetry url is valid; qed"),
+        TelemetryEndpoints::new(vec![(TELEMETRY_URL.to_string(), telemetry::CONSENSUS_INFO)])
+            .expect("Horizen Labs telemetry url is valid; qed"),
     )
     .with_properties(chain_properties())
     .with_genesis_config_preset_name("testnet")
