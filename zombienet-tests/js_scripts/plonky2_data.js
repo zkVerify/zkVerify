@@ -9,7 +9,7 @@ const VK = `{
 
 const VKEY_HASH = "0xe19d0a5e355cc3c8372588b60e60990a12e37cae6cb0e230b668f14e46324c2d"
 
-exports.PROOF = PROOF;
+exports.PROOF = JSON.parse(PROOF);
 exports.PUBS = PUBS;
 exports.VK = JSON.parse(VK);
 exports.VKEY_HASH = VKEY_HASH;
