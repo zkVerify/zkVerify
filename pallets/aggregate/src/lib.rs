@@ -247,7 +247,12 @@ pub mod pallet {
                     domain_id,
                     aggregation_id: domain.next.id,
                 });
-                let to_publish = domain.append_statement(account.clone(), reserve, statement);
+                let to_publish = domain
+                    .append_statement(account.clone(), reserve, statement)
+                    .unwrap_or_else(|err| {
+                        log::debug!("Failed adding proof to a given aggregation queue: {err:?}");
+                        None
+                    });
                 if let Some(aggregation) = to_publish {
                     domain.available_aggregation(aggregation);
                 }
@@ -276,6 +281,8 @@ pub mod pallet {
         InvalidDomainState,
         /// Try to register a domain without any defined ownership (maybe a manager that didn't provide the delivery owner).
         MissedDeliveryOwnership,
+        /// Cannot create a new, unique, aggregation id anymore
+        NextAggregationIdUnavailable,
     }
 
     #[derive(Debug, Clone, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
@@ -448,11 +455,11 @@ pub mod pallet {
 
         /// Return the aggregation `id`, removing it from the queue of aggregations to be
         /// published.
-        fn take_aggregation(&mut self, id: u64) -> Option<Aggregation<T>> {
+        fn take_aggregation(&mut self, id: u64) -> Result<Option<Aggregation<T>>, Error<T>> {
             if self.next.id == id {
                 self.pop_next_aggregation()
             } else {
-                self.should_publish.remove(&id)
+                Ok(self.should_publish.remove(&id))
             }
         }
 
@@ -475,16 +482,15 @@ pub mod pallet {
 
         /// Return the next non-empty aggregation to be published, or none if the aggregation is empty.
         /// If successful, a new aggregation is created as next to be published.
-        fn pop_next_aggregation(&mut self) -> Option<Aggregation<T>> {
+        fn pop_next_aggregation(&mut self) -> Result<Option<Aggregation<T>>, Error<T>> {
             if self.next.statements.is_empty() {
-                None
+                Ok(None)
             } else {
                 let aggregation = &mut self.next;
-                // Create a new aggregation as next, and return the old one
-                Some(sp_std::mem::replace(
-                    aggregation,
-                    aggregation.create_next(aggregation.size),
-                ))
+                aggregation.create_next(aggregation.size).map_or(
+                    Err(Error::<T>::NextAggregationIdUnavailable),
+                    |new_aggregation| Ok(Some(sp_std::mem::replace(aggregation, new_aggregation))),
+                )
             }
         }
 
@@ -499,7 +505,7 @@ pub mod pallet {
             account: T::AccountId,
             reserve: Reserve<BalanceOf<T>>,
             statement: H256,
-        ) -> Option<Aggregation<T>> {
+        ) -> Result<Option<Aggregation<T>>, Error<T>> {
             self.next
                 .statements
                 .try_push(StatementEntry::new(account.clone(), reserve, statement))
@@ -507,7 +513,7 @@ pub mod pallet {
             if self.is_next_aggregation_complete() {
                 self.pop_next_aggregation()
             } else {
-                None
+                Ok(None)
             }
         }
 
@@ -682,7 +688,7 @@ pub mod pallet {
                         Error::<T>::UnknownDomainId,
                     )
                 })?;
-                let aggregation = domain.take_aggregation(aggregation_id).ok_or_else(|| {
+                let aggregation = domain.take_aggregation(aggregation_id)?.ok_or_else(|| {
                     dispatch_post_error(
                         T::WeightInfo::aggregate_on_invalid_id(),
                         Error::<T>::InvalidAggregationId,
@@ -695,7 +701,7 @@ pub mod pallet {
                 ) {
                     Err(BadOrigin)?
                 }
-                let root = aggregation.compute();
+                let root = aggregation.compute_receipt();
                 let size = aggregation.statements.len() as u32;
                 Published::<T>::mutate(|published: &mut _| {
                     published.push((domain_id, aggregation))
@@ -703,13 +709,13 @@ pub mod pallet {
 
                 if let Some((_, published)) = Published::<T>::get().last() {
                     for s in published.statements.iter() {
-                        handle_held_founds::<T>(
+                        handle_held_funds::<T>(
                             HoldReason::Aggregation,
                             &s.account,
                             aggregator.account(),
                             s.reserve.aggregate,
                         );
-                        handle_held_founds::<T>(
+                        handle_held_funds::<T>(
                             HoldReason::Delivery,
                             &s.account,
                             Some(&domain.delivery.owner),
@@ -904,7 +910,7 @@ pub mod pallet {
         }
 
         /// Set the delivery attestation price. Every submitter will hold this price (at the time of proof submission)
-        /// divided by the aggregation size. When the aggregation is dispatched all this held founds will be
+        /// divided by the aggregation size. When the aggregation is dispatched all this held funds will be
         /// transferred to the delivery owner.
         ///
         /// Only domain owner, delivery owner or manager can set the price.
@@ -938,27 +944,28 @@ pub mod pallet {
         }
     }
 
-    fn handle_held_founds<T: Config>(
+    fn handle_held_funds<T: Config>(
         reason: HoldReason,
         account: &AccountOf<T>,
         dest: Option<&AccountOf<T>>,
         amount: BalanceOf<T>,
     ) {
-        let remain = if let Some(dest) = dest {
-            T::Hold::transfer_on_hold(
-                &reason.into(),
-                account,
-                dest,
-                amount,
-                Precision::BestEffort,
-                Restriction::Free,
-                Fortitude::Polite,
-            )
-        } else {
-            T::Hold::release(&reason.into(), account, amount, Precision::BestEffort)
-        }
-        .expect("Call user should exists. qed")
-        .defensive_saturating_sub(amount);
+        let remain = amount.defensive_saturating_sub(
+            if let Some(dest) = dest {
+                T::Hold::transfer_on_hold(
+                    &reason.into(),
+                    account,
+                    dest,
+                    amount,
+                    Precision::BestEffort,
+                    Restriction::Free,
+                    Fortitude::Polite,
+                )
+            } else {
+                T::Hold::release(&reason.into(), account, amount, Precision::BestEffort)
+            }
+            .expect("Call user should exists. qed"),
+        );
         if remain > 0_u32.into() {
             log::warn!("Cannot refund all funds from {account:?} to {dest:?}: missed {remain:?}")
         };
@@ -1036,8 +1043,8 @@ pub mod pallet {
 
         pub fn pays(&self) -> Pays {
             match self {
-                User::Account(_owner) => Pays::Yes,
-                _ => Pays::No,
+                User::Manager => Pays::No,
+                _ => Pays::Yes,
             }
         }
     }
