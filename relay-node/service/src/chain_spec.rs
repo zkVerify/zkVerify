@@ -36,7 +36,7 @@ const BOOTNODE_2_DNS: &str = "bootnode-tn-2.zkverify.io";
 const BOOTNODE_2_PEER_ID: &str = "12D3KooWEjVadU1YWyfDGvyRXPbCq2rXhzJtXaG4RxJZBkGE9Aug";
 
 // The URL for the telemetry server.
-const STAGING_TELEMETRY_URL: &str = "wss://testnet-telemetry.zkverify.io/submit/";
+const TELEMETRY_URL: &str = "wss://telemetry.zkverify.io/submit/";
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
 pub type ChainSpec = sc_service::GenericChainSpec<Extensions>;
@@ -112,11 +112,8 @@ pub fn testnet_config() -> Result<ChainSpec, String> {
             .expect("MultiaddrWithPeerId"),
     ])
     .with_telemetry_endpoints(
-        TelemetryEndpoints::new(vec![(
-            STAGING_TELEMETRY_URL.to_string(),
-            telemetry::CONSENSUS_INFO,
-        )])
-        .expect("Horizen Labs telemetry url is valid; qed"),
+        TelemetryEndpoints::new(vec![(TELEMETRY_URL.to_string(), telemetry::CONSENSUS_INFO)])
+            .expect("Horizen Labs telemetry url is valid; qed"),
     )
     .with_properties(chain_properties())
     .with_genesis_config_preset_name("testnet")
