@@ -10,6 +10,7 @@ license = "Apache-2.0"
 
 [dependencies]
 pallet-groth16-verifier = { workspace = true }
+pallet-plonky2-verifier = { workspace = true }
 pallet-proofofsql-verifier = { workspace = true }
 pallet-ultraplonk-verifier = { workspace = true }
 codec = { default-features = false, workspace = true }
@@ -30,6 +31,7 @@ std = [
 	"hp-verifiers/std",
 	"pallet-groth16-verifier/std",
 	"pallet-proofofsql-verifier/std",
+	"pallet-plonky2-verifier/std",
 	"sp-core/std",
 	"zkv-runtime/std"
 ]

@@ -65,6 +65,7 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
                 RuntimeCall::SettlementGroth16Pallet(..) |
                 RuntimeCall::SettlementRisc0Pallet(..) |
                 RuntimeCall::SettlementUltraplonkPallet(..) |
+                RuntimeCall::SettlementPlonky2Pallet(..) |
                 RuntimeCall::SettlementProofOfSqlPallet(..)
             ),
             ProxyType::Governance => matches!(

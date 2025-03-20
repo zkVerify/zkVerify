@@ -20,6 +20,7 @@ const ReturnCode = {
 
 const { init_api, submitProof, registerVk, receivedEvents } = require('zkv-lib')
 const { PROOF: GROTH16_PROOF, PUBS: GROTH16_PUBS, VK: GROTH16_VK, VKEY_HASH: GROTH16_VKEY_HASH } = require('./groth16_data.js');
+const { PROOF: PLONKY2_PROOF, PUBS: PLONKY2_PUBS, VK: PLONKY2_VK, VKEY_HASH: PLONKY2_VKEY_HASH } = require('./plonky2_data.js');
 const { PROOF: PROOFOFSQL_PROOF, PUBS: PROOFOFSQL_PUBS, VK: PROOFOFSQL_VK, VKEY_HASH: PROOFOFSQL_VKEY_HASH } = require('./proofofsql_data.js');
 const { PROOF: RISC0_PROOF, PUBS: RISC0_PUBS, VK: RISC0_VK } = require('./risc0_data.js');
 const { PROOF: ULTRAPLONK_PROOF, PUBS: ULTRAPLONK_PUBS, VK: ULTRAPLONK_VK, VKEY_HASH: ULTRAPLONK_VKEY_HASH,
@@ -34,6 +35,12 @@ async function run(nodeName, networkInfo, _args) {
             pallet: api.rpc.vk_hash.groth16,
             vk: GROTH16_VK,
             expected_hash: GROTH16_VKEY_HASH
+        },
+        {
+            name: "Plonky2",
+            pallet: api.rpc.vk_hash.plonky2,
+            vk: PLONKY2_VK,
+            expected_hash: PLONKY2_VKEY_HASH
         },
         {
             name: "Proofofsql",
