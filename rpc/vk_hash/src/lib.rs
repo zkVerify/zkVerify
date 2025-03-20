@@ -17,9 +17,9 @@ use codec::{Decode, Encode};
 use hp_verifiers::Verifier;
 use jsonrpsee::{core::RpcResult, proc_macros::rpc, types::ErrorObject};
 use pallet_groth16_verifier::{Curve, Groth16};
+use pallet_plonky2_verifier::{Plonky2, Plonky2Config};
 use pallet_proofofsql_verifier::ProofOfSql;
 use pallet_ultraplonk_verifier::{Ultraplonk, VK_SIZE};
-use pallet_plonky2_verifier::{Plonky2, Plonky2Config};
 use sp_core::{serde::Deserialize, serde::Serialize, Bytes, H256};
 
 type VkOf<V> = <V as hp_verifiers::Verifier>::Vk;
@@ -101,9 +101,10 @@ impl VKHashApiServer<H256> for VKHash {
     }
 
     fn plonky2(&self, vk: Plonky2Vk) -> RpcResult<H256> {
-        let config = pallet_plonky2_verifier::Plonky2Config::from(vk.config);
+        let config = vk.config;
         let bytes = vk.bytes.0;
-        let vk_with_config: VkOf<Plonky2<zkv_runtime::Runtime>> = pallet_plonky2_verifier::Vk::new(config, bytes);
+        let vk_with_config: VkOf<Plonky2<zkv_runtime::Runtime>> =
+            pallet_plonky2_verifier::Vk::new(config, bytes);
         Ok(Plonky2::<zkv_runtime::Runtime>::vk_hash(&vk_with_config))
     }
 

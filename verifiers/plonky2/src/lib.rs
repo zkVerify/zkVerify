@@ -12,9 +12,6 @@ use plonky2_verifier::verify;
 use sp_std::marker::PhantomData;
 use sp_std::vec::Vec;
 
-#[cfg(any(test, feature = "runtime-benchmarks"))]
-mod resources;
-
 pub mod benchmarking;
 mod proof;
 pub(crate) mod verifier_should;
