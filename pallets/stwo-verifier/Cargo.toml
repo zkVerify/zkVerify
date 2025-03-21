@@ -1,5 +1,5 @@
 [package]
-name = "pallet-verifiers"
+name = "pallet-stwo-verifier"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
@@ -11,7 +11,13 @@ scale-info = { version = "2.1.1", default-features = false, features = ["derive"
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
+sp-io = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
 hp-verifiers = { path = "../../primitives/verifiers", default-features = false }
+pallet-verifiers = { path = "../verifiers", default-features = false }
+
+[dev-dependencies]
+sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
 
 [features]
 default = ["std"]
@@ -21,5 +27,13 @@ std = [
     "frame-support/std",
     "frame-system/std",
     "sp-std/std",
+    "sp-core/std",
+    "sp-io/std",
     "hp-verifiers/std",
+    "pallet-verifiers/std",
 ]
+runtime-benchmarks = [
+    "frame-support/runtime-benchmarks",
+    "frame-system/runtime-benchmarks",
+]
+try-runtime = ["frame-support/try-runtime"]
