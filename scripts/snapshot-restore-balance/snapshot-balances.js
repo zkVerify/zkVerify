@@ -4,9 +4,14 @@ const {decodeAddress} = require('@polkadot/util-crypto');
 const {u8aToHex} = require('@polkadot/util');
 
 const DEFAULT_WS_ENDPOINT = 'wss://testnet-rpc.zkverify.io';
+const DEFAULT_WS_ENDPOINTS = {
+    'local': 'ws://localhost:9944',
+    'testnet': DEFAULT_WS_ENDPOINT,
+}
 const DEFAULT_SNAPSHOT_PATH = 'snapshot_balances.json';
 const DEFAULT_FILTERING_PATH = 'filter_account.json';
-const DEFAULT_CAP = 1000000000000000000000 // 1000
+const DEFAULT_SUDO = ""; // The optional sudo account
+const DEFAULT_CAP = 1000000000000000000000; // 1000
 const EXISTENTIAL_DEPOSIT = 10000000000000000; //0.01
 // Don't recover all accounts that ends with "0000000000000000000000000000000000000000"
 const MODULE_ACCOUNT_ENDS = "0000000000000000000000000000000000000000";
@@ -57,12 +62,11 @@ function filterBalance(account, balance, blockList) {
 }
 
 // Restore balances from the snapshot
-async function restoreBalances(api, keyring, snapshotBalancesFile, custodySeed, filterFile, capValue) {
+async function restoreBalances(api, keyring, snapshotBalancesFile, custodyAddress, filterFile, capValue, executor) {
     let balances = JSON.parse(fs.readFileSync(snapshotBalancesFile));
     const filter = JSON.parse(fs.readFileSync(filterFile));
-    const custodyAccount = keyring.addFromUri(custodySeed);
     capValue = BigInt(capValue)
-    let nonce = (await api.query.system.account(custodyAccount.address)).nonce.toNumber();
+    let nonce = (await api.query.system.account(executor.address)).nonce.toNumber();
 
     const newBalances = {};
 
@@ -82,7 +86,7 @@ async function restoreBalances(api, keyring, snapshotBalancesFile, custodySeed, 
 
     const totalAmount = Object.values(balances).reduce((acc, balance) => acc + balance, BigInt(0));
     console.log(`Total balance: ${totalAmount.toString()}`);
-    const {data: {free: custodyFreeBalance}} = await api.query.system.account(custodyAccount.address);
+    const {data: {free: custodyFreeBalance}} = await api.query.system.account(custodyAddress);
 
     if (BigInt(custodyFreeBalance.toString()) < totalAmount) {
         console.error(`Insufficient balance in custody account. Required: ${totalAmount.toString()}, Available: ${custodyFreeBalance.toString()}`);
@@ -91,9 +95,13 @@ async function restoreBalances(api, keyring, snapshotBalancesFile, custodySeed, 
 
     for (const [account, balance] of Object.entries(balances)) {
         console.log(`Transfer '${balance}' to ${account} [${nonce}] `)
-        const transfer = api.tx.balances.transferAllowDeath(account, balance);
+        let transfer = api.tx.balances.transferAllowDeath(account, balance);
+        if (custodyAddress !== executor.address) {
+            // Run as sudo
+            transfer = api.tx.sudo.sudoAs(custodyAddress, transfer);
+        }
         try {
-            const hash = await transfer.signAndSend(custodyAccount, {nonce});
+            const hash = await transfer.signAndSend(executor, {nonce});
             console.log(`Transferred to ${account}, transaction hash: ${hash.toHex()}`);
             nonce++;
         } catch (error) {
@@ -107,11 +115,14 @@ function usage() {
     node snapshot-balances.js [OPTIONS] snapshot
         or 
     node snapshot-balances.js restore "//CustodyWalletSeed"
+        or 
+    node snapshot-balances.js -S "//SudoSecret" restore "5H4Rcaj63MBL3fuYNoMuM6XFY2EvAPKD4PasFyCCZA4WrAH3"
     
     OPTIONS:
-    -e, --end-point [${DEFAULT_WS_ENDPOINT}]
+    -e, --end-point [${DEFAULT_WS_ENDPOINT}] (address or key from ${Object.keys(DEFAULT_WS_ENDPOINTS)})
     -s, --snapshot [${DEFAULT_SNAPSHOT_PATH}]
     -f, --filter [${DEFAULT_FILTERING_PATH}]
+    -S, --sudo [${DEFAULT_SUDO}]
     -c, --cap [${DEFAULT_CAP}] = 0 => No cap
     -h, --help : Show this help and exists 
     `);
@@ -124,11 +135,16 @@ async function main() {
     let filter = DEFAULT_FILTERING_PATH;
     let snapshotFile = DEFAULT_SNAPSHOT_PATH;
     let capValue = DEFAULT_CAP;
+    let sudo = DEFAULT_SUDO;
     // Skipping command and remove general options like -e
     const newArgs = []
     for (let i = 0; i < args.length - 1; i += 1) {
         if (args[i] === '-e' || args[i] === '--end-point') {
             wsEndpoint = args[++i];
+            let address = DEFAULT_WS_ENDPOINTS[wsEndpoint];
+            if (address !== undefined) {
+                wsEndpoint = address
+            }
             continue
         }
         if (args[i] === '-f' || args[i] === '--filter') {
@@ -143,12 +159,18 @@ async function main() {
             capValue = args[++i];
             continue
         }
+        if (args[i] === '-S' || args[i] === '--sudo') {
+            sudo = args[++i];
+            continue
+        }
         if (args[i] === '-h' || args[i] === '--help') {
             usage();
         }
         newArgs.push(args[i]);
     }
-    newArgs.push(args[args.length - 1]);
+    if (args.length > 0) {
+        newArgs.push(args[args.length - 1]);
+    }
     args = newArgs;
     if (args.length < 1) {
         usage();
@@ -164,6 +186,11 @@ async function main() {
     } else {
         console.log(`No cap`);
     }
+    if (sudo !== "") {
+        console.log(`Using sudo: ${sudo}`);
+    } else {
+        console.log(`No sudo`);
+    }
     const provider = new WsProvider(wsEndpoint);
     const api = await ApiPromise.create({provider});
     const keyring = new Keyring({type: 'sr25519'});
@@ -175,8 +202,17 @@ async function main() {
         if (args.length !== 1) {
             usage();
         }
-        const custodySeed = args[0];
-        await restoreBalances(api, keyring, snapshotFile, custodySeed, filter, capValue);
+        let custodyStr = args[0];
+        let custodyAddress = null;
+        let executor = null;
+        if (sudo !== "") {
+            executor = keyring.addFromUri(sudo);
+            custodyAddress = custodyStr;
+        } else {
+            executor = keyring.addFromUri(custodyStr);
+            custodyAddress = executor.address;
+        }
+        await restoreBalances(api, keyring, snapshotFile, custodyAddress, filter, capValue, executor);
     } else {
         usage();
     }
