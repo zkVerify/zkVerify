@@ -16,7 +16,8 @@
 
 //! zkVerify CLI library.
 
-pub use polkadot_node_primitives::NODE_VERSION;
+/// Node version **Should be the same of the one in `relay-node/Cargo.toml`**.
+pub const NODE_VERSION: &str = "0.9.0";
 
 use clap::Parser;
 use std::path::PathBuf;
