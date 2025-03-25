@@ -116,7 +116,7 @@ function usage() {
         or 
     node snapshot-balances.js restore "//CustodyWalletSeed"
         or 
-    node snapshot-balances.js -S "//SudoSecret" restore "5H4Rcaj63MBL3fuYNoMuM6XFY2EvAPKD4PasFyCCZA4WrAH3"
+    node snapshot-balances.js -S "//SudoSeed" restore "CustodyWalletAddress"
     
     OPTIONS:
     -e, --end-point [${DEFAULT_WS_ENDPOINT}] (address or key from ${Object.keys(DEFAULT_WS_ENDPOINTS)})
@@ -137,8 +137,9 @@ async function main() {
     let capValue = DEFAULT_CAP;
     let sudo = DEFAULT_SUDO;
     // Skipping command and remove general options like -e
-    const newArgs = []
-    for (let i = 0; i < args.length - 1; i += 1) {
+    const newArgs = [];
+    let i = 0;
+    for (; i < args.length - 1; i += 1) {
         if (args[i] === '-e' || args[i] === '--end-point') {
             wsEndpoint = args[++i];
             let address = DEFAULT_WS_ENDPOINTS[wsEndpoint];
@@ -168,7 +169,7 @@ async function main() {
         }
         newArgs.push(args[i]);
     }
-    if (args.length > 0) {
+    if (args.length - i > 0) {
         newArgs.push(args[args.length - 1]);
     }
     args = newArgs;

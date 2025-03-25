@@ -13,7 +13,7 @@ const DEFAULT_SNAPSHOT_PATH = 'snapshot_vks.json';
 
 function pallet(sub, p) {
     return {
-        "groth16": sub.settlementGroth16Pallet,
+        'groth16': sub.settlementGroth16Pallet,
         'proofofsql': sub.settlementProofOfSqlPallet,
         'ultraplonk': sub.settlementUltraplonkPallet,
         'risc0': sub.settlementRisc0Pallet
@@ -74,7 +74,7 @@ function usage() {
     console.error(`Usage : snapshot or restore vk
     node snapshot-vks.js [OPTIONS] snapshot
         or 
-    node snapshot-vks.js restore "//SudoSecret"
+    node snapshot-vks.js restore "//SudoSeed"
     
     OPTIONS:
     -e, --end-point [${DEFAULT_WS_ENDPOINT}] (address or key from ${Object.keys(DEFAULT_WS_ENDPOINTS)})
@@ -91,8 +91,9 @@ async function main() {
     let snapshotFile = DEFAULT_SNAPSHOT_PATH;
     let pallets = DEFAULT_PALLETS;
     // Skipping command and remove general options like -e
-    const newArgs = []
-    for (let i = 0; i < args.length - 1; i += 1) {
+    const newArgs = [];
+    let i = 0;
+    for (; i < args.length - 1; i += 1) {
         if (args[i] === '-e' || args[i] === '--end-point') {
             wsEndpoint = args[++i];
             let address = DEFAULT_WS_ENDPOINTS[wsEndpoint];
@@ -114,7 +115,7 @@ async function main() {
         }
         newArgs.push(args[i]);
     }
-    if (args.length > 0) {
+    if (args.length - i > 0) {
         newArgs.push(args[args.length - 1]);
     }
     args = newArgs;
