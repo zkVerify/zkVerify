@@ -15,14 +15,15 @@ services:
       - "${BENCH_BASE_PATH?err_unset}:${BENCH_BASE_PATH}:rw"
     blkio_config:
       device_read_iops:
-        - path: "${LOOP_DEV?err_unset}"
+        - path: "${DEVICE?err_unset}"
           rate: "${READ_IO?err_unset}"
       device_write_iops:
-        - path: "${LOOP_DEV?err_unset}"
+        - path: "${DEVICE?err_unset}"
           rate: "${WRITE_IO?err_unset}"
       device_read_bps:
-        - path: "${LOOP_DEV?err_unset}"
+        - path: "${DEVICE?err_unset}"
           rate: "${READ_BPS?err_unset}"
       device_write_bps:
-        - path: "${LOOP_DEV?err_unset}"
+        - path: "${DEVICE?err_unset}"
           rate: "${WRITE_BPS?err_unset}"
+    cpuset: 0,2,4,6,8,10,12,14
