@@ -20,6 +20,7 @@ use crate::*;
 use polkadot_primitives::{AssignmentId, AsyncBackingParams, SchedulerParams, ValidatorId};
 use sp_consensus_babe::AuthorityId as BabeId;
 use sp_consensus_grandpa::AuthorityId as GrandpaId;
+use sp_core::crypto::Ss58Codec;
 use sp_core::{sr25519, Pair, Public};
 use sp_genesis_builder::PresetId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
@@ -32,7 +33,6 @@ use sp_std::vec::Vec;
 const ENDOWMENT: Balance = 1_000_000 * VFY;
 const STASH_BOND: Balance = ENDOWMENT / 100;
 const DEFAULT_ENDOWED_SEEDS: [&str; 6] = ["Alice", "Bob", "Charlie", "Dave", "Eve", "Ferdie"];
-const LOCAL_N_AUTH: usize = 2;
 
 /// Generate a crypto pair from seed.
 pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
@@ -80,18 +80,6 @@ fn session_keys(
         para_assignment,
         authority_discovery,
     }
-}
-
-/// Generate a session authority key.
-pub fn authority_keys_from_seed(s: &str) -> Ids {
-    (
-        get_account_id_from_seed::<sr25519::Public>(s),
-        get_from_seed::<BabeId>(s),
-        get_from_seed::<GrandpaId>(s),
-        get_from_seed::<ValidatorId>(s),
-        get_from_seed::<AssignmentId>(s),
-        get_from_seed::<AuthorityDiscoveryId>(s),
-    )
 }
 
 // Generate authority IDs from SS58 addresses.
@@ -230,22 +218,16 @@ fn default_parachains_host_configuration(
 }
 
 #[derive(Clone)]
-struct FundedAccount<'a> {
-    /// The account-id sr25519 public key
-    _account: &'a str,
+struct FundedAccount {
     /// The account-id
     account_id: AccountId,
     /// Initial balance
     balance: Balance,
 }
 
-impl<'a> FundedAccount<'a> {
-    fn from_id(
-        sr25519_key: &'a str,
-        balance: Balance,
-    ) -> Result<Self, sp_core::crypto::PublicError> {
+impl FundedAccount {
+    fn from_id(sr25519_key: &str, balance: Balance) -> Result<Self, sp_core::crypto::PublicError> {
         Ok(Self {
-            _account: sr25519_key,
             account_id: from_ss58check(sr25519_key)?,
             balance,
         })
@@ -257,13 +239,9 @@ impl<'a> FundedAccount<'a> {
 }
 
 #[derive(Clone)]
-struct ValidatorData<'a> {
+struct ValidatorData {
     /// The account-id sr25519 public key
-    account: FundedAccount<'a>,
-    /// The common sr25519 public key (used for others key instead of grandpa and account)
-    _sr: &'a str,
-    /// The ed25519 public key (used for grandpa)
-    _ed: &'a str,
+    account: FundedAccount,
     ///  Bonded data
     bonded: Balance,
 
@@ -274,7 +252,7 @@ struct ValidatorData<'a> {
     authority_discovery_id: AuthorityDiscoveryId,
 }
 
-impl StakerData for ValidatorData<'_> {
+impl StakerData for ValidatorData {
     fn staker_data(&self) -> (AccountId, AccountId, Balance, StakerStatus<AccountId>) {
         (
             self.account.account_id.clone(),
@@ -285,11 +263,11 @@ impl StakerData for ValidatorData<'_> {
     }
 }
 
-impl<'a> ValidatorData<'a> {
+impl ValidatorData {
     fn from_ids(
-        sr25519_account_key: &'a str,
-        sr25519_common_key: &'a str,
-        ed25519_key: &'a str,
+        sr25519_account_key: &str,
+        sr25519_common_key: &str,
+        ed25519_key: &str,
         balance: Balance,
         bonded: Balance,
     ) -> Result<Self, sp_core::crypto::PublicError> {
@@ -297,12 +275,9 @@ impl<'a> ValidatorData<'a> {
             authority_ids_from_ss58(sr25519_account_key, sr25519_common_key, ed25519_key)?;
         Ok(Self {
             account: FundedAccount {
-                _account: sr25519_account_key,
                 account_id,
                 balance,
             },
-            _sr: sr25519_common_key,
-            _ed: ed25519_key,
             bonded,
             babe_id,
             grandpa_id,
@@ -325,14 +300,14 @@ impl<'a> ValidatorData<'a> {
 }
 
 #[derive(Clone)]
-struct NominatorData<'a> {
+struct NominatorData {
     /// The account-id sr25519 public key
-    account: FundedAccount<'a>,
+    account: FundedAccount,
     bonded: Balance,
     voted: Vec<AccountId>,
 }
 
-impl StakerData for NominatorData<'_> {
+impl StakerData for NominatorData {
     fn staker_data(&self) -> (AccountId, AccountId, Balance, StakerStatus<AccountId>) {
         (
             self.account.account_id.clone(),
@@ -524,26 +499,54 @@ pub fn zkv_testnet_config_genesis() -> Result<serde_json::Value, sp_core::crypto
 pub fn zkv_local_config_genesis() -> serde_json::Value {
     let balances = DEFAULT_ENDOWED_SEEDS
         .into_iter()
-        .map(|seed| (get_account_id_from_seed::<sr25519::Public>(seed), ENDOWMENT))
+        .map(|seed| {
+            FundedAccount::from_id(
+                get_account_id_from_seed::<sr25519::Public>(seed)
+                    .to_ss58check()
+                    .as_str(),
+                ENDOWMENT,
+            )
+            .expect("Invalid seed")
+        })
+        .collect::<Vec<_>>();
+
+    let authorities_num = 2;
+    let initial_authorities = DEFAULT_ENDOWED_SEEDS
+        .iter()
+        .take(authorities_num)
+        .map(|seed| {
+            ValidatorData::from_ids(
+                get_account_id_from_seed::<sr25519::Public>(seed)
+                    .to_ss58check()
+                    .as_str(),
+                get_from_seed::<BabeId>(seed).to_ss58check().as_str(),
+                get_from_seed::<GrandpaId>(seed).to_ss58check().as_str(),
+                ENDOWMENT,
+                STASH_BOND,
+            )
+            .expect("Invalid seed")
+        })
         .collect::<Vec<_>>();
 
     genesis(
         // Initial PoA authorities
-        DEFAULT_ENDOWED_SEEDS
-            .into_iter()
-            .map(authority_keys_from_seed)
-            .take(LOCAL_N_AUTH)
+        initial_authorities
+            .iter()
+            .map(ValidatorData::ids)
             .collect::<Vec<_>>(),
         // Sudo account
         get_account_id_from_seed::<sr25519::Public>(DEFAULT_ENDOWED_SEEDS[0]),
         // Pre-funded accounts
-        balances.clone(),
         balances
+            .iter()
+            .map(FundedAccount::json_data)
+            .collect::<Vec<_>>(),
+        initial_authorities
             .into_iter()
-            .map(|(a, _)| Box::new((a, STASH_BOND)) as Box<dyn StakerData>)
+            .map(|v| Box::new(v) as Box<dyn StakerData>)
             .collect(),
         // min validator count
-        1,
+        2,
         // max validator count
         None,
         // min validator bond
@@ -556,33 +559,61 @@ pub fn zkv_local_config_genesis() -> serde_json::Value {
 pub fn zkv_development_config_genesis() -> serde_json::Value {
     let balances = DEFAULT_ENDOWED_SEEDS
         .into_iter()
-        .map(|seed| (get_account_id_from_seed::<sr25519::Public>(seed), ENDOWMENT))
-        .take(2)
+        .map(|seed| {
+            FundedAccount::from_id(
+                get_account_id_from_seed::<sr25519::Public>(seed)
+                    .to_ss58check()
+                    .as_str(),
+                ENDOWMENT,
+            )
+            .expect("Invalid seed")
+        })
         .chain([
             // The following is a workaround for pallet_treasury benchmarks which hardcode
             // a payment of 100 (lower than EXISTENTIAL_DEPOSIT) to a given address ([0x0])
             #[cfg(feature = "runtime-benchmarks")]
-            (
-                from_ss58check("5C4hrfjw9DjXZTzV3MwzrrAr9P1MJhSrvWGWqi1eSuyUpnhM").unwrap(),
+            (FundedAccount::from_id(
+                "5C4hrfjw9DjXZTzV3MwzrrAr9P1MJhSrvWGWqi1eSuyUpnhM",
                 ENDOWMENT,
-            ),
+            )
+            .expect("Address not valid")),
         ])
+        .collect::<Vec<_>>();
+
+    let authorities_num = 1;
+    let initial_authorities = DEFAULT_ENDOWED_SEEDS
+        .iter()
+        .take(authorities_num)
+        .map(|seed| {
+            ValidatorData::from_ids(
+                get_account_id_from_seed::<sr25519::Public>(seed)
+                    .to_ss58check()
+                    .as_str(),
+                get_from_seed::<BabeId>(seed).to_ss58check().as_str(),
+                get_from_seed::<GrandpaId>(seed).to_ss58check().as_str(),
+                ENDOWMENT,
+                STASH_BOND,
+            )
+            .expect("Invalid seed")
+        })
         .collect::<Vec<_>>();
 
     genesis(
         // Initial PoA authorities
-        DEFAULT_ENDOWED_SEEDS
-            .into_iter()
-            .map(authority_keys_from_seed)
-            .take(1)
+        initial_authorities
+            .iter()
+            .map(ValidatorData::ids)
             .collect::<Vec<_>>(),
         // Sudo account
         get_account_id_from_seed::<sr25519::Public>(DEFAULT_ENDOWED_SEEDS[0]),
         // Pre-funded accounts
-        balances.clone(),
         balances
+            .iter()
+            .map(FundedAccount::json_data)
+            .collect::<Vec<_>>(),
+        initial_authorities
             .into_iter()
-            .map(|(a, _)| Box::new((a, STASH_BOND)) as Box<dyn StakerData>)
+            .map(|v| Box::new(v) as Box<dyn StakerData>)
             .collect(),
         // min validator count
         1,
@@ -620,43 +651,20 @@ pub fn get_preset(id: &sp_genesis_builder::PresetId) -> Option<sp_std::vec::Vec<
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde_json::Value;
 
-    // The following test verifies whether we added session configuration in the genesis block
-    // by checking that the json returned by testnet_genesis() contains the field "session"
+    #[cfg(feature = "runtime-benchmarks")]
     #[test]
-    fn testnet_genesis_should_set_session_keys() {
-        let initial_authorities = vec![authority_keys_from_seed("Alice")];
-        let root_key = get_account_id_from_seed::<sr25519::Public>("Alice");
-
-        let ret_val: serde_json::Value = genesis(
-            initial_authorities.clone(),
-            root_key,
-            vec![],
-            vec![Box::new((initial_authorities[0].0.clone(), 7 * VFY)) as Box<dyn StakerData>],
-            1,
-            None,
-            0,
-            0,
-        );
-
-        let session_config = &ret_val["session"];
-
-        // Check that we have the field "session" in the genesis config
-        assert!(!session_config.is_null());
-
-        let auth_len = session_config
-            .as_object()
-            .map(|inner| inner["keys"].as_array().unwrap().len())
-            .unwrap();
-        let staker = &ret_val["staking"]["stakers"][0];
-
-        // ret_val.clone()["staking"]["stakers"][0];
-        // Check that we have one "keys" set
-        assert_eq!(1, auth_len);
-        assert_eq!(
-            Value::Number((7 * VFY).into()),
-            staker.as_array().unwrap()[2]
-        );
+    fn development_genesis_config_unchanged() {
+        // This test checks that the genesis config that will be used for benchmarks is as
+        // expected, and that no change goes unnoticed, as it may break benchmarks.
+        // If changes are necessary and tested not to break any benchmark, then please update to
+        // golden reference at "tests/genesis_dev_golden.json".
+        // "zkv-relay build-spec --chain dev | jq -rc '.genesis.runtimeGenesis.patch' > genesis_dev_golden.json"
+        let genesis = zkv_development_config_genesis();
+        let file = std::fs::File::open("tests/genesis_dev_golden.json")
+            .expect("could not open golden file");
+        let genesis_golden: serde_json::Value =
+            serde_json::from_reader(file).expect("could not parse golden genesis patch");
+        assert_eq!(genesis, genesis_golden);
     }
 }
