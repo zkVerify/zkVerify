@@ -21262,7 +21262,7 @@ dependencies = [
 
 [[package]]
 name = "zkv-relay"
-version = "0.9.0"
+version = "0.9.1"
 dependencies = [
  "assert_cmd",
  "color-eyre",
