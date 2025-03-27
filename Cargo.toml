@@ -196,6 +196,7 @@ aggregate-rpc-runtime-api = { default-features = false, path = "rpc/aggregate/ru
 ismp = { default-features = false, version = "0.2.2" }
 pallet-ismp = { default-features = false, version = "=16.0.0" }
 pallet-ismp-runtime-api = { default-features = false, version = "16.0.0" }
+pallet-ismp-rpc = { default-features = false, version = "16.0.0" }
 ismp-grandpa = { default-features = false, version = "16.0.0" }
 pallet-token-gateway = { default-features = false, version = "16.0.0" }
 pallet-hyperbridge = { default-features = false, version = "16.0.0" }

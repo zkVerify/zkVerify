@@ -15,6 +15,7 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use jsonrpsee::RpcModule;
+use pallet_ismp_rpc::{IsmpApiServer, IsmpRpcHandler};
 use polkadot_primitives::{AccountId, Balance, Block, BlockNumber, Hash, Nonce};
 use sc_client_api::AuxStore;
 use sc_consensus_grandpa::FinalityProofProvider;
@@ -90,14 +91,17 @@ where
         + HeaderBackend<Block>
         + AuxStore
         + HeaderMetadata<Block, Error = BlockChainError>
+        + sc_client_api::BlockBackend<Block>
+        + sc_client_api::ProofProvider<Block>
         + Send
         + Sync
         + 'static,
-    C::Api: frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
-    C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
-    C::Api: aggregate_rpc::AggregateRuntimeApi<Block>,
-    C::Api: BabeApi<Block>,
-    C::Api: BlockBuilder<Block>,
+    C::Api: frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
+        + pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
+        + aggregate_rpc::AggregateRuntimeApi<Block>
+        + BabeApi<Block>
+        + BlockBuilder<Block>
+        + pallet_ismp_runtime_api::IsmpRuntimeApi<Block, Hash>,
     P: sc_transaction_pool_api::TransactionPool + Sync + Send + 'static,
     SC: SelectChain<Block> + 'static,
     B: sc_client_api::Backend<Block> + Send + Sync + 'static,
@@ -126,6 +130,8 @@ where
     io.merge(StateMigration::new(client.clone(), backend.clone()).into_rpc())?;
     io.merge(System::new(client.clone(), pool.clone()).into_rpc())?;
     io.merge(TransactionPayment::new(client.clone()).into_rpc())?;
+    io.merge(IsmpRpcHandler::new(client.clone(), backend)?.into_rpc())?;
+
     io.merge(
         Babe::new(
             client.clone(),

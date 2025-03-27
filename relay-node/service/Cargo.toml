@@ -137,6 +137,8 @@ sc-rpc = { workspace = true }
 sc-rpc-spec-v2 = { workspace = true }
 
 vk-hash = { workspace = true }
+pallet-ismp-rpc = { workspace = true }
+pallet-ismp-runtime-api  = { workspace = true }
 
 [dev-dependencies]
 test-client = { path = "../test/client", features = ["runtime-benchmarks"] }
