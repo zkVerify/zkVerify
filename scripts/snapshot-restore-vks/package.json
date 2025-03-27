@@ -1,0 +1,9 @@
+{
+  "name": "snapshot-vks",
+  "description": "Snapshot verifiers vks and restore them",
+  "version": "0.0.1",
+  "author": "HorizenLabs' Mainchain team",
+  "dependencies": {
+    "@polkadot/api": "15.8.1"
+  }
+}
