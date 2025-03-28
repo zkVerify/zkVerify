@@ -124,6 +124,15 @@ pub mod pallet {
         Vk(Box<K>),
     }
 
+    impl<K> sp_std::default::Default for VkOrHash<K>
+    where
+        K: sp_std::fmt::Debug + Clone + PartialEq + Encode + Decode + TypeInfo + MaxEncodedLen,
+    {
+        fn default() -> Self {
+            VkOrHash::Hash(H256::default())
+        }
+    }
+
     impl<K> VkOrHash<K>
     where
         K: sp_std::fmt::Debug + Clone + PartialEq + Encode + Decode + TypeInfo + MaxEncodedLen,

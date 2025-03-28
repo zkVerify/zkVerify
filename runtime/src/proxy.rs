@@ -33,13 +33,32 @@ impl Default for ProxyType {
         Self::Any
     }
 }
+
+impl ProxyType {
+    fn is_a_submit_proof_extrinsic(c: &RuntimeCall) -> bool {
+        matches!(
+            c,
+            RuntimeCall::SettlementGroth16Pallet(pallet_verifiers::Call::submit_proof { .. })
+                | RuntimeCall::SettlementRisc0Pallet(pallet_verifiers::Call::submit_proof { .. })
+                | RuntimeCall::SettlementUltraplonkPallet(
+                    pallet_verifiers::Call::submit_proof { .. }
+                )
+                | RuntimeCall::SettlementProofOfSqlPallet(
+                    pallet_verifiers::Call::submit_proof { .. }
+                )
+                | RuntimeCall::SettlementPlonky2Pallet(pallet_verifiers::Call::submit_proof { .. })
+        )
+    }
+}
+
 impl InstanceFilter<RuntimeCall> for ProxyType {
     fn filter(&self, c: &RuntimeCall) -> bool {
         match self {
             ProxyType::Any => true,
-            ProxyType::NonTransfer => matches!(
-                c,
-                RuntimeCall::System(..) |
+            ProxyType::NonTransfer => {
+                matches!(
+                    c,
+                    RuntimeCall::System(..) |
 				RuntimeCall::Scheduler(..) |
 				RuntimeCall::Babe(..) |
 				RuntimeCall::Timestamp(..) |
@@ -65,9 +84,10 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
                 RuntimeCall::SettlementGroth16Pallet(..) |
                 RuntimeCall::SettlementRisc0Pallet(..) |
                 RuntimeCall::SettlementUltraplonkPallet(..) |
-                RuntimeCall::SettlementPlonky2Pallet(..) |
-                RuntimeCall::SettlementProofOfSqlPallet(..)
-            ),
+                RuntimeCall::SettlementProofOfSqlPallet(..) |
+                RuntimeCall::SettlementPlonky2Pallet(..)
+                ) && !Self::is_a_submit_proof_extrinsic(c)
+            }
             ProxyType::Governance => matches!(
                 c,
                 RuntimeCall::Treasury(..)

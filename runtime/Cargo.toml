@@ -120,6 +120,9 @@ xcm = { workspace = true }
 xcm-procedural = { workspace = true }
 hex-literal = { workspace = true }
 
+[dev-dependencies]
+rstest = { workspace = true }
+
 [build-dependencies]
 substrate-wasm-builder = { workspace = true, optional = true }
 
