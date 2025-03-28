@@ -21,5 +21,6 @@ mod availability;
 mod misc;
 mod pallets_interact;
 mod payout;
+mod proxy;
 mod testsfixtures;
 mod use_correct_weights;
