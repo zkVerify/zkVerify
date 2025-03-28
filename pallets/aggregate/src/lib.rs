@@ -691,6 +691,7 @@ pub mod pallet {
                 if !domain.aggregate_rules.can_user_aggregate_it::<T>(
                     &aggregator,
                     &domain.owner,
+                    &domain.delivery.owner,
                     &aggregation,
                 ) {
                     Err(BadOrigin)?
@@ -1047,15 +1048,19 @@ pub mod pallet {
             &self,
             aggregator: &User<T::AccountId>,
             domain_owner: &User<T::AccountId>,
+            delivery_owner: &T::AccountId,
             aggregation: &Aggregation<T>,
         ) -> bool {
+            let is_owner_auth = || {
+                aggregator.account() == Some(delivery_owner)
+                    || aggregator == domain_owner
+                    || aggregator.is_manager()
+            };
             match self {
                 AggregateSecurityRules::Untrusted => true,
-                AggregateSecurityRules::OnlyOwner => {
-                    aggregator == domain_owner || aggregator.is_manager()
-                }
+                AggregateSecurityRules::OnlyOwner => is_owner_auth(),
                 AggregateSecurityRules::OnlyOwnerUncompleted => {
-                    aggregation.completed() || aggregator == domain_owner || aggregator.is_manager()
+                    aggregation.completed() || is_owner_auth()
                 }
             }
         }

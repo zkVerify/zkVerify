@@ -732,17 +732,17 @@ mod aggregate {
         }
 
         #[rstest]
-        fn only_owner_only_owner_uncompleted_and_should_accept_calls_from_owner_and_manager(
+        fn only_owner_only_owner_uncompleted_and_should_accept_aggregate_call(
             #[values(
                 AggregateSecurityRules::OnlyOwner,
                 AggregateSecurityRules::OnlyOwnerUncompleted
             )]
             rules: AggregateSecurityRules,
-            #[values(USER_1, ROOT_USER)] aggregator: AccountId,
+            #[values(USER_1, ROOT_USER, USER_DELIVERY_OWNER)] aggregator: AccountId,
             #[values(true, false)] completed: bool,
         ) {
             let (mut test, domain_id, aggregation_id) =
-                init_domain(USER_1, rules, 16, completed, None);
+                init_domain(USER_1, rules, 16, completed, Some(USER_DELIVERY_OWNER));
             test.execute_with(|| {
                 assert_ok!(Aggregate::aggregate(
                     Origin::Signed(aggregator).into(),
@@ -793,7 +793,7 @@ mod aggregate {
             #[case] completed: bool,
         ) {
             let (mut test, domain_id, aggregation_id) =
-                init_domain(USER_1, rules, 16, completed, None);
+                init_domain(USER_1, rules, 16, completed, Some(USER_DELIVERY_OWNER));
             test.execute_with(|| {
                 assert_noop!(
                     Aggregate::aggregate(
