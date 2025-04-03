@@ -28,7 +28,7 @@ pub type Pubs = Vec<u8>;
 pub type Proof<T> = MorphProof<T>;
 pub type Vk<T> = VkWithConfig<T>;
 
-const MAX_DEGREE_BITS: u32 = 19;
+const MAX_DEGREE_BITS: usize = 19;
 
 impl<T: Config> Vk<T> {
     pub fn validate_size(&self) -> Result<(), VerifyError> {
@@ -140,14 +140,14 @@ where
     F: RichField + Extendable<D>,
     C: GenericConfig<D, F = F>,
 {
-    let vk = plonky2_verifier::deserializer::deserialize_vk::<F, C, D>(vk)
+    plonky2_verifier::deserialize_vk::<F, C, D>(vk)
         .map_err(ValidateError::from)
         .and_then(|vk| {
             (vk.common.config == CircuitConfig::standard_recursion_config()
                 && vk.common.fri_params.degree_bits <= MAX_DEGREE_BITS)
                 .then_some(())
                 .ok_or(ValidateError::UnsupportedCircuitConfig)
-        });
+        })
 }
 
 pub struct Plonky2Weight<W: weight::WeightInfo>(PhantomData<W>);
