@@ -7,7 +7,11 @@ use frame_support::ensure;
 use frame_support::pallet_prelude::Get;
 use frame_support::weights::Weight;
 use hp_verifiers::{Cow, Verifier, VerifyError};
-use plonky2_verifier::validate::validate_vk;
+use plonky2::field::extension::Extendable;
+use plonky2::hash::hash_types::RichField;
+use plonky2::plonk::circuit_data::CircuitConfig;
+use plonky2::plonk::config::{GenericConfig, KeccakGoldilocksConfig, PoseidonGoldilocksConfig};
+use plonky2_verifier::validate::ValidateError;
 use plonky2_verifier::verify;
 use sp_std::marker::PhantomData;
 use sp_std::vec::Vec;
@@ -23,6 +27,8 @@ pub use weight::WeightInfo;
 pub type Pubs = Vec<u8>;
 pub type Proof<T> = MorphProof<T>;
 pub type Vk<T> = VkWithConfig<T>;
+
+const MAX_DEGREE_BITS: u32 = 19;
 
 impl<T: Config> Vk<T> {
     pub fn validate_size(&self) -> Result<(), VerifyError> {
@@ -103,14 +109,46 @@ impl<T: Config> Verifier for Plonky2<T> {
 
         let vk = plonky2_verifier::Vk::from(vk.clone());
 
-        validate_vk(&vk)
-            .inspect_err(|e| log::debug!("VK validation failed: {:?}", e))
-            .map_err(|_| VerifyError::InvalidVerificationKey)
+        // validate_vk(&vk)
+        //     .inspect_err(|e| log::debug!("VK validation failed: {:?}", e))
+        //     .map_err(|_| VerifyError::InvalidVerificationKey)
+
+        match vk.config {
+            plonky2_verifier::Plonky2Config::Keccak => {
+                const D: usize = 2;
+                type C = KeccakGoldilocksConfig;
+                type F = <C as GenericConfig<D>>::F;
+
+                validate_vk_inner::<F, C, D>(&vk.bytes)
+            }
+            plonky2_verifier::Plonky2Config::Poseidon => {
+                const D: usize = 2;
+                type C = PoseidonGoldilocksConfig;
+                type F = <C as GenericConfig<D>>::F;
+
+                validate_vk_inner::<F, C, D>(&vk.bytes)
+            }
+        }
     }
 
     fn pubs_bytes(pubs: &Self::Pubs) -> Cow<[u8]> {
         Cow::Borrowed(pubs)
     }
+}
+
+fn validate_vk_inner<F, C, const D: usize>(vk: &[u8]) -> plonky2_verifier::ValidateResult
+where
+    F: RichField + Extendable<D>,
+    C: GenericConfig<D, F = F>,
+{
+    let vk = plonky2_verifier::deserializer::deserialize_vk::<F, C, D>(vk)
+        .map_err(ValidateError::from)
+        .and_then(|vk| {
+            (vk.common.config == CircuitConfig::standard_recursion_config()
+                && vk.common.fri_params.degree_bits <= MAX_DEGREE_BITS)
+                .then_some(())
+                .ok_or(ValidateError::UnsupportedCircuitConfig)
+        });
 }
 
 pub struct Plonky2Weight<W: weight::WeightInfo>(PhantomData<W>);
