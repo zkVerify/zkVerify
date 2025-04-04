@@ -143,10 +143,10 @@ where
     plonky2_verifier::deserialize_vk::<F, C, D>(vk)
         .map_err(ValidateError::from)
         .and_then(|vk| {
-            (vk.common.config == CircuitConfig::standard_recursion_config()
-                && vk.common.fri_params.degree_bits <= MAX_DEGREE_BITS)
-                .then_some(())
-                .ok_or(ValidateError::UnsupportedCircuitConfig)
+            (vk.common.fri_params.degree_bits <= MAX_DEGREE_BITS
+                && vk.common.config == CircuitConfig::standard_recursion_config())
+            .then_some(())
+            .ok_or(ValidateError::UnsupportedCircuitConfig)
         })
 }
 
