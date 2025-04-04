@@ -23,7 +23,7 @@ fn verify_valid_proof(valid_test_data: TestData<MockConfig>) {
 mod reject {
     use frame_support::assert_err;
     use hp_verifiers::VerifyError;
-    use pallet_verifiers::mock::Test;
+    // use pallet_verifiers::mock::Test;
 
     use super::*;
 
@@ -94,18 +94,16 @@ mod reject {
     fn should_not_validate_vk_with_too_large_degree_bits(valid_test_data: TestData<MockConfig>) {
         let TestData {
             mut vk,
-            proof,
-            pubs,
+            proof: _,
+            pubs: _,
         } = valid_test_data;
 
-        const D: usize = 2;
-        type C = PoseidonGoldilocksConfig;
-        type F = <C as GenericConfig<D>>::F;
+        // Set the byte controlling degree_bits to a very high value
+        vk.bytes[732] = 255;
 
-        let circuit_data = plonky2_verifier::deserialize_vk::<F, C, D>(&vk.bytes[..]).unwrap();
-        println!(
-            "degree_bits: {}",
-            circuit_data.common.fri_params.degree_bits
+        assert_err!(
+            Plonky2::<MockConfig>::validate_vk(&vk),
+            VerifyError::InvalidVerificationKey
         );
     }
 
