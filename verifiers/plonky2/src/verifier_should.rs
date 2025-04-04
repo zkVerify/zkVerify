@@ -23,7 +23,6 @@ fn verify_valid_proof(valid_test_data: TestData<MockConfig>) {
 mod reject {
     use frame_support::assert_err;
     use hp_verifiers::VerifyError;
-    // use pallet_verifiers::mock::Test;
 
     use super::*;
 
