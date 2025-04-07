@@ -1821,6 +1821,8 @@ fn return_the_correct_weigh_on_proof_verified() {
 
 mod aggregation_id_max {
 
+    use frame_support::assert_err_ignore_postinfo;
+
     use super::*;
 
     const MAX_AGGREGATE_ID: u64 = u64::MAX;
@@ -1853,11 +1855,25 @@ mod aggregation_id_max {
                 MAX_AGGREGATE_ID
             ));
 
-            assert_eq!(
-                DomainState::Hold,
-                Domains::<Test>::get(DOMAIN_ID).unwrap().state
-            );
             assert_state_changed_evt(DOMAIN_ID, DomainState::Hold);
+
+            // Note: Domain contains only one aggregation. Once published, and in hold, state is automatically switched to Removable.
+            assert_state_changed_evt(DOMAIN_ID, DomainState::Removable);
+
+            // Not possible to submit new proofs/call aggregate on this domain
+            Aggregate::on_proof_verified(Some(USER_1), DOMAIN, statement);
+            assert_cannot_aggregate_evt(
+                statement,
+                CannotAggregateCause::InvalidDomainState {
+                    domain_id: DOMAIN_ID,
+                    state: DomainState::Removable,
+                },
+            );
+
+            assert_err_ignore_postinfo!(
+                Aggregate::aggregate(Origin::Signed(USER_DOMAIN_1).into(), DOMAIN_ID, 0),
+                Error::<Test>::InvalidAggregationId
+            );
         })
     }
 
@@ -1889,6 +1905,21 @@ mod aggregation_id_max {
                 Domains::<Test>::get(DOMAIN_ID).unwrap().state
             );
             assert_state_changed_evt(DOMAIN_ID, DomainState::Hold);
+
+            // Not possible to submit new proofs/call aggregate on this domain
+            Aggregate::on_proof_verified(Some(USER_1), DOMAIN, statement);
+            assert_cannot_aggregate_evt(
+                statement,
+                CannotAggregateCause::InvalidDomainState {
+                    domain_id: DOMAIN_ID,
+                    state: DomainState::Hold,
+                },
+            );
+
+            assert_err_ignore_postinfo!(
+                Aggregate::aggregate(Origin::Signed(USER_DOMAIN_1).into(), DOMAIN_ID, 0),
+                Error::<Test>::InvalidAggregationId
+            );
         })
     }
 }

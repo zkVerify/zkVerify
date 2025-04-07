@@ -481,16 +481,17 @@ pub mod pallet {
             if self.next.statements.is_empty() {
                 None
             } else {
-                let aggregation = self.next.clone();
-                if let Some(new_aggregation) = aggregation.create_next(aggregation.size) {
-                    self.next = new_aggregation;
-                } else {
+                let new_aggregation = self.next.create_next(self.next.size).unwrap_or_else(|| {
                     // Cannot create a new aggregation. Must hold the domain.
                     self.state = DomainState::Hold;
                     self.emit_state_changed_event();
-                }
+                    // Return a dummy aggregation with which replacing the old one.
+                    // Domain is in Hold state so no-one can submit proofs or call aggregate on top
+                    // of this new one.
+                    crate::data::AggregationEntry::create(0, self.next.size)
+                });
 
-                Some(aggregation)
+                Some(sp_std::mem::replace(&mut self.next, new_aggregation))
             }
         }
 
