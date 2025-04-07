@@ -788,6 +788,10 @@ pub mod pallet {
                 .or_else(|| caller.account().cloned())
                 .ok_or(Error::<T>::MissedDeliveryOwnership)?;
             let id = Self::next_domain_id();
+            if id == u32::MAX {
+                log::error!("Reached max id: {id:?}. Cannot create new domain.");
+                Err(Error::<T>::InvalidDomainParams)?
+            }
             let queue_size = queue_size.unwrap_or(T::MaxPendingPublishQueueSize::get());
             let delivery = DeliveryParams::new(delivery_owner, delivery);
 
@@ -820,7 +824,8 @@ pub mod pallet {
                 delivery,
             )?;
             Domains::<T>::insert(id, domain);
-            NextDomainId::<T>::put(id + 1);
+            let next_id = id.checked_add(1).expect("Cannot overflow. QED");
+            NextDomainId::<T>::put(next_id);
             Self::deposit_event(Event::NewDomain { id });
 
             Ok(caller.post_info(None))

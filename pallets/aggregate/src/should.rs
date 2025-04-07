@@ -1329,6 +1329,24 @@ mod register_domain {
         assert_eq!(info.pays_fee, Pays::Yes);
         assert_eq!(info.weight, MockWeightInfo::register_domain());
     }
+
+    #[test]
+    fn no_more_domain_ids() {
+        test().execute_with(|| {
+            NextDomainId::<Test>::put(u32::MAX);
+            assert_noop!(
+                Aggregate::register_domain(
+                    Origin::Signed(USER_DOMAIN_1).into(),
+                    16,
+                    None,
+                    AggregateSecurityRules::Untrusted,
+                    none_delivering(),
+                    None
+                ),
+                Error::<Test>::InvalidDomainParams
+            );
+        })
+    }
 }
 
 mod hold_domain {
