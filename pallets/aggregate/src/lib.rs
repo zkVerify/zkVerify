@@ -247,12 +247,7 @@ pub mod pallet {
                     domain_id,
                     aggregation_id: domain.next.id,
                 });
-                let to_publish = domain
-                    .append_statement(account.clone(), reserve, statement)
-                    .unwrap_or_else(|err| {
-                        log::debug!("Failed adding proof to a given aggregation queue: {err:?}");
-                        None
-                    });
+                let to_publish = domain.append_statement(account.clone(), reserve, statement);
                 if let Some(aggregation) = to_publish {
                     domain.available_aggregation(aggregation);
                 }
@@ -455,11 +450,11 @@ pub mod pallet {
 
         /// Return the aggregation `id`, removing it from the queue of aggregations to be
         /// published.
-        fn take_aggregation(&mut self, id: u64) -> Result<Option<Aggregation<T>>, Error<T>> {
+        fn take_aggregation(&mut self, id: u64) -> Option<Aggregation<T>> {
             if self.next.id == id {
                 self.pop_next_aggregation()
             } else {
-                Ok(self.should_publish.remove(&id))
+                self.should_publish.remove(&id)
             }
         }
 
@@ -482,15 +477,20 @@ pub mod pallet {
 
         /// Return the next non-empty aggregation to be published, or none if the aggregation is empty.
         /// If successful, a new aggregation is created as next to be published.
-        fn pop_next_aggregation(&mut self) -> Result<Option<Aggregation<T>>, Error<T>> {
+        fn pop_next_aggregation(&mut self) -> Option<Aggregation<T>> {
             if self.next.statements.is_empty() {
-                Ok(None)
+                None
             } else {
-                let aggregation = &mut self.next;
-                aggregation.create_next(aggregation.size).map_or(
-                    Err(Error::<T>::NextAggregationIdUnavailable),
-                    |new_aggregation| Ok(Some(sp_std::mem::replace(aggregation, new_aggregation))),
-                )
+                let aggregation = self.next.clone();
+                if let Some(new_aggregation) = aggregation.create_next(aggregation.size) {
+                    self.next = new_aggregation;
+                } else {
+                    // Cannot create a new aggregation. Must hold the domain.
+                    self.state = DomainState::Hold;
+                    self.emit_state_changed_event();
+                }
+
+                Some(aggregation)
             }
         }
 
@@ -505,7 +505,7 @@ pub mod pallet {
             account: T::AccountId,
             reserve: Reserve<BalanceOf<T>>,
             statement: H256,
-        ) -> Result<Option<Aggregation<T>>, Error<T>> {
+        ) -> Option<Aggregation<T>> {
             self.next
                 .statements
                 .try_push(StatementEntry::new(account.clone(), reserve, statement))
@@ -513,7 +513,7 @@ pub mod pallet {
             if self.is_next_aggregation_complete() {
                 self.pop_next_aggregation()
             } else {
-                Ok(None)
+                None
             }
         }
 
@@ -688,7 +688,7 @@ pub mod pallet {
                         Error::<T>::UnknownDomainId,
                     )
                 })?;
-                let aggregation = domain.take_aggregation(aggregation_id)?.ok_or_else(|| {
+                let aggregation = domain.take_aggregation(aggregation_id).ok_or_else(|| {
                     dispatch_post_error(
                         T::WeightInfo::aggregate_on_invalid_id(),
                         Error::<T>::InvalidAggregationId,
@@ -951,22 +951,23 @@ pub mod pallet {
         dest: Option<&AccountOf<T>>,
         amount: BalanceOf<T>,
     ) {
-        let remain = amount.defensive_saturating_sub(
-            if let Some(dest) = dest {
-                T::Hold::transfer_on_hold(
-                    &reason.into(),
-                    account,
-                    dest,
-                    amount,
-                    Precision::BestEffort,
-                    Restriction::Free,
-                    Fortitude::Polite,
-                )
-            } else {
-                T::Hold::release(&reason.into(), account, amount, Precision::BestEffort)
-            }
-            .expect("Call user should exists. qed"),
-        );
+        let transfer = if let Some(dest) = dest {
+            T::Hold::transfer_on_hold(
+                &reason.into(),
+                account,
+                dest,
+                amount,
+                Precision::BestEffort,
+                Restriction::Free,
+                Fortitude::Polite,
+            )
+        } else {
+            T::Hold::release(&reason.into(), account, amount, Precision::BestEffort)
+        }
+        .expect("Call user should exists. qed");
+
+        let remain = amount.defensive_saturating_sub(transfer);
+
         if remain > 0_u32.into() {
             log::warn!("Cannot refund all funds from {account:?} to {dest:?}: missed {remain:?}")
         };

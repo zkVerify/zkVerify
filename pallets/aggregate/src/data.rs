@@ -16,6 +16,7 @@
 use core::marker::PhantomData;
 
 use codec::{Decode, Encode, MaxEncodedLen};
+use educe::Educe;
 use frame_support::{PartialEqNoBound, RuntimeDebugNoBound};
 use hp_dispatch::Destination;
 use scale_info::TypeInfo;
@@ -80,7 +81,8 @@ impl<T: Get<AggregationSize>> Get<u32> for VecSize<T> {
     }
 }
 
-#[derive(Clone, Encode, Decode, TypeInfo, MaxEncodedLen, RuntimeDebugNoBound, PartialEqNoBound)]
+#[derive(Educe, Encode, Decode, TypeInfo, MaxEncodedLen, RuntimeDebugNoBound, PartialEqNoBound)]
+#[educe(Clone)]
 #[scale_info(skip_type_params(S))]
 /// The aggregation data. That is the entry where we put all the [`StatementEntry`]
 /// that should be aggregated.

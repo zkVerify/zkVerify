@@ -8574,6 +8574,7 @@ name = "pallet-aggregate"
 version = "0.1.0"
 dependencies = [
  "binary-merkle-tree",
+ "educe",
  "frame-benchmarking",
  "frame-support",
  "frame-system",

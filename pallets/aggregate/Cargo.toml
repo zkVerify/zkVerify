@@ -30,6 +30,10 @@ hp-on-proof-verified = { workspace = true }
 hp-dispatch = { workspace = true }
 hex-literal = { workspace = true }
 
+educe = { version = "0.6.0", default-features = false, features = [
+    "Clone",
+] }
+
 [dev-dependencies]
 pallet-balances = { workspace = true, features = ["std"] }
 sp-io = { workspace = true, features = ["std"] }

@@ -1808,14 +1808,14 @@ mod aggregation_id_max {
     const MAX_AGGREGATE_ID: u64 = u64::MAX;
 
     #[test]
-    fn fail_on_aggregate() {
+    fn hold_on_aggregate() {
         test().execute_with(|| {
             let domain = Domain::<Test>::try_create(
                 DOMAIN_ID,
                 USER_DOMAIN_1.into(),
                 MAX_AGGREGATE_ID,
-                16,
-                8,
+                2,
+                1,
                 AggregateSecurityRules::OnlyOwnerUncompleted,
                 None,
                 DeliveryParams::<AccountId, Balance>::new(
@@ -1829,26 +1829,28 @@ mod aggregation_id_max {
             let statement = H256::from_low_u64_be(123);
 
             Aggregate::on_proof_verified(Some(USER_1), DOMAIN, statement);
+            assert_ok!(Aggregate::aggregate(
+                Origin::Signed(USER_DOMAIN_1).into(),
+                DOMAIN_ID,
+                MAX_AGGREGATE_ID
+            ));
 
-            assert_noop!(
-                Aggregate::aggregate(
-                    Origin::Signed(USER_DOMAIN_1).into(),
-                    DOMAIN_ID,
-                    MAX_AGGREGATE_ID
-                ),
-                Error::<Test>::NextAggregationIdUnavailable
+            assert_eq!(
+                DomainState::Hold,
+                Domains::<Test>::get(DOMAIN_ID).unwrap().state
             );
+            assert_state_changed_evt(DOMAIN_ID, DomainState::Hold);
         })
     }
 
     #[test]
-    fn fail_on_on_proof_verified() {
+    fn hold_on_on_proof_verified() {
         test().execute_with(|| {
             let domain = Domain::<Test>::try_create(
                 DOMAIN_ID,
                 USER_DOMAIN_1.into(),
                 MAX_AGGREGATE_ID,
-                16,
+                1,
                 1,
                 AggregateSecurityRules::OnlyOwnerUncompleted,
                 None,
@@ -1864,13 +1866,11 @@ mod aggregation_id_max {
 
             Aggregate::on_proof_verified(Some(USER_DOMAIN_1), Some(DOMAIN_ID), statement);
 
-            assert_not_evt(
-                Event::AggregationComplete {
-                    domain_id: DOMAIN_ID,
-                    aggregation_id: MAX_AGGREGATE_ID,
-                },
-                "",
+            assert_eq!(
+                DomainState::Hold,
+                Domains::<Test>::get(DOMAIN_ID).unwrap().state
             );
+            assert_state_changed_evt(DOMAIN_ID, DomainState::Hold);
         })
     }
 }
