@@ -48,6 +48,7 @@ std = [
     "pallet-verifiers/std",
     "pallet-balances/std",
     "plonky2-verifier/std",
+    "plonky2/std",
     "frame-benchmarking/std",
     "log/std",
     "sp-io/std",
