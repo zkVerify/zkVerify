@@ -20,7 +20,7 @@ use frame_support::{ensure, fail, pallet_prelude::*, weights::Weight};
 use hp_verifiers::{Verifier, VerifyError};
 use log::debug;
 use risc0_verifier::poseidon2_injection::Boxed as _;
-use risc0_verifier::{Journal, SegmentInfo, Verifier as _, VerifierContext, Vk as Risc0Vk};
+use risc0_verifier::{Journal, SegmentInfo, Verifier as _, Vk as Risc0Vk, V1, V2};
 use sp_core::{Get, H256};
 use sp_std::vec::Vec;
 
@@ -75,6 +75,7 @@ pub enum Proof {
     V1_0(Vec<u8>),
     V1_1(Vec<u8>),
     V1_2(Vec<u8>),
+    V2_0(Vec<u8>),
 }
 
 pub type Pubs = Vec<u8>;
@@ -84,6 +85,7 @@ enum R0Proof {
     V1_0(risc0_verifier::Proof),
     V1_1(risc0_verifier::Proof),
     V1_2(risc0_verifier::Proof),
+    V2_0(risc0_verifier::Proof),
 }
 
 enum ProofStructure {
@@ -117,6 +119,7 @@ impl R0Proof {
             R0Proof::V1_0(p) => p,
             R0Proof::V1_1(p) => p,
             R0Proof::V1_2(p) => p,
+            R0Proof::V2_0(p) => p,
         }
     }
 
@@ -125,20 +128,16 @@ impl R0Proof {
             R0Proof::V1_0(p) => p,
             R0Proof::V1_1(p) => p,
             R0Proof::V1_2(p) => p,
+            R0Proof::V2_0(p) => p,
         }
     }
 
     fn verifier(&self) -> sp_std::boxed::Box<dyn risc0_verifier::Verifier> {
         match self {
-            R0Proof::V1_0(_r0_proof) => VerifierContext::v1_0()
-                .inject_native_poseidon2_if_needed()
-                .boxed(),
-            R0Proof::V1_1(_r0_proof) => VerifierContext::v1_1()
-                .inject_native_poseidon2_if_needed()
-                .boxed(),
-            R0Proof::V1_2(_r0_proof) => VerifierContext::v1_2()
-                .inject_native_poseidon2_if_needed()
-                .boxed(),
+            R0Proof::V1_0(_r0_proof) => V1::v1_0().inject_native_poseidon2_if_needed().boxed(),
+            R0Proof::V1_1(_r0_proof) => V1::v1_1().inject_native_poseidon2_if_needed().boxed(),
+            R0Proof::V1_2(_r0_proof) => V1::v1_2().inject_native_poseidon2_if_needed().boxed(),
+            R0Proof::V2_0(_r0_proof) => V2::v2_0().inject_native_poseidon2_if_needed().boxed(),
         }
     }
 }
@@ -152,6 +151,7 @@ impl TryFrom<&Proof> for R0Proof {
             Proof::V1_0(_) => Self::V1_0(risc0_proof),
             Proof::V1_1(_) => Self::V1_1(risc0_proof),
             Proof::V1_2(_) => Self::V1_2(risc0_proof),
+            Proof::V2_0(_) => Self::V2_0(risc0_proof),
         })
     }
 }
@@ -162,6 +162,7 @@ impl Proof {
             Proof::V1_0(proof_bytes) => proof_bytes.len(),
             Proof::V1_1(proof_bytes) => proof_bytes.len(),
             Proof::V1_2(proof_bytes) => proof_bytes.len(),
+            Proof::V2_0(proof_bytes) => proof_bytes.len(),
         }
     }
 
@@ -170,6 +171,7 @@ impl Proof {
             Proof::V1_0(proof_bytes) => proof_bytes.as_slice(),
             Proof::V1_1(proof_bytes) => proof_bytes.as_slice(),
             Proof::V1_2(proof_bytes) => proof_bytes.as_slice(),
+            Proof::V2_0(proof_bytes) => proof_bytes.as_slice(),
         }
     }
 }
@@ -275,6 +277,9 @@ impl<T: Config> Verifier for Risc0<T> {
             ),
             Proof::V1_2(_) => hex_literal::hex!(
                 "5f39e7751602fc8dbc1055078b61e2704565e3271312744119505ab26605a942"
+            ),
+            Proof::V2_0(_) => hex_literal::hex!(
+                "4b591002da5e767a89a636535a1758bd5f5e2677c42811f11b0a6429d2429a1b"
             ),
         };
         H256(h)
