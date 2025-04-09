@@ -20,7 +20,7 @@ use frame_support::{ensure, fail, pallet_prelude::*, weights::Weight};
 use hp_verifiers::{Verifier, VerifyError};
 use log::debug;
 use risc0_derive::R0Proof;
-use risc0_verifier::{Journal, SegmentInfo, Verifier as _, Vk as Risc0Vk, V1, V2};
+use risc0_verifier::{v1_0, v1_1, v1_2, v2_0, Journal, SegmentInfo, Verifier as _, Vk as Risc0Vk};
 use sp_core::{Get, H256};
 use sp_std::vec::Vec;
 
@@ -109,10 +109,10 @@ impl R0Proof {
 
     fn verifier(&self) -> sp_std::boxed::Box<dyn risc0_verifier::Verifier> {
         match self {
-            R0Proof::V1_0(_r0_proof) => V1::v1_0().inject_native_poseidon2_if_needed().boxed(),
-            R0Proof::V1_1(_r0_proof) => V1::v1_1().inject_native_poseidon2_if_needed().boxed(),
-            R0Proof::V1_2(_r0_proof) => V1::v1_2().inject_native_poseidon2_if_needed().boxed(),
-            R0Proof::V2_0(_r0_proof) => V2::v2_0().inject_native_poseidon2_if_needed().boxed(),
+            R0Proof::V1_0(_r0_proof) => v1_0().inject_native_poseidon2_if_needed().boxed(),
+            R0Proof::V1_1(_r0_proof) => v1_1().inject_native_poseidon2_if_needed().boxed(),
+            R0Proof::V1_2(_r0_proof) => v1_2().inject_native_poseidon2_if_needed().boxed(),
+            R0Proof::V2_0(_r0_proof) => v2_0().inject_native_poseidon2_if_needed().boxed(),
         }
     }
 }

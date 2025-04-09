@@ -14312,8 +14312,8 @@ dependencies = [
 
 [[package]]
 name = "risc0-verifier"
-version = "0.5.0"
-source = "git+https://github.com/HorizenLabs/risc0-verifier.git?branch=md/v2_support#8daaa2d9fb4bbccfb5f9eb43dbf221535308d6e5"
+version = "0.6.0"
+source = "git+https://github.com/HorizenLabs/risc0-verifier.git?tag=v0.6.0#5f658527cdeb53199c9dd694d84a03b8526b7d27"
 dependencies = [
  "anyhow",
  "bytemuck",

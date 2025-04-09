@@ -68,7 +68,7 @@ mod benchmarks {
         #[block]
         {
             let proof: R0Proof = proof.try_into().unwrap();
-            risc0_verifier::V1::v1_2()
+            risc0_verifier::v1_2()
                 .verify(vk, proof.take_proof(), journal)
                 .unwrap()
         }
@@ -82,7 +82,7 @@ mod benchmarks {
         #[block]
         {
             let proof: crate::R0Proof = Proof::V1_2(PROOF_SUCCINCT.to_vec()).try_into().unwrap();
-            risc0_verifier::V1::v1_2()
+            risc0_verifier::v1_2()
                 .verify(vk, proof.take_proof(), journal)
                 .unwrap()
         }
@@ -96,7 +96,7 @@ mod benchmarks {
         #[block]
         {
             let proof: crate::R0Proof = Proof::V1_2(PROOF_SUCCINCT.to_vec()).try_into().unwrap();
-            risc0_verifier::V1::v1_2()
+            risc0_verifier::v1_2()
                 .inject_native_poseidon2_if_needed()
                 .verify(vk, proof.take_proof(), journal)
                 .unwrap()
@@ -114,7 +114,7 @@ mod benchmarks {
                 Proof::V1_1(PROOF_RISC0_VERIFIER_POSEIDON2_16_VM_1_1.to_vec())
                     .try_into()
                     .unwrap();
-            risc0_verifier::V1::v1_1()
+            risc0_verifier::v1_1()
                 .verify(vk, proof.take_proof(), journal)
                 .unwrap()
         }
@@ -131,7 +131,7 @@ mod benchmarks {
                 Proof::V1_1(PROOF_RISC0_VERIFIER_POSEIDON2_16_VM_1_1.to_vec())
                     .try_into()
                     .unwrap();
-            risc0_verifier::V1::v1_1()
+            risc0_verifier::v1_1()
                 .inject_native_poseidon2_if_needed()
                 .verify(vk, proof.take_proof(), journal)
                 .unwrap()
@@ -149,7 +149,7 @@ mod benchmarks {
                 Proof::V1_2(PROOF_RISC0_VERIFIER_POSEIDON2_22_VM_1_2.to_vec())
                     .try_into()
                     .unwrap();
-            risc0_verifier::V1::v1_2()
+            risc0_verifier::v1_2()
                 .verify(vk, proof.take_proof(), journal)
                 .unwrap()
         }
@@ -166,7 +166,7 @@ mod benchmarks {
                 Proof::V1_2(PROOF_RISC0_VERIFIER_POSEIDON2_22_VM_1_2.to_vec())
                     .try_into()
                     .unwrap();
-            risc0_verifier::V1::v1_2()
+            risc0_verifier::v1_2()
                 .inject_native_poseidon2_if_needed()
                 .verify(vk, proof.take_proof(), journal)
                 .unwrap()
