@@ -19,7 +19,7 @@ use core::marker::PhantomData;
 use frame_support::{ensure, fail, pallet_prelude::*, weights::Weight};
 use hp_verifiers::{Verifier, VerifyError};
 use log::debug;
-use risc0_verifier::poseidon2_injection::Boxed as _;
+use risc0_derive::R0Proof;
 use risc0_verifier::{Journal, SegmentInfo, Verifier as _, Vk as Risc0Vk, V1, V2};
 use sp_core::{Get, H256};
 use sp_std::vec::Vec;
@@ -70,7 +70,7 @@ pub trait Config {
 #[pallet_verifiers::verifier]
 pub struct Risc0<T>;
 
-#[derive(Clone, Debug, PartialEq, Encode, Decode, TypeInfo)]
+#[derive(Clone, Debug, PartialEq, Encode, Decode, TypeInfo, R0Proof)]
 pub enum Proof {
     V1_0(Vec<u8>),
     V1_1(Vec<u8>),
@@ -80,13 +80,6 @@ pub enum Proof {
 
 pub type Pubs = Vec<u8>;
 pub type Vk = H256;
-
-enum R0Proof {
-    V1_0(risc0_verifier::Proof),
-    V1_1(risc0_verifier::Proof),
-    V1_2(risc0_verifier::Proof),
-    V2_0(risc0_verifier::Proof),
-}
 
 enum ProofStructure {
     Succinct,
@@ -114,64 +107,12 @@ impl R0Proof {
         Ok(structure)
     }
 
-    fn proof(&self) -> &risc0_verifier::Proof {
-        match self {
-            R0Proof::V1_0(p) => p,
-            R0Proof::V1_1(p) => p,
-            R0Proof::V1_2(p) => p,
-            R0Proof::V2_0(p) => p,
-        }
-    }
-
-    fn take_proof(self) -> risc0_verifier::Proof {
-        match self {
-            R0Proof::V1_0(p) => p,
-            R0Proof::V1_1(p) => p,
-            R0Proof::V1_2(p) => p,
-            R0Proof::V2_0(p) => p,
-        }
-    }
-
     fn verifier(&self) -> sp_std::boxed::Box<dyn risc0_verifier::Verifier> {
         match self {
             R0Proof::V1_0(_r0_proof) => V1::v1_0().inject_native_poseidon2_if_needed().boxed(),
             R0Proof::V1_1(_r0_proof) => V1::v1_1().inject_native_poseidon2_if_needed().boxed(),
             R0Proof::V1_2(_r0_proof) => V1::v1_2().inject_native_poseidon2_if_needed().boxed(),
             R0Proof::V2_0(_r0_proof) => V2::v2_0().inject_native_poseidon2_if_needed().boxed(),
-        }
-    }
-}
-
-impl TryFrom<&Proof> for R0Proof {
-    type Error = ();
-
-    fn try_from(proof: &Proof) -> Result<Self, Self::Error> {
-        let risc0_proof = ciborium::from_reader(proof.bytes()).map_err(|_| ())?;
-        Ok(match proof {
-            Proof::V1_0(_) => Self::V1_0(risc0_proof),
-            Proof::V1_1(_) => Self::V1_1(risc0_proof),
-            Proof::V1_2(_) => Self::V1_2(risc0_proof),
-            Proof::V2_0(_) => Self::V2_0(risc0_proof),
-        })
-    }
-}
-
-impl Proof {
-    fn len(&self) -> usize {
-        match self {
-            Proof::V1_0(proof_bytes) => proof_bytes.len(),
-            Proof::V1_1(proof_bytes) => proof_bytes.len(),
-            Proof::V1_2(proof_bytes) => proof_bytes.len(),
-            Proof::V2_0(proof_bytes) => proof_bytes.len(),
-        }
-    }
-
-    fn bytes(&self) -> &[u8] {
-        match self {
-            Proof::V1_0(proof_bytes) => proof_bytes.as_slice(),
-            Proof::V1_1(proof_bytes) => proof_bytes.as_slice(),
-            Proof::V1_2(proof_bytes) => proof_bytes.as_slice(),
-            Proof::V2_0(proof_bytes) => proof_bytes.as_slice(),
         }
     }
 }
@@ -202,6 +143,7 @@ pub trait InjectNativePoseidon2IfNeeded {
 impl<C: risc0_verifier::Verifier> InjectNativePoseidon2IfNeeded for C {
     #[cfg(feature = "inject-native-poseidon2")]
     fn inject_native_poseidon2_if_needed(mut self) -> Self {
+        use risc0_verifier::poseidon2_injection::Boxed as _;
         self.set_poseidon2_mix_impl(native_poseidon2::NativePoseidon2Mix.boxed());
         self
     }

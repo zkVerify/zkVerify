@@ -10204,6 +10204,7 @@ dependencies = [
  "pallet-balances",
  "pallet-verifiers",
  "parity-scale-codec",
+ "risc0-derive",
  "risc0-verifier",
  "rstest",
  "scale-info",
@@ -14303,6 +14304,8 @@ dependencies = [
 name = "risc0-derive"
 version = "0.1.0"
 dependencies = [
+ "pretty_assertions",
+ "proc-macro2",
  "quote",
  "syn 2.0.100",
 ]

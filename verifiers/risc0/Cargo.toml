@@ -27,6 +27,7 @@ sp-std = { workspace = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
 frame-benchmarking = { workspace = true, optional = true }
+risc0-derive = { path = "./risc0-derive" }
 
 [dev-dependencies]
 sp-io = { workspace = true, features = ["std"] }
