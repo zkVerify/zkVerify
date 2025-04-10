@@ -45,7 +45,13 @@ To build the client from source, clone this repository and run the following com
 
 ```bash
 git checkout <latest tagged release>
-cargo build -p mainchain --release
+cargo build -p zkv-relay --release
+```
+
+In order to build `paratest` node as well (for the E2E test involving a Parachain), you can simply run:
+
+```bash
+cargo build --release
 ```
 
 ### Run
