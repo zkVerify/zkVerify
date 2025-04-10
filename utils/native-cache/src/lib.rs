@@ -45,7 +45,7 @@ pub const ENABLE_LOGS: bool = false;
 /// - `target_root` is the path to the target directory where cargo places build artifacts.
 /// - `dependency` that should define how to cache by implement [`Dependency`].
 /// - `profile` is the compilation profile; In your build script you can use `PROFILE`
-///    environment variable that cargo set: `let profile = env::var("PROFILE").unwrap();`
+///   environment variable that cargo set: `let profile = env::var("PROFILE").unwrap();`
 pub fn handle_dependency(
     target_root: impl AsRef<Path>,
     dependency: &impl Dependency,
@@ -93,7 +93,7 @@ fn handle_dependency_inner(
 /// - `target_root` is the path to the target directory where cargo places build artifacts.
 /// - `dependencies` a set of dependencies to be cached; every item should implement [`Dependency`] trait.
 /// - `profile` is the compilation profile; In your build script you can use `PROFILE`
-///    environment variable that cargo set: `let profile = env::var("PROFILE").unwrap();`
+///   environment variable that cargo set: `let profile = env::var("PROFILE").unwrap();`
 pub fn handle_dependencies<'a>(
     target_root: impl AsRef<Path>,
     dependencies: impl IntoIterator<Item = &'a Box<dyn Dependency>>,
