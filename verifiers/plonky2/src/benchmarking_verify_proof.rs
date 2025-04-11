@@ -104,91 +104,91 @@ mod benchmarks {
     impl_benchmark_test_suite!(Pallet, super::mock::test_ext(), super::mock::Test);
 }
 
-// #[cfg(test)]
-// pub mod mock {
-//     use frame_support::{
-//         derive_impl, parameter_types,
-//         sp_runtime::{traits::IdentityLookup, BuildStorage},
-//         traits::{fungible::HoldConsideration, LinearStoragePrice},
-//     };
-//     use sp_core::{ConstU128, ConstU32};
+#[cfg(test)]
+pub mod mock {
+    use frame_support::{
+        derive_impl, parameter_types,
+        sp_runtime::{traits::IdentityLookup, BuildStorage},
+        traits::{fungible::HoldConsideration, LinearStoragePrice},
+    };
+    use sp_core::{ConstU128, ConstU32};
 
-//     type Balance = u128;
-//     type AccountId = u64;
+    type Balance = u128;
+    type AccountId = u64;
 
-//     // Configure a mock runtime to test the pallet.
-//     frame_support::construct_runtime!(
-//         pub enum Test
-//         {
-//             System: frame_system,
-//             Balances: pallet_balances,
-//             CommonVerifiersPallet: pallet_verifiers::common,
-//             VerifierPallet: crate,
-//         }
-//     );
+    // Configure a mock runtime to test the pallet.
+    frame_support::construct_runtime!(
+        pub enum Test
+        {
+            System: frame_system,
+            Balances: pallet_balances,
+            CommonVerifiersPallet: pallet_verifiers::common,
+            VerifierPallet: crate,
+        }
+    );
 
-//     impl crate::Config for Test {
-//         type MaxNSegment = ConstU32<4>;
-//         type Segment20MaxSize = ConstU32<350_000>;
-//         type MaxPubsSize = ConstU32<2060>;
-//         type WeightInfo = ();
-//     }
+    impl crate::Config for Test {
+        type MaxNSegment = ConstU32<4>;
+        type Segment20MaxSize = ConstU32<350_000>;
+        type MaxPubsSize = ConstU32<2060>;
+        type WeightInfo = ();
+    }
 
-//     #[derive_impl(frame_system::config_preludes::SolochainDefaultConfig as frame_system::DefaultConfig)]
-//     impl frame_system::Config for Test {
-//         type Block = frame_system::mocking::MockBlockU32<Test>;
-//         type AccountId = AccountId;
-//         type AccountData = pallet_balances::AccountData<Balance>;
-//         type Lookup = IdentityLookup<Self::AccountId>;
-//     }
+    #[derive_impl(frame_system::config_preludes::SolochainDefaultConfig as frame_system::DefaultConfig)]
+    impl frame_system::Config for Test {
+        type Block = frame_system::mocking::MockBlockU32<Test>;
+        type AccountId = AccountId;
+        type AccountData = pallet_balances::AccountData<Balance>;
+        type Lookup = IdentityLookup<Self::AccountId>;
+    }
 
-//     parameter_types! {
-//         pub const BaseDeposit: Balance = 1;
-//         pub const PerByteDeposit: Balance = 2;
-//         pub const HoldReasonVkRegistration: RuntimeHoldReason = RuntimeHoldReason::CommonVerifiersPallet(pallet_verifiers::common::HoldReason::VkRegistration);
-//     }
+    parameter_types! {
+        pub const BaseDeposit: Balance = 1;
+        pub const PerByteDeposit: Balance = 2;
+        pub const HoldReasonVkRegistration: RuntimeHoldReason = RuntimeHoldReason::CommonVerifiersPallet(pallet_verifiers::common::HoldReason::VkRegistration);
+    }
 
-//     impl pallet_verifiers::Config<crate::Risc0<Test>> for Test {
-//         type RuntimeEvent = RuntimeEvent;
-//         type OnProofVerified = ();
-//         type WeightInfo = crate::Risc0Weight<()>;
-//         type Ticket = HoldConsideration<
-//             AccountId,
-//             Balances,
-//             HoldReasonVkRegistration,
-//             LinearStoragePrice<BaseDeposit, PerByteDeposit, Balance>,
-//         >;
-//         type Currency = Balances;
-//     }
+    impl pallet_verifiers::Config<crate::Plonky2<Test>> for Test {
+        type RuntimeEvent = RuntimeEvent;
+        type OnProofVerified = ();
+        type WeightInfo = crate::Plonky2Weight<()>;
+        type Ticket = HoldConsideration<
+            AccountId,
+            Balances,
+            HoldReasonVkRegistration,
+            LinearStoragePrice<BaseDeposit, PerByteDeposit, Balance>,
+        >;
+        type Currency = Balances;
+    }
 
-//     impl pallet_balances::Config for Test {
-//         type RuntimeEvent = RuntimeEvent;
-//         type RuntimeHoldReason = RuntimeHoldReason;
-//         type RuntimeFreezeReason = RuntimeFreezeReason;
-//         type WeightInfo = ();
-//         type Balance = Balance;
-//         type DustRemoval = ();
-//         type ExistentialDeposit = ConstU128<1>;
-//         type AccountStore = System;
-//         type ReserveIdentifier = [u8; 8];
-//         type FreezeIdentifier = RuntimeFreezeReason;
-//         type MaxLocks = ConstU32<10>;
-//         type MaxReserves = ConstU32<10>;
-//         type MaxFreezes = ConstU32<10>;
-//     }
+    impl pallet_balances::Config for Test {
+        type RuntimeEvent = RuntimeEvent;
+        type RuntimeHoldReason = RuntimeHoldReason;
+        type RuntimeFreezeReason = RuntimeFreezeReason;
+        type WeightInfo = ();
+        type Balance = Balance;
+        type DustRemoval = ();
+        type ExistentialDeposit = ConstU128<1>;
+        type AccountStore = System;
+        type ReserveIdentifier = [u8; 8];
+        type FreezeIdentifier = RuntimeFreezeReason;
+        type MaxLocks = ConstU32<10>;
+        type MaxReserves = ConstU32<10>;
+        type MaxFreezes = ConstU32<10>;
+    }
 
-//     impl pallet_verifiers::common::Config for Test {
-//         type CommonWeightInfo = Test;
-//     }
+    impl pallet_verifiers::common::Config for Test {
+        type CommonWeightInfo = Test;
+    }
 
-//     /// Build genesis storage according to the mock runtime.
-//     pub fn test_ext() -> sp_io::TestExternalities {
-//         let mut ext = sp_io::TestExternalities::from(
-//             frame_system::GenesisConfig::<Test>::default()
-//                 .build_storage()
-//                 .unwrap(),
-//         );
-//         ext.execute_with(|| System::set_block_number(1));
-//         ext
-//     }
-// }
+    /// Build genesis storage according to the mock runtime.
+    pub fn test_ext() -> sp_io::TestExternalities {
+        let mut ext = sp_io::TestExternalities::from(
+            frame_system::GenesisConfig::<Test>::default()
+                .build_storage()
+                .unwrap(),
+        );
+        ext.execute_with(|| System::set_block_number(1));
+        ext
+    }
+}
