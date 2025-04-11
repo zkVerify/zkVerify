@@ -19,6 +19,16 @@ pub struct Proof<T> {
     _marker: PhantomData<T>,
 }
 
+impl<T: Config> Proof<T> {
+    pub fn new(compressed: bool, bytes: Vec<u8>) -> Self {
+        Self {
+            compressed,
+            bytes,
+            _marker: PhantomData,
+        }
+    }
+}
+
 impl<T: Config> MaxEncodedLen for Proof<T> {
     fn max_encoded_len() -> usize {
         bool::max_encoded_len()
