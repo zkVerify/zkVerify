@@ -1,6 +1,7 @@
 #![cfg(feature = "runtime-benchmarks")]
 
 use crate::Plonky2 as Verifier;
+use crate::{Plonky2Config, Proof, Vk};
 use frame_benchmarking::v2::*;
 use hp_verifiers::Verifier as _;
 use pallet_verifiers::benchmarking_utils;
@@ -23,11 +24,13 @@ mod benchmarks {
             $(
                 #[benchmark]
                 fn $crate::paste::paste!{[<verify_proof_poseidon_compressed_ $degree>]}() {
-                    let vk = include_bytes!(concat!(
+                    let vk = Vk::new(
+                        Plonky2Config::Poseidon,
+                        include_bytes!(concat!(
                         "resources/degree_",
                         stringify!($degree),
                         "/compressed/poseidon/vk.bin"
-                    )).to_vec();
+                    )).to_vec());
                     let proof_bytes = include_bytes!(concat!(
                         "resources/degree_",
                         stringify!($degree),
@@ -55,7 +58,10 @@ mod benchmarks {
 
     // #[benchmark]
     // fn verify_proof_poseidon_compressed_2() {
-    //     let vk = include_bytes!("resources/degree_2/compressed/poseidon/vk.bin").to_vec();
+    //     let vk = Vk::new(
+    //         Plonky2Config::Poseidon,
+    //         include_bytes!("resources/degree_2/compressed/poseidon/vk.bin").to_vec(),
+    //     );
     //     let proof_bytes =
     //         include_bytes!("resources/degree_2/compressed/poseidon/proof.bin").to_vec();
     //     let proof = Proof::new(true, proof_bytes);
@@ -71,7 +77,10 @@ mod benchmarks {
 
     // #[benchmark]
     // fn verify_proof_poseidon_compressed_3() {
-    //     let vk = include_bytes!("resources/degree_3/compressed/poseidon/vk.bin").to_vec();
+    //     let vk = Vk::new(
+    //         Plonky2Config::Poseidon,
+    //         include_bytes!("resources/degree_3/compressed/poseidon/vk.bin").to_vec(),
+    //     );
     //     let proof_bytes =
     //         include_bytes!("resources/degree_3/compressed/poseidon/proof.bin").to_vec();
     //     let proof = Proof::new(true, proof_bytes);
@@ -87,7 +96,10 @@ mod benchmarks {
 
     // #[benchmark]
     // fn verify_proof_poseidon_compressed_4() {
-    //     let vk = include_bytes!("resources/degree_4/compressed/poseidon/vk.bin").to_vec();
+    //     let vk = Vk::new(
+    //         Plonky2Config::Poseidon,
+    //         include_bytes!("resources/degree_4/compressed/poseidon/vk.bin").to_vec(),
+    //     );
     //     let proof_bytes =
     //         include_bytes!("resources/degree_4/compressed/poseidon/proof.bin").to_vec();
     //     let proof = Proof::new(true, proof_bytes);
