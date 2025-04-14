@@ -26,11 +26,11 @@ fn pallet_fflonk_verifier() {
     use pallet_fflonk_verifier::WeightInfo;
 
     assert_eq!(
-        <<Runtime as pallet_verifiers::Config<Fflonk>>::WeightInfo as pallet_verifiers::WeightInfo<Fflonk>>::submit_proof(
+        <<Runtime as pallet_verifiers::Config<Fflonk>>::WeightInfo as pallet_verifiers::WeightInfo<Fflonk>>::verify_proof(
             &dummy_proof,
             &dummy_pubs
         ),
-        crate::weights::pallet_fflonk_verifier::ZKVWeight::<Runtime>::submit_proof()
+        crate::weights::pallet_fflonk_verifier::ZKVWeight::<Runtime>::verify_proof()
     );
 }
 
