@@ -758,7 +758,7 @@ pub mod pallet {
         /// requested this domain will be the owner and is the only one that can unregister it. Unregister the domain
         /// will unlock the deposit and remove the domain from the system.
         ///
-        /// Just manager can register a domain that use bridge delivery.
+        /// Just manager can register a domain that uses bridge delivery.
         ///
         /// Arguments
         /// - aggregation_size: The size of the aggregation, in other words how many statements any aggregation have.
@@ -848,7 +848,7 @@ pub mod pallet {
         ///
         /// The `DomainStateChanged` event is emitted when the domain change its state.
         ///
-        /// This call fails if the domain is not in `Ready` state or if the use cannot manage this domain.
+        /// This call fails if the domain is not in `Ready` state or if the user cannot manage this domain.
         ///
         /// Arguments
         /// - domain_id: The domain identifier.
