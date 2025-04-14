@@ -99,10 +99,62 @@ impl<T: Config> Verifier for Plonky2<T> {
         let vk = plonky2_verifier::Vk::from(vk.clone());
         let proof = plonky2_verifier::Proof::from(raw_proof.clone());
 
+        let degree_bits = match vk.config {
+            Plonky2Config::Keccak => {
+                const D: usize = 2;
+                type C = KeccakGoldilocksConfig;
+                type F = <C as GenericConfig<D>>::F;
+
+                deserialize_vk::<F, C, D>(&vk.bytes)
+                    .unwrap()
+                    .common
+                    .fri_params
+                    .degree_bits
+            }
+            Plonky2Config::Poseidon => {
+                const D: usize = 2;
+                type C = PoseidonGoldilocksConfig;
+                type F = <C as GenericConfig<D>>::F;
+
+                deserialize_vk::<F, C, D>(&vk.bytes)
+                    .unwrap()
+                    .common
+                    .fri_params
+                    .degree_bits
+            }
+        };
+
+        let w = match degree_bits {
+            2 => weight::WeightInfo::verify_proof_poseidon_compressed_2(),
+            3 => weight::WeightInfo::verify_proof_poseidon_compressed_3(),
+            4 => weight::WeightInfo::verify_proof_poseidon_compressed_4(),
+            5 => weight::WeightInfo::verify_proof_poseidon_compressed_5(),
+            6 => weight::WeightInfo::verify_proof_poseidon_compressed_6(),
+            7 => weight::WeightInfo::verify_proof_poseidon_compressed_7(),
+            8 => weight::WeightInfo::verify_proof_poseidon_compressed_8(),
+            9 => weight::WeightInfo::verify_proof_poseidon_compressed_9(),
+            10 => weight::WeightInfo::verify_proof_poseidon_compressed_10(),
+            11 => weight::WeightInfo::verify_proof_poseidon_compressed_11(),
+            12 => weight::WeightInfo::verify_proof_poseidon_compressed_12(),
+            13 => weight::WeightInfo::verify_proof_poseidon_compressed_13(),
+            14 => weight::WeightInfo::verify_proof_poseidon_compressed_14(),
+            15 => weight::WeightInfo::verify_proof_poseidon_compressed_15(),
+            16 => weight::WeightInfo::verify_proof_poseidon_compressed_16(),
+            17 => weight::WeightInfo::verify_proof_poseidon_compressed_17(),
+            18 => weight::WeightInfo::verify_proof_poseidon_compressed_18(),
+            19 => weight::WeightInfo::verify_proof_poseidon_compressed_19(),
+            20 => weight::WeightInfo::verify_proof_poseidon_compressed_20(),
+            21 => weight::WeightInfo::verify_proof_poseidon_compressed_21(),
+            22 => weight::WeightInfo::verify_proof_poseidon_compressed_22(),
+            23 => weight::WeightInfo::verify_proof_poseidon_compressed_23(),
+            _ => panic!(),
+        };
+
+        // let degree_bits = vk.
         verify(&vk, &proof, raw_pubs)
             .inspect_err(|e| log::debug!("Proof verification failed: {:?}", e))
             .map_err(|_| VerifyError::VerifyError)
-            .map(|_| None)
+            .map(|_| Some(w))
     }
 
     fn validate_vk(vk: &Self::Vk) -> Result<(), VerifyError> {
