@@ -106,12 +106,6 @@ pub mod pallet {
         pub fee: Balance,
     }
 
-    #[derive(Encode, Decode)]
-    struct AggregationData {
-        aggregation_id: u64,
-        aggregation: sp_core::H256,
-    }
-
     impl<T: Config> Pallet<T> {
         /// Dispatch aggregation to given EVM chain
         pub fn dispatch_aggregation(
