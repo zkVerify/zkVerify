@@ -892,6 +892,16 @@ impl pallet_verifiers::common::Config for Runtime {
     type CommonWeightInfo = Runtime;
 }
 
+impl pallet_verifiers::Config<pallet_fflonk_verifier::Fflonk> for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type OnProofVerified = Aggregate;
+    type WeightInfo =
+        pallet_fflonk_verifier::FflonkWeight<weights::pallet_fflonk_verifier::ZKVWeight<Runtime>>;
+    type Ticket = VkRegistrationHoldConsideration;
+    #[cfg(feature = "runtime-benchmarks")]
+    type Currency = Balances;
+}
+
 pub const GROTH16_MAX_NUM_INPUTS: u32 = 16;
 parameter_types! {
     pub const Groth16MaxNumInputs: u32 = GROTH16_MAX_NUM_INPUTS;
@@ -1192,6 +1202,7 @@ construct_runtime!(
         SettlementUltraplonkPallet: pallet_ultraplonk_verifier = 163,
         SettlementProofOfSqlPallet: pallet_proofofsql_verifier = 164,
         SettlementPlonky2Pallet: pallet_plonky2_verifier = 165,
+        SettlementFFlonkPallet: pallet_fflonk_verifier = 166,
     }
 );
 
@@ -1271,6 +1282,7 @@ mod benches {
         [ismp_grandpa, IsmpGrandpa]
         [pallet_token_gateway, TokenGateway]
         [pallet_claim, Claim]
+        [pallet_fflonk_verifier, FflonkVerifierBench::<Runtime>]
         [pallet_groth16_verifier, Groth16VerifierBench::<Runtime>]
         [pallet_risc0_verifier, Risc0VerifierBench::<Runtime>]
         [pallet_risc0_verifier_verify_proof, Risc0VerifierVerifyProofBench::<Runtime>]
@@ -1762,6 +1774,7 @@ impl_runtime_apis! {
             use baseline::Pallet as BaselineBench;
             use pallet_election_provider_support_benchmarking::Pallet as ElectionProviderBench;
             use pallet_session_benchmarking::Pallet as SessionBench;
+            use pallet_fflonk_verifier::benchmarking::Pallet as FflonkVerifierBench;
             use pallet_groth16_verifier::benchmarking::Pallet as Groth16VerifierBench;
             use pallet_risc0_verifier::benchmarking::Pallet as Risc0VerifierBench;
             use pallet_risc0_verifier::benchmarking_verify_proof::Pallet as Risc0VerifierVerifyProofBench;
@@ -1793,6 +1806,7 @@ impl_runtime_apis! {
             use baseline::Pallet as BaselineBench;
             use pallet_election_provider_support_benchmarking::Pallet as ElectionProviderBench;
             use pallet_session_benchmarking::Pallet as SessionBench;
+            use pallet_fflonk_verifier::benchmarking::Pallet as FflonkVerifierBench;
             use pallet_groth16_verifier::benchmarking::Pallet as Groth16VerifierBench;
             use pallet_risc0_verifier::benchmarking::Pallet as Risc0VerifierBench;
             use pallet_risc0_verifier::benchmarking_verify_proof::Pallet as Risc0VerifierVerifyProofBench;

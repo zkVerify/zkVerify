@@ -20,6 +20,7 @@ const ReturnCode = {
 
 const { init_api, submitProof, receivedEvents, registerDomain, sudoRegisterDomain,
     holdDomain, unregisterDomain, aggregate, getBalance } = require('zkv-lib');
+const { PROOF: FFLONK_PROOF, PUBS: FFLONK_PUBS, VK: FFLONK_VK } = require('./fflonk_data.js');
 const { PROOF: GROTH16_PROOF, PUBS: GROTH16_PUBS, VK: GROTH16_VK } = require('./groth16_data.js');
 const { PROOF: RISC0_PROOF, PUBS: RISC0_PUBS, VK: RISC0_VK } = require('./risc0_data.js');
 const { PROOF: ULTRAPLONK_PROOF, PUBS: ULTRAPLONK_PUBS, VK: ULTRAPLONK_VK } = require('./ultraplonk_data.js');
@@ -39,6 +40,11 @@ async function run(nodeName, networkInfo, _args) {
     const destination = { None: null };
 
     verifiers = [
+        {
+            name: "FFlonk",
+            pallet: api.tx.settlementFFlonkPallet,
+            args: [{ 'Vk': FFLONK_VK }, FFLONK_PROOF, FFLONK_PUBS],
+        },
         {
             name: "Risc0",
             pallet: api.tx.settlementRisc0Pallet,

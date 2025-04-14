@@ -26,6 +26,38 @@ zkvTypes = {
         config: "Plonky2Config",
         bytes: "Bytes"
     },
+    Fr: {
+        value: "U256"
+    },
+    Fq: {
+        value: "U256"
+    },
+    Fq2: {
+        c0: "Fq",
+        c1: "Fq",
+    },
+    G1: {
+        x: "Fq",
+        y: "Fq",
+        z: "Fq",
+    },
+    G2: {
+        x: "Fq2",
+        y: "Fq2",
+        z: "Fq2",
+    },
+    FflonkVk: {
+        power: "u8",
+        k1: "Fr",
+        k2: "Fr",
+        w: "Fr",
+        w3: "Fr",
+        w4: "Fr",
+        w8: "Fr",
+        wr: "Fr",
+        x2: "G2",
+        c0: "G1",
+    },
 };
 
 // This one defines the metadata for the arguments and return value of proofPath RPC call
@@ -55,6 +87,16 @@ zkvRpc = {
         }
     },
     vk_hash: {
+        fflonk: {
+            description: 'Get the hash of a Fflonk verification key',
+            params: [
+                {
+                    name: 'vk',
+                    type: 'FflonkVk',
+                },
+            ],
+            type: 'H256'
+        },
         groth16: {
             description: 'Get the hash of a Groth16 verification key',
             params: [

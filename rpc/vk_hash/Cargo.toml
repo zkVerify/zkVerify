@@ -9,6 +9,7 @@ homepage.workspace = true
 license = "Apache-2.0"
 
 [dependencies]
+pallet-fflonk-verifier = { workspace = true }
 pallet-groth16-verifier = { workspace = true }
 pallet-plonky2-verifier = { workspace = true }
 pallet-proofofsql-verifier = { workspace = true }
@@ -24,6 +25,7 @@ zkv-runtime = { default-features = false, workspace = true }
 [features]
 default = ["std"]
 std = [
+	"pallet-fflonk-verifier/std",
 	"pallet-ultraplonk-verifier/std",
 	"serde/std",
 	"codec/std",

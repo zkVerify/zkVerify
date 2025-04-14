@@ -16,6 +16,7 @@
 use codec::{Decode, Encode};
 use hp_verifiers::Verifier;
 use jsonrpsee::{core::RpcResult, proc_macros::rpc, types::ErrorObject};
+use pallet_fflonk_verifier::{Fr}
 use pallet_groth16_verifier::{Curve, Groth16};
 use pallet_plonky2_verifier::{Plonky2, Plonky2Config};
 use pallet_proofofsql_verifier::ProofOfSql;
@@ -30,6 +31,17 @@ pub enum Groth16Curve {
     Bn254,
     Bls12_381,
 }
+
+#[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
+struct Fr(U256);
+#[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
+struct Fq(U256);
+#[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
+struct Fq2(Fq, Fq);
+#[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
+struct G1(Fq, Fq, Fq);
+#[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
+struct G2(Fq2, Fq2, Fq2);
 
 #[derive(Debug, Encode, Decode, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -58,8 +70,24 @@ pub struct Plonky2Vk {
     pub bytes: Bytes,
 }
 
+#[derive(Debug, Encode, Decode, Serialize, Deserialize)]
+pub struct FflonkVk {
+    power: u8,
+    k1: Fr,
+    k2: Fr,
+    w: Fr,
+    w3: Fr,
+    w4: Fr,
+    w8: Fr,
+    wr: Fr,
+    x2: G2,
+    c0: G1,
+}
+
 #[rpc(client, server, namespace = "vk_hash")]
 pub trait VKHashApi<ResponseType> {
+    #[method(name = "fflonk")]
+    fn fflonk(&self, vk: FflonkVk) -> RpcResult<ResponseType>;
     #[method(name = "groth16")]
     fn groth16(&self, vk: Groth16Vk) -> RpcResult<ResponseType>;
     #[method(name = "plonky2")]
@@ -83,6 +111,8 @@ impl VKHash {
 }
 
 impl VKHashApiServer<H256> for VKHash {
+    fn fflonk(&self, vk: FflonkVk) -> RpcResult<H256> {}
+
     fn groth16(&self, vk: Groth16Vk) -> RpcResult<H256> {
         let vk: VkOf<Groth16<zkv_runtime::Runtime>> = pallet_groth16_verifier::Vk {
             curve: vk.curve,
