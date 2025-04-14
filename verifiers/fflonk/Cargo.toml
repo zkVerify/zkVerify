@@ -26,9 +26,6 @@ pallet-verifiers = { workspace = true }
 substrate-bn = "0.6.0"
 serde_json = { version = "1.0.117", optional = true, default-features = false }
 sp-io = { workspace = true, optional = true }
-pallet-aggregate = { workspace = true, optional = true, default-features = false, features = [
-    "runtime-benchmarks",
-] }
 
 [dev-dependencies]
 fflonk_verifier = { git = "https://github.com/HorizenLabs/fflonk_verifier.git", default-features = false, features = [
@@ -52,7 +49,6 @@ std = [
 	"pallet-balances/std",
 	"frame-benchmarking?/std",
 	"log/std",
-	"pallet-aggregate?/std",
 	"sp-io?/std"
 ]
 runtime-benchmarks = [
@@ -64,8 +60,6 @@ runtime-benchmarks = [
 	"dep:hex-literal",
 	"dep:serde_json",
 	"dep:sp-io",
-	"dep:pallet-aggregate",
 	"fflonk_verifier/serde",
-	"pallet-aggregate?/runtime-benchmarks",
 	"pallet-balances/runtime-benchmarks"
 ]

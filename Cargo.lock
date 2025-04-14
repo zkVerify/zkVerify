@@ -9403,7 +9403,6 @@ dependencies = [
  "hex-literal",
  "hp-verifiers",
  "log",
- "pallet-aggregate",
  "pallet-balances",
  "pallet-verifiers",
  "parity-scale-codec",
