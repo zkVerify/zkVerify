@@ -22,7 +22,7 @@ use hp_verifiers::{Cow, Verifier, VerifyError};
 
 pub mod benchmarking;
 mod verifier_should;
-mod vk;
+pub mod vk;
 mod weight;
 
 pub const PUBS_SIZE: usize = 32;
@@ -49,7 +49,7 @@ impl Verifier for Fflonk {
         vk: &Self::Vk,
         raw_proof: &Self::Proof,
         raw_pubs: &Self::Pubs,
-    ) -> Result<(), VerifyError> {
+    ) -> Result<Option<Weight>, VerifyError> {
         let vk: fflonk_verifier::VerificationKey = vk
             .clone()
             .try_into_fflonk_vk_unchecked()
@@ -68,8 +68,9 @@ impl Verifier for Fflonk {
         );
 
         fflonk_verifier::verify(&vk, &proof, &pubs)
-            .map_err(|e| log::debug!("Cannot verify proof: {:?}", e))
+            .inspect_err(|e| log::debug!("Proof verification failed: {:?}", e))
             .map_err(|_| VerifyError::VerifyError)
+            .map(|_| None)
     }
 
     fn validate_vk(vk: &Self::Vk) -> Result<(), hp_verifiers::VerifyError> {
@@ -93,25 +94,33 @@ impl Verifier for Fflonk {
 pub struct FflonkWeight<W: weight::WeightInfo>(PhantomData<W>);
 
 impl<W: weight::WeightInfo> pallet_verifiers::WeightInfo<Fflonk> for FflonkWeight<W> {
-    fn submit_proof(
-        _proof: &<Fflonk as hp_verifiers::Verifier>::Proof,
-        _pubs: &<Fflonk as hp_verifiers::Verifier>::Pubs,
-    ) -> Weight {
-        W::submit_proof()
-    }
-
-    fn submit_proof_with_vk_hash(
-        _proof: &<Fflonk as hp_verifiers::Verifier>::Proof,
-        _pubs: &<Fflonk as hp_verifiers::Verifier>::Pubs,
-    ) -> Weight {
-        W::submit_proof_with_vk_hash()
-    }
-
     fn register_vk(_vk: &<Fflonk as hp_verifiers::Verifier>::Vk) -> Weight {
         W::register_vk()
     }
 
     fn unregister_vk() -> Weight {
         W::unregister_vk()
+    }
+
+    fn verify_proof(
+        _proof: &<Fflonk as Verifier>::Proof,
+        _pubs: &<Fflonk as Verifier>::Pubs,
+    ) -> Weight {
+        W::verify_proof()
+    }
+
+    fn get_vk() -> Weight {
+        W::get_vk()
+    }
+
+    fn validate_vk(_vk: &<Fflonk as Verifier>::Vk) -> Weight {
+        W::validate_vk()
+    }
+
+    fn compute_statement_hash(
+        _proof: &<Fflonk as Verifier>::Proof,
+        _pubs: &<Fflonk as Verifier>::Pubs,
+    ) -> Weight {
+        W::compute_statement_hash()
     }
 }

@@ -4419,6 +4419,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ethnum"
+version = "1.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b90ca2580b73ab6a1f724b76ca11ab632df820fd6040c336200d2c1df7b3c82c"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "event-listener"
 version = "2.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4581,6 +4590,19 @@ checksum = "c0b50bfb653653f9ca9095b427bed08ab8d75a137839d9ad64eb11810d5b6393"
 dependencies = [
  "rand_core",
  "subtle 2.6.1",
+]
+
+[[package]]
+name = "fflonk_verifier"
+version = "0.4.0"
+source = "git+https://github.com/HorizenLabs/fflonk_verifier.git?tag=v0.4.0#aa848aa56114c9e002c5b41a2822c7043d19b501"
+dependencies = [
+ "digest 0.10.7",
+ "ethnum",
+ "serde",
+ "sha3",
+ "snafu 0.7.5",
+ "substrate-bn",
 ]
 
 [[package]]
@@ -6761,6 +6783,9 @@ name = "lazy_static"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
+dependencies = [
+ "spin 0.9.8",
+]
 
 [[package]]
 name = "lazycell"
@@ -9368,6 +9393,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-fflonk-verifier"
+version = "0.1.0"
+dependencies = [
+ "fflonk_verifier",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "hex-literal",
+ "hp-verifiers",
+ "log",
+ "pallet-aggregate",
+ "pallet-balances",
+ "pallet-verifiers",
+ "parity-scale-codec",
+ "scale-info",
+ "serde_json",
+ "sp-core",
+ "sp-io",
+ "substrate-bn",
+]
+
+[[package]]
 name = "pallet-glutton"
 version = "24.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -11412,7 +11459,7 @@ dependencies = [
  "plonky2",
  "serde",
  "serde_with",
- "snafu",
+ "snafu 0.8.5",
 ]
 
 [[package]]
@@ -13460,7 +13507,7 @@ dependencies = [
  "proof-of-sql-parser",
  "serde",
  "serde_json",
- "snafu",
+ "snafu 0.8.5",
  "tiny-keccak",
  "tracing",
  "zerocopy 0.7.35",
@@ -13478,7 +13525,7 @@ dependencies = [
  "lalrpop",
  "lalrpop-util",
  "serde",
- "snafu",
+ "snafu 0.8.5",
 ]
 
 [[package]]
@@ -13496,7 +13543,7 @@ dependencies = [
  "proof-of-sql-parser",
  "serde",
  "serde_with",
- "snafu",
+ "snafu 0.8.5",
 ]
 
 [[package]]
@@ -16871,11 +16918,33 @@ dependencies = [
 
 [[package]]
 name = "snafu"
+version = "0.7.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e4de37ad025c587a29e8f3f5605c00f70b98715ef90b9061a815b9e59e9042d6"
+dependencies = [
+ "doc-comment",
+ "snafu-derive 0.7.5",
+]
+
+[[package]]
+name = "snafu"
 version = "0.8.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "223891c85e2a29c3fe8fb900c1fae5e69c2e42415e3177752e8718475efa5019"
 dependencies = [
- "snafu-derive",
+ "snafu-derive 0.8.5",
+]
+
+[[package]]
+name = "snafu-derive"
+version = "0.7.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "990079665f075b699031e9c08fd3ab99be5029b96f3b78dc0709e8f77e4efebf"
+dependencies = [
+ "heck 0.4.1",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
 ]
 
 [[package]]
@@ -18455,6 +18524,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "substrate-bn"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72b5bbfa79abbae15dd642ea8176a21a635ff3c00059961d1ea27ad04e5b441c"
+dependencies = [
+ "byteorder",
+ "crunchy",
+ "lazy_static",
+ "rand",
+ "rustc-hex",
+]
+
+[[package]]
 name = "substrate-build-script-utils"
 version = "11.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -19677,7 +19759,7 @@ dependencies = [
  "ark-std 0.5.0",
  "hex-literal",
  "sha3",
- "snafu",
+ "snafu 0.8.5",
 ]
 
 [[package]]
@@ -19851,6 +19933,7 @@ dependencies = [
  "hp-groth16",
  "hp-verifiers",
  "jsonrpsee",
+ "pallet-fflonk-verifier",
  "pallet-groth16-verifier",
  "pallet-plonky2-verifier",
  "pallet-proofofsql-verifier",
@@ -21315,6 +21398,7 @@ dependencies = [
  "pallet-claim",
  "pallet-conviction-voting",
  "pallet-election-provider-support-benchmarking",
+ "pallet-fflonk-verifier",
  "pallet-grandpa",
  "pallet-groth16-verifier",
  "pallet-hyperbridge",

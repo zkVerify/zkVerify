@@ -17,28 +17,28 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_core::U256;
 #[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
-struct Fr(U256);
+pub struct Fr(pub U256);
 #[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
-struct Fq(U256);
+pub struct Fq(pub U256);
 #[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
-struct Fq2(Fq, Fq);
+pub struct Fq2(pub Fq, pub Fq);
 #[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
-struct G1(Fq, Fq, Fq);
+pub struct G1(pub Fq, pub Fq, pub Fq);
 #[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
-struct G2(Fq2, Fq2, Fq2);
+pub struct G2(pub Fq2, pub Fq2, pub Fq2);
 
 #[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
 pub struct Vk {
-    power: u8,
-    k1: Fr,
-    k2: Fr,
-    w: Fr,
-    w3: Fr,
-    w4: Fr,
-    w8: Fr,
-    wr: Fr,
-    x2: G2,
-    c0: G1,
+    pub power: u8,
+    pub k1: Fr,
+    pub k2: Fr,
+    pub w: Fr,
+    pub w3: Fr,
+    pub w4: Fr,
+    pub w8: Fr,
+    pub wr: Fr,
+    pub x2: G2,
+    pub c0: G1,
 }
 
 trait IntoBytes {

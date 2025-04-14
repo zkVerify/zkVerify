@@ -35,5 +35,5 @@ std = [
 	"pallet-proofofsql-verifier/std",
 	"pallet-plonky2-verifier/std",
 	"sp-core/std",
-	"zkv-runtime/std"
+	"zkv-runtime/std",
 ]

@@ -47,7 +47,7 @@ static VALID_PROOF: crate::Proof = hex_literal::hex!(
 );
 
 #[allow(dead_code)]
-fn cdk_key() -> crate::vk::Vk {
+fn fflonk_key() -> crate::vk::Vk {
     serde_json::from_str::<fflonk_verifier::VerificationKey>(
         r#"
     {

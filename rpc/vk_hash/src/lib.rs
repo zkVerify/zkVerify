@@ -16,12 +16,15 @@
 use codec::{Decode, Encode};
 use hp_verifiers::Verifier;
 use jsonrpsee::{core::RpcResult, proc_macros::rpc, types::ErrorObject};
-use pallet_fflonk_verifier::{Fr}
+use pallet_fflonk_verifier::{
+    vk::{Fq, Fq2, Fr, Vk, G1, G2},
+    Fflonk,
+};
 use pallet_groth16_verifier::{Curve, Groth16};
 use pallet_plonky2_verifier::{Plonky2, Plonky2Config};
 use pallet_proofofsql_verifier::ProofOfSql;
 use pallet_ultraplonk_verifier::{Ultraplonk, VK_SIZE};
-use sp_core::{serde::Deserialize, serde::Serialize, Bytes, H256};
+use sp_core::{serde::Deserialize, serde::Serialize, Bytes, H256, U256};
 
 type VkOf<V> = <V as hp_verifiers::Verifier>::Vk;
 
@@ -31,17 +34,6 @@ pub enum Groth16Curve {
     Bn254,
     Bls12_381,
 }
-
-#[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
-struct Fr(U256);
-#[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
-struct Fq(U256);
-#[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
-struct Fq2(Fq, Fq);
-#[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
-struct G1(Fq, Fq, Fq);
-#[derive(Clone, Debug, Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
-struct G2(Fq2, Fq2, Fq2);
 
 #[derive(Debug, Encode, Decode, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -72,16 +64,16 @@ pub struct Plonky2Vk {
 
 #[derive(Debug, Encode, Decode, Serialize, Deserialize)]
 pub struct FflonkVk {
-    power: u8,
-    k1: Fr,
-    k2: Fr,
-    w: Fr,
-    w3: Fr,
-    w4: Fr,
-    w8: Fr,
-    wr: Fr,
-    x2: G2,
-    c0: G1,
+    pub power: u8,
+    pub k1: U256,
+    pub k2: U256,
+    pub w: U256,
+    pub w3: U256,
+    pub w4: U256,
+    pub w8: U256,
+    pub wr: U256,
+    pub x2: [[U256; 2]; 3],
+    pub c0: [U256; 3],
 }
 
 #[rpc(client, server, namespace = "vk_hash")]
@@ -111,7 +103,25 @@ impl VKHash {
 }
 
 impl VKHashApiServer<H256> for VKHash {
-    fn fflonk(&self, vk: FflonkVk) -> RpcResult<H256> {}
+    fn fflonk(&self, vk: FflonkVk) -> RpcResult<H256> {
+        let vk = Vk {
+            power: vk.power,
+            k1: Fr(vk.k1),
+            k2: Fr(vk.k2),
+            w: Fr(vk.w),
+            w3: Fr(vk.w3),
+            w4: Fr(vk.w4),
+            w8: Fr(vk.w8),
+            wr: Fr(vk.wr),
+            x2: G2(
+                Fq2(Fq(vk.x2[0][0]), Fq(vk.x2[0][1])),
+                Fq2(Fq(vk.x2[1][0]), Fq(vk.x2[1][1])),
+                Fq2(Fq(vk.x2[2][0]), Fq(vk.x2[2][1])),
+            ),
+            c0: G1(Fq(vk.c0[0]), Fq(vk.c0[1]), Fq(vk.c0[2])),
+        };
+        Ok(Fflonk::vk_hash(&vk))
+    }
 
     fn groth16(&self, vk: Groth16Vk) -> RpcResult<H256> {
         let vk: VkOf<Groth16<zkv_runtime::Runtime>> = pallet_groth16_verifier::Vk {

@@ -22,7 +22,7 @@ include!("resources.rs");
 
 #[test]
 fn verify_valid_proof() {
-    let vk = cdk_key();
+    let vk = fflonk_key();
 
     assert!(Fflonk::verify_proof(&vk, &VALID_PROOF, &VALID_PUBS).is_ok());
 }
@@ -36,13 +36,13 @@ fn return_the_same_bytes_as_public_inputs() {
 
 #[test]
 fn validate_valid_vk() {
-    let vk = cdk_key();
+    let vk = fflonk_key();
     assert!(Fflonk::validate_vk(&vk).is_ok())
 }
 
 #[test]
 fn reject_malformed_vk() {
-    let mut vk = cdk_key();
+    let mut vk = fflonk_key();
 
     *vk.mut_c0_x() = U256::zero();
 
@@ -58,7 +58,7 @@ mod reject {
 
     #[test]
     fn invalid_pubs() {
-        let vk = cdk_key();
+        let vk = fflonk_key();
         let mut invalid_pubs = VALID_PUBS;
         invalid_pubs[0] = invalid_pubs[0].wrapping_add(1);
 
@@ -70,7 +70,7 @@ mod reject {
 
     #[test]
     fn invalid_proof() {
-        let vk = cdk_key();
+        let vk = fflonk_key();
         let mut invalid_proof: Proof = VALID_PROOF;
         // last byte changed from '0x06' to '0x00' (public inputs)
         invalid_proof[invalid_proof.len() - 1] = 0x00;
@@ -83,7 +83,7 @@ mod reject {
 
     #[test]
     fn reject_malformed_proof() {
-        let vk = cdk_key();
+        let vk = fflonk_key();
         let mut malformed_proof: Proof = VALID_PROOF;
         // first byte changed from '0x17' to '0x07' (raw proof data)
         malformed_proof[0] = 0x07;
