@@ -75,6 +75,59 @@ mod benchmarks {
     }
 
     #[benchmark]
+    fn verify_proof_keccak_compressed_2() {
+        let vk = Vk::new(
+            Plonky2Config::Keccak,
+            include_bytes!("resources/degree_2/compressed/keccak/vk.bin").to_vec(),
+        );
+        let proof_bytes = include_bytes!("resources/degree_2/compressed/keccak/proof.bin").to_vec();
+        let proof = Proof::new(true, proof_bytes);
+        let pubs = include_bytes!("resources/degree_2/compressed/keccak/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_poseidon_uncompressed_2() {
+        let vk = Vk::new(
+            Plonky2Config::Poseidon,
+            include_bytes!("resources/degree_2/uncompressed/poseidon/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_2/uncompressed/poseidon/proof.bin").to_vec();
+        let proof = Proof::new(false, proof_bytes);
+        let pubs = include_bytes!("resources/degree_2/uncompressed/poseidon/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_keccak_uncompressed_2() {
+        let vk = Vk::new(
+            Plonky2Config::Keccak,
+            include_bytes!("resources/degree_2/uncompressed/keccak/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_2/uncompressed/keccak/proof.bin").to_vec();
+        let proof = Proof::new(false, proof_bytes);
+        let pubs = include_bytes!("resources/degree_2/uncompressed/keccak/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
     fn verify_proof_poseidon_compressed_3() {
         let vk = Vk::new(
             Plonky2Config::Poseidon,
@@ -84,6 +137,59 @@ mod benchmarks {
             include_bytes!("resources/degree_3/compressed/poseidon/proof.bin").to_vec();
         let proof = Proof::new(true, proof_bytes);
         let pubs = include_bytes!("resources/degree_3/compressed/poseidon/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_keccak_compressed_3() {
+        let vk = Vk::new(
+            Plonky2Config::Keccak,
+            include_bytes!("resources/degree_3/compressed/keccak/vk.bin").to_vec(),
+        );
+        let proof_bytes = include_bytes!("resources/degree_3/compressed/keccak/proof.bin").to_vec();
+        let proof = Proof::new(true, proof_bytes);
+        let pubs = include_bytes!("resources/degree_3/compressed/keccak/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_poseidon_uncompressed_3() {
+        let vk = Vk::new(
+            Plonky2Config::Poseidon,
+            include_bytes!("resources/degree_3/uncompressed/poseidon/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_3/uncompressed/poseidon/proof.bin").to_vec();
+        let proof = Proof::new(false, proof_bytes);
+        let pubs = include_bytes!("resources/degree_3/uncompressed/poseidon/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_keccak_uncompressed_3() {
+        let vk = Vk::new(
+            Plonky2Config::Keccak,
+            include_bytes!("resources/degree_3/uncompressed/keccak/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_3/uncompressed/keccak/proof.bin").to_vec();
+        let proof = Proof::new(false, proof_bytes);
+        let pubs = include_bytes!("resources/degree_3/uncompressed/keccak/pubs.bin").to_vec();
         let r;
         #[block]
         {
@@ -111,6 +217,59 @@ mod benchmarks {
     }
 
     #[benchmark]
+    fn verify_proof_keccak_compressed_4() {
+        let vk = Vk::new(
+            Plonky2Config::Keccak,
+            include_bytes!("resources/degree_4/compressed/keccak/vk.bin").to_vec(),
+        );
+        let proof_bytes = include_bytes!("resources/degree_4/compressed/keccak/proof.bin").to_vec();
+        let proof = Proof::new(true, proof_bytes);
+        let pubs = include_bytes!("resources/degree_4/compressed/keccak/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_poseidon_uncompressed_4() {
+        let vk = Vk::new(
+            Plonky2Config::Poseidon,
+            include_bytes!("resources/degree_4/uncompressed/poseidon/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_4/uncompressed/poseidon/proof.bin").to_vec();
+        let proof = Proof::new(false, proof_bytes);
+        let pubs = include_bytes!("resources/degree_4/uncompressed/poseidon/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_keccak_uncompressed_4() {
+        let vk = Vk::new(
+            Plonky2Config::Keccak,
+            include_bytes!("resources/degree_4/uncompressed/keccak/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_4/uncompressed/keccak/proof.bin").to_vec();
+        let proof = Proof::new(false, proof_bytes);
+        let pubs = include_bytes!("resources/degree_4/uncompressed/keccak/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
     fn verify_proof_poseidon_compressed_5() {
         let vk = Vk::new(
             Plonky2Config::Poseidon,
@@ -120,6 +279,59 @@ mod benchmarks {
             include_bytes!("resources/degree_5/compressed/poseidon/proof.bin").to_vec();
         let proof = Proof::new(true, proof_bytes);
         let pubs = include_bytes!("resources/degree_5/compressed/poseidon/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_keccak_compressed_5() {
+        let vk = Vk::new(
+            Plonky2Config::Keccak,
+            include_bytes!("resources/degree_5/compressed/keccak/vk.bin").to_vec(),
+        );
+        let proof_bytes = include_bytes!("resources/degree_5/compressed/keccak/proof.bin").to_vec();
+        let proof = Proof::new(true, proof_bytes);
+        let pubs = include_bytes!("resources/degree_5/compressed/keccak/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_poseidon_uncompressed_5() {
+        let vk = Vk::new(
+            Plonky2Config::Poseidon,
+            include_bytes!("resources/degree_5/uncompressed/poseidon/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_5/uncompressed/poseidon/proof.bin").to_vec();
+        let proof = Proof::new(false, proof_bytes);
+        let pubs = include_bytes!("resources/degree_5/uncompressed/poseidon/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_keccak_uncompressed_5() {
+        let vk = Vk::new(
+            Plonky2Config::Keccak,
+            include_bytes!("resources/degree_5/uncompressed/keccak/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_5/uncompressed/keccak/proof.bin").to_vec();
+        let proof = Proof::new(false, proof_bytes);
+        let pubs = include_bytes!("resources/degree_5/uncompressed/keccak/pubs.bin").to_vec();
         let r;
         #[block]
         {
@@ -147,6 +359,59 @@ mod benchmarks {
     }
 
     #[benchmark]
+    fn verify_proof_keccak_compressed_6() {
+        let vk = Vk::new(
+            Plonky2Config::Keccak,
+            include_bytes!("resources/degree_6/compressed/keccak/vk.bin").to_vec(),
+        );
+        let proof_bytes = include_bytes!("resources/degree_6/compressed/keccak/proof.bin").to_vec();
+        let proof = Proof::new(true, proof_bytes);
+        let pubs = include_bytes!("resources/degree_6/compressed/keccak/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_poseidon_uncompressed_6() {
+        let vk = Vk::new(
+            Plonky2Config::Poseidon,
+            include_bytes!("resources/degree_6/uncompressed/poseidon/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_6/uncompressed/poseidon/proof.bin").to_vec();
+        let proof = Proof::new(false, proof_bytes);
+        let pubs = include_bytes!("resources/degree_6/uncompressed/poseidon/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_keccak_uncompressed_6() {
+        let vk = Vk::new(
+            Plonky2Config::Keccak,
+            include_bytes!("resources/degree_6/uncompressed/keccak/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_6/uncompressed/keccak/proof.bin").to_vec();
+        let proof = Proof::new(false, proof_bytes);
+        let pubs = include_bytes!("resources/degree_6/uncompressed/keccak/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
     fn verify_proof_poseidon_compressed_7() {
         let vk = Vk::new(
             Plonky2Config::Poseidon,
@@ -156,6 +421,59 @@ mod benchmarks {
             include_bytes!("resources/degree_7/compressed/poseidon/proof.bin").to_vec();
         let proof = Proof::new(true, proof_bytes);
         let pubs = include_bytes!("resources/degree_7/compressed/poseidon/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_keccak_compressed_7() {
+        let vk = Vk::new(
+            Plonky2Config::Keccak,
+            include_bytes!("resources/degree_7/compressed/keccak/vk.bin").to_vec(),
+        );
+        let proof_bytes = include_bytes!("resources/degree_7/compressed/keccak/proof.bin").to_vec();
+        let proof = Proof::new(true, proof_bytes);
+        let pubs = include_bytes!("resources/degree_7/compressed/keccak/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_poseidon_uncompressed_7() {
+        let vk = Vk::new(
+            Plonky2Config::Poseidon,
+            include_bytes!("resources/degree_7/uncompressed/poseidon/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_7/uncompressed/poseidon/proof.bin").to_vec();
+        let proof = Proof::new(false, proof_bytes);
+        let pubs = include_bytes!("resources/degree_7/uncompressed/poseidon/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_keccak_uncompressed_7() {
+        let vk = Vk::new(
+            Plonky2Config::Keccak,
+            include_bytes!("resources/degree_7/uncompressed/keccak/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_7/uncompressed/keccak/proof.bin").to_vec();
+        let proof = Proof::new(false, proof_bytes);
+        let pubs = include_bytes!("resources/degree_7/uncompressed/keccak/pubs.bin").to_vec();
         let r;
         #[block]
         {
@@ -183,6 +501,59 @@ mod benchmarks {
     }
 
     #[benchmark]
+    fn verify_proof_keccak_compressed_8() {
+        let vk = Vk::new(
+            Plonky2Config::Keccak,
+            include_bytes!("resources/degree_8/compressed/keccak/vk.bin").to_vec(),
+        );
+        let proof_bytes = include_bytes!("resources/degree_8/compressed/keccak/proof.bin").to_vec();
+        let proof = Proof::new(true, proof_bytes);
+        let pubs = include_bytes!("resources/degree_8/compressed/keccak/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_poseidon_uncompressed_8() {
+        let vk = Vk::new(
+            Plonky2Config::Poseidon,
+            include_bytes!("resources/degree_8/uncompressed/poseidon/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_8/uncompressed/poseidon/proof.bin").to_vec();
+        let proof = Proof::new(false, proof_bytes);
+        let pubs = include_bytes!("resources/degree_8/uncompressed/poseidon/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_keccak_uncompressed_8() {
+        let vk = Vk::new(
+            Plonky2Config::Keccak,
+            include_bytes!("resources/degree_8/uncompressed/keccak/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_8/uncompressed/keccak/proof.bin").to_vec();
+        let proof = Proof::new(false, proof_bytes);
+        let pubs = include_bytes!("resources/degree_8/uncompressed/keccak/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
     fn verify_proof_poseidon_compressed_9() {
         let vk = Vk::new(
             Plonky2Config::Poseidon,
@@ -192,6 +563,59 @@ mod benchmarks {
             include_bytes!("resources/degree_9/compressed/poseidon/proof.bin").to_vec();
         let proof = Proof::new(true, proof_bytes);
         let pubs = include_bytes!("resources/degree_9/compressed/poseidon/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_keccak_compressed_9() {
+        let vk = Vk::new(
+            Plonky2Config::Keccak,
+            include_bytes!("resources/degree_9/compressed/keccak/vk.bin").to_vec(),
+        );
+        let proof_bytes = include_bytes!("resources/degree_9/compressed/keccak/proof.bin").to_vec();
+        let proof = Proof::new(true, proof_bytes);
+        let pubs = include_bytes!("resources/degree_9/compressed/keccak/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_poseidon_uncompressed_9() {
+        let vk = Vk::new(
+            Plonky2Config::Poseidon,
+            include_bytes!("resources/degree_9/uncompressed/poseidon/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_9/uncompressed/poseidon/proof.bin").to_vec();
+        let proof = Proof::new(false, proof_bytes);
+        let pubs = include_bytes!("resources/degree_9/uncompressed/poseidon/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_keccak_uncompressed_9() {
+        let vk = Vk::new(
+            Plonky2Config::Keccak,
+            include_bytes!("resources/degree_9/uncompressed/keccak/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_9/uncompressed/keccak/proof.bin").to_vec();
+        let proof = Proof::new(false, proof_bytes);
+        let pubs = include_bytes!("resources/degree_9/uncompressed/keccak/pubs.bin").to_vec();
         let r;
         #[block]
         {
@@ -219,6 +643,60 @@ mod benchmarks {
     }
 
     #[benchmark]
+    fn verify_proof_keccak_compressed_10() {
+        let vk = Vk::new(
+            Plonky2Config::Keccak,
+            include_bytes!("resources/degree_10/compressed/keccak/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_10/compressed/keccak/proof.bin").to_vec();
+        let proof = Proof::new(true, proof_bytes);
+        let pubs = include_bytes!("resources/degree_10/compressed/keccak/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_poseidon_uncompressed_10() {
+        let vk = Vk::new(
+            Plonky2Config::Poseidon,
+            include_bytes!("resources/degree_10/uncompressed/poseidon/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_10/uncompressed/poseidon/proof.bin").to_vec();
+        let proof = Proof::new(false, proof_bytes);
+        let pubs = include_bytes!("resources/degree_10/uncompressed/poseidon/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_keccak_uncompressed_10() {
+        let vk = Vk::new(
+            Plonky2Config::Keccak,
+            include_bytes!("resources/degree_10/uncompressed/keccak/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_10/uncompressed/keccak/proof.bin").to_vec();
+        let proof = Proof::new(false, proof_bytes);
+        let pubs = include_bytes!("resources/degree_10/uncompressed/keccak/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
     fn verify_proof_poseidon_compressed_11() {
         let vk = Vk::new(
             Plonky2Config::Poseidon,
@@ -228,6 +706,60 @@ mod benchmarks {
             include_bytes!("resources/degree_11/compressed/poseidon/proof.bin").to_vec();
         let proof = Proof::new(true, proof_bytes);
         let pubs = include_bytes!("resources/degree_11/compressed/poseidon/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_keccak_compressed_11() {
+        let vk = Vk::new(
+            Plonky2Config::Keccak,
+            include_bytes!("resources/degree_11/compressed/keccak/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_11/compressed/keccak/proof.bin").to_vec();
+        let proof = Proof::new(true, proof_bytes);
+        let pubs = include_bytes!("resources/degree_11/compressed/keccak/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_poseidon_uncompressed_11() {
+        let vk = Vk::new(
+            Plonky2Config::Poseidon,
+            include_bytes!("resources/degree_11/uncompressed/poseidon/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_11/uncompressed/poseidon/proof.bin").to_vec();
+        let proof = Proof::new(false, proof_bytes);
+        let pubs = include_bytes!("resources/degree_11/uncompressed/poseidon/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_keccak_uncompressed_11() {
+        let vk = Vk::new(
+            Plonky2Config::Keccak,
+            include_bytes!("resources/degree_11/uncompressed/keccak/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_11/uncompressed/keccak/proof.bin").to_vec();
+        let proof = Proof::new(false, proof_bytes);
+        let pubs = include_bytes!("resources/degree_11/uncompressed/keccak/pubs.bin").to_vec();
         let r;
         #[block]
         {
@@ -255,6 +787,60 @@ mod benchmarks {
     }
 
     #[benchmark]
+    fn verify_proof_keccak_compressed_12() {
+        let vk = Vk::new(
+            Plonky2Config::Keccak,
+            include_bytes!("resources/degree_12/compressed/keccak/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_12/compressed/keccak/proof.bin").to_vec();
+        let proof = Proof::new(true, proof_bytes);
+        let pubs = include_bytes!("resources/degree_12/compressed/keccak/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_poseidon_uncompressed_12() {
+        let vk = Vk::new(
+            Plonky2Config::Poseidon,
+            include_bytes!("resources/degree_12/uncompressed/poseidon/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_12/uncompressed/poseidon/proof.bin").to_vec();
+        let proof = Proof::new(false, proof_bytes);
+        let pubs = include_bytes!("resources/degree_12/uncompressed/poseidon/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_keccak_uncompressed_12() {
+        let vk = Vk::new(
+            Plonky2Config::Keccak,
+            include_bytes!("resources/degree_12/uncompressed/keccak/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_12/uncompressed/keccak/proof.bin").to_vec();
+        let proof = Proof::new(false, proof_bytes);
+        let pubs = include_bytes!("resources/degree_12/uncompressed/keccak/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
     fn verify_proof_poseidon_compressed_13() {
         let vk = Vk::new(
             Plonky2Config::Poseidon,
@@ -264,6 +850,60 @@ mod benchmarks {
             include_bytes!("resources/degree_13/compressed/poseidon/proof.bin").to_vec();
         let proof = Proof::new(true, proof_bytes);
         let pubs = include_bytes!("resources/degree_13/compressed/poseidon/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_keccak_compressed_13() {
+        let vk = Vk::new(
+            Plonky2Config::Keccak,
+            include_bytes!("resources/degree_13/compressed/keccak/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_13/compressed/keccak/proof.bin").to_vec();
+        let proof = Proof::new(true, proof_bytes);
+        let pubs = include_bytes!("resources/degree_13/compressed/keccak/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_poseidon_uncompressed_13() {
+        let vk = Vk::new(
+            Plonky2Config::Poseidon,
+            include_bytes!("resources/degree_13/uncompressed/poseidon/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_13/uncompressed/poseidon/proof.bin").to_vec();
+        let proof = Proof::new(false, proof_bytes);
+        let pubs = include_bytes!("resources/degree_13/uncompressed/poseidon/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_keccak_uncompressed_13() {
+        let vk = Vk::new(
+            Plonky2Config::Keccak,
+            include_bytes!("resources/degree_13/uncompressed/keccak/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_13/uncompressed/keccak/proof.bin").to_vec();
+        let proof = Proof::new(false, proof_bytes);
+        let pubs = include_bytes!("resources/degree_13/uncompressed/keccak/pubs.bin").to_vec();
         let r;
         #[block]
         {
@@ -291,6 +931,60 @@ mod benchmarks {
     }
 
     #[benchmark]
+    fn verify_proof_keccak_compressed_14() {
+        let vk = Vk::new(
+            Plonky2Config::Keccak,
+            include_bytes!("resources/degree_14/compressed/keccak/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_14/compressed/keccak/proof.bin").to_vec();
+        let proof = Proof::new(true, proof_bytes);
+        let pubs = include_bytes!("resources/degree_14/compressed/keccak/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_poseidon_uncompressed_14() {
+        let vk = Vk::new(
+            Plonky2Config::Poseidon,
+            include_bytes!("resources/degree_14/uncompressed/poseidon/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_14/uncompressed/poseidon/proof.bin").to_vec();
+        let proof = Proof::new(false, proof_bytes);
+        let pubs = include_bytes!("resources/degree_14/uncompressed/poseidon/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_keccak_uncompressed_14() {
+        let vk = Vk::new(
+            Plonky2Config::Keccak,
+            include_bytes!("resources/degree_14/uncompressed/keccak/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_14/uncompressed/keccak/proof.bin").to_vec();
+        let proof = Proof::new(false, proof_bytes);
+        let pubs = include_bytes!("resources/degree_14/uncompressed/keccak/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
     fn verify_proof_poseidon_compressed_15() {
         let vk = Vk::new(
             Plonky2Config::Poseidon,
@@ -300,6 +994,60 @@ mod benchmarks {
             include_bytes!("resources/degree_15/compressed/poseidon/proof.bin").to_vec();
         let proof = Proof::new(true, proof_bytes);
         let pubs = include_bytes!("resources/degree_15/compressed/poseidon/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_keccak_compressed_15() {
+        let vk = Vk::new(
+            Plonky2Config::Keccak,
+            include_bytes!("resources/degree_15/compressed/keccak/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_15/compressed/keccak/proof.bin").to_vec();
+        let proof = Proof::new(true, proof_bytes);
+        let pubs = include_bytes!("resources/degree_15/compressed/keccak/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_poseidon_uncompressed_15() {
+        let vk = Vk::new(
+            Plonky2Config::Poseidon,
+            include_bytes!("resources/degree_15/uncompressed/poseidon/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_15/uncompressed/poseidon/proof.bin").to_vec();
+        let proof = Proof::new(false, proof_bytes);
+        let pubs = include_bytes!("resources/degree_15/uncompressed/poseidon/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_keccak_uncompressed_15() {
+        let vk = Vk::new(
+            Plonky2Config::Keccak,
+            include_bytes!("resources/degree_15/uncompressed/keccak/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_15/uncompressed/keccak/proof.bin").to_vec();
+        let proof = Proof::new(false, proof_bytes);
+        let pubs = include_bytes!("resources/degree_15/uncompressed/keccak/pubs.bin").to_vec();
         let r;
         #[block]
         {
@@ -327,6 +1075,60 @@ mod benchmarks {
     }
 
     #[benchmark]
+    fn verify_proof_keccak_compressed_16() {
+        let vk = Vk::new(
+            Plonky2Config::Keccak,
+            include_bytes!("resources/degree_16/compressed/keccak/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_16/compressed/keccak/proof.bin").to_vec();
+        let proof = Proof::new(true, proof_bytes);
+        let pubs = include_bytes!("resources/degree_16/compressed/keccak/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_poseidon_uncompressed_16() {
+        let vk = Vk::new(
+            Plonky2Config::Poseidon,
+            include_bytes!("resources/degree_16/uncompressed/poseidon/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_16/uncompressed/poseidon/proof.bin").to_vec();
+        let proof = Proof::new(false, proof_bytes);
+        let pubs = include_bytes!("resources/degree_16/uncompressed/poseidon/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_keccak_uncompressed_16() {
+        let vk = Vk::new(
+            Plonky2Config::Keccak,
+            include_bytes!("resources/degree_16/uncompressed/keccak/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_16/uncompressed/keccak/proof.bin").to_vec();
+        let proof = Proof::new(false, proof_bytes);
+        let pubs = include_bytes!("resources/degree_16/uncompressed/keccak/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
     fn verify_proof_poseidon_compressed_17() {
         let vk = Vk::new(
             Plonky2Config::Poseidon,
@@ -336,6 +1138,60 @@ mod benchmarks {
             include_bytes!("resources/degree_17/compressed/poseidon/proof.bin").to_vec();
         let proof = Proof::new(true, proof_bytes);
         let pubs = include_bytes!("resources/degree_17/compressed/poseidon/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_keccak_compressed_17() {
+        let vk = Vk::new(
+            Plonky2Config::Keccak,
+            include_bytes!("resources/degree_17/compressed/keccak/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_17/compressed/keccak/proof.bin").to_vec();
+        let proof = Proof::new(true, proof_bytes);
+        let pubs = include_bytes!("resources/degree_17/compressed/keccak/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_poseidon_uncompressed_17() {
+        let vk = Vk::new(
+            Plonky2Config::Poseidon,
+            include_bytes!("resources/degree_17/uncompressed/poseidon/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_17/uncompressed/poseidon/proof.bin").to_vec();
+        let proof = Proof::new(false, proof_bytes);
+        let pubs = include_bytes!("resources/degree_17/uncompressed/poseidon/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_keccak_uncompressed_17() {
+        let vk = Vk::new(
+            Plonky2Config::Keccak,
+            include_bytes!("resources/degree_17/uncompressed/keccak/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_17/uncompressed/keccak/proof.bin").to_vec();
+        let proof = Proof::new(false, proof_bytes);
+        let pubs = include_bytes!("resources/degree_17/uncompressed/keccak/pubs.bin").to_vec();
         let r;
         #[block]
         {
@@ -363,6 +1219,60 @@ mod benchmarks {
     }
 
     #[benchmark]
+    fn verify_proof_keccak_compressed_18() {
+        let vk = Vk::new(
+            Plonky2Config::Keccak,
+            include_bytes!("resources/degree_18/compressed/keccak/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_18/compressed/keccak/proof.bin").to_vec();
+        let proof = Proof::new(true, proof_bytes);
+        let pubs = include_bytes!("resources/degree_18/compressed/keccak/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_poseidon_uncompressed_18() {
+        let vk = Vk::new(
+            Plonky2Config::Poseidon,
+            include_bytes!("resources/degree_18/uncompressed/poseidon/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_18/uncompressed/poseidon/proof.bin").to_vec();
+        let proof = Proof::new(false, proof_bytes);
+        let pubs = include_bytes!("resources/degree_18/uncompressed/poseidon/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_keccak_uncompressed_18() {
+        let vk = Vk::new(
+            Plonky2Config::Keccak,
+            include_bytes!("resources/degree_18/uncompressed/keccak/vk.bin").to_vec(),
+        );
+        let proof_bytes =
+            include_bytes!("resources/degree_18/uncompressed/keccak/proof.bin").to_vec();
+        let proof = Proof::new(false, proof_bytes);
+        let pubs = include_bytes!("resources/degree_18/uncompressed/keccak/pubs.bin").to_vec();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
     fn verify_proof_poseidon_compressed_19() {
         let vk = Vk::new(
             Plonky2Config::Poseidon,
@@ -381,15 +1291,15 @@ mod benchmarks {
     }
 
     #[benchmark]
-    fn verify_proof_poseidon_compressed_20() {
+    fn verify_proof_keccak_compressed_19() {
         let vk = Vk::new(
-            Plonky2Config::Poseidon,
-            include_bytes!("resources/degree_20/compressed/poseidon/vk.bin").to_vec(),
+            Plonky2Config::Keccak,
+            include_bytes!("resources/degree_19/compressed/keccak/vk.bin").to_vec(),
         );
         let proof_bytes =
-            include_bytes!("resources/degree_20/compressed/poseidon/proof.bin").to_vec();
+            include_bytes!("resources/degree_19/compressed/keccak/proof.bin").to_vec();
         let proof = Proof::new(true, proof_bytes);
-        let pubs = include_bytes!("resources/degree_20/compressed/poseidon/pubs.bin").to_vec();
+        let pubs = include_bytes!("resources/degree_19/compressed/keccak/pubs.bin").to_vec();
         let r;
         #[block]
         {
@@ -399,15 +1309,15 @@ mod benchmarks {
     }
 
     #[benchmark]
-    fn verify_proof_poseidon_compressed_21() {
+    fn verify_proof_poseidon_uncompressed_19() {
         let vk = Vk::new(
             Plonky2Config::Poseidon,
-            include_bytes!("resources/degree_21/compressed/poseidon/vk.bin").to_vec(),
+            include_bytes!("resources/degree_19/uncompressed/poseidon/vk.bin").to_vec(),
         );
         let proof_bytes =
-            include_bytes!("resources/degree_21/compressed/poseidon/proof.bin").to_vec();
-        let proof = Proof::new(true, proof_bytes);
-        let pubs = include_bytes!("resources/degree_21/compressed/poseidon/pubs.bin").to_vec();
+            include_bytes!("resources/degree_19/uncompressed/poseidon/proof.bin").to_vec();
+        let proof = Proof::new(false, proof_bytes);
+        let pubs = include_bytes!("resources/degree_19/uncompressed/poseidon/pubs.bin").to_vec();
         let r;
         #[block]
         {
@@ -417,33 +1327,15 @@ mod benchmarks {
     }
 
     #[benchmark]
-    fn verify_proof_poseidon_compressed_22() {
+    fn verify_proof_keccak_uncompressed_19() {
         let vk = Vk::new(
-            Plonky2Config::Poseidon,
-            include_bytes!("resources/degree_22/compressed/poseidon/vk.bin").to_vec(),
+            Plonky2Config::Keccak,
+            include_bytes!("resources/degree_19/uncompressed/keccak/vk.bin").to_vec(),
         );
         let proof_bytes =
-            include_bytes!("resources/degree_22/compressed/poseidon/proof.bin").to_vec();
-        let proof = Proof::new(true, proof_bytes);
-        let pubs = include_bytes!("resources/degree_22/compressed/poseidon/pubs.bin").to_vec();
-        let r;
-        #[block]
-        {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
-        };
-        assert!(r.is_ok());
-    }
-
-    #[benchmark]
-    fn verify_proof_poseidon_compressed_23() {
-        let vk = Vk::new(
-            Plonky2Config::Poseidon,
-            include_bytes!("resources/degree_23/compressed/poseidon/vk.bin").to_vec(),
-        );
-        let proof_bytes =
-            include_bytes!("resources/degree_23/compressed/poseidon/proof.bin").to_vec();
-        let proof = Proof::new(true, proof_bytes);
-        let pubs = include_bytes!("resources/degree_23/compressed/poseidon/pubs.bin").to_vec();
+            include_bytes!("resources/degree_19/uncompressed/keccak/proof.bin").to_vec();
+        let proof = Proof::new(false, proof_bytes);
+        let pubs = include_bytes!("resources/degree_19/uncompressed/keccak/pubs.bin").to_vec();
         let r;
         #[block]
         {
@@ -479,9 +1371,9 @@ pub mod mock {
     );
 
     impl crate::Config for Test {
-        type MaxNSegment = ConstU32<4>;
-        type Segment20MaxSize = ConstU32<350_000>;
-        type MaxPubsSize = ConstU32<2060>;
+        type MaxProofSize = ConstU32<1000000>;
+        type MaxPubsSize = ConstU32<1000000>;
+        type MaxVkSize = ConstU32<1000000>;
         type WeightInfo = ();
     }
 

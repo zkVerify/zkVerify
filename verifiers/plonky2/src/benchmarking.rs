@@ -138,6 +138,7 @@ mod mock {
         type MaxProofSize = ConstU32<1000000>;
         type MaxPubsSize = ConstU32<1000000>;
         type MaxVkSize = ConstU32<1000000>;
+        type WeightInfo = ();
     }
 
     #[derive_impl(frame_system::config_preludes::SolochainDefaultConfig as frame_system::DefaultConfig)]
