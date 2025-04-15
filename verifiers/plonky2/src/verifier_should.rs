@@ -154,7 +154,7 @@ mod reject {
         } = valid_test_data;
 
         // Set the byte controlling degree_bits to a very high value
-        vk.bytes[732] = 255;
+        vk.bytes[732] = u8::MAX;
 
         assert_err!(
             Plonky2::<MockConfig>::validate_vk(&vk),
