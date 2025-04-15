@@ -298,7 +298,7 @@ impl frame_system::Config for Runtime {
 
 parameter_types! {
     pub const ExpectedBlockTime: u64 = MILLISECS_PER_BLOCK; // Should use primitives::Moment
-    pub EpochDurationInBlocks: BlockNumber = prod_or_fast!(1 * HOURS, 1 * MINUTES, 50); // epoch duration set to 5 minutes
+    pub EpochDurationInBlocks: BlockNumber = prod_or_fast!(1 * HOURS, 5 * MINUTES, "ZKV_RELAY_EPOCH_DURATION");
 
     /// How long (in blocks) an equivocation report is valid for
     pub ReportLongevity: u64 = EpochDurationInBlocks::get() as u64 * 10;
