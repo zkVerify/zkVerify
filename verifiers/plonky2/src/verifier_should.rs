@@ -11,6 +11,26 @@ fn valid_test_data() -> TestData<MockConfig> {
     get_valid_test_data()
 }
 
+#[fixture]
+fn valid_compressed_poseidon_test_data() -> TestData<MockConfig> {
+    get_valid_compressed_poseidon_test_data()
+}
+
+#[fixture]
+fn valid_uncompressed_poseidon_test_data() -> TestData<MockConfig> {
+    get_valid_uncompressed_poseidon_test_data()
+}
+
+#[fixture]
+fn valid_compressed_keccak_test_data() -> TestData<MockConfig> {
+    get_valid_compressed_keccak_test_data()
+}
+
+#[fixture]
+fn valid_uncompressed_keccak_test_data() -> TestData<MockConfig> {
+    get_valid_uncompressed_keccak_test_data()
+}
+
 #[rstest]
 fn verify_valid_proof(valid_test_data: TestData<MockConfig>) {
     assert_ok!(Plonky2::<MockConfig>::verify_proof(
@@ -18,6 +38,42 @@ fn verify_valid_proof(valid_test_data: TestData<MockConfig>) {
         &valid_test_data.proof,
         &valid_test_data.pubs
     ));
+}
+
+#[rstest]
+#[case(Plonky2Config::Poseidon, true, valid_compressed_poseidon_test_data())]
+#[case(
+    Plonky2Config::Poseidon,
+    false,
+    valid_uncompressed_poseidon_test_data()
+)]
+#[case(Plonky2Config::Keccak, true, valid_compressed_keccak_test_data())]
+#[case(Plonky2Config::Keccak, false, valid_uncompressed_keccak_test_data())]
+fn verify_valid_proof_cases(
+    #[case] _config: Plonky2Config,
+    #[case] _compress: bool,
+    #[case] test_data: TestData<MockConfig>,
+) {
+    assert_ok!(Plonky2::<MockConfig>::verify_proof(
+        &test_data.vk,
+        &test_data.proof,
+        &test_data.pubs
+    ));
+}
+
+#[rstest]
+fn compute_correct_weight_for_proof(valid_compressed_poseidon_test_data: TestData<MockConfig>) {
+    let expected = <() as crate::WeightInfoVerifyProof>::verify_proof_poseidon_compressed_19();
+
+    assert_eq!(
+        Some(expected),
+        Plonky2::<MockConfig>::verify_proof(
+            &valid_compressed_poseidon_test_data.vk,
+            &valid_compressed_poseidon_test_data.proof,
+            &valid_compressed_poseidon_test_data.pubs
+        )
+        .unwrap()
+    );
 }
 
 mod reject {

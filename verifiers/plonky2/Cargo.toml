@@ -24,14 +24,13 @@ pallet-verifiers = { workspace = true }
 sp-io = { workspace = true, optional = true }
 frame-support = { workspace = true }
 plonky2 = { git = "https://github.com/zkVerify/plonky2.git", tag = "v0.1.0", default-features = false }
-plonky2-verifier = { git = "https://github.com/zkVerify/plonky2-verifier", tag = "v0.2.0", default-features = false }
+plonky2-verifier = { git = "https://github.com/zkVerify/plonky2-verifier", branch = "dimitris/add-circuit-for-benchmarking", default-features = false }
 educe = { version = "0.6.0", default-features = false, features = [
     "Clone",
     "Debug",
     "PartialEq",
 ] }
 sp-std = { workspace = true }
-paste = { version = "1.0" }
 
 [dev-dependencies]
 rstest = { workspace = true }

@@ -12,7 +12,7 @@ use plonky2::hash::hash_types::RichField;
 use plonky2::plonk::circuit_data::CircuitConfig;
 use plonky2::plonk::config::{GenericConfig, KeccakGoldilocksConfig, PoseidonGoldilocksConfig};
 use plonky2_verifier::validate::ValidateError;
-use plonky2_verifier::verify;
+use plonky2_verifier::{deserialize_vk, verify};
 use sp_std::marker::PhantomData;
 use sp_std::vec::Vec;
 
@@ -22,7 +22,9 @@ mod proof;
 pub(crate) mod verifier_should;
 mod vk;
 mod weight;
+mod weight_verify_proof;
 
+pub use crate::weight_verify_proof::WeightInfo as WeightInfoVerifyProof;
 pub use weight::WeightInfo;
 
 pub type Pubs = Vec<u8>;
@@ -56,6 +58,8 @@ pub trait Config: 'static {
     type MaxPubsSize: Get<u32>;
     /// Maximum number of bytes contained in the verification key (otherwise rejected)
     type MaxVkSize: Get<u32>;
+    /// Weight info used to compute the verify proof weight
+    type WeightInfo: WeightInfoVerifyProof;
 
     fn max_proof_size() -> u32 {
         Self::MaxProofSize::get()
@@ -100,7 +104,7 @@ impl<T: Config> Verifier for Plonky2<T> {
         let proof = plonky2_verifier::Proof::from(raw_proof.clone());
 
         let degree_bits = match vk.config {
-            Plonky2Config::Keccak => {
+            plonky2_verifier::Plonky2Config::Keccak => {
                 const D: usize = 2;
                 type C = KeccakGoldilocksConfig;
                 type F = <C as GenericConfig<D>>::F;
@@ -111,7 +115,7 @@ impl<T: Config> Verifier for Plonky2<T> {
                     .fri_params
                     .degree_bits
             }
-            Plonky2Config::Poseidon => {
+            plonky2_verifier::Plonky2Config::Poseidon => {
                 const D: usize = 2;
                 type C = PoseidonGoldilocksConfig;
                 type F = <C as GenericConfig<D>>::F;
@@ -124,33 +128,8 @@ impl<T: Config> Verifier for Plonky2<T> {
             }
         };
 
-        let w = match degree_bits {
-            2 => weight::WeightInfo::verify_proof_poseidon_compressed_2(),
-            3 => weight::WeightInfo::verify_proof_poseidon_compressed_3(),
-            4 => weight::WeightInfo::verify_proof_poseidon_compressed_4(),
-            5 => weight::WeightInfo::verify_proof_poseidon_compressed_5(),
-            6 => weight::WeightInfo::verify_proof_poseidon_compressed_6(),
-            7 => weight::WeightInfo::verify_proof_poseidon_compressed_7(),
-            8 => weight::WeightInfo::verify_proof_poseidon_compressed_8(),
-            9 => weight::WeightInfo::verify_proof_poseidon_compressed_9(),
-            10 => weight::WeightInfo::verify_proof_poseidon_compressed_10(),
-            11 => weight::WeightInfo::verify_proof_poseidon_compressed_11(),
-            12 => weight::WeightInfo::verify_proof_poseidon_compressed_12(),
-            13 => weight::WeightInfo::verify_proof_poseidon_compressed_13(),
-            14 => weight::WeightInfo::verify_proof_poseidon_compressed_14(),
-            15 => weight::WeightInfo::verify_proof_poseidon_compressed_15(),
-            16 => weight::WeightInfo::verify_proof_poseidon_compressed_16(),
-            17 => weight::WeightInfo::verify_proof_poseidon_compressed_17(),
-            18 => weight::WeightInfo::verify_proof_poseidon_compressed_18(),
-            19 => weight::WeightInfo::verify_proof_poseidon_compressed_19(),
-            20 => weight::WeightInfo::verify_proof_poseidon_compressed_20(),
-            21 => weight::WeightInfo::verify_proof_poseidon_compressed_21(),
-            22 => weight::WeightInfo::verify_proof_poseidon_compressed_22(),
-            23 => weight::WeightInfo::verify_proof_poseidon_compressed_23(),
-            _ => panic!(),
-        };
+        let w = compute_weight::<T>(degree_bits, vk.config, proof.compressed);
 
-        // let degree_bits = vk.
         verify(&vk, &proof, raw_pubs)
             .inspect_err(|e| log::debug!("Proof verification failed: {:?}", e))
             .map_err(|_| VerifyError::VerifyError)
@@ -201,6 +180,197 @@ where
             .then_some(())
             .ok_or(ValidateError::UnsupportedCircuitConfig)
         })
+}
+
+fn compute_weight<T: Config>(
+    degree_bits: usize,
+    config: plonky2_verifier::Plonky2Config,
+    compressed: bool,
+) -> Weight {
+    use plonky2_verifier::Plonky2Config;
+    match degree_bits {
+        2 => match compressed {
+            true => match config {
+                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_compressed_2(),
+                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_compressed_2(),
+            },
+            false => match config {
+                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_uncompressed_2(),
+                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_uncompressed_2(),
+            },
+        },
+        3 => match compressed {
+            true => match config {
+                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_compressed_3(),
+                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_compressed_3(),
+            },
+            false => match config {
+                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_uncompressed_3(),
+                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_uncompressed_3(),
+            },
+        },
+        4 => match compressed {
+            true => match config {
+                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_compressed_4(),
+                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_compressed_4(),
+            },
+            false => match config {
+                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_uncompressed_4(),
+                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_uncompressed_4(),
+            },
+        },
+        5 => match compressed {
+            true => match config {
+                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_compressed_5(),
+                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_compressed_5(),
+            },
+            false => match config {
+                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_uncompressed_5(),
+                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_uncompressed_5(),
+            },
+        },
+        6 => match compressed {
+            true => match config {
+                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_compressed_6(),
+                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_compressed_6(),
+            },
+            false => match config {
+                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_uncompressed_6(),
+                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_uncompressed_6(),
+            },
+        },
+        7 => match compressed {
+            true => match config {
+                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_compressed_7(),
+                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_compressed_7(),
+            },
+            false => match config {
+                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_uncompressed_7(),
+                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_uncompressed_7(),
+            },
+        },
+        8 => match compressed {
+            true => match config {
+                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_compressed_8(),
+                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_compressed_8(),
+            },
+            false => match config {
+                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_uncompressed_8(),
+                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_uncompressed_8(),
+            },
+        },
+        9 => match compressed {
+            true => match config {
+                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_compressed_9(),
+                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_compressed_9(),
+            },
+            false => match config {
+                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_uncompressed_9(),
+                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_uncompressed_9(),
+            },
+        },
+        10 => match compressed {
+            true => match config {
+                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_compressed_10(),
+                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_compressed_10(),
+            },
+            false => match config {
+                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_uncompressed_10(),
+                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_uncompressed_10(),
+            },
+        },
+        11 => match compressed {
+            true => match config {
+                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_compressed_11(),
+                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_compressed_11(),
+            },
+            false => match config {
+                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_uncompressed_11(),
+                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_uncompressed_11(),
+            },
+        },
+        12 => match compressed {
+            true => match config {
+                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_compressed_12(),
+                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_compressed_12(),
+            },
+            false => match config {
+                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_uncompressed_12(),
+                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_uncompressed_12(),
+            },
+        },
+        13 => match compressed {
+            true => match config {
+                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_compressed_13(),
+                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_compressed_13(),
+            },
+            false => match config {
+                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_uncompressed_13(),
+                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_uncompressed_13(),
+            },
+        },
+        14 => match compressed {
+            true => match config {
+                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_compressed_14(),
+                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_compressed_14(),
+            },
+            false => match config {
+                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_uncompressed_14(),
+                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_uncompressed_14(),
+            },
+        },
+        15 => match compressed {
+            true => match config {
+                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_compressed_15(),
+                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_compressed_15(),
+            },
+            false => match config {
+                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_uncompressed_15(),
+                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_uncompressed_15(),
+            },
+        },
+        16 => match compressed {
+            true => match config {
+                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_compressed_16(),
+                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_compressed_16(),
+            },
+            false => match config {
+                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_uncompressed_16(),
+                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_uncompressed_16(),
+            },
+        },
+        17 => match compressed {
+            true => match config {
+                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_compressed_17(),
+                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_compressed_17(),
+            },
+            false => match config {
+                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_uncompressed_17(),
+                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_uncompressed_17(),
+            },
+        },
+        18 => match compressed {
+            true => match config {
+                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_compressed_18(),
+                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_compressed_18(),
+            },
+            false => match config {
+                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_uncompressed_18(),
+                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_uncompressed_18(),
+            },
+        },
+        19 => match compressed {
+            true => match config {
+                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_compressed_19(),
+                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_compressed_19(),
+            },
+            false => match config {
+                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_uncompressed_19(),
+                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_uncompressed_19(),
+            },
+        },
+        _ => panic!(),
+    }
 }
 
 pub struct Plonky2Weight<W: weight::WeightInfo>(PhantomData<W>);
