@@ -298,7 +298,7 @@ impl frame_system::Config for Runtime {
 
 parameter_types! {
     pub const ExpectedBlockTime: u64 = MILLISECS_PER_BLOCK; // Should use primitives::Moment
-    pub EpochDurationInBlocks: BlockNumber = prod_or_fast!(1 * HOURS, 1 * MINUTES, "ZKV_RELAY_EPOCH_DURATION");
+    pub EpochDurationInBlocks: BlockNumber = prod_or_fast!(1 * HOURS, 1 * MINUTES, 50); // epoch duration set to 5 minutes
 
     /// How long (in blocks) an equivocation report is valid for
     pub ReportLongevity: u64 = EpochDurationInBlocks::get() as u64 * 10;
@@ -726,7 +726,7 @@ impl pallet_session::Config for Runtime {
 }
 
 parameter_types! {
-    pub SessionsPerEra: sp_staking::SessionIndex = 6 * HOURS / EpochDurationInBlocks::get(); // number of sessions in 1 era, 6h
+    pub SessionsPerEra: sp_staking::SessionIndex = 10 * MINUTES / EpochDurationInBlocks::get(); // number of sessions in 1 era, 10 minutes
 
     pub const BondingDuration: sp_staking::EraIndex = 28; // number of sessions for which staking
                                                          // remains locked
@@ -737,12 +737,12 @@ parameter_types! {
 
 // Maximum number of election targets (eligible authorities) to account for. The staking pallet
 // can never have more validators than this.
-pub const MAX_TARGETS: u32 = 1_000;
+pub const MAX_TARGETS: u32 = 1_000_000; // Just a very large number to be able to test any scenario
 // Maximum number of voters. This also includes targets, which implicitly vote for themselves.
-pub const MAX_VOTERS: u32 = 5_000;
+pub const MAX_VOTERS: u32 = 1_000_000; // Just a very large number to be able to test any scenario
 // The maximum number of number of active validators that we want to handle.
 // This *must always be greater or equal* to staking.validatorCount storage value.
-pub const MAX_ACTIVE_VALIDATORS: u32 = 20;
+pub const MAX_ACTIVE_VALIDATORS: u32 = 10_000; // Just a very large number to be able to test any scenario
 
 parameter_types! {
     // Maximum number of election voters and targets that can be handled by OnChainSeqPhragmen
@@ -792,7 +792,7 @@ impl pallet_staking::Config for Runtime {
     type ElectionProvider = OnChainExecution<OnChainSeqPhragmen>;
     type GenesisElectionProvider = OnChainExecution<OnChainSeqPhragmen>;
     type VoterList = VoterList;
-    type NominationsQuota = pallet_staking::FixedNominationsQuota<10>;
+    type NominationsQuota = pallet_staking::FixedNominationsQuota<20>; // MAX amount of Nominations to fit the tests
     type TargetList = pallet_staking::UseValidatorsMap<Self>;
     type MaxUnlockingChunks = ConstU32<32>;
     type HistoryDepth = HistoryDepth; // Number of eras to keep in history
