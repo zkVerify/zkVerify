@@ -41,19 +41,11 @@ fn verify_valid_proof(valid_test_data: TestData<MockConfig>) {
 }
 
 #[rstest]
-#[case(Plonky2Config::Poseidon, true, valid_compressed_poseidon_test_data())]
-#[case(
-    Plonky2Config::Poseidon,
-    false,
-    valid_uncompressed_poseidon_test_data()
-)]
-#[case(Plonky2Config::Keccak, true, valid_compressed_keccak_test_data())]
-#[case(Plonky2Config::Keccak, false, valid_uncompressed_keccak_test_data())]
-fn verify_valid_proof_cases(
-    #[case] _config: Plonky2Config,
-    #[case] _compress: bool,
-    #[case] test_data: TestData<MockConfig>,
-) {
+#[case(valid_compressed_poseidon_test_data())]
+#[case(valid_uncompressed_poseidon_test_data())]
+#[case(valid_compressed_keccak_test_data())]
+#[case(valid_uncompressed_keccak_test_data())]
+fn verify_valid_proof_cases(#[case] test_data: TestData<MockConfig>) {
     assert_ok!(Plonky2::<MockConfig>::verify_proof(
         &test_data.vk,
         &test_data.proof,
