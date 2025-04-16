@@ -433,7 +433,7 @@ pub mod pallet {
         /// Raise an Error if attempting to end an already ended airdrop.
         /// Origin must be 'ManagerOrigin'.
         #[pallet::call_index(4)]
-        #[pallet::weight(T::WeightInfo::end_airdrop(Beneficiaries::<T>::count()))]
+        #[pallet::weight(T::WeightInfo::end_airdrop(Beneficiaries::<T>::count()).saturating_add(T::DbWeight::get().reads(1_u64)))]
         pub fn end_airdrop(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
             T::ManagerOrigin::ensure_origin(origin)?;
 
