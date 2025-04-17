@@ -1,7 +1,6 @@
 use crate::mock::RuntimeEvent as TestEvent;
 use crate::mock::*;
 use crate::*;
-use crate::{mock, Pallet};
 use frame_support::{assert_err, assert_noop, assert_ok, dispatch::Pays};
 use frame_system::{EventRecord, Phase};
 use sp_core::TypedGet;
