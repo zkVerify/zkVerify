@@ -147,6 +147,6 @@ The official documentation is available at [docs.zkverify.io](https://docs.zkver
 ## License
 
 zkVerify is released under the following licenses:
-- [GPL-3](LICENSE-GPL3) for all the crates under the `zkv-relay` package.
+- [GPL-3](LICENSE-GPL3) for all the crates under the `zkv-relay`, `zkv-runtime` and `pallet-fflonk-verifier`packages.
 - GPL-3 with CLASSPATH exception for `cumulus-relay-chain-inprocess-interface` and `cumulus-relay-chain-minimal-node` crates.
 - [Apache 2.0](LICENSE-APACHE2) for all the other crates.
