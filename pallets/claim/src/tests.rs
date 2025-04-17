@@ -1,7 +1,7 @@
-use crate::mock;
 use crate::mock::RuntimeEvent as TestEvent;
 use crate::mock::*;
 use crate::*;
+use crate::{mock, Pallet};
 use frame_support::{assert_err, assert_noop, assert_ok, dispatch::Pays};
 use frame_system::{EventRecord, Phase};
 use sp_core::TypedGet;
@@ -79,9 +79,14 @@ fn genesis_build_sufficient_balance() {
 }
 
 #[test]
-#[should_panic(expected = "TooManyBeneficiaries")]
-fn genesis_build_too_many_beneficiaries() {
-    test_genesis_too_many_beneficiaries().execute_with(|| {});
+fn genesis_build_exceed_op_beneficiaries_is_ok() {
+    test_genesis_with_beneficiaries(MaxBeneficiaries::get()).execute_with(|| {});
+}
+
+#[test]
+#[should_panic(expected = "MaxNumBeneficiariesReached")]
+fn genesis_build_exceed_max_beneficiaries_fails() {
+    test_genesis_with_beneficiaries(MaxBeneficiaries::get() + 1).execute_with(|| {});
 }
 
 #[test]
@@ -180,20 +185,16 @@ fn new_airdrop_insufficient_funds() {
 }
 
 #[test]
-fn new_airdrop_too_many_beneficiaries() {
+fn new_airdrop_adding_too_many_op_beneficiaries() {
     test_with_configs(
         WithGenesisBeneficiaries::No,
         GenesisClaimBalance::Sufficient,
     )
     .execute_with(|| {
-        assert_ok!(Claim::begin_airdrop(
-            Origin::Signed(MANAGER_USER).into(),
-            GENESIS_BENEFICIARIES_MAP.clone()
-        ));
         assert_noop!(
-            Claim::add_beneficiaries(
+            Claim::begin_airdrop(
                 Origin::Signed(MANAGER_USER).into(),
-                utils::get_beneficiaries_map::<Test>(MaxBeneficiaries::get()).0
+                utils::get_beneficiaries_map::<Test>(MaxOpBeneficiaries::get() + 1).0
             ),
             Error::<Test>::TooManyBeneficiaries
         );
@@ -464,16 +465,20 @@ fn cannot_add_beneficiaries_while_airdrop_inactive() {
 }
 
 #[test]
-fn cannot_add_too_many_beneficiaries() {
+fn cannot_add_too_many_op_beneficiaries() {
     test_with_configs(
-        WithGenesisBeneficiaries::Yes,
+        WithGenesisBeneficiaries::No,
         GenesisClaimBalance::Sufficient,
     )
     .execute_with(|| {
+        assert_ok!(Claim::begin_airdrop(
+            Origin::Signed(MANAGER_USER).into(),
+            EMPTY_BENEFICIARIES_MAP.clone()
+        ));
         assert_noop!(
             Claim::add_beneficiaries(
                 Origin::Signed(MANAGER_USER).into(),
-                utils::get_beneficiaries_map::<Test>(MaxBeneficiaries::get()).0
+                utils::get_beneficiaries_map::<Test>(MaxOpBeneficiaries::get() + 1).0
             ),
             Error::<Test>::TooManyBeneficiaries
         );
@@ -482,22 +487,18 @@ fn cannot_add_too_many_beneficiaries() {
 
 #[test]
 fn cannot_add_beneficiaries_over_the_max() {
-    test().execute_with(|| {
-        assert_ok!(Claim::begin_airdrop(
-            Origin::Signed(MANAGER_USER).into(),
-            EMPTY_BENEFICIARIES_MAP.clone()
-        ));
-
-        let _ = Balances::mint_into(&Claim::account_id(), 1000000000).unwrap(); // Just to be safe
-        assert_ok!(Claim::add_beneficiaries(
-            Origin::Signed(MANAGER_USER).into(),
-            utils::get_beneficiaries_map::<Test>(MaxOpBeneficiaries::get()).0
-        ));
-
+    test_with_configs(
+        WithGenesisBeneficiaries::Yes,
+        GenesisClaimBalance::Sufficient,
+    )
+    .execute_with(|| {
         assert_noop!(
             Claim::add_beneficiaries(
                 Origin::Signed(MANAGER_USER).into(),
-                NEW_BENEFICIARIES_MAP.clone()
+                utils::get_beneficiaries_map::<Test>(
+                    MaxBeneficiaries::get() - GENESIS_BENEFICIARIES.len() as u32 + 1
+                )
+                .0
             ),
             Error::<Test>::MaxNumBeneficiariesReached
         );

@@ -132,6 +132,9 @@ pub mod pallet {
         fn build(&self) {
             use frame_support::assert_ok;
 
+            // Sanity check
+            assert!(T::MAX_OP_BENEFICIARIES <= T::MaxBeneficiaries::get());
+
             // Create Claim account
             let account_id = <Pallet<T>>::account_id();
 
@@ -148,13 +151,12 @@ pub mod pallet {
             let num_beneficiaries = self.beneficiaries.len();
 
             if num_beneficiaries > 0 {
-                // Check that we are not adding too many here
-                assert_ok!(<Pallet<T>>::check_num_beneficiaries(num_beneficiaries));
-
                 // Start adding beneficiaries if specified
+                // Note: Considering it's a genesis build there is no need here
+                //       to enforce a check on MaxOpBeneficiaries
+                assert_ok!(<Pallet<T>>::check_max_beneficiaries(num_beneficiaries));
                 assert_ok!(<Pallet<T>>::do_add_beneficiaries(
                     self.beneficiaries.clone().into_iter().collect(),
-                    num_beneficiaries
                 ));
 
                 // Initialize other storage variables
@@ -270,13 +272,7 @@ pub mod pallet {
 
         fn do_add_beneficiaries(
             beneficiaries: BTreeMap<T::AccountId, BalanceOf<T>>,
-            num_beneficiaries: usize,
         ) -> DispatchResult {
-            // Check we have space for all the beneficiaries we are trying to add
-            if Beneficiaries::<T>::count() + num_beneficiaries as u32 > T::MaxBeneficiaries::get() {
-                Err(Error::<T>::MaxNumBeneficiariesReached)?;
-            }
-
             // Check that the pot has enough funds to cover for all the beneficiaries
             let available_amount = Self::pot();
             let mut required_amount = TotalClaimable::<T>::get();
@@ -323,14 +319,35 @@ pub mod pallet {
             }
         }
 
-        fn check_num_beneficiaries(beneficiaries_len: usize) -> DispatchResult {
-            if beneficiaries_len > T::MAX_OP_BENEFICIARIES as usize {
+        fn check_max_op_beneficiaries(new_beneficiaries_len: usize) -> DispatchResult {
+            if new_beneficiaries_len > T::MAX_OP_BENEFICIARIES as usize {
                 log::warn!(
-                    "Too many beneficiaries for this single operation: {beneficiaries_len:?}."
+                    "Too many beneficiaries for this single operation: {new_beneficiaries_len:?}."
                 );
                 Err(Error::<T>::TooManyBeneficiaries)?;
             }
 
+            Ok(())
+        }
+
+        fn check_max_beneficiaries(new_beneficiaries_len: usize) -> DispatchResult {
+            // Check we have space for all the beneficiaries we are trying to add
+            let actual_beneficiaries_len = Beneficiaries::<T>::count();
+            if actual_beneficiaries_len + new_beneficiaries_len as u32 > T::MaxBeneficiaries::get()
+            {
+                log::warn!(
+                    "This operation would exceed the maximum amount of supported beneficiaries.
+                    \nCurrent: {actual_beneficiaries_len}. Attempting to add: {new_beneficiaries_len:?}."
+                );
+                Err(Error::<T>::MaxNumBeneficiariesReached)?;
+            }
+
+            Ok(())
+        }
+
+        fn check_beneficiaries_len(new_beneficiaries_len: usize) -> DispatchResult {
+            Self::check_max_op_beneficiaries(new_beneficiaries_len)?;
+            Self::check_max_beneficiaries(new_beneficiaries_len)?;
             Ok(())
         }
     }
@@ -359,10 +376,14 @@ pub mod pallet {
 
             if num_beneficiaries > 0 {
                 // Check that we are not adding too many here
-                Self::check_num_beneficiaries(num_beneficiaries)?;
+                // Note: we don't need to check for MaxBeneficiaries considering that:
+                // - When starting an airdrop there are no beneficiaries in storage
+                // - It always holds that T::MaxOpBeneficiaries <= T::MaxBeneficiaries
+                // Thus the following check, alone, it's enough
+                Self::check_max_op_beneficiaries(num_beneficiaries)?;
 
                 // Start adding beneficiaries if specified
-                Self::do_add_beneficiaries(beneficiaries, num_beneficiaries)?;
+                Self::do_add_beneficiaries(beneficiaries)?;
             }
 
             // Increase airdrop id
@@ -419,10 +440,10 @@ pub mod pallet {
 
             if num_beneficiaries > 0 {
                 // Check that we are not adding too many here
-                Self::check_num_beneficiaries(num_beneficiaries)?;
+                Self::check_beneficiaries_len(num_beneficiaries)?;
 
                 // Start adding beneficiaries if specified
-                Self::do_add_beneficiaries(beneficiaries, num_beneficiaries)?;
+                Self::do_add_beneficiaries(beneficiaries)?;
             }
 
             Ok(Pays::No.into())
@@ -445,7 +466,7 @@ pub mod pallet {
 
             if num_beneficiaries > 0 {
                 // Check that we are not removing too many here
-                Self::check_num_beneficiaries(num_beneficiaries as usize)?;
+                Self::check_max_op_beneficiaries(num_beneficiaries as usize)?;
 
                 // Remove all beneficiaries entries
                 let _ = Beneficiaries::<T>::clear(num_beneficiaries, None);

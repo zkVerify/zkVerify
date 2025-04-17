@@ -235,7 +235,7 @@ pub fn test_with_configs(
     ext
 }
 
-pub fn test_genesis_too_many_beneficiaries() -> sp_io::TestExternalities {
+pub fn test_genesis_with_beneficiaries(n: u32) -> sp_io::TestExternalities {
     let mut t = frame_system::GenesisConfig::<Test>::default()
         .build_storage()
         .unwrap();
@@ -247,11 +247,11 @@ pub fn test_genesis_too_many_beneficiaries() -> sp_io::TestExternalities {
     .unwrap();
 
     crate::GenesisConfig::<Test> {
-        beneficiaries: utils::get_beneficiaries_map::<Test>(MaxBeneficiaries::get() + 1)
+        beneficiaries: utils::get_beneficiaries_map::<Test>(n)
             .0
             .into_iter()
             .collect(),
-        genesis_balance: 0, // It doesn't matter
+        genesis_balance: 42_000_000_000,
     }
     .assimilate_storage(&mut t)
     .unwrap();
