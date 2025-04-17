@@ -51,3 +51,13 @@ pub mod v1_2 {
     pub static VALID_PUBS_UPPER_BOUND: &[u8] = &hex_literal::hex!("0d003c0000000000");
     pub static VALID_PROOF_UPPER_BOUND: &[u8] = include_bytes!("resources/upper_bound.bin");
 }
+
+pub mod v2_0 {
+    pub static VALID_VK: sp_core::H256 = sp_core::H256(hex_literal::hex!(
+        "46eb54959aaff64f405fb04575c4a2387630de3a7938d679494b8f31f859cb01"
+    ));
+
+    pub static VALID_PROOF: &[u8] = include_bytes!("resources/v_2_0_succinct_22.bin");
+
+    pub static VALID_PUBS: &[u8] = &hex_literal::hex!("08003c0000000000");
+}

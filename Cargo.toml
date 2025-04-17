@@ -20,6 +20,7 @@ members = [
     "primitives/hp-groth16",
     "verifiers/groth16",
     "verifiers/risc0",
+    "verifiers/risc0/risc0-derive",
     "verifiers/ultraplonk",
     "verifiers/proofofsql",
     "verifiers/plonky2",
@@ -104,7 +105,7 @@ pallet-groth16-verifier = { path = "verifiers/groth16", default-features = false
 pallet-risc0-verifier = { path = "verifiers/risc0", default-features = false }
 pallet-ultraplonk-verifier = { path = "verifiers/ultraplonk", default-features = false }
 pallet-proofofsql-verifier = { path = "verifiers/proofofsql", default-features = false }
-risc0-verifier = { git = "https://github.com/HorizenLabs/risc0-verifier.git", tag="v0.5.0", default-features = false }
+risc0-verifier = { git = "https://github.com/HorizenLabs/risc0-verifier.git", tag = "v0.6.0", default-features = false }
 pallet-plonky2-verifier = { path = "verifiers/plonky2", default-features = false }
 
 zkv-benchmarks = { path = "relay-node/benchmarks" }

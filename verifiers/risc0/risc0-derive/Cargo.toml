@@ -1,0 +1,20 @@
+[package]
+name = "risc0-derive"
+version = "0.1.0"
+description = "A risc0 verifier derive"
+homepage.workspace = true
+edition.workspace = true
+authors.workspace = true
+repository.workspace = true
+license = "Apache-2.0"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = "2.0"
+quote = "1.0"
+proc-macro2 = "1.0.94"
+
+[dev-dependencies]
+pretty_assertions = "1.4.1"
