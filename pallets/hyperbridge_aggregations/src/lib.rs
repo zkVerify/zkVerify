@@ -90,7 +90,7 @@ pub mod pallet {
         /// Aggregation id
         pub aggregation_id: u64,
 
-        /// Aggregation Recepit
+        /// Aggregation receipt
         pub aggregation: sp_core::H256,
 
         /// Destination contract

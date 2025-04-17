@@ -161,10 +161,11 @@ pub mod pallet {
         type ComputePublisherTip: ComputePublisherTip<BalanceOf<Self>>;
         /// The weight definition for this pallet
         type WeightInfo: WeightInfo;
-        /// The (max) size of aggregations used in benchmarks. NEEDS to be equal to AggregationSize::get()
+        /// The (max) size of aggregations used in benchmarks. NEEDS to be equal to AggregationSize::get().
+        /// Used in benchmarks
         #[cfg(feature = "runtime-benchmarks")]
         const AGGREGATION_SIZE: u32;
-        /// The weight definition for this pallet
+        /// The currency trait, used in benchmarks.
         #[cfg(feature = "runtime-benchmarks")]
         type Currency: frame_support::traits::fungible::Mutate<AccountOf<Self>>;
         /// Handler for when an aggregation is completed
@@ -916,7 +917,7 @@ pub mod pallet {
             Ok(owner.post_info(None))
         }
 
-        /// Set the delivery attestation price. Every submitter will hold this price (at the time of proof submission)
+        /// Set the delivery aggregation price. Every submitter will hold this price (at the time of proof submission)
         /// divided by the aggregation size. When the aggregation is dispatched all this held funds will be
         /// transferred to the delivery owner.
         ///

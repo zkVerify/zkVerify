@@ -99,11 +99,11 @@ where
 
         api.get_statement_path(at, domain_id, aggregation_id, statement)
             .map_err(|e| map_err(e, "Unable to query dispatch info."))
-            .and_then(|r| r.map_err(convert_attestation_error))
+            .and_then(|r| r.map_err(convert_aggregation_error))
     }
 }
 
-fn convert_attestation_error(e: PathRequestError) -> ErrorObjectOwned {
+fn convert_aggregation_error(e: PathRequestError) -> ErrorObjectOwned {
     match e {
         PathRequestError::NotFound(domain_id, id, h) => ErrorObject::owned(
             Error::StatementNotFound.into(),
