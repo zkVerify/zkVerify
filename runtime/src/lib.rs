@@ -1095,6 +1095,7 @@ impl pallet_plonky2_verifier::Config for Runtime {
     type MaxProofSize = Plonky2MaxProofSize;
     type MaxPubsSize = Plonky2MaxPubsSize;
     type MaxVkSize = Plonky2MaxVkSize;
+    type WeightInfo = ();
 }
 
 impl pallet_verifiers::Config<pallet_plonky2_verifier::Plonky2<Runtime>> for Runtime {
@@ -1290,6 +1291,7 @@ mod benches {
         [pallet_ultraplonk_verifier, UltraplonkVerifierBench::<Runtime>]
         [pallet_proofofsql_verifier, ProofOfSqlVerifierBench::<Runtime>]
         [pallet_plonky2_verifier, Plonky2VerifierBench::<Runtime>]
+        [pallet_plonky2_verifier_verify_proof, Plonky2VerifierVerifyProofBench::<Runtime>]
         // parachains
         [crate::parachains::configuration, Configuration]
         [crate::parachains::disputes, ParasDisputes]
@@ -1781,6 +1783,7 @@ impl_runtime_apis! {
             use pallet_risc0_verifier::extend_benchmarking::Pallet as Risc0VerifierExtendBench;
             use pallet_ultraplonk_verifier::benchmarking::Pallet as UltraplonkVerifierBench;
             use pallet_proofofsql_verifier::benchmarking::Pallet as ProofOfSqlVerifierBench;
+            use pallet_plonky2_verifier::benchmarking_verify_proof::Pallet as Plonky2VerifierVerifyProofBench;
             use pallet_plonky2_verifier::benchmarking::Pallet as Plonky2VerifierBench;
 
             pub mod xcm {
@@ -1813,6 +1816,7 @@ impl_runtime_apis! {
             use pallet_risc0_verifier::extend_benchmarking::Pallet as Risc0VerifierExtendBench;
             use pallet_ultraplonk_verifier::benchmarking::Pallet as UltraplonkVerifierBench;
             use pallet_proofofsql_verifier::benchmarking::Pallet as ProofOfSqlVerifierBench;
+            use pallet_plonky2_verifier::benchmarking_verify_proof::Pallet as Plonky2VerifierVerifyProofBench;
             use pallet_plonky2_verifier::benchmarking::Pallet as Plonky2VerifierBench;
 
             pub mod xcm {
