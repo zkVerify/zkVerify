@@ -33,7 +33,7 @@ pub mod pallet_custom_origins {
     pub enum Origin {
         /// Origin able to cancel slashes and manage minimum commission.
         StakingAdmin,
-        /// Origin for spending up to TBD VFYs from the treasury as well as generally
+        /// Origin for spending up to $10,000,000 VFYs from the treasury as well as generally
         /// administering it.
         Treasurer,
         /// Origin able to cancel referenda.

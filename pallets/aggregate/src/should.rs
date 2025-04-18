@@ -335,7 +335,7 @@ fn reserve_at_least_the_publish_proof_price_fraction_when_on_proof_verified() {
 }
 
 const DELIVERY_PRICE: u128 = 64 * 10000;
-const EXPECTED_DELIVERY_HOLD_FOUNDS: u128 = DELIVERY_PRICE / DOMAIN_SIZE as u128;
+const EXPECTED_DELIVERY_HOLD_FUNDS: u128 = DELIVERY_PRICE / DOMAIN_SIZE as u128;
 
 fn set_delivery_price(domain_id: u32, price: Balance) {
     Domains::<Test>::mutate_extant(domain_id, |d| {
@@ -355,7 +355,7 @@ fn reserve_the_delivery_price_fraction_when_on_proof_verified() {
 
         assert_eq!(
             Balances::reserved_balance(account),
-            DOMAIN_FEE + EXPECTED_DELIVERY_HOLD_FOUNDS
+            DOMAIN_FEE + EXPECTED_DELIVERY_HOLD_FUNDS
         );
     })
 }
@@ -382,10 +382,10 @@ fn not_fail_but_raise_just_an_event_if_a_user_doesn_t_have_enough_found_to_reser
         let statement = H256::from_low_u64_be(123);
         set_delivery_price(DOMAIN_ID, DELIVERY_PRICE);
 
-        Aggregate::on_proof_verified(Some(NO_DELIVERY_FOUND_USER), DOMAIN, statement);
+        Aggregate::on_proof_verified(Some(NO_DELIVERY_FUND_USER), DOMAIN, statement);
 
         assert_eq!(
-            Balances::reserved_balance(NO_DELIVERY_FOUND_USER),
+            Balances::reserved_balance(NO_DELIVERY_FUND_USER),
             0,
             "Should not reserve any balance"
         );
@@ -400,10 +400,10 @@ fn not_fail_but_raise_just_an_event_if_a_user_doesn_t_have_enough_found_to_reser
     test().execute_with(|| {
         let statement = H256::from_low_u64_be(123);
 
-        Aggregate::on_proof_verified(Some(NO_DOMAIN_FEE_FOUND_USER), DOMAIN, statement);
+        Aggregate::on_proof_verified(Some(NO_DOMAIN_FEE_FUND_USER), DOMAIN, statement);
 
         assert_eq!(
-            Balances::reserved_balance(NO_DOMAIN_FEE_FOUND_USER),
+            Balances::reserved_balance(NO_DOMAIN_FEE_FUND_USER),
             0,
             "Should not reserve any balance"
         );
@@ -535,7 +535,7 @@ mod aggregate {
     }
 
     #[test]
-    fn refound_the_publisher_from_the_reserved_founds() {
+    fn refund_the_publisher_from_the_reserved_funds() {
         test().execute_with(|| {
             let accounts = [USER_1, USER_2];
             let elements = (0..DOMAIN_SIZE as u64)
@@ -563,7 +563,7 @@ mod aggregate {
     }
 
     #[test]
-    fn un_hold_the_submitters_aggregation_founds_if_called_by_the_manager() {
+    fn un_hold_the_submitters_aggregation_funds_if_called_by_the_manager() {
         test().execute_with(|| {
             let accounts = [USER_1, USER_2];
             let elements = (0..DOMAIN_SIZE as u64)
@@ -609,7 +609,7 @@ mod aggregate {
     }
 
     #[rstest]
-    fn pay_the_delivery_owner_for_delivering_from_the_reserved_founds(
+    fn pay_the_delivery_owner_for_delivering_from_the_reserved_funds(
         #[values(PUBLISHER_USER, ROOT_USER)] executor: AccountId,
     ) {
         test().execute_with(|| {
@@ -643,7 +643,7 @@ mod aggregate {
     }
 
     #[rstest]
-    fn after_aggregate_submitter_user_should_not_have_any_founds_on_hold(
+    fn after_aggregate_submitter_user_should_not_have_any_funds_on_hold(
         #[values(PUBLISHER_USER, ROOT_USER)] executor: AccountId,
     ) {
         test().execute_with(|| {
@@ -1329,6 +1329,24 @@ mod register_domain {
         assert_eq!(info.pays_fee, Pays::Yes);
         assert_eq!(info.weight, MockWeightInfo::register_domain());
     }
+
+    #[test]
+    fn no_more_domain_ids() {
+        test().execute_with(|| {
+            NextDomainId::<Test>::put(u32::MAX);
+            assert_noop!(
+                Aggregate::register_domain(
+                    Origin::Signed(USER_DOMAIN_1).into(),
+                    16,
+                    None,
+                    AggregateSecurityRules::Untrusted,
+                    none_delivering(),
+                    None
+                ),
+                Error::<Test>::InvalidDomainParams
+            );
+        })
+    }
 }
 
 mod hold_domain {
@@ -1799,4 +1817,109 @@ fn return_the_correct_weigh_on_proof_verified() {
         <Aggregate as OnProofVerified<u64>>::weight(&Some(42)),
         <Test as crate::Config>::WeightInfo::on_proof_verified()
     );
+}
+
+mod aggregation_id_max {
+
+    use frame_support::assert_err_ignore_postinfo;
+
+    use super::*;
+
+    const MAX_AGGREGATE_ID: u64 = u64::MAX;
+
+    #[test]
+    fn hold_on_aggregate() {
+        test().execute_with(|| {
+            let domain = Domain::<Test>::try_create(
+                DOMAIN_ID,
+                USER_DOMAIN_1.into(),
+                MAX_AGGREGATE_ID,
+                2,
+                1,
+                AggregateSecurityRules::OnlyOwnerUncompleted,
+                None,
+                DeliveryParams::<AccountId, Balance>::new(
+                    USER_DOMAIN_1,
+                    Delivery::new(none_destination(), 1234),
+                ),
+            )
+            .unwrap();
+            Domains::<Test>::insert(DOMAIN_ID, domain);
+
+            let statement = H256::from_low_u64_be(123);
+
+            Aggregate::on_proof_verified(Some(USER_1), DOMAIN, statement);
+            assert_ok!(Aggregate::aggregate(
+                Origin::Signed(USER_DOMAIN_1).into(),
+                DOMAIN_ID,
+                MAX_AGGREGATE_ID
+            ));
+
+            assert_state_changed_evt(DOMAIN_ID, DomainState::Hold);
+
+            // Note: Domain contains only one aggregation. Once published, and in hold, state is automatically switched to Removable.
+            assert_state_changed_evt(DOMAIN_ID, DomainState::Removable);
+
+            // Not possible to submit new proofs/call aggregate on this domain
+            Aggregate::on_proof_verified(Some(USER_1), DOMAIN, statement);
+            assert_cannot_aggregate_evt(
+                statement,
+                CannotAggregateCause::InvalidDomainState {
+                    domain_id: DOMAIN_ID,
+                    state: DomainState::Removable,
+                },
+            );
+
+            assert_err_ignore_postinfo!(
+                Aggregate::aggregate(Origin::Signed(USER_DOMAIN_1).into(), DOMAIN_ID, 0),
+                Error::<Test>::InvalidAggregationId
+            );
+        })
+    }
+
+    #[test]
+    fn hold_on_on_proof_verified() {
+        test().execute_with(|| {
+            let domain = Domain::<Test>::try_create(
+                DOMAIN_ID,
+                USER_DOMAIN_1.into(),
+                MAX_AGGREGATE_ID,
+                1,
+                1,
+                AggregateSecurityRules::OnlyOwnerUncompleted,
+                None,
+                DeliveryParams::<AccountId, Balance>::new(
+                    USER_DOMAIN_1,
+                    Delivery::new(none_destination(), 1234),
+                ),
+            )
+            .unwrap();
+            Domains::<Test>::insert(DOMAIN_ID, domain);
+
+            let statement = H256::from_low_u64_be(123);
+
+            Aggregate::on_proof_verified(Some(USER_DOMAIN_1), Some(DOMAIN_ID), statement);
+
+            assert_eq!(
+                DomainState::Hold,
+                Domains::<Test>::get(DOMAIN_ID).unwrap().state
+            );
+            assert_state_changed_evt(DOMAIN_ID, DomainState::Hold);
+
+            // Not possible to submit new proofs/call aggregate on this domain
+            Aggregate::on_proof_verified(Some(USER_1), DOMAIN, statement);
+            assert_cannot_aggregate_evt(
+                statement,
+                CannotAggregateCause::InvalidDomainState {
+                    domain_id: DOMAIN_ID,
+                    state: DomainState::Hold,
+                },
+            );
+
+            assert_err_ignore_postinfo!(
+                Aggregate::aggregate(Origin::Signed(USER_DOMAIN_1).into(), DOMAIN_ID, 0),
+                Error::<Test>::InvalidAggregationId
+            );
+        })
+    }
 }

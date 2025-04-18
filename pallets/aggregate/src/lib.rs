@@ -161,10 +161,11 @@ pub mod pallet {
         type ComputePublisherTip: ComputePublisherTip<BalanceOf<Self>>;
         /// The weight definition for this pallet
         type WeightInfo: WeightInfo;
-        /// The (max) size of aggregations used in benchmarks. NEEDS to be equal to AggregationSize::get()
+        /// The (max) size of aggregations used in benchmarks. NEEDS to be equal to AggregationSize::get().
+        /// Used in benchmarks
         #[cfg(feature = "runtime-benchmarks")]
         const AGGREGATION_SIZE: u32;
-        /// The weight definition for this pallet
+        /// The currency trait, used in benchmarks.
         #[cfg(feature = "runtime-benchmarks")]
         type Currency: frame_support::traits::fungible::Mutate<AccountOf<Self>>;
         /// Handler for when an aggregation is completed
@@ -276,6 +277,8 @@ pub mod pallet {
         InvalidDomainState,
         /// Try to register a domain without any defined ownership (maybe a manager that didn't provide the delivery owner).
         MissedDeliveryOwnership,
+        /// Cannot create a new, unique, aggregation id anymore
+        NextAggregationIdUnavailable,
     }
 
     #[derive(Debug, Clone, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
@@ -479,12 +482,17 @@ pub mod pallet {
             if self.next.statements.is_empty() {
                 None
             } else {
-                let aggregation = &mut self.next;
-                // Create a new aggregation as next, and return the old one
-                Some(sp_std::mem::replace(
-                    aggregation,
-                    aggregation.create_next(aggregation.size),
-                ))
+                let new_aggregation = self.next.create_next(self.next.size).unwrap_or_else(|| {
+                    // Cannot create a new aggregation. Must hold the domain.
+                    self.state = DomainState::Hold;
+                    self.emit_state_changed_event();
+                    // Return a dummy aggregation with which replacing the old one.
+                    // Domain is in Hold state so no-one can submit proofs or call aggregate on top
+                    // of this new one.
+                    crate::data::AggregationEntry::create(0, self.next.size)
+                });
+
+                Some(sp_std::mem::replace(&mut self.next, new_aggregation))
             }
         }
 
@@ -696,7 +704,7 @@ pub mod pallet {
                 ) {
                     Err(BadOrigin)?
                 }
-                let root = aggregation.compute();
+                let root = aggregation.compute_receipt();
                 let size = aggregation.statements.len() as u32;
                 Published::<T>::mutate(|published: &mut _| {
                     published.push((domain_id, aggregation))
@@ -704,13 +712,13 @@ pub mod pallet {
 
                 if let Some((_, published)) = Published::<T>::get().last() {
                     for s in published.statements.iter() {
-                        handle_held_founds::<T>(
+                        handle_held_funds::<T>(
                             HoldReason::Aggregation,
                             &s.account,
                             aggregator.account(),
                             s.reserve.aggregate,
                         );
-                        handle_held_founds::<T>(
+                        handle_held_funds::<T>(
                             HoldReason::Delivery,
                             &s.account,
                             Some(&domain.delivery.owner),
@@ -751,7 +759,7 @@ pub mod pallet {
         /// requested this domain will be the owner and is the only one that can unregister it. Unregister the domain
         /// will unlock the deposit and remove the domain from the system.
         ///
-        /// Just manager can register a domain that use bridge delivery.
+        /// Just manager can register a domain that uses bridge delivery.
         ///
         /// Arguments
         /// - aggregation_size: The size of the aggregation, in other words how many statements any aggregation have.
@@ -782,6 +790,10 @@ pub mod pallet {
                 .or_else(|| caller.account().cloned())
                 .ok_or(Error::<T>::MissedDeliveryOwnership)?;
             let id = Self::next_domain_id();
+            if id == u32::MAX {
+                log::error!("Reached max id: {id:?}. Cannot create new domain.");
+                Err(Error::<T>::InvalidDomainParams)?
+            }
             let queue_size = queue_size.unwrap_or(T::MaxPendingPublishQueueSize::get());
             let delivery = DeliveryParams::new(delivery_owner, delivery);
 
@@ -814,7 +826,8 @@ pub mod pallet {
                 delivery,
             )?;
             Domains::<T>::insert(id, domain);
-            NextDomainId::<T>::put(id + 1);
+            let next_id = id.checked_add(1).expect("Cannot overflow. QED");
+            NextDomainId::<T>::put(next_id);
             Self::deposit_event(Event::NewDomain { id });
 
             Ok(caller.post_info(None))
@@ -836,7 +849,7 @@ pub mod pallet {
         ///
         /// The `DomainStateChanged` event is emitted when the domain change its state.
         ///
-        /// This call fails if the domain is not in `Ready` state or if the use cannot manage this domain.
+        /// This call fails if the domain is not in `Ready` state or if the user cannot manage this domain.
         ///
         /// Arguments
         /// - domain_id: The domain identifier.
@@ -904,8 +917,8 @@ pub mod pallet {
             Ok(owner.post_info(None))
         }
 
-        /// Set the delivery attestation price. Every submitter will hold this price (at the time of proof submission)
-        /// divided by the aggregation size. When the aggregation is dispatched all this held founds will be
+        /// Set the delivery aggregation price. Every submitter will hold this price (at the time of proof submission)
+        /// divided by the aggregation size. When the aggregation is dispatched all this held funds will be
         /// transferred to the delivery owner.
         ///
         /// Only domain owner, delivery owner or manager can set the price.
@@ -939,13 +952,13 @@ pub mod pallet {
         }
     }
 
-    fn handle_held_founds<T: Config>(
+    fn handle_held_funds<T: Config>(
         reason: HoldReason,
         account: &AccountOf<T>,
         dest: Option<&AccountOf<T>>,
         amount: BalanceOf<T>,
     ) {
-        let remain = if let Some(dest) = dest {
+        let transfer = if let Some(dest) = dest {
             T::Hold::transfer_on_hold(
                 &reason.into(),
                 account,
@@ -958,8 +971,10 @@ pub mod pallet {
         } else {
             T::Hold::release(&reason.into(), account, amount, Precision::BestEffort)
         }
-        .expect("Call user should exists. qed")
-        .defensive_saturating_sub(amount);
+        .expect("Call user should exists. qed");
+
+        let remain = amount.defensive_saturating_sub(transfer);
+
         if remain > 0_u32.into() {
             log::warn!("Cannot refund all funds from {account:?} to {dest:?}: missed {remain:?}")
         };
@@ -1037,8 +1052,8 @@ pub mod pallet {
 
         pub fn pays(&self) -> Pays {
             match self {
-                User::Account(_owner) => Pays::Yes,
-                _ => Pays::No,
+                User::Manager => Pays::No,
+                _ => Pays::Yes,
             }
         }
     }

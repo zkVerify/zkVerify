@@ -231,7 +231,7 @@ pub fn benchmarking_utils(input: proc_macro::TokenStream) -> proc_macro::TokenSt
             #verifier_call::vk_hash(vk)
         }
 
-        /// Return a new account with enough founds to do anything.
+        /// Return a new account with enough funds to do anything.
         fn funded_account<T>() -> T::AccountId
         where
             T: #crate_name::Config<#verifier> #opt_cfg_bound,

@@ -30,6 +30,8 @@ mod benchmarking;
 mod mock;
 #[cfg(test)]
 mod tests;
+#[cfg(any(test, feature = "runtime-benchmarks"))]
+mod utils;
 mod weight;
 use core::marker::PhantomData;
 
@@ -86,14 +88,18 @@ pub mod pallet {
         /// Weight information for extrinsics in this pallet.
         type WeightInfo: WeightInfo;
 
-        /// The maximum number of beneficiaries used in benchmarks.
-        #[cfg(feature = "runtime-benchmarks")]
-        const MAX_BENEFICIARIES: u32;
+        /// The maximum number of allowed beneficiaries.
+        #[pallet::constant]
+        type MaxBeneficiaries: Get<u32>;
+
+        /// The maximum number of beneficiaries allowed to be updated within a single operation. Used to restrict extrinsic weights.
+        const MAX_OP_BENEFICIARIES: u32;
     }
 
     /// Candidates eligible to receive an airdrop with the associated balance they have right to
     #[pallet::storage]
-    pub type Beneficiaries<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, BalanceOf<T>>;
+    pub type Beneficiaries<T: Config> =
+        CountedStorageMap<_, Twox64Concat, T::AccountId, BalanceOf<T>>;
 
     /// Total tokens claimable from the current airdrop.  
     #[pallet::storage]
@@ -126,6 +132,9 @@ pub mod pallet {
         fn build(&self) {
             use frame_support::assert_ok;
 
+            // Sanity check
+            assert!(T::MAX_OP_BENEFICIARIES <= T::MaxBeneficiaries::get());
+
             // Create Claim account
             let account_id = <Pallet<T>>::account_id();
 
@@ -139,9 +148,15 @@ pub mod pallet {
             TotalClaimable::<T>::put(BalanceOf::<T>::zero());
 
             // Add beneficiaries
-            if !self.beneficiaries.is_empty() {
+            let num_beneficiaries = self.beneficiaries.len();
+
+            if num_beneficiaries > 0 {
+                // Start adding beneficiaries if specified
+                // Note: Considering it's a genesis build there is no need here
+                //       to enforce a check on MaxOpBeneficiaries
+                assert_ok!(<Pallet<T>>::check_max_beneficiaries(num_beneficiaries));
                 assert_ok!(<Pallet<T>>::do_add_beneficiaries(
-                    self.beneficiaries.clone().into_iter().collect()
+                    self.beneficiaries.clone().into_iter().collect(),
                 ));
 
                 // Initialize other storage variables
@@ -182,6 +197,10 @@ pub mod pallet {
         NotEligible,
         /// Added a beneficiary without balance to claim
         NothingToClaim,
+        /// Maximum number of beneficiaries reached
+        MaxNumBeneficiariesReached,
+        /// Too many beneficiaries for this single operation
+        TooManyBeneficiaries,
         /// Attempt to modify the balance of an already added beneficiary
         AlreadyPresent,
         /// Attempt to perform an action implying an open airdrop, while it has already ended
@@ -271,6 +290,7 @@ pub mod pallet {
                         log::warn!("Beneficiary {account:?} with nothing to claim.");
                         Err(Error::<T>::NothingToClaim)?;
                     }
+
                     // Account doesn't exist. Add its token amount to the required amount this pallet's account should have
                     required_amount = required_amount.defensive_saturating_add(*amount);
                     log::trace!("Added beneficiary {account:?}. Can claim: {amount:?}");
@@ -291,10 +311,43 @@ pub mod pallet {
             Ok(())
         }
 
-        fn check_airdrop_status() -> DispatchResult {
-            if !AirdropActive::<T>::get() {
-                Err(Error::<T>::AlreadyEnded)?;
+        fn check_airdrop_status(should_be_active: bool) -> DispatchResult {
+            match (AirdropActive::<T>::get(), should_be_active) {
+                (false, true) => Err(Error::<T>::AlreadyEnded)?,
+                (true, false) => Err(Error::<T>::AlreadyStarted)?,
+                _ => Ok(()),
             }
+        }
+
+        fn check_max_op_beneficiaries(new_beneficiaries_len: usize) -> DispatchResult {
+            if new_beneficiaries_len > T::MAX_OP_BENEFICIARIES as usize {
+                log::warn!(
+                    "Too many beneficiaries for this single operation: {new_beneficiaries_len:?}."
+                );
+                Err(Error::<T>::TooManyBeneficiaries)?;
+            }
+
+            Ok(())
+        }
+
+        fn check_max_beneficiaries(new_beneficiaries_len: usize) -> DispatchResult {
+            // Check we have space for all the beneficiaries we are trying to add
+            let actual_beneficiaries_len = Beneficiaries::<T>::count();
+            if actual_beneficiaries_len + new_beneficiaries_len as u32 > T::MaxBeneficiaries::get()
+            {
+                log::warn!(
+                    "This operation would exceed the maximum amount of supported beneficiaries.
+                    \nCurrent: {actual_beneficiaries_len}. Attempting to add: {new_beneficiaries_len:?}."
+                );
+                Err(Error::<T>::MaxNumBeneficiariesReached)?;
+            }
+
+            Ok(())
+        }
+
+        fn check_beneficiaries_len(new_beneficiaries_len: usize) -> DispatchResult {
+            Self::check_max_op_beneficiaries(new_beneficiaries_len)?;
+            Self::check_max_beneficiaries(new_beneficiaries_len)?;
             Ok(())
         }
     }
@@ -316,17 +369,22 @@ pub mod pallet {
             T::ManagerOrigin::ensure_origin(origin)?;
 
             // Set airdrop as active
-            AirdropActive::<T>::try_mutate(|is_active| {
-                if *is_active {
-                    Err(Error::<T>::AlreadyStarted)?
-                } else {
-                    *is_active = true;
-                    Ok::<_, DispatchError>(())
-                }
-            })?;
+            Self::check_airdrop_status(false)?;
+            AirdropActive::<T>::put(true);
 
-            // Start adding beneficiaries if specified
-            Self::do_add_beneficiaries(beneficiaries)?;
+            let num_beneficiaries = beneficiaries.len();
+
+            if num_beneficiaries > 0 {
+                // Check that we are not adding too many here
+                // Note: we don't need to check for MaxBeneficiaries considering that:
+                // - When starting an airdrop there are no beneficiaries in storage
+                // - It always holds that T::MaxOpBeneficiaries <= T::MaxBeneficiaries
+                // Thus the following check, alone, it's enough
+                Self::check_max_op_beneficiaries(num_beneficiaries)?;
+
+                // Start adding beneficiaries if specified
+                Self::do_add_beneficiaries(beneficiaries)?;
+            }
 
             // Increase airdrop id
             AirdropId::<T>::mutate(|id| {
@@ -338,8 +396,8 @@ pub mod pallet {
             Ok(Pays::No.into())
         }
 
-        /// Claim token airdrop for 'origin' or 'dest' (if specified).
-        /// Fails if 'origin' or 'dest' are not entitled to any airdrop.
+        /// Claim token airdrop for 'origin' and send the tokens to 'dest'.
+        /// Fails if 'origin' is not entitled to any airdrop.
         /// 'origin' must be signed.
         #[pallet::call_index(1)]
         #[pallet::weight(T::WeightInfo::claim())]
@@ -348,18 +406,17 @@ pub mod pallet {
             dest: Option<T::AccountId>,
         ) -> DispatchResultWithPostInfo {
             let origin_account = ensure_signed(origin)?;
-            Self::check_airdrop_status()?;
+            Self::check_airdrop_status(true)?;
             Self::do_claim(origin_account, dest)?;
             Ok(Pays::No.into())
         }
 
-        /// Claim token airdrop for 'origin' or 'dest' (if specified).
-        /// Fails if 'origin' or 'dest' are not entitled to any airdrop.
-        /// 'origin' must be signed.
+        /// Claim token airdrop for 'dest'.
+        /// Fails if 'dest' is not entitled to any airdrop.
         #[pallet::call_index(2)]
         #[pallet::weight(T::WeightInfo::claim_for())]
         pub fn claim_for(_origin: OriginFor<T>, dest: T::AccountId) -> DispatchResultWithPostInfo {
-            Self::check_airdrop_status()?;
+            Self::check_airdrop_status(true)?;
             Self::do_claim(dest, None)?;
             Ok(Pays::No.into())
         }
@@ -376,9 +433,18 @@ pub mod pallet {
             origin: OriginFor<T>,
             beneficiaries: BTreeMap<T::AccountId, BalanceOf<T>>,
         ) -> DispatchResultWithPostInfo {
-            Self::check_airdrop_status()?;
+            Self::check_airdrop_status(true)?;
             T::ManagerOrigin::ensure_origin(origin)?;
-            Self::do_add_beneficiaries(beneficiaries)?;
+
+            let num_beneficiaries = beneficiaries.len();
+
+            if num_beneficiaries > 0 {
+                // Check that we are not adding too many here
+                Self::check_beneficiaries_len(num_beneficiaries)?;
+
+                // Start adding beneficiaries if specified
+                Self::do_add_beneficiaries(beneficiaries)?;
+            }
 
             Ok(Pays::No.into())
         }
@@ -388,22 +454,23 @@ pub mod pallet {
         /// Raise an Error if attempting to end an already ended airdrop.
         /// Origin must be 'ManagerOrigin'.
         #[pallet::call_index(4)]
-        #[pallet::weight(T::WeightInfo::end_airdrop(Beneficiaries::<T>::iter_keys().collect::<Vec<_>>().len() as u32))]
+        #[pallet::weight(T::WeightInfo::end_airdrop(Beneficiaries::<T>::count()).saturating_add(T::DbWeight::get().reads(1_u64)))]
         pub fn end_airdrop(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
             T::ManagerOrigin::ensure_origin(origin)?;
 
             // Set airdrop as inactive
-            AirdropActive::<T>::try_mutate(|is_active| {
-                if !*is_active {
-                    Err(Error::<T>::AlreadyEnded)?
-                } else {
-                    *is_active = false;
-                    Ok::<_, DispatchError>(())
-                }
-            })?;
+            Self::check_airdrop_status(true)?;
+            AirdropActive::<T>::put(false);
 
-            // Remove all beneficiaries entries
-            let _ = Beneficiaries::<T>::clear(u32::MAX, None);
+            let num_beneficiaries = Beneficiaries::<T>::count();
+
+            if num_beneficiaries > 0 {
+                // Check that we are not removing too many here
+                Self::check_max_op_beneficiaries(num_beneficiaries as usize)?;
+
+                // Remove all beneficiaries entries
+                let _ = Beneficiaries::<T>::clear(num_beneficiaries, None);
+            }
 
             // Deal with any remaining balance in the pallet's account
             let unclaimed_destination = T::UnclaimedDestination::get();
@@ -411,7 +478,7 @@ pub mod pallet {
                 let remaining_funds = Self::pot();
                 T::Currency::transfer(
                     &Self::account_id(),
-                    &T::UnclaimedDestination::get(),
+                    &unclaimed_destination,
                     remaining_funds,
                     Preservation::Preserve,
                 )?;

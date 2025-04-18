@@ -16,6 +16,7 @@
 use core::marker::PhantomData;
 
 use codec::{Decode, Encode, MaxEncodedLen};
+use educe::Educe;
 use frame_support::{PartialEqNoBound, RuntimeDebugNoBound};
 use hp_dispatch::Destination;
 use scale_info::TypeInfo;
@@ -80,7 +81,8 @@ impl<T: Get<AggregationSize>> Get<u32> for VecSize<T> {
     }
 }
 
-#[derive(Clone, Encode, Decode, TypeInfo, MaxEncodedLen, RuntimeDebugNoBound, PartialEqNoBound)]
+#[derive(Educe, Encode, Decode, TypeInfo, MaxEncodedLen, RuntimeDebugNoBound, PartialEqNoBound)]
+#[educe(Clone)]
 #[scale_info(skip_type_params(S))]
 /// The aggregation data. That is the entry where we put all the [`StatementEntry`]
 /// that should be aggregated.
@@ -129,8 +131,10 @@ impl<
 
     /// Create a new aggregation entry with the given size. Just increment
     /// the id.
-    pub fn create_next(&self, size: AggregationSize) -> Self {
-        Self::create(self.id + 1, size)
+    pub fn create_next(&self, size: AggregationSize) -> Option<Self> {
+        self.id
+            .checked_add(1)
+            .map(|next_id| Self::create(next_id, size))
     }
 
     fn space_left(&self) -> usize {
@@ -141,7 +145,7 @@ impl<
         self.space_left() == 0
     }
 
-    pub fn compute(&self) -> H256 {
+    pub fn compute_receipt(&self) -> H256 {
         binary_merkle_tree::merkle_root::<Keccak256, _>(
             self.statements.iter().map(|s| s.statement.as_ref()),
         )

@@ -59,9 +59,9 @@ pub const DOMAIN_QUEUE_SIZE: u32 = 16;
 pub const DOMAIN_FEE: Balance = (ESTIMATED_FEE_CORRECTED / DOMAIN_SIZE as u32) as Balance;
 pub const NOT_REGISTERED_DOMAIN_ID: u32 = 911;
 pub const NOT_REGISTERED_DOMAIN: Option<u32> = Some(NOT_REGISTERED_DOMAIN_ID);
-pub const NO_DOMAIN_FEE_FOUND_USER: AccountId = 999;
-pub const NO_DELIVERY_FOUND_USER: AccountId = 888;
-pub const NO_FOUND_USER: AccountId = 777;
+pub const NO_DOMAIN_FEE_FUND_USER: AccountId = 999;
+pub const NO_DELIVERY_FUND_USER: AccountId = 888;
+pub const NO_FUND_USER: AccountId = 777;
 pub const PUBLISHER_USER: AccountId = 100;
 pub const USER_1: AccountId = 42;
 pub const USER_2: AccountId = 24;
@@ -78,9 +78,9 @@ pub static USERS: &[(AccountId, Balance)] = &[
     (USER_DOMAIN_1, 100_000_000_000),
     (USER_DOMAIN_2, 200_000_000_000),
     (PUBLISHER_USER, 1_000_000_000),
-    (NO_DOMAIN_FEE_FOUND_USER, (DOMAIN_FEE / 2) as u128),
-    (NO_DELIVERY_FOUND_USER, DOMAIN_FEE + 1 as u128),
-    (NO_FOUND_USER, 1_u128),
+    (NO_DOMAIN_FEE_FUND_USER, (DOMAIN_FEE / 2) as u128),
+    (NO_DELIVERY_FUND_USER, DOMAIN_FEE + 1 as u128),
+    (NO_FUND_USER, 1_u128),
 ];
 
 pub struct MockWeightInfo;
@@ -305,6 +305,7 @@ impl Consideration<AccountId, Footprint> for MockConsideration {
         Ok(())
     }
 
+    #[cfg(feature = "runtime-benchmarks")]
     fn ensure_successful(_: &u64, _: Footprint) {
         unimplemented!("Not needed by now")
     }
