@@ -253,6 +253,6 @@ mod test {
             }
         };
 
-        assert_eq!(format!("{:#?}", expected), format!("{:#?}", out));
+        assert_eq!(expected.to_string(), out.to_string());
     }
 }
