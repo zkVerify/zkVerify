@@ -765,7 +765,7 @@ impl onchain::Config for OnChainSeqPhragmen {
     type Bounds = ElectionBoundsOnChain;
 }
 
-/// The numbers configured could always be more than the the maximum limits of staking pallet
+/// The numbers configured could always be more than the maximum limits of staking pallet
 /// to ensure election snapshot will not run out of memory.
 pub struct StakingBenchmarkConfig;
 impl pallet_staking::BenchmarkingConfig for StakingBenchmarkConfig {
