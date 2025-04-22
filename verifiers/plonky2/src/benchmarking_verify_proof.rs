@@ -19,43 +19,6 @@ mod benchmarks {
 
     benchmarking_utils!(Verifier<T>, crate::Config);
 
-    // macro_rules! generate_compressed_poseidon_benchmarks {
-    //     ( $( $degree:literal ),* ) => {
-    //         $(
-    //             #[benchmark]
-    //             fn $crate::paste::paste!{[<verify_proof_poseidon_compressed_ $degree>]}() {
-    //                 let vk = Vk::new(
-    //                     Plonky2Config::Poseidon,
-    //                     include_bytes!(concat!(
-    //                     "resources/degree_",
-    //                     stringify!($degree),
-    //                     "/compressed/poseidon/vk.bin"
-    //                 )).to_vec());
-    //                 let proof_bytes = include_bytes!(concat!(
-    //                     "resources/degree_",
-    //                     stringify!($degree),
-    //                     "/compressed/poseidon/proof.bin"
-    //                 )).to_vec();
-    //                 let proof = Proof::new(true, proof_bytes);
-    //                 let pubs = include_bytes!(concat!(
-    //                     "resources/degree_",
-    //                     stringify!($degree),
-    //                     "/compressed/poseidon/pubs.bin"
-    //                 )).to_vec();
-
-    //                 let r;
-    //                 #[block]
-    //                 {
-    //                     r = do_verify_proof::<T>(&vk, &proof, &pubs)
-    //                 };
-    //                 assert!(r.is_ok());
-    //             }
-    //         )*
-    //     };
-    // }
-
-    // generate_compressed_poseidon_benchmarks!(2, 3, 4);
-
     #[benchmark]
     fn verify_proof_poseidon_compressed_2() {
         let vk = Vk::new(
