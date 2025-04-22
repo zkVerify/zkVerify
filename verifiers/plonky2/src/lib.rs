@@ -110,7 +110,7 @@ impl<T: Config> Verifier for Plonky2<T> {
                 type F = <C as GenericConfig<D>>::F;
 
                 deserialize_vk::<F, C, D>(&vk.bytes)
-                    .unwrap()
+                    .map_err(|_| hp_verifiers::VerifyError::InvalidVerificationKey)?
                     .common
                     .fri_params
                     .degree_bits
@@ -121,7 +121,7 @@ impl<T: Config> Verifier for Plonky2<T> {
                 type F = <C as GenericConfig<D>>::F;
 
                 deserialize_vk::<F, C, D>(&vk.bytes)
-                    .unwrap()
+                    .map_err(|_| hp_verifiers::VerifyError::InvalidVerificationKey)?
                     .common
                     .fri_params
                     .degree_bits
