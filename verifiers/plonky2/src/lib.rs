@@ -187,189 +187,224 @@ fn compute_weight<T: Config>(
     config: plonky2_verifier::Plonky2Config,
     compressed: bool,
 ) -> Weight {
-    use plonky2_verifier::Plonky2Config;
-    match degree_bits {
-        2 => match compressed {
-            true => match config {
-                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_compressed_2(),
-                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_compressed_2(),
-            },
-            false => match config {
-                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_uncompressed_2(),
-                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_uncompressed_2(),
-            },
-        },
-        3 => match compressed {
-            true => match config {
-                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_compressed_3(),
-                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_compressed_3(),
-            },
-            false => match config {
-                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_uncompressed_3(),
-                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_uncompressed_3(),
-            },
-        },
-        4 => match compressed {
-            true => match config {
-                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_compressed_4(),
-                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_compressed_4(),
-            },
-            false => match config {
-                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_uncompressed_4(),
-                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_uncompressed_4(),
-            },
-        },
-        5 => match compressed {
-            true => match config {
-                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_compressed_5(),
-                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_compressed_5(),
-            },
-            false => match config {
-                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_uncompressed_5(),
-                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_uncompressed_5(),
-            },
-        },
-        6 => match compressed {
-            true => match config {
-                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_compressed_6(),
-                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_compressed_6(),
-            },
-            false => match config {
-                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_uncompressed_6(),
-                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_uncompressed_6(),
-            },
-        },
-        7 => match compressed {
-            true => match config {
-                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_compressed_7(),
-                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_compressed_7(),
-            },
-            false => match config {
-                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_uncompressed_7(),
-                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_uncompressed_7(),
-            },
-        },
-        8 => match compressed {
-            true => match config {
-                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_compressed_8(),
-                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_compressed_8(),
-            },
-            false => match config {
-                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_uncompressed_8(),
-                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_uncompressed_8(),
-            },
-        },
-        9 => match compressed {
-            true => match config {
-                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_compressed_9(),
-                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_compressed_9(),
-            },
-            false => match config {
-                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_uncompressed_9(),
-                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_uncompressed_9(),
-            },
-        },
-        10 => match compressed {
-            true => match config {
-                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_compressed_10(),
-                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_compressed_10(),
-            },
-            false => match config {
-                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_uncompressed_10(),
-                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_uncompressed_10(),
-            },
-        },
-        11 => match compressed {
-            true => match config {
-                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_compressed_11(),
-                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_compressed_11(),
-            },
-            false => match config {
-                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_uncompressed_11(),
-                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_uncompressed_11(),
-            },
-        },
-        12 => match compressed {
-            true => match config {
-                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_compressed_12(),
-                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_compressed_12(),
-            },
-            false => match config {
-                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_uncompressed_12(),
-                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_uncompressed_12(),
-            },
-        },
-        13 => match compressed {
-            true => match config {
-                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_compressed_13(),
-                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_compressed_13(),
-            },
-            false => match config {
-                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_uncompressed_13(),
-                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_uncompressed_13(),
-            },
-        },
-        14 => match compressed {
-            true => match config {
-                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_compressed_14(),
-                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_compressed_14(),
-            },
-            false => match config {
-                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_uncompressed_14(),
-                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_uncompressed_14(),
-            },
-        },
-        15 => match compressed {
-            true => match config {
-                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_compressed_15(),
-                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_compressed_15(),
-            },
-            false => match config {
-                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_uncompressed_15(),
-                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_uncompressed_15(),
-            },
-        },
-        16 => match compressed {
-            true => match config {
-                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_compressed_16(),
-                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_compressed_16(),
-            },
-            false => match config {
-                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_uncompressed_16(),
-                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_uncompressed_16(),
-            },
-        },
-        17 => match compressed {
-            true => match config {
-                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_compressed_17(),
-                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_compressed_17(),
-            },
-            false => match config {
-                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_uncompressed_17(),
-                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_uncompressed_17(),
-            },
-        },
-        18 => match compressed {
-            true => match config {
-                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_compressed_18(),
-                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_compressed_18(),
-            },
-            false => match config {
-                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_uncompressed_18(),
-                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_uncompressed_18(),
-            },
-        },
-        19 => match compressed {
-            true => match config {
-                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_compressed_19(),
-                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_compressed_19(),
-            },
-            false => match config {
-                Plonky2Config::Poseidon => T::WeightInfo::verify_proof_poseidon_uncompressed_19(),
-                Plonky2Config::Keccak => T::WeightInfo::verify_proof_keccak_uncompressed_19(),
-            },
-        },
-        _ => panic!(),
+    match (degree_bits, config, compressed) {
+        (2, plonky2_verifier::Plonky2Config::Poseidon, true) => {
+            T::WeightInfo::verify_proof_poseidon_compressed_2()
+        }
+        (2, plonky2_verifier::Plonky2Config::Keccak, true) => {
+            T::WeightInfo::verify_proof_keccak_compressed_2()
+        }
+        (2, plonky2_verifier::Plonky2Config::Poseidon, false) => {
+            T::WeightInfo::verify_proof_poseidon_uncompressed_2()
+        }
+        (2, plonky2_verifier::Plonky2Config::Keccak, false) => {
+            T::WeightInfo::verify_proof_keccak_uncompressed_2()
+        }
+        (3, plonky2_verifier::Plonky2Config::Poseidon, true) => {
+            T::WeightInfo::verify_proof_poseidon_compressed_3()
+        }
+        (3, plonky2_verifier::Plonky2Config::Keccak, true) => {
+            T::WeightInfo::verify_proof_keccak_compressed_3()
+        }
+        (3, plonky2_verifier::Plonky2Config::Poseidon, false) => {
+            T::WeightInfo::verify_proof_poseidon_uncompressed_3()
+        }
+        (3, plonky2_verifier::Plonky2Config::Keccak, false) => {
+            T::WeightInfo::verify_proof_keccak_uncompressed_3()
+        }
+        (4, plonky2_verifier::Plonky2Config::Poseidon, true) => {
+            T::WeightInfo::verify_proof_poseidon_compressed_4()
+        }
+        (4, plonky2_verifier::Plonky2Config::Keccak, true) => {
+            T::WeightInfo::verify_proof_keccak_compressed_4()
+        }
+        (4, plonky2_verifier::Plonky2Config::Poseidon, false) => {
+            T::WeightInfo::verify_proof_poseidon_uncompressed_4()
+        }
+        (4, plonky2_verifier::Plonky2Config::Keccak, false) => {
+            T::WeightInfo::verify_proof_keccak_uncompressed_4()
+        }
+        (5, plonky2_verifier::Plonky2Config::Poseidon, true) => {
+            T::WeightInfo::verify_proof_poseidon_compressed_5()
+        }
+        (5, plonky2_verifier::Plonky2Config::Keccak, true) => {
+            T::WeightInfo::verify_proof_keccak_compressed_5()
+        }
+        (5, plonky2_verifier::Plonky2Config::Poseidon, false) => {
+            T::WeightInfo::verify_proof_poseidon_uncompressed_5()
+        }
+        (5, plonky2_verifier::Plonky2Config::Keccak, false) => {
+            T::WeightInfo::verify_proof_keccak_uncompressed_5()
+        }
+        (6, plonky2_verifier::Plonky2Config::Poseidon, true) => {
+            T::WeightInfo::verify_proof_poseidon_compressed_6()
+        }
+        (6, plonky2_verifier::Plonky2Config::Keccak, true) => {
+            T::WeightInfo::verify_proof_keccak_compressed_6()
+        }
+        (6, plonky2_verifier::Plonky2Config::Poseidon, false) => {
+            T::WeightInfo::verify_proof_poseidon_uncompressed_6()
+        }
+        (6, plonky2_verifier::Plonky2Config::Keccak, false) => {
+            T::WeightInfo::verify_proof_keccak_uncompressed_6()
+        }
+        (7, plonky2_verifier::Plonky2Config::Poseidon, true) => {
+            T::WeightInfo::verify_proof_poseidon_compressed_7()
+        }
+        (7, plonky2_verifier::Plonky2Config::Keccak, true) => {
+            T::WeightInfo::verify_proof_keccak_compressed_7()
+        }
+        (7, plonky2_verifier::Plonky2Config::Poseidon, false) => {
+            T::WeightInfo::verify_proof_poseidon_uncompressed_7()
+        }
+        (7, plonky2_verifier::Plonky2Config::Keccak, false) => {
+            T::WeightInfo::verify_proof_keccak_uncompressed_7()
+        }
+        (8, plonky2_verifier::Plonky2Config::Poseidon, true) => {
+            T::WeightInfo::verify_proof_poseidon_compressed_8()
+        }
+        (8, plonky2_verifier::Plonky2Config::Keccak, true) => {
+            T::WeightInfo::verify_proof_keccak_compressed_8()
+        }
+        (8, plonky2_verifier::Plonky2Config::Poseidon, false) => {
+            T::WeightInfo::verify_proof_poseidon_uncompressed_8()
+        }
+        (8, plonky2_verifier::Plonky2Config::Keccak, false) => {
+            T::WeightInfo::verify_proof_keccak_uncompressed_8()
+        }
+        (9, plonky2_verifier::Plonky2Config::Poseidon, true) => {
+            T::WeightInfo::verify_proof_poseidon_compressed_9()
+        }
+        (9, plonky2_verifier::Plonky2Config::Keccak, true) => {
+            T::WeightInfo::verify_proof_keccak_compressed_9()
+        }
+        (9, plonky2_verifier::Plonky2Config::Poseidon, false) => {
+            T::WeightInfo::verify_proof_poseidon_uncompressed_9()
+        }
+        (9, plonky2_verifier::Plonky2Config::Keccak, false) => {
+            T::WeightInfo::verify_proof_keccak_uncompressed_9()
+        }
+        (10, plonky2_verifier::Plonky2Config::Poseidon, true) => {
+            T::WeightInfo::verify_proof_poseidon_compressed_10()
+        }
+        (10, plonky2_verifier::Plonky2Config::Keccak, true) => {
+            T::WeightInfo::verify_proof_keccak_compressed_10()
+        }
+        (10, plonky2_verifier::Plonky2Config::Poseidon, false) => {
+            T::WeightInfo::verify_proof_poseidon_uncompressed_10()
+        }
+        (10, plonky2_verifier::Plonky2Config::Keccak, false) => {
+            T::WeightInfo::verify_proof_keccak_uncompressed_10()
+        }
+        (11, plonky2_verifier::Plonky2Config::Poseidon, true) => {
+            T::WeightInfo::verify_proof_poseidon_compressed_11()
+        }
+        (11, plonky2_verifier::Plonky2Config::Keccak, true) => {
+            T::WeightInfo::verify_proof_keccak_compressed_11()
+        }
+        (11, plonky2_verifier::Plonky2Config::Poseidon, false) => {
+            T::WeightInfo::verify_proof_poseidon_uncompressed_11()
+        }
+        (11, plonky2_verifier::Plonky2Config::Keccak, false) => {
+            T::WeightInfo::verify_proof_keccak_uncompressed_11()
+        }
+        (12, plonky2_verifier::Plonky2Config::Poseidon, true) => {
+            T::WeightInfo::verify_proof_poseidon_compressed_12()
+        }
+        (12, plonky2_verifier::Plonky2Config::Keccak, true) => {
+            T::WeightInfo::verify_proof_keccak_compressed_12()
+        }
+        (12, plonky2_verifier::Plonky2Config::Poseidon, false) => {
+            T::WeightInfo::verify_proof_poseidon_uncompressed_12()
+        }
+        (12, plonky2_verifier::Plonky2Config::Keccak, false) => {
+            T::WeightInfo::verify_proof_keccak_uncompressed_12()
+        }
+        (13, plonky2_verifier::Plonky2Config::Poseidon, true) => {
+            T::WeightInfo::verify_proof_poseidon_compressed_13()
+        }
+        (13, plonky2_verifier::Plonky2Config::Keccak, true) => {
+            T::WeightInfo::verify_proof_keccak_compressed_13()
+        }
+        (13, plonky2_verifier::Plonky2Config::Poseidon, false) => {
+            T::WeightInfo::verify_proof_poseidon_uncompressed_13()
+        }
+        (13, plonky2_verifier::Plonky2Config::Keccak, false) => {
+            T::WeightInfo::verify_proof_keccak_uncompressed_13()
+        }
+        (14, plonky2_verifier::Plonky2Config::Poseidon, true) => {
+            T::WeightInfo::verify_proof_poseidon_compressed_14()
+        }
+        (14, plonky2_verifier::Plonky2Config::Keccak, true) => {
+            T::WeightInfo::verify_proof_keccak_compressed_14()
+        }
+        (14, plonky2_verifier::Plonky2Config::Poseidon, false) => {
+            T::WeightInfo::verify_proof_poseidon_uncompressed_14()
+        }
+        (14, plonky2_verifier::Plonky2Config::Keccak, false) => {
+            T::WeightInfo::verify_proof_keccak_uncompressed_14()
+        }
+        (15, plonky2_verifier::Plonky2Config::Poseidon, true) => {
+            T::WeightInfo::verify_proof_poseidon_compressed_15()
+        }
+        (15, plonky2_verifier::Plonky2Config::Keccak, true) => {
+            T::WeightInfo::verify_proof_keccak_compressed_15()
+        }
+        (15, plonky2_verifier::Plonky2Config::Poseidon, false) => {
+            T::WeightInfo::verify_proof_poseidon_uncompressed_15()
+        }
+        (15, plonky2_verifier::Plonky2Config::Keccak, false) => {
+            T::WeightInfo::verify_proof_keccak_uncompressed_15()
+        }
+        (16, plonky2_verifier::Plonky2Config::Poseidon, true) => {
+            T::WeightInfo::verify_proof_poseidon_compressed_16()
+        }
+        (16, plonky2_verifier::Plonky2Config::Keccak, true) => {
+            T::WeightInfo::verify_proof_keccak_compressed_16()
+        }
+        (16, plonky2_verifier::Plonky2Config::Poseidon, false) => {
+            T::WeightInfo::verify_proof_poseidon_uncompressed_16()
+        }
+        (16, plonky2_verifier::Plonky2Config::Keccak, false) => {
+            T::WeightInfo::verify_proof_keccak_uncompressed_16()
+        }
+        (17, plonky2_verifier::Plonky2Config::Poseidon, true) => {
+            T::WeightInfo::verify_proof_poseidon_compressed_17()
+        }
+        (17, plonky2_verifier::Plonky2Config::Keccak, true) => {
+            T::WeightInfo::verify_proof_keccak_compressed_17()
+        }
+        (17, plonky2_verifier::Plonky2Config::Poseidon, false) => {
+            T::WeightInfo::verify_proof_poseidon_uncompressed_17()
+        }
+        (17, plonky2_verifier::Plonky2Config::Keccak, false) => {
+            T::WeightInfo::verify_proof_keccak_uncompressed_17()
+        }
+        (18, plonky2_verifier::Plonky2Config::Poseidon, true) => {
+            T::WeightInfo::verify_proof_poseidon_compressed_18()
+        }
+        (18, plonky2_verifier::Plonky2Config::Keccak, true) => {
+            T::WeightInfo::verify_proof_keccak_compressed_18()
+        }
+        (18, plonky2_verifier::Plonky2Config::Poseidon, false) => {
+            T::WeightInfo::verify_proof_poseidon_uncompressed_18()
+        }
+        (18, plonky2_verifier::Plonky2Config::Keccak, false) => {
+            T::WeightInfo::verify_proof_keccak_uncompressed_18()
+        }
+        (19, plonky2_verifier::Plonky2Config::Poseidon, true) => {
+            T::WeightInfo::verify_proof_poseidon_compressed_19()
+        }
+        (19, plonky2_verifier::Plonky2Config::Keccak, true) => {
+            T::WeightInfo::verify_proof_keccak_compressed_19()
+        }
+        (19, plonky2_verifier::Plonky2Config::Poseidon, false) => {
+            T::WeightInfo::verify_proof_poseidon_uncompressed_19()
+        }
+        (19, plonky2_verifier::Plonky2Config::Keccak, false) => {
+            T::WeightInfo::verify_proof_keccak_uncompressed_19()
+        }
+        _ => panic!("Invalid value given for degree_bits."),
     }
 }
 
