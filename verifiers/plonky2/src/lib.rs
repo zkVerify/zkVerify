@@ -19,7 +19,7 @@ use sp_std::vec::Vec;
 pub mod benchmarking;
 pub mod benchmarking_verify_proof;
 mod proof;
-pub(crate) mod verifier_should;
+mod verifier_should;
 mod vk;
 mod weight;
 mod weight_verify_proof;
