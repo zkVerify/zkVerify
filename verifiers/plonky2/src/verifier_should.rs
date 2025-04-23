@@ -138,15 +138,19 @@ mod reject {
     }
 
     #[rstest]
-    fn should_not_validate_vk_with_too_large_degree_bits(valid_test_data: TestData<MockConfig>) {
+    fn should_not_validate_vk_with_too_large_degree_bits(
+        valid_compressed_poseidon_test_data: TestData<MockConfig>,
+    ) {
         let TestData {
             mut vk,
             proof: _,
             pubs: _,
-        } = valid_test_data;
+        } = valid_compressed_poseidon_test_data;
 
-        // Set the byte controlling degree_bits to a very high value
-        vk.bytes[732] = u8::MAX;
+        // Set the byte controlling degree_bits to a value beyond what is acceptable
+        vk.bytes[732] = u8::try_from(MAX_DEGREE_BITS)
+            .expect("MAX_DEGREE_BITS should always be convertible to u8")
+            + 1;
 
         assert_err!(
             Plonky2::<MockConfig>::validate_vk(&vk),
