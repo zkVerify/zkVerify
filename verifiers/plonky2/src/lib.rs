@@ -188,6 +188,18 @@ fn compute_weight<T: Config>(
     compressed: bool,
 ) -> Weight {
     match (degree_bits, config, compressed) {
+        (1, plonky2_verifier::Plonky2Config::Poseidon, true) => {
+            T::WeightInfo::verify_proof_poseidon_compressed_2()
+        }
+        (1, plonky2_verifier::Plonky2Config::Keccak, true) => {
+            T::WeightInfo::verify_proof_keccak_compressed_2()
+        }
+        (1, plonky2_verifier::Plonky2Config::Poseidon, false) => {
+            T::WeightInfo::verify_proof_poseidon_uncompressed_2()
+        }
+        (1, plonky2_verifier::Plonky2Config::Keccak, false) => {
+            T::WeightInfo::verify_proof_keccak_uncompressed_2()
+        }
         (2, plonky2_verifier::Plonky2Config::Poseidon, true) => {
             T::WeightInfo::verify_proof_poseidon_compressed_2()
         }

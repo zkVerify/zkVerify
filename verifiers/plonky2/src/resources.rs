@@ -1,4 +1,6 @@
+use crate::vk::Plonky2Config;
 use frame_support::traits::ConstU32;
+use std::fs::read;
 
 struct MockConfig;
 
@@ -17,74 +19,33 @@ struct TestData<T: crate::Config> {
 }
 
 #[cfg(any(test, feature = "runtime-benchmarks"))]
-fn get_valid_test_data<T: crate::Config>() -> TestData<T> {
-    TestData {
-        vk: crate::VkWithConfig::from_default_with_bytes(
-            include_bytes!("resources/vk.bin").to_vec(),
-        ),
-        proof: crate::Proof::from_default_with_bytes(
-            include_bytes!("resources/proof.bin").to_vec(),
-        ),
-        pubs: include_bytes!("resources/pubs.bin").to_vec(),
-    }
-}
+fn get_parameterized_test_data<T: crate::Config>(
+    degree: usize,
+    config: Plonky2Config,
+    compress: bool,
+) -> TestData<T> {
+    let h = match config {
+        Plonky2Config::Poseidon => "poseidon",
+        Plonky2Config::Keccak => "keccak",
+    };
+    let c = match compress {
+        true => "compressed",
+        _ => "uncompressed",
+    };
+    let base_path = format!("src/resources/degree_{degree}/{c}/{h}");
+    let vk_path = format!("{base_path}/vk.bin");
+    let proof_path = format!("{base_path}/proof.bin");
+    let pubs_path = format!("{base_path}/pubs.bin");
 
-#[cfg(any(test, feature = "runtime-benchmarks"))]
-fn get_valid_compressed_poseidon_test_data<T: crate::Config>() -> TestData<T> {
     TestData {
         vk: crate::VkWithConfig::new(
-            crate::vk::Plonky2Config::Poseidon,
-            include_bytes!("resources/degree_19/compressed/poseidon/vk.bin").to_vec(),
+            config,
+            read(&vk_path).expect(format!("File: {vk_path} not found!").as_str()),
         ),
         proof: crate::Proof::new(
-            true,
-            include_bytes!("resources/degree_19/compressed/poseidon/proof.bin").to_vec(),
+            compress,
+            read(&proof_path).expect(format!("File: {proof_path} not found!").as_str()),
         ),
-        pubs: include_bytes!("resources/degree_19/compressed/poseidon/pubs.bin").to_vec(),
-    }
-}
-
-#[cfg(any(test, feature = "runtime-benchmarks"))]
-fn get_valid_uncompressed_poseidon_test_data<T: crate::Config>() -> TestData<T> {
-    TestData {
-        vk: crate::VkWithConfig::new(
-            crate::vk::Plonky2Config::Poseidon,
-            include_bytes!("resources/degree_19/uncompressed/poseidon/vk.bin").to_vec(),
-        ),
-        proof: crate::Proof::new(
-            false,
-            include_bytes!("resources/degree_19/uncompressed/poseidon/proof.bin").to_vec(),
-        ),
-        pubs: include_bytes!("resources/degree_19/uncompressed/poseidon/pubs.bin").to_vec(),
-    }
-}
-
-#[cfg(any(test, feature = "runtime-benchmarks"))]
-fn get_valid_compressed_keccak_test_data<T: crate::Config>() -> TestData<T> {
-    TestData {
-        vk: crate::VkWithConfig::new(
-            crate::vk::Plonky2Config::Keccak,
-            include_bytes!("resources/degree_19/compressed/keccak/vk.bin").to_vec(),
-        ),
-        proof: crate::Proof::new(
-            true,
-            include_bytes!("resources/degree_19/compressed/keccak/proof.bin").to_vec(),
-        ),
-        pubs: include_bytes!("resources/degree_19/compressed/keccak/pubs.bin").to_vec(),
-    }
-}
-
-#[cfg(any(test, feature = "runtime-benchmarks"))]
-fn get_valid_uncompressed_keccak_test_data<T: crate::Config>() -> TestData<T> {
-    TestData {
-        vk: crate::VkWithConfig::new(
-            crate::vk::Plonky2Config::Keccak,
-            include_bytes!("resources/degree_19/uncompressed/keccak/vk.bin").to_vec(),
-        ),
-        proof: crate::Proof::new(
-            false,
-            include_bytes!("resources/degree_19/uncompressed/keccak/proof.bin").to_vec(),
-        ),
-        pubs: include_bytes!("resources/degree_19/uncompressed/keccak/pubs.bin").to_vec(),
+        pubs: read(&pubs_path).expect(format!("File: {pubs_path} not found!").as_str()),
     }
 }

@@ -1096,7 +1096,7 @@ impl pallet_plonky2_verifier::Config for Runtime {
     type MaxProofSize = Plonky2MaxProofSize;
     type MaxPubsSize = Plonky2MaxPubsSize;
     type MaxVkSize = Plonky2MaxVkSize;
-    type WeightInfo = pallet_plonky2_verifier::benchmarking_verify_proof;
+    type WeightInfo = (); // pallet_plonky2_verifier::benchmarking_verify_proof;
 }
 
 impl pallet_verifiers::Config<pallet_plonky2_verifier::Plonky2<Runtime>> for Runtime {

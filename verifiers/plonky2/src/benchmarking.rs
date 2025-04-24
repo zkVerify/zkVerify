@@ -1,6 +1,7 @@
 #![cfg(feature = "runtime-benchmarks")]
 
 use crate::Plonky2 as Verifier;
+use crate::MAX_DEGREE_BITS;
 use frame_benchmarking::v2::*;
 use frame_system::RawOrigin;
 use hp_verifiers::Verifier as _;
@@ -22,7 +23,7 @@ mod benchmarks {
 
     #[benchmark]
     fn verify_proof() {
-        let data = get_valid_test_data();
+        let data = get_parameterized_test_data(MAX_DEGREE_BITS, Plonky2Config::Poseidon, true);
 
         let proof = data.proof;
         let pubs = data.pubs;
@@ -38,7 +39,7 @@ mod benchmarks {
 
     #[benchmark]
     fn get_vk() {
-        let vk = get_valid_test_data().vk;
+        let vk = get_parameterized_test_data(MAX_DEGREE_BITS, Plonky2Config::Poseidon, true).vk;
         let hash = sp_core::H256::repeat_byte(2);
 
         insert_vk_anonymous::<T>(vk, hash);
@@ -53,7 +54,7 @@ mod benchmarks {
 
     #[benchmark]
     fn validate_vk() {
-        let vk = get_valid_test_data().vk;
+        let vk = get_parameterized_test_data(MAX_DEGREE_BITS, Plonky2Config::Poseidon, true).vk;
 
         let r;
         #[block]
@@ -65,7 +66,7 @@ mod benchmarks {
 
     #[benchmark]
     fn compute_statement_hash() {
-        let data = get_valid_test_data();
+        let data = get_parameterized_test_data(MAX_DEGREE_BITS, Plonky2Config::Poseidon, true);
 
         let proof = data.proof;
         let pubs = data.pubs;
@@ -83,7 +84,7 @@ mod benchmarks {
     fn register_vk() {
         // setup code
         let caller = funded_account::<T>();
-        let vk = get_valid_test_data().vk;
+        let vk = get_parameterized_test_data(MAX_DEGREE_BITS, Plonky2Config::Poseidon, true).vk;
 
         #[extrinsic_call]
         register_vk(RawOrigin::Signed(caller), vk.clone().into());
@@ -97,7 +98,7 @@ mod benchmarks {
         // setup code
         let caller = funded_account::<T>();
         let hash = sp_core::H256::repeat_byte(2);
-        let vk = get_valid_test_data().vk;
+        let vk = get_parameterized_test_data(MAX_DEGREE_BITS, Plonky2Config::Poseidon, true).vk;
 
         insert_vk::<T>(caller.clone(), vk, hash);
 
