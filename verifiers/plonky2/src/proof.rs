@@ -14,15 +14,16 @@ use frame_support::pallet_prelude::TypeInfo;
 #[educe(Clone, Debug, PartialEq)]
 #[scale_info(skip_type_params(T))]
 pub struct Proof<T> {
-    pub compressed: bool,
+    // pub compressed: bool,
     pub bytes: Vec<u8>,
     _marker: PhantomData<T>,
 }
 
 impl<T: Config> Proof<T> {
-    pub fn new(compressed: bool, bytes: Vec<u8>) -> Self {
+    // pub fn new(compressed: bool, bytes: Vec<u8>) -> Self {
+    pub fn new(bytes: Vec<u8>) -> Self {
         Self {
-            compressed,
+            // compressed,
             bytes,
             _marker: PhantomData,
         }
@@ -40,7 +41,8 @@ impl<T: Config> MaxEncodedLen for Proof<T> {
 impl<T: Config> From<Proof<T>> for plonky2_verifier::Proof {
     fn from(proof: Proof<T>) -> Self {
         Self {
-            compressed: proof.compressed,
+            // TODO: Restore when we support compressed proofs
+            compressed: false, // proof.compressed,
             bytes: proof.bytes,
         }
     }
@@ -49,7 +51,7 @@ impl<T: Config> From<Proof<T>> for plonky2_verifier::Proof {
 impl<T: Config> Default for Proof<T> {
     fn default() -> Self {
         Self {
-            compressed: false,
+            // compressed: false,
             bytes: Vec::default(),
             _marker: PhantomData,
         }

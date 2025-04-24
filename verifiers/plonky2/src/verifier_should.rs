@@ -8,7 +8,8 @@ include!("resources.rs");
 
 #[fixture]
 fn worst_case_test_data() -> TestData<MockConfig> {
-    get_parameterized_test_data(MAX_DEGREE_BITS, crate::vk::Plonky2Config::Poseidon, true)
+    // get_parameterized_test_data(MAX_DEGREE_BITS, crate::vk::Plonky2Config::Poseidon, true)
+    get_parameterized_test_data(MAX_DEGREE_BITS, crate::vk::Plonky2Config::Poseidon)
 }
 
 #[rstest]
@@ -21,16 +22,17 @@ fn verify_valid_proof(worst_case_test_data: TestData<MockConfig>) {
 }
 
 #[rstest]
-#[case(MAX_DEGREE_BITS, Plonky2Config::Poseidon, true)]
-#[case(MAX_DEGREE_BITS, Plonky2Config::Keccak, true)]
-#[case(MAX_DEGREE_BITS, Plonky2Config::Poseidon, false)]
-#[case(MAX_DEGREE_BITS, Plonky2Config::Keccak, false)]
+// #[case(MAX_DEGREE_BITS, Plonky2Config::Keccak, true)]
+#[case(MAX_DEGREE_BITS, Plonky2Config::Keccak)]
+// #[case(MAX_DEGREE_BITS, Plonky2Config::Poseidon, true)]
+#[case(MAX_DEGREE_BITS, Plonky2Config::Poseidon)]
 fn test_parameterized_test_data(
     #[case] deg: usize,
     #[case] config: Plonky2Config,
-    #[case] compress: bool,
+    // #[case] compress: bool,
 ) {
-    let test_data = get_parameterized_test_data(deg, config, compress);
+    // let test_data = get_parameterized_test_data(deg, config, compress);
+    let test_data = get_parameterized_test_data(deg, config);
     assert_ok!(Plonky2::<MockConfig>::verify_proof(
         &test_data.vk,
         &test_data.proof,
@@ -40,8 +42,9 @@ fn test_parameterized_test_data(
 
 #[rstest]
 fn compute_correct_weight_for_proof() {
-    let test_data = get_parameterized_test_data(19, Plonky2Config::Poseidon, true);
-    let expected = <() as crate::WeightInfoVerifyProof>::verify_proof_poseidon_compressed_19();
+    // let test_data = get_parameterized_test_data(19, Plonky2Config::Poseidon, true);
+    let test_data = get_parameterized_test_data(19, Plonky2Config::Poseidon);
+    let expected = <() as crate::WeightInfoVerifyProof>::verify_proof_poseidon_uncompressed_19();
 
     assert_eq!(
         Some(expected),

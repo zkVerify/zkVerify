@@ -22,17 +22,17 @@ struct TestData<T: crate::Config> {
 fn get_parameterized_test_data<T: crate::Config>(
     degree: usize,
     config: Plonky2Config,
-    compress: bool,
+    // compress: bool,
 ) -> TestData<T> {
     let h = match config {
         Plonky2Config::Poseidon => "poseidon",
         Plonky2Config::Keccak => "keccak",
     };
-    let c = match compress {
-        true => "compressed",
-        _ => "uncompressed",
-    };
-    let base_path = format!("src/resources/degree_{degree}/{c}/{h}");
+    // let c = match compress {
+    //     true => "compressed",
+    //     _ => "uncompressed",
+    // };
+    let base_path = format!("src/resources/degree_{degree}/uncompressed/{h}"); // TODO: FIX TO SUPPORT COMPRESSED PROOFS
     let vk_path = format!("{base_path}/vk.bin");
     let proof_path = format!("{base_path}/proof.bin");
     let pubs_path = format!("{base_path}/pubs.bin");
@@ -43,7 +43,7 @@ fn get_parameterized_test_data<T: crate::Config>(
             read(&vk_path).expect(format!("File: {vk_path} not found!").as_str()),
         ),
         proof: crate::Proof::new(
-            compress,
+            // false, // TODO: FIX TO SUPPORT COMPRESSED PROOFS
             read(&proof_path).expect(format!("File: {proof_path} not found!").as_str()),
         ),
         pubs: read(&pubs_path).expect(format!("File: {pubs_path} not found!").as_str()),
