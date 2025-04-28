@@ -11456,7 +11456,7 @@ dependencies = [
 [[package]]
 name = "plonky2-verifier"
 version = "0.2.1"
-source = "git+https://github.com/zkVerify/plonky2-verifier?branch=dimitris/add-circuit-for-benchmarking#d22071443c6e61f8e2effcc51e644cf72d2d7f74"
+source = "git+https://github.com/zkVerify/plonky2-verifier?tag=v0.2.1#59a390d42ae19985cf20e8d13595c0649be4967d"
 dependencies = [
  "plonky2",
  "serde",
