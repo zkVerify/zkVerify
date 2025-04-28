@@ -1,6 +1,6 @@
 [package]
 name = "zkv-runtime"
-version = "0.13.0"
+version = "0.14.0"
 description = "zkVerify Mainchain Runtime."
 authors.workspace = true
 homepage = "https://github.com/zkVerify/zkVerify"
