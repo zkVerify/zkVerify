@@ -53,7 +53,7 @@ impl SubstrateCli for Cli {
     }
 
     fn support_url() -> String {
-        "https://github.com/HorizenLabs/zkVerify".into()
+        "https://github.com/zkVerify/zkVerify".into()
     }
 
     fn copyright_start_year() -> i32 {
