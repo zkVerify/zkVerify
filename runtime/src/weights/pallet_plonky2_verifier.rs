@@ -57,13 +57,6 @@ use core::marker::PhantomData;
 pub struct ZKVWeight<T>(PhantomData<T>);
 
 impl<T: frame_system::Config> pallet_plonky2_verifier::WeightInfo for ZKVWeight<T> {
-    fn verify_proof() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 32_064_297_000 picoseconds.
-        Weight::from_parts(32_111_099_000, 0)
-    }
     /// Storage: `SettlementPlonky2Pallet::Vks` (r:1 w:0)
     /// Proof: `SettlementPlonky2Pallet::Vks` (`max_values`: None, `max_size`: Some(50045), added: 52520, mode: `MaxEncodedLen`)
     fn get_vk() -> Weight {

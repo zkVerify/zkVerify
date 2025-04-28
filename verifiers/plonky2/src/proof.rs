@@ -1,3 +1,18 @@
+// Copyright 2024, Horizen Labs, Inc.
+// SPDX-License-Identifier: Apache-2.0
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 //! Proof to be morphed into `plonky2` variant.
 use crate::Config;
 use sp_std::vec::Vec;
@@ -14,16 +29,13 @@ use frame_support::pallet_prelude::TypeInfo;
 #[educe(Clone, Debug, PartialEq)]
 #[scale_info(skip_type_params(T))]
 pub struct Proof<T> {
-    // pub compressed: bool,
     pub bytes: Vec<u8>,
     _marker: PhantomData<T>,
 }
 
 impl<T: Config> Proof<T> {
-    // pub fn new(compressed: bool, bytes: Vec<u8>) -> Self {
     pub fn new(bytes: Vec<u8>) -> Self {
         Self {
-            // compressed,
             bytes,
             _marker: PhantomData,
         }
@@ -41,8 +53,7 @@ impl<T: Config> MaxEncodedLen for Proof<T> {
 impl<T: Config> From<Proof<T>> for plonky2_verifier::Proof {
     fn from(proof: Proof<T>) -> Self {
         Self {
-            // TODO: Restore when we support compressed proofs
-            compressed: false, // proof.compressed,
+            compressed: false,
             bytes: proof.bytes,
         }
     }
@@ -50,20 +61,6 @@ impl<T: Config> From<Proof<T>> for plonky2_verifier::Proof {
 
 impl<T: Config> Default for Proof<T> {
     fn default() -> Self {
-        Self {
-            // compressed: false,
-            bytes: Vec::default(),
-            _marker: PhantomData,
-        }
-    }
-}
-
-#[cfg(any(test, feature = "runtime-benchmarks"))]
-impl<T: Config> Proof<T> {
-    pub(crate) fn from_default_with_bytes(bytes: Vec<u8>) -> Self {
-        Self {
-            bytes,
-            ..Default::default()
-        }
+        Self::new(Vec::new())
     }
 }

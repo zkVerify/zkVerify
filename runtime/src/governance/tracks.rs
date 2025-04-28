@@ -49,7 +49,7 @@ const APP_BIG_SPENDER: Curve = Curve::make_linear(28, 28, percent(50), percent(1
 const SUP_BIG_SPENDER: Curve = Curve::make_reciprocal(20, 28, percent(1), percent(0), percent(50));
 
 const TRACKS_DATA: &[(u16, pallet_referenda::TrackInfo<Balance, BlockNumber>)] = &[
-    #[cfg(feature = "runtime-benchmarks")]
+    #[cfg(any(feature = "runtime-benchmarks", test))]
     (
         0,
         pallet_referenda::TrackInfo {
@@ -214,7 +214,7 @@ impl pallet_referenda::TracksInfo<Balance, BlockNumber> for TracksInfo {
         TRACKS_DATA
     }
     fn track_for(id: &Self::RuntimeOrigin) -> Result<Self::Id, ()> {
-        if cfg!(feature = "runtime-benchmarks") {
+        if cfg!(any(feature = "runtime-benchmarks", test)) {
             match frame_system::RawOrigin::try_from(id.clone()) {
                 Ok(frame_system::RawOrigin::Root) => return Ok(0),
                 Ok(_) => return Err(()),

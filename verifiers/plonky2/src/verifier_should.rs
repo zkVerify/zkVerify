@@ -1,14 +1,27 @@
+// Copyright 2024, Horizen Labs, Inc.
+// SPDX-License-Identifier: Apache-2.0
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 #![cfg(test)]
 
 use super::*;
+use crate::resources::*;
 use frame_support::assert_ok;
 use rstest::*;
 
-include!("resources.rs");
-
 #[fixture]
 fn worst_case_test_data() -> TestData<MockConfig> {
-    // get_parameterized_test_data(MAX_DEGREE_BITS, crate::vk::Plonky2Config::Poseidon, true)
     get_parameterized_test_data(MAX_DEGREE_BITS, crate::vk::Plonky2Config::Poseidon)
 }
 
@@ -22,16 +35,9 @@ fn verify_valid_proof(worst_case_test_data: TestData<MockConfig>) {
 }
 
 #[rstest]
-// #[case(MAX_DEGREE_BITS, Plonky2Config::Keccak, true)]
 #[case(MAX_DEGREE_BITS, Plonky2Config::Keccak)]
-// #[case(MAX_DEGREE_BITS, Plonky2Config::Poseidon, true)]
 #[case(MAX_DEGREE_BITS, Plonky2Config::Poseidon)]
-fn test_parameterized_test_data(
-    #[case] deg: usize,
-    #[case] config: Plonky2Config,
-    // #[case] compress: bool,
-) {
-    // let test_data = get_parameterized_test_data(deg, config, compress);
+fn test_parameterized_test_data(#[case] deg: usize, #[case] config: Plonky2Config) {
     let test_data = get_parameterized_test_data(deg, config);
     assert_ok!(Plonky2::<MockConfig>::verify_proof(
         &test_data.vk,
@@ -42,7 +48,6 @@ fn test_parameterized_test_data(
 
 #[rstest]
 fn compute_correct_weight_for_proof() {
-    // let test_data = get_parameterized_test_data(19, Plonky2Config::Poseidon, true);
     let test_data = get_parameterized_test_data(19, Plonky2Config::Poseidon);
     let expected = <() as crate::WeightInfoVerifyProof>::verify_proof_poseidon_uncompressed_19();
 
