@@ -107,15 +107,25 @@ fn pallet_settlement_proofofsql() {
 
 #[test]
 fn pallet_settlement_plonky2() {
-    use pallet_plonky2_verifier::{Plonky2, Proof, WeightInfo};
+    use pallet_plonky2_verifier::{Plonky2, Plonky2Config, Vk, WeightInfo};
 
     assert_eq!(
         <<Runtime as pallet_verifiers::Config<Plonky2<Runtime>>>::WeightInfo as
         pallet_verifiers::WeightInfo<Plonky2<Runtime>>>
-        ::verify_proof(
-            &Proof::default(),
-            &Vec::new()
+        ::register_vk(
+            &Vk::new(Plonky2Config::Poseidon, Vec::new())
         ),
-        crate::weights::pallet_plonky2_verifier::ZKVWeight::<Runtime>::verify_proof()
+        crate::weights::pallet_plonky2_verifier::ZKVWeight::<Runtime>::register_vk()
+    );
+}
+
+#[test]
+fn pallet_settlement_plonky2_verify_proof() {
+    use pallet_plonky2_verifier::WeightInfoVerifyProof;
+
+    assert_eq!(
+        <Runtime as pallet_plonky2_verifier::Config>::WeightInfo::verify_proof_poseidon_uncompressed_19()
+        ,
+        crate::weights::pallet_plonky2_verifier_verify_proof::ZKVWeight::<Runtime>::verify_proof_poseidon_uncompressed_19()
     );
 }

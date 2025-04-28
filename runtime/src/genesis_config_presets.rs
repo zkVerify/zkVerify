@@ -650,7 +650,6 @@ pub fn get_preset(id: &sp_genesis_builder::PresetId) -> Option<sp_std::vec::Vec<
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     #[cfg(feature = "runtime-benchmarks")]
     #[test]
@@ -660,7 +659,7 @@ mod tests {
         // If changes are necessary and tested not to break any benchmark, then please update to
         // golden reference at "tests/genesis_dev_golden.json".
         // "zkv-relay build-spec --chain dev | jq -rc '.genesis.runtimeGenesis.patch' > genesis_dev_golden.json"
-        let genesis = zkv_development_config_genesis();
+        let genesis = super::zkv_development_config_genesis();
         let file = std::fs::File::open("tests/genesis_dev_golden.json")
             .expect("could not open golden file");
         let genesis_golden: serde_json::Value =

@@ -3825,7 +3825,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "18e4fdb82bd54a12e42fb58a800dcae6b9e13982238ce2296dc3570b92148e1f"
 dependencies = [
  "data-encoding",
- "syn 2.0.100",
+ "syn 1.0.109",
 ]
 
 [[package]]
@@ -5888,7 +5888,7 @@ dependencies = [
  "httpdate",
  "itoa",
  "pin-project-lite",
- "socket2 0.5.8",
+ "socket2 0.4.10",
  "tokio",
  "tower-service",
  "tracing",
@@ -6826,7 +6826,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc2f4eb4bc735547cfed7c0a4922cbd04a4655978c09b54f1f7b228750664c34"
 dependencies = [
  "cfg-if",
- "windows-targets 0.52.6",
+ "windows-targets 0.48.5",
 ]
 
 [[package]]
@@ -9997,6 +9997,7 @@ dependencies = [
  "pallet-balances",
  "pallet-verifiers",
  "parity-scale-codec",
+ "plonky2",
  "plonky2-verifier",
  "rstest",
  "scale-info",
@@ -11435,7 +11436,7 @@ checksum = "7edddbd0b52d732b21ad9a5fab5c704c14cd949e5e9a1ec5929a24fded1b904c"
 [[package]]
 name = "plonky2"
 version = "1.0.2"
-source = "git+https://github.com/zkVerify/plonky2?tag=v0.1.0#c587c2e4b9350e29d7aecc1a02f6e35c33550839"
+source = "git+https://github.com/zkVerify/plonky2.git?tag=v0.1.0#c587c2e4b9350e29d7aecc1a02f6e35c33550839"
 dependencies = [
  "anyhow",
  "hashbrown 0.15.2",
@@ -11454,8 +11455,8 @@ dependencies = [
 
 [[package]]
 name = "plonky2-verifier"
-version = "0.1.3"
-source = "git+https://github.com/zkVerify/plonky2-verifier?tag=v0.1.3#80843c98975b2c7e377ebce5dd0934b217ba99bd"
+version = "0.2.1"
+source = "git+https://github.com/zkVerify/plonky2-verifier?tag=v0.2.1#59a390d42ae19985cf20e8d13595c0649be4967d"
 dependencies = [
  "plonky2",
  "serde",
@@ -11466,7 +11467,7 @@ dependencies = [
 [[package]]
 name = "plonky2_field"
 version = "1.0.0"
-source = "git+https://github.com/zkVerify/plonky2?tag=v0.1.0#c587c2e4b9350e29d7aecc1a02f6e35c33550839"
+source = "git+https://github.com/zkVerify/plonky2.git?tag=v0.1.0#c587c2e4b9350e29d7aecc1a02f6e35c33550839"
 dependencies = [
  "anyhow",
  "itertools 0.11.0",
@@ -11482,12 +11483,12 @@ dependencies = [
 [[package]]
 name = "plonky2_maybe_rayon"
 version = "1.0.0"
-source = "git+https://github.com/zkVerify/plonky2?tag=v0.1.0#c587c2e4b9350e29d7aecc1a02f6e35c33550839"
+source = "git+https://github.com/zkVerify/plonky2.git?tag=v0.1.0#c587c2e4b9350e29d7aecc1a02f6e35c33550839"
 
 [[package]]
 name = "plonky2_util"
 version = "1.0.0"
-source = "git+https://github.com/zkVerify/plonky2?tag=v0.1.0#c587c2e4b9350e29d7aecc1a02f6e35c33550839"
+source = "git+https://github.com/zkVerify/plonky2.git?tag=v0.1.0#c587c2e4b9350e29d7aecc1a02f6e35c33550839"
 
 [[package]]
 name = "polkadot-approval-distribution"

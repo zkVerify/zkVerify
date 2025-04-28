@@ -1,6 +1,22 @@
+// Copyright 2024, Horizen Labs, Inc.
+// SPDX-License-Identifier: Apache-2.0
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 #![cfg(feature = "runtime-benchmarks")]
 
 use crate::Plonky2 as Verifier;
+use crate::{resources::get_parameterized_test_data, Plonky2Config, MAX_DEGREE_BITS};
 use frame_benchmarking::v2::*;
 use frame_system::RawOrigin;
 use hp_verifiers::Verifier as _;
@@ -11,8 +27,6 @@ pub trait Config: crate::Config {}
 impl<T: crate::Config> Config for T {}
 pub type Call<T> = pallet_verifiers::Call<T, Verifier<T>>;
 
-include!("resources.rs");
-
 #[allow(clippy::multiple_bound_locations)]
 #[benchmarks(where T: pallet_verifiers::Config<Verifier<T>>)]
 mod benchmarks {
@@ -21,24 +35,8 @@ mod benchmarks {
     benchmarking_utils!(Verifier<T>, crate::Config);
 
     #[benchmark]
-    fn verify_proof() {
-        let data = get_valid_test_data();
-
-        let proof = data.proof;
-        let pubs = data.pubs;
-        let vk = data.vk;
-
-        let r;
-        #[block]
-        {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
-        };
-        assert!(r.is_ok());
-    }
-
-    #[benchmark]
     fn get_vk() {
-        let vk = get_valid_test_data().vk;
+        let vk = get_parameterized_test_data(MAX_DEGREE_BITS, Plonky2Config::Poseidon).vk;
         let hash = sp_core::H256::repeat_byte(2);
 
         insert_vk_anonymous::<T>(vk, hash);
@@ -53,7 +51,7 @@ mod benchmarks {
 
     #[benchmark]
     fn validate_vk() {
-        let vk = get_valid_test_data().vk;
+        let vk = get_parameterized_test_data(MAX_DEGREE_BITS, Plonky2Config::Poseidon).vk;
 
         let r;
         #[block]
@@ -65,7 +63,7 @@ mod benchmarks {
 
     #[benchmark]
     fn compute_statement_hash() {
-        let data = get_valid_test_data();
+        let data = get_parameterized_test_data(MAX_DEGREE_BITS, Plonky2Config::Poseidon);
 
         let proof = data.proof;
         let pubs = data.pubs;
@@ -83,7 +81,7 @@ mod benchmarks {
     fn register_vk() {
         // setup code
         let caller = funded_account::<T>();
-        let vk = get_valid_test_data().vk;
+        let vk = get_parameterized_test_data(MAX_DEGREE_BITS, Plonky2Config::Poseidon).vk;
 
         #[extrinsic_call]
         register_vk(RawOrigin::Signed(caller), vk.clone().into());
@@ -97,7 +95,7 @@ mod benchmarks {
         // setup code
         let caller = funded_account::<T>();
         let hash = sp_core::H256::repeat_byte(2);
-        let vk = get_valid_test_data().vk;
+        let vk = get_parameterized_test_data(MAX_DEGREE_BITS, Plonky2Config::Poseidon).vk;
 
         insert_vk::<T>(caller.clone(), vk, hash);
 
@@ -108,7 +106,7 @@ mod benchmarks {
         assert!(do_get_vk::<T>(&hash).is_none());
     }
 
-    impl_benchmark_test_suite!(Pallet, super::mock::test_ext(), super::mock::Test);
+    impl_benchmark_test_suite!(Pallet, mock::test_ext(), super::mock::Test);
 }
 
 #[cfg(test)]
@@ -138,6 +136,7 @@ mod mock {
         type MaxProofSize = ConstU32<1000000>;
         type MaxPubsSize = ConstU32<1000000>;
         type MaxVkSize = ConstU32<1000000>;
+        type WeightInfo = ();
     }
 
     #[derive_impl(frame_system::config_preludes::SolochainDefaultConfig as frame_system::DefaultConfig)]
