@@ -100,7 +100,7 @@ ZKV_CONF_NAME="{name}"
 
 
 ZKV_CONF_BASE_PATH="/data/node"
-ZKV_CONF_VALIDATOR="true"
+ZKV_CONF_VALIDATOR="yes"
 ZKV_CONF_CHAIN="/data/chain_spec.json"                   
 """)
 
@@ -115,7 +115,7 @@ ZKV_CONF_NAME="{name}"
 ZKV_CONF_BASE_PATH="/data/node"
 ZKV_CONF_CHAIN="/data/chain_spec.json"
 
-ZKV_CONF_RPC_EXTERNAL="true"
+ZKV_CONF_RPC_EXTERNAL="yes"
 ZKV_CONF_RPC_CORS="all"
 ZKV_CONF_PRUNING="archive"
 """)
@@ -129,8 +129,8 @@ def crete_collator_env(path, name, identity):
 # Node config
 ZKV_CONF_NAME="{name}"
 
-ZKV_CONF_{identity}="true"
-ZKV_CONF_COLLATOR="true"
+ZKV_CONF_{identity}="yes"
+ZKV_CONF_COLLATOR="yes"
 ZKV_CONF_BASE_PATH="/data/node"
 
 ZKV_CONF_CHAIN="/data/chain_spec.json"
@@ -147,7 +147,7 @@ def crete_rpc_para_env(path, name):
 ZKV_CONF_NAME="{name}"
 
 ZKV_CONF_BASE_PATH="/data/node"
-ZKV_CONF_RPC_EXTERNAL="true"
+ZKV_CONF_RPC_EXTERNAL="yes"
 ZKV_CONF_RPC_CORS="all"
 ZKV_CONF_PRUNING="archive"
 
