@@ -4595,7 +4595,7 @@ dependencies = [
 [[package]]
 name = "fflonk_verifier"
 version = "0.4.0"
-source = "git+https://github.com/HorizenLabs/fflonk_verifier.git?tag=v0.4.0#aa848aa56114c9e002c5b41a2822c7043d19b501"
+source = "git+https://github.com/zkVerify/fflonk_verifier.git?tag=v0.4.0#aa848aa56114c9e002c5b41a2822c7043d19b501"
 dependencies = [
  "digest 0.10.7",
  "ethnum",
@@ -13533,7 +13533,7 @@ dependencies = [
 [[package]]
 name = "proof-of-sql-verifier"
 version = "0.1.0"
-source = "git+https://github.com/HorizenLabs/proof-of-sql-verifier.git?tag=v0.2.0#d499c6d64915954c033d14dbd2ec937434b8b564"
+source = "git+https://github.com/zkVerify/proof-of-sql-verifier.git?tag=v0.2.0#d499c6d64915954c033d14dbd2ec937434b8b564"
 dependencies = [
  "ahash 0.8.11",
  "ark-bls12-381",
@@ -14358,7 +14358,7 @@ dependencies = [
 [[package]]
 name = "risc0-verifier"
 version = "0.6.0"
-source = "git+https://github.com/HorizenLabs/risc0-verifier.git?tag=v0.6.0#5f658527cdeb53199c9dd694d84a03b8526b7d27"
+source = "git+https://github.com/zkVerify/risc0-verifier.git?tag=v0.6.0#5f658527cdeb53199c9dd694d84a03b8526b7d27"
 dependencies = [
  "anyhow",
  "bytemuck",

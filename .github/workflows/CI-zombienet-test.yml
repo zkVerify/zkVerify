@@ -33,7 +33,6 @@ jobs:
             && yarn install
             && yarn test 2>&1 | tee /build/zombienet_test_output.txt'
           use_cache: 'no'
-          cmake_install: 'yes'
           lld_install: 'yes'
           nodejs_version_install: '18'
 

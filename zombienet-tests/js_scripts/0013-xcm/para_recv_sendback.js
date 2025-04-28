@@ -220,10 +220,10 @@ async function run(nodeName, networkInfo, args) {
     // 4. Wait for the XCM response on the outcome of the remote execution
 
     console.log("Waiting for XCM response");
-    const EXPECTED_RESP_TIMEOUT = BLOCK_TIME * 8; // 3 blocks for finalization on relay
+    const EXPECTED_RESP_TIMEOUT = BLOCK_TIME * 10; // 3 blocks for finalization on relay
                                                   // + 1 for response receival
                                                   // + 1 for XCM execution on para
-                                                  // + 4 as margin
+    // + 6 as margin
     response = (await waitForEvent(api, EXPECTED_RESP_TIMEOUT, "xcmPallet", "ResponseReady"));
 
     if (response == -1) {

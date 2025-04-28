@@ -37,7 +37,6 @@ jobs:
             && echo "<meta http-equiv=\"refresh\" content=\"0; url=zkv_node/index.html\">" > /build/target/doc/index.html'
           use_cache: 'yes'
           cache_key: 'rustdoc'
-          cmake_install: 'yes'
           lld_install: 'yes'
 
       - name: Upload documentation

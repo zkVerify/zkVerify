@@ -32,7 +32,6 @@ jobs:
           command: "cargo build -p zkv-runtime --release --features try-runtime"
           use_cache: 'yes'
           cache_key: 'build-try-runtime'
-          cmake_install: 'yes'
           lld_install: 'yes'
 
       - name: Execute try-runtime

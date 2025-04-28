@@ -1,7 +1,7 @@
 [workspace.package]
 authors = ["Horizen Labs <admin@horizenlabs.io>"]
 edition = "2021"
-repository = "https://github.com/HorizenLabs/zkVerify"
+repository = "https://github.com/zkVerify/zkVerify"
 homepage = "https://horizenlabs.io"
 
 [workspace]
@@ -107,7 +107,7 @@ pallet-groth16-verifier = { path = "verifiers/groth16", default-features = false
 pallet-risc0-verifier = { path = "verifiers/risc0", default-features = false }
 pallet-ultraplonk-verifier = { path = "verifiers/ultraplonk", default-features = false }
 pallet-proofofsql-verifier = { path = "verifiers/proofofsql", default-features = false }
-risc0-verifier = { git = "https://github.com/HorizenLabs/risc0-verifier.git", tag = "v0.6.0", default-features = false }
+risc0-verifier = { git = "https://github.com/zkVerify/risc0-verifier.git", tag = "v0.6.0", default-features = false }
 pallet-plonky2-verifier = { path = "verifiers/plonky2", default-features = false }
 
 zkv-benchmarks = { path = "relay-node/benchmarks" }

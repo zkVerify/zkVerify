@@ -3,7 +3,6 @@ FROM rust:1-bookworm AS builder
 RUN apt-get update -qq \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
       clang \
-      cmake \
       lld \
       protobuf-compiler \
     && apt-get -y clean \
