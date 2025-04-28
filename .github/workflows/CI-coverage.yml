@@ -23,7 +23,6 @@ jobs:
             && cargo llvm-cov report --json --output-path coverage_report.json --summary-only && cargo llvm-cov report | tee coverage_summary.txt'
           use_cache: 'yes'
           cache_key: 'coverage'
-          cmake_install: 'yes'
           lld_install: 'yes'
           cargo_binaries_install: cargo-llvm-cov
 

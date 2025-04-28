@@ -20,7 +20,6 @@ jobs:
           command: "cargo clippy --release --all-targets -- --deny warnings 2>&1 | tee linting_output.txt"
           use_cache: "yes"
           cache_key: "lint-format"
-          cmake_install: "yes"
           lld_install: "yes"
 
       - name: Upload lint artifacts
@@ -38,7 +37,6 @@ jobs:
           command: "cargo fmt --check 2>&1 | tee formatting_output.txt"
           use_cache: "yes"
           cache_key: "lint-format"
-          cmake_install: "yes"
           lld_install: "yes"
 
       - name: Upload format artifacts
