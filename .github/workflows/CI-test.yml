@@ -23,6 +23,15 @@ jobs:
           cmake_install: 'yes'
           lld_install: 'yes'
 
+      - name: Cargo unit test runtime without features
+        uses: ./.github/actions/cmd-in-docker
+        with:
+          command: "cargo test --lib -p zkv-runtime --no-fail-fast --release 2>&1 | tee -a unit_test_output.txt"
+          use_cache: 'yes'
+          cache_key: 'unit-test'
+          cmake_install: 'yes'
+          lld_install: 'yes'
+
       - name: Upload unit test output
         uses: actions/upload-artifact@v4
         with:
