@@ -20,7 +20,7 @@
 # - `ZKV_CONF_BOOTNODES` -> `--bootnodes`
 #
 # Values of environment variables are used unmodified as values of command line arguments with the exception
-# of `true` being dropped (as a flag, example `ZKV_CONF_VALIDATOR`/`--validator`)
+# of `yes` being dropped (as a flag, example `ZKV_CONF_VALIDATOR`/`--validator`)
 
 set -eEuo pipefail
 
@@ -63,9 +63,9 @@ get_arg_value_from_env_value() {
   local env_value="$1"
   local arg_value="${env_value}"
 
-  # Check if the value is exactly "true".
-  if [ "${arg_value}" == "true" ]; then
-    # If it is "true", set arg_value to an empty string (""), indicating no flag should be set.
+  # Check if the value is exactly "yes".
+  if [ "${arg_value}" == "yes" ]; then
+    # If it is "yes", set arg_value to an empty string (""), indicating no flag should be set.
     arg_value=""
   fi
 
@@ -186,7 +186,7 @@ while IFS='=' read -r -d '' var_name var_value; do
       done
     else
       # If there is no comma, just add the argument with the value
-      if [ "${var_value}" != "true" ]; then
+      if [ "${var_value}" != "yes" ]; then
         conf_args+=("${arg_name}")
         conf_args+=("${var_value}")
       else
@@ -304,7 +304,7 @@ if env | grep -q "^${prefix}"; then
         done
       else
         # If there is no comma, just add the argument with or without the value depending on the condition
-        if [ "${var_value}" != "true" ]; then
+        if [ "${var_value}" != "yes" ]; then
           conf_args+=("${arg_name}")
           conf_args+=("${var_value}")
         else
