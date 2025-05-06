@@ -137,7 +137,7 @@ impl crate::WeightInfo for MockWeightInfo {
         Weight::from_parts(Self::HOLD_REF_TIME, Self::HOLD_PROOF_SIZE)
     }
 
-    fn set_delivery_price() -> Weight {
+    fn set_total_delivery_fee() -> Weight {
         Weight::from_parts(Self::SET_PRICE_REF_TIME, Self::SET_PRICE_PROOF_SIZE)
     }
 }
@@ -182,6 +182,7 @@ pub struct MockDispatchAggregation {
     pub aggregation_id: u64,
     pub aggregation: H256,
     pub destination: Destination,
+    pub fee: u128,
 }
 
 impl MockDispatchAggregation {
@@ -227,18 +228,20 @@ impl MockDispatchAggregation {
     }
 }
 
-impl DispatchAggregation for MockDispatchAggregation {
+impl DispatchAggregation<Balance> for MockDispatchAggregation {
     fn dispatch_aggregation(
         domain_id: u32,
         aggregation_id: u64,
         aggregation: H256,
         destination: Destination,
+        fee: u128,
     ) -> DispatchResult {
         MockDispatchAggregation {
             domain_id,
             aggregation_id,
             aggregation,
             destination,
+            fee,
         }
         .push();
         MockDispatchAggregation::return_value()
@@ -402,8 +405,8 @@ pub fn none_delivering() -> Delivery<Balance> {
     none_destination().into()
 }
 
-pub fn priced_none_delivering(delivery_price: Balance) -> Delivery<Balance> {
-    Delivery::new(none_destination(), delivery_price)
+pub fn priced_none_delivering(delivery_fee: Balance, owner_tip: Balance) -> Delivery<Balance> {
+    Delivery::new(none_destination(), delivery_fee, owner_tip)
 }
 
 #[derive_impl(frame_system::config_preludes::SolochainDefaultConfig as frame_system::DefaultConfig)]
@@ -506,7 +509,7 @@ pub fn test() -> sp_io::TestExternalities {
 
 impl From<Destination> for crate::data::Delivery<Balance> {
     fn from(destination: Destination) -> Self {
-        Delivery::new(destination, 0_u128)
+        Delivery::new(destination, 0_u128, 0_u128)
     }
 }
 

@@ -209,13 +209,20 @@ pub enum AggregateSecurityRules {
 pub struct Delivery<B: sp_std::fmt::Debug + sp_std::cmp::PartialEq> {
     /// Destination
     pub destination: Destination,
-    /// Price
-    pub price: B,
+    /// fee
+    pub fee: B,
+    /// Tip for the delivery owner
+    pub owner_tip: B,
 }
 
-impl<B: sp_std::fmt::Debug + sp_std::cmp::PartialEq> Delivery<B> {
-    pub fn new(destination: Destination, price: B) -> Self {
-        Self { destination, price }
+impl<B: sp_std::fmt::Debug + sp_std::cmp::PartialEq + Clone + sp_std::ops::Add<Output = B>> Delivery<B> {
+    pub fn new(destination: Destination, fee: B, owner_tip: B) -> Self {
+        Self { destination, fee, owner_tip }
+    }
+
+    /// Get the total delivery fee (delivery fee + owner tip)
+    pub fn total_fee(&self) -> B {
+        self.fee.clone() + self.owner_tip.clone()
     }
 }
 
@@ -228,19 +235,32 @@ pub struct DeliveryParams<A, B: sp_std::fmt::Debug + sp_std::cmp::PartialEq> {
     data: Delivery<B>,
 }
 
-impl<A, B: sp_std::fmt::Debug + sp_std::cmp::PartialEq> DeliveryParams<A, B> {
+impl<A, B: sp_std::fmt::Debug + sp_std::cmp::PartialEq + Clone + sp_std::ops::Add<Output = B>> DeliveryParams<A, B> {
     pub fn new(owner: A, data: Delivery<B>) -> Self {
         Self { owner, data }
     }
 
-    /// The delivery aggregation price
-    pub fn price(&self) -> &B {
-        &self.data.price
+    /// The delivery fee
+    pub fn fee(&self) -> &B {
+        &self.data.fee
     }
 
-    /// Set the delivery aggregation price
-    pub fn set_price(&mut self, price: B) {
-        self.data.price = price
+    /// Set the delivery fee
+    pub fn set_fee(&mut self, fee: B) {
+        self.data.fee = fee
+    }
+
+    /// Set the delivery owner tip
+    pub fn set_owner_tip(&mut self, tip: B) {
+        self.data.owner_tip = tip
+    }
+
+    /// Get the total delivery fee (fee + tip)
+    pub fn total_fee(&self) -> B
+    where
+        B: Clone + sp_std::ops::Add<Output = B>
+    {
+        self.data.total_fee()
     }
 
     /// The delivery destination
