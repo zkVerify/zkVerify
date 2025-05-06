@@ -683,59 +683,60 @@ pub mod pallet {
             aggregation_id: u64,
         ) -> DispatchResultWithPostInfo {
             let aggregator = User::<T::AccountId>::from_origin::<T>(origin)?;
-            let (root, size, destination, delivery_fee) = Domains::<T>::try_mutate(domain_id, |domain| {
-                let domain = domain.as_mut().ok_or_else(|| {
-                    dispatch_post_error(
-                        T::WeightInfo::aggregate_on_invalid_domain(),
-                        Error::<T>::UnknownDomainId,
-                    )
-                })?;
-                let aggregation = domain.take_aggregation(aggregation_id).ok_or_else(|| {
-                    dispatch_post_error(
-                        T::WeightInfo::aggregate_on_invalid_id(),
-                        Error::<T>::InvalidAggregationId,
-                    )
-                })?;
-                if !domain.aggregate_rules.can_user_aggregate_it::<T>(
-                    &aggregator,
-                    &domain.owner,
-                    &domain.delivery.owner,
-                    &aggregation,
-                ) {
-                    Err(BadOrigin)?
-                }
-                let root = aggregation.compute_receipt();
-                let size = aggregation.statements.len() as u32;
-                Published::<T>::mutate(|published: &mut _| {
-                    published.push((domain_id, aggregation))
-                });
-
-                if let Some((_, published)) = Published::<T>::get().last() {
-                    for s in published.statements.iter() {
-                        handle_held_funds::<T>(
-                            HoldReason::Aggregation,
-                            &s.account,
-                            aggregator.account(),
-                            s.reserve.aggregate,
-                        );
-                        handle_held_funds::<T>(
-                            HoldReason::Delivery,
-                            &s.account,
-                            Some(&domain.delivery.owner),
-                            s.reserve.delivery,
-                        );
+            let (root, size, destination, delivery_fee) =
+                Domains::<T>::try_mutate(domain_id, |domain| {
+                    let domain = domain.as_mut().ok_or_else(|| {
+                        dispatch_post_error(
+                            T::WeightInfo::aggregate_on_invalid_domain(),
+                            Error::<T>::UnknownDomainId,
+                        )
+                    })?;
+                    let aggregation = domain.take_aggregation(aggregation_id).ok_or_else(|| {
+                        dispatch_post_error(
+                            T::WeightInfo::aggregate_on_invalid_id(),
+                            Error::<T>::InvalidAggregationId,
+                        )
+                    })?;
+                    if !domain.aggregate_rules.can_user_aggregate_it::<T>(
+                        &aggregator,
+                        &domain.owner,
+                        &domain.delivery.owner,
+                        &aggregation,
+                    ) {
+                        Err(BadOrigin)?
                     }
-                }
+                    let root = aggregation.compute_receipt();
+                    let size = aggregation.statements.len() as u32;
+                    Published::<T>::mutate(|published: &mut _| {
+                        published.push((domain_id, aggregation))
+                    });
 
-                domain.handle_hold_state();
+                    if let Some((_, published)) = Published::<T>::get().last() {
+                        for s in published.statements.iter() {
+                            handle_held_funds::<T>(
+                                HoldReason::Aggregation,
+                                &s.account,
+                                aggregator.account(),
+                                s.reserve.aggregate,
+                            );
+                            handle_held_funds::<T>(
+                                HoldReason::Delivery,
+                                &s.account,
+                                Some(&domain.delivery.owner),
+                                s.reserve.delivery,
+                            );
+                        }
+                    }
 
-                Result::<_, DispatchErrorWithPostInfo>::Ok((
-                    root,
-                    size,
-                    domain.delivery.destination().clone(),
-                    *domain.delivery.fee(),
-                ))
-            })?;
+                    domain.handle_hold_state();
+
+                    Result::<_, DispatchErrorWithPostInfo>::Ok((
+                        root,
+                        size,
+                        domain.delivery.destination().clone(),
+                        *domain.delivery.fee(),
+                    ))
+                })?;
             Self::deposit_event(Event::NewAggregationReceipt {
                 domain_id,
                 aggregation_id,
@@ -767,8 +768,8 @@ pub mod pallet {
         /// - aggregation_size: The size of the aggregation, in other words how many statements any aggregation have.
         /// - queue_size: The maximum number of aggregations that can be in the queue for this domain.
         /// - aggregate_rules: The rules permission to call `aggregate` on this domain (see [`AggregateSecurityRules`])
-        /// - delivery: Params defining aggregation delivery (price, destination ... [`Delivery`])
-        /// - delivery_owner: An optional account that will receive the delivery price when the aggregations are delivered.
+        /// - delivery: Params defining aggregation delivery (fee, destination ... [`Delivery`])
+        /// - delivery_owner: An optional account that will receive the total delivery fee when the aggregations are delivered.
         ///   If not provided, the delivery owner will be the caller.
         ///
         /// Errors:
@@ -1029,7 +1030,10 @@ pub mod pallet {
             }
         }
 
-        pub fn can_set_total_delivery_fee<T: Config<AccountId = A>>(&self, domain: &Domain<T>) -> bool
+        pub fn can_set_total_delivery_fee<T: Config<AccountId = A>>(
+            &self,
+            domain: &Domain<T>,
+        ) -> bool
         where
             A: PartialEq + sp_std::fmt::Debug,
         {

@@ -614,7 +614,7 @@ impl DispatchAggregation<Balance> for Runtime {
         aggregation_id: u64,
         aggregation: H256,
         destination_params: Destination,
-        fee: Balance
+        fee: Balance,
     ) -> DispatchResult {
         match destination_params {
             Destination::None => Ok(()),

@@ -243,7 +243,12 @@ mod benchmarks {
         insert_domain::<T>(domain_id, caller.clone(), None);
 
         #[extrinsic_call]
-        set_total_delivery_fee(RawOrigin::Signed(caller), domain_id, 12345_u32.into(), 123_u32.into());
+        set_total_delivery_fee(
+            RawOrigin::Signed(caller),
+            domain_id,
+            12345_u32.into(),
+            123_u32.into(),
+        );
 
         // Sanity check: we consumed the aggregation
         let domain = Domains::<T>::get(domain_id).unwrap();

@@ -33,7 +33,7 @@ pub trait DispatchAggregation<B> {
         aggregation_id: u64,
         aggregation: H256,
         destination: Destination,
-        fee: B
+        fee: B,
     ) -> DispatchResult;
 
     /// Maximum weight for this dispatch: should be the maximum weight for the dispatch
@@ -51,7 +51,7 @@ impl<B> DispatchAggregation<B> for () {
         _aggregation_id: u64,
         _aggregation: H256,
         _destination: Destination,
-        _fee: B
+        _fee: B,
     ) -> DispatchResult {
         Ok(())
     }

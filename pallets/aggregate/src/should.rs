@@ -334,19 +334,22 @@ fn reserve_at_least_the_publish_proof_price_fraction_when_on_proof_verified() {
     })
 }
 
-const DELIVERY_PRICE: u128 = 64 * 10000;
-const EXPECTED_DELIVERY_HOLD_FUNDS: u128 = DELIVERY_PRICE / DOMAIN_SIZE as u128;
+const DELIVERY_FEE: u128 = 64 * 10000;
+const OWNER_TIP: u128 = 100;
 
-fn set_total_delivery_fee(domain_id: u32, fee: Balance) {
+const EXPECTED_DELIVERY_HOLD_FUNDS: u128 = (DELIVERY_FEE + OWNER_TIP) / DOMAIN_SIZE as u128;
+
+fn set_total_delivery_fee(domain_id: u32, fee: Balance, owner_tip: Balance) {
     Domains::<Test>::mutate_extant(domain_id, |d| {
         d.delivery.set_fee(fee);
+        d.delivery.set_owner_tip(owner_tip);
     });
 }
 
 #[test]
 fn reserve_the_delivery_price_fraction_when_on_proof_verified() {
     test().execute_with(|| {
-        set_total_delivery_fee(DOMAIN_ID, DELIVERY_PRICE);
+        set_total_delivery_fee(DOMAIN_ID, DELIVERY_FEE, OWNER_TIP);
 
         let statement = H256::from_low_u64_be(123);
         let account = USER_1;
@@ -380,7 +383,7 @@ fn not_fail_but_raise_just_an_event_if_a_user_doesn_t_have_enough_found_to_reser
 ) {
     test().execute_with(|| {
         let statement = H256::from_low_u64_be(123);
-        set_total_delivery_fee(DOMAIN_ID, DELIVERY_PRICE);
+        set_total_delivery_fee(DOMAIN_ID, DELIVERY_FEE, OWNER_TIP);
 
         Aggregate::on_proof_verified(Some(NO_DELIVERY_FUND_USER), DOMAIN, statement);
 
@@ -615,7 +618,7 @@ mod aggregate {
         #[values(PUBLISHER_USER, ROOT_USER)] executor: AccountId,
     ) {
         test().execute_with(|| {
-            set_total_delivery_fee(DOMAIN_ID, DELIVERY_PRICE);
+            set_total_delivery_fee(DOMAIN_ID, DELIVERY_FEE, OWNER_TIP);
             let accounts = [USER_1, USER_2];
             let elements = (0..DOMAIN_SIZE as u64)
                 .map(|i| {
@@ -629,7 +632,9 @@ mod aggregate {
                 Aggregate::on_proof_verified(Some(account), DOMAIN, statement);
             }
 
-            let expected_balance = Balances::free_balance(USER_DELIVERY_OWNER) + DELIVERY_PRICE;
+            let delivery_per_statement = (DELIVERY_FEE + OWNER_TIP) / DOMAIN_SIZE as u128;
+            let total_collected = delivery_per_statement * DOMAIN_SIZE as u128;
+            let expected_balance = Balances::free_balance(USER_DELIVERY_OWNER) + total_collected;
 
             assert_ok!(Aggregate::aggregate(
                 Origin::Signed(executor).into(),
@@ -649,7 +654,7 @@ mod aggregate {
         #[values(PUBLISHER_USER, ROOT_USER)] executor: AccountId,
     ) {
         test().execute_with(|| {
-            set_total_delivery_fee(DOMAIN_ID, 2 * DELIVERY_PRICE);
+            set_total_delivery_fee(DOMAIN_ID, 2 * DELIVERY_FEE, OWNER_TIP);
             let accounts = [USER_1, USER_2];
             let elements = (0..DOMAIN_SIZE as u64)
                 .map(|i| {
@@ -1206,8 +1211,8 @@ mod register_domain {
     }
 
     #[rstest]
-    #[case(hyperbridge_destination(), (78809, 1697, 9359, 21033))]
-    #[case(Destination::None, (78776, 1664, 9326, 21000))]
+    #[case(hyperbridge_destination(), (78825, 1713, 9375, 21049))]
+    #[case(Destination::None, (78792, 1680, 9342, 21016))]
     fn not_change_domain_encoded_size(
         #[case] destination: Destination,
         #[case] variables: (usize, usize, usize, usize),
@@ -1227,7 +1232,7 @@ mod register_domain {
         );
 
         // Fixture max
-        assert_eq!(Domain::<Test>::max_encoded_len(), 78809);
+        assert_eq!(Domain::<Test>::max_encoded_len(), 78825);
 
         // Max configurations
         assert_eq!(
@@ -1759,7 +1764,7 @@ mod get_statement_path {
     }
 }
 
-mod set_delivery_price {
+mod set_total_delivery_fee {
     use super::*;
 
     #[rstest]
@@ -1804,7 +1809,12 @@ mod set_delivery_price {
     ) {
         test().execute_with(|| {
             assert_err!(
-                Aggregate::set_total_delivery_fee(Origin::Signed(issuer).into(), domain_id, 123456, 123),
+                Aggregate::set_total_delivery_fee(
+                    Origin::Signed(issuer).into(),
+                    domain_id,
+                    123456,
+                    123
+                ),
                 error
             );
         })
