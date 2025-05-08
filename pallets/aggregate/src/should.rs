@@ -934,7 +934,7 @@ mod aggregate {
             }
 
             let expected_weight = <Test as Config>::WeightInfo::aggregate(proofs)
-                + <<Test as Config>::DispatchAggregation as DispatchAggregation<Balance>>::dispatch_weight(
+                + <<Test as Config>::DispatchAggregation as DispatchAggregation<Balance, AccountId>>::dispatch_weight(
                     &destination,
                 );
 
