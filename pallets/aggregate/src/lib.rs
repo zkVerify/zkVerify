@@ -169,7 +169,7 @@ pub mod pallet {
         #[cfg(feature = "runtime-benchmarks")]
         type Currency: frame_support::traits::fungible::Mutate<AccountOf<Self>>;
         /// Handler for when an aggregation is completed
-        type DispatchAggregation: DispatchAggregation<BalanceOf<Self>>;
+        type DispatchAggregation: DispatchAggregation<BalanceOf<Self>, AccountOf<Self>>;
     }
 
     impl<T: Config> OnProofVerified<<T as frame_system::Config>::AccountId> for Pallet<T> {
@@ -683,7 +683,7 @@ pub mod pallet {
             aggregation_id: u64,
         ) -> DispatchResultWithPostInfo {
             let aggregator = User::<T::AccountId>::from_origin::<T>(origin)?;
-            let (root, size, destination, delivery_fee) =
+            let (root, size, destination, owner_account, delivery_fee) =
                 Domains::<T>::try_mutate(domain_id, |domain| {
                     let domain = domain.as_mut().ok_or_else(|| {
                         dispatch_post_error(
@@ -734,6 +734,7 @@ pub mod pallet {
                         root,
                         size,
                         domain.delivery.destination().clone(),
+                        domain.delivery.owner.clone(),
                         *domain.delivery.fee(),
                     ))
                 })?;
@@ -751,6 +752,7 @@ pub mod pallet {
                 root,
                 destination,
                 delivery_fee,
+                owner_account,
             )?;
 
             Ok(aggregator.post_info((T::WeightInfo::aggregate(size) + dispatch_weight).into()))

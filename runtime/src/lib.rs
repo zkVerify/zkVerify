@@ -608,19 +608,20 @@ where
     }
 }
 
-impl DispatchAggregation<Balance> for Runtime {
+impl DispatchAggregation<Balance, AccountId> for Runtime {
     fn dispatch_aggregation(
         domain_id: u32,
         aggregation_id: u64,
         aggregation: H256,
         destination_params: Destination,
         fee: Balance,
+        owner_account: AccountId,
     ) -> DispatchResult {
         match destination_params {
             Destination::None => Ok(()),
             Destination::Hyperbridge(params) => {
                 pallet_hyperbridge_aggregations::Pallet::<Runtime>::dispatch_aggregation(
-                    pallet_hyperbridge_aggregations::PALLET_ID.into_account_truncating(),
+                    owner_account,
                     Params {
                         domain_id,
                         aggregation_id,

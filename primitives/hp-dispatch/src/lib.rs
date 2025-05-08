@@ -26,14 +26,15 @@ use sp_core::{H160, H256};
 use sp_std::fmt::Debug;
 
 /// Trait to dispatch aggregations
-pub trait DispatchAggregation<B> {
+pub trait DispatchAggregation<Balance, AccountId> {
     /// forward an aggregation to the destination
     fn dispatch_aggregation(
         domain_id: u32,
         aggregation_id: u64,
         aggregation: H256,
         destination: Destination,
-        fee: B,
+        fee: Balance,
+        domain_owner: AccountId,
     ) -> DispatchResult;
 
     /// Maximum weight for this dispatch: should be the maximum weight for the dispatch
@@ -45,13 +46,14 @@ pub trait DispatchAggregation<B> {
     fn dispatch_weight(destination: &Destination) -> Weight;
 }
 
-impl<B> DispatchAggregation<B> for () {
+impl<Balance, AccountId> DispatchAggregation<Balance, AccountId> for () {
     fn dispatch_aggregation(
         _domain_id: u32,
         _aggregation_id: u64,
         _aggregation: H256,
         _destination: Destination,
-        _fee: B,
+        _fee: Balance,
+        _domain_owner: AccountId,
     ) -> DispatchResult {
         Ok(())
     }
