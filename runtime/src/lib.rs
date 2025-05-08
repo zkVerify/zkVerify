@@ -1822,9 +1822,8 @@ impl_runtime_apis! {
 
             pub mod xcm {
                 use super::*;
-                use xcm::v4::{Asset, AssetId, Assets, Location, InteriorLocation, Junction, Junctions::Here, NetworkId, Response};
+                use xcm::v4::{Asset, AssetId, Assets, Location, InteriorLocation, Junction, Junctions::Here, NetworkId, Response, Fungibility::Fungible};
                 use frame_benchmarking::BenchmarkError;
-                use xcm::latest::Fungibility::Fungible;
 
                 pub use pallet_xcm::benchmarking::Pallet as XcmPalletBench;
                 pub use pallet_xcm_benchmarks::fungible::Pallet as XcmPalletBenchFungible;

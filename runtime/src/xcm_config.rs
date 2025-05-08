@@ -50,7 +50,7 @@ use crate::weights::pallet_xcm::ZKVWeight as XcmPalletZKVWeight;
 use crate::weights::xcm::ZKVWeight as XcmZKVWeight;
 
 const ZKV_GENESIS_HASH: [u8; 32] =
-    hex_literal::hex!("e2a4f521dbcba897cd2359adc5e7725f409b17f9ae129737904e5e8939c22a05");
+    hex_literal::hex!("ff7fe5a610f15fe7a0c52f94f86313fb7db7d3786e7f8acf2b66c11d5be7c242");
 
 parameter_types! {
     pub const RootLocation: Location = Here.into_location();
@@ -138,16 +138,25 @@ pub type XcmRouter = WithUniqueTopic<(
     ChildParachainRouter<Runtime, XcmPallet, PriceForChildParachainDelivery>,
 )>;
 
+// zkVerify-EVM-Parachain
+pub const ZKV_EVM_PARA_ID: u32 = 1;
+// paratest, included in this repository
 pub const TEST_PARA_ID: u32 = 1599;
+
 parameter_types! {
-    pub const Acme: AssetFilter = Wild(AllOf { fun: WildFungible, id: AssetId(TokenLocation::get()) });
+    pub const TVFYAsset: AssetFilter = Wild(AllOf { fun: WildFungible, id: AssetId(TokenLocation::get()) });
     pub TestParaLocation: Location = Parachain(TEST_PARA_ID).into_location();
-    pub AcmeForTest: (AssetFilter, Location) = (Acme::get(), TestParaLocation::get());
+    pub ZKVEvmParaLocation: Location = Parachain(ZKV_EVM_PARA_ID).into_location();
+    pub TVFYAssetForTest: (AssetFilter, Location) = (TVFYAsset::get(), TestParaLocation::get());
+    pub TVFYAssetForZKVEvm: (AssetFilter, Location) = (TVFYAsset::get(), ZKVEvmParaLocation::get());
     pub const MaxAssetsIntoHolding: u32 = 64;
 }
 
 /// ZKV Relay recognizes/respects Test parachain as teleporter for VFY.
-pub type TrustedTeleporters = xcm_builder::Case<AcmeForTest>;
+pub type TrustedTeleporters = (
+    xcm_builder::Case<TVFYAssetForTest>,
+    xcm_builder::Case<TVFYAssetForZKVEvm>,
+);
 
 pub struct OnlyParachains;
 impl Contains<Location> for OnlyParachains {
