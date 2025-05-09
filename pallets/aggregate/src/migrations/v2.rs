@@ -16,7 +16,6 @@ use sp_std::vec::Vec;
 /// price.
 ///
 /// If we cannot find any delivery owner, we'll remove domain from the storage.
-
 pub struct InnerMigrateV1ToV2<T>(core::marker::PhantomData<T>);
 
 impl<T: crate::Config> UncheckedOnRuntimeUpgrade for InnerMigrateV1ToV2<T> {
