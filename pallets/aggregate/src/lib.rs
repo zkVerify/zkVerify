@@ -108,7 +108,7 @@ pub mod pallet {
     pub(crate) type TicketOf<T> = <T as Config>::Consideration;
 
     /// The in-code storage version.
-    const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+    const STORAGE_VERSION: StorageVersion = StorageVersion::new(2);
 
     #[pallet::pallet]
     #[pallet::storage_version(STORAGE_VERSION)]
