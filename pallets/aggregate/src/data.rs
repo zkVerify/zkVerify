@@ -259,6 +259,12 @@ impl<A, B: sp_std::fmt::Debug + sp_std::cmp::PartialEq + Clone + sp_std::ops::Ad
     }
 
     /// Set the delivery owner tip
+    #[allow(dead_code)]
+    pub fn owner_tip(&self) -> &B {
+        &self.data.owner_tip
+    }
+
+    /// Set the delivery owner tip
     pub fn set_owner_tip(&mut self, tip: B) {
         self.data.owner_tip = tip
     }

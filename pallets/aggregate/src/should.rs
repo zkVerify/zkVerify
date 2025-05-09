@@ -491,6 +491,9 @@ mod aggregate {
         test().execute_with(|| {
             add_aggregations(Some(USER_2), DOMAIN, DOMAIN_SIZE);
 
+            // Record initial balance of delivery owner
+            let initial_balance = Balances::free_balance(USER_DELIVERY_OWNER);
+
             Aggregate::aggregate(Origin::Signed(USER_1).into(), DOMAIN_ID, 1).unwrap();
 
             let MockDispatchAggregation {
@@ -505,6 +508,18 @@ mod aggregate {
             assert_new_receipt(domain_id, aggregation_id, Some(aggregation));
             assert_eq!(hyperbridge_destination(), destination);
             assert_eq!(USER_DELIVERY_OWNER, delivery_owner);
+
+            // Get the domain to access delivery fee and tip
+            let domain = Domains::<Test>::get(domain_id).unwrap();
+            let owner_tip = *domain.delivery.owner_tip();
+
+            // Verify delivery owner's final balance
+            let final_balance = Balances::free_balance(USER_DELIVERY_OWNER);
+            assert_eq!(
+                final_balance,
+                initial_balance + owner_tip,
+                "Delivery owner should only receive their tip"
+            );
         })
     }
 
