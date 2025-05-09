@@ -21,19 +21,15 @@ use super::{
     AccountId, AllPalletsWithSystem, Balances, Dmp, ParaId, Runtime, RuntimeCall, RuntimeEvent,
     RuntimeOrigin, TransactionByteFee, XcmPallet,
 };
-use crate::parachains::parachains_origin;
 use frame_support::{
     parameter_types,
     traits::{Contains, Equals, Everything, Nothing},
 };
 use frame_system::EnsureRoot;
 use pallet_xcm::XcmPassthrough;
-use polkadot_runtime_common::{
-    xcm_sender::{ChildParachainRouter, ExponentialPrice},
-    ToAuthor,
-};
+use polkadot_runtime_common::xcm_sender::{ChildParachainRouter, ExponentialPrice};
 
-use crate::currency::CENTS;
+use crate::{currency::CENTS, parachains::parachains_origin, payout::DealWithFees};
 use sp_core::ConstU32;
 use xcm::latest::prelude::*;
 use xcm_builder::{
@@ -149,7 +145,7 @@ parameter_types! {
     pub ZKVEvmParaLocation: Location = Parachain(ZKV_EVM_PARA_ID).into_location();
     pub TVFYAssetForTest: (AssetFilter, Location) = (TVFYAsset::get(), TestParaLocation::get());
     pub TVFYAssetForZKVEvm: (AssetFilter, Location) = (TVFYAsset::get(), ZKVEvmParaLocation::get());
-    pub const MaxAssetsIntoHolding: u32 = 64;
+    pub const MaxAssetsIntoHolding: u32 = 1;
 }
 
 /// ZKV Relay recognizes/respects Test parachain as teleporter for VFY.
@@ -210,11 +206,11 @@ impl xcm_executor::Config for XcmConfig {
     type Weigher = WeightInfoBounds<XcmZKVWeight<RuntimeCall>, RuntimeCall, MaxInstructions>;
     // The weight trader piggybacks on the existing transaction-fee conversion logic.
     type Trader = UsingComponents<
-        crate::IdentityFee<crate::Balance>,
+        <Runtime as pallet_transaction_payment::Config>::WeightToFee,
         TokenLocation,
         AccountId,
         Balances,
-        ToAuthor<Runtime>,
+        DealWithFees<Runtime>,
     >;
     type ResponseHandler = XcmPallet;
     type AssetTrap = XcmPallet;
