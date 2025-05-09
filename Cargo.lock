@@ -3825,7 +3825,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "18e4fdb82bd54a12e42fb58a800dcae6b9e13982238ce2296dc3570b92148e1f"
 dependencies = [
  "data-encoding",
-    "syn 2.0.100",
+ "syn 2.0.100",
 ]
 
 [[package]]
@@ -4374,7 +4374,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "33d852cb9b869c2a9b3df2f71a3074817f01e1844f839a144f5fcef059a4eb5d"
 dependencies = [
  "libc",
-    "windows-sys 0.52.0",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -6377,7 +6377,7 @@ checksum = "e04d7f318608d35d4b61ddd75cbdaee86b023ebe2bd5a66ee0915f0bf93095a9"
 dependencies = [
  "hermit-abi 0.5.0",
  "libc",
-    "windows-sys 0.52.0",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -6826,7 +6826,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc2f4eb4bc735547cfed7c0a4922cbd04a4655978c09b54f1f7b228750664c34"
 dependencies = [
  "cfg-if",
-    "windows-targets 0.52.6",
+ "windows-targets 0.52.6",
 ]
 
 [[package]]
@@ -13903,7 +13903,7 @@ dependencies = [
  "once_cell",
  "socket2 0.5.8",
  "tracing",
-    "windows-sys 0.52.0",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -14803,7 +14803,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys 0.4.15",
-    "windows-sys 0.52.0",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -14816,7 +14816,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys 0.9.2",
-    "windows-sys 0.52.0",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -18954,7 +18954,7 @@ dependencies = [
  "getrandom 0.3.1",
  "once_cell",
  "rustix 1.0.2",
-    "windows-sys 0.52.0",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -20771,7 +20771,7 @@ version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf221c93e13a30d793f7645a0e7762c55d169dbb0a49671918a2319d289b10bb"
 dependencies = [
-    "windows-sys 0.52.0",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
