@@ -504,7 +504,7 @@ mod aggregate {
 
             assert_new_receipt(domain_id, aggregation_id, Some(aggregation));
             assert_eq!(hyperbridge_destination(), destination);
-            assert_eq!(USER_1, owner_account);
+            assert_eq!(USER_DELIVERY_OWNER, owner_account);
         })
     }
 
@@ -525,7 +525,7 @@ mod aggregate {
             } = MockDispatchAggregation::pop().expect("No call received");
 
             assert_eq!(none_delivering().destination, destination);
-            assert_eq!(USER_1, owner_account);
+            assert_eq!(USER_DELIVERY_OWNER, owner_account);
         })
     }
 
@@ -934,9 +934,10 @@ mod aggregate {
             }
 
             let expected_weight = <Test as Config>::WeightInfo::aggregate(proofs)
-                + <<Test as Config>::DispatchAggregation as DispatchAggregation<Balance, AccountId>>::dispatch_weight(
-                    &destination,
-                );
+                + <<Test as Config>::DispatchAggregation as DispatchAggregation<
+                    Balance,
+                    AccountId,
+                >>::dispatch_weight(&destination);
 
             assert_eq!(
                 expected_weight,
