@@ -183,7 +183,7 @@ pub struct MockDispatchAggregation {
     pub aggregation: H256,
     pub destination: Destination,
     pub fee: u128,
-    pub owner_account: AccountId,
+    pub delivery_owner: AccountId,
 }
 
 impl MockDispatchAggregation {
@@ -236,7 +236,7 @@ impl DispatchAggregation<Balance, AccountId> for MockDispatchAggregation {
         aggregation: H256,
         destination: Destination,
         fee: Balance,
-        owner_account: AccountId,
+        delivery_owner: AccountId,
     ) -> DispatchResult {
         MockDispatchAggregation {
             domain_id,
@@ -244,7 +244,7 @@ impl DispatchAggregation<Balance, AccountId> for MockDispatchAggregation {
             aggregation,
             destination,
             fee,
-            owner_account,
+            delivery_owner,
         }
         .push();
         MockDispatchAggregation::return_value()

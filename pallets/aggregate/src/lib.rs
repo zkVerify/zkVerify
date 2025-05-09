@@ -683,7 +683,7 @@ pub mod pallet {
             aggregation_id: u64,
         ) -> DispatchResultWithPostInfo {
             let aggregator = User::<T::AccountId>::from_origin::<T>(origin)?;
-            let (root, size, destination, owner_account, delivery_fee) =
+            let (root, size, destination, delivery_owner, delivery_fee) =
                 Domains::<T>::try_mutate(domain_id, |domain| {
                     let domain = domain.as_mut().ok_or_else(|| {
                         dispatch_post_error(
@@ -752,7 +752,7 @@ pub mod pallet {
                 root,
                 destination,
                 delivery_fee,
-                owner_account,
+                delivery_owner,
             )?;
 
             Ok(aggregator.post_info((T::WeightInfo::aggregate(size) + dispatch_weight).into()))

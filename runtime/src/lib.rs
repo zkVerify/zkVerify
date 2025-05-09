@@ -615,13 +615,13 @@ impl DispatchAggregation<Balance, AccountId> for Runtime {
         aggregation: H256,
         destination_params: Destination,
         fee: Balance,
-        owner_account: AccountId,
+        delivery_owner: AccountId,
     ) -> DispatchResult {
         match destination_params {
             Destination::None => Ok(()),
             Destination::Hyperbridge(params) => {
                 pallet_hyperbridge_aggregations::Pallet::<Runtime>::dispatch_aggregation(
-                    owner_account,
+                    delivery_owner,
                     Params {
                         domain_id,
                         aggregation_id,

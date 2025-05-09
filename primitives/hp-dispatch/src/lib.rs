@@ -34,7 +34,7 @@ pub trait DispatchAggregation<Balance, AccountId> {
         aggregation: H256,
         destination: Destination,
         fee: Balance,
-        domain_owner: AccountId,
+        delivery_owner: AccountId,
     ) -> DispatchResult;
 
     /// Maximum weight for this dispatch: should be the maximum weight for the dispatch
@@ -53,7 +53,7 @@ impl<Balance, AccountId> DispatchAggregation<Balance, AccountId> for () {
         _aggregation: H256,
         _destination: Destination,
         _fee: Balance,
-        _domain_owner: AccountId,
+        _delivery_owner: AccountId,
     ) -> DispatchResult {
         Ok(())
     }

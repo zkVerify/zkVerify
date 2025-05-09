@@ -498,13 +498,13 @@ mod aggregate {
                 aggregation_id,
                 aggregation,
                 destination,
-                owner_account,
+                delivery_owner,
                 ..
             } = MockDispatchAggregation::pop().expect("No call received");
 
             assert_new_receipt(domain_id, aggregation_id, Some(aggregation));
             assert_eq!(hyperbridge_destination(), destination);
-            assert_eq!(USER_DELIVERY_OWNER, owner_account);
+            assert_eq!(USER_DELIVERY_OWNER, delivery_owner);
         })
     }
 
@@ -520,12 +520,12 @@ mod aggregate {
                 aggregation_id: _,
                 aggregation: _,
                 destination,
-                owner_account,
+                delivery_owner,
                 ..
             } = MockDispatchAggregation::pop().expect("No call received");
 
             assert_eq!(none_delivering().destination, destination);
-            assert_eq!(USER_DELIVERY_OWNER, owner_account);
+            assert_eq!(USER_DELIVERY_OWNER, delivery_owner);
         })
     }
 
