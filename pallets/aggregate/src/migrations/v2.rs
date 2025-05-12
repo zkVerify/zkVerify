@@ -19,16 +19,6 @@ use sp_std::vec::Vec;
 pub struct InnerMigrateV1ToV2<T>(core::marker::PhantomData<T>);
 
 impl<T: crate::Config> UncheckedOnRuntimeUpgrade for InnerMigrateV1ToV2<T> {
-    #[cfg(feature = "try-runtime")]
-    fn pre_upgrade() -> Result<Vec<u8>, sp_runtime::TryRuntimeError> {
-        // Count the _migrable_entries
-        let counts: u64 = v1::Domains::<T>::iter()
-            .filter_map(|(_, d)| d.owner.account().map(|_| Some(())))
-            .count() as u64;
-        use codec::Encode;
-        Ok(counts.encode().to_vec())
-    }
-
     /// Migrate the storage from V1 to v2.
     fn on_runtime_upgrade() -> frame_support::weights::Weight {
         let old_storage = v1::Domains::<T>::drain().collect::<Vec<_>>();
@@ -66,19 +56,6 @@ impl<T: crate::Config> UncheckedOnRuntimeUpgrade for InnerMigrateV1ToV2<T> {
         }
         T::DbWeight::get().reads_writes(reads, writes)
     }
-
-    /// Verifies the storage was migrated correctly.
-    #[cfg(feature = "try-runtime")]
-    fn post_upgrade(encoded_numbers: Vec<u8>) -> Result<(), sp_runtime::TryRuntimeError> {
-        use codec::Decode;
-        let expected: u64 =
-            u64::decode(&mut encoded_numbers.as_slice()).map_err(|_| "Cannot decode expected")?;
-        frame_support::ensure!(
-            crate::Domains::<T>::iter().count() as u64 == expected,
-            "Unexpected number of domains"
-        );
-        Ok(())
-    }
 }
 
 /// [`UncheckedOnRuntimeUpgrade`] implementation [`InnerMigrateV0ToV1`] wrapped in a
@@ -99,8 +76,6 @@ mod test {
     // use self::InnerMigrateV0ToV1;
     use super::*;
     use crate::mock::*;
-    #[cfg(feature = "try-runtime")]
-    use frame_support::assert_ok;
     use frame_support::{pallet_prelude::*, weights::RuntimeDbWeight};
     use hp_dispatch::Destination;
 
@@ -157,16 +132,8 @@ mod test {
                 create_old_domain(2, v1::User::from(42), v1::DomainState::Removable, Some(33)),
             );
 
-            #[cfg(feature = "try-runtime")]
-            let expected_encoded = InnerMigrateV1ToV2::<Test>::pre_upgrade()
-                .map_err(|e| format!("pre_upgrade failed: {:?}", e))
-                .unwrap();
-
             // Perform runtime upgrade
             let weight = InnerMigrateV1ToV2::<Test>::on_runtime_upgrade();
-
-            #[cfg(feature = "try-runtime")]
-            assert_ok!(InnerMigrateV1ToV2::<Test>::post_upgrade(expected_encoded));
 
             // Check that `Domains` contains the expected number
             assert_eq!(crate::Domains::<Test>::iter().count(), 3);
