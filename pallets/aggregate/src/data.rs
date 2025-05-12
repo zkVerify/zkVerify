@@ -215,9 +215,7 @@ pub struct Delivery<B: sp_std::fmt::Debug + sp_std::cmp::PartialEq> {
     pub owner_tip: B,
 }
 
-impl<B: sp_std::fmt::Debug + sp_std::cmp::PartialEq + Clone + sp_std::ops::Add<Output = B>>
-    Delivery<B>
-{
+impl<B: sp_std::fmt::Debug + sp_std::cmp::PartialEq> Delivery<B> {
     pub fn new(destination: Destination, fee: B, owner_tip: B) -> Self {
         Self {
             destination,
@@ -227,7 +225,10 @@ impl<B: sp_std::fmt::Debug + sp_std::cmp::PartialEq + Clone + sp_std::ops::Add<O
     }
 
     /// Get the total delivery fee (delivery fee + owner tip)
-    pub fn total_fee(&self) -> B {
+    pub fn total_fee(&self) -> B
+    where
+        B: sp_std::ops::Add<Output = B> + sp_std::clone::Clone,
+    {
         self.fee.clone() + self.owner_tip.clone()
     }
 }
@@ -241,9 +242,7 @@ pub struct DeliveryParams<A, B: sp_std::fmt::Debug + sp_std::cmp::PartialEq> {
     data: Delivery<B>,
 }
 
-impl<A, B: sp_std::fmt::Debug + sp_std::cmp::PartialEq + Clone + sp_std::ops::Add<Output = B>>
-    DeliveryParams<A, B>
-{
+impl<A, B: sp_std::fmt::Debug + sp_std::cmp::PartialEq> DeliveryParams<A, B> {
     pub fn new(owner: A, data: Delivery<B>) -> Self {
         Self { owner, data }
     }

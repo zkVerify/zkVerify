@@ -35,15 +35,7 @@ impl<T: crate::Config> UncheckedOnRuntimeUpgrade for InnerMigrateV1ToV2<T> {
         let (reads, mut writes) = (old_storage.len() as u64, old_storage.len() as u64);
         let converted = old_storage
             .into_iter()
-            .filter_map(|(domain_id, domain)| {
-                // Only the domain with a delivery owner can be migrated
-                domain
-                    .owner
-                    .account()
-                    .cloned()
-                    .map(|owner_id| (domain_id, domain, owner_id))
-            })
-            .map(|(domain_id, domain, owner_id)| {
+            .map(|(domain_id, domain)| {
                 (
                     domain_id,
                     crate::Domain::<T>(crate::data::DomainEntry {
@@ -55,12 +47,12 @@ impl<T: crate::Config> UncheckedOnRuntimeUpgrade for InnerMigrateV1ToV2<T> {
                         should_publish: domain.should_publish,
                         publish_queue_size: domain.publish_queue_size,
                         ticket: domain.ticket,
-                        aggregate_rules: crate::data::AggregateSecurityRules::Untrusted,
+                        aggregate_rules: domain.aggregate_rules,
                         delivery: crate::data::DeliveryParams::new(
-                            owner_id,
+                            domain.delivery.owner,
                             crate::data::Delivery::new(
-                                hp_dispatch::Destination::None,
-                                0_u32.into(),
+                                domain.delivery.data.destination,
+                                domain.delivery.data.fee,
                                 0_u32.into(), // 0 as owner tip initially
                             ),
                         ),
@@ -160,11 +152,6 @@ mod test {
                 42,
                 create_old_domain(42, v1::User::from(321), v1::DomainState::Hold, Some(123)),
             );
-            // This one is create by manager: could not be migrated
-            v1::Domains::<Test>::insert(
-                1,
-                create_old_domain(1, v1::User::Manager, v1::DomainState::Removable, None),
-            );
             v1::Domains::<Test>::insert(
                 2,
                 create_old_domain(2, v1::User::from(42), v1::DomainState::Removable, Some(33)),
@@ -184,30 +171,41 @@ mod test {
             // Check that `Domains` contains the expected number
             assert_eq!(crate::Domains::<Test>::iter().count(), 3);
 
-            assert!(
-                crate::Domains::<Test>::get(1).is_none(),
-                "Domain 1 should not exist because created by the manager"
-            );
-
             let domain_data = |id| {
                 let crate::Domain::<Test>(crate::data::DomainEntry {
                     owner,
                     state,
                     ticket,
+                    delivery,
                     ..
                 }) = crate::Domains::<Test>::take(id).unwrap();
-                (owner, state, ticket.unwrap().who)
+                (
+                    owner,
+                    state,
+                    ticket.unwrap().who,
+                    *delivery.fee(),
+                    *delivery.owner_tip(),
+                )
             };
             use crate::data::{DomainState, User};
-            assert_eq!(domain_data(23), (User::from(123), DomainState::Ready, 321));
-            assert_eq!(domain_data(42), (User::from(321), DomainState::Hold, 123));
-            assert_eq!(domain_data(2), (User::from(42), DomainState::Removable, 33));
+            assert_eq!(
+                domain_data(23),
+                (User::from(123), DomainState::Ready, 321, 100, 0)
+            );
+            assert_eq!(
+                domain_data(42),
+                (User::from(321), DomainState::Hold, 123, 100, 0)
+            );
+            assert_eq!(
+                domain_data(2),
+                (User::from(42), DomainState::Removable, 33, 100, 0)
+            );
 
             // Check that weight are as expected
             assert_eq!(
                 weight,
                 <<Test as frame_system::Config>::DbWeight as Get<RuntimeDbWeight>>::get()
-                    .reads_writes(4, 7)
+                    .reads_writes(3, 6)
             );
         })
     }
