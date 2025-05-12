@@ -113,8 +113,6 @@ type LocalOriginConverter = (
 );
 
 parameter_types! {
-    /// The amount of weight an XCM operation takes. This is a safe overestimate.
-    pub const BaseXcmWeight: Weight = Weight::from_parts(1_000_000_000, 1024);
     /// Maximum number of instructions in a single XCM fragment. A sanity check against weight
     /// calculations getting too crazy.
     pub const MaxInstructions: u32 = 100;
@@ -140,18 +138,18 @@ pub const ZKV_EVM_PARA_ID: u32 = 1;
 pub const TEST_PARA_ID: u32 = 1599;
 
 parameter_types! {
-    pub const TVFYAsset: AssetFilter = Wild(AllOf { fun: WildFungible, id: AssetId(TokenLocation::get()) });
+    pub const VFY: AssetFilter = Wild(AllOf { fun: WildFungible, id: AssetId(TokenLocation::get()) });
     pub TestParaLocation: Location = Parachain(TEST_PARA_ID).into_location();
     pub ZKVEvmParaLocation: Location = Parachain(ZKV_EVM_PARA_ID).into_location();
-    pub TVFYAssetForTest: (AssetFilter, Location) = (TVFYAsset::get(), TestParaLocation::get());
-    pub TVFYAssetForZKVEvm: (AssetFilter, Location) = (TVFYAsset::get(), ZKVEvmParaLocation::get());
+    pub VFYForTest: (AssetFilter, Location) = (VFY::get(), TestParaLocation::get());
+    pub VFYForZKVEvm: (AssetFilter, Location) = (VFY::get(), ZKVEvmParaLocation::get());
     pub const MaxAssetsIntoHolding: u32 = 1;
 }
 
 /// ZKV Relay recognizes/respects Test parachain as teleporter for VFY.
 pub type TrustedTeleporters = (
-    xcm_builder::Case<TVFYAssetForTest>,
-    xcm_builder::Case<TVFYAssetForZKVEvm>,
+    xcm_builder::Case<VFYForTest>,
+    xcm_builder::Case<VFYForZKVEvm>,
 );
 
 pub struct OnlyParachains;
@@ -234,19 +232,6 @@ impl xcm_executor::Config for XcmConfig {
     type HrmpNewChannelOpenRequestHandler = ();
     type HrmpChannelAcceptedHandler = ();
     type HrmpChannelClosingHandler = ();
-}
-
-const FELLOWSHIP_ADMIN_INDEX: u32 = 1; // to be moved to some constants mod
-
-parameter_types! {
-    // `GeneralAdmin` pluralistic body.
-    pub const GeneralAdminBodyId: BodyId = BodyId::Administration;
-    // StakingAdmin pluralistic body.
-    pub const StakingAdminBodyId: BodyId = BodyId::Defense;
-    // FellowshipAdmin pluralistic body.
-    pub const FellowshipAdminBodyId: BodyId = BodyId::Index(FELLOWSHIP_ADMIN_INDEX);
-    // `Treasurer` pluralistic body.
-    pub const TreasurerBodyId: BodyId = BodyId::Treasury;
 }
 
 /// Type to convert an `Origin` type value into a `Location` value which represents an interior
