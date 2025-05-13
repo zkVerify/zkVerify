@@ -21,19 +21,15 @@ use super::{
     AccountId, AllPalletsWithSystem, Balances, Dmp, ParaId, Runtime, RuntimeCall, RuntimeEvent,
     RuntimeOrigin, TransactionByteFee, XcmPallet,
 };
-use crate::parachains::parachains_origin;
 use frame_support::{
     parameter_types,
     traits::{Contains, Equals, Everything, Nothing},
 };
 use frame_system::EnsureRoot;
 use pallet_xcm::XcmPassthrough;
-use polkadot_runtime_common::{
-    xcm_sender::{ChildParachainRouter, ExponentialPrice},
-    ToAuthor,
-};
+use polkadot_runtime_common::xcm_sender::{ChildParachainRouter, ExponentialPrice};
 
-use crate::currency::CENTS;
+use crate::{currency::CENTS, parachains::parachains_origin, payout::DealWithFees};
 use sp_core::ConstU32;
 use xcm::latest::prelude::*;
 use xcm_builder::{
@@ -50,7 +46,7 @@ use crate::weights::pallet_xcm::ZKVWeight as XcmPalletZKVWeight;
 use crate::weights::xcm::ZKVWeight as XcmZKVWeight;
 
 const ZKV_GENESIS_HASH: [u8; 32] =
-    hex_literal::hex!("e2a4f521dbcba897cd2359adc5e7725f409b17f9ae129737904e5e8939c22a05");
+    hex_literal::hex!("ff7fe5a610f15fe7a0c52f94f86313fb7db7d3786e7f8acf2b66c11d5be7c242");
 
 parameter_types! {
     pub const RootLocation: Location = Here.into_location();
@@ -117,8 +113,6 @@ type LocalOriginConverter = (
 );
 
 parameter_types! {
-    /// The amount of weight an XCM operation takes. This is a safe overestimate.
-    pub const BaseXcmWeight: Weight = Weight::from_parts(1_000_000_000, 1024);
     /// Maximum number of instructions in a single XCM fragment. A sanity check against weight
     /// calculations getting too crazy.
     pub const MaxInstructions: u32 = 100;
@@ -138,16 +132,25 @@ pub type XcmRouter = WithUniqueTopic<(
     ChildParachainRouter<Runtime, XcmPallet, PriceForChildParachainDelivery>,
 )>;
 
+// zkVerify-EVM-Parachain
+pub const ZKV_EVM_PARA_ID: u32 = 1;
+// paratest, included in this repository
 pub const TEST_PARA_ID: u32 = 1599;
+
 parameter_types! {
-    pub const Acme: AssetFilter = Wild(AllOf { fun: WildFungible, id: AssetId(TokenLocation::get()) });
+    pub const VFY: AssetFilter = Wild(AllOf { fun: WildFungible, id: AssetId(TokenLocation::get()) });
     pub TestParaLocation: Location = Parachain(TEST_PARA_ID).into_location();
-    pub AcmeForTest: (AssetFilter, Location) = (Acme::get(), TestParaLocation::get());
-    pub const MaxAssetsIntoHolding: u32 = 64;
+    pub ZKVEvmParaLocation: Location = Parachain(ZKV_EVM_PARA_ID).into_location();
+    pub VFYForTest: (AssetFilter, Location) = (VFY::get(), TestParaLocation::get());
+    pub VFYForZKVEvm: (AssetFilter, Location) = (VFY::get(), ZKVEvmParaLocation::get());
+    pub const MaxAssetsIntoHolding: u32 = 1;
 }
 
 /// ZKV Relay recognizes/respects Test parachain as teleporter for VFY.
-pub type TrustedTeleporters = xcm_builder::Case<AcmeForTest>;
+pub type TrustedTeleporters = (
+    xcm_builder::Case<VFYForTest>,
+    xcm_builder::Case<VFYForZKVEvm>,
+);
 
 pub struct OnlyParachains;
 impl Contains<Location> for OnlyParachains {
@@ -201,11 +204,11 @@ impl xcm_executor::Config for XcmConfig {
     type Weigher = WeightInfoBounds<XcmZKVWeight<RuntimeCall>, RuntimeCall, MaxInstructions>;
     // The weight trader piggybacks on the existing transaction-fee conversion logic.
     type Trader = UsingComponents<
-        crate::IdentityFee<crate::Balance>,
+        <Runtime as pallet_transaction_payment::Config>::WeightToFee,
         TokenLocation,
         AccountId,
         Balances,
-        ToAuthor<Runtime>,
+        DealWithFees<Runtime>,
     >;
     type ResponseHandler = XcmPallet;
     type AssetTrap = XcmPallet;
@@ -229,19 +232,6 @@ impl xcm_executor::Config for XcmConfig {
     type HrmpNewChannelOpenRequestHandler = ();
     type HrmpChannelAcceptedHandler = ();
     type HrmpChannelClosingHandler = ();
-}
-
-const FELLOWSHIP_ADMIN_INDEX: u32 = 1; // to be moved to some constants mod
-
-parameter_types! {
-    // `GeneralAdmin` pluralistic body.
-    pub const GeneralAdminBodyId: BodyId = BodyId::Administration;
-    // StakingAdmin pluralistic body.
-    pub const StakingAdminBodyId: BodyId = BodyId::Defense;
-    // FellowshipAdmin pluralistic body.
-    pub const FellowshipAdminBodyId: BodyId = BodyId::Index(FELLOWSHIP_ADMIN_INDEX);
-    // `Treasurer` pluralistic body.
-    pub const TreasurerBodyId: BodyId = BodyId::Treasury;
 }
 
 /// Type to convert an `Origin` type value into a `Location` value which represents an interior
