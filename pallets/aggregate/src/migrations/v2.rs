@@ -6,16 +6,12 @@ use frame_support::{migrations::VersionedMigration, traits::UncheckedOnRuntimeUp
 use sp_core::Get;
 use sp_std::vec::Vec;
 
-/// Implements [`UncheckedOnRuntimeUpgrade`], migrating the state of this pallet from V0 to V1.
+/// Implements [`UncheckedOnRuntimeUpgrade`], migrating the state of this pallet from V1 to V2.
 ///
-/// In V0 of the template, the value of the [`crate::Domains`] `StorageMap` is the old `Domain`
-/// without delivery configurations and aggregation rules.
+/// In V1 of the template, the value of the [`crate::Domains`] `StorageMap` is the old `Domain`
+/// without owner tip.
 ///
-/// We migrate every domain by add a [`crate::data::AggregateSecurityRules::Untrusted`] rules
-/// and a [`crate::data::DeliveryParams`] with the same domain owner, none destination and zero
-/// price.
-///
-/// If we cannot find any delivery owner, we'll remove domain from the storage.
+/// We migrate every domain by adding a zero owner tip.
 pub struct InnerMigrateV1ToV2<T>(core::marker::PhantomData<T>);
 
 impl<T: crate::Config> UncheckedOnRuntimeUpgrade for InnerMigrateV1ToV2<T> {
