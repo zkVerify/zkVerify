@@ -60,7 +60,7 @@ pub trait WeightInfo {
     fn register_domain() -> Weight;
     fn hold_domain() -> Weight;
     fn unregister_domain() -> Weight;
-    fn set_delivery_price() -> Weight;
+    fn set_total_delivery_fee() -> Weight;
 }
 
 // For backwards compatibility and tests.
@@ -158,7 +158,7 @@ impl WeightInfo for () {
     }
     /// Storage: `Aggregate::Domains` (r:1 w:1)
     /// Proof: `Aggregate::Domains` (`max_values`: None, `max_size`: Some(209429), added: 211904, mode: `MaxEncodedLen`)
-    fn set_delivery_price() -> Weight {
+    fn set_total_delivery_fee() -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `268`
         //  Estimated: `212894`

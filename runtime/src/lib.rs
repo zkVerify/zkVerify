@@ -608,18 +608,20 @@ where
     }
 }
 
-impl DispatchAggregation for Runtime {
+impl DispatchAggregation<Balance, AccountId> for Runtime {
     fn dispatch_aggregation(
         domain_id: u32,
         aggregation_id: u64,
         aggregation: H256,
         destination_params: Destination,
+        fee: Balance,
+        delivery_owner: AccountId,
     ) -> DispatchResult {
         match destination_params {
             Destination::None => Ok(()),
             Destination::Hyperbridge(params) => {
                 pallet_hyperbridge_aggregations::Pallet::<Runtime>::dispatch_aggregation(
-                    pallet_hyperbridge_aggregations::PALLET_ID.into_account_truncating(),
+                    delivery_owner,
                     Params {
                         domain_id,
                         aggregation_id,
@@ -627,7 +629,7 @@ impl DispatchAggregation for Runtime {
                         module: params.destination_module,
                         destination: StateMachine::from(params.destination_chain),
                         timeout: params.timeout,
-                        fee: Balance::zero(),
+                        fee,
                     },
                 )
             }
@@ -1331,7 +1333,6 @@ use pallet_hyperbridge_aggregations::{Params, ZKV_MODULE_ID};
 pub use polkadot_runtime_parachains::runtime_api_impl::{
     v10 as parachains_runtime_api_impl, vstaging as parachains_staging_runtime_api_impl,
 };
-use sp_runtime::traits::Zero;
 
 // Used for testing purposes only.
 sp_api::decl_runtime_apis! {

@@ -18,4 +18,4 @@
 #[allow(unused_imports)]
 use super::*;
 
-pub type Unreleased = ();
+pub type Unreleased = (pallet_aggregate::migrations::v2::MigrateV1ToV2<Runtime>,);

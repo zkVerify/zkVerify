@@ -40,7 +40,7 @@ pub mod utils {
     }
 
     pub(crate) fn delivery<T: Config>(destination: Destination) -> Delivery<crate::BalanceOf<T>> {
-        Delivery::new(destination, 1_000_000_000_u32.into())
+        Delivery::new(destination, 1_000_000_000_u32.into(), 1_000_000_u32.into())
     }
 
     /// Insert a domain into the system.
@@ -237,18 +237,23 @@ mod benchmarks {
     }
 
     #[benchmark]
-    fn set_delivery_price() {
+    fn set_total_delivery_fee() {
         let caller: T::AccountId = funded_account::<T>();
         let domain_id = 1;
         insert_domain::<T>(domain_id, caller.clone(), None);
 
         #[extrinsic_call]
-        set_delivery_price(RawOrigin::Signed(caller), domain_id, 12345_u32.into());
+        set_total_delivery_fee(
+            RawOrigin::Signed(caller),
+            domain_id,
+            12345_u32.into(),
+            123_u32.into(),
+        );
 
         // Sanity check: we consumed the aggregation
         let domain = Domains::<T>::get(domain_id).unwrap();
 
-        assert_eq!(domain.delivery.price(), &12345_u32.into());
+        assert_eq!(domain.delivery.fee(), &12345_u32.into());
     }
 
     use crate::data::AggregateSecurityRules;

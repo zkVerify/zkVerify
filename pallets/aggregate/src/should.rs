@@ -334,19 +334,22 @@ fn reserve_at_least_the_publish_proof_price_fraction_when_on_proof_verified() {
     })
 }
 
-const DELIVERY_PRICE: u128 = 64 * 10000;
-const EXPECTED_DELIVERY_HOLD_FUNDS: u128 = DELIVERY_PRICE / DOMAIN_SIZE as u128;
+const DELIVERY_FEE: u128 = 64 * 10000;
+const OWNER_TIP: u128 = 100;
 
-fn set_delivery_price(domain_id: u32, price: Balance) {
+const EXPECTED_DELIVERY_HOLD_FUNDS: u128 = (DELIVERY_FEE + OWNER_TIP) / DOMAIN_SIZE as u128;
+
+fn set_total_delivery_fee(domain_id: u32, fee: Balance, owner_tip: Balance) {
     Domains::<Test>::mutate_extant(domain_id, |d| {
-        d.delivery.set_price(price);
+        d.delivery.set_fee(fee);
+        d.delivery.set_owner_tip(owner_tip);
     });
 }
 
 #[test]
 fn reserve_the_delivery_price_fraction_when_on_proof_verified() {
     test().execute_with(|| {
-        set_delivery_price(DOMAIN_ID, DELIVERY_PRICE);
+        set_total_delivery_fee(DOMAIN_ID, DELIVERY_FEE, OWNER_TIP);
 
         let statement = H256::from_low_u64_be(123);
         let account = USER_1;
@@ -380,7 +383,7 @@ fn not_fail_but_raise_just_an_event_if_a_user_doesn_t_have_enough_found_to_reser
 ) {
     test().execute_with(|| {
         let statement = H256::from_low_u64_be(123);
-        set_delivery_price(DOMAIN_ID, DELIVERY_PRICE);
+        set_total_delivery_fee(DOMAIN_ID, DELIVERY_FEE, OWNER_TIP);
 
         Aggregate::on_proof_verified(Some(NO_DELIVERY_FUND_USER), DOMAIN, statement);
 
@@ -488,6 +491,9 @@ mod aggregate {
         test().execute_with(|| {
             add_aggregations(Some(USER_2), DOMAIN, DOMAIN_SIZE);
 
+            // Record initial balance of delivery owner
+            let initial_balance = Balances::free_balance(USER_DELIVERY_OWNER);
+
             Aggregate::aggregate(Origin::Signed(USER_1).into(), DOMAIN_ID, 1).unwrap();
 
             let MockDispatchAggregation {
@@ -495,10 +501,25 @@ mod aggregate {
                 aggregation_id,
                 aggregation,
                 destination,
+                delivery_owner,
+                ..
             } = MockDispatchAggregation::pop().expect("No call received");
 
             assert_new_receipt(domain_id, aggregation_id, Some(aggregation));
             assert_eq!(hyperbridge_destination(), destination);
+            assert_eq!(USER_DELIVERY_OWNER, delivery_owner);
+
+            // Get the domain to access delivery fee and tip
+            let domain = Domains::<Test>::get(domain_id).unwrap();
+            let owner_tip = *domain.delivery.owner_tip();
+
+            // Verify delivery owner's final balance
+            let final_balance = Balances::free_balance(USER_DELIVERY_OWNER);
+            assert_eq!(
+                final_balance,
+                initial_balance + owner_tip,
+                "Delivery owner should only receive their tip"
+            );
         })
     }
 
@@ -514,9 +535,12 @@ mod aggregate {
                 aggregation_id: _,
                 aggregation: _,
                 destination,
+                delivery_owner,
+                ..
             } = MockDispatchAggregation::pop().expect("No call received");
 
             assert_eq!(none_delivering().destination, destination);
+            assert_eq!(USER_DELIVERY_OWNER, delivery_owner);
         })
     }
 
@@ -613,7 +637,7 @@ mod aggregate {
         #[values(PUBLISHER_USER, ROOT_USER)] executor: AccountId,
     ) {
         test().execute_with(|| {
-            set_delivery_price(DOMAIN_ID, DELIVERY_PRICE);
+            set_total_delivery_fee(DOMAIN_ID, DELIVERY_FEE, OWNER_TIP);
             let accounts = [USER_1, USER_2];
             let elements = (0..DOMAIN_SIZE as u64)
                 .map(|i| {
@@ -627,7 +651,9 @@ mod aggregate {
                 Aggregate::on_proof_verified(Some(account), DOMAIN, statement);
             }
 
-            let expected_balance = Balances::free_balance(USER_DELIVERY_OWNER) + DELIVERY_PRICE;
+            let delivery_per_statement = (DELIVERY_FEE + OWNER_TIP) / DOMAIN_SIZE as u128;
+            let total_collected = delivery_per_statement * DOMAIN_SIZE as u128;
+            let expected_balance = Balances::free_balance(USER_DELIVERY_OWNER) + total_collected;
 
             assert_ok!(Aggregate::aggregate(
                 Origin::Signed(executor).into(),
@@ -647,7 +673,7 @@ mod aggregate {
         #[values(PUBLISHER_USER, ROOT_USER)] executor: AccountId,
     ) {
         test().execute_with(|| {
-            set_delivery_price(DOMAIN_ID, 2 * DELIVERY_PRICE);
+            set_total_delivery_fee(DOMAIN_ID, 2 * DELIVERY_FEE, OWNER_TIP);
             let accounts = [USER_1, USER_2];
             let elements = (0..DOMAIN_SIZE as u64)
                 .map(|i| {
@@ -923,9 +949,10 @@ mod aggregate {
             }
 
             let expected_weight = <Test as Config>::WeightInfo::aggregate(proofs)
-                + <<Test as Config>::DispatchAggregation as DispatchAggregation>::dispatch_weight(
-                    &destination,
-                );
+                + <<Test as Config>::DispatchAggregation as DispatchAggregation<
+                    Balance,
+                    AccountId,
+                >>::dispatch_weight(&destination);
 
             assert_eq!(
                 expected_weight,
@@ -948,7 +975,7 @@ mod register_domain {
                 16,
                 Some(8),
                 AggregateSecurityRules::OnlyOwnerUncompleted,
-                priced_none_delivering(1234),
+                priced_none_delivering(1234, 12),
                 Some(USER_DOMAIN_2)
             ));
             let registered_id = registered_ids()[0];
@@ -965,7 +992,7 @@ mod register_domain {
             assert_eq!(
                 DeliveryParams::<AccountId, Balance>::new(
                     USER_DOMAIN_2,
-                    Delivery::new(none_destination(), 1234)
+                    Delivery::new(none_destination(), 1234, 12)
                 ),
                 domain.delivery
             );
@@ -983,7 +1010,7 @@ mod register_domain {
                 16,
                 Some(8),
                 AggregateSecurityRules::OnlyOwnerUncompleted,
-                priced_none_delivering(1234),
+                priced_none_delivering(1234, 12),
                 None
             ));
             let registered_id = registered_ids()[0];
@@ -1041,7 +1068,7 @@ mod register_domain {
                 values[0].0,
                 values[0].1,
                 AggregateSecurityRules::Untrusted,
-                priced_none_delivering(4321),
+                priced_none_delivering(4321, 43),
                 None
             ));
             assert_ok!(Aggregate::register_domain(
@@ -1049,7 +1076,7 @@ mod register_domain {
                 values[1].0,
                 values[1].1,
                 AggregateSecurityRules::Untrusted,
-                priced_none_delivering(4331),
+                priced_none_delivering(4331, 43),
                 Some(delivery_users[1])
             ));
             assert_ok!(Aggregate::register_domain(
@@ -1057,7 +1084,7 @@ mod register_domain {
                 values[2].0,
                 values[2].1,
                 AggregateSecurityRules::Untrusted,
-                priced_none_delivering(4341),
+                priced_none_delivering(4341, 43),
                 Some(delivery_users[2])
             ));
 
@@ -1078,7 +1105,7 @@ mod register_domain {
                 assert_eq!(aggregation_size, domain.max_aggregation_size);
                 assert_eq!(queue_size, domain.publish_queue_size);
                 assert_eq!(&none_destination(), domain.delivery.destination());
-                assert_eq!(4321 + (pos as u128) * 10, *domain.delivery.price());
+                assert_eq!(4321 + (pos as u128) * 10, *domain.delivery.fee());
                 assert_eq!(delivery_users[pos], domain.delivery.owner);
 
                 assert_eq!(
@@ -1204,8 +1231,8 @@ mod register_domain {
     }
 
     #[rstest]
-    #[case(hyperbridge_destination(), (78809, 1697, 9359, 21033))]
-    #[case(Destination::None, (78776, 1664, 9326, 21000))]
+    #[case(hyperbridge_destination(), (78825, 1713, 9375, 21049))]
+    #[case(Destination::None, (78792, 1680, 9342, 21016))]
     fn not_change_domain_encoded_size(
         #[case] destination: Destination,
         #[case] variables: (usize, usize, usize, usize),
@@ -1225,7 +1252,7 @@ mod register_domain {
         );
 
         // Fixture max
-        assert_eq!(Domain::<Test>::max_encoded_len(), 78809);
+        assert_eq!(Domain::<Test>::max_encoded_len(), 78825);
 
         // Max configurations
         assert_eq!(
@@ -1757,34 +1784,36 @@ mod get_statement_path {
     }
 }
 
-mod set_delivery_price {
+mod set_total_delivery_fee {
     use super::*;
 
     #[rstest]
     #[case::domain_owner(USER_DOMAIN_1)]
     #[case::manager(ROOT_USER)]
     #[case::delivery_owner(USER_DELIVERY_OWNER)]
-    fn should_set_the_correct_price(#[case] issuer: AccountId) {
+    fn should_set_the_correct_total_delivery_fee(#[case] issuer: AccountId) {
         test().execute_with(|| {
-            assert_ok!(Aggregate::set_delivery_price(
+            assert_ok!(Aggregate::set_total_delivery_fee(
                 Origin::Signed(issuer).into(),
                 DOMAIN_ID,
-                123456
+                123456,
+                123
             ));
 
             assert_eq!(
-                Domains::<Test>::get(DOMAIN_ID).unwrap().delivery.price(),
+                Domains::<Test>::get(DOMAIN_ID).unwrap().delivery.fee(),
                 &123456
             );
 
-            assert_ok!(Aggregate::set_delivery_price(
+            assert_ok!(Aggregate::set_total_delivery_fee(
                 Origin::Signed(issuer).into(),
                 DOMAIN_ID,
-                654321
+                654321,
+                654
             ));
 
             assert_eq!(
-                Domains::<Test>::get(DOMAIN_ID).unwrap().delivery.price(),
+                Domains::<Test>::get(DOMAIN_ID).unwrap().delivery.fee(),
                 &654321
             );
         })
@@ -1800,7 +1829,12 @@ mod set_delivery_price {
     ) {
         test().execute_with(|| {
             assert_err!(
-                Aggregate::set_delivery_price(Origin::Signed(issuer).into(), domain_id, 123456),
+                Aggregate::set_total_delivery_fee(
+                    Origin::Signed(issuer).into(),
+                    domain_id,
+                    123456,
+                    123
+                ),
                 error
             );
         })
@@ -1840,7 +1874,7 @@ mod aggregation_id_max {
                 None,
                 DeliveryParams::<AccountId, Balance>::new(
                     USER_DOMAIN_1,
-                    Delivery::new(none_destination(), 1234),
+                    Delivery::new(none_destination(), 1234, 12),
                 ),
             )
             .unwrap();
@@ -1890,7 +1924,7 @@ mod aggregation_id_max {
                 None,
                 DeliveryParams::<AccountId, Balance>::new(
                     USER_DOMAIN_1,
-                    Delivery::new(none_destination(), 1234),
+                    Delivery::new(none_destination(), 1234, 12),
                 ),
             )
             .unwrap();

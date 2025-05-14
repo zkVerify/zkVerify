@@ -61,6 +61,7 @@ impl<T: crate::Config> UncheckedOnRuntimeUpgrade for InnerMigrateV0ToV1<T> {
                             crate::data::Delivery::new(
                                 hp_dispatch::Destination::None,
                                 0_u32.into(),
+                                0_u32.into(),
                             ),
                         ),
                     }),
