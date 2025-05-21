@@ -19,6 +19,7 @@ pub mod disputes;
 pub mod hrmp;
 pub mod inclusion;
 pub mod initializer;
+pub mod ondemand;
 pub mod paras;
 pub mod paras_inherent;
 pub mod registrar;

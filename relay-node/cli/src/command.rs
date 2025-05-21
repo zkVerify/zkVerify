@@ -102,18 +102,6 @@ where
 
     set_default_ss58_version(chain_spec.as_ref());
 
-    let jaeger_agent = if let Some(ref jaeger_agent) = cli.run.jaeger_agent {
-        Some(
-            jaeger_agent
-                .to_socket_addrs()
-                .map_err(Error::AddressResolutionFailure)?
-                .next()
-                .ok_or_else(|| Error::AddressResolutionMissing)?,
-        )
-    } else {
-        None
-    };
-
     let node_version = if cli.run.disable_worker_version_check {
         None
     } else {
@@ -136,7 +124,6 @@ where
             service::NewFullParams {
                 is_parachain_node: service::IsParachainNode::No,
                 force_authoring_backoff: cli.run.force_authoring_backoff,
-                jaeger_agent,
                 telemetry_worker_handle: None,
                 node_version,
                 secure_validator_mode,

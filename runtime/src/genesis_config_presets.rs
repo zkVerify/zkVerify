@@ -635,10 +635,10 @@ pub fn preset_names() -> Vec<PresetId> {
 }
 
 pub fn get_preset(id: &sp_genesis_builder::PresetId) -> Option<sp_std::vec::Vec<u8>> {
-    let cfg = match id.try_into() {
-        Ok("development") => zkv_development_config_genesis(),
-        Ok("local") => zkv_local_config_genesis(),
-        Ok("testnet") => zkv_testnet_config_genesis().unwrap(),
+    let cfg = match id.as_ref() {
+        "development" => zkv_development_config_genesis(),
+        "local" => zkv_local_config_genesis(),
+        "testnet" => zkv_testnet_config_genesis().unwrap(),
         _ => return None,
     };
     Some(

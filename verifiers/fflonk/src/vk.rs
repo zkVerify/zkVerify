@@ -47,9 +47,7 @@ trait IntoBytes {
 
 impl IntoBytes for U256 {
     fn into_bytes(self) -> [u8; 32] {
-        let mut out = [0; 32];
-        self.to_big_endian(&mut out);
-        out
+        self.to_big_endian()
     }
 }
 

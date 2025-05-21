@@ -23,17 +23,17 @@ use frame_support::{
 };
 use frame_system::EnsureRoot;
 use polkadot_primitives::ValidatorId;
-use xcm::opaque::lts::Junction;
+use xcm::latest::Junction;
 
 pub use polkadot_runtime_parachains::{
-    assigner_parachains as parachains_assigner_parachains, configuration,
+    assigner_coretime as parachains_assigner_coretime, configuration,
     configuration::ActiveConfigHrmpChannelSizeAndCapacityRatio,
     disputes,
     disputes::slashing,
-    dmp as parachains_dmp, hrmp, inclusion, initializer, origin as parachains_origin, paras,
-    paras_inherent, reward_points as parachains_reward_points,
+    dmp as parachains_dmp, hrmp, inclusion, initializer, on_demand, origin as parachains_origin,
+    paras, paras_inherent, reward_points as parachains_reward_points,
     runtime_api_impl::{
-        v10 as parachains_runtime_api_impl, vstaging as parachains_staging_runtime_api_impl,
+        v11 as parachains_runtime_api_impl, vstaging as parachains_staging_runtime_api_impl,
     },
     scheduler as parachains_scheduler, session_info as parachains_session_info,
     shared as parachains_shared,
@@ -54,11 +54,28 @@ use inclusion::AggregateMessageOrigin;
 use sp_core::parameter_types;
 use sp_runtime::{FixedU128, Percent};
 
+#[cfg(feature = "fast-runtime")]
+pub const TIMESLICE_PERIOD: u32 = 20;
+#[cfg(not(feature = "fast-runtime"))]
+pub const TIMESLICE_PERIOD: u32 = 80;
+
 parameter_types! {
     pub const OnDemandTrafficDefaultValue: FixedU128 = FixedU128::from_u32(1);
+    // Keep 2 timeslices worth of revenue information.
+    pub const MaxHistoricalRevenue: BlockNumber = 2 * TIMESLICE_PERIOD;
+    pub const OnDemandPalletId: crate::PalletId = crate::PalletId(*b"zk/ondmd");
 }
 
-impl parachains_assigner_parachains::Config for Runtime {}
+impl on_demand::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type Currency = Balances;
+    type TrafficDefaultValue = OnDemandTrafficDefaultValue;
+    type WeightInfo = weights::parachains::ondemand::ZKVWeight<Runtime>;
+    type MaxHistoricalRevenue = MaxHistoricalRevenue;
+    type PalletId = OnDemandPalletId;
+}
+
+impl parachains_assigner_coretime::Config for Runtime {}
 
 impl initializer::Config for Runtime {
     type Randomness = pallet_babe::RandomnessFromOneEpochAgo<Runtime>;
