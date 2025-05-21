@@ -64,6 +64,7 @@ use {
 };
 
 use polkadot_node_subsystem_util::database::Database;
+use polkadot_overseer::SpawnGlue;
 
 #[cfg(feature = "full-node")]
 pub use {
@@ -82,7 +83,7 @@ use prometheus_endpoint::Registry;
 pub use sc_service as service;
 #[cfg(feature = "full-node")]
 use sc_service::KeystoreContainer;
-use sc_service::RpcHandlers;
+use sc_service::{RpcHandlers, SpawnTaskHandle};
 use sc_telemetry::TelemetryWorker;
 #[cfg(feature = "full-node")]
 use sc_telemetry::{Telemetry, TelemetryWorkerHandle};
@@ -420,7 +421,7 @@ fn new_partial<ChainSelection>(
         FullBackend,
         ChainSelection,
         sc_consensus::DefaultImportQueue<Block>,
-        sc_transaction_pool::FullPool<Block, FullClient>,
+        sc_transaction_pool::TransactionPoolHandle<Block, FullClient>,
         (
             impl Fn(rpc::SubscriptionTaskExecutor) -> Result<rpc::RpcExtension, SubstrateServiceError>,
             (
@@ -438,12 +439,15 @@ fn new_partial<ChainSelection>(
 where
     ChainSelection: 'static + SelectChain<Block>,
 {
-    let transaction_pool = sc_transaction_pool::BasicPool::new_full(
-        config.transaction_pool.clone(),
-        config.role.is_authority().into(),
-        config.prometheus_registry(),
-        task_manager.spawn_essential_handle(),
-        client.clone(),
+    let transaction_pool = Arc::from(
+        sc_transaction_pool::Builder::new(
+            task_manager.spawn_essential_handle(),
+            client.clone(),
+            config.role.is_authority().into(),
+        )
+        .with_options(config.transaction_pool.clone())
+        .with_prometheus(config.prometheus_registry())
+        .build(),
     );
 
     let grandpa_hard_forks = Vec::new();
@@ -580,6 +584,8 @@ pub struct NewFullParams<OverseerGenerator: OverseerGen> {
     #[allow(dead_code)]
     pub malus_finality_delay: Option<u32>,
     pub hwbench: Option<sc_sysinfo::HwBench>,
+    /// Enable approval voting processing in parallel.
+    pub enable_approval_voting_parallel: bool,
 }
 
 #[cfg(feature = "full-node")]
@@ -671,6 +677,7 @@ pub fn new_full<
         execute_workers_max_num,
         prepare_workers_soft_max_num,
         prepare_workers_hard_max_num,
+        enable_approval_voting_parallel,
     }: NewFullParams<OverseerGenerator>,
 ) -> Result<NewFull, Error> {
     use polkadot_availability_recovery::FETCH_CHUNKS_THRESHOLD;
@@ -704,6 +711,7 @@ pub fn new_full<
             overseer_handle.clone(),
             metrics,
             Some(basics.task_manager.spawn_handle()),
+            enable_approval_voting_parallel,
         )
     } else {
         SelectRelayChain::new_longest_chain(basics.backend.clone())
@@ -892,6 +900,7 @@ pub fn new_full<
             dispute_coordinator_config,
             chain_selection_config,
             fetch_chunks_threshold,
+            enable_approval_voting_parallel,
         })
     };
 
@@ -926,7 +935,7 @@ pub fn new_full<
                 is_validator: role.is_authority(),
                 enable_http_requests: false,
                 custom_extensions: move |_| vec![],
-            })
+            })?
             .run(client.clone(), task_manager.spawn_handle())
             .boxed(),
         );
@@ -1286,6 +1295,7 @@ pub fn revert_backend(
     backend: Arc<FullBackend>,
     blocks: BlockNumber,
     config: Configuration,
+    task_handle: SpawnTaskHandle,
 ) -> Result<(), Error> {
     let best_number = client.info().best_number;
     let finalized = client.info().finalized_number;
@@ -1306,7 +1316,7 @@ pub fn revert_backend(
     let parachains_db = open_database(&config.database)
         .map_err(|err| sp_blockchain::Error::Backend(err.to_string()))?;
 
-    revert_approval_voting(parachains_db.clone(), hash)?;
+    revert_approval_voting(parachains_db.clone(), hash, task_handle)?;
     revert_chain_selection(parachains_db, hash)?;
     // Revert Substrate consensus related components
     babe::revert(client.clone(), backend, blocks)?;
@@ -1329,7 +1339,11 @@ fn revert_chain_selection(db: Arc<dyn Database>, hash: Hash) -> sp_blockchain::R
         .map_err(|err| sp_blockchain::Error::Backend(err.to_string()))
 }
 
-fn revert_approval_voting(db: Arc<dyn Database>, hash: Hash) -> sp_blockchain::Result<()> {
+fn revert_approval_voting(
+    db: Arc<dyn Database>,
+    hash: Hash,
+    task_handle: SpawnTaskHandle,
+) -> sp_blockchain::Result<()> {
     let config = approval_voting_subsystem::Config {
         col_approval_data: parachains_db::REAL_COLUMNS.col_approval_data,
         slot_duration_millis: Default::default(),
@@ -1341,6 +1355,7 @@ fn revert_approval_voting(db: Arc<dyn Database>, hash: Hash) -> sp_blockchain::R
         Arc::new(sc_keystore::LocalKeystore::in_memory()),
         Box::new(sp_consensus::NoNetwork),
         approval_voting_subsystem::Metrics::default(),
+        Arc::new(SpawnGlue(task_handle)),
     );
 
     approval_voting

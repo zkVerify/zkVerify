@@ -264,6 +264,7 @@ polkadot-gossip-support = { version = "21.0.0" }
 polkadot-network-bridge = { version = "21.0.0" }
 polkadot-node-collation-generation = { version = "21.0.0" }
 polkadot-node-core-approval-voting = { version = "21.0.0" }
+polkadot-node-core-approval-voting-parallel = { version = "0.4.0" }
 polkadot-node-core-av-store = { version = "21.0.0" }
 polkadot-node-core-backing = { version = "21.0.0" }
 polkadot-node-core-bitfield-signing = { version = "21.0.0" }
