@@ -30,8 +30,7 @@ use polkadot_runtime_common::BlockHashCount;
 use polkadot_runtime_parachains::paras::{ParaGenesisArgs, ParaKind};
 use service::{Error, FullClient, FullWasmExecutor, IsParachainNode, NewFull, PrometheusConfig};
 use test_runtime::{
-    ParasCall, ParasSudoWrapperCall, Runtime, SignedExtra, SignedPayload, SudoCall,
-    UncheckedExtrinsic, VERSION,
+    ParasCall, ParasSudoWrapperCall, Runtime, SignedPayload, SudoCall, UncheckedExtrinsic, VERSION,
 };
 
 pub use service::rpc;
@@ -99,6 +98,7 @@ pub fn new_full(
             execute_workers_max_num: None,
             prepare_workers_hard_max_num: None,
             prepare_workers_soft_max_num: None,
+            enable_approval_voting_parallel: false,
         },
     )
 }
@@ -429,7 +429,7 @@ pub fn construct_extrinsic(
         .map(|c| c / 2)
         .unwrap_or(2) as u64;
     let tip = 0;
-    let extra: SignedExtra = (
+    let tx_ext: test_runtime::TxExtension = (
         frame_system::CheckNonZeroSender::<Runtime>::new(),
         frame_system::CheckSpecVersion::<Runtime>::new(),
         frame_system::CheckTxVersion::<Runtime>::new(),
@@ -441,7 +441,7 @@ pub fn construct_extrinsic(
     );
     let raw_payload = SignedPayload::from_raw(
         function.clone(),
-        extra.clone(),
+        tx_ext.clone(),
         (
             (),
             VERSION.spec_version,
@@ -458,7 +458,7 @@ pub fn construct_extrinsic(
         function.clone(),
         test_runtime::Address::Id(caller.public().into()),
         polkadot_primitives::Signature::Sr25519(signature),
-        extra.clone(),
+        tx_ext.clone(),
     )
 }
 

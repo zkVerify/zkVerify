@@ -424,7 +424,7 @@ mod tests {
 	use super::*;
 
 	use polkadot_primitives::Block as PBlock;
-	use polkadot_test_client::{
+	use test_client::{
 		construct_transfer_extrinsic, BlockBuilderExt, Client, ClientBlockImportExt,
 		DefaultTestClientBuilderExt, InitPolkadotBlockBuilder, TestClientBuilder,
 		TestClientBuilderExt,

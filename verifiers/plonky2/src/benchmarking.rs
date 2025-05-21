@@ -180,6 +180,7 @@ mod mock {
         type MaxLocks = ConstU32<10>;
         type MaxReserves = ConstU32<10>;
         type MaxFreezes = ConstU32<10>;
+        type DoneSlashHandler = ();
     }
 
     impl pallet_verifiers::common::Config for Test {

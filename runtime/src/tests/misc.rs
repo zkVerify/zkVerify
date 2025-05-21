@@ -66,8 +66,8 @@ fn submit_proof_weights_composition() {
                 domain_id: Some(2),
             }
             .get_dispatch_info();
-        let ref_time = info.weight.ref_time();
-        let proof_size = info.weight.proof_size();
+        let ref_time = info.call_weight.ref_time();
+        let proof_size = info.call_weight.proof_size();
 
         let verify_time = <<Runtime as pallet_verifiers::Config<Groth16<Runtime>>>::WeightInfo as
             pallet_verifiers::WeightInfo<Groth16<Runtime>>>
@@ -97,7 +97,7 @@ fn submit_proof_weights_composition_should_ignore_aggregate_if_no_domain() {
             }
             .get_dispatch_info();
 
-        let proof_size = info.weight.proof_size();
+        let proof_size = info.call_weight.proof_size();
 
         // We check that is lesser than half of the aggregate weight... just a reference to be sure that not use it
         assert!(proof_size < <Runtime as pallet_aggregate::Config>::WeightInfo::on_proof_verified().proof_size()/2);
