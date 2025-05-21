@@ -188,7 +188,7 @@ mod test_utils {
         fn from(value: substrate_bn::Fq) -> Self {
             let mut buf = [0; 32];
             value.to_big_endian(&mut buf).unwrap();
-            Self(buf.into())
+            Self(U256::from_big_endian(&buf))
         }
     }
 

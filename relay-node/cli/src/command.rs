@@ -201,8 +201,7 @@ pub fn run() -> Result<()> {
             set_default_ss58_version(chain_spec.as_ref());
 
             runner.async_run(|mut config| {
-                let (client, _, import_queue, task_manager) =
-                    service::new_chain_ops(&mut config)?;
+                let (client, _, import_queue, task_manager) = service::new_chain_ops(&mut config)?;
                 Ok((
                     cmd.run(client, import_queue).map_err(Error::SubstrateCli),
                     task_manager,
@@ -247,8 +246,7 @@ pub fn run() -> Result<()> {
             set_default_ss58_version(chain_spec.as_ref());
 
             Ok(runner.async_run(|mut config| {
-                let (client, _, import_queue, task_manager) =
-                    service::new_chain_ops(&mut config)?;
+                let (client, _, import_queue, task_manager) = service::new_chain_ops(&mut config)?;
                 Ok((
                     cmd.run(client, import_queue).map_err(Error::SubstrateCli),
                     task_manager,
@@ -269,13 +267,15 @@ pub fn run() -> Result<()> {
                 let (client, backend, _, task_manager) = service::new_chain_ops(&mut config)?;
                 let task_handle = task_manager.spawn_handle();
                 let aux_revert = Box::new(|client, backend, blocks| {
-                    service::revert_backend(client, backend, blocks, config, task_handle).map_err(|err| {
-                        match err {
-                            service::Error::Blockchain(err) => err.into(),
-                            // Generic application-specific error.
-                            err => sc_cli::Error::Application(err.into()),
-                        }
-                    })
+                    service::revert_backend(client, backend, blocks, config, task_handle).map_err(
+                        |err| {
+                            match err {
+                                service::Error::Blockchain(err) => err.into(),
+                                // Generic application-specific error.
+                                err => sc_cli::Error::Application(err.into()),
+                            }
+                        },
+                    )
                 });
                 Ok((
                     cmd.run(client, backend, Some(aux_revert))
