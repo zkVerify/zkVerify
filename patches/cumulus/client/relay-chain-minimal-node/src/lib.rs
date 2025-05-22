@@ -34,7 +34,7 @@ use service::{overseer::OverseerGenArgs, IsParachainNode};
 
 use sc_authority_discovery::Service as AuthorityDiscoveryService;
 use sc_network::{
-	config::{FullNetworkConfiguration, NetworkBackendType}, service::traits::NetworkService, Event, NetworkBackend,
+	config::FullNetworkConfiguration, service::traits::NetworkService, Event, NetworkBackend,
 	NetworkEventStream,
 };
 use sc_service::{config::PrometheusConfig, Configuration, TaskManager};
@@ -51,7 +51,7 @@ pub use blockchain_rpc_client::BlockChainRpcClient;
 
 const LOG_TARGET: &str = "minimal-relaychain-node";
 
-fn build_authority_discovery_service<Block: BlockT>(
+fn build_authority_discovery_service(
 	task_manager: &TaskManager,
 	client: Arc<BlockChainRpcClient>,
 	config: &Configuration,
@@ -239,7 +239,7 @@ async fn new_minimal_relay_chain<Block: BlockT, Network: NetworkBackend<RelayBlo
 	)
 	.map_err(|e| RelayChainError::Application(Box::new(e) as Box<_>))?;
 
-	let authority_discovery_service = build_authority_discovery_service::<Block>(
+	let authority_discovery_service = build_authority_discovery_service(
 		&task_manager,
 		relay_chain_rpc_client.clone(),
 		&config,

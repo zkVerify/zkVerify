@@ -452,8 +452,7 @@ impl pallet_transaction_payment::Config for Runtime {
     type WeightToFee = ConstantMultiplier<Balance, TransactionPicosecondFee>;
     type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
     type FeeMultiplierUpdate = ZKVFeeUpdate<Self>;
-    type WeightInfo = pallet_transaction_payment::weights::SubstrateWeight<Runtime>; // TODO:
-                                                                                     // update this
+    type WeightInfo = weights::pallet_transaction_payment::ZKVWeight<Runtime>;
 }
 
 impl pallet_sudo::Config for Runtime {
@@ -1319,11 +1318,15 @@ mod benches {
         [pallet_utility, Utility]
         [pallet_vesting, Vesting]
         [pallet_proxy, Proxy]
-        [pallet_aggregate, Aggregate]
-        [pallet_hyperbridge_aggregations, HyperbridgeAggregations]
+        [pallet_transaction_payment, TransactionPayment]
+        // hyperbridge
         [ismp_grandpa, IsmpGrandpa]
         [pallet_token_gateway, TokenGateway]
+        // our pallets
+        [pallet_aggregate, Aggregate]
         [pallet_claim, Claim]
+        [pallet_hyperbridge_aggregations, HyperbridgeAggregations]
+        // verifiers
         [pallet_fflonk_verifier, FflonkVerifierBench::<Runtime>]
         [pallet_groth16_verifier, Groth16VerifierBench::<Runtime>]
         [pallet_risc0_verifier, Risc0VerifierBench::<Runtime>]
@@ -1342,6 +1345,7 @@ mod benches {
         [parachains::initializer, Initializer]
         [parachains::paras, Paras]
         [parachains::paras_inherent, ParaInherent]
+        [parachains::on_demand, OnDemandAssignmentProvider]
         [pallet_message_queue, MessageQueue]
         // xcm
         [pallet_xcm, xcm::XcmPalletBench::<Runtime>]
@@ -1858,7 +1862,7 @@ impl_runtime_apis! {
 
         fn dispatch_benchmark(
             config: frame_benchmarking::BenchmarkConfig
-        ) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
+        ) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, alloc::string::String> {
             use frame_benchmarking::{baseline, Benchmarking, BenchmarkBatch};
             use sp_storage::TrackedStorageKey;
             use frame_system_benchmarking::Pallet as SystemBench;

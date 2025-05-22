@@ -60,7 +60,6 @@ use {
     sc_client_api::BlockBackend,
     sc_consensus_grandpa::{self, FinalityProofProvider as GrandpaFinalityProofProvider},
     sc_transaction_pool_api::OffchainTransactionPoolFactory,
-    sp_core::traits::SpawnNamed,
 };
 
 use polkadot_node_subsystem_util::database::Database;

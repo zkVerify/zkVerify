@@ -178,7 +178,8 @@ runtime-benchmarks = [
 	"pallet-message-queue/runtime-benchmarks",
 	"pallet-offences/runtime-benchmarks",
 	"sp-staking/runtime-benchmarks",
-	"hp-dispatch/runtime-benchmarks"
+	"hp-dispatch/runtime-benchmarks",
+	"pallet-transaction-payment/runtime-benchmarks"
 ]
 fast-runtime = []
 metadata-hash = ["substrate-wasm-builder/metadata-hash"]

@@ -70,7 +70,7 @@ impl on_demand::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type Currency = Balances;
     type TrafficDefaultValue = OnDemandTrafficDefaultValue;
-    type WeightInfo = weights::parachains::ondemand::ZKVWeight<Runtime>;
+    type WeightInfo = weights::parachains::on_demand::ZKVWeight<Runtime>;
     type MaxHistoricalRevenue = MaxHistoricalRevenue;
     type PalletId = OnDemandPalletId;
 }

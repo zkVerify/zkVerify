@@ -21,8 +21,6 @@ use super::*;
 #[allow(unused_imports)]
 use super::parachains::*;
 
-use polkadot_runtime_common::paras_registrar::migration;
-
 use pallet_balances::WeightInfo;
 
 parameter_types! {
