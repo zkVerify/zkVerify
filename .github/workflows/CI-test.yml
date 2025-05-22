@@ -31,6 +31,7 @@ jobs:
           lld_install: 'yes'
 
       - name: Upload unit test output
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: unit-test-output
@@ -55,6 +56,7 @@ jobs:
           lld_install: 'yes'
 
       - name: Upload integration test output
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: integration-test-output

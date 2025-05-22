@@ -22,6 +22,7 @@ jobs:
           cargo_binaries_install: zepter
 
       - name: Upload feature propagation output
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: feature-propagation-output
