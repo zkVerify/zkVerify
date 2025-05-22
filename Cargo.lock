@@ -461,12 +461,12 @@ dependencies = [
 
 [[package]]
 name = "anstyle-wincon"
-version = "3.0.7"
+version = "3.0.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ca3534e77181a9cc07539ad51f2141fe32f6c3ffd4df76db8ad92346b003ae4e"
+checksum = "6680de5231bd6ee4c6191b8a1325daa282b415391ec9d3a37bd34f2060dc73fa"
 dependencies = [
  "anstyle",
- "once_cell",
+ "once_cell_polyfill",
  "windows-sys 0.59.0",
 ]
 
@@ -4972,9 +4972,9 @@ checksum = "28dd6caf6059519a65843af8fe2a3ae298b14b80179855aeb4adc2c1934ee619"
 
 [[package]]
 name = "frame-benchmarking"
-version = "39.0.0"
+version = "39.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8c221b23f5cc5990830c4010bc01eac1cf401327e2bec362b0d28cb261809958"
+checksum = "243a7b247c6a1ebf89c43eb8f3bfaea60965aa9712dceca781ef09579263d343"
 dependencies = [
  "frame-support",
  "frame-support-procedural",
@@ -4997,9 +4997,9 @@ dependencies = [
 
 [[package]]
 name = "frame-benchmarking-cli"
-version = "46.1.0"
+version = "46.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "94cc896c787382b70a7761dd193a797711ea73ef48ad5d87ee89bbebf28e3914"
+checksum = "cbd56d645dae5cb7f386f628abbb798f370c158a10616aefdcae1f1a3e5e2509"
 dependencies = [
  "Inflector",
  "array-bytes",
@@ -5075,9 +5075,9 @@ dependencies = [
 
 [[package]]
 name = "frame-election-provider-solution-type"
-version = "14.0.1"
+version = "14.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8156f209055d352994ecd49e19658c6b469d7c6de923bd79868957d0dcfb6f71"
+checksum = "bc435a406e04540f00979782c45db0534440873ae526e07a290c286cfcb99b09"
 dependencies = [
  "proc-macro-crate 3.3.0",
  "proc-macro2",
@@ -5087,9 +5087,9 @@ dependencies = [
 
 [[package]]
 name = "frame-election-provider-support"
-version = "39.0.0"
+version = "39.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3d62cba64438e4f6f8b78c8c7ec1953ba3c3f4933245412b44501b31df0f87ef"
+checksum = "2d5a6d33db65e59084460e153c409c29737b6441fd52159a6f022e9ecd8344c4"
 dependencies = [
  "frame-election-provider-solution-type",
  "frame-support",
@@ -9137,6 +9137,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "42f5e15c9953c5e4ccceeb2e7382a716482c34515315f7b03532b8b4e8393d2d"
 
 [[package]]
+name = "once_cell_polyfill"
+version = "1.70.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2611b99ab098a31bdc8be48b4f1a285ca0ced28bd5b4f23e45efa8c63b09efa5"
+dependencies = [
+ "once_cell",
+]
+
+[[package]]
 name = "opaque-debug"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9496,9 +9505,9 @@ dependencies = [
 
 [[package]]
 name = "pallet-beefy"
-version = "40.1.0"
+version = "40.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7c163fa041eb848fb68900ba0cea3c213f34282241959f327bbe10c93d5aa124"
+checksum = "13f7788811909f3c7858bec28a66dae50a3be26d4cc8578b23052d561a6cd4de"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -9933,9 +9942,9 @@ dependencies = [
 
 [[package]]
 name = "pallet-election-provider-multi-phase"
-version = "38.1.0"
+version = "38.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7b93092065f6b31fbf6e5788a889d712859cf5402cc5d487fe6a241f102bcac6"
+checksum = "80033a0f457cf66d3bfd09ed51137cc5a0a6d55f23a2d778a8d998e993d2982a"
 dependencies = [
  "frame-benchmarking",
  "frame-election-provider-support",
@@ -10830,9 +10839,9 @@ dependencies = [
 
 [[package]]
 name = "pallet-scheduler"
-version = "40.1.0"
+version = "40.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6efb66648d83ce14caaa5cb062fa54021222e964dc58c7326aee44f27db96b46"
+checksum = "e290bcd7f5e1eefcd5eec1e21efa9ac690c6f97e4534aa3831ff78b7d1fbda68"
 dependencies = [
  "docify",
  "frame-benchmarking",
@@ -11340,9 +11349,9 @@ dependencies = [
 
 [[package]]
 name = "pallet-xcm"
-version = "18.1.0"
+version = "18.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee1d95aa6954c1ac5ecac000a3d9d3203399498c3a79ec508cdb81acecacd77f"
+checksum = "00c70b60f0a76bcca27686889da513b2e1440979d0192cc34c738e75112c88c0"
 dependencies = [
  "bounded-collections",
  "frame-benchmarking",
@@ -11382,9 +11391,9 @@ dependencies = [
 
 [[package]]
 name = "pallet-xcm-bridge-hub"
-version = "0.14.2"
+version = "0.14.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b5bd00ad5cff288bfdf216dba30efdc0e2a7d19d53dfd307864428ee1cc12d04"
+checksum = "13c2078cc35fe19754c4aa85a597d718a369055abb47d481d0197eb748bf079d"
 dependencies = [
  "bp-messages",
  "bp-runtime",
@@ -16211,9 +16220,9 @@ dependencies = [
 
 [[package]]
 name = "sc-network"
-version = "0.48.3"
+version = "0.48.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b3e6927803b73e7f88fd36d428d3238e4e430c3c963fde0857338c768fe0fad"
+checksum = "8c4337c3707ea575ec354656ee7847eafe73432af2c07c944f609a83285eee66"
 dependencies = [
  "array-bytes",
  "async-channel 1.9.0",
@@ -18681,9 +18690,9 @@ dependencies = [
 
 [[package]]
 name = "sp-npos-elections"
-version = "35.0.0"
+version = "35.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6df43d267689ec0e10e61eff57543af326f769481215cd43022e791c32ce30a3"
+checksum = "a26266f752840c9bc2cf37a273453407f5e28dd48ed5c1e6271cf75acc843b59"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -19144,9 +19153,9 @@ checksum = "af6c3c1ace30eab195a92723747a69344a328442f72c1de871c66460c091c34d"
 
 [[package]]
 name = "staging-xcm"
-version = "15.0.3"
+version = "15.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b570c175519cb507fd7c16d69c43f77e87853cc7cc0d88bf4aabca028775363b"
+checksum = "40fdb8384388024e85d9c22bfd9a79d47a07f589cd276e94ead79b5c05f6910c"
 dependencies = [
  "array-bytes",
  "bounded-collections",
@@ -19166,9 +19175,9 @@ dependencies = [
 
 [[package]]
 name = "staging-xcm-builder"
-version = "18.2.0"
+version = "18.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb41713b55123a0ec0d2690899cce5cd7354217455650f3bc80c75dd39ad8f02"
+checksum = "807d4c9e1f688b98df437f6d146c873e7f4464f5835ed3ab15a6864b96deeb7e"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -19189,9 +19198,9 @@ dependencies = [
 
 [[package]]
 name = "staging-xcm-executor"
-version = "18.0.2"
+version = "18.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c901632fd40c746e0607335d7d720949eb46f2d08800404f19ab5be2cdcff410"
+checksum = "59ce69c5c34e910df78b213e7c0f9b3c0f79ad24e5e66587a9dbe7b3ee09ece6"
 dependencies = [
  "environmental",
  "frame-benchmarking",
@@ -19216,15 +19225,15 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 
 [[package]]
 name = "static_init"
-version = "1.0.3"
+version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8a2a1c578e98c1c16fc3b8ec1328f7659a500737d7a0c6d625e73e830ff9c1f6"
+checksum = "8bae1df58c5fea7502e8e352ec26b5579f6178e1fdb311e088580c980dee25ed"
 dependencies = [
  "bitflags 1.3.2",
- "cfg_aliases 0.1.1",
+ "cfg_aliases 0.2.1",
  "libc",
- "parking_lot 0.11.2",
- "parking_lot_core 0.8.6",
+ "parking_lot 0.12.3",
+ "parking_lot_core 0.9.10",
  "static_init_macro",
  "winapi",
 ]
@@ -21481,9 +21490,9 @@ dependencies = [
 
 [[package]]
 name = "westend-runtime"
-version = "21.1.0"
+version = "21.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "62d0f8825746e1ddc4037b25ac1efb6ada1b4a0372206e86f6ec1cc3b3827a4c"
+checksum = "8a72523849da1b274fa5bb93fa31fc7d8558820435ba798b8c9158b9ac333408"
 dependencies = [
  "binary-merkle-tree",
  "bitvec",
@@ -22160,9 +22169,9 @@ dependencies = [
 
 [[package]]
 name = "xcm-runtime-apis"
-version = "0.5.2"
+version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ffd97b4d476b2444e55b40ac29474011138d9d891c8ffe480eadaf93e6778794"
+checksum = "0f43f0f524f1a448ad2e30af5e693211967651ce7e012465e865674fc4fc6587"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -22175,9 +22184,9 @@ dependencies = [
 
 [[package]]
 name = "xcm-simulator"
-version = "18.0.0"
+version = "18.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "36d95b40a6899a9902628a1ed978c8dd81c9f09ee2aa6e15b7adc79d901f585e"
+checksum = "e36119d79dd3b4d0e18b22fe9bba9e9860dc5cc9460b75b6287c0c745224987e"
 dependencies = [
  "frame-support",
  "frame-system",
