@@ -17,7 +17,6 @@
 //! Client testing utilities.
 
 #![warn(missing_docs)]
-
 #![allow(clippy::type_complexity)]
 
 pub mod client_ext;

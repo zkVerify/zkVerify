@@ -15,6 +15,7 @@
 // limitations under the License.
 
 pub mod configuration;
+pub mod coretime;
 pub mod disputes;
 pub mod hrmp;
 pub mod inclusion;

@@ -1217,7 +1217,8 @@ construct_runtime!(
         ParasDisputes: parachains::disputes = 112,
         ParasSlashing: parachains::slashing = 113,
         ParachainsAssignmentProvider: parachains::parachains_assigner_coretime = 114,
-		    OnDemandAssignmentProvider: parachains::on_demand = 115,
+        OnDemandAssignmentProvider: parachains::on_demand = 115,
+        Coretime: parachains::coretime = 116,
 
         // Parachain onboarding; visualization only, not intended for actual usage.
         Registrar: parachains::paras_registrar = 120,
@@ -1346,6 +1347,7 @@ mod benches {
         [parachains::paras, Paras]
         [parachains::paras_inherent, ParaInherent]
         [parachains::on_demand, OnDemandAssignmentProvider]
+        [parachains::coretime, Coretime]
         [pallet_message_queue, MessageQueue]
         // xcm
         [pallet_xcm, xcm::XcmPalletBench::<Runtime>]
