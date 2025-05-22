@@ -25,6 +25,8 @@ use service::{
     HeaderBackend, IdentifyVariant,
 };
 use sp_keyring::Sr25519Keyring;
+#[allow(unused_imports)]
+use std::net::ToSocketAddrs;
 use zkv_benchmarks::hardware::zkv_reference_hardware;
 
 pub use crate::{error::Error, service::BlockId};

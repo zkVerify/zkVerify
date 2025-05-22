@@ -9,7 +9,7 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 mod weights;
 pub mod xcm_config;
 
-extern crate alloc; // TODO: check this!
+extern crate alloc;
 use alloc::borrow::Cow;
 use cumulus_pallet_parachain_system::RelayNumberMonotonicallyIncreases;
 use pallet_aura::Authorities;
@@ -350,7 +350,7 @@ impl pallet_balances::Config for Runtime {
     type RuntimeFreezeReason = RuntimeFreezeReason;
     type FreezeIdentifier = ();
     type MaxFreezes = ConstU32<0>;
-    type DoneSlashHandler = (); // TODO: CHECK
+    type DoneSlashHandler = ();
 }
 
 parameter_types! {
