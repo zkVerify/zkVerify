@@ -14,6 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
 
+#![allow(clippy::type_complexity)]
+
+#![allow(clippy::too_many_arguments)]
+
 use polkadot_core_primitives::{Block, Hash, Header};
 use sp_runtime::traits::NumberFor;
 

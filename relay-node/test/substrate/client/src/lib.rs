@@ -18,6 +18,8 @@
 
 #![warn(missing_docs)]
 
+#![allow(clippy::type_complexity)]
+
 pub mod client_ext;
 
 pub use self::client_ext::{BlockOrigin, ClientBlockImportExt, ClientExt};
@@ -88,7 +90,7 @@ impl<Block: BlockT, ExecutorDispatch, G: GenesisInit>
 {
     /// Create new `TestClientBuilder` with default backend.
     pub fn with_default_backend() -> Self {
-        let backend = Arc::new(Backend::new_test(std::u32::MAX, std::u64::MAX));
+        let backend = Arc::new(Backend::new_test(u32::MAX, u64::MAX));
         Self::with_backend(backend)
     }
 
@@ -347,7 +349,7 @@ impl RpcHandlersExt for RpcHandlers {
 						"params": ["0x{}"],
 						"id": 0
 					}}"#,
-                array_bytes::bytes2hex("", &extrinsic.encode())
+                array_bytes::bytes2hex("", extrinsic.encode())
             ))
             .await
             .expect("valid JSON-RPC request object; qed");
