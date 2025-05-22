@@ -24,6 +24,7 @@ jobs:
           cargo_binaries_install: cargo-audit
 
       - name: Upload cargo audit output
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: audit-output
