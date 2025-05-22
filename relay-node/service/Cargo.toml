@@ -201,7 +201,8 @@ runtime-benchmarks = [
 	"sp-runtime/runtime-benchmarks",
 	"zkv-runtime/runtime-benchmarks",
 	"sp-staking/runtime-benchmarks",
-	"test-client/runtime-benchmarks"
+	"test-client/runtime-benchmarks",
+	"pallet-transaction-payment/runtime-benchmarks"
 ]
 
 try-runtime = [
