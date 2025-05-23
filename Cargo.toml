@@ -346,6 +346,12 @@ panic = "unwind"
 opt-level = 3
 
 [workspace.lints.clippy]
+all = { level = "allow", priority = 0 }                              # Basically, we accept the _perf_ clippy concerns
+correctness = { level = "deny", priority = 1 }                       # But reject all other stuff
+suspicious = { level = "deny", priority = 1 }
+complexity = { level = "deny", priority = 1 }
+style = { level = "warn", priority = 1 }
+# perf = { level = "warn", priority = 1 }                            # We don't care about performace (polkadot also)
 unnecessary_cast = { level = "allow", priority = 2 }                 # Types may change
 useless_conversion = { level = "allow", priority = 2 }               # Types may change
 zero-prefixed-literal = { level = "allow", priority = 2 }            # 00_1000_000
