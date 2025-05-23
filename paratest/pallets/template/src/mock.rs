@@ -53,6 +53,7 @@ impl system::Config for Test {
     type PreInherents = ();
     type PostInherents = ();
     type PostTransactions = ();
+    type ExtensionsWeightInfo = ();
 }
 
 impl crate::Config for Test {

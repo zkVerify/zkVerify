@@ -392,7 +392,7 @@ mod sudo {
                 new: MultiAddress::Id(account_ids[1].clone()),
             };
 
-            let sudo_call_weight = sudo_call.get_dispatch_info().weight;
+            let sudo_call_weight = sudo_call.get_dispatch_info().call_weight;
 
             // First part of multisig approval (propose the sudo call)
             assert_ok!(Multisig::as_multi(

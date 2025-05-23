@@ -9,13 +9,15 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 mod weights;
 pub mod xcm_config;
 
+extern crate alloc;
+use alloc::borrow::Cow;
 use cumulus_pallet_parachain_system::RelayNumberMonotonicallyIncreases;
 use pallet_aura::Authorities;
 use smallvec::smallvec;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
-    create_runtime_str, generic, impl_opaque_keys,
+    generic, impl_opaque_keys,
     traits::{BlakeTwo256, Block as BlockT, IdentifyAccount, Verify},
     transaction_validity::{TransactionSource, TransactionValidity},
     ApplyExtrinsicResult, MultiSignature,
@@ -186,14 +188,14 @@ impl_opaque_keys! {
 
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-    spec_name: create_runtime_str!("template-parachain"),
-    impl_name: create_runtime_str!("template-parachain"),
+    spec_name: Cow::Borrowed("template-parachain"),
+    impl_name: Cow::Borrowed("template-parachain"),
     authoring_version: 1,
     spec_version: 1,
     impl_version: 0,
     apis: RUNTIME_API_VERSIONS,
     transaction_version: 1,
-    state_version: 1,
+    system_version: 1,
 };
 
 /// This determines the average expected block time that we are targeting.
@@ -348,6 +350,7 @@ impl pallet_balances::Config for Runtime {
     type RuntimeFreezeReason = RuntimeFreezeReason;
     type FreezeIdentifier = ();
     type MaxFreezes = ConstU32<0>;
+    type DoneSlashHandler = ();
 }
 
 parameter_types! {
@@ -362,6 +365,7 @@ impl pallet_transaction_payment::Config for Runtime {
     type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
     type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
     type OperationalFeeMultiplier = ConstU8<5>;
+    type WeightInfo = ();
 }
 
 impl pallet_sudo::Config for Runtime {
@@ -395,6 +399,7 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
     type ReservedXcmpWeight = ReservedXcmpWeight;
     type CheckAssociatedRelayNumber = RelayNumberMonotonicallyIncreases;
     type ConsensusHook = ConsensusHook;
+    type SelectCore = cumulus_pallet_parachain_system::DefaultCoreSelector<Self>;
 }
 
 impl parachain_info::Config for Runtime {}
@@ -805,7 +810,7 @@ impl_runtime_apis! {
 
         fn dispatch_benchmark(
             config: frame_benchmarking::BenchmarkConfig
-        ) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
+        ) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, alloc::string::String> {
             use frame_benchmarking::{Benchmarking, BenchmarkBatch};
 
             use frame_system_benchmarking::Pallet as SystemBench;

@@ -637,7 +637,8 @@ pub mod pallet {
 
             // Evaluate the Merkle proof and return a MerkleProof structure to the caller
             Ok(binary_merkle_tree::merkle_proof::<Keccak256, _, _>(
-                leaves, index,
+                leaves,
+                index.try_into().unwrap(),
             ))
         }
     }

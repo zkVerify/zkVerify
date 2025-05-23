@@ -17,6 +17,7 @@
 //! Client testing utilities.
 
 #![warn(missing_docs)]
+#![allow(clippy::type_complexity)]
 
 pub mod client_ext;
 
@@ -71,6 +72,7 @@ pub struct TestClientBuilder<Block: BlockT, ExecutorDispatch, Backend: 'static, 
     fork_blocks: ForkBlocks<Block>,
     bad_blocks: BadBlocks<Block>,
     enable_offchain_indexing_api: bool,
+    enable_import_proof_recording: bool,
     no_genesis: bool,
 }
 
@@ -121,6 +123,7 @@ impl<Block: BlockT, ExecutorDispatch, Backend, G: GenesisInit>
             bad_blocks: None,
             enable_offchain_indexing_api: false,
             no_genesis: false,
+            enable_import_proof_recording: false,
         }
     }
 
@@ -172,6 +175,12 @@ impl<Block: BlockT, ExecutorDispatch, Backend, G: GenesisInit>
         self
     }
 
+    /// Enable proof recording on import.
+    pub fn enable_import_proof_recording(mut self) -> Self {
+        self.enable_import_proof_recording = true;
+        self
+    }
+
     /// Disable writing genesis.
     pub fn set_no_genesis(mut self) -> Self {
         self.no_genesis = true;
@@ -209,6 +218,7 @@ impl<Block: BlockT, ExecutorDispatch, Backend, G: GenesisInit>
         };
 
         let client_config = ClientConfig {
+            enable_import_proof_recording: self.enable_import_proof_recording,
             offchain_indexing_api: self.enable_offchain_indexing_api,
             no_genesis: self.no_genesis,
             ..Default::default()
@@ -243,12 +253,9 @@ impl<Block: BlockT, ExecutorDispatch, Backend, G: GenesisInit>
     }
 }
 
-impl<Block: BlockT, D, Backend, G: GenesisInit>
-    TestClientBuilder<Block, client::LocalCallExecutor<Block, Backend, WasmExecutor<D>>, Backend, G>
-where
-    D: sc_executor::NativeExecutionDispatch,
+impl<Block: BlockT, H, Backend, G: GenesisInit>
+    TestClientBuilder<Block, client::LocalCallExecutor<Block, Backend, WasmExecutor<H>>, Backend, G>
 {
-    #[allow(clippy::type_complexity)]
     /// Build the test client with the given native executor.
     pub fn build_with_native_executor<RuntimeApi, I>(
         self,
@@ -256,20 +263,20 @@ where
     ) -> (
         client::Client<
             Backend,
-            client::LocalCallExecutor<Block, Backend, WasmExecutor<D>>,
+            client::LocalCallExecutor<Block, Backend, WasmExecutor<H>>,
             Block,
             RuntimeApi,
         >,
         sc_consensus::LongestChain<Backend, Block>,
     )
     where
-        I: Into<Option<WasmExecutor<D>>>,
-        D: sc_executor::HostFunctions,
+        I: Into<Option<WasmExecutor<H>>>,
         Backend: sc_client_api::backend::Backend<Block> + 'static,
+        H: sc_executor::HostFunctions,
     {
         let executor = executor
             .into()
-            .unwrap_or_else(|| WasmExecutor::<D>::builder().build());
+            .unwrap_or_else(|| WasmExecutor::<H>::builder().build());
         let executor = LocalCallExecutor::new(
             self.backend.clone(),
             executor.clone(),
@@ -287,7 +294,7 @@ pub struct RpcTransactionOutput {
     /// The output string of the transaction if any.
     pub result: String,
     /// An async receiver if data will be returned via a callback.
-    pub receiver: tokio::sync::mpsc::Receiver<std::string::String>,
+    pub receiver: tokio::sync::mpsc::Receiver<String>,
 }
 
 impl std::fmt::Debug for RpcTransactionOutput {

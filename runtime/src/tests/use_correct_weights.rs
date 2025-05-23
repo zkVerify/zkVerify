@@ -298,6 +298,16 @@ fn pallet_message_queue() {
         )
 }
 
+#[test]
+fn pallet_transaction_payment() {
+    use pallet_transaction_payment::WeightInfo;
+
+    assert_eq!(
+            <<Runtime as pallet_transaction_payment::Config>::WeightInfo as pallet_transaction_payment::WeightInfo>::charge_transaction_payment(),
+            crate::weights::pallet_transaction_payment::ZKVWeight::<Runtime>::charge_transaction_payment()
+        )
+}
+
 mod parachains {
     use super::*;
     use crate::parachains::*;
@@ -384,6 +394,17 @@ mod parachains {
         assert_eq!(
             <<Runtime as slashing::Config>::WeightInfo as slashing::WeightInfo>::report_dispute_lost(12),
             crate::weights::parachains::slashing::ZKVWeight::<Runtime>::report_dispute_lost(12)
+        )
+    }
+
+    #[test]
+    fn coretime() {
+        use coretime::WeightInfo;
+
+        assert_eq!(
+            <<Runtime as coretime::Config>::WeightInfo as coretime::WeightInfo>::request_revenue_at(
+            ),
+            crate::weights::parachains::coretime::ZKVWeight::<Runtime>::request_revenue_at()
         )
     }
 }

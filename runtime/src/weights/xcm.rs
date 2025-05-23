@@ -21,7 +21,9 @@ use frame_support::weights::Weight;
 
 use crate::Runtime;
 use core::marker::PhantomData;
-use xcm::{latest::prelude::*, lts::Error, DoubleEncoded};
+use sp_runtime::BoundedVec;
+use xcm::latest::AssetTransferFilter;
+use xcm::{latest::prelude::*, latest::Error, DoubleEncoded};
 
 use pallet_xcm_benchmarks_fungible::WeightInfo as XcmBalancesWeight;
 use pallet_xcm_benchmarks_generic::WeightInfo as XcmGenericWeight;
@@ -96,7 +98,7 @@ impl WeighAssets for Assets {
 /// Weights for `pallet_xcm` using the zkVerify node and recommended hardware.
 pub struct ZKVWeight<T>(PhantomData<T>);
 
-impl<T> xcm::v4::XcmWeightInfo<T> for ZKVWeight<T> {
+impl<T> xcm::latest::XcmWeightInfo<T> for ZKVWeight<T> {
     fn withdraw_asset(assets: &Assets) -> sp_weights::Weight {
         assets.weigh_multi_assets(XcmBalancesWeight::<Runtime>::withdraw_asset())
     }
@@ -126,7 +128,7 @@ impl<T> xcm::v4::XcmWeightInfo<T> for ZKVWeight<T> {
     }
     fn transact(
         _origin_kind: &OriginKind,
-        _require_weight_at_most: &Weight,
+        _require_weight_at_most: &Option<Weight>,
         _call: &DoubleEncoded<T>,
     ) -> sp_weights::Weight {
         XcmGenericWeight::<Runtime>::transact()
@@ -282,5 +284,27 @@ impl<T> xcm::v4::XcmWeightInfo<T> for ZKVWeight<T> {
     }
     fn unpaid_execution(_: &WeightLimit, _: &core::option::Option<Location>) -> sp_weights::Weight {
         XcmGenericWeight::<Runtime>::unpaid_execution()
+    }
+    fn pay_fees(_asset: &Asset) -> Weight {
+        unimplemented!("This should probably be implemented!")
+        //XcmGenericWeight::<Runtime>::pay_fees()
+    }
+    fn initiate_transfer(
+        _dest: &Location,
+        _remote_fees: &Option<AssetTransferFilter>,
+        _preserve_origin: &bool,
+        _assets: &BoundedVec<AssetTransferFilter, MaxAssetTransferFilters>,
+        _xcm: &Xcm<()>,
+    ) -> Weight {
+        // XCM Executor does not currently support initiate_transfer operations
+        Weight::MAX
+    }
+    fn execute_with_origin(_: &Option<InteriorLocation>, _: &Xcm<T>) -> Weight {
+        // XCM Executor does not currently support execute_with_origin operations
+        Weight::MAX
+    }
+    fn set_hints(_hints: &BoundedVec<Hint, HintNumVariants>) -> Weight {
+        // XCM Executor does not currently support set_hints operations
+        Weight::MAX
     }
 }

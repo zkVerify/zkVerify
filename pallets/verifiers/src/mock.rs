@@ -301,6 +301,7 @@ impl pallet_balances::Config for Test {
     type MaxFreezes = ();
     type RuntimeHoldReason = RuntimeHoldReason;
     type RuntimeFreezeReason = ();
+    type DoneSlashHandler = ();
 }
 
 impl crate::common::Config for Test {

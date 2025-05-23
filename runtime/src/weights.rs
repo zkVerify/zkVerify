@@ -46,6 +46,7 @@ pub mod pallet_staking;
 pub mod pallet_sudo;
 pub mod pallet_timestamp;
 pub mod pallet_token_gateway;
+pub mod pallet_transaction_payment;
 pub mod pallet_treasury;
 pub mod pallet_ultraplonk_verifier;
 pub mod pallet_utility;

@@ -65,6 +65,7 @@ impl pallet_balances::Config for Test {
     type MaxFreezes = ();
     type RuntimeHoldReason = RuntimeHoldReason;
     type RuntimeFreezeReason = ();
+    type DoneSlashHandler = ();
 }
 
 pub struct FakeWeightInfo;
@@ -100,8 +101,8 @@ impl pallet_ismp::Config for Test {
     type Router = ModuleRouter;
     type Coprocessor = Coprocessor;
     type ConsensusClients = (ismp_grandpa::consensus::GrandpaConsensusClient<Test>,);
-    type WeightProvider = ();
     type OffchainDB = ();
+    type FeeHandler = pallet_ismp::fee_handler::WeightFeeHandler<()>;
 }
 
 #[derive(Default)]
