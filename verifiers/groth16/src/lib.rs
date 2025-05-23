@@ -27,7 +27,7 @@ use hp_groth16::Scalar;
 use hp_verifiers::{Verifier, VerifyError};
 use sp_std::vec::Vec;
 
-pub const MAX_NUM_INPUTS: u32 = 32;
+pub const MAX_NUM_INPUTS: u32 = 64;
 pub use weight::WeightInfo;
 
 pub trait Config {

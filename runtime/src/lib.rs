@@ -905,7 +905,7 @@ impl pallet_verifiers::Config<pallet_fflonk_verifier::Fflonk> for Runtime {
     type Currency = Balances;
 }
 
-pub const GROTH16_MAX_NUM_INPUTS: u32 = 16;
+pub const GROTH16_MAX_NUM_INPUTS: u32 = 64;
 parameter_types! {
     pub const Groth16MaxNumInputs: u32 = GROTH16_MAX_NUM_INPUTS;
 }
