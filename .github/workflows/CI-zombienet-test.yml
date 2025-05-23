@@ -37,6 +37,7 @@ jobs:
           nodejs_version_install: '18'
 
       - name: Upload zombienet test results
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: zombienet-test-output
