@@ -102,7 +102,7 @@ impl pallet_ismp::Config for Test {
     type Coprocessor = Coprocessor;
     type ConsensusClients = (ismp_grandpa::consensus::GrandpaConsensusClient<Test>,);
     type OffchainDB = ();
-    type FeeHandler = pallet_ismp::fee_handler::WeightFeeHandler<()>; // TODO: check
+    type FeeHandler = pallet_ismp::fee_handler::WeightFeeHandler<()>;
 }
 
 #[derive(Default)]

@@ -22,7 +22,7 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-extern crate alloc; // TODO: check this!
+extern crate alloc;
 
 use alloc::{
     borrow::Cow,
@@ -413,7 +413,7 @@ impl pallet_balances::Config for Runtime {
     type MaxFreezes = MaxFreezes;
     type RuntimeHoldReason = RuntimeHoldReason;
     type RuntimeFreezeReason = RuntimeFreezeReason;
-    type DoneSlashHandler = (); // TODO: check this
+    type DoneSlashHandler = ();
 }
 
 impl_opaque_keys! {
@@ -1050,7 +1050,7 @@ impl pallet_ismp::Config for Runtime {
     type Coprocessor = Coprocessor;
     type ConsensusClients = (ismp_grandpa::consensus::GrandpaConsensusClient<Runtime>,);
     type OffchainDB = ();
-    type FeeHandler = pallet_ismp::fee_handler::WeightFeeHandler<()>; // TODO: check
+    type FeeHandler = pallet_ismp::fee_handler::WeightFeeHandler<()>;
 }
 
 impl pallet_hyperbridge_aggregations::Config for Runtime {
