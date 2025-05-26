@@ -12,8 +12,8 @@ const ReturnCode = {
 const { init_api, submitProof, getBalance, receivedEvents, submitExtrinsic } = require('zkv-lib')
 const { PROOF, PUBS, VK } = require('./ultraplonk_data.js');
 
-// Call verify on a disable verifier should cost at most FACTOR times the cost of the proof.
-const FACTOR = 20;
+// Calling verify on a disable verifier should cost at most 1/FACTOR times the cost of the proof.
+const FACTOR = 10;
 
 async function run(nodeName, networkInfo, _args) {
     const api = await init_api(zombie, nodeName, networkInfo);
@@ -60,7 +60,7 @@ async function run(nodeName, networkInfo, _args) {
     console.log('Alice paid for a disable verifier: ' + paidBalanceOnDisable);
 
     if (paidBalanceOnDisable > paidBalanceOnVerify / FACTOR) {
-        console.log(`ERROR: Alice should pay a valid verify at most ${FACTOR} times what she paid for a disabled verify`);
+        console.log(`ERROR: Alice should pay a valid verify at least ${FACTOR} times what she paid for a disabled verify`);
         return ReturnCode.ErrDisableProofTooCostly;
     }
     console.log(`INFO: Alice paid less than ${FACTOR} times`);

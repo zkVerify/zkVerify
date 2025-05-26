@@ -302,6 +302,7 @@ impl frame_system::Config for Runtime {
     type SS58Prefix = SS58Prefix;
     type MaxConsumers = frame_support::traits::ConstU32<16>;
     type SystemWeightInfo = weights::frame_system::ZKVWeight<Runtime>;
+    type ExtensionsWeightInfo = weights::frame_system_extensions::ZKVWeight<Runtime>;
 }
 
 parameter_types! {
@@ -1299,6 +1300,7 @@ mod benches {
     define_benchmarks!(
         [frame_benchmarking, BaselineBench::<Runtime>]
         [frame_system, SystemBench::<Runtime>]
+        [frame_system_extensions, SystemExtensionsBench::<Runtime>]
         [pallet_balances, Balances]
         [pallet_bags_list, VoterList]
         [pallet_babe, Babe]
@@ -1835,6 +1837,7 @@ impl_runtime_apis! {
             use frame_benchmarking::{baseline, Benchmarking, BenchmarkList};
             use frame_support::traits::StorageInfoTrait;
             use frame_system_benchmarking::Pallet as SystemBench;
+            use frame_system_benchmarking::extensions::Pallet as SystemExtensionsBench;
             use baseline::Pallet as BaselineBench;
             use pallet_election_provider_support_benchmarking::Pallet as ElectionProviderBench;
             use pallet_session_benchmarking::Pallet as SessionBench;
@@ -1868,6 +1871,7 @@ impl_runtime_apis! {
             use frame_benchmarking::{baseline, Benchmarking, BenchmarkBatch};
             use sp_storage::TrackedStorageKey;
             use frame_system_benchmarking::Pallet as SystemBench;
+            use frame_system_benchmarking::extensions::Pallet as SystemExtensionsBench;
             use baseline::Pallet as BaselineBench;
             use pallet_election_provider_support_benchmarking::Pallet as ElectionProviderBench;
             use pallet_session_benchmarking::Pallet as SessionBench;
