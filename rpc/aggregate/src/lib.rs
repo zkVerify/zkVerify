@@ -117,5 +117,10 @@ fn convert_aggregation_error(e: PathRequestError) -> ErrorObjectOwned {
             "Receipt not published in this block",
             Some(format!("Receipt ({domain_id},{id}) not published yet")),
         ),
+        PathRequestError::IndexOutOfBounds => ErrorObject::owned(
+            Error::StatementNotFound.into(),
+            "Statement index goes out of u32 bounds",
+            Some("Statement index goes out of u32 bounds".to_string()),
+        ),
     }
 }

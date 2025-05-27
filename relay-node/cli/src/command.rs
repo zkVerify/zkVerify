@@ -25,13 +25,13 @@ use service::{
     HeaderBackend, IdentifyVariant,
 };
 use sp_keyring::Sr25519Keyring;
-#[allow(unused_imports)]
-use std::net::ToSocketAddrs;
 use zkv_benchmarks::hardware::zkv_reference_hardware;
 
 pub use crate::{error::Error, service::BlockId};
 #[cfg(feature = "pyroscope")]
 use pyroscope_pprofrs::{pprof_backend, PprofConfig};
+#[cfg(feature = "pyroscope")]
+use std::net::ToSocketAddrs;
 
 type Result<T> = std::result::Result<T, Error>;
 

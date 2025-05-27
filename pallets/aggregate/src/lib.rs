@@ -604,6 +604,8 @@ pub mod pallet {
         NotFound(u32, u64, sp_core::H256),
         /// The receipt is not published for the given domain and aggregation.
         ReceiptNotPublished(u32, u64),
+        /// The index of the statement exceeds the maximum that can be handled
+        IndexOutOfBounds,
     }
 
     impl<T: Config> Pallet<T> {
@@ -638,7 +640,9 @@ pub mod pallet {
             // Evaluate the Merkle proof and return a MerkleProof structure to the caller
             Ok(binary_merkle_tree::merkle_proof::<Keccak256, _, _>(
                 leaves,
-                index.try_into().unwrap(),
+                index
+                    .try_into()
+                    .map_err(|_| PathRequestError::IndexOutOfBounds)?,
             ))
         }
     }
