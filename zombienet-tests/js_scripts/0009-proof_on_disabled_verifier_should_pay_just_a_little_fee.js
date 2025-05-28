@@ -10,10 +10,10 @@ const ReturnCode = {
 };
 
 const { init_api, submitProof, getBalance, receivedEvents, submitExtrinsic } = require('zkv-lib')
-const { PROOF, PUBS, VK } = require('./ultraplonk_data.js');
+const {PROOF, PUBS, VK} = require('./risc0_v2_0_data.js');
 
 // Calling verify on a disable verifier should cost at most 1/FACTOR times the cost of the proof.
-const FACTOR = 10;
+const FACTOR = 70;
 
 async function run(nodeName, networkInfo, _args) {
     const api = await init_api(zombie, nodeName, networkInfo);
@@ -25,7 +25,7 @@ async function run(nodeName, networkInfo, _args) {
     let balanceAlice = await getBalance(alice);
     console.log('Alice\'s balance: ' + balanceAlice.toHuman());
 
-    if (!receivedEvents(await submitProof(api.tx.settlementUltraplonkPallet, alice, { 'Vk': VK }, PROOF, PUBS))) {
+    if (!receivedEvents(await submitProof(api.tx.settlementRisc0Pallet, alice, { 'Vk': VK }, PROOF, PUBS))) {
         return ReturnCode.ErrProofVerificationFailed;
     };
 
@@ -36,7 +36,7 @@ async function run(nodeName, networkInfo, _args) {
 
     console.log('Alice paid for a valid proof: ' + paidBalanceOnVerify);
 
-    const disableTx = api.tx.settlementUltraplonkPallet.disable(true);
+    const disableTx = api.tx.settlementRisc0Pallet.disable(true);
     const sudoDisableTx = api.tx.sudo.sudo(disableTx)
 
     if (!receivedEvents(await submitExtrinsic(api, sudoDisableTx, alice, BlockUntil.InBlock))) {
@@ -47,7 +47,7 @@ async function run(nodeName, networkInfo, _args) {
     console.log('Alice\'s balance before verify a proof on disabled verifier: ' + balanceAlice.toHuman());
 
     // This should fail
-    if (receivedEvents(await submitProof(api.tx.settlementUltraplonkPallet, alice, { 'Vk': VK }, PROOF, PUBS))) {
+    if (receivedEvents(await submitProof(api.tx.settlementRisc0Pallet, alice, { 'Vk': VK }, PROOF, PUBS))) {
         return ReturnCode.ErrVerifiedOnDisable;
     };
 
