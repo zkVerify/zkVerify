@@ -23,17 +23,17 @@ use frame_support::{
 };
 use frame_system::EnsureRoot;
 use polkadot_primitives::ValidatorId;
-use xcm::opaque::lts::Junction;
+use xcm::latest::{InteriorLocation, Junction};
 
 pub use polkadot_runtime_parachains::{
-    assigner_parachains as parachains_assigner_parachains, configuration,
+    assigner_coretime as parachains_assigner_coretime, configuration,
     configuration::ActiveConfigHrmpChannelSizeAndCapacityRatio,
-    disputes,
+    coretime, disputes,
     disputes::slashing,
-    dmp as parachains_dmp, hrmp, inclusion, initializer, origin as parachains_origin, paras,
-    paras_inherent, reward_points as parachains_reward_points,
+    dmp as parachains_dmp, hrmp, inclusion, initializer, on_demand, origin as parachains_origin,
+    paras, paras_inherent, reward_points as parachains_reward_points,
     runtime_api_impl::{
-        v10 as parachains_runtime_api_impl, vstaging as parachains_staging_runtime_api_impl,
+        v11 as parachains_runtime_api_impl, vstaging as parachains_staging_runtime_api_impl,
     },
     scheduler as parachains_scheduler, session_info as parachains_session_info,
     shared as parachains_shared,
@@ -43,29 +43,48 @@ pub use polkadot_runtime_common::{paras_registrar, paras_sudo_wrapper, slots, tr
 
 use super::{
     currency::Balance, weights, xcm_config, AccountId, Babe, Balances, BlockNumber, BlockWeights,
-    Historical, KeyOwnerProofSystem, KeyTypeId, MaxAuthorities, MessageQueue, Offences,
+    Coretime, Historical, KeyOwnerProofSystem, KeyTypeId, MaxAuthorities, MessageQueue, Offences,
     ParaInclusion, ParachainsAssignmentProvider, ParasDisputes, ParasSlashing, Perbill,
     ReportLongevity, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, Session, Weight,
 };
 use sp_runtime::transaction_validity::TransactionPriority;
 
 use crate::XcmPallet;
+use crate::{Get, PalletId};
 use inclusion::AggregateMessageOrigin;
 use sp_core::parameter_types;
+use sp_runtime::traits::AccountIdConversion;
 use sp_runtime::{FixedU128, Percent};
+
+#[cfg(feature = "fast-runtime")]
+pub const TIMESLICE_PERIOD: u32 = 20;
+#[cfg(not(feature = "fast-runtime"))]
+pub const TIMESLICE_PERIOD: u32 = 80;
 
 parameter_types! {
     pub const OnDemandTrafficDefaultValue: FixedU128 = FixedU128::from_u32(1);
+    // Keep 2 timeslices worth of revenue information.
+    pub const MaxHistoricalRevenue: BlockNumber = 2 * TIMESLICE_PERIOD;
+    pub const OnDemandPalletId: PalletId = PalletId(*b"zk/ondmd");
 }
 
-impl parachains_assigner_parachains::Config for Runtime {}
+impl on_demand::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type Currency = Balances;
+    type TrafficDefaultValue = OnDemandTrafficDefaultValue;
+    type WeightInfo = weights::parachains::on_demand::ZKVWeight<Runtime>;
+    type MaxHistoricalRevenue = MaxHistoricalRevenue;
+    type PalletId = OnDemandPalletId;
+}
+
+impl parachains_assigner_coretime::Config for Runtime {}
 
 impl initializer::Config for Runtime {
     type Randomness = pallet_babe::RandomnessFromOneEpochAgo<Runtime>;
     type ForceOrigin = EnsureRoot<AccountId>;
     type WeightInfo = weights::parachains::initializer::ZKVWeight<Runtime>;
 
-    type CoretimeOnNewSession = ();
+    type CoretimeOnNewSession = Coretime;
 }
 
 impl disputes::Config for Runtime {
@@ -151,7 +170,7 @@ impl paras::Config for Runtime {
     type QueueFootprinter = ParaInclusion;
     type NextSessionRotation = Babe;
     type OnNewHead = crate::Registrar;
-    type AssignCoretime = ();
+    type AssignCoretime = ParachainsAssignmentProvider;
     type WeightInfo = weights::parachains::paras::ZKVWeight<Runtime>;
 }
 
@@ -240,6 +259,39 @@ impl slots::Config for Runtime {
     type LeaseOffset = ();
     type ForceOrigin = EnsureRoot<Self::AccountId>;
     type WeightInfo = weights::parachains::slots::ZKVWeight<Runtime>;
+}
+
+parameter_types! {
+    pub const BrokerId: u32 = 0; // we do not have any broker
+    pub const BrokerPalletId: PalletId = PalletId(*b"zk/broke");
+    pub MaxXcmTransactWeight: Weight = Weight::from_parts(0, 0); // no xcm allowed
+}
+
+pub struct BrokerPot;
+impl Get<InteriorLocation> for BrokerPot {
+    fn get() -> InteriorLocation {
+        Junction::AccountId32 {
+            network: None,
+            id: BrokerPalletId::get().into_account_truncating(),
+        }
+        .into()
+    }
+}
+
+impl coretime::Config for Runtime {
+    type RuntimeOrigin = RuntimeOrigin;
+    type RuntimeEvent = RuntimeEvent;
+    type Currency = Balances;
+    type BrokerId = BrokerId;
+    type WeightInfo = weights::parachains::coretime::ZKVWeight<Runtime>;
+    type SendXcm = crate::xcm_config::XcmRouter;
+    type MaxXcmTransactWeight = MaxXcmTransactWeight;
+    type BrokerPotLocation = BrokerPot;
+    type AssetTransactor = crate::xcm_config::LocalAssetTransactor;
+    type AccountToLocation = xcm_builder::AliasesIntoAccountId32<
+        xcm_config::ThisNetwork,
+        <Runtime as frame_system::Config>::AccountId,
+    >;
 }
 
 /// All migrations that will run on the next runtime upgrade.

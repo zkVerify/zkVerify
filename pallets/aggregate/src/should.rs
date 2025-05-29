@@ -925,7 +925,7 @@ mod aggregate {
 
         assert_eq!(info.pays_fee, Pays::Yes);
         assert_eq!(
-            info.weight,
+            info.call_weight,
             MockWeightInfo::aggregate(MaxAggregationSize::get() as u32)
                 + MockDispatchAggregation::max_weight()
         );
@@ -1354,7 +1354,7 @@ mod register_domain {
         .get_dispatch_info();
 
         assert_eq!(info.pays_fee, Pays::Yes);
-        assert_eq!(info.weight, MockWeightInfo::register_domain());
+        assert_eq!(info.call_weight, MockWeightInfo::register_domain());
     }
 
     #[test]
@@ -1712,7 +1712,7 @@ mod unregister_domain {
         let info = Call::<Test>::unregister_domain { domain_id: 22 }.get_dispatch_info();
 
         assert_eq!(info.pays_fee, Pays::Yes);
-        assert_eq!(info.weight, MockWeightInfo::unregister_domain());
+        assert_eq!(info.call_weight, MockWeightInfo::unregister_domain());
     }
 }
 

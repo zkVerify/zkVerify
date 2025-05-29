@@ -30,7 +30,8 @@ EXIT_STATUS=0
 # Check operating system and set variables for binary name
 OS="$(uname)"
 ARCH="$(uname -m)"
-BASE_URL="https://github.com/paritytech/zombienet/releases/download/v1.3.109"
+# zombienet v1.3.128 provides @polkadot/api: "^14.3.1",
+BASE_URL="https://github.com/paritytech/zombienet/releases/download/v1.3.128"
 case "$OS" in
     "Linux")
         case "$ARCH" in

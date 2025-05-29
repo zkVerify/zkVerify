@@ -18,4 +18,19 @@
 #[allow(unused_imports)]
 use super::*;
 
-pub type Unreleased = (pallet_aggregate::migrations::v2::MigrateV1ToV2<Runtime>,);
+#[allow(unused_imports)]
+use super::parachains::*;
+
+use pallet_balances::WeightInfo;
+
+parameter_types! {
+        /// Weight for balance unreservations
+        pub BalanceTransferAllowDeath: Weight = weights::pallet_balances::ZKVWeight::<Runtime>::transfer_allow_death();
+}
+
+pub type Unreleased = (
+    pallet_aggregate::migrations::v2::MigrateV1ToV2<Runtime>,
+    parachains_shared::migration::MigrateToV1<Runtime>,
+    parachains_scheduler::migration::MigrateV2ToV3<Runtime>,
+    pallet_child_bounties::migration::MigrateV0ToV1<Runtime, BalanceTransferAllowDeath>,
+);

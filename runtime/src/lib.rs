@@ -22,6 +22,14 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+extern crate alloc;
+
+use alloc::{
+    borrow::Cow,
+    collections::{btree_map::BTreeMap, vec_deque::VecDeque},
+    vec::Vec,
+};
+
 use authority_discovery_primitives::AuthorityId as AuthorityDiscoveryId;
 use codec::MaxEncodedLen;
 use pallet_babe::AuthorityId as BabeId;
@@ -29,7 +37,7 @@ use pallet_grandpa::AuthorityId as GrandpaId;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, Get, OpaqueMetadata, H256};
 use sp_runtime::{
-    create_runtime_str, generic, impl_opaque_keys,
+    generic, impl_opaque_keys,
     traits::{
         AccountIdConversion, BlakeTwo256, Block as BlockT, Bounded, ConvertInto, IdentifyAccount,
         IdentityLookup, NumberFor, One, OpaqueKeys, Verify,
@@ -184,8 +192,8 @@ pub mod opaque {
 // https://docs.substrate.io/main-docs/build/upgrade#runtime-versioning
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-    spec_name: create_runtime_str!("tzkv-runtime"),
-    impl_name: create_runtime_str!("zkv-node"),
+    spec_name: Cow::Borrowed("tzkv-runtime"),
+    impl_name: Cow::Borrowed("zkv-node"),
     authoring_version: 1,
     // The version of the runtime specification. A full node will not attempt to use its native
     //   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
@@ -194,7 +202,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
     impl_version: 1,
     apis: RUNTIME_API_VERSIONS,
     transaction_version: 1,
-    state_version: 1,
+    system_version: 1,
 };
 
 /// This determines the average expected block time that we are targeting.
@@ -294,6 +302,7 @@ impl frame_system::Config for Runtime {
     type SS58Prefix = SS58Prefix;
     type MaxConsumers = frame_support::traits::ConstU32<16>;
     type SystemWeightInfo = weights::frame_system::ZKVWeight<Runtime>;
+    type ExtensionsWeightInfo = weights::frame_system_extensions::ZKVWeight<Runtime>;
 }
 
 parameter_types! {
@@ -405,6 +414,7 @@ impl pallet_balances::Config for Runtime {
     type MaxFreezes = MaxFreezes;
     type RuntimeHoldReason = RuntimeHoldReason;
     type RuntimeFreezeReason = RuntimeFreezeReason;
+    type DoneSlashHandler = ();
 }
 
 impl_opaque_keys! {
@@ -443,6 +453,7 @@ impl pallet_transaction_payment::Config for Runtime {
     type WeightToFee = ConstantMultiplier<Balance, TransactionPicosecondFee>;
     type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
     type FeeMultiplierUpdate = ZKVFeeUpdate<Self>;
+    type WeightInfo = weights::pallet_transaction_payment::ZKVWeight<Runtime>;
 }
 
 impl pallet_sudo::Config for Runtime {
@@ -541,6 +552,7 @@ impl pallet_treasury::Config for Runtime {
     type Paymaster = PayFromAccount<Balances, ZKVerifyTreasuryAccount>;
     type BalanceConverter = UnityAssetBalanceConversion;
     type PayoutPeriod = PayoutSpendPeriod;
+    type BlockNumberProvider = System;
     #[cfg(feature = "runtime-benchmarks")]
     type BenchmarkHelper = ();
 }
@@ -813,12 +825,32 @@ impl pallet_authorship::Config for Runtime {
     type EventHandler = Staking;
 }
 
-impl<C> frame_system::offchain::SendTransactionTypes<C> for Runtime
+impl<LocalCall> frame_system::offchain::CreateTransaction<LocalCall> for Runtime
+where
+    RuntimeCall: From<LocalCall>,
+{
+    type Extension = TxExtension;
+
+    fn create_transaction(call: RuntimeCall, extension: TxExtension) -> UncheckedExtrinsic {
+        UncheckedExtrinsic::new_transaction(call, extension)
+    }
+}
+
+impl<C> frame_system::offchain::CreateTransactionBase<C> for Runtime
 where
     RuntimeCall: From<C>,
 {
     type Extrinsic = UncheckedExtrinsic;
-    type OverarchingCall = RuntimeCall;
+    type RuntimeCall = RuntimeCall;
+}
+
+impl<LocalCall> frame_system::offchain::CreateInherent<LocalCall> for Runtime
+where
+    RuntimeCall: From<LocalCall>,
+{
+    fn create_inherent(call: RuntimeCall) -> UncheckedExtrinsic {
+        UncheckedExtrinsic::new_bare(call)
+    }
 }
 
 impl pallet_session::historical::Config for Runtime {
@@ -1018,8 +1050,8 @@ impl pallet_ismp::Config for Runtime {
     type Router = ModuleRouter;
     type Coprocessor = Coprocessor;
     type ConsensusClients = (ismp_grandpa::consensus::GrandpaConsensusClient<Runtime>,);
-    type WeightProvider = ();
     type OffchainDB = ();
+    type FeeHandler = pallet_ismp::fee_handler::WeightFeeHandler<()>;
 }
 
 impl pallet_hyperbridge_aggregations::Config for Runtime {
@@ -1185,7 +1217,9 @@ construct_runtime!(
         ParaSessionInfo: parachains::parachains_session_info = 111,
         ParasDisputes: parachains::disputes = 112,
         ParasSlashing: parachains::slashing = 113,
-        ParachainsAssignmentProvider: parachains::parachains_assigner_parachains = 114,
+        ParachainsAssignmentProvider: parachains::parachains_assigner_coretime = 114,
+        OnDemandAssignmentProvider: parachains::on_demand = 115,
+        Coretime: parachains::coretime = 116,
 
         // Parachain onboarding; visualization only, not intended for actual usage.
         Registrar: parachains::paras_registrar = 120,
@@ -1217,7 +1251,7 @@ pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 /// Block type as expected by this runtime.
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 /// The SignedExtension to the basic transaction logic.
-pub type SignedExtra = (
+pub type TxExtension = (
     frame_system::CheckNonZeroSender<Runtime>,
     frame_system::CheckSpecVersion<Runtime>,
     frame_system::CheckTxVersion<Runtime>,
@@ -1239,9 +1273,14 @@ type Migrations = (migrations::Unreleased, ParachainMigrations);
 
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic =
-    generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
+    generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, TxExtension>;
+/// Unchecked signature payload type as expected by this runtime.
+pub type UncheckedSignaturePayload =
+    generic::UncheckedSignaturePayload<Address, Signature, TxExtension>;
 /// The payload being signed in transactions.
-pub type SignedPayload = generic::SignedPayload<RuntimeCall, SignedExtra>;
+pub type SignedPayload = generic::SignedPayload<RuntimeCall, TxExtension>;
+/// Extrinsic type that has already been checked.
+pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, RuntimeCall, TxExtension>;
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<
     Runtime,
@@ -1261,6 +1300,7 @@ mod benches {
     define_benchmarks!(
         [frame_benchmarking, BaselineBench::<Runtime>]
         [frame_system, SystemBench::<Runtime>]
+        [frame_system_extensions, SystemExtensionsBench::<Runtime>]
         [pallet_balances, Balances]
         [pallet_bags_list, VoterList]
         [pallet_babe, Babe]
@@ -1281,11 +1321,15 @@ mod benches {
         [pallet_utility, Utility]
         [pallet_vesting, Vesting]
         [pallet_proxy, Proxy]
-        [pallet_aggregate, Aggregate]
-        [pallet_hyperbridge_aggregations, HyperbridgeAggregations]
+        [pallet_transaction_payment, TransactionPayment]
+        // hyperbridge
         [ismp_grandpa, IsmpGrandpa]
         [pallet_token_gateway, TokenGateway]
+        // our pallets
+        [pallet_aggregate, Aggregate]
         [pallet_claim, Claim]
+        [pallet_hyperbridge_aggregations, HyperbridgeAggregations]
+        // verifiers
         [pallet_fflonk_verifier, FflonkVerifierBench::<Runtime>]
         [pallet_groth16_verifier, Groth16VerifierBench::<Runtime>]
         [pallet_risc0_verifier, Risc0VerifierBench::<Runtime>]
@@ -1304,6 +1348,8 @@ mod benches {
         [parachains::initializer, Initializer]
         [parachains::paras, Paras]
         [parachains::paras_inherent, ParaInherent]
+        [parachains::on_demand, OnDemandAssignmentProvider]
+        [parachains::coretime, Coretime]
         [pallet_message_queue, MessageQueue]
         // xcm
         [pallet_xcm, xcm::XcmPalletBench::<Runtime>]
@@ -1320,10 +1366,14 @@ pub const BABE_GENESIS_EPOCH_CONFIG: sp_consensus_babe::BabeEpochConfiguration =
     };
 
 use polkadot_primitives::{
-    self as primitives, slashing, ApprovalVotingParams, CandidateEvent, CandidateHash,
-    CommittedCandidateReceipt, CoreState, DisputeState, ExecutorParams, GroupRotationInfo,
-    Id as ParaId, InboundDownwardMessage, InboundHrmpMessage, NodeFeatures, OccupiedCoreAssumption,
-    PersistedValidationData, ScrapedOnChainVotes, SessionIndex, SessionInfo, ValidationCode,
+    self as primitives, slashing,
+    vstaging::{
+        async_backing::BackingState, CandidateEvent,
+        CommittedCandidateReceiptV2 as CommittedCandidateReceipt, CoreState, ScrapedOnChainVotes,
+    },
+    ApprovalVotingParams, CandidateHash, CoreIndex, DisputeState, ExecutorParams,
+    GroupRotationInfo, Id as ParaId, InboundDownwardMessage, InboundHrmpMessage, NodeFeatures,
+    OccupiedCoreAssumption, PersistedValidationData, SessionIndex, SessionInfo, ValidationCode,
     ValidationCodeHash, ValidatorId, ValidatorIndex, PARACHAIN_KEY_TYPE_ID,
 };
 
@@ -1331,7 +1381,7 @@ use hp_dispatch::{Destination, DispatchAggregation};
 use pallet_hyperbridge_aggregations::{Params, ZKV_MODULE_ID};
 
 pub use polkadot_runtime_parachains::runtime_api_impl::{
-    v10 as parachains_runtime_api_impl, vstaging as parachains_staging_runtime_api_impl,
+    v11 as parachains_runtime_api_impl, vstaging as parachains_staging_runtime_api_impl,
 };
 
 // Used for testing purposes only.
@@ -1459,7 +1509,7 @@ impl_runtime_apis! {
 
     impl authority_discovery_primitives::AuthorityDiscoveryApi<Block> for Runtime {
         fn authorities() -> Vec<AuthorityDiscoveryId> {
-            polkadot_runtime_parachains::runtime_api_impl::v10::relevant_authority_ids::<Runtime>()
+            polkadot_runtime_parachains::runtime_api_impl::v11::relevant_authority_ids::<Runtime>()
         }
     }
 
@@ -1608,7 +1658,7 @@ impl_runtime_apis! {
         }
     }
 
-    #[api_version(10)]
+    #[api_version(12)]
     impl primitives::runtime_api::ParachainHost<Block> for Runtime {
         fn validators() -> Vec<ValidatorId> {
             parachains_runtime_api_impl::validators::<Runtime>()
@@ -1745,7 +1795,7 @@ impl_runtime_apis! {
             parachains_runtime_api_impl::minimum_backing_votes::<Runtime>()
         }
 
-        fn para_backing_state(para_id: ParaId) -> Option<primitives::async_backing::BackingState> {
+        fn para_backing_state(para_id: ParaId) -> Option<BackingState> {
             parachains_runtime_api_impl::backing_state::<Runtime>(para_id)
         }
 
@@ -1764,6 +1814,18 @@ impl_runtime_apis! {
         fn approval_voting_params() -> ApprovalVotingParams {
             parachains_runtime_api_impl::approval_voting_params::<Runtime>()
         }
+
+        fn claim_queue() -> BTreeMap<CoreIndex, VecDeque<ParaId>> {
+            parachains_runtime_api_impl::claim_queue::<Runtime>()
+        }
+
+        fn candidates_pending_availability(para_id: ParaId) -> Vec<CommittedCandidateReceipt<Hash>> {
+            parachains_runtime_api_impl::candidates_pending_availability::<Runtime>(para_id)
+        }
+
+        fn validation_code_bomb_limit() -> u32 {
+            parachains_staging_runtime_api_impl::validation_code_bomb_limit::<Runtime>()
+        }
     }
 
     #[cfg(feature = "runtime-benchmarks")]
@@ -1775,6 +1837,7 @@ impl_runtime_apis! {
             use frame_benchmarking::{baseline, Benchmarking, BenchmarkList};
             use frame_support::traits::StorageInfoTrait;
             use frame_system_benchmarking::Pallet as SystemBench;
+            use frame_system_benchmarking::extensions::Pallet as SystemExtensionsBench;
             use baseline::Pallet as BaselineBench;
             use pallet_election_provider_support_benchmarking::Pallet as ElectionProviderBench;
             use pallet_session_benchmarking::Pallet as SessionBench;
@@ -1804,10 +1867,11 @@ impl_runtime_apis! {
 
         fn dispatch_benchmark(
             config: frame_benchmarking::BenchmarkConfig
-        ) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
+        ) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, alloc::string::String> {
             use frame_benchmarking::{baseline, Benchmarking, BenchmarkBatch};
             use sp_storage::TrackedStorageKey;
             use frame_system_benchmarking::Pallet as SystemBench;
+            use frame_system_benchmarking::extensions::Pallet as SystemExtensionsBench;
             use baseline::Pallet as BaselineBench;
             use pallet_election_provider_support_benchmarking::Pallet as ElectionProviderBench;
             use pallet_session_benchmarking::Pallet as SessionBench;
@@ -1823,7 +1887,7 @@ impl_runtime_apis! {
 
             pub mod xcm {
                 use super::*;
-                use xcm::v4::{Asset, AssetId, Assets, Location, InteriorLocation, Junction, Junctions::Here, NetworkId, Response, Fungibility::Fungible};
+                use xcm::latest::{Asset, AssetId, Assets, Location, InteriorLocation, Junction, Junctions::Here, NetworkId, Response, Fungibility::Fungible};
                 use frame_benchmarking::BenchmarkError;
 
                 pub use pallet_xcm::benchmarking::Pallet as XcmPalletBench;

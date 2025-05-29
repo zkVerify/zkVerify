@@ -14,29 +14,35 @@
 // You should have received a copy of the GNU General Public License
 // along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
 
-#![allow(clippy::all)]
-
-use std::{collections::btree_map::BTreeMap, pin::Pin, sync::Arc, time::Duration};
+use std::{
+    collections::{BTreeMap, VecDeque},
+    pin::Pin,
+    sync::Arc,
+    time::Duration,
+};
 
 use async_trait::async_trait;
 use cumulus_primitives_core::{
     relay_chain::{
-        runtime_api::ParachainHost, Block as PBlock, BlockId, BlockNumber, CommittedCandidateReceipt, CoreState,
-        Hash as PHash, Header as PHeader, InboundHrmpMessage, OccupiedCoreAssumption, SessionIndex,
-        ValidationCodeHash, ValidatorId,
+        runtime_api::ParachainHost,
+        vstaging::{CommittedCandidateReceiptV2 as CommittedCandidateReceipt, CoreState},
+        Block as PBlock, BlockId, BlockNumber, CoreIndex, Hash as PHash, Header as PHeader,
+        InboundHrmpMessage, OccupiedCoreAssumption, SessionIndex, ValidationCodeHash, ValidatorId,
     },
     InboundDownwardMessage, ParaId, PersistedValidationData,
 };
 use cumulus_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayChainResult};
 use futures::{FutureExt, Stream, StreamExt};
+use service::{
+    CollatorPair, Configuration, FullBackend, FullClient, Handle, NewFull, TaskManager,
+};
 use sc_cli::{RuntimeVersion, SubstrateCli};
 use sc_client_api::{
     blockchain::BlockStatus, Backend, BlockchainEvents, HeaderBackend, ImportNotifications,
     StorageProof,
 };
 use sc_telemetry::TelemetryWorkerHandle;
-use service::{CollatorPair, Configuration, FullBackend, FullClient, Handle, NewFull, TaskManager};
-use sp_api::ProvideRuntimeApi;
+use sp_api::{CallApiAt, CallApiAtParams, CallContext, ProvideRuntimeApi};
 use sp_consensus::SyncOracle;
 use sp_core::Pair;
 use sp_state_machine::{Backend as StateBackend, StorageValue};
@@ -62,12 +68,7 @@ impl RelayChainInProcessInterface {
         sync_oracle: Arc<dyn SyncOracle + Send + Sync>,
         overseer_handle: Handle,
     ) -> Self {
-        Self {
-            full_client,
-            backend,
-            sync_oracle,
-            overseer_handle,
-        }
+        Self { full_client, backend, sync_oracle, overseer_handle }
     }
 }
 
@@ -82,10 +83,7 @@ impl RelayChainInterface for RelayChainInProcessInterface {
         para_id: ParaId,
         relay_parent: PHash,
     ) -> RelayChainResult<Vec<InboundDownwardMessage>> {
-        Ok(self
-            .full_client
-            .runtime_api()
-            .dmq_contents(relay_parent, para_id)?)
+        Ok(self.full_client.runtime_api().dmq_contents(relay_parent, para_id)?)
     }
 
     async fn retrieve_all_inbound_hrmp_channel_contents(
@@ -102,13 +100,12 @@ impl RelayChainInterface for RelayChainInProcessInterface {
     async fn header(&self, block_id: BlockId) -> RelayChainResult<Option<PHeader>> {
         let hash = match block_id {
             BlockId::Hash(hash) => hash,
-            BlockId::Number(num) => {
+            BlockId::Number(num) =>
                 if let Some(hash) = self.full_client.hash(num)? {
                     hash
                 } else {
-                    return Ok(None);
-                }
-            }
+                    return Ok(None)
+                },
         };
         let header = self.full_client.header(hash)?;
 
@@ -149,14 +146,12 @@ impl RelayChainInterface for RelayChainInProcessInterface {
         Ok(self
             .full_client
             .runtime_api()
-            .candidate_pending_availability(hash, para_id)?)
+            .candidate_pending_availability(hash, para_id)?
+            .map(|receipt| receipt.into()))
     }
 
     async fn session_index_for_child(&self, hash: PHash) -> RelayChainResult<SessionIndex> {
-        Ok(self
-            .full_client
-            .runtime_api()
-            .session_index_for_child(hash)?)
+        Ok(self.full_client.runtime_api().session_index_for_child(hash)?)
     }
 
     async fn validators(&self, hash: PHash) -> RelayChainResult<Vec<ValidatorId>> {
@@ -189,6 +184,23 @@ impl RelayChainInterface for RelayChainInProcessInterface {
 
     async fn finalized_block_hash(&self) -> RelayChainResult<PHash> {
         Ok(self.backend.blockchain().info().finalized_hash)
+    }
+
+    async fn call_runtime_api(
+        &self,
+        method_name: &'static str,
+        hash: PHash,
+        payload: &[u8],
+    ) -> RelayChainResult<Vec<u8>> {
+        Ok(self.full_client.call_api_at(CallApiAtParams {
+            at: hash,
+            function: method_name,
+            arguments: payload.to_vec(),
+            overlayed_changes: &Default::default(),
+            call_context: CallContext::Offchain,
+            recorder: &None,
+            extensions: &Default::default(),
+        })?)
     }
 
     async fn is_major_syncing(&self) -> RelayChainResult<bool> {
@@ -275,7 +287,13 @@ impl RelayChainInterface for RelayChainInProcessInterface {
         &self,
         relay_parent: PHash,
     ) -> RelayChainResult<Vec<CoreState<PHash, BlockNumber>>> {
-        Ok(self.full_client.runtime_api().availability_cores(relay_parent)?)
+        Ok(self
+            .full_client
+            .runtime_api()
+            .availability_cores(relay_parent)?
+            .into_iter()
+            .map(|core_state| core_state.into())
+            .collect::<Vec<_>>())
     }
 
     async fn candidates_pending_availability(
@@ -283,7 +301,20 @@ impl RelayChainInterface for RelayChainInProcessInterface {
         hash: PHash,
         para_id: ParaId,
     ) -> RelayChainResult<Vec<CommittedCandidateReceipt>> {
-        Ok(self.full_client.runtime_api().candidates_pending_availability(hash, para_id)?)
+        Ok(self
+            .full_client
+            .runtime_api()
+            .candidates_pending_availability(hash, para_id)?
+            .into_iter()
+            .map(|receipt| receipt.into())
+            .collect::<Vec<_>>())
+    }
+
+    async fn claim_queue(
+        &self,
+        hash: PHash,
+    ) -> RelayChainResult<BTreeMap<CoreIndex, VecDeque<ParaId>>> {
+        Ok(self.full_client.runtime_api().claim_queue(hash)?)
     }
 }
 
@@ -303,7 +334,7 @@ pub fn check_block_in_chain(
     let _lock = backend.get_import_lock().read();
 
     if backend.blockchain().status(hash)? == BlockStatus::InChain {
-        return Ok(BlockCheckStatus::InChain);
+        return Ok(BlockCheckStatus::InChain)
     }
 
     let listener = client.import_notification_stream();
@@ -321,10 +352,7 @@ fn build_polkadot_full_node(
 ) -> Result<(NewFull, Option<CollatorPair>), service::Error> {
     let (is_parachain_node, maybe_collator_key) = if parachain_config.role.is_authority() {
         let collator_key = CollatorPair::generate().0;
-        (
-            service::IsParachainNode::Collator(Box::new(collator_key.clone())),
-            Some(collator_key),
-        )
+        (service::IsParachainNode::Collator(Box::new(collator_key.clone())), Some(collator_key))
     } else {
         (service::IsParachainNode::FullNode, None)
     };
@@ -334,7 +362,6 @@ fn build_polkadot_full_node(
         service::NewFullParams {
             is_parachain_node,
             force_authoring_backoff: false,
-            jaeger_agent: None,
             telemetry_worker_handle,
 
             // Cumulus doesn't spawn PVF workers, so we can disable version checks.
@@ -350,6 +377,7 @@ fn build_polkadot_full_node(
             execute_workers_max_num: None,
             prepare_workers_hard_max_num: None,
             prepare_workers_soft_max_num: None,
+            enable_approval_voting_parallel: false,
         },
     )?;
 
@@ -363,10 +391,7 @@ pub fn build_inprocess_relay_chain(
     telemetry_worker_handle: Option<TelemetryWorkerHandle>,
     task_manager: &mut TaskManager,
     hwbench: Option<sc_sysinfo::HwBench>,
-) -> RelayChainResult<(
-    Arc<(dyn RelayChainInterface + 'static)>,
-    Option<CollatorPair>,
-)> {
+) -> RelayChainResult<(Arc<(dyn RelayChainInterface + 'static)>, Option<CollatorPair>)> {
     // This is essentially a hack, but we want to ensure that we send the correct node version
     // to the telemetry.
     polkadot_config.impl_version = zkv_cli::Cli::impl_version();
@@ -384,12 +409,9 @@ pub fn build_inprocess_relay_chain(
         full_node.client,
         full_node.backend,
         full_node.sync_service,
-        full_node
-            .overseer_handle
-            .clone()
-            .ok_or(RelayChainError::GenericError(
-                "Overseer not running in full node.".to_string(),
-            ))?,
+        full_node.overseer_handle.clone().ok_or(RelayChainError::GenericError(
+            "Overseer not running in full node.".to_string(),
+        ))?,
     ));
 
     task_manager.add_child(full_node.task_manager);
@@ -445,7 +467,7 @@ mod tests {
 
     #[test]
     fn returns_directly_for_available_block() {
-        let (mut client, block, relay_chain_interface) = build_client_backend_and_block();
+        let (client, block, relay_chain_interface) = build_client_backend_and_block();
         let hash = block.hash();
 
         block_on(client.import(BlockOrigin::Own, block)).expect("Imports the block");
@@ -461,7 +483,7 @@ mod tests {
 
     #[test]
     fn resolve_after_block_import_notification_was_received() {
-        let (mut client, block, relay_chain_interface) = build_client_backend_and_block();
+        let (client, block, relay_chain_interface) = build_client_backend_and_block();
         let hash = block.hash();
 
         block_on(async move {
@@ -470,10 +492,7 @@ mod tests {
             assert!(poll!(&mut future).is_pending());
 
             // Import the block that should fire the notification
-            client
-                .import(BlockOrigin::Own, block)
-                .await
-                .expect("Imports the block");
+            client.import(BlockOrigin::Own, block).await.expect("Imports the block");
 
             // Now it should have received the notification and report that the block was imported
             assert!(matches!(poll!(future), Poll::Ready(Ok(()))));
@@ -493,7 +512,7 @@ mod tests {
 
     #[test]
     fn do_not_resolve_after_different_block_import_notification_was_received() {
-        let (mut client, block, relay_chain_interface) = build_client_backend_and_block();
+        let (client, block, relay_chain_interface) = build_client_backend_and_block();
         let hash = block.hash();
 
         let ext = construct_transfer_extrinsic(
@@ -504,9 +523,7 @@ mod tests {
         );
         let mut block_builder = client.init_polkadot_block_builder();
         // Push an extrinsic to get a different block hash.
-        block_builder
-            .push_polkadot_extrinsic(ext)
-            .expect("Push extrinsic");
+        block_builder.push_polkadot_extrinsic(ext).expect("Push extrinsic");
         let block2 = block_builder.build().expect("Build second block").block;
         let hash2 = block2.hash();
 
@@ -518,20 +535,14 @@ mod tests {
             assert!(poll!(&mut future2).is_pending());
 
             // Import the block that should fire the notification
-            client
-                .import(BlockOrigin::Own, block2)
-                .await
-                .expect("Imports the second block");
+            client.import(BlockOrigin::Own, block2).await.expect("Imports the second block");
 
             // The import notification of the second block should not make this one finish
             assert!(poll!(&mut future).is_pending());
             // Now it should have received the notification and report that the block was imported
             assert!(matches!(poll!(future2), Poll::Ready(Ok(()))));
 
-            client
-                .import(BlockOrigin::Own, block)
-                .await
-                .expect("Imports the first block");
+            client.import(BlockOrigin::Own, block).await.expect("Imports the first block");
 
             // Now it should be ready
             assert!(matches!(poll!(future), Poll::Ready(Ok(()))));

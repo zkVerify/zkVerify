@@ -120,6 +120,9 @@ EXCLUDED_PALLETS=(
 
         # SLOW
         # "pallet_im_online" "frame_benchmarking" "frame_system" "pallet_balances" "pallet_staking"
+
+        # Manually disabled to keep artificial weights
+        "parachains::on_demand"
     )
 
 echo "[+] Benchmarking ${#SELECTED_PALLETS[@]} zkVerify pallets. (IGNORE SET [${#EXCLUDED_PALLETS[@]}])"

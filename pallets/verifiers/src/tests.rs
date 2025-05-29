@@ -140,7 +140,7 @@ mod register_should {
         let info = Call::<Test, FakeVerifier>::register_vk { vk: Box::new(42) }.get_dispatch_info();
 
         assert_eq!(info.pays_fee, Pays::Yes);
-        assert_eq!(info.weight, MockWeightInfo::register_vk(&43));
+        assert_eq!(info.call_weight, MockWeightInfo::register_vk(&43));
     }
 
     #[rstest]
@@ -419,7 +419,7 @@ mod submit_proof_should {
         .get_dispatch_info();
 
         assert_eq!(info.pays_fee, Pays::Yes);
-        assert_eq!(info.weight, expected_weight);
+        assert_eq!(info.call_weight, expected_weight);
     }
 
     #[test]

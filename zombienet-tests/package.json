@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "author": "HorizenLabs' Mainchain team",
   "dependencies": {
-    "@polkadot/api": "10.11.2",
+    "@polkadot/api": "^16.0.1",
     "keccak256": "^1.0.6",
     "zkv-lib": "file:./zkv-lib"
   },
