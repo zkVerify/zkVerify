@@ -143,11 +143,16 @@ prereqs
 # performance profiles
 declare -A cpu_profiles
 declare -A io_profiles
+
+# Default CPU profile for 'Relay' chain reference machine: aws.c7a.2xlarge
+# Default CPU profile for 'Para' chain reference machine: linode.g6-standard-8
 CPU_PROFILE="${CPU_PROFILE:-aws.c7a.2xlarge}"
 IO_PROFILE="${IO_PROFILE:-aws.ebs.io2_8000}"
+echo -e "\n==== INFO: Using CPU profile '${CPU_PROFILE}' and IO profile '${IO_PROFILE}' ====\n"
 
 # frequency in kHz
 cpu_profiles["aws.c7a.2xlarge"]="3500000"
+cpu_profiles["linode.g6-standard-8"]="2800000"
 cpu_profiles["unconfined"]="5389000"
 io_profiles["aws.ebs.io2_8000"]='{"read_io":97000,"write_io":97000,"read_bps":575438848,"write_bps":575438848}'
 io_profiles["unconfined"]='{"read_io":1000000000,"write_io":1000000000,"read_bps":53687091200,"write_bps":53687091200}'
