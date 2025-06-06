@@ -55,7 +55,6 @@ if [ "${USE_DOCKER}" = "false" ]; then
   # The executable to use.
   ZKV_NODE="${PROJECT_ROOT}/target/production/zkv-relay"
   ZKV_WASM="${PROJECT_ROOT}/target/production/wbuild/zkv-runtime/zkv_runtime.compact.compressed.wasm"
-  SKIP_LINES=2
 else
   IMAGE="zkverify"
   TAG="$(git rev-parse --short HEAD)"
@@ -80,7 +79,6 @@ else
 
   # Now PROJECT_ROOT become the docker folder
   PROJECT_ROOT="/data/benchmark"
-  SKIP_LINES=4
 fi
 
 DEFAULT_DEPLOY_WEIGHT_TEMPLATE="${PROJECT_ROOT}/relay-node/benchmarks/zkv-deploy-weight-template.hbs"
@@ -104,7 +102,6 @@ if [ "${ENABLE_PALLETS:-}" = "true" ]; then
       --list \
       --runtime "${ZKV_WASM}" \
       --genesis-builder=runtime | \
-      tail -n+${SKIP_LINES} | \
       cut -d',' -f1 | \
       sort | \
       uniq \
@@ -145,20 +142,25 @@ rm -f "${ERR_FILE:?err_unset}"
 
 # Benchmark each pallet.
 for PALLET in "${SELECTED_PALLETS[@]}"; do
+  if [ "${PALLET}" = "pallet" ]; then
+    # Skip header
+    continue
+  fi
+
   if is_pallet_excluded "${PALLET}"; then
     echo "[+] Skipping - $PALLET"
     continue
   fi
 
   PALLET_NAME="$(tr '_' '-' <<< "${PALLET}")"
-  MODULE_NAME=$(echo "${PALLET}.rs" | sed 's/^crate:://g' | sed 's/::/\//g');
+  MODULE_NAME=$(echo "${PALLET}.rs" | sed 's/ :: /\//g');
   WEIGHT_FILE="${WEIGHTS_FOLDER}/${MODULE_NAME}"
   mkdir -p "${MODULE_NAME}"
   echo "[+] Benchmarking $PALLET with weight file $WEIGHT_FILE"
 
   TEMPLATE="${WEIGTH_TEMPLATE}"
   # XCM pallet-xcm-benchmarks benchmarks need a different template
-  if [[ "${PALLET}" == xcm::pallet_xcm_benchmarks_* ]] ; then
+  if [[ "${PALLET}" == *pallet_xcm_benchmarks_* ]] ; then
     TEMPLATE="${WEIGTH_TEMPLATE_XCM}"
   fi
 

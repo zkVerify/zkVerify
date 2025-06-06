@@ -1959,7 +1959,7 @@ impl_runtime_apis! {
                     fn worst_case_holding(_depositable_count: u32) -> Assets {
                         vec![Asset {
                             id: AssetId(xcm_config::TokenLocation::get()),
-                            fun: Fungible(VFY),
+                            fun: Fungible(MILLIONS),
                         }].into()
                     }
                 }
@@ -2026,7 +2026,7 @@ impl_runtime_apis! {
                     fn fee_asset() -> Result<Asset, BenchmarkError> {
                         Ok(Asset {
                             id: xcm_config::FeeAssetId::get(),
-                            fun: Fungible(ExistentialDeposit::get()),
+                            fun: Fungible(MILLIONS),
                         })
                     }
 
