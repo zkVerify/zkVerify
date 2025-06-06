@@ -155,7 +155,6 @@ for PALLET in "${SELECTED_PALLETS[@]}"; do
   PALLET_NAME="$(tr '_' '-' <<< "${PALLET}")"
   MODULE_NAME=$(echo "${PALLET}.rs" | sed 's/ :: /\//g');
   WEIGHT_FILE="${WEIGHTS_FOLDER}/${MODULE_NAME}"
-  mkdir -p "${MODULE_NAME}"
   echo "[+] Benchmarking $PALLET with weight file $WEIGHT_FILE"
 
   TEMPLATE="${WEIGTH_TEMPLATE}"
