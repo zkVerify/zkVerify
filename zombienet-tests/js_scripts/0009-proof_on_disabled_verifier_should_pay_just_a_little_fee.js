@@ -10,7 +10,7 @@ const ReturnCode = {
 };
 
 const { init_api, submitProof, getBalance, receivedEvents, submitExtrinsic } = require('zkv-lib')
-const {PROOF, PUBS, VK} = require('./risc0_v2_0_data.js');
+const {PROOF, PUBS, VK} = require('./risc0_v2_1_data.js');
 
 // Calling verify on a disable verifier should cost at most 1/FACTOR times the cost of the proof.
 const FACTOR = 70;
