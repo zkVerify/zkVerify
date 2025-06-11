@@ -137,6 +137,20 @@ mod proxy;
 mod tests;
 mod weights;
 
+pub(crate) mod weight_aliases {
+    pub mod pallet_plonky2_verifier_verify_proof {
+        pub use pallet_plonky2_verifier::WeightInfoVerifyProof as WeightInfo;
+    }
+
+    pub mod pallet_risc0_verifier_verify_proof {
+        pub use pallet_risc0_verifier::WeightInfoVerifyProof as WeightInfo;
+    }
+
+    pub mod frame_system_extensions {
+        pub use frame_system::ExtensionsWeightInfo as WeightInfo;
+    }
+}
+
 /// An index to a block.
 pub type BlockNumber = u32;
 

@@ -53,11 +53,12 @@
 use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use core::marker::PhantomData;
 use crate::parachains;
+use crate::weight_aliases::*;
 
 /// Weights for `frame_system_extensions` using the zkVerify node and recommended hardware.
 pub struct ZKVWeight<T>(PhantomData<T>);
 
-impl<T: frame_system::Config> frame_system::ExtensionsWeightInfo for ZKVWeight<T> {
+impl<T: frame_system::Config> frame_system_extensions::WeightInfo for ZKVWeight<T> {
     fn check_genesis() -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `30`
