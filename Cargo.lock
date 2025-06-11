@@ -14795,9 +14795,9 @@ dependencies = [
 
 [[package]]
 name = "risc0-circuit-rv32im"
-version = "2.0.3"
+version = "2.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "23f6ed144d8b8f93c4a6096e3dd90f9dcbd91eff83eae690a72fd6e640760b94"
+checksum = "c80e0a8f0f56106295bb682dbc27093438e163a5f6384a79e877ab895a11d9ae"
 dependencies = [
  "anyhow",
  "bit-vec",
@@ -14844,8 +14844,8 @@ dependencies = [
 
 [[package]]
 name = "risc0-verifier"
-version = "0.6.0"
-source = "git+https://github.com/zkVerify/risc0-verifier.git?tag=v0.6.0#5f658527cdeb53199c9dd694d84a03b8526b7d27"
+version = "0.7.0"
+source = "git+https://github.com/zkVerify/risc0-verifier.git?tag=v0.7.0#968365aa398c5fad0f94be15320202cc36455675"
 dependencies = [
  "anyhow",
  "bytemuck",
@@ -14853,7 +14853,7 @@ dependencies = [
  "log",
  "risc0-binfmt 1.2.6",
  "risc0-circuit-rv32im 1.2.6",
- "risc0-circuit-rv32im 2.0.3",
+ "risc0-circuit-rv32im 2.0.4",
  "risc0-core 1.2.6",
  "risc0-core 2.0.0",
  "risc0-zkp 1.2.6",

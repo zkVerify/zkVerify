@@ -61,3 +61,13 @@ pub mod v2_0 {
 
     pub static VALID_PUBS: &[u8] = &hex_literal::hex!("08003c0000000000");
 }
+
+pub mod v2_1 {
+    pub static VALID_VK: sp_core::H256 = sp_core::H256(hex_literal::hex!(
+        "8e3794e8255e7810de2be7710fe19f79e538de060f038a21b24529e28d0b744c"
+    ));
+
+    pub static VALID_PROOF: &[u8] = include_bytes!("resources/v_2_1_succinct_22.bin");
+
+    pub static VALID_PUBS: &[u8] = &hex_literal::hex!("00003c0000000000");
+}
