@@ -17,17 +17,15 @@
 #![allow(unused_imports)]
 #![allow(missing_docs)]
 
+use crate::weight_aliases::*;
 use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use core::marker::PhantomData;
+use crate::parachains;
 
 /// Weights for `{{pallet}}` using the zkVerify node and recommended hardware.
 pub struct ZKVWeight<T>(PhantomData<T>);
 
-{{#if (eq pallet "frame_system_extensions")}}
-impl<T: frame_system::Config> frame_system::ExtensionsWeightInfo for ZKVWeight<T> {
-{{else}}
 impl<T: frame_system::Config> {{pallet}}::WeightInfo for ZKVWeight<T> {
-{{/if}}
     {{#each benchmarks as |benchmark|}}
     {{#each benchmark.comments as |comment|}}
     /// {{comment}}
@@ -44,7 +42,12 @@ impl<T: frame_system::Config> {{pallet}}::WeightInfo for ZKVWeight<T> {
         //  Measured:  `{{benchmark.base_recorded_proof_size}}{{#each benchmark.component_recorded_proof_size as |cp|}} + {{cp.name}} * ({{cp.slope}} ±{{underscore cp.error}}){{/each}}`
         //  Estimated: `{{benchmark.base_calculated_proof_size}}{{#each benchmark.component_calculated_proof_size as |cp|}} + {{cp.name}} * ({{cp.slope}} ±{{underscore cp.error}}){{/each}}`
         // Minimum execution time: {{underscore benchmark.min_execution_time}}_000 picoseconds.
+        {{#if (eq benchmark.name "enact_candidate")}}
+        // Using recorded proof size instead of calculated, as the latter is broken for this benchmark.
+        Weight::from_parts({{underscore benchmark.base_weight}}, {{benchmark.base_recorded_proof_size}})
+        {{else}}
         Weight::from_parts({{underscore benchmark.base_weight}}, {{benchmark.base_calculated_proof_size}})
+        {{/if}}
             {{#each benchmark.component_weight as |cw|}}
             // Standard Error: {{underscore cw.error}}
             .saturating_add(Weight::from_parts({{underscore cw.slope}}, 0).saturating_mul({{cw.name}}.into()))

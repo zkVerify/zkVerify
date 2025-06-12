@@ -262,7 +262,7 @@ impl slots::Config for Runtime {
 }
 
 parameter_types! {
-    pub const BrokerId: u32 = 0; // we do not have any broker
+    pub const BrokerId: u32 = 9999; // we do not have any broker, can be any random, but 0!
     pub const BrokerPalletId: PalletId = PalletId(*b"zk/broke");
     pub MaxXcmTransactWeight: Weight = Weight::from_parts(0, 0); // no xcm allowed
 }

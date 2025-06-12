@@ -286,8 +286,7 @@ impl<T> xcm::latest::XcmWeightInfo<T> for ZKVWeight<T> {
         XcmGenericWeight::<Runtime>::unpaid_execution()
     }
     fn pay_fees(_asset: &Asset) -> Weight {
-        unimplemented!("This should probably be implemented!")
-        //XcmGenericWeight::<Runtime>::pay_fees()
+        XcmGenericWeight::<Runtime>::pay_fees()
     }
     fn initiate_transfer(
         _dest: &Location,

@@ -137,6 +137,20 @@ mod proxy;
 mod tests;
 mod weights;
 
+pub(crate) mod weight_aliases {
+    pub mod pallet_plonky2_verifier_verify_proof {
+        pub use pallet_plonky2_verifier::WeightInfoVerifyProof as WeightInfo;
+    }
+
+    pub mod pallet_risc0_verifier_verify_proof {
+        pub use pallet_risc0_verifier::WeightInfoVerifyProof as WeightInfo;
+    }
+
+    pub mod frame_system_extensions {
+        pub use frame_system::ExtensionsWeightInfo as WeightInfo;
+    }
+}
+
 /// An index to a block.
 pub type BlockNumber = u32;
 
@@ -1959,7 +1973,7 @@ impl_runtime_apis! {
                     fn worst_case_holding(_depositable_count: u32) -> Assets {
                         vec![Asset {
                             id: AssetId(xcm_config::TokenLocation::get()),
-                            fun: Fungible(VFY),
+                            fun: Fungible(MILLIONS),
                         }].into()
                     }
                 }
@@ -2026,7 +2040,7 @@ impl_runtime_apis! {
                     fn fee_asset() -> Result<Asset, BenchmarkError> {
                         Ok(Asset {
                             id: xcm_config::FeeAssetId::get(),
-                            fun: Fungible(ExistentialDeposit::get()),
+                            fun: Fungible(MILLIONS),
                         })
                     }
 
