@@ -1,14 +1,23 @@
 name: Docker image build and publish
 
-run-name: "Workflow CI/CD Steps: Docker image build and publish"
+run-name: "Workflow Release Steps: build docker images, publish them, create release and notify on slack"
 
 on:
   workflow_call:
     inputs:
+      release_name:
+        description: "The release name"
+        required: true
+        type: string
       release_branch:
         description: "Github branch name release can be created from"
         required: true
         type: string
+      dry_run:
+        description: "Dry run execution"
+        required: true
+        type: boolean
+        default: false
     secrets:
       DOCKER_HUB_USERNAME:
         required: true
@@ -36,6 +45,29 @@ jobs:
           ref: ${{ github.ref }}
           docker_hub_org: ${{ env.DOCKER_HUB_ORG }}
           docker_image_name: ${{ env.DOCKER_IMAGE_BUILD_NAME }}
+          dry_run: ${{ inputs.dry_run }}
+
+    outputs:
+      artifact_name: ${{ steps.build-docker-image.outputs.artifact_name }}
+
+  build-docker-fastruntime:
+    runs-on: warp-ubuntu-latest-x64-8x
+    name: Build Docker Image relay with fast-runtime
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Docker build
+        id: build-docker-image
+        uses: ./.github/actions/build-docker-image
+        with:
+          ref: ${{ github.ref }}
+          profile: release
+          docker_image_suffix: '-fastruntime'
+          features: fast-runtime
+          docker_hub_org: ${{ env.DOCKER_HUB_ORG }}
+          docker_image_name: ${{ env.DOCKER_IMAGE_BUILD_NAME }}
+          dry_run: ${{ inputs.dry_run }}
 
     outputs:
       artifact_name: ${{ steps.build-docker-image.outputs.artifact_name }}
@@ -65,6 +97,7 @@ jobs:
           DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
         shell: bash
         run: |
+          export DRY_RUN=${{ inputs.dry_run }}
           # shellcheck disable=SC1090
           source "${GITHUB_WORKSPACE}/ci/setup_env.sh"
           "${GITHUB_WORKSPACE}/ci/publish-docker-image.sh" --image-artifact ${{ needs.build-docker.outputs.artifact_name }}
@@ -77,7 +110,63 @@ jobs:
           retention-days: 7
           overwrite: true
 
+  publish-docker-image-fastruntime:
+    runs-on: warp-ubuntu-latest-x64-2x
+    name: Publish Docker Image relay fast-runtime
+    needs: [ build-docker-fastruntime ]
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+
+      - name: Download zkVerify Docker image fastruntime artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-docker-fastruntime.outputs.artifact_name }}
+          path: ./
+
+      - name: Publish fast-runtime Docker image(s)
+        env:
+          RELEASE_BRANCH: ${{ inputs.release_branch }}
+          MAINTAINERS_KEYS: ${{ vars.MAINTAINERS_KEYS }}
+          DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+          DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
+        shell: bash
+        run: |
+          export DRY_RUN=${{ inputs.dry_run }}
+          export FAST_RUNTIME_RELEASE="true"
+          # shellcheck disable=SC1090
+          source "${GITHUB_WORKSPACE}/ci/setup_env.sh"
+          "${GITHUB_WORKSPACE}/ci/publish-docker-image.sh" --image-artifact ${{ needs.build-docker-fastruntime.outputs.artifact_name }}
+
+  release:
+    runs-on: warp-ubuntu-latest-x64-2x
+    name: Create release
+    needs: [ publish-docker-image, publish-docker-image-fastruntime ]
+    steps:
+      - name: Retrieve saved runtime wasm
+        uses: actions/download-artifact@v4
+        with:
+          name: "zkv_runtime.relay.compact.compressed.wasm"
+          path: wasm
+
+      - name: Create Release
+        id: create-release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ inputs.release_name }}
+          generate_release_notes: true
+          draft: ${{ inputs.dry_run }}
+          prerelease: false
+          files: |
+            wasm/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Notify Slack Production Releases
+        if: ${{ inputs.dry_run == false }}
         uses: slackapi/slack-github-action@v1.25.0
         with:
           payload: |

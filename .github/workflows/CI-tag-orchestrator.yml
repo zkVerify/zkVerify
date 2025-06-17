@@ -1,19 +1,17 @@
 name: Tag-orchestrator
-
 on:
   push:
     tags:
       - "[0-9]+.[0-9]+.[0-9]+-[0-9]+.[0-9]+.[0-9]+*"
 
 jobs:
-  docker-image:
-    name: Docker image
-    strategy:
-      fail-fast: false
-
-    uses: ./.github/workflows/CI-docker-build-publish.yml
+  release:
+    name: Create artifacts and release them
+    uses: ./.github/workflows/CI-release.yml
     with:
+      release_name: "Release ${{ github.ref_name }}"
       release_branch: release
+      dry_run: ${{ vars.TAG_RELEASE_DRY_RUN == 'true' }}
     secrets:
       DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
       DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}

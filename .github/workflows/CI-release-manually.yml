@@ -1,0 +1,32 @@
+name: Create Release
+
+run-name: "Create a release : manually triggerable"
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_name:
+        description: "The release name"
+        required: true
+        type: string
+      release_branch:
+        description: "Github branch name release can be created from"
+        required: true
+        type: string
+      dry_run:
+        description: "Dry run execution"
+        required: true
+        type: boolean
+        default: false
+jobs:
+  release:
+    name: Create artifacts and release them
+    uses: ./.github/workflows/CI-release.yml
+    with:
+      release_name: ${{ inputs.release_name }}
+      release_branch: ${{ inputs.release_branch }}
+      dry_run: ${{ inputs.dry_run }}
+    secrets:
+      DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+      DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
+      RELEASES_PROD_SLACK_WEBHOOK_URL: ${{ secrets.RELEASES_PROD_SLACK_WEBHOOK_URL }}
