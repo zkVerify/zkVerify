@@ -16,8 +16,8 @@
 //! Verification Key to be morphed into `plonky2` variant.
 
 use crate::Config;
-use sp_std::marker::PhantomData;
-use sp_std::vec::Vec;
+use alloc::vec::Vec;
+use core::marker::PhantomData;
 
 use codec::{Decode, Encode, MaxEncodedLen};
 use educe::Educe;

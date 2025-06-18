@@ -180,7 +180,6 @@ sp-runtime = { version = "40.1.0", default-features = false, features = [
 sp-runtime-interface = { version = "29.0.0", default-features = false }
 sp-session = { version = "37.0.0", default-features = false }
 sp-staking = { version = "37.0.0", default-features = false }
-sp-std = { version = "14.0.0", default-features = false }
 sp-storage = { version = "22.0.0", default-features = false }
 sp-transaction-pool = { version = "35.0.0", default-features = false }
 sp-version = { version = "38.0.0", default-features = false, features = [

@@ -17,12 +17,12 @@
 
 //! This module contains a dummy circuit for Groth16 verification.
 
+use alloc::vec::Vec;
 use ark_crypto_primitives::snark::SNARK;
 use ark_ec::pairing::Pairing;
 use ark_ff::PrimeField;
 use ark_relations::r1cs::{ConstraintSynthesizer, ConstraintSystemRef, SynthesisError};
 use ark_std::{rand::rngs::StdRng, rand::SeedableRng, UniformRand};
-use sp_std::vec::Vec;
 
 use crate::{Proof, Scalar, VerificationKey};
 

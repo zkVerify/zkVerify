@@ -23,7 +23,6 @@ frame-support = { workspace = true }
 frame-system = { workspace = true }
 frame-benchmarking = { workspace = true, optional = true }
 sp-core = { workspace = true }
-sp-std = { workspace = true }
 sp-runtime = { workspace = true }
 
 hp-on-proof-verified = { workspace = true }
@@ -61,9 +60,7 @@ std = [
 	"log/std",
 	"pallet-balances/std",
 	"sp-io/std",
-	"sp-std/std",
 	"hp-on-proof-verified/std",
-	"sp-std/std",
 	"ismp/std",
 	"hp-dispatch/std"
 ]

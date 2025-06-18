@@ -19,12 +19,14 @@
 //! The traits and basic implementations for the verifier pallets based on `pallet-verifiers`
 //! parametric pallet.
 
+extern crate alloc;
+
+use alloc::borrow::Cow;
 use codec::{Decode, Encode, EncodeLike};
+use core::fmt::Debug;
 use hex_literal::hex;
 use scale_info::TypeInfo;
 use sp_core::{MaxEncodedLen, H256};
-pub use sp_std::borrow::Cow;
-use sp_std::fmt::Debug;
 use sp_weights::Weight;
 
 /// No version provided.

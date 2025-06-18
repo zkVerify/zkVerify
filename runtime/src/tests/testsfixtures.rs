@@ -18,7 +18,6 @@ use frame_support::traits::Hooks;
 use sp_consensus_babe::Slot;
 use sp_core::{crypto::VrfSecret, Pair, Public};
 use sp_runtime::{Digest, DigestItem};
-use sp_std::sync::LazyLock;
 
 use crate::{currency, Balance, EXISTENTIAL_DEPOSIT};
 
@@ -169,7 +168,7 @@ pub fn test() -> sp_io::TestExternalities {
             .cloned()
             .map(|user| (user.raw_account.into(), user.starting_balance))
             .collect(),
-        genesis_balance: *TOTAL_BALANCE,
+        genesis_balance: total_balances(),
     }
     .assimilate_storage(&mut t)
     .unwrap();
@@ -225,9 +224,9 @@ pub static SAMPLE_USERS: [SampleAccount; NUM_TEST_ACCOUNTS as usize] = [
     },
 ];
 
-pub static TOTAL_BALANCE: LazyLock<Balance> = LazyLock::new(|| {
+pub fn total_balances() -> Balance {
     SAMPLE_USERS
         .iter()
         .map(|account| account.starting_balance)
         .sum()
-});
+}

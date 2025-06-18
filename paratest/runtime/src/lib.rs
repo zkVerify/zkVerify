@@ -11,6 +11,7 @@ pub mod xcm_config;
 
 extern crate alloc;
 use alloc::borrow::Cow;
+use alloc::{vec, vec::Vec};
 use cumulus_pallet_parachain_system::RelayNumberMonotonicallyIncreases;
 use pallet_aura::Authorities;
 use smallvec::smallvec;
@@ -23,7 +24,6 @@ use sp_runtime::{
     ApplyExtrinsicResult, MultiSignature,
 };
 
-use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
@@ -661,7 +661,7 @@ impl_runtime_apis! {
             Runtime::metadata_at_version(version)
         }
 
-        fn metadata_versions() -> sp_std::vec::Vec<u32> {
+        fn metadata_versions() -> Vec<u32> {
             Runtime::metadata_versions()
         }
     }
@@ -855,12 +855,12 @@ impl_runtime_apis! {
 
 #[cfg(feature = "runtime-benchmarks")]
 mod runtime_benchmarking_extra_config {
+    use crate::Runtime;
+    use alloc::vec::Vec;
     use frame_benchmarking::BenchmarkError;
 
-    use crate::Runtime;
-
     impl frame_system_benchmarking::Config for Runtime {
-        fn setup_set_code_requirements(code: &sp_std::vec::Vec<u8>) -> Result<(), BenchmarkError> {
+        fn setup_set_code_requirements(code: &Vec<u8>) -> Result<(), BenchmarkError> {
             crate::ParachainSystem::initialize_for_set_code_benchmark(code.len() as u32);
             Ok(())
         }

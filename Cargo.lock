@@ -102,7 +102,6 @@ dependencies = [
  "sp-api",
  "sp-core",
  "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
@@ -6005,7 +6004,6 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
@@ -6029,7 +6027,6 @@ dependencies = [
  "rstest_reuse",
  "scale-info",
  "sp-runtime-interface",
- "sp-std",
 ]
 
 [[package]]
@@ -6050,7 +6047,6 @@ dependencies = [
  "scale-info",
  "sp-core",
  "sp-io",
- "sp-std",
  "sp-weights",
 ]
 
@@ -9235,7 +9231,6 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
@@ -9705,7 +9700,6 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
@@ -10097,7 +10091,6 @@ dependencies = [
  "scale-info",
  "sp-core",
  "sp-io",
- "sp-std",
 ]
 
 [[package]]
@@ -10137,7 +10130,6 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
@@ -10622,7 +10614,6 @@ dependencies = [
  "scale-info",
  "sp-core",
  "sp-io",
- "sp-std",
 ]
 
 [[package]]
@@ -10660,7 +10651,6 @@ dependencies = [
  "scale-info",
  "sp-core",
  "sp-io",
- "sp-std",
 ]
 
 [[package]]
@@ -10765,7 +10755,6 @@ dependencies = [
  "scale-info",
  "sp-core",
  "sp-io",
- "sp-std",
 ]
 
 [[package]]
@@ -11231,7 +11220,6 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std",
  "ultraplonk-no-std",
 ]
 
@@ -11285,7 +11273,6 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
@@ -11601,7 +11588,6 @@ dependencies = [
  "sp-offchain",
  "sp-runtime",
  "sp-session",
- "sp-std",
  "sp-transaction-pool",
  "sp-version",
  "staging-parachain-info",
@@ -19945,7 +19931,6 @@ dependencies = [
  "sp-runtime",
  "sp-session",
  "sp-staking",
- "sp-std",
  "sp-transaction-pool",
  "sp-trie",
  "sp-version",
@@ -22560,7 +22545,6 @@ dependencies = [
  "sp-runtime",
  "sp-session",
  "sp-staking",
- "sp-std",
  "sp-storage",
  "sp-transaction-pool",
  "sp-version",

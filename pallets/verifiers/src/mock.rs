@@ -98,6 +98,7 @@ pub mod on_proof_verified {
 
 pub mod fake_pallet {
     use super::*;
+    use alloc::borrow::Cow;
 
     pub const PROOF_WITH_FAKE_VERSION_LOWER_BOUND: u64 = 1000;
 
@@ -173,8 +174,8 @@ pub mod fake_pallet {
             }
         }
 
-        fn pubs_bytes(pubs: &Self::Pubs) -> sp_std::borrow::Cow<[u8]> {
-            sp_std::borrow::Cow::Owned(pubs.to_be_bytes().into())
+        fn pubs_bytes(pubs: &Self::Pubs) -> Cow<[u8]> {
+            Cow::Owned(pubs.to_be_bytes().into())
         }
 
         fn verifier_version_hash(proof: &Self::Proof) -> sp_core::H256 {

@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use core::marker::PhantomData;
+use core::{cmp::PartialEq, fmt::Debug, marker::PhantomData, ops::Add};
 
 use codec::{Decode, Encode, MaxEncodedLen};
 use educe::Educe;
@@ -91,11 +91,7 @@ impl<T: Get<AggregationSize>> Get<u32> for VecSize<T> {
 /// - `A`: The type of the account identifier.
 /// - `B`: The type of the balance.
 /// - `S`: The type of the maximum aggregation size.
-pub struct AggregationEntry<
-    A: sp_std::fmt::Debug + sp_std::cmp::PartialEq,
-    B: sp_std::fmt::Debug + sp_std::cmp::PartialEq,
-    S: Get<AggregationSize>,
-> {
+pub struct AggregationEntry<A: Debug + PartialEq, B: Debug + PartialEq, S: Get<AggregationSize>> {
     /// The unique identifier (in the domain) of the aggregation.
     pub id: u64,
     /// The maximum number of statements that this aggregation can aggregate: should be less or equal
@@ -105,11 +101,8 @@ pub struct AggregationEntry<
     pub statements: BoundedVec<StatementEntry<A, B>, VecSize<S>>,
 }
 
-impl<
-        A: sp_std::fmt::Debug + sp_std::cmp::PartialEq,
-        B: sp_std::fmt::Debug + sp_std::cmp::PartialEq,
-        S: Get<AggregationSize>,
-    > AggregationEntry<A, B, S>
+impl<A: Debug + PartialEq, B: Debug + PartialEq, S: Get<AggregationSize>>
+    AggregationEntry<A, B, S>
 {
     fn new(
         id: u64,
@@ -182,11 +175,8 @@ pub enum DomainState {
     Removed,
 }
 
-impl<
-        A: sp_std::fmt::Debug + sp_std::cmp::PartialEq,
-        B: sp_std::fmt::Debug + sp_std::cmp::PartialEq,
-        S: Get<AggregationSize>,
-    > Default for AggregationEntry<A, B, S>
+impl<A: Debug + PartialEq, B: Debug + PartialEq, S: Get<AggregationSize>> Default
+    for AggregationEntry<A, B, S>
 {
     fn default() -> Self {
         Self::create(1, S::get())
@@ -206,7 +196,7 @@ pub enum AggregateSecurityRules {
 
 /// Delivering aggregations data
 #[derive(Clone, PartialEq, Eq, Encode, Decode, TypeInfo, MaxEncodedLen, Debug)]
-pub struct Delivery<B: sp_std::fmt::Debug + sp_std::cmp::PartialEq> {
+pub struct Delivery<B: Debug + PartialEq> {
     /// Destination
     pub destination: Destination,
     /// fee
@@ -215,7 +205,7 @@ pub struct Delivery<B: sp_std::fmt::Debug + sp_std::cmp::PartialEq> {
     pub owner_tip: B,
 }
 
-impl<B: sp_std::fmt::Debug + sp_std::cmp::PartialEq> Delivery<B> {
+impl<B: Debug + PartialEq> Delivery<B> {
     pub fn new(destination: Destination, fee: B, owner_tip: B) -> Self {
         Self {
             destination,
@@ -227,7 +217,7 @@ impl<B: sp_std::fmt::Debug + sp_std::cmp::PartialEq> Delivery<B> {
     /// Get the total delivery fee (delivery fee + owner tip)
     pub fn total_fee(&self) -> B
     where
-        B: sp_std::ops::Add<Output = B> + sp_std::clone::Clone,
+        B: Add<Output = B> + Clone,
     {
         self.fee.clone() + self.owner_tip.clone()
     }
@@ -235,14 +225,14 @@ impl<B: sp_std::fmt::Debug + sp_std::cmp::PartialEq> Delivery<B> {
 
 /// Configuration for delivering aggregations
 #[derive(Clone, PartialEq, Eq, Encode, Decode, TypeInfo, MaxEncodedLen, Debug)]
-pub struct DeliveryParams<A, B: sp_std::fmt::Debug + sp_std::cmp::PartialEq> {
+pub struct DeliveryParams<A, B: Debug + PartialEq> {
     /// The delivery channel owner
     pub owner: A,
     /// The delivery data
     data: Delivery<B>,
 }
 
-impl<A, B: sp_std::fmt::Debug + sp_std::cmp::PartialEq> DeliveryParams<A, B> {
+impl<A, B: Debug + PartialEq> DeliveryParams<A, B> {
     pub fn new(owner: A, data: Delivery<B>) -> Self {
         Self { owner, data }
     }
@@ -271,7 +261,7 @@ impl<A, B: sp_std::fmt::Debug + sp_std::cmp::PartialEq> DeliveryParams<A, B> {
     /// Get the total delivery fee (fee + tip)
     pub fn total_fee(&self) -> B
     where
-        B: Clone + sp_std::ops::Add<Output = B>,
+        B: Clone + Add<Output = B>,
     {
         self.data.total_fee()
     }
@@ -294,8 +284,8 @@ impl<A, B: sp_std::fmt::Debug + sp_std::cmp::PartialEq> DeliveryParams<A, B> {
 /// - `T`: The type of consideration ticket used to hold the balance for the space used
 ///   by domain storage.
 pub struct DomainEntry<
-    A: sp_std::fmt::Debug + sp_std::cmp::PartialEq,
-    B: sp_std::fmt::Debug + sp_std::cmp::PartialEq,
+    A: Debug + PartialEq,
+    B: Debug + PartialEq,
     S: Get<AggregationSize>,
     M: Get<u32>,
     T: Encode + Decode + TypeInfo + MaxEncodedLen,
@@ -324,8 +314,8 @@ pub struct DomainEntry<
 }
 
 impl<
-        A: sp_std::fmt::Debug + sp_std::cmp::PartialEq,
-        B: sp_std::fmt::Debug + sp_std::cmp::PartialEq,
+        A: Debug + PartialEq,
+        B: Debug + PartialEq,
         S: Get<AggregationSize>,
         M: Get<u32>,
         Ticket: Encode + Decode + TypeInfo + MaxEncodedLen,

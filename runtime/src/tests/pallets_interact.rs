@@ -469,7 +469,7 @@ mod claim {
 
             // Check that treasury balance increased
             assert_eq!(
-                pre_balance.saturating_add(*testsfixtures::TOTAL_BALANCE),
+                pre_balance.saturating_add(testsfixtures::total_balances()),
                 Balances::free_balance(Treasury::account_id())
             )
         });

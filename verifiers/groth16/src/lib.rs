@@ -15,17 +15,19 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+extern crate alloc;
+
 pub mod benchmarking;
 mod groth16;
 mod verifier_should;
 mod weight;
 
+use alloc::{borrow::Cow, vec::Vec};
 use core::marker::PhantomData;
 use frame_support::pallet_prelude::Weight;
 pub use groth16::{Curve, ProofWithCurve as Proof, VerificationKeyWithCurve as Vk};
 use hp_groth16::Scalar;
 use hp_verifiers::{Verifier, VerifyError};
-use sp_std::vec::Vec;
 
 pub const MAX_NUM_INPUTS: u32 = 64;
 pub use weight::WeightInfo;
@@ -63,22 +65,19 @@ impl<T: Config> Verifier for Groth16<T> {
         }
 
         groth16::Groth16::verify_proof(proof.clone().into(), vk.clone(), pubs)
-            .and_then(|r| {
-                r.then_some(())
-                    .ok_or(hp_verifiers::VerifyError::VerifyError)
-            })
+            .and_then(|r| r.then_some(()).ok_or(VerifyError::VerifyError))
             .map(|_| None)
     }
 
-    fn pubs_bytes(pubs: &Self::Pubs) -> hp_verifiers::Cow<[u8]> {
+    fn pubs_bytes(pubs: &Self::Pubs) -> Cow<[u8]> {
         let data = pubs
             .iter()
             .flat_map(|s| s.0.iter().cloned())
             .collect::<Vec<_>>();
-        hp_verifiers::Cow::Owned(data)
+        Cow::Owned(data)
     }
 
-    fn validate_vk(vk: &Self::Vk) -> Result<(), hp_verifiers::VerifyError> {
+    fn validate_vk(vk: &Self::Vk) -> Result<(), VerifyError> {
         let curve = vk.curve;
         let vk = vk.clone().vk();
         match curve {
@@ -94,7 +93,7 @@ impl<T: Config> Verifier for Groth16<T> {
 pub struct Groth16Weight<W: WeightInfo>(PhantomData<W>);
 
 impl<T: Config, W: WeightInfo> pallet_verifiers::WeightInfo<Groth16<T>> for Groth16Weight<W> {
-    fn register_vk(vk: &<Groth16<T> as Verifier>::Vk) -> frame_support::weights::Weight {
+    fn register_vk(vk: &<Groth16<T> as Verifier>::Vk) -> Weight {
         let n = (vk.gamma_abc_g1.len().saturating_sub(1))
             .try_into()
             .expect(concat!(

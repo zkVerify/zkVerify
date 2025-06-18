@@ -21,7 +21,6 @@ frame-support = { workspace = true }
 frame-system = { workspace = true }
 frame-benchmarking = { workspace = true, optional = true }
 sp-core = { workspace = true }
-sp-std = { workspace = true }
 sp-runtime = { workspace = true }
 sp-io = { workspace = true }
 ismp = { workspace = true }
@@ -66,8 +65,7 @@ std = [
 	"ismp-grandpa/std",
 	"log/std",
 	"pallet-balances/std",
-	"pallet-ismp/std",
-	"sp-std/std"
+	"pallet-ismp/std"
 ]
 try-runtime = [
 	"frame-support/try-runtime",

@@ -13,6 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+extern crate alloc;
+
+use alloc::{vec, vec::Vec};
 use ark_ec::{pairing::Pairing, AffineRepr};
 use ark_ff::PrimeField;
 use ark_serialize::SerializationError;
@@ -20,8 +23,6 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use core::fmt::Debug;
 use scale_info::TypeInfo;
 use sp_runtime_interface::pass_by::{PassByCodec, PassByInner};
-use sp_std::vec;
-use sp_std::vec::Vec;
 
 /// Maximum sizes for G1 in bytes
 pub const G1_MAX_SIZE: u32 = 96;

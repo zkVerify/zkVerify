@@ -23,7 +23,6 @@ pallet-verifiers = { workspace = true }
 codec = { workspace = true }
 scale-info = { workspace = true }
 sp-core = { workspace = true }
-sp-std = { workspace = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
 frame-benchmarking = { workspace = true, optional = true }
@@ -40,7 +39,6 @@ rstest = { workspace = true }
 std = [
 	"hp-verifiers/std",
 	"pallet-verifiers/std",
-	"sp-std/std",
 	"sp-io/std",
 	"sp-core/std",
 	"frame-support/std",

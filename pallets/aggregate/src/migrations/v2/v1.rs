@@ -25,7 +25,7 @@ type AggregationSize = u32;
 
 /// Old v1 Delivery struct without owner_tip
 #[derive(Clone, PartialEq, Eq, Encode, Decode, TypeInfo, MaxEncodedLen, Debug)]
-pub struct Delivery<B: sp_std::fmt::Debug + sp_std::cmp::PartialEq> {
+pub struct Delivery<B: alloc::fmt::Debug + core::cmp::PartialEq> {
     /// Destination
     pub destination: hp_dispatch::Destination,
     /// fee
@@ -34,7 +34,7 @@ pub struct Delivery<B: sp_std::fmt::Debug + sp_std::cmp::PartialEq> {
 
 /// Old v1 DeliveryParams struct
 #[derive(Clone, PartialEq, Eq, Encode, Decode, TypeInfo, MaxEncodedLen, Debug)]
-pub struct DeliveryParams<A, B: sp_std::fmt::Debug + sp_std::cmp::PartialEq> {
+pub struct DeliveryParams<A, B: alloc::fmt::Debug + core::cmp::PartialEq> {
     /// The delivery channel owner
     pub owner: A,
     /// The delivery data
@@ -45,8 +45,8 @@ pub struct DeliveryParams<A, B: sp_std::fmt::Debug + sp_std::cmp::PartialEq> {
 #[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
 #[scale_info(skip_type_params(S, M))]
 pub struct DomainEntry<
-    A: sp_std::fmt::Debug + sp_std::cmp::PartialEq,
-    B: sp_std::fmt::Debug + sp_std::cmp::PartialEq,
+    A: alloc::fmt::Debug + core::cmp::PartialEq,
+    B: alloc::fmt::Debug + core::cmp::PartialEq,
     S: Get<AggregationSize>,
     M: Get<u32>,
     T: Encode + Decode + TypeInfo + MaxEncodedLen,

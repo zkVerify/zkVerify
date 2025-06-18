@@ -13,7 +13,6 @@ workspace = true
 
 [dependencies]
 sp-core = { workspace = true }
-sp-std = { workspace = true }
 hp-verifiers = { workspace = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
@@ -37,7 +36,6 @@ pallet-balances = { workspace = true, features = ["std", "runtime-benchmarks"] }
 [features]
 std = [
 	"sp-core/std",
-	"sp-std/std",
 	"sp-io/std",
 	"hp-verifiers/std",
 	"frame-support/std",

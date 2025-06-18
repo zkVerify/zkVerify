@@ -2,9 +2,9 @@
 
 mod v1;
 
+use alloc::vec::Vec;
 use frame_support::{migrations::VersionedMigration, traits::UncheckedOnRuntimeUpgrade};
 use sp_core::Get;
-use sp_std::vec::Vec;
 
 /// Implements [`UncheckedOnRuntimeUpgrade`], migrating the state of this pallet from V1 to V2.
 ///

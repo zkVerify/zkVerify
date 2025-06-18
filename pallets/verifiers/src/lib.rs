@@ -52,14 +52,16 @@
 //!         }
 //!     }
 //!        
-//!     fn pubs_bytes(pubs: &Self::Pubs) -> sp_std::borrow::Cow<[u8]> {
-//!         sp_std::borrow::Cow::Owned(pubs.to_be_bytes().into())
+//!     fn pubs_bytes(pubs: &Self::Pubs) -> alloc::borrow::Cow<[u8]> {
+//!         alloc::borrow::Cow::Owned(pubs.to_be_bytes().into())
 //!     }
 //! }
 //! ```
 //! Your crate should also implement a struct that implements the `hp_verifiers::WeightInfo<YourVerifierStruct>`
 //! trait. This struct is used to define the weight of the verifier pallet and should map the generic
 //! request in you weight implementation computed with your benchmark.
+
+extern crate alloc;
 
 // Workaround for a bug in `frame_support::pallet` procedural macro that generate some docs only code wrongly:
 // they forget to add the where clause to the calls (and maybe in some other places).
@@ -83,7 +85,11 @@ pub mod pallet {
     // they forget to add the where clause to the calls (and maybe in some other places).
     #![cfg(not(doc))]
 
+    use alloc::borrow::Cow;
+    use alloc::boxed::Box;
     use codec::Encode;
+    use core::default::Default;
+    use core::fmt::Debug;
     #[cfg(feature = "runtime-benchmarks")]
     use frame_support::traits::fungible::Mutate;
     use frame_support::{
@@ -97,7 +103,6 @@ pub mod pallet {
     use sp_core::{hexdisplay::AsBytesRef, H256};
     use sp_io::hashing::keccak_256;
     use sp_runtime::{traits::BadOrigin, ArithmeticError};
-    use sp_std::boxed::Box;
 
     use hp_verifiers::{Verifier, VerifyError, WeightInfo};
 
@@ -116,7 +121,7 @@ pub mod pallet {
     #[derive(Debug, Clone, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
     pub enum VkOrHash<K>
     where
-        K: sp_std::fmt::Debug + Clone + PartialEq + Encode + Decode + TypeInfo + MaxEncodedLen,
+        K: Debug + Clone + PartialEq + Encode + Decode + TypeInfo + MaxEncodedLen,
     {
         /// The Vk hash
         Hash(H256),
@@ -124,9 +129,9 @@ pub mod pallet {
         Vk(Box<K>),
     }
 
-    impl<K> sp_std::default::Default for VkOrHash<K>
+    impl<K> Default for VkOrHash<K>
     where
-        K: sp_std::fmt::Debug + Clone + PartialEq + Encode + Decode + TypeInfo + MaxEncodedLen,
+        K: Debug + Clone + PartialEq + Encode + Decode + TypeInfo + MaxEncodedLen,
     {
         fn default() -> Self {
             VkOrHash::Hash(H256::default())
@@ -135,7 +140,7 @@ pub mod pallet {
 
     impl<K> VkOrHash<K>
     where
-        K: sp_std::fmt::Debug + Clone + PartialEq + Encode + Decode + TypeInfo + MaxEncodedLen,
+        K: Debug + Clone + PartialEq + Encode + Decode + TypeInfo + MaxEncodedLen,
     {
         /// Take a verification key and return a `VkOrHash`
         pub fn from_vk(vk: K) -> Self {
@@ -190,8 +195,8 @@ pub mod pallet {
     ) -> H256 {
         let version_hash = I::verifier_version_hash(proof);
         let hash = match vk_or_hash {
-            VkOrHash::Hash(h) => sp_std::borrow::Cow::Borrowed(h),
-            VkOrHash::Vk(vk) => sp_std::borrow::Cow::Owned(I::vk_hash(vk)),
+            VkOrHash::Hash(h) => Cow::Borrowed(h),
+            VkOrHash::Vk(vk) => Cow::Owned(I::vk_hash(vk)),
         };
         let ctx: &[u8] = I::hash_context_data();
         let vk_hash: &H256 = hash.as_ref();
@@ -511,7 +516,7 @@ pub mod pallet {
             ) -> Result<Option<Weight>, VerifyError> {
                 FakeVerifier::verify_proof(vk, proof, pubs)
             }
-            fn pubs_bytes(pubs: &Self::Pubs) -> sp_std::borrow::Cow<[u8]> {
+            fn pubs_bytes(pubs: &Self::Pubs) -> Cow<[u8]> {
                 FakeVerifier::pubs_bytes(pubs)
             }
         }
@@ -618,8 +623,8 @@ pub mod pallet {
                 Ok(None)
             }
 
-            fn pubs_bytes(_pubs: &Self::Pubs) -> hp_verifiers::Cow<[u8]> {
-                hp_verifiers::Cow::Borrowed(&[])
+            fn pubs_bytes(_pubs: &Self::Pubs) -> Cow<[u8]> {
+                Cow::Borrowed(&[])
             }
         }
 
@@ -645,8 +650,8 @@ pub mod pallet {
                 Ok(None)
             }
 
-            fn pubs_bytes(_pubs: &Self::Pubs) -> hp_verifiers::Cow<[u8]> {
-                hp_verifiers::Cow::Borrowed(&[])
+            fn pubs_bytes(_pubs: &Self::Pubs) -> Cow<[u8]> {
+                Cow::Borrowed(&[])
             }
         }
 
