@@ -15,6 +15,10 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+extern crate alloc;
+
+use alloc::vec::Vec;
+use alloc::{borrow::Cow, boxed::Box};
 use core::marker::PhantomData;
 use frame_support::{ensure, fail, pallet_prelude::*, weights::Weight};
 use hp_verifiers::{Verifier, VerifyError};
@@ -24,7 +28,6 @@ use risc0_verifier::{
     v1_0, v1_1, v1_2, v2_0, v2_1, Journal, SegmentInfo, Verifier as _, Vk as Risc0Vk,
 };
 use sp_core::{Get, H256};
-use sp_std::vec::Vec;
 
 pub mod benchmarking;
 pub mod benchmarking_verify_proof;
@@ -90,11 +93,11 @@ enum ProofStructure {
 }
 
 impl R0Proof {
-    fn verify(self, vk: Risc0Vk, journal: Journal) -> Result<(), hp_verifiers::VerifyError> {
+    fn verify(self, vk: Risc0Vk, journal: Journal) -> Result<(), VerifyError> {
         self.verifier()
             .verify(vk.into(), self.take_proof(), journal)
             .inspect_err(|e| log::debug!("Cannot verify proof: {:?}", e))
-            .map_err(|_| hp_verifiers::VerifyError::VerifyError)
+            .map_err(|_| VerifyError::VerifyError)
     }
 
     fn proof_structure(&self) -> Result<ProofStructure, ()> {
@@ -110,7 +113,7 @@ impl R0Proof {
         Ok(structure)
     }
 
-    fn verifier(&self) -> sp_std::boxed::Box<dyn risc0_verifier::Verifier> {
+    fn verifier(&self) -> Box<dyn risc0_verifier::Verifier> {
         match self {
             R0Proof::V1_0(_r0_proof) => v1_0().inject_native_poseidon2_if_needed().boxed(),
             R0Proof::V1_1(_r0_proof) => v1_1().inject_native_poseidon2_if_needed().boxed(),
@@ -176,11 +179,11 @@ impl<T: Config> Verifier for Risc0<T> {
         log::trace!("Checking size");
         ensure!(
             proof.len() <= T::max_proof_size() as usize,
-            hp_verifiers::VerifyError::InvalidProofData
+            VerifyError::InvalidProofData
         );
         ensure!(
             pubs.len() <= T::MaxPubsSize::get() as usize,
-            hp_verifiers::VerifyError::InvalidInput
+            VerifyError::InvalidInput
         );
         log::trace!("Verifying (native)");
         let journal = Journal::new(pubs.to_vec());
@@ -201,15 +204,15 @@ impl<T: Config> Verifier for Risc0<T> {
         proof.verify(vk.0.into(), journal).map(|_| Some(w))
     }
 
-    fn pubs_bytes(pubs: &Self::Pubs) -> hp_verifiers::Cow<[u8]> {
-        hp_verifiers::Cow::Borrowed(pubs)
+    fn pubs_bytes(pubs: &Self::Pubs) -> Cow<[u8]> {
+        Cow::Borrowed(pubs)
     }
 
     fn vk_hash(vk: &Self::Vk) -> H256 {
         *vk
     }
 
-    fn vk_bytes(_vk: &Self::Vk) -> hp_verifiers::Cow<[u8]> {
+    fn vk_bytes(_vk: &Self::Vk) -> Cow<[u8]> {
         panic!("Risc0 vk is already hashed and we cannot know its preimage: use vk_hash() instead")
     }
 

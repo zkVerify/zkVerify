@@ -15,10 +15,12 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use core::marker::PhantomData;
+extern crate alloc;
 
+use alloc::borrow::Cow;
+use core::marker::PhantomData;
 use frame_support::weights::Weight;
-use hp_verifiers::{Cow, Verifier, VerifyError};
+use hp_verifiers::{Verifier, VerifyError};
 
 pub mod benchmarking;
 mod verifier_should;

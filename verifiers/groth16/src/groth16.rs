@@ -13,11 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use alloc::vec::Vec;
 use codec::{Decode, Encode, MaxEncodedLen};
 use core::fmt::Debug;
 use hp_verifiers::VerifyError;
 use scale_info::TypeInfo;
-use sp_std::vec::Vec;
 
 pub use hp_groth16::{vec_max_encoded_len, Proof, Scalar, VerificationKey, G1, G2};
 

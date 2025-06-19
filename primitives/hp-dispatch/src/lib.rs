@@ -19,11 +19,11 @@
 //! Traits for hyperbridge
 
 use codec::{Decode, Encode, MaxEncodedLen};
+use core::fmt::Debug;
 use frame_support::{dispatch::DispatchResult, weights::Weight};
 use ismp::host::StateMachine;
 use scale_info::TypeInfo;
 use sp_core::{H160, H256};
-use sp_std::fmt::Debug;
 
 /// Trait to dispatch aggregations
 pub trait DispatchAggregation<Balance, AccountId> {

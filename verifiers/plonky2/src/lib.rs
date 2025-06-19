@@ -15,21 +15,23 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+extern crate alloc;
+
 pub use crate::proof::Proof as MorphProof;
 pub use crate::vk::{Plonky2Config, VkWithConfig};
 
+use alloc::{borrow::Cow, vec::Vec};
+use core::marker::PhantomData;
 use frame_support::ensure;
 use frame_support::pallet_prelude::Get;
 use frame_support::weights::Weight;
-use hp_verifiers::{Cow, Verifier, VerifyError};
+use hp_verifiers::{Verifier, VerifyError};
 use plonky2::field::extension::Extendable;
 use plonky2::hash::hash_types::RichField;
 use plonky2::plonk::circuit_data::CircuitConfig;
 use plonky2::plonk::config::{GenericConfig, KeccakGoldilocksConfig, PoseidonGoldilocksConfig};
 use plonky2_verifier::validate::ValidateError;
 use plonky2_verifier::{deserialize_vk, verify};
-use sp_std::marker::PhantomData;
-use sp_std::vec::Vec;
 
 pub mod benchmarking;
 pub mod benchmarking_verify_proof;

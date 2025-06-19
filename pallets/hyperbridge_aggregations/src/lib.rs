@@ -15,6 +15,8 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+extern crate alloc;
+
 use ismp::module::IsmpModule;
 use ismp::router::{PostRequest, Response, Timeout};
 pub use pallet::*;
@@ -32,13 +34,13 @@ pub use weight::WeightInfo;
 #[frame_support::pallet]
 pub mod pallet {
     use super::WeightInfo;
+    use alloc::vec;
     use alloy_dyn_abi::DynSolValue;
     use alloy_primitives::{B256, U256};
     use frame_support::{pallet_prelude::*, PalletId};
     use ismp::dispatcher::{DispatchPost, DispatchRequest, FeeMetadata, IsmpDispatcher};
     use ismp::host::StateMachine;
     use pallet_ismp::ModuleId;
-    use sp_std::vec;
 
     pub const ZKV_MODULE_ID: ModuleId = ModuleId::Pallet(PalletId(*b"ZKVE-MOD"));
     pub const PALLET_ID: PalletId = PalletId(*b"HYP-AGR!");

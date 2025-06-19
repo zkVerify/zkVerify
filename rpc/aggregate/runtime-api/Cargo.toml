@@ -14,7 +14,6 @@ workspace = true
 pallet-aggregate = { default-features = false, workspace = true }
 codec = { default-features = false, workspace = true, features = ["derive"] }
 sp-api = { default-features = false, workspace = true }
-sp-std = { default-features = false, workspace = true }
 sp-core = { default-features = false, workspace = true }
 sp-runtime = { default-features = false, workspace = true }
 scale-info = { default-features = false, workspace = true, features = [
@@ -31,7 +30,6 @@ std = [
 	"pallet-aggregate/std",
 	"codec/std",
 	"sp-api/std",
-	"sp-std/std",
 	"sp-runtime/std",
 	"scale-info/std",
 	"binary-merkle-tree/std",

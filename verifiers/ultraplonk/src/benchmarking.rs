@@ -16,11 +16,11 @@
 #![cfg(feature = "runtime-benchmarks")]
 
 use crate::Ultraplonk as Verifier;
+use alloc::vec::Vec;
 use frame_benchmarking::v2::*;
 use frame_system::RawOrigin;
 use hp_verifiers::Verifier as _;
 use pallet_verifiers::{benchmarking_utils, VkOrHash};
-use sp_std::{vec, vec::Vec};
 pub struct Pallet<T: Config>(crate::Pallet<T>);
 pub trait Config: crate::Config {}
 impl<T: crate::Config> Config for T {}

@@ -19,6 +19,8 @@
 //! Provide a base interface and the std lib implementation for groth16
 //! verifier via arkworks library
 
+extern crate alloc;
+
 mod data_structures;
 
 /// Rexported Bls curve
@@ -62,9 +64,9 @@ impl From<Groth16Error> for hp_verifiers::VerifyError {
 mod implementation {
     use crate::*;
 
+    use alloc::vec::Vec;
     use ark_ec::pairing::Pairing;
     use ark_groth16::prepare_verifying_key;
-    use sp_std::vec::Vec;
 
     /// Verify a groth16 proof against the `E` elliptic curve using the provided verification key and inputs.
     pub fn verify_proof<E: Pairing>(

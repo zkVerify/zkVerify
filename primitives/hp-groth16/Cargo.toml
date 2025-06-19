@@ -15,7 +15,6 @@ workspace = true
 [dependencies]
 codec = { workspace = true, features = ["max-encoded-len"] }
 scale-info = { workspace = true }
-sp-std = { workspace = true }
 sp-runtime-interface = { workspace = true }
 hp-verifiers = { workspace = true }
 
@@ -49,7 +48,6 @@ std = [
 	"sp-runtime-interface/std",
 	"codec/std",
 	"scale-info/std",
-	"sp-std/std",
 	"hp-verifiers/std",
 	"ark-bls12-381/std",
 	"ark-bn254/std",

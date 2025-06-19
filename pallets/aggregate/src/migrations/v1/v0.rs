@@ -27,8 +27,8 @@ type AggregationSize = u32;
 #[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
 #[scale_info(skip_type_params(S, M))]
 pub struct DomainEntry<
-    A: sp_std::fmt::Debug + sp_std::cmp::PartialEq,
-    B: sp_std::fmt::Debug + sp_std::cmp::PartialEq,
+    A: core::fmt::Debug + core::cmp::PartialEq,
+    B: core::fmt::Debug + core::cmp::PartialEq,
     S: Get<AggregationSize>,
     M: Get<u32>,
     T: Encode + Decode + TypeInfo + MaxEncodedLen,

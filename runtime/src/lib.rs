@@ -26,6 +26,7 @@ extern crate alloc;
 
 use alloc::{
     borrow::Cow,
+    boxed::Box,
     collections::{btree_map::BTreeMap, vec_deque::VecDeque},
     vec::Vec,
 };
@@ -45,7 +46,6 @@ use sp_runtime::{
     transaction_validity::{TransactionSource, TransactionValidity},
     ApplyExtrinsicResult, FixedPointNumber, MultiSignature, Perquintill,
 };
-use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
@@ -1430,7 +1430,7 @@ impl_runtime_apis! {
             Runtime::metadata_at_version(version)
         }
 
-        fn metadata_versions() -> sp_std::vec::Vec<u32> {
+        fn metadata_versions() -> Vec<u32> {
             Runtime::metadata_versions()
         }
     }
@@ -1747,7 +1747,7 @@ impl_runtime_apis! {
 
         fn inbound_hrmp_channels_contents(
             recipient: ParaId
-        ) -> sp_std::collections::btree_map::BTreeMap<ParaId, Vec<InboundHrmpMessage<BlockNumber>>> {
+        ) -> alloc::collections::btree_map::BTreeMap<ParaId, Vec<InboundHrmpMessage<BlockNumber>>> {
             parachains_runtime_api_impl::inbound_hrmp_channels_contents::<Runtime>(recipient)
         }
 
@@ -1901,6 +1901,7 @@ impl_runtime_apis! {
 
             pub mod xcm {
                 use super::*;
+                use alloc::vec;
                 use xcm::latest::{Asset, AssetId, Assets, Location, InteriorLocation, Junction, Junctions::Here, NetworkId, Response, Fungibility::Fungible};
                 use frame_benchmarking::BenchmarkError;
 

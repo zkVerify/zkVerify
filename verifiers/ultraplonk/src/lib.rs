@@ -15,10 +15,13 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+extern crate alloc;
+
+use alloc::{borrow::Cow, vec::Vec};
+use core::marker::PhantomData;
 use frame_support::{ensure, weights::Weight};
-use hp_verifiers::{Cow, Verifier, VerifyError};
+use hp_verifiers::{Verifier, VerifyError};
 use sp_core::{Get, H256};
-use sp_std::{marker::PhantomData, vec::Vec};
 
 use native::bn254::HostHooks as CurveHooksImpl;
 

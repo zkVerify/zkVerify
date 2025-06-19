@@ -30,7 +30,6 @@ educe = { version = "0.6.0", default-features = false, features = [
     "Debug",
     "PartialEq",
 ] }
-sp-std = { workspace = true }
 
 [dev-dependencies]
 rstest = { workspace = true }
@@ -51,8 +50,7 @@ std = [
     "plonky2/std",
     "frame-benchmarking/std",
     "log/std",
-    "sp-io/std",
-    "sp-std/std"
+    "sp-io/std"
 ]
 runtime-benchmarks = [
     "frame-benchmarking/runtime-benchmarks",

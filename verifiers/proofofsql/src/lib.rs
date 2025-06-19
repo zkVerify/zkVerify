@@ -15,15 +15,19 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+extern crate alloc;
+
+use alloc::borrow::Cow;
+use alloc::vec::Vec;
 use codec::{Decode, Encode, MaxEncodedLen};
+use core::marker::PhantomData;
 use educe::Educe;
 use errors::LibraryError;
 use frame_support::weights::Weight;
-use hp_verifiers::{Cow, Verifier, VerifyError};
+use hp_verifiers::{Verifier, VerifyError};
 use proof_of_sql_verifier::VerificationKey;
 use scale_info::TypeInfo;
 use sp_core::Get;
-use sp_std::{marker::PhantomData, vec::Vec};
 
 pub mod benchmarking;
 mod errors;

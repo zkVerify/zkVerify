@@ -17,6 +17,7 @@
 #![allow(clippy::type_complexity)]
 
 use crate::*;
+use alloc::{boxed::Box, format, vec, vec::Vec};
 use polkadot_primitives::{AssignmentId, AsyncBackingParams, SchedulerParams, ValidatorId};
 use sp_consensus_babe::AuthorityId as BabeId;
 use sp_consensus_grandpa::AuthorityId as GrandpaId;
@@ -25,10 +26,6 @@ use sp_core::{sr25519, Pair, Public};
 use sp_genesis_builder::PresetId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use sp_staking::StakerStatus;
-#[cfg(not(feature = "std"))]
-use sp_std::alloc::format;
-use sp_std::vec;
-use sp_std::vec::Vec;
 
 const ENDOWMENT: Balance = 1_000_000 * VFY;
 const STASH_BOND: Balance = ENDOWMENT / 100;
@@ -458,8 +455,8 @@ pub fn zkv_testnet_config_genesis() -> Result<serde_json::Value, sp_core::crypto
         .chain(foundation_custody.iter())
         .chain(contributors_custody.iter())
         .chain(investors_custody.iter())
-        .chain(sp_std::iter::once(&treasury_account))
-        .chain(sp_std::iter::once(&sudo_account))
+        .chain(core::iter::once(&treasury_account))
+        .chain(core::iter::once(&sudo_account))
         .map(FundedAccount::json_data)
         .collect::<Vec<_>>();
     let staker = initial_authorities
@@ -634,7 +631,7 @@ pub fn preset_names() -> Vec<PresetId> {
     ]
 }
 
-pub fn get_preset(id: &sp_genesis_builder::PresetId) -> Option<sp_std::vec::Vec<u8>> {
+pub fn get_preset(id: &sp_genesis_builder::PresetId) -> Option<Vec<u8>> {
     let cfg = match id.as_ref() {
         "development" => zkv_development_config_genesis(),
         "local" => zkv_local_config_genesis(),

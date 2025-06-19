@@ -17,7 +17,6 @@ codec = { workspace = true }
 scale-info = { workspace = true, features = ["derive"] }
 frame-support = { workspace = true }
 sp-core = { workspace = true }
-sp-std = { workspace = true }
 sp-runtime = { workspace = true }
 
 [dev-dependencies]
@@ -37,7 +36,6 @@ std = [
     "frame-support/std",
     "log/std",
     "sp-io/std",
-    "sp-std/std",
     "ismp/std",
 ]
 try-runtime = [

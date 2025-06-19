@@ -49,6 +49,8 @@
 //! - Just owner and manager can call it
 //!
 
+extern crate alloc;
+
 pub use pallet::*;
 pub use weight::WeightInfo;
 
@@ -67,8 +69,10 @@ pub use benchmarking::utils::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-    use core::ops::Deref;
-    use sp_std::fmt::Debug;
+    use core::{
+        fmt::Debug,
+        ops::{Deref, DerefMut},
+    };
 
     pub use crate::data::AggregationSize;
     use crate::data::{
@@ -77,6 +81,7 @@ pub mod pallet {
     };
 
     use super::WeightInfo;
+    use alloc::vec::Vec;
     use frame_support::{
         dispatch::{DispatchErrorWithPostInfo, PostDispatchInfo},
         pallet_prelude::*,
@@ -95,7 +100,6 @@ pub mod pallet {
     use hp_on_proof_verified::OnProofVerified;
     use sp_core::H256;
     use sp_runtime::traits::{BadOrigin, Keccak256};
-    use sp_std::vec::Vec;
 
     /// Given a `Configuration` return the Account type.
     pub type AccountOf<T> = <T as frame_system::Config>::AccountId;
@@ -492,7 +496,7 @@ pub mod pallet {
                     crate::data::AggregationEntry::create(0, self.next.size)
                 });
 
-                Some(sp_std::mem::replace(&mut self.next, new_aggregation))
+                Some(core::mem::replace(&mut self.next, new_aggregation))
             }
         }
 
@@ -563,7 +567,7 @@ pub mod pallet {
         }
     }
 
-    impl<T: Config> sp_std::ops::DerefMut for Domain<T> {
+    impl<T: Config> DerefMut for Domain<T> {
         fn deref_mut(&mut self) -> &mut Self::Target {
             &mut self.0
         }
@@ -1029,7 +1033,7 @@ pub mod pallet {
 
         pub fn can_handle_domain<T: Config<AccountId = A>>(&self, domain: &Domain<T>) -> bool
         where
-            A: PartialEq + sp_std::fmt::Debug,
+            A: PartialEq + Debug,
         {
             match self {
                 User::Account(_) => &domain.owner == self,
@@ -1042,7 +1046,7 @@ pub mod pallet {
             domain: &Domain<T>,
         ) -> bool
         where
-            A: PartialEq + sp_std::fmt::Debug,
+            A: PartialEq + Debug,
         {
             match self {
                 User::Account(account) => {

@@ -1,8 +1,10 @@
 // Mock implementation for Assets that satisfies token_gateway requirements
 // without the complexity of a full pallet implementation.
 
+use alloc::vec::Vec;
 use codec::MaxEncodedLen;
 use core::fmt::Debug;
+use core::marker::PhantomData;
 use frame_support::{
     dispatch::DispatchResult,
     pallet_prelude::*,
@@ -20,7 +22,6 @@ use sp_runtime::{
     traits::{AtLeast32BitUnsigned, Zero},
     DispatchError,
 };
-use sp_std::{marker::PhantomData, prelude::*};
 
 /// Configuration trait for the mock Assets module
 pub trait Config: frame_system::Config {
