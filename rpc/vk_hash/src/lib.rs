@@ -22,7 +22,6 @@ use pallet_fflonk_verifier::{
 };
 use pallet_groth16_verifier::{Curve, Groth16};
 use pallet_plonky2_verifier::{Plonky2, Plonky2Config};
-use pallet_proofofsql_verifier::ProofOfSql;
 use pallet_ultraplonk_verifier::{Ultraplonk, VK_SIZE};
 use sp_core::{serde::Deserialize, serde::Serialize, Bytes, H256, U256};
 
@@ -122,8 +121,6 @@ pub trait VKHashApi<ResponseType> {
     fn groth16(&self, vk: Groth16Vk) -> RpcResult<ResponseType>;
     #[method(name = "plonky2")]
     fn plonky2(&self, vk: Plonky2Vk) -> RpcResult<ResponseType>;
-    #[method(name = "proofofsql")]
-    fn proofofsql(&self, vk: Bytes) -> RpcResult<ResponseType>;
     #[method(name = "risc0")]
     fn risc0(&self, vk: H256) -> RpcResult<ResponseType>;
     #[method(name = "ultraplonk")]
@@ -155,11 +152,6 @@ impl VKHashApiServer<H256> for VKHash {
         let vk_with_config: VkOf<Plonky2<zkv_runtime::Runtime>> =
             pallet_plonky2_verifier::Vk::new(config, bytes);
         Ok(Plonky2::<zkv_runtime::Runtime>::vk_hash(&vk_with_config))
-    }
-
-    fn proofofsql(&self, vk: Bytes) -> RpcResult<H256> {
-        let vk: VkOf<ProofOfSql<zkv_runtime::Runtime>> = pallet_proofofsql_verifier::Vk::from(vk.0);
-        Ok(ProofOfSql::vk_hash(&vk))
     }
 
     fn risc0(&self, vk: H256) -> RpcResult<H256> {

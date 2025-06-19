@@ -36,7 +36,6 @@ pub mod pallet_multisig;
 pub mod pallet_plonky2_verifier;
 pub mod pallet_plonky2_verifier_verify_proof;
 pub mod pallet_preimage;
-pub mod pallet_proofofsql_verifier;
 pub mod pallet_proxy;
 pub mod pallet_referenda;
 pub mod pallet_risc0_verifier;
