@@ -12,7 +12,6 @@ license = "Apache-2.0"
 pallet-fflonk-verifier = { workspace = true }
 pallet-groth16-verifier = { workspace = true }
 pallet-plonky2-verifier = { workspace = true }
-pallet-proofofsql-verifier = { workspace = true }
 pallet-ultraplonk-verifier = { workspace = true }
 codec = { default-features = false, workspace = true }
 jsonrpsee = { workspace = true, features = ["client-core", "server", "macros"] }
@@ -32,7 +31,6 @@ std = [
 	"hp-groth16/std",
 	"hp-verifiers/std",
 	"pallet-groth16-verifier/std",
-	"pallet-proofofsql-verifier/std",
 	"pallet-plonky2-verifier/std",
 	"sp-core/std",
 	"zkv-runtime/std",

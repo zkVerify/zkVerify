@@ -46,14 +46,6 @@ use crate::RuntimeCall;
         domain_id: None,
         })
 )]
-#[case::proofofsql_submit_proof(
-    RuntimeCall::SettlementProofOfSqlPallet(pallet_verifiers::Call::submit_proof{
-        vk_or_hash: Default::default(),
-        proof: Default::default(),
-        pubs: Default::default(),
-        domain_id: None,
-        })
-)]
 #[case::risc0_submit_proof(
     RuntimeCall::SettlementRisc0Pallet(pallet_verifiers::Call::submit_proof {
         vk_or_hash: Default::default(),
@@ -70,6 +62,7 @@ use crate::RuntimeCall;
         domain_id: None,
     })
 )]
+
 fn nontransfer_deny_extrinsic(#[case] call: RuntimeCall) {
     let proxy = ProxyType::NonTransfer;
 

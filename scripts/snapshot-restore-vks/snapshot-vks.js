@@ -3,7 +3,7 @@ const fs = require('fs');
 const {decodeAddress} = require('@polkadot/util-crypto');
 const {u8aToHex} = require('@polkadot/util');
 
-const DEFAULT_PALLETS = ['groth16', 'proofofsql', 'ultraplonk', 'risc0'];
+const DEFAULT_PALLETS = ['groth16', 'ultraplonk', 'risc0'];
 const DEFAULT_WS_ENDPOINT = 'wss://testnet-rpc.zkverify.io';
 const DEFAULT_WS_ENDPOINTS = {
     'local': 'ws://localhost:9944',
@@ -14,7 +14,6 @@ const DEFAULT_SNAPSHOT_PATH = 'snapshot_vks.json';
 function pallet(sub, p) {
     return {
         'groth16': sub.settlementGroth16Pallet,
-        'proofofsql': sub.settlementProofOfSqlPallet,
         'ultraplonk': sub.settlementUltraplonkPallet,
         'risc0': sub.settlementRisc0Pallet
     }[p]
