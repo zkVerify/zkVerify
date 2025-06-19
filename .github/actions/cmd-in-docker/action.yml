@@ -4,7 +4,7 @@ description: A composite action to run command(s) inside Docker with caching set
 
 inputs:
   command:
-    description: 'A command to run inside "image_name:image_tag" docker container (e.g., "cargo build -p mainchain --release")'
+    description: 'A command to run inside "image_name:image_tag" docker container (e.g., "cargo build -p zkv-relay --release")'
     required: true
     type: string
   use_cache:
@@ -12,7 +12,7 @@ inputs:
     required: true
     type: string
   cache_key:
-    description: 'The cache key name (e.g., "build-mainchain-cache")'
+    description: 'The cache key name (e.g., "build-relay-paratest")'
     required: false
     type: string
   image_name:
@@ -42,6 +42,11 @@ inputs:
     default: ''
   nodejs_version_install:
     description: 'Nodejs major version to install. If not provided nodejs is not being installed'
+    required: false
+    type: string
+    default: ''
+  skip_wasm_build:
+    description: 'If enable disable the runtime wasm build (reduces build time)'
     required: false
     type: string
     default: ''
@@ -83,6 +88,7 @@ runs:
         CMAKE_INSTALL: ${{ inputs.cmake_install }}
         CARGO_BINARIES_INSTALL: ${{ inputs.cargo_binaries_install }}
         NODEJS_VERSION_INSTALL: ${{ inputs.nodejs_version_install }}
+        SKIP_WASM_BUILD: ${{ inputs.skip_wasm_build }}
         DOCKER_BUILD_DIR: /build
         DOCKER_CARGO_HOME: /tmp/.cargo
       run: |

@@ -19,12 +19,13 @@ jobs:
         with:
           command: >-
             /bin/bash -c 'set -o pipefail && cargo llvm-cov clean --workspace && find . -name \"*.profraw\" -delete
-            && cargo llvm-cov --all-features --workspace --exclude mainchain --exclude zkv-relay --exclude paratest-node --exclude test-service --lcov --output-path lcov.info
+            && cargo llvm-cov --all-features --workspace --exclude zkv-relay --exclude paratest-node --exclude test-service --lcov --output-path lcov.info
             && cargo llvm-cov report --json --output-path coverage_report.json --summary-only && cargo llvm-cov report | tee coverage_summary.txt'
           use_cache: 'yes'
           cache_key: 'coverage'
           lld_install: 'yes'
           cargo_binaries_install: cargo-llvm-cov
+          skip_wasm_build: 'yes'
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4

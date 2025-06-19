@@ -21,6 +21,7 @@ jobs:
           use_cache: 'yes'
           cache_key: 'unit-test'
           lld_install: 'yes'
+          skip_wasm_build: 'yes'
 
       - name: Cargo unit test runtime without features
         uses: ./.github/actions/cmd-in-docker
@@ -29,6 +30,7 @@ jobs:
           use_cache: 'yes'
           cache_key: 'unit-test'
           lld_install: 'yes'
+          skip_wasm_build: 'yes'
 
       - name: Upload unit test output
         if: ${{ !cancelled() }}

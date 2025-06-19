@@ -5,6 +5,7 @@ IS_A_RELEASE="false"
 PROD_RELEASE="false"
 DEV_RELEASE="false"
 TEST_RELEASE="false"
+FAST_RUNTIME_RELEASE="${FAST_RUNTIME_RELEASE:-false}"
 workdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." &> /dev/null && pwd )"
 github_tag="${GITHUB_REF_NAME:-}"
 release_branch="${RELEASE_BRANCH:-release}"
@@ -61,6 +62,7 @@ check_signed_tag() {
 ####
 # Main
 ####
+log_info "DRY_RUN: '${DRY_RUN}'"
 log_info "Release branch is: ${release_branch}"
 log_info "Github tag is: ${github_tag}"
 
@@ -72,8 +74,12 @@ if git branch -r --contains "${github_tag}" | grep -xqE ". origin\/${release_bra
     log_warn "WARNING: 'MAINTAINERS_KEYS' variable is not set. The build is not going to be released ..."
   fi
 
-  import_gpg_keys "${maintainers_keys}"
-  check_signed_tag "${github_tag}"
+  if [ "${DRY_RUN}" != "true" ]; then
+    import_gpg_keys "${maintainers_keys}"
+    check_signed_tag "${github_tag}"
+  else
+    log_warn "WARNING: 'DRY_RUN' variable is set to 'true'. Don't check GPG keys"
+  fi
 
   # Release test
   if [ "${IS_A_RELEASE}" = "true" ]; then
@@ -95,7 +101,10 @@ fi
 # Final check for release vs non-release build
 if [ "${IS_A_RELEASE}" = "true" ]; then
   export IS_A_RELEASE="true"
-  if [ "${PROD_RELEASE}" = "true" ]; then
+  if [ "${FAST_RUNTIME_RELEASE}" = "true" ]; then
+    echo "" && log_info "=== This is a fast-runtime build ===" && echo ""
+    export FAST_RUNTIME_RELEASE="true"
+  elif [ "${PROD_RELEASE}" = "true" ]; then
     echo "" && log_info "=== This is a 'Production' release build ===" && echo ""
     export PROD_RELEASE="true"
   elif [ "${DEV_RELEASE}" = "true" ]; then
