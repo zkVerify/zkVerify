@@ -91,21 +91,6 @@ fn pallet_settlement_ultraplonk() {
 }
 
 #[test]
-fn pallet_settlement_proofofsql() {
-    use pallet_proofofsql_verifier::{ProofOfSql, WeightInfo};
-
-    assert_eq!(
-        <<Runtime as pallet_verifiers::Config<ProofOfSql<Runtime>>>::WeightInfo as
-            pallet_verifiers::WeightInfo<ProofOfSql<Runtime>>>
-            ::verify_proof(
-            &Vec::new(),
-            &Vec::new()
-        ),
-        crate::weights::pallet_proofofsql_verifier::ZKVWeight::<Runtime>::verify_proof()
-    );
-}
-
-#[test]
 fn pallet_settlement_plonky2() {
     use pallet_plonky2_verifier::{Plonky2, Plonky2Config, Vk, WeightInfo};
 

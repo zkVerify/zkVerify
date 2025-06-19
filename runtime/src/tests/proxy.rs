@@ -46,14 +46,6 @@ use crate::RuntimeCall;
         domain_id: None,
     })
 )]
-#[case::proofofsql_submit_proof(
-    RuntimeCall::SettlementProofOfSqlPallet(pallet_verifiers::Call::submit_proof {
-        vk_or_hash: Default::default(),
-        proof: Default::default(),
-        pubs: Default::default(),
-        domain_id: None,
-    })
-)]
 #[case::plonky2_submit_proof(
     RuntimeCall::SettlementPlonky2Pallet(pallet_verifiers::Call::submit_proof {
         vk_or_hash: Default::default(),
