@@ -38,7 +38,8 @@ impl ProxyType {
     fn is_a_submit_proof_extrinsic(c: &RuntimeCall) -> bool {
         matches!(
             c,
-            RuntimeCall::SettlementGroth16Pallet(pallet_verifiers::Call::submit_proof { .. })
+            RuntimeCall::SettlementFFlonkPallet(pallet_verifiers::Call::submit_proof { .. })
+                | RuntimeCall::SettlementGroth16Pallet(pallet_verifiers::Call::submit_proof { .. })
                 | RuntimeCall::SettlementRisc0Pallet(pallet_verifiers::Call::submit_proof { .. })
                 | RuntimeCall::SettlementUltraplonkPallet(
                     pallet_verifiers::Call::submit_proof { .. }
