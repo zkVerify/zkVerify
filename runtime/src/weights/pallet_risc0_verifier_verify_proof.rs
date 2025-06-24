@@ -73,26 +73,12 @@ impl<T: frame_system::Config> pallet_risc0_verifier_verify_proof::WeightInfo for
         // Minimum execution time: 30_250_006_000 picoseconds.
         Weight::from_parts(30_283_378_000, 0)
     }
-    fn verify_proof_segment_sha_256_16() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 7_202_657_000 picoseconds.
-        Weight::from_parts(7_218_476_000, 0)
-    }
     fn verify_proof_segment_poseidon2_17() -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `0`
         //  Estimated: `0`
         // Minimum execution time: 32_667_157_000 picoseconds.
         Weight::from_parts(32_709_818_000, 0)
-    }
-    fn verify_proof_segment_sha_256_17() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 7_078_663_000 picoseconds.
-        Weight::from_parts(7_098_049_000, 0)
     }
     fn verify_proof_segment_poseidon2_18() -> Weight {
         // Proof Size summary in bytes:
@@ -101,26 +87,12 @@ impl<T: frame_system::Config> pallet_risc0_verifier_verify_proof::WeightInfo for
         // Minimum execution time: 34_678_391_000 picoseconds.
         Weight::from_parts(34_722_053_000, 0)
     }
-    fn verify_proof_segment_sha_256_18() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 7_477_195_000 picoseconds.
-        Weight::from_parts(7_496_290_000, 0)
-    }
     fn verify_proof_segment_poseidon2_19() -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `0`
         //  Estimated: `0`
         // Minimum execution time: 36_755_621_000 picoseconds.
         Weight::from_parts(36_799_845_000, 0)
-    }
-    fn verify_proof_segment_sha_256_19() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 7_980_244_000 picoseconds.
-        Weight::from_parts(7_997_516_000, 0)
     }
     fn verify_proof_segment_poseidon2_20() -> Weight {
         // Proof Size summary in bytes:
@@ -129,25 +101,11 @@ impl<T: frame_system::Config> pallet_risc0_verifier_verify_proof::WeightInfo for
         // Minimum execution time: 39_159_416_000 picoseconds.
         Weight::from_parts(39_208_969_000, 0)
     }
-    fn verify_proof_segment_sha_256_20() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 8_706_353_000 picoseconds.
-        Weight::from_parts(8_726_070_000, 0)
-    }
     fn verify_proof_segment_poseidon2_21() -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `0`
         //  Estimated: `0`
         // Minimum execution time: 42_082_110_000 picoseconds.
         Weight::from_parts(42_143_165_000, 0)
-    }
-    fn verify_proof_segment_sha_256_21() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 8_615_561_000 picoseconds.
-        Weight::from_parts(8_645_668_000, 0)
     }
 }

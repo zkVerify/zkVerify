@@ -51,17 +51,11 @@ use core::marker::PhantomData;
 pub trait WeightInfo {
     fn verify_proof_succinct() -> Weight;
     fn verify_proof_segment_poseidon2_16() -> Weight;
-    fn verify_proof_segment_sha_256_16() -> Weight;
     fn verify_proof_segment_poseidon2_17() -> Weight;
-    fn verify_proof_segment_sha_256_17() -> Weight;
     fn verify_proof_segment_poseidon2_18() -> Weight;
-    fn verify_proof_segment_sha_256_18() -> Weight;
     fn verify_proof_segment_poseidon2_19() -> Weight;
-    fn verify_proof_segment_sha_256_19() -> Weight;
     fn verify_proof_segment_poseidon2_20() -> Weight;
-    fn verify_proof_segment_sha_256_20() -> Weight;
     fn verify_proof_segment_poseidon2_21() -> Weight;
-    fn verify_proof_segment_sha_256_21() -> Weight;
 }
 
 // For backwards compatibility and tests.
@@ -80,26 +74,12 @@ impl WeightInfo for () {
         // Minimum execution time: 24_343_188_000 picoseconds.
         Weight::from_parts(24_451_349_000, 0)
     }
-    fn verify_proof_segment_sha_256_16() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 6_302_386_000 picoseconds.
-        Weight::from_parts(6_412_252_000, 0)
-    }
     fn verify_proof_segment_poseidon2_17() -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `0`
         //  Estimated: `0`
         // Minimum execution time: 26_093_897_000 picoseconds.
         Weight::from_parts(26_227_165_000, 0)
-    }
-    fn verify_proof_segment_sha_256_17() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 6_259_460_000 picoseconds.
-        Weight::from_parts(6_296_064_000, 0)
     }
     fn verify_proof_segment_poseidon2_18() -> Weight {
         // Proof Size summary in bytes:
@@ -108,26 +88,12 @@ impl WeightInfo for () {
         // Minimum execution time: 27_837_208_000 picoseconds.
         Weight::from_parts(27_973_141_000, 0)
     }
-    fn verify_proof_segment_sha_256_18() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 6_616_839_000 picoseconds.
-        Weight::from_parts(6_664_248_000, 0)
-    }
     fn verify_proof_segment_poseidon2_19() -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `0`
         //  Estimated: `0`
         // Minimum execution time: 29_479_589_000 picoseconds.
         Weight::from_parts(29_586_043_000, 0)
-    }
-    fn verify_proof_segment_sha_256_19() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 7_096_450_000 picoseconds.
-        Weight::from_parts(7_156_530_000, 0)
     }
     fn verify_proof_segment_poseidon2_20() -> Weight {
         // Proof Size summary in bytes:
@@ -136,25 +102,11 @@ impl WeightInfo for () {
         // Minimum execution time: 31_531_129_000 picoseconds.
         Weight::from_parts(31_663_007_000, 0)
     }
-    fn verify_proof_segment_sha_256_20() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 7_778_163_000 picoseconds.
-        Weight::from_parts(7_837_869_000, 0)
-    }
     fn verify_proof_segment_poseidon2_21() -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `0`
         //  Estimated: `0`
         // Minimum execution time: 33_735_360_000 picoseconds.
         Weight::from_parts(33_820_397_000, 0)
-    }
-    fn verify_proof_segment_sha_256_21() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 7_718_935_000 picoseconds.
-        Weight::from_parts(7_777_177_000, 0)
     }
 }

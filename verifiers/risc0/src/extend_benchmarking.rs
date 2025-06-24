@@ -35,54 +35,37 @@ mod benchmarks {
     use super::*;
 
     impl TryFrom<crate::Proof> for R0Proof {
-        type Error = ();
+        type Error = crate::ConvertProofError;
 
         fn try_from(value: Proof) -> Result<Self, Self::Error> {
             (&value).try_into()
         }
     }
 
-    static VK_RISC0_VERIFIER_VM_1_2_0: &[u8; 32] =
-        &hex_literal::hex!("9db9988d9fbcacadf2bd29fc7c60b98bc4234342fe536eb983169eb6cc248009");
-    static PROOF_SUCCINCT: &[u8] = include_bytes!("resources/v_1_2_succinct_22.bin");
+    pub static VALID_VK_V2_1: &[u8; 32] =
+        &hex_literal::hex!("8e3794e8255e7810de2be7710fe19f79e538de060f038a21b24529e28d0b744c");
 
-    static PUBS_RISC0_VERIFIER_22: [u8; 8] = hex_literal::hex!("1d64010000000000");
-    static PROOF_RISC0_VERIFIER_POSEIDON2_22_VM_1_2: &[u8] =
-        include_bytes!("resources/v_1_2_poseidon2_22.bin");
+    static PROOF_SUCCINCT_V2_1: &[u8] = include_bytes!("resources/v_2_1_succinct_22.bin");
 
-    static VK_RISC0_VERIFIER_VM_1_1_3: &[u8; 32] =
-        &hex_literal::hex!("2addbbeb4ddb2f2ec2b4a0a8a21c03f7d3bf42cfd2ee9f4a69d2ebd9974218b6");
-    static PROOF_RISC0_VERIFIER_POSEIDON2_16_VM_1_1: &[u8] =
-        include_bytes!("resources/v_1_1_poseidon2_16.bin");
+    static PUBS_22: [u8; 8] = hex_literal::hex!("00003c0000000000");
 
-    static PUBS_RISC0_VERIFIER_16: [u8; 8] = hex_literal::hex!("8105000000000000");
+    static PUBS_16: [u8; 8] = hex_literal::hex!("1c40000000000000");
 
-    #[benchmark]
-    fn verify_sha2_22() {
-        let vk = (*VK_RISC0_VERIFIER_VM_1_2_0).into();
-        let journal = risc0_verifier::Journal::new(PUBS_RISC0_VERIFIER_22.to_vec());
-        let proof = Proof::V1_2(
-            include_bytes!("resources_benchmarking/RISC0_SHA2_22_VM_1_2_0.bin").to_vec(),
-        );
+    static PROOF_POSEIDON2_22_V2_1: &[u8] = include_bytes!("resources/v_2_1_poseidon2_22.bin");
 
-        #[block]
-        {
-            let proof: R0Proof = proof.try_into().unwrap();
-            risc0_verifier::v1_2()
-                .verify(vk, proof.take_proof(), journal)
-                .unwrap()
-        }
-    }
+    static PROOF_POSEIDON2_16_V2_1: &[u8] = include_bytes!("resources/v_2_1_poseidon2_16.bin");
 
     #[benchmark]
     fn verify_poseidon2_succinct_not_accelerated() {
-        let vk = (*VK_RISC0_VERIFIER_VM_1_2_0).into();
-        let journal = risc0_verifier::Journal::new(PUBS_RISC0_VERIFIER_22.to_vec());
+        let vk = (*VALID_VK_V2_1).into();
+        let journal = risc0_verifier::Journal::new(PUBS_22.to_vec());
 
         #[block]
         {
-            let proof: crate::R0Proof = Proof::V1_2(PROOF_SUCCINCT.to_vec()).try_into().unwrap();
-            risc0_verifier::v1_2()
+            let proof: crate::R0Proof = Proof::V2_1(PROOF_SUCCINCT_V2_1.to_vec())
+                .try_into()
+                .unwrap();
+            risc0_verifier::v2_1()
                 .verify(vk, proof.take_proof(), journal)
                 .unwrap()
         }
@@ -90,13 +73,15 @@ mod benchmarks {
 
     #[benchmark]
     fn verify_poseidon2_succinct_accelerated() {
-        let vk = (*VK_RISC0_VERIFIER_VM_1_2_0).into();
-        let journal = risc0_verifier::Journal::new(PUBS_RISC0_VERIFIER_22.to_vec());
+        let vk = (*VALID_VK_V2_1).into();
+        let journal = risc0_verifier::Journal::new(PUBS_22.to_vec());
 
         #[block]
         {
-            let proof: crate::R0Proof = Proof::V1_2(PROOF_SUCCINCT.to_vec()).try_into().unwrap();
-            risc0_verifier::v1_2()
+            let proof: crate::R0Proof = Proof::V2_1(PROOF_SUCCINCT_V2_1.to_vec())
+                .try_into()
+                .unwrap();
+            risc0_verifier::v2_1()
                 .inject_native_poseidon2_if_needed()
                 .verify(vk, proof.take_proof(), journal)
                 .unwrap()
@@ -105,16 +90,15 @@ mod benchmarks {
 
     #[benchmark]
     fn verify_poseidon2_16_not_accelerated() {
-        let vk = (*VK_RISC0_VERIFIER_VM_1_1_3).into();
-        let journal = risc0_verifier::Journal::new(PUBS_RISC0_VERIFIER_16.to_vec());
+        let vk = (*VALID_VK_V2_1).into();
+        let journal = risc0_verifier::Journal::new(PUBS_16.to_vec());
 
         #[block]
         {
-            let proof: crate::R0Proof =
-                Proof::V1_1(PROOF_RISC0_VERIFIER_POSEIDON2_16_VM_1_1.to_vec())
-                    .try_into()
-                    .unwrap();
-            risc0_verifier::v1_1()
+            let proof: crate::R0Proof = Proof::V2_1(PROOF_POSEIDON2_16_V2_1.to_vec())
+                .try_into()
+                .unwrap();
+            risc0_verifier::v2_1()
                 .verify(vk, proof.take_proof(), journal)
                 .unwrap()
         }
@@ -122,16 +106,15 @@ mod benchmarks {
 
     #[benchmark]
     fn verify_poseidon2_16_accelerated() {
-        let vk = (*VK_RISC0_VERIFIER_VM_1_1_3).into();
-        let journal = risc0_verifier::Journal::new(PUBS_RISC0_VERIFIER_16.to_vec());
+        let vk = (*VALID_VK_V2_1).into();
+        let journal = risc0_verifier::Journal::new(PUBS_16.to_vec());
 
         #[block]
         {
-            let proof: crate::R0Proof =
-                Proof::V1_1(PROOF_RISC0_VERIFIER_POSEIDON2_16_VM_1_1.to_vec())
-                    .try_into()
-                    .unwrap();
-            risc0_verifier::v1_1()
+            let proof: crate::R0Proof = Proof::V2_1(PROOF_POSEIDON2_16_V2_1.to_vec())
+                .try_into()
+                .unwrap();
+            risc0_verifier::v2_1()
                 .inject_native_poseidon2_if_needed()
                 .verify(vk, proof.take_proof(), journal)
                 .unwrap()
@@ -140,16 +123,15 @@ mod benchmarks {
 
     #[benchmark]
     fn verify_poseidon2_22_not_accelerated() {
-        let vk = (*VK_RISC0_VERIFIER_VM_1_2_0).into();
-        let journal = risc0_verifier::Journal::new(PUBS_RISC0_VERIFIER_22.to_vec());
+        let vk = (*VALID_VK_V2_1).into();
+        let journal = risc0_verifier::Journal::new(PUBS_22.to_vec());
 
         #[block]
         {
-            let proof: crate::R0Proof =
-                Proof::V1_2(PROOF_RISC0_VERIFIER_POSEIDON2_22_VM_1_2.to_vec())
-                    .try_into()
-                    .unwrap();
-            risc0_verifier::v1_2()
+            let proof: crate::R0Proof = Proof::V2_1(PROOF_POSEIDON2_22_V2_1.to_vec())
+                .try_into()
+                .unwrap();
+            risc0_verifier::v2_1()
                 .verify(vk, proof.take_proof(), journal)
                 .unwrap()
         }
@@ -157,16 +139,15 @@ mod benchmarks {
 
     #[benchmark]
     fn verify_poseidon2_22_accelerated() {
-        let vk = (*VK_RISC0_VERIFIER_VM_1_2_0).into();
-        let journal = risc0_verifier::Journal::new(PUBS_RISC0_VERIFIER_22.to_vec());
+        let vk = (*VALID_VK_V2_1).into();
+        let journal = risc0_verifier::Journal::new(PUBS_22.to_vec());
 
         #[block]
         {
-            let proof: crate::R0Proof =
-                Proof::V1_2(PROOF_RISC0_VERIFIER_POSEIDON2_22_VM_1_2.to_vec())
-                    .try_into()
-                    .unwrap();
-            risc0_verifier::v1_2()
+            let proof: crate::R0Proof = Proof::V2_1(PROOF_POSEIDON2_22_V2_1.to_vec())
+                .try_into()
+                .unwrap();
+            risc0_verifier::v2_1()
                 .inject_native_poseidon2_if_needed()
                 .verify(vk, proof.take_proof(), journal)
                 .unwrap()

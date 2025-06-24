@@ -18,11 +18,11 @@ use proc_macro2::Ident;
 use quote::{format_ident, quote};
 use syn::DeriveInput;
 
-#[proc_macro_derive(R0Proof)]
+#[proc_macro_derive(R0Proof, attributes(unsupported))]
 pub fn risc0_proof(input: TokenStream) -> TokenStream {
     let ast: DeriveInput = syn::parse(input).unwrap();
     match valid_data(ast) {
-        Ok((name, valid_variants)) => impl_risc0_proof(&name, valid_variants.as_slice()),
+        Ok(data) => impl_risc0_proof(data),
         Err(err) => {
             let err = err.into_iter().map(|err| err.to_compile_error());
             quote! {
@@ -33,7 +33,18 @@ pub fn risc0_proof(input: TokenStream) -> TokenStream {
     .into()
 }
 
-fn valid_data(ast: DeriveInput) -> Result<(Ident, Vec<Ident>), Vec<syn::Error>> {
+#[derive(Debug, PartialEq)]
+struct Variant {
+    name: Ident,
+    supported: bool,
+}
+#[derive(Debug)]
+struct EnumData {
+    name: Ident,
+    variants: Vec<Variant>,
+}
+
+fn valid_data(ast: DeriveInput) -> Result<EnumData, Vec<syn::Error>> {
     let name = ast.ident.clone();
     let variants = match &ast.data {
         syn::Data::Enum(data) => &data.variants,
@@ -47,14 +58,18 @@ fn valid_data(ast: DeriveInput) -> Result<(Ident, Vec<Ident>), Vec<syn::Error>> 
     if !errors.is_empty() {
         Err(errors.into_iter().map(Result::unwrap_err).collect())
     } else {
-        Ok((
+        Ok(EnumData {
             name,
-            valid_variants.into_iter().map(Result::unwrap).collect(),
-        ))
+            variants: valid_variants.into_iter().map(Result::unwrap).collect(),
+        })
     }
 }
 
-fn valid_variant(variant: &syn::Variant) -> Result<Ident, syn::Error> {
+fn valid_variant(variant: &syn::Variant) -> Result<Variant, syn::Error> {
+    let supported = !variant
+        .attrs
+        .iter()
+        .any(|attr| attr.path().is_ident("unsupported"));
     match &variant.fields {
         syn::Fields::Unnamed(inner) if inner.unnamed.len() == 1 => (),
         _ => {
@@ -64,51 +79,94 @@ fn valid_variant(variant: &syn::Variant) -> Result<Ident, syn::Error> {
             ))
         }
     };
-    Ok(variant.ident.clone())
+    Ok(Variant {
+        name: variant.ident.clone(),
+        supported,
+    })
 }
 
-fn impl_risc0_proof(proof: &Ident, variants: &[Ident]) -> proc_macro2::TokenStream {
+fn impl_risc0_proof(data: EnumData) -> proc_macro2::TokenStream {
+    let proof = &data.name;
+    let variants = data.variants.as_slice();
+    let local_variants = variants.iter().map(|v| &v.name).collect::<Vec<_>>();
     let r0_proof = format_ident!("R0{proof}");
+    let r0_variants = variants
+        .iter()
+        .filter(|v| v.supported)
+        .map(|v| &v.name)
+        .collect::<Vec<_>>();
+
+    let try_from_impls = variants
+        .iter()
+        .map(|v| {
+            let variant = &v.name;
+            if v.supported {
+                quote! {
+                    Ok(Self::#variant(risc0_proof))
+                }
+            } else {
+                quote! {
+                    Err(ConvertProofError::UnsupportedVersion)
+                }
+            }
+        })
+        .collect::<Vec<_>>();
+
     quote! {
         enum #r0_proof {
-            #(#variants(risc0_verifier::Proof)),*
+            #(#r0_variants(risc0_verifier::Proof)),*
         }
 
         impl #r0_proof {
             fn proof(&self) -> &risc0_verifier::Proof {
                 match self {
-                    #(#r0_proof::#variants(p) => p),*
+                    #(#r0_proof::#r0_variants(p) => p),*
                 }
             }
 
             fn take_proof(self) -> risc0_verifier::Proof {
                 match self {
-                    #(#r0_proof::#variants(p) => p),*
+                    #(#r0_proof::#r0_variants(p) => p),*
+                }
+            }
+        }
+
+        #[derive(Debug)]
+        enum ConvertProofError {
+            UnsupportedVersion,
+            DeserializeError,
+        }
+
+        impl From<ConvertProofError> for hp_verifiers::VerifyError {
+            fn from(err: ConvertProofError) -> Self {
+                match err {
+                    ConvertProofError::UnsupportedVersion => hp_verifiers::VerifyError::UnsupportedVersion,
+                    ConvertProofError::DeserializeError => hp_verifiers::VerifyError::InvalidProofData,
                 }
             }
         }
 
         impl TryFrom<&#proof> for #r0_proof {
-            type Error = ();
+            type Error = ConvertProofError;
 
             fn try_from(proof: &#proof) -> Result<Self, Self::Error> {
-                let risc0_proof = ciborium::from_reader(proof.bytes()).map_err(|_| ())?;
-                Ok(match proof {
-                    #(#proof::#variants(_) => Self::#variants(risc0_proof)),*
-                })
+                let risc0_proof = ciborium::from_reader(proof.bytes()).map_err(|_| ConvertProofError::DeserializeError)?;
+                match proof {
+                    #(#proof::#local_variants(_) => #try_from_impls),*
+                }
             }
         }
 
         impl #proof {
             fn len(&self) -> usize {
                 match self {
-                    #(#proof::#variants(proof_bytes) => proof_bytes.len()),*
+                    #(#proof::#local_variants(proof_bytes) => proof_bytes.len()),*
                 }
             }
 
             fn bytes(&self) -> &[u8] {
                 match self {
-                    #(#proof::#variants(proof_bytes) => proof_bytes.as_slice()),*
+                    #(#proof::#local_variants(proof_bytes) => proof_bytes.as_slice()),*
                 }
             }
         }
@@ -129,21 +187,32 @@ mod test {
         fn accept_enum() {
             let data = syn::parse_str(
                 r#"enum MyEnum{
+                    #[unsupported]
                     First(some),
+                    FirstSupported(some),
+                    #[unsupported]
                     Second(other),
                     More(many),
                   }"#,
             )
             .unwrap();
-            let (name, valid_variants) = valid_data(data).unwrap();
+            let data = valid_data(data).unwrap();
 
-            assert_eq!("MyEnum", name.to_string());
+            assert_eq!("MyEnum", data.name.to_string());
             assert_eq!(
-                valid_variants,
-                vec!["First", "Second", "More"]
-                    .into_iter()
-                    .map(|id| format_ident!("{id}"))
-                    .collect::<Vec<_>>()
+                data.variants,
+                vec![
+                    ("First", false),
+                    ("FirstSupported", true),
+                    ("Second", false),
+                    ("More", true)
+                ]
+                .into_iter()
+                .map(|(id, supported)| Variant {
+                    name: format_ident!("{id}"),
+                    supported,
+                })
+                .collect::<Vec<_>>()
             );
         }
 
@@ -183,17 +252,23 @@ mod test {
     #[test]
     fn render() {
         let name = syn::parse_str("Proof").unwrap();
-        let variants_names = ["V1_0", "V1_1", "V1_2", "V2_0"]
-            .into_iter()
-            .map(|n| format_ident!("{}", n))
-            .collect::<Vec<_>>();
+        let variants = [
+            ("V1_0", false),
+            ("V1_1", false),
+            ("V1_2", true),
+            ("V2_0", true),
+        ]
+        .into_iter()
+        .map(|(n, supported)| Variant {
+            name: format_ident!("{n}"),
+            supported,
+        })
+        .collect::<Vec<_>>();
 
-        let out = impl_risc0_proof(&name, variants_names.as_slice());
+        let out = impl_risc0_proof(EnumData { name, variants });
 
         let expected = quote! {
             enum R0Proof {
-                V1_0(risc0_verifier::Proof),
-                V1_1(risc0_verifier::Proof),
                 V1_2(risc0_verifier::Proof),
                 V2_0(risc0_verifier::Proof)
             }
@@ -201,8 +276,6 @@ mod test {
             impl R0Proof {
                 fn proof(&self) -> &risc0_verifier::Proof {
                     match self {
-                        R0Proof::V1_0(p) => p,
-                        R0Proof::V1_1(p) => p,
                         R0Proof::V1_2(p) => p,
                         R0Proof::V2_0(p) => p
                     }
@@ -210,25 +283,38 @@ mod test {
 
                 fn take_proof(self) -> risc0_verifier::Proof {
                     match self {
-                        R0Proof::V1_0(p) => p,
-                        R0Proof::V1_1(p) => p,
                         R0Proof::V1_2(p) => p,
                         R0Proof::V2_0(p) => p
                     }
                 }
             }
 
+            #[derive(Debug)]
+            enum ConvertProofError {
+                UnsupportedVersion,
+                DeserializeError,
+            }
+
+            impl From<ConvertProofError> for hp_verifiers::VerifyError {
+                fn from(err: ConvertProofError) -> Self {
+                    match err {
+                        ConvertProofError::UnsupportedVersion => hp_verifiers::VerifyError::UnsupportedVersion,
+                        ConvertProofError::DeserializeError => hp_verifiers::VerifyError::InvalidProofData,
+                    }
+                }
+            }
+
             impl TryFrom<&Proof> for R0Proof {
-                type Error = ();
+                type Error = ConvertProofError;
 
                 fn try_from(proof: &Proof) -> Result<Self, Self::Error> {
-                    let risc0_proof = ciborium::from_reader(proof.bytes()).map_err(|_| ())?;
-                    Ok(match proof {
-                        Proof::V1_0(_) => Self::V1_0(risc0_proof),
-                        Proof::V1_1(_) => Self::V1_1(risc0_proof),
-                        Proof::V1_2(_) => Self::V1_2(risc0_proof),
-                        Proof::V2_0(_) => Self::V2_0(risc0_proof)
-                    })
+                    let risc0_proof = ciborium::from_reader(proof.bytes()).map_err(|_| ConvertProofError::DeserializeError)?;
+                    match proof {
+                        Proof::V1_0(_) => Err(ConvertProofError::UnsupportedVersion),
+                        Proof::V1_1(_) => Err(ConvertProofError::UnsupportedVersion),
+                        Proof::V1_2(_) => Ok(Self::V1_2(risc0_proof)),
+                        Proof::V2_0(_) => Ok(Self::V2_0(risc0_proof))
+                    }
                 }
             }
 

@@ -39,7 +39,7 @@ mod benchmarks {
 
     #[benchmark]
     fn get_vk() {
-        let vk = VALID_VK;
+        let vk = VK;
         let hash = sp_core::H256::repeat_byte(2);
 
         insert_vk_anonymous::<T>(vk, hash);
@@ -54,7 +54,7 @@ mod benchmarks {
 
     #[benchmark]
     fn validate_vk() {
-        let vk = VALID_VK;
+        let vk = VK;
 
         let r;
         #[block]
@@ -66,10 +66,10 @@ mod benchmarks {
 
     #[benchmark]
     fn compute_statement_hash() {
-        let vk = VALID_VK;
-        let inner_proof = include_bytes!("resources_benchmarking/POSEIDON2_BLOCK_21.bin").to_vec();
-        let proof = Proof::V1_2(inner_proof);
-        let pubs = VALID_PUBS_BLOCK_21.to_vec();
+        let vk = VK;
+        let inner_proof = include_bytes!("resources_benchmarking/poseidon2_21.bin").to_vec();
+        let proof = Proof::V2_1(inner_proof);
+        let pubs = PUBS_21.to_vec();
 
         let vk = VkOrHash::Vk(vk.into());
 
@@ -82,7 +82,7 @@ mod benchmarks {
     #[benchmark]
     fn register_vk() {
         let caller = funded_account::<T>();
-        let vk: VkOf<T> = VALID_VK;
+        let vk: VkOf<T> = VK;
 
         #[extrinsic_call]
         register_vk(RawOrigin::Signed(caller), vk.into());
@@ -96,7 +96,7 @@ mod benchmarks {
         // setup code
         let caller: T::AccountId = funded_account::<T>();
         let hash = sp_core::H256::repeat_byte(2);
-        let vk = VALID_VK;
+        let vk = VK;
 
         insert_vk::<T>(caller.clone(), vk, hash);
 
