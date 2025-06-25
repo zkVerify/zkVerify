@@ -11,10 +11,26 @@ inputs:
     description: "Docker image name"
     required: true
     type: string
+  docker_image_suffix:
+    description: "Docker image name suffix"
+    type: string
+    default: '-relay'
   docker_hub_org:
     description: "Docker hub organization"
     type: string
     default: 'horizenlabs'
+  profile:
+    description: "Build profile"
+    type: string
+    default: 'production'
+  features:
+    description: "Build features"
+    type: string
+    default: 'metadata-hash'
+  dry_run:
+    description: "Dry run execution"
+    type: boolean
+    default: false
 
 outputs:
   artifact_name:
@@ -34,24 +50,27 @@ runs:
       shell: bash
       run: |
         echo "Building relay chain Docker image"
-        docker build --build-arg PROFILE=production \
-          --build-arg FEATURES=metadata-hash \
+        ${{inputs.dry_run}} && echo "*********************** Dry run mode enabled, skipping Docker build. ***********************"
+        ${{inputs.dry_run}} || docker build --build-arg "PROFILE=${{ inputs.profile }}" \
+          --build-arg "FEATURES=${{ inputs.features }}" \
           -f "docker/dockerfiles/zkv-relay.Dockerfile" \
-          -t ${{ inputs.docker_hub_org }}/${{ inputs.docker_image_name }}-relay .
+          -t ${{ inputs.docker_hub_org }}/${{ inputs.docker_image_name }}${{ inputs.docker_image_suffix }} .
 
-        echo "DOCKER_IMAGE_NAME=${{ inputs.docker_hub_org }}/${{ inputs.docker_image_name }}-relay" >> "${GITHUB_ENV}"
+        echo "DOCKER_IMAGE_NAME=${{ inputs.docker_hub_org }}/${{ inputs.docker_image_name }}${{ inputs.docker_image_suffix }}" >> "${GITHUB_ENV}"
 
     - name: Save the Docker image as a tarball
       id: create-tar-file
       shell: bash
       run: |
-        ARTIFACT_NAME="${{ inputs.docker_image_name }}-relay"
+        ARTIFACT_NAME="${{ inputs.docker_image_name }}${{ inputs.docker_image_suffix }}"
         TAR_FILE="${{github.workspace}}/${ARTIFACT_NAME}.tar"
 
         echo "artifact_name=$ARTIFACT_NAME" >> "${GITHUB_OUTPUT}"
         echo "TAR_FILE=$TAR_FILE" >> "${GITHUB_ENV}"
 
-        docker save "${DOCKER_IMAGE_NAME}" -o "${TAR_FILE}"
+        ${{inputs.dry_run}} && echo "*********************** Dry run mode enabled, skipping Docker build. ***********************"
+        ${{inputs.dry_run}} && echo "DRY-RUN -> ${DOCKER_IMAGE_NAME}" > "${TAR_FILE}"
+        ${{inputs.dry_run}} || docker save "${DOCKER_IMAGE_NAME}" -o "${TAR_FILE}"
 
     - name: Upload Docker image artifact
       uses: actions/upload-artifact@v4

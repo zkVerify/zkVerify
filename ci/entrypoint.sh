@@ -11,6 +11,7 @@ CARGO_BINARIES_INSTALL="${CARGO_BINARIES_INSTALL:-}"
 NODEJS_VERSION_INSTALL="${NODEJS_VERSION_INSTALL:-}"
 CMAKE_INSTALL="${CMAKE_INSTALL:-}"
 LLD_INSTALL="${LLD_INSTALL:-}"
+SKIP_WASM_BUILD="${SKIP_WASM_BUILD:-}"
 TARGET_DIR="${DOCKER_BUILD_DIR}/target"
 
 fn_die() {
@@ -106,6 +107,11 @@ export DONT_CACHE_NATIVE="true"
 # then the compiled artifact (cargo use timestamp to identify what to recompile). So we can
 # save 20/30% time on disable it without to lose any advantage.
 export CARGO_INCREMENTAL=0
+
+# If SKIP_WASM_BUILD is set, we export the variable to skip the runtime wasm build
+if [ -n "${SKIP_WASM_BUILD}" ]; then
+  export SKIP_WASM_BUILD=1
+fi
 
 # Run
 if [ "$USERNAME" = "root" ]; then

@@ -1,0 +1,49 @@
+name: Build Docker Image Custom
+
+on:
+  workflow_dispatch:
+    inputs:
+      docker_image_name:
+        description: "Docker image name"
+        required: true
+        type: string
+      docker_image_suffix:
+        description: "Docker image name suffix"
+        type: string
+        default: '-relay'
+      docker_hub_org:
+        description: "Docker hub organization"
+        type: string
+        default: 'horizenlabs'
+      profile:
+        description: "Build profile"
+        type: string
+        default: 'production'
+      features:
+        description: "Build features"
+        type: string
+        default: 'metadata-hash'
+      dry_run:
+        description: "Dry run execution"
+        type: boolean
+        default: false
+
+jobs:
+  build-docker:
+    runs-on: warp-ubuntu-latest-x64-8x
+    name: Build Docker image Manually
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Docker build
+        id: build-docker-image
+        uses: ./.github/actions/build-docker-image
+        with:
+          ref: ${{ git.ref }}
+          docker_image_name: ${{ inputs.docker_image_name }}
+          docker_image_suffix: ${{ inputs.docker_image_suffix }}
+          docker_hub_org: ${{ inputs.docker_hub_org }}
+          profile: ${{ inputs.profile }}
+          features: ${{ inputs.features }}
+          dry_run: ${{ inputs.dry_run }}

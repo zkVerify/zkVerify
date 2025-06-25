@@ -20,6 +20,7 @@ services:
       - "NODEJS_VERSION_INSTALL=${NODEJS_VERSION_INSTALL:-}"
       - "CMAKE_INSTALL=${CMAKE_INSTALL:-}"
       - "LLD_INSTALL=${LLD_INSTALL:-}"
+      - "SKIP_WASM_BUILD=${SKIP_WASM_BUILD:-}"
       - "LOCAL_USER_ID=${USER_ID:-}"
       - "LOCAL_GRP_ID=${GRP_ID:-}"
     entrypoint: ${DOCKER_BUILD_DIR}/ci/entrypoint.sh
