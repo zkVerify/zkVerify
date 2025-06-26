@@ -25,7 +25,6 @@ jobs:
           cache_key: 'coverage'
           lld_install: 'yes'
           cargo_binaries_install: cargo-llvm-cov
-          skip_wasm_build: 'yes'
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
