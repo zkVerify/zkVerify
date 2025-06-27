@@ -43,31 +43,31 @@ runtime-benchmarks = [
 	"frame-benchmarking/runtime-benchmarks",
 	"frame-support/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
+	"hp-dispatch/runtime-benchmarks",
 	"pallet-balances/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
-	"hp-dispatch/runtime-benchmarks"
 ]
-default = ["std"]
+default = [ "std" ]
 std = [
+	"binary-merkle-tree/std",
 	"codec/std",
-	"scale-info/std",
-	"sp-runtime/std",
-	"sp-core/std",
 	"frame-benchmarking/std",
 	"frame-support/std",
 	"frame-system/std",
-	"binary-merkle-tree/std",
-	"log/std",
-	"pallet-balances/std",
-	"sp-io/std",
+	"hp-dispatch/std",
 	"hp-on-proof-verified/std",
 	"ismp/std",
-	"hp-dispatch/std"
+	"log/std",
+	"pallet-balances/std",
+	"scale-info/std",
+	"sp-core/std",
+	"sp-io/std",
+	"sp-runtime/std",
 ]
 try-runtime = [
 	"frame-support/try-runtime",
 	"frame-system/try-runtime",
+	"hp-dispatch/try-runtime",
 	"pallet-balances/try-runtime",
 	"sp-runtime/try-runtime",
-	"hp-dispatch/try-runtime"
 ]

@@ -153,9 +153,9 @@ tempfile = { workspace = true }
 
 
 [features]
-default = ["db", "full-node"]
+default = [ "db", "full-node" ]
 
-db = ["sc-service/rocksdb"]
+db = [ "sc-service/rocksdb" ]
 
 full-node = [
 	"kvdb-rocksdb",
@@ -193,16 +193,16 @@ runtime-benchmarks = [
 	"frame-system/runtime-benchmarks",
 	"pallet-babe/runtime-benchmarks",
 	"pallet-staking/runtime-benchmarks",
+	"pallet-transaction-payment/runtime-benchmarks",
 	"polkadot-parachain-primitives/runtime-benchmarks",
 	"polkadot-primitives/runtime-benchmarks",
 	"polkadot-runtime-parachains/runtime-benchmarks",
 	"sc-client-db/runtime-benchmarks",
 	"sc-service/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
-	"zkv-runtime/runtime-benchmarks",
 	"sp-staking/runtime-benchmarks",
 	"test-client/runtime-benchmarks",
-	"pallet-transaction-payment/runtime-benchmarks"
+	"zkv-runtime/runtime-benchmarks",
 ]
 
 try-runtime = [
@@ -212,12 +212,12 @@ try-runtime = [
 	"pallet-staking/try-runtime",
 	"pallet-transaction-payment/try-runtime",
 	"polkadot-runtime-parachains/try-runtime",
+	"sp-runtime/try-runtime",
 	"zkv-runtime/try-runtime",
-	"sp-runtime/try-runtime"
 ]
 
-fast-runtime = ["zkv-runtime/fast-runtime"]
+fast-runtime = [ "zkv-runtime/fast-runtime" ]
 
-malus = ["full-node"]
-runtime-metrics = ["polkadot-runtime-parachains/runtime-metrics"]
-metadata-hash = ["zkv-runtime/metadata-hash"]
+malus = [ "full-node" ]
+runtime-metrics = [ "polkadot-runtime-parachains/runtime-metrics" ]
+metadata-hash = [ "zkv-runtime/metadata-hash" ]

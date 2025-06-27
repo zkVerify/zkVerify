@@ -41,31 +41,31 @@ runtime-benchmarks = [
 	"frame-benchmarking/runtime-benchmarks",
 	"frame-support/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
-	"pallet-ismp/runtime-benchmarks",
 	"ismp-grandpa/runtime-benchmarks",
 	"pallet-balances/runtime-benchmarks",
+	"pallet-ismp/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
-	"sp-runtime/runtime-benchmarks"
+	"sp-runtime/runtime-benchmarks",
 ]
-default = ["std"]
+default = [ "std" ]
 std = [
+	"alloy-dyn-abi/std",
+	"alloy-primitives/std",
 	"anyhow/std",
 	"codec/std",
-	"scale-info/std",
-	"sp-runtime/std",
-	"sp-core/std",
-	"sp-io/std",
-	"alloy-primitives/std",
-	"pallet-timestamp/std",
 	"frame-benchmarking/std",
 	"frame-support/std",
 	"frame-system/std",
-	"alloy-dyn-abi/std",
-	"ismp/std",
 	"ismp-grandpa/std",
+	"ismp/std",
 	"log/std",
 	"pallet-balances/std",
-	"pallet-ismp/std"
+	"pallet-ismp/std",
+	"pallet-timestamp/std",
+	"scale-info/std",
+	"sp-core/std",
+	"sp-io/std",
+	"sp-runtime/std",
 ]
 try-runtime = [
 	"frame-support/try-runtime",
@@ -74,5 +74,5 @@ try-runtime = [
 	"pallet-balances/try-runtime",
 	"pallet-ismp/try-runtime",
 	"pallet-timestamp/try-runtime",
-	"sp-runtime/try-runtime"
+	"sp-runtime/try-runtime",
 ]

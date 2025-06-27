@@ -19,11 +19,11 @@ sp-io = { workspace = true }
 hex-literal = { workspace = true }
 
 [features]
-default = ["std"]
+default = [ "std" ]
 std = [
-    "codec/std",
-    "sp-weights/std",
-    "scale-info/std",
-    "sp-core/std",
-    "sp-io/std",
+	"codec/std",
+	"scale-info/std",
+	"sp-core/std",
+	"sp-io/std",
+	"sp-weights/std",
 ]
