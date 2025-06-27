@@ -1,0 +1,36 @@
+name: Cache cleanup
+
+run-name: Cache cleanup
+
+on:
+  workflow_dispatch:
+
+jobs:
+  clear-cache:
+    runs-on: warp-ubuntu-latest-x64-2x
+    name: "Clear cache key: '${{ matrix.cache_key }}'"
+    strategy:
+      matrix:
+        cache_key:
+          - build-relay-paratest
+          - coverage
+          - unit-test
+          - integration-test
+          - build-runtime-benchmarks
+          - lint-format
+          - udeps
+          - build-try-runtime
+          - rustdoc
+    steps:
+      - name: "Deleting '${{ matrix.cache_key }}' cache key"
+        uses: WarpBuilds/cache@v1
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            deps/
+          key: ${{ matrix.cache_key }}-${{ github.event.repository.default_branch }}
+          delete-cache: true
