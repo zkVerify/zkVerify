@@ -22,6 +22,14 @@ use crate::proxy::ProxyType;
 use crate::RuntimeCall;
 
 #[rstest]
+#[case::fflonk_submit_proof(
+    RuntimeCall::SettlementFFlonkPallet(pallet_verifiers::Call::submit_proof{
+        vk_or_hash: Default::default(),
+        proof: [0u8; 768].into(),
+        pubs: Default::default(),
+        domain_id: None,
+        })
+)]
 #[case::groth16_submit_proof(
     RuntimeCall::SettlementGroth16Pallet(pallet_verifiers::Call::submit_proof {
         vk_or_hash: Default::default(),
@@ -30,32 +38,32 @@ use crate::RuntimeCall;
         domain_id: None,
     })
 )]
+#[case::plonky2_submit_proof(
+    RuntimeCall::SettlementPlonky2Pallet(pallet_verifiers::Call::submit_proof{
+        vk_or_hash: Default::default(),
+        proof: Default::default(),
+        pubs: Default::default(),
+        domain_id: None,
+        })
+)]
+#[case::proofofsql_submit_proof(
+    RuntimeCall::SettlementProofOfSqlPallet(pallet_verifiers::Call::submit_proof{
+        vk_or_hash: Default::default(),
+        proof: Default::default(),
+        pubs: Default::default(),
+        domain_id: None,
+        })
+)]
 #[case::risc0_submit_proof(
     RuntimeCall::SettlementRisc0Pallet(pallet_verifiers::Call::submit_proof {
         vk_or_hash: Default::default(),
-        proof: pallet_risc0_verifier::Proof::V1_2(Default::default()).into(),
+        proof: pallet_risc0_verifier::Proof::V2_1(Default::default()).into(),
         pubs: Default::default(),
         domain_id: None,
     })
 )]
 #[case::ultraplonk_submit_proof(
     RuntimeCall::SettlementUltraplonkPallet(pallet_verifiers::Call::submit_proof {
-        vk_or_hash: Default::default(),
-        proof: Default::default(),
-        pubs: Default::default(),
-        domain_id: None,
-    })
-)]
-#[case::proofofsql_submit_proof(
-    RuntimeCall::SettlementProofOfSqlPallet(pallet_verifiers::Call::submit_proof {
-        vk_or_hash: Default::default(),
-        proof: Default::default(),
-        pubs: Default::default(),
-        domain_id: None,
-    })
-)]
-#[case::plonky2_submit_proof(
-    RuntimeCall::SettlementPlonky2Pallet(pallet_verifiers::Call::submit_proof {
         vk_or_hash: Default::default(),
         proof: Default::default(),
         pubs: Default::default(),

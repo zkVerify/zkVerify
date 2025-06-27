@@ -296,6 +296,8 @@ pub mod pallet {
         DisabledVerifier,
         /// Verification key has already been registered.
         VerificationKeyAlreadyRegistered,
+        /// The submitted proof is in an unsupported version.
+        UnsupportedVersion,
     }
 
     impl<T, I> From<VerifyError> for Error<T, I> {
@@ -305,6 +307,7 @@ pub mod pallet {
                 VerifyError::InvalidProofData => Error::<T, I>::InvalidProofData,
                 VerifyError::VerifyError => Error::<T, I>::VerifyError,
                 VerifyError::InvalidVerificationKey => Error::<T, I>::InvalidVerificationKey,
+                VerifyError::UnsupportedVersion => Error::<T, I>::UnsupportedVersion,
             }
         }
     }

@@ -52,6 +52,8 @@ pub enum VerifyError {
     VerifyError,
     /// Provided an invalid verification key.
     InvalidVerificationKey,
+    /// Unsupported Version.
+    UnsupportedVersion,
 }
 
 /// The trait that characterizes a verifier.

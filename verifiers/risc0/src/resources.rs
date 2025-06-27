@@ -13,61 +13,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub mod v1_0 {
-    pub static VALID_VK: sp_core::H256 = sp_core::H256(hex_literal::hex!(
-        "32e1a33f3988c3cdf127e709cc0323a258b28df750b7a2d5ddc4c5e37f007d99"
-    ));
-
-    pub static VALID_PROOF: &[u8] = include_bytes!("resources/valid_proof_v1_0.bin");
-
-    pub static VALID_PUBS: &[u8] = &hex_literal::hex!("01000078");
+pub mod any_mock {
+    pub static VK: sp_core::H256 = sp_core::H256([0xad; 32]);
+    pub static PUBS: &[u8] = &hex_literal::hex!("0000000000000000");
+    pub static PROOF: &[u8] = include_bytes!("resources/v_2_1_poseidon2_16.bin");
 }
-
-pub mod v1_1 {
-    pub static VALID_VK: sp_core::H256 = sp_core::H256(hex_literal::hex!(
-        "2addbbeb4ddb2f2ec2b4a0a8a21c03f7d3bf42cfd2ee9f4a69d2ebd9974218b6"
-    ));
-
-    pub static VALID_PROOF: &[u8] = include_bytes!("resources/v_1_1_poseidon2_16.bin");
-
-    pub static VALID_PUBS: &[u8] = &hex_literal::hex!("8105000000000000");
-}
-
-pub mod v1_2 {
-    pub static VALID_VK: sp_core::H256 = sp_core::H256(hex_literal::hex!(
-        "9db9988d9fbcacadf2bd29fc7c60b98bc4234342fe536eb983169eb6cc248009"
-    ));
-
-    pub static VALID_PROOF: &[u8] = include_bytes!("resources/v_1_2_succinct_22.bin");
-
-    pub static VALID_PUBS: &[u8] = &hex_literal::hex!("1d64010000000000");
-
-    pub static VALID_PROOF_COMPOSITE_3_SLOTS: &[u8] =
-        include_bytes!("resources/v_1_2_poseidon2_22.bin");
-
-    pub static VALID_VK_UPPER_BOUND: sp_core::H256 = sp_core::H256(hex_literal::hex!(
-        "f9ac6bf258c7e19a574346ff57fec724c087a7dc5f1541a71b4504ebba82cb2f"
-    ));
-    pub static VALID_PUBS_UPPER_BOUND: &[u8] = &hex_literal::hex!("0d003c0000000000");
-    pub static VALID_PROOF_UPPER_BOUND: &[u8] = include_bytes!("resources/upper_bound.bin");
-}
-
-pub mod v2_0 {
-    pub static VALID_VK: sp_core::H256 = sp_core::H256(hex_literal::hex!(
-        "46eb54959aaff64f405fb04575c4a2387630de3a7938d679494b8f31f859cb01"
-    ));
-
-    pub static VALID_PROOF: &[u8] = include_bytes!("resources/v_2_0_succinct_22.bin");
-
-    pub static VALID_PUBS: &[u8] = &hex_literal::hex!("08003c0000000000");
-}
-
 pub mod v2_1 {
-    pub static VALID_VK: sp_core::H256 = sp_core::H256(hex_literal::hex!(
+    pub static VK: sp_core::H256 = sp_core::H256(hex_literal::hex!(
         "8e3794e8255e7810de2be7710fe19f79e538de060f038a21b24529e28d0b744c"
     ));
+    pub static PUBS_22: &[u8] = &hex_literal::hex!("00003c0000000000");
+    pub static PUBS_16: &[u8] = &hex_literal::hex!("1c40000000000000");
 
-    pub static VALID_PROOF: &[u8] = include_bytes!("resources/v_2_1_succinct_22.bin");
+    pub static PROOF_SUCCINCT: &[u8] = include_bytes!("resources/v_2_1_succinct_22.bin");
+    pub static PUBS_SUCCINCT: &[u8] = PUBS_22;
 
-    pub static VALID_PUBS: &[u8] = &hex_literal::hex!("00003c0000000000");
+    pub static PROOF_POSEIDON2_22: &[u8] = include_bytes!("resources/v_2_1_poseidon2_22.bin");
+    pub static PROOF_POSEIDON2_16: &[u8] = include_bytes!("resources/v_2_1_poseidon2_16.bin");
+
+    pub static VALID_PROOF: &[u8] = PROOF_POSEIDON2_16;
+    pub static PUBS: &[u8] = PUBS_16;
+
+    pub static PUBS_COMPOSITE_3_SLOTS: &[u8] = &hex_literal::hex!("1a00200000000000");
+    pub static PROOF_COMPOSITE_3_SLOTS: &[u8] =
+        include_bytes!("resources/v_2_1_poseidon2_composite_3_slots.bin");
+
+    pub static PROOF_UPPER_BOUND: &[u8] = include_bytes!("resources/v_2_1_poseidon2_22.bin");
+    pub static PUBS_UPPER_BOUND: &[u8] = &hex_literal::hex!("00003c0000000000");
 }

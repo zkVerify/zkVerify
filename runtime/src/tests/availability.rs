@@ -229,7 +229,7 @@ fn pallet_risc0() {
         let dummy_origin = AccountId32::new([0; 32]);
 
         let dummy_vk = H256::default();
-        let dummy_proof = pallet_risc0_verifier::Proof::V1_1(vec![]);
+        let dummy_proof = pallet_risc0_verifier::Proof::V2_1(vec![]);
         let dummy_pubs = vec![];
 
         assert!(SettlementRisc0Pallet::submit_proof(
