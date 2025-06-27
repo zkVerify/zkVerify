@@ -19,7 +19,7 @@ args = ["check", "--all-features"]
 
 [tasks.build]
 command = "cargo"
-args = ["build", "--release"]
+args = ["build", "--release", "--features", "fast-runtime"]
 
 [tasks.test-base]
 command = "cargo"
@@ -36,6 +36,7 @@ args = ["test", "--release", "--all-features"]
 dependencies = ["build"]
 script = [
     "cd zombienet-tests",
+    "rm -rf bin/ node_modules/ yarn.lock", # make sure you don't have outdated dependencies locally
     "yarn install",
     "yarn test"
 ]
