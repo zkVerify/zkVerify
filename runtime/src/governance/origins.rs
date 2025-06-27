@@ -19,7 +19,7 @@ pub use pallet_custom_origins::*;
 
 #[frame_support::pallet]
 pub mod pallet_custom_origins {
-    use crate::{Balance, THOUSANDS, VFY};
+    use crate::{Balance, THOUSANDS};
     use frame_support::pallet_prelude::*;
 
     #[pallet::config]
@@ -31,25 +31,10 @@ pub mod pallet_custom_origins {
     #[derive(PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo, RuntimeDebug)]
     #[pallet::origin]
     pub enum Origin {
-        /// Origin able to cancel slashes and manage minimum commission.
-        StakingAdmin,
-        /// Origin for spending up to $10,000,000 VFYs from the treasury as well as generally
-        /// administering it.
-        Treasurer,
         /// Origin able to cancel referenda.
         ReferendumCanceller,
-        /// Origin able to kill referenda.
-        ReferendumKiller,
-        /// Origin able to spend around $250 from the treasury at once.
-        SmallTipper,
-        /// Origin able to spend around $1,000 from the treasury at once.
-        BigTipper,
-        /// Origin able to spend around $10,000 from the treasury at once.
-        SmallSpender,
         /// Origin able to spend around $100,000 from the treasury at once.
         MediumSpender,
-        /// Origin able to spend up to $1,000,000 VFY from the treasury at once.
-        BigSpender,
         /// Origin for signaling that the network wishes for some change.
         WishForChange,
     }
@@ -84,13 +69,7 @@ pub mod pallet_custom_origins {
 		};
 		() => {}
 	}
-    decl_unit_ensures!(
-        StakingAdmin,
-        Treasurer,
-        ReferendumCanceller,
-        ReferendumKiller,
-        WishForChange,
-    );
+    decl_unit_ensures!(ReferendumCanceller, WishForChange,);
 
     macro_rules! decl_ensure {
 		(
@@ -127,12 +106,7 @@ pub mod pallet_custom_origins {
 
     decl_ensure! {
         pub type Spender: EnsureOrigin<Success = Balance> {
-            SmallTipper = 250 * VFY,
-            BigTipper = THOUSANDS,
-            SmallSpender = 10 * THOUSANDS,
             MediumSpender = 100 * THOUSANDS,
-            BigSpender = 1_000 * THOUSANDS,
-            Treasurer = 10_000 * THOUSANDS,
         }
     }
 }

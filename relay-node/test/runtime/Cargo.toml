@@ -80,14 +80,13 @@ serde_json = { workspace = true }
 substrate-wasm-builder = { workspace = true }
 
 [features]
-default = ["std"]
+default = [ "std" ]
 no_std = []
 only-staking = []
 try-runtime = [
-	"sp-runtime/try-runtime",
-	"frame-support/try-runtime",
 	"frame-election-provider-support/try-runtime",
 	"frame-executive/try-runtime",
+	"frame-support/try-runtime",
 	"frame-system/try-runtime",
 	"pallet-authority-discovery/try-runtime",
 	"pallet-authorship/try-runtime",
@@ -104,7 +103,8 @@ try-runtime = [
 	"pallet-vesting/try-runtime",
 	"pallet-xcm/try-runtime",
 	"polkadot-runtime-common/try-runtime",
-	"polkadot-runtime-parachains/try-runtime"
+	"polkadot-runtime-parachains/try-runtime",
+	"sp-runtime/try-runtime",
 ]
 runtime-metrics = [
 	"polkadot-runtime-parachains/runtime-metrics",
@@ -112,18 +112,13 @@ runtime-metrics = [
 ]
 
 std = [
-	"sp-authority-discovery/std",
-	"sp-consensus-babe/std",
 	"bitvec/std",
-	"sp-block-builder/std",
 	"frame-election-provider-support/std",
 	"frame-executive/std",
 	"frame-support/std",
 	"frame-system-rpc-runtime-api/std",
 	"frame-system/std",
-	"sp-inherents/std",
 	"log/std",
-	"sp-offchain/std",
 	"pallet-authority-discovery/std",
 	"pallet-authorship/std",
 	"pallet-babe/std",
@@ -141,27 +136,32 @@ std = [
 	"pallet-xcm/std",
 	"parity-scale-codec/std",
 	"polkadot-parachain-primitives/std",
-	"polkadot-runtime-parachains/std",
 	"polkadot-primitives/std",
 	"polkadot-runtime-common/std",
+	"polkadot-runtime-parachains/std",
 	"rustc-hex/std",
 	"scale-info/std",
 	"serde/std",
 	"serde_derive",
+	"serde_json/std",
 	"sp-api/std",
+	"sp-authority-discovery/std",
+	"sp-block-builder/std",
+	"sp-consensus-babe/std",
 	"sp-core/std",
 	"sp-genesis-builder/std",
+	"sp-inherents/std",
 	"sp-io/std",
+	"sp-offchain/std",
 	"sp-runtime/std",
 	"sp-session/std",
 	"sp-staking/std",
+	"sp-transaction-pool/std",
 	"sp-version/std",
 	"test-runtime-constants/std",
-	"sp-transaction-pool/std",
 	"xcm-builder/std",
 	"xcm-executor/std",
 	"xcm/std",
-	"serde_json/std"
 ]
 
 runtime-benchmarks = [
@@ -176,15 +176,15 @@ runtime-benchmarks = [
 	"pallet-staking/runtime-benchmarks",
 	"pallet-sudo/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
+	"pallet-transaction-payment/runtime-benchmarks",
 	"pallet-vesting/runtime-benchmarks",
 	"pallet-xcm/runtime-benchmarks",
 	"polkadot-parachain-primitives/runtime-benchmarks",
-	"polkadot-runtime-parachains/runtime-benchmarks",
 	"polkadot-primitives/runtime-benchmarks",
 	"polkadot-runtime-common/runtime-benchmarks",
+	"polkadot-runtime-parachains/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
 	"sp-staking/runtime-benchmarks",
 	"xcm-builder/runtime-benchmarks",
 	"xcm-executor/runtime-benchmarks",
-	"pallet-transaction-payment/runtime-benchmarks"
 ]

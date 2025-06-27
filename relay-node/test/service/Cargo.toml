@@ -64,19 +64,19 @@ pallet-balances = { workspace = true }
 tokio = { workspace = true, features = ["macros"] }
 
 [features]
-runtime-metrics = ["test-runtime/runtime-metrics"]
+runtime-metrics = [ "test-runtime/runtime-metrics" ]
 runtime-benchmarks = [
 	"frame-system/runtime-benchmarks",
 	"pallet-balances/runtime-benchmarks",
 	"pallet-staking/runtime-benchmarks",
+	"pallet-transaction-payment/runtime-benchmarks",
 	"polkadot-parachain-primitives/runtime-benchmarks",
 	"polkadot-primitives/runtime-benchmarks",
 	"polkadot-runtime-common/runtime-benchmarks",
 	"polkadot-runtime-parachains/runtime-benchmarks",
-	"service/runtime-benchmarks",
-	"test-runtime/runtime-benchmarks",
-	"sc-service/runtime-benchmarks",
-	"sp-runtime/runtime-benchmarks",
 	"polkadot-service/runtime-benchmarks",
-	"pallet-transaction-payment/runtime-benchmarks"
+	"sc-service/runtime-benchmarks",
+	"service/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"test-runtime/runtime-benchmarks",
 ]

@@ -25,15 +25,15 @@ serde = { optional = true, workspace = true }
 binary-merkle-tree = { default-features = false, workspace = true }
 
 [features]
-default = ["std"]
+default = [ "std" ]
 std = [
-	"pallet-aggregate/std",
-	"codec/std",
-	"sp-api/std",
-	"sp-runtime/std",
-	"scale-info/std",
 	"binary-merkle-tree/std",
+	"codec/std",
+	"pallet-aggregate/std",
+	"scale-info/std",
 	"serde",
+	"serde?/std",
+	"sp-api/std",
 	"sp-core/std",
-	"serde?/std"
+	"sp-runtime/std",
 ]
