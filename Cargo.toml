@@ -107,6 +107,7 @@ pallet-risc0-verifier = { path = "verifiers/risc0", default-features = false }
 pallet-ultraplonk-verifier = { path = "verifiers/ultraplonk", default-features = false }
 risc0-verifier = { git = "https://github.com/zkVerify/risc0-verifier.git", tag = "v0.7.0", default-features = false }
 pallet-plonky2-verifier = { path = "verifiers/plonky2", default-features = false }
+ultraplonk-no-std = { git = "https://github.com/zkVerify/ultraplonk_verifier.git", default-features = false, tag = "v0.4.0" }
 
 zkv-benchmarks = { path = "relay-node/benchmarks" }
 native-cache = { path = "utils/native-cache" }

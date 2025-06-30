@@ -22,7 +22,7 @@ log = { workspace = true }
 hex-literal = { workspace = true, optional = true }
 native = { workspace = true }
 sp-io = { workspace = true }
-ultraplonk-no-std = { git = "https://github.com/zkVerify/ultraplonk_verifier.git", default-features = false, tag = "v0.4.0" }
+ultraplonk-no-std = { workspace = true }
 
 [dev-dependencies]
 hex-literal = { workspace = true }

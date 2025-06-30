@@ -1,0 +1,33 @@
+[package]
+name = "checker-template"
+version = "0.1.0"
+authors.workspace = true
+edition.workspace = true
+repository.workspace = true
+homepage.workspace = true
+
+[dependencies]
+ultraplonk = { path = "ultraplonk" }
+risc0 = { path = "risc0" }
+maybe-fail = { path = "maybe-fail" }
+sp-version.workspace = true
+sp-api.workspace = true
+
+[build-dependencies]
+substrate-wasm-builder.workspace = true
+
+[features]
+default = ["std"]
+std = [
+ "sp-api/std",
+ "sp-version/std",
+]
+dont-link-maybe-fail = []
+fail = [
+ "maybe-fail/fail",
+]
+
+[package.metadata.cargo-udeps.ignore]
+normal = [
+ "maybe-fail",
+]

@@ -1,0 +1,11 @@
+[package]
+name = "ultraplonk"
+version = "0.1.0"
+edition.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+
+[dependencies]
+ultraplonk-no-std = { workspace = true }
+hex-literal = { workspace = true }
