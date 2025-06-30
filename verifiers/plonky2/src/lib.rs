@@ -180,7 +180,7 @@ impl<T: Config> Verifier for Plonky2<T> {
             .map_err(|_| VerifyError::InvalidVerificationKey)
     }
 
-    fn pubs_bytes(pubs: &Self::Pubs) -> Cow<[u8]> {
+    fn pubs_bytes(pubs: &Self::Pubs) -> Cow<'_, [u8]> {
         Cow::Borrowed(pubs)
     }
 }

@@ -84,7 +84,7 @@ impl Verifier for Fflonk {
         Ok(())
     }
 
-    fn pubs_bytes(pubs: &Self::Pubs) -> Cow<[u8]> {
+    fn pubs_bytes(pubs: &Self::Pubs) -> Cow<'_, [u8]> {
         Cow::Borrowed(pubs)
     }
 }

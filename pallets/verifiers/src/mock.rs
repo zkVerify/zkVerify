@@ -174,7 +174,7 @@ pub mod fake_pallet {
             }
         }
 
-        fn pubs_bytes(pubs: &Self::Pubs) -> Cow<[u8]> {
+        fn pubs_bytes(pubs: &Self::Pubs) -> Cow<'_, [u8]> {
             Cow::Owned(pubs.to_be_bytes().into())
         }
 

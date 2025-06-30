@@ -98,13 +98,13 @@ pub trait Verifier {
 
     /// A vk's byte serialization used to compute the verification key hash. The default implementation
     /// uses the `scale::encode()` one, but you can customize it.
-    fn vk_bytes(vk: &Self::Vk) -> Cow<[u8]> {
+    fn vk_bytes(vk: &Self::Vk) -> Cow<'_, [u8]> {
         Cow::Owned(vk.encode())
     }
 
     /// Public inputs byte serialization used to compute the statement hash.
     /// There isn't any default implementation: you should implement it.
-    fn pubs_bytes(pubs: &Self::Pubs) -> Cow<[u8]>;
+    fn pubs_bytes(pubs: &Self::Pubs) -> Cow<'_, [u8]>;
 
     /// Return a hash that represents the verifier version used to verify the proof.
     /// This value, if present, will be included in the computation of the statement hash.
@@ -173,7 +173,7 @@ impl Verifier for () {
         Ok(())
     }
 
-    fn pubs_bytes(_pubs: &Self::Pubs) -> Cow<[u8]> {
+    fn pubs_bytes(_pubs: &Self::Pubs) -> Cow<'_, [u8]> {
         static EMPTY: [u8; 0] = [];
         // Example: If you would use something computed here, you can use
         // Cow::Owned(_pubs.encode())
