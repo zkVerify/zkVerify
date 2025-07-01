@@ -169,8 +169,6 @@ pub mod currency {
     pub const HUNDREDS: Balance = 100 * VFY;
     pub const THOUSANDS: Balance = 1_000 * VFY;
     pub const MILLIONS: Balance = 1_000 * THOUSANDS;
-    pub const CENTS: Balance = VFY / 100;
-    pub const MILLIS: Balance = VFY / 1_000;
     pub const MILLICENTS: Balance = CENTS / 1_000;
     #[cfg(not(feature = "runtime-benchmarks"))]
     pub const EXISTENTIAL_DEPOSIT: Balance = CENTS;
