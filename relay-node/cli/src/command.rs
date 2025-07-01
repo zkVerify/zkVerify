@@ -42,7 +42,7 @@ impl SubstrateCli for Cli {
 
     fn impl_version() -> String {
         let commit_hash = env!("SUBSTRATE_CLI_COMMIT_HASH");
-        format!("{}-{commit_hash}", NODE_VERSION)
+        format!("{NODE_VERSION}-{commit_hash}")
     }
 
     fn description() -> String {
@@ -319,7 +319,7 @@ pub fn run() -> Result<()> {
                         let (client, _, _, _) = service::new_chain_ops(&mut config)?;
                         let header = client.header(client.info().genesis_hash).unwrap().unwrap();
                         let inherent_data = benchmark_inherent_data(header)
-                            .map_err(|e| format!("generating inherent data: {:?}", e))?;
+                            .map_err(|e| format!("generating inherent data: {e:?}"))?;
                         let remark_builder =
                             RemarkBuilder::new(client.clone(), config.chain_spec.identify_chain());
 

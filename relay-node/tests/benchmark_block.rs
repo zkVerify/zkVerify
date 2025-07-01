@@ -87,7 +87,7 @@ fn benchmark_block(runtime: &str, base_path: &Path, block: u32) -> Result<(), St
         .args(["--repeat", "1"])
         .args(["--wasm-execution", "compiled"])
         .status()
-        .map_err(|e| format!("command failed: {:?}", e))?;
+        .map_err(|e| format!("command failed: {e:?}"))?;
 
     if !status.success() {
         return Err("Command failed".into());

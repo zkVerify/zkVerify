@@ -133,7 +133,7 @@ pub fn open_creating_rocksdb(
 
     let path_str = path
         .to_str()
-        .ok_or_else(|| other_io_error(format!("Bad database path: {:?}", path)))?;
+        .ok_or_else(|| other_io_error(format!("Bad database path: {path:?}")))?;
 
     gum::debug!(
         target: LOG_TARGET,
@@ -160,7 +160,7 @@ pub fn open_creating_paritydb(
     let path = root.join("parachains");
     let path_str = path
         .to_str()
-        .ok_or_else(|| other_io_error(format!("Bad database path: {:?}", path)))?;
+        .ok_or_else(|| other_io_error(format!("Bad database path: {path:?}")))?;
 
     gum::debug!(
         target: LOG_TARGET,
@@ -171,7 +171,7 @@ pub fn open_creating_paritydb(
     upgrade::try_upgrade_db(&path, DatabaseKind::ParityDB, upgrade::CURRENT_VERSION)?;
 
     let db = parity_db::Db::open_or_create(&upgrade::paritydb_version_3_config(&path))
-        .map_err(|err| io::Error::new(io::ErrorKind::Other, format!("{:?}", err)))?;
+        .map_err(|err| io::Error::new(io::ErrorKind::Other, format!("{err:?}")))?;
 
     let db = polkadot_node_subsystem_util::database::paritydb_impl::DbAdapter::new(
         db,

@@ -78,7 +78,7 @@ pub fn find_ws_url_from_output(read: impl Read + Send) -> (String, String) {
                 Some((_, after)) => after.split_once(',').unwrap().0,
             };
 
-            Some(format!("ws://{}", sock_addr))
+            Some(format!("ws://{sock_addr}"))
         })
         .unwrap_or_else(|| panic!("Could not find address in process output:\n{}", &data));
     (ws_url, data)

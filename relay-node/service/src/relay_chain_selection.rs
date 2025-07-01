@@ -267,12 +267,10 @@ where
         match HeaderProvider::header(self.backend.header_provider(), hash) {
             Ok(Some(header)) => Ok(header),
             Ok(None) => Err(ConsensusError::ChainLookup(format!(
-                "Missing header with hash {:?}",
-                hash,
+                "Missing header with hash {hash:?}",
             ))),
             Err(e) => Err(ConsensusError::ChainLookup(format!(
-                "Lookup failed for header with hash {:?}: {:?}",
-                hash, e,
+                "Lookup failed for header with hash {hash:?}: {e:?}",
             ))),
         }
     }
@@ -281,12 +279,10 @@ where
         match HeaderProvider::number(self.backend.header_provider(), hash) {
             Ok(Some(number)) => Ok(number),
             Ok(None) => Err(ConsensusError::ChainLookup(format!(
-                "Missing number with hash {:?}",
-                hash,
+                "Missing number with hash {hash:?}",
             ))),
             Err(e) => Err(ConsensusError::ChainLookup(format!(
-                "Lookup failed for number with hash {:?}: {:?}",
-                hash, e,
+                "Lookup failed for number with hash {hash:?}: {e:?}",
             ))),
         }
     }
@@ -454,7 +450,7 @@ where
                             max,
                             &subchain_header,
                         )
-                        .map_err(|e| ConsensusError::ChainLookup(format!("{:?}", e)))?;
+                        .map_err(|e| ConsensusError::ChainLookup(format!("{e:?}")))?;
                     gum::trace!(
                         target: LOG_TARGET,
                         ?ancestor_hash,
@@ -619,7 +615,7 @@ where
                     safe_target,
                     &initial_leaf_header,
                 )
-                .map_err(|e| ConsensusError::ChainLookup(format!("{:?}", e)))?;
+                .map_err(|e| ConsensusError::ChainLookup(format!("{e:?}")))?;
 
                 gum::warn!(
                     target: LOG_TARGET,

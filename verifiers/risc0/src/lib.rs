@@ -98,7 +98,7 @@ impl R0Proof {
     fn verify(self, vk: Risc0Vk, journal: Journal) -> Result<(), VerifyError> {
         self.verifier()
             .verify(vk.into(), self.take_proof(), journal)
-            .inspect_err(|e| log::debug!("Cannot verify proof: {:?}", e))
+            .inspect_err(|e| log::debug!("Cannot verify proof: {e:?}"))
             .map_err(|_| VerifyError::VerifyError)
     }
 

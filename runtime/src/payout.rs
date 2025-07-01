@@ -197,8 +197,7 @@ fn check_exp() {
     for v in TEST_VALUES {
         assert!(
             (exp(v) - v.exp()).abs() <= ExpPrecision::get(),
-            "failed for {}",
-            v
+            "failed for {v}"
         );
     }
 }
