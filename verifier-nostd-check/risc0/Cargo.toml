@@ -1,0 +1,10 @@
+[package]
+name = "risc0"
+version = "0.1.0"
+edition.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+
+[dependencies]
+risc0-verifier = { workspace = true }
