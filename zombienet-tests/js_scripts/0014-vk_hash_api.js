@@ -22,8 +22,9 @@ const { init_api } = require('zkv-lib')
 const { VK: FFLONK_VK, VKEY_HASH: FFLONK_VKEY_HASH } = require('./fflonk_data.js');
 const { VK: GROTH16_VK, VKEY_HASH: GROTH16_VKEY_HASH } = require('./groth16_data.js');
 const { VK: PLONKY2_VK, VKEY_HASH: PLONKY2_VKEY_HASH } = require('./plonky2_data.js');
-const { VK: RISC0_VK} = require('./risc0_v2_1_data.js');
+const { VK: RISC0_VK } = require('./risc0_v2_1_data.js');
 const { VK: ULTRAPLONK_VK, VKEY_HASH: ULTRAPLONK_VKEY_HASH } = require('./ultraplonk_data.js');
+const { VK: SP1_VK } = require('./sp1_data.js');
 
 async function run(nodeName, networkInfo, _args) {
     const api = await init_api(zombie, nodeName, networkInfo);
@@ -58,6 +59,12 @@ async function run(nodeName, networkInfo, _args) {
             pallet: api.rpc.vk_hash.ultraplonk,
             vk: ULTRAPLONK_VK,
             expected_hash: ULTRAPLONK_VKEY_HASH
+        },
+        {
+            name: "Sp1",
+            pallet: api.rpc.vk_hash.sp1,
+            vk: SP1_VK,
+            expected_hash: SP1_VK
         },
     ];
 
