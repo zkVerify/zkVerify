@@ -202,7 +202,7 @@ impl<T: Config> Verifier for Risc0<T> {
         proof.verify(vk.0.into(), journal).map(|_| Some(w))
     }
 
-    fn pubs_bytes(pubs: &Self::Pubs) -> Cow<[u8]> {
+    fn pubs_bytes(pubs: &Self::Pubs) -> Cow<'_, [u8]> {
         Cow::Borrowed(pubs)
     }
 
@@ -210,7 +210,7 @@ impl<T: Config> Verifier for Risc0<T> {
         *vk
     }
 
-    fn vk_bytes(_vk: &Self::Vk) -> Cow<[u8]> {
+    fn vk_bytes(_vk: &Self::Vk) -> Cow<'_, [u8]> {
         panic!("Risc0 vk is already hashed and we cannot know its preimage: use vk_hash() instead")
     }
 

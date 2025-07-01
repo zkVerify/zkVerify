@@ -69,7 +69,7 @@ impl<T: Config> Verifier for Groth16<T> {
             .map(|_| None)
     }
 
-    fn pubs_bytes(pubs: &Self::Pubs) -> Cow<[u8]> {
+    fn pubs_bytes(pubs: &Self::Pubs) -> Cow<'_, [u8]> {
         let data = pubs
             .iter()
             .flat_map(|s| s.0.iter().cloned())

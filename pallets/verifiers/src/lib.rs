@@ -519,7 +519,7 @@ pub mod pallet {
             ) -> Result<Option<Weight>, VerifyError> {
                 FakeVerifier::verify_proof(vk, proof, pubs)
             }
-            fn pubs_bytes(pubs: &Self::Pubs) -> Cow<[u8]> {
+            fn pubs_bytes(pubs: &Self::Pubs) -> Cow<'_, [u8]> {
                 FakeVerifier::pubs_bytes(pubs)
             }
         }
@@ -626,7 +626,7 @@ pub mod pallet {
                 Ok(None)
             }
 
-            fn pubs_bytes(_pubs: &Self::Pubs) -> Cow<[u8]> {
+            fn pubs_bytes(_pubs: &Self::Pubs) -> Cow<'_, [u8]> {
                 Cow::Borrowed(&[])
             }
         }
@@ -653,7 +653,7 @@ pub mod pallet {
                 Ok(None)
             }
 
-            fn pubs_bytes(_pubs: &Self::Pubs) -> Cow<[u8]> {
+            fn pubs_bytes(_pubs: &Self::Pubs) -> Cow<'_, [u8]> {
                 Cow::Borrowed(&[])
             }
         }
