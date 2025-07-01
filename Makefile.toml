@@ -19,21 +19,30 @@ args = ["check", "--all-features"]
 
 [tasks.build]
 command = "cargo"
-args = ["build", "--release", "--features", "fast-runtime"]
+args = ["build", "--release"]
+
+[tasks.build-dev-relay]
+command = "cargo"
+args = ["build", "-p", "zkv-relay", "--release", "--features", "fast-runtime"]
+
+[tasks.build-dev-paratest]
+command = "cargo"
+args = ["build", "-p", "paratest-node", "--release"]
+
+[tasks.build-dev]
+dependencies = ["build-dev-relay", "build-dev-paratest"]
 
 [tasks.test-base]
 command = "cargo"
-env = { "SKIP_WASM_BUILD" = "1" }
 args = ["test", "--release"]
 
 [tasks.test]
 dependencies = ["test-base"]
 command = "cargo"
-env = { "SKIP_WASM_BUILD" = "1" }
 args = ["test", "--release", "--all-features"]
 
 [tasks.zombienet-tests]
-dependencies = ["build"]
+dependencies = ["build-dev"]
 script = [
     "cd zombienet-tests",
     "rm -rf bin/ node_modules/ yarn.lock", # make sure you don't have outdated dependencies locally
@@ -103,15 +112,22 @@ args = ["run", "fix"]
 [tasks.zepter]
 dependencies = ["zepter-fix-check", "zepter-fix-format"]
 
-[tasks.machete]
+[tasks.udeps-inst]
 command = "cargo"
-args = ["machete"]
+args = ["install", "cargo-udeps", "--locked"]
+
+[tasks.udeps]
+dependencies = ["udeps-inst"]
+command = "cargo"
+env = { "SKIP_WASM_BUILD" = "1" }
+toolchain = "nightly"
+args = ["udeps", "--all-targets", "--all-features"]
 
 [tasks.dependencies-check]
-dependencies = ["audit", "machete"]
-
-[tasks.ci]
-dependencies = ["format", "zepter", "check", "build", "test", "zombienet-tests", "test-bench", "clippy", "dependencies-check"]
+dependencies = ["audit", "udeps"]
 
 [tasks.test-full]
 dependencies = ["test", "zombienet-tests", "test-bench"]
+
+[tasks.ci]
+dependencies = ["format", "zepter", "check", "build-dev", "test-full", "clippy", "dependencies-check"]
