@@ -81,13 +81,13 @@ runtime-benchmarks = [
 	"frame-benchmarking-cli/runtime-benchmarks",
 	"frame-benchmarking/runtime-benchmarks",
 	"paratest-runtime/runtime-benchmarks",
-	"zkv-cli/runtime-benchmarks",
 	"polkadot-primitives/runtime-benchmarks",
 	"sc-service/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
+	"zkv-cli/runtime-benchmarks",
 ]
 try-runtime = [
 	"paratest-runtime/try-runtime",
 	"sp-runtime/try-runtime",
-	"zkv-cli/try-runtime"
+	"zkv-cli/try-runtime",
 ]

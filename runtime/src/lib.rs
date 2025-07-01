@@ -165,6 +165,7 @@ pub mod currency {
     pub type Balance = u128;
     pub const VFY: Balance = 1_000_000_000_000_000_000;
     pub const CENTS: Balance = VFY / 100;
+    pub const MILLIS: Balance = VFY / 1_000;
     pub const THOUSANDS: Balance = 1_000 * VFY;
     pub const MILLIONS: Balance = 1_000 * THOUSANDS;
     pub const MILLICENTS: Balance = CENTS / 1_000;

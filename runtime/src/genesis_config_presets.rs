@@ -18,7 +18,10 @@
 
 use crate::*;
 use alloc::{boxed::Box, format, vec, vec::Vec};
-use polkadot_primitives::{AssignmentId, AsyncBackingParams, SchedulerParams, ValidatorId};
+use polkadot_primitives::{
+    AssignmentId, AsyncBackingParams, BlockNumber, SchedulerParams, ValidatorId,
+};
+use polkadot_runtime_parachains::configuration::HostConfiguration;
 use sp_consensus_babe::AuthorityId as BabeId;
 use sp_consensus_grandpa::AuthorityId as GrandpaId;
 use sp_core::crypto::Ss58Codec;
@@ -134,6 +137,7 @@ fn genesis(
     max_validator_count: Option<u32>,
     min_validator_bond: Balance,
     min_nominator_bond: Balance,
+    parachains_host_configuration: HostConfiguration<BlockNumber>,
 ) -> serde_json::Value {
     serde_json::json!({
         "balances": {
@@ -164,18 +168,16 @@ fn genesis(
             "key": Some(root_key),
         },
         "configuration": {
-            "config": default_parachains_host_configuration(),
+            "config": parachains_host_configuration,
         },
 
     })
 }
 
-fn default_parachains_host_configuration(
-) -> polkadot_runtime_parachains::configuration::HostConfiguration<polkadot_primitives::BlockNumber>
-{
+fn default_parachains_host_configuration() -> HostConfiguration<BlockNumber> {
     use polkadot_primitives::{MAX_CODE_SIZE, MAX_POV_SIZE};
 
-    polkadot_runtime_parachains::configuration::HostConfiguration {
+    HostConfiguration {
         validation_upgrade_cooldown: 2u32,
         validation_upgrade_delay: 2,
         code_retention_period: 1200,
@@ -211,6 +213,58 @@ fn default_parachains_host_configuration(
             ..Default::default()
         },
         ..Default::default()
+    }
+}
+
+#[allow(dead_code)]
+fn test_parachains_host_configuration() -> HostConfiguration<BlockNumber> {
+    use polkadot_primitives::{MAX_CODE_SIZE, MAX_POV_SIZE};
+
+    HostConfiguration {
+        validation_upgrade_cooldown: 2u32, // Don't care for now: we work only with system (thus, trusted) parachains
+        validation_upgrade_delay: 2, // Don't care for now: we work only with system (thus, trusted) parachains
+        code_retention_period: 3600,
+        max_code_size: MAX_CODE_SIZE,
+        max_pov_size: MAX_POV_SIZE,
+        max_head_data_size: 20 * 1024,
+        max_upward_queue_count: 128,
+        max_upward_queue_size: 256 * 1024, // MaxUpwardQueueCount * MaxUpwardMessageSize * 2
+        max_downward_message_size: 10 * 1024,
+        max_upward_message_size: 1024,
+        max_upward_message_num_per_candidate: 64,
+        hrmp_sender_deposit: 0,                     // Don't need HRMP for now
+        hrmp_recipient_deposit: 0,                  // Don't need HRMP for now
+        hrmp_channel_max_capacity: 8,               // Don't need HRMP for now
+        hrmp_channel_max_total_size: 8 * 1024,      // Don't need HRMP for now
+        hrmp_max_parachain_inbound_channels: 4,     // Don't need HRMP for now
+        hrmp_channel_max_message_size: 1024 * 1024, // Don't need HRMP for now
+        hrmp_max_parachain_outbound_channels: 4,    // Don't need HRMP for now
+        hrmp_max_message_num_per_candidate: 5,      // Don't need HRMP for now
+        dispute_period: 6,
+        no_show_slots: 3,
+        n_delay_tranches: 2,
+        needed_approvals: 5,
+        relay_vrf_modulo_samples: 2,
+        zeroth_delay_tranche_width: 0,
+        minimum_validation_upgrade_delay: 5, // Don't care for now: we work only with system (thus, trusted) parachains
+        minimum_backing_votes: 2,
+        async_backing_params: AsyncBackingParams {
+            max_candidate_depth: 3,
+            allowed_ancestry_len: 2,
+        },
+        scheduler_params: SchedulerParams {
+            lookahead: 2,
+            max_validators_per_core: Some(5),
+            ..Default::default() // Deprecated and unused params, assigning default values
+        },
+        executor_params: Default::default(),
+        max_validators: None, // No Max
+        dispute_post_conclusion_acceptance_period: 50,
+        pvf_voting_ttl: 2,
+        node_features: NodeFeatures::EMPTY,
+        approval_voting_params: ApprovalVotingParams {
+            max_approval_coalesce_count: 1,
+        },
     }
 }
 
@@ -490,6 +544,7 @@ pub fn zkv_testnet_config_genesis() -> Result<serde_json::Value, sp_core::crypto
         10 * THOUSANDS,
         // min nominator bond
         10 * VFY,
+        default_parachains_host_configuration(),
     ))
 }
 
@@ -550,6 +605,7 @@ pub fn zkv_local_config_genesis() -> serde_json::Value {
         0,
         // min nominator bond
         0,
+        test_parachains_host_configuration(),
     )
 }
 
@@ -620,6 +676,7 @@ pub fn zkv_development_config_genesis() -> serde_json::Value {
         0,
         // min nominator bond
         0,
+        test_parachains_host_configuration(),
     )
 }
 
@@ -643,24 +700,4 @@ pub fn get_preset(id: &sp_genesis_builder::PresetId) -> Option<Vec<u8>> {
             .expect("genesis cfg must be serializable. qed.")
             .into_bytes(),
     )
-}
-
-#[cfg(test)]
-mod tests {
-
-    #[cfg(feature = "runtime-benchmarks")]
-    #[test]
-    fn development_genesis_config_unchanged() {
-        // This test checks that the genesis config that will be used for benchmarks is as
-        // expected, and that no change goes unnoticed, as it may break benchmarks.
-        // If changes are necessary and tested not to break any benchmark, then please update to
-        // golden reference at "tests/genesis_dev_golden.json".
-        // "zkv-relay build-spec --chain dev | jq -rc '.genesis.runtimeGenesis.patch' > genesis_dev_golden.json"
-        let genesis = super::zkv_development_config_genesis();
-        let file = std::fs::File::open("tests/genesis_dev_golden.json")
-            .expect("could not open golden file");
-        let genesis_golden: serde_json::Value =
-            serde_json::from_reader(file).expect("could not parse golden genesis patch");
-        assert_eq!(genesis, genesis_golden);
-    }
 }

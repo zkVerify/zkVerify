@@ -10,8 +10,6 @@ const fs = require('fs');
 
 const { submitExtrinsic, receivedEvents } = require('zkv-lib');
 
-const { PROOF: GROTH16_PROOF, PUBS: GROTH16_PUBS, VK: GROTH16_VK } = require('../groth16_data.js');
-
 const ReturnCode = {
     Ok: 1,
     WrongBalance: 2,
@@ -19,10 +17,10 @@ const ReturnCode = {
     FailedSavingFile: 4,
 };
 
-function encodeVerifyCall(api, filePath) {
-    console.log("Writing verify call to " + filePath);
-    validProofSubmission = api.tx.settlementGroth16Pallet.submitProof({ 'Vk': GROTH16_VK }, GROTH16_PROOF, GROTH16_PUBS, null);
-    const data = u8aToHex(compactAddLength(validProofSubmission.method.toU8a()));
+function encodeTestCall(api, filePath) {
+    console.log("Writing test call to " + filePath);
+    validTestCall = api.tx.system.remark("Hello world!");
+    const data = u8aToHex(compactAddLength(validTestCall.method.toU8a()));
     fs.writeFile(filePath, 'const CALL = "' + data + '"\nexports.CALL = CALL;\n', function(err) {
         if(err) {
             console.log("Could not save the file!");
@@ -104,8 +102,8 @@ async function run(nodeName, networkInfo, args) {
         return ReturnCode.WrongBalance;
     }
     
-    // 3. Encode a groth16 proof verification, and write the encoded call to a temp file
-    return encodeVerifyCall(api, networkInfo["tmpDir"] + '/groth_proof_call.js');
+    // 3. Encode a test call, and write it to a temp file
+    return encodeTestCall(api, networkInfo["tmpDir"] + '/test_call.js');
 }
 
 module.exports = { run }

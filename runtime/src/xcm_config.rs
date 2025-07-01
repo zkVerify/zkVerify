@@ -29,7 +29,7 @@ use frame_system::EnsureRoot;
 use pallet_xcm::XcmPassthrough;
 use polkadot_runtime_common::xcm_sender::{ChildParachainRouter, ExponentialPrice};
 
-use crate::{currency::CENTS, parachains::parachains_origin, payout::DealWithFees};
+use crate::{currency::MILLIS, parachains::parachains_origin, payout::DealWithFees};
 use sp_core::ConstU32;
 use xcm::latest::prelude::*;
 use xcm_builder::{
@@ -115,11 +115,11 @@ type LocalOriginConverter = (
 parameter_types! {
     /// Maximum number of instructions in a single XCM fragment. A sanity check against weight
     /// calculations getting too crazy.
-    pub const MaxInstructions: u32 = 100;
+    pub const MaxInstructions: u32 = 30;
     /// The asset ID for the asset that we use to pay for message delivery fees.
     pub FeeAssetId: AssetId = AssetId(TokenLocation::get());
     /// The base fee for the message delivery fees.
-    pub const BaseDeliveryFee: u128 = CENTS.saturating_mul(3);
+    pub const BaseDeliveryFee: u128 = MILLIS.saturating_mul(3);
 }
 
 pub type PriceForChildParachainDelivery =
@@ -252,7 +252,7 @@ impl pallet_xcm::Config for Runtime {
     type XcmExecuteFilter = Everything;
     type XcmExecutor = xcm_executor::XcmExecutor<XcmConfig>;
     type XcmTeleportFilter = Everything; // == Allow All
-    type XcmReserveTransferFilter = Everything; // == Allow All
+    type XcmReserveTransferFilter = Nothing;
     type Weigher = WeightInfoBounds<XcmZKVWeight<RuntimeCall>, RuntimeCall, MaxInstructions>;
     type UniversalLocation = UniversalLocation;
     type RuntimeOrigin = RuntimeOrigin;
