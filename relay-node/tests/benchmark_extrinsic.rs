@@ -43,7 +43,7 @@ fn benchmark_extrinsic(runtime: &str, pallet: &str, extrinsic: &str) -> Result<(
         // Run with low repeats for faster execution.
         .args(["--repeat=1", "--warmup=1", "--max-ext-per-block=1"])
         .status()
-        .map_err(|e| format!("command failed: {:?}", e))?;
+        .map_err(|e| format!("command failed: {e:?}"))?;
 
     if !status.success() {
         return Err("Command failed".into());

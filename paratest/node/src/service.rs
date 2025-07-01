@@ -255,8 +255,7 @@ async fn start_node_impl<Network: sc_network::NetworkBackend<Block, Hash>>(
         match SUBSTRATE_REFERENCE_HARDWARE.check_hardware(&hwbench, validator) {
             Err(err) if validator => {
                 log::warn!(
-				"⚠️  The hardware does not meet the minimal requirements {} for role 'Authority'.",
-				err
+				"⚠️  The hardware does not meet the minimal requirements {err} for role 'Authority'."
 			);
             }
             _ => {}

@@ -29,7 +29,7 @@ pub const STASH_DEPOSIT: Balance = 1 * currency::VFY; // MUST not be smaller tha
 pub const NUM_VALIDATORS: u32 = 2;
 
 pub fn get_from_seed<TPublic: Public>(seed: u8) -> TPublic::Pair {
-    TPublic::Pair::from_string(&format!("//test_seed{}", seed), None)
+    TPublic::Pair::from_string(&format!("//test_seed{seed}"), None)
         .expect("static values are valid; qed")
 }
 

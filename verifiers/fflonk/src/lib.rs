@@ -55,11 +55,11 @@ impl Verifier for Fflonk {
         let vk: fflonk_verifier::VerificationKey = vk
             .clone()
             .try_into_fflonk_vk_unchecked()
-            .map_err(|e| log::debug!("Invalid Vk: {:?}", e))
+            .map_err(|e| log::debug!("Invalid Vk: {e:?}"))
             .map_err(|_| VerifyError::InvalidVerificationKey)?;
         let pubs: fflonk_verifier::Public = (*raw_pubs).into();
         let proof = fflonk_verifier::Proof::try_from(raw_proof)
-            .map_err(|e| log::debug!("Cannot extract raw proof data: {:?}", e))
+            .map_err(|e| log::debug!("Cannot extract raw proof data: {e:?}"))
             .map_err(|_| VerifyError::InvalidProofData)?;
         log::trace!(
             "Extracted public inputs [{:?}...{:?}] and proof data [{:?}...{:?}]",
@@ -70,7 +70,7 @@ impl Verifier for Fflonk {
         );
 
         fflonk_verifier::verify(&vk, &proof, &pubs)
-            .inspect_err(|e| log::debug!("Proof verification failed: {:?}", e))
+            .inspect_err(|e| log::debug!("Proof verification failed: {e:?}"))
             .map_err(|_| VerifyError::VerifyError)
             .map(|_| None)
     }
@@ -79,7 +79,7 @@ impl Verifier for Fflonk {
         let _: fflonk_verifier::VerificationKey = vk
             .clone()
             .try_into()
-            .map_err(|e| log::debug!("Invalid Vk: {:?}", e))
+            .map_err(|e| log::debug!("Invalid Vk: {e:?}"))
             .map_err(|_| VerifyError::InvalidVerificationKey)?;
         Ok(())
     }

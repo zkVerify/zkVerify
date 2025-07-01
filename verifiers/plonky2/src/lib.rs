@@ -149,7 +149,7 @@ impl<T: Config> Verifier for Plonky2<T> {
         let w = compute_weight::<T>(degree_bits, vk.config);
 
         verify(&vk, &proof, raw_pubs)
-            .inspect_err(|e| log::debug!("Proof verification failed: {:?}", e))
+            .inspect_err(|e| log::debug!("Proof verification failed: {e:?}"))
             .map_err(|_| VerifyError::VerifyError)
             .map(|_| Some(w))
     }
@@ -176,7 +176,7 @@ impl<T: Config> Verifier for Plonky2<T> {
             }
         };
 
-        vk.inspect_err(|e| log::debug!("VK validation failed: {:?}", e))
+        vk.inspect_err(|e| log::debug!("VK validation failed: {e:?}"))
             .map_err(|_| VerifyError::InvalidVerificationKey)
     }
 

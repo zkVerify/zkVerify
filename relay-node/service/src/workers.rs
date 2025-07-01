@@ -65,10 +65,7 @@ pub fn determine_workers_paths(
             workers_names,
         });
     } else if workers_paths.len() > 1 {
-        log::warn!(
-            "multiple sets of worker binaries found ({:?})",
-            workers_paths,
-        );
+        log::warn!("multiple sets of worker binaries found ({workers_paths:?})",);
     }
 
     let (prep_worker_path, exec_worker_path) = workers_paths.swap_remove(0);
@@ -112,7 +109,7 @@ fn list_workers_paths(
     workers_names: Option<(String, String)>,
 ) -> Result<Vec<(PathBuf, PathBuf)>, Error> {
     if let Some(path) = given_workers_path {
-        log::trace!("Using explicitly provided workers path {:?}", path);
+        log::trace!("Using explicitly provided workers path {path:?}");
 
         if path.is_executable() {
             return Ok(vec![(path.clone(), path)]);
@@ -142,20 +139,12 @@ fn list_workers_paths(
         // Add to set if both workers exist. Warn on partial installs.
         let (prep_worker_exists, exec_worker_exists) = (prep_worker.exists(), exec_worker.exists());
         if prep_worker_exists && exec_worker_exists {
-            log::trace!("Worker binaries found at current exe path: {:?}", exe_path);
+            log::trace!("Worker binaries found at current exe path: {exe_path:?}");
             workers_paths.push((prep_worker, exec_worker));
         } else if prep_worker_exists {
-            log::warn!(
-                "Worker binary found at {:?} but not {:?}",
-                prep_worker,
-                exec_worker
-            );
+            log::warn!("Worker binary found at {prep_worker:?} but not {exec_worker:?}");
         } else if exec_worker_exists {
-            log::warn!(
-                "Worker binary found at {:?} but not {:?}",
-                exec_worker,
-                prep_worker
-            );
+            log::warn!("Worker binary found at {exec_worker:?} but not {prep_worker:?}");
         }
     }
 
@@ -176,17 +165,9 @@ fn list_workers_paths(
             log::trace!("Worker binaries found at /usr/lib/polkadot");
             workers_paths.push((prep_worker, exec_worker));
         } else if prep_worker_exists {
-            log::warn!(
-                "Worker binary found at {:?} but not {:?}",
-                prep_worker,
-                exec_worker
-            );
+            log::warn!("Worker binary found at {prep_worker:?} but not {exec_worker:?}");
         } else if exec_worker_exists {
-            log::warn!(
-                "Worker binary found at {:?} but not {:?}",
-                exec_worker,
-                prep_worker
-            );
+            log::warn!("Worker binary found at {exec_worker:?} but not {prep_worker:?}");
         }
     }
 
@@ -274,9 +255,8 @@ if [[ \"$1\" != \"--version\" ]] ; then
     exit 1
 fi
 
-echo {}
-",
-            version
+echo {version}
+"
         )
     }
 

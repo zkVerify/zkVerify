@@ -49,7 +49,7 @@ fn benchmark_overhead(runtime: &str) -> Result<(), String> {
         // especially for a non-release builds.
         .args(["--max-ext-per-block", "5"])
         .status()
-        .map_err(|e| format!("command failed: {:?}", e))?;
+        .map_err(|e| format!("command failed: {e:?}"))?;
 
     if !status.success() {
         return Err("Command failed".into());

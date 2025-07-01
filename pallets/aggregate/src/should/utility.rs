@@ -180,8 +180,8 @@ pub fn register_domain(
 
 fn assert_evt_gen(contains: bool, event: Event<Test>, context: &str) {
     let message = match contains {
-        true => format!("{context} - CANNOT FIND {:?}", event),
-        false => format!("{context} - FOUND {:?}", event),
+        true => format!("{context} - CANNOT FIND {event:?}"),
+        false => format!("{context} - FOUND {event:?}"),
     };
     assert_eq!(
         contains,

@@ -835,8 +835,8 @@ pub fn new_full<
                 workers_names,
                 node_version.clone(),
             )?;
-            log::info!("🚀 Using prepare-worker binary at: {:?}", prep_worker_path);
-            log::info!("🚀 Using execute-worker binary at: {:?}", exec_worker_path);
+            log::info!("🚀 Using prepare-worker binary at: {prep_worker_path:?}");
+            log::info!("🚀 Using execute-worker binary at: {exec_worker_path:?}");
 
             Some(CandidateValidationConfig {
                 artifacts_cache_path: config
@@ -960,9 +960,8 @@ pub fn new_full<
         match zkv_reference_hardware().check_hardware(&hwbench, role.is_authority()) {
             Err(err) if role.is_authority() => {
                 log::warn!(
-				"⚠️  The hardware does not meet the minimal requirements {} for role 'Authority' find out more at:\n\
-				https://wiki.polkadot.network/docs/maintain-guides-how-to-validate-polkadot#reference-hardware",
-				err
+				"⚠️  The hardware does not meet the minimal requirements {err} for role 'Authority' find out more at:\n\
+				https://wiki.polkadot.network/docs/maintain-guides-how-to-validate-polkadot#reference-hardware"
 			);
             }
             _ => {}
@@ -1307,8 +1306,7 @@ pub fn revert_backend(
     let number = best_number - revertible;
     let hash = client.block_hash_from_id(&BlockId::Number(number))?.ok_or(
         sp_blockchain::Error::Backend(format!(
-            "Unexpected hash lookup failure for block number: {}",
-            number
+            "Unexpected hash lookup failure for block number: {number}"
         )),
     )?;
 

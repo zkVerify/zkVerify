@@ -74,7 +74,7 @@ impl<T: Config> Verifier for Ultraplonk<T> {
         log::trace!("Verifying (no-std)");
         ultraplonk_no_std::verify::<CurveHooksImpl>(vk, proof, pubs)
             .map_err(|e| {
-                log::debug!("Cannot verify proof: {:?}", e);
+                log::debug!("Cannot verify proof: {e:?}");
                 e
             })
             .map_err(|e| match e {
@@ -99,7 +99,7 @@ impl<T: Config> Verifier for Ultraplonk<T> {
 
     fn validate_vk(vk: &Self::Vk) -> Result<(), VerifyError> {
         let _vk = VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&vk[..])
-            .map_err(|e| log::debug!("Invalid Vk: {:?}", e))
+            .map_err(|e| log::debug!("Invalid Vk: {e:?}"))
             .map_err(|_| VerifyError::InvalidVerificationKey)?;
 
         Ok(())

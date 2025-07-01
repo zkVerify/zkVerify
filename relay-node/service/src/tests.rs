@@ -114,7 +114,7 @@ fn test_harness<T: Future<Output = VirtualOverseer>>(
 async fn overseer_recv(overseer: &mut VirtualOverseer) -> AllMessages {
     let msg = overseer_recv_with_timeout(overseer, TIMEOUT)
         .await
-        .unwrap_or_else(|| panic!("{:?} is enough to receive messages.", TIMEOUT));
+        .unwrap_or_else(|| panic!("{TIMEOUT:?} is enough to receive messages."));
 
     gum::trace!("Received message:\n{:?}", &msg);
 
@@ -260,8 +260,7 @@ impl ChainBuilder {
         let header = ChainBuilder::make_header(parent_hash, number);
         assert!(
             self.0.blocks_by_hash.insert(hash, header).is_none(),
-            "block with hash {:?} already exists",
-            hash,
+            "block with hash {hash:?} already exists",
         );
         self.0
             .blocks_at_height
@@ -455,8 +454,7 @@ fn run_specialized_test_w_harness<F: FnOnce() -> CaseVars>(case_var_provider: F)
 
                             assert_eq!(
 							expected, undisputed_chain,
-							"TestCaseIntegrity: Provided and anticipated undisputed chain mismatch: {:?} vs {:?}",
-							undisputed_chain, expected,
+                            "TestCaseIntegrity: Provided and anticipated undisputed chain mismatch: {undisputed_chain:?} vs {expected:?}",
 						);
                         }
                         highest_approved_ancestor_w_desc
