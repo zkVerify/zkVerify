@@ -161,7 +161,7 @@ async function run(nodeName, networkInfo, args) {
         ]
     };
 
-    const { CALL: GROTH16_VERIFY_CALL } = require(networkInfo["tmpDir"] + '/groth_proof_call.js')
+    const { CALL: TEST_CALL } = require(networkInfo["tmpDir"] + '/test_call.js')
 
     const instr_transact = {
         Transact: {
@@ -172,7 +172,7 @@ async function run(nodeName, networkInfo, args) {
                 refTime: '9000000000',
                 proofSize: '177995',
             },
-            call: GROTH16_VERIFY_CALL,
+            call: TEST_CALL,
         }
     };
 

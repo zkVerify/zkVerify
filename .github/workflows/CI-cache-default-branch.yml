@@ -26,6 +26,10 @@ jobs:
     name: Cargo test job cache rebuild
     uses: ./.github/workflows/CI-test.yml
 
+  bench-test-job-cache:
+    name: Cargo test bench job cache rebuild
+    uses: ./.github/workflows/CI-test-bench.yml
+
   lint-format-job-cache:
     name: Lint and format job cache rebuild
     uses: ./.github/workflows/CI-lint-format.yml

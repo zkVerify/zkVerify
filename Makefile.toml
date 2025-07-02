@@ -1,0 +1,133 @@
+[config]
+default_to_workspace = false
+
+[tasks.ignore-members]
+workspace = false
+
+[tasks.clean]
+command = "cargo"
+args = ["clean"]
+
+[tasks.install-wasm]
+command = "rustup"
+args = ["add", "target", "wasm32-unknown-unknown"]
+
+[tasks.check]
+command = "cargo"
+env = { "SKIP_WASM_BUILD" = "1" }
+args = ["check", "--all-features"]
+
+[tasks.build]
+command = "cargo"
+args = ["build", "--release"]
+
+[tasks.build-dev-relay]
+command = "cargo"
+args = ["build", "-p", "zkv-relay", "--release", "--features", "fast-runtime"]
+
+[tasks.build-dev-paratest]
+command = "cargo"
+args = ["build", "-p", "paratest-node", "--release"]
+
+[tasks.build-dev]
+dependencies = ["build-dev-relay", "build-dev-paratest"]
+
+[tasks.test-base]
+command = "cargo"
+args = ["test", "--release"]
+
+[tasks.test]
+dependencies = ["test-base"]
+command = "cargo"
+args = ["test", "--release", "--all-features"]
+
+[tasks.zombienet-tests]
+dependencies = ["build-dev"]
+script = [
+    "cd zombienet-tests",
+    "rm -rf bin/ node_modules/ yarn.lock", # make sure you don't have outdated dependencies locally
+    "yarn install",
+    "yarn test"
+]
+
+[tasks.build-bench]
+command = "cargo"
+args = ["build", "-p", "zkv-relay", "--release", "--features", "runtime-benchmarks"]
+
+[tasks.test-bench]
+dependencies = ["build-bench"]
+command = "./target/release/zkv-relay"
+args = ["benchmark", "pallet", "--pallet", "*", "--extrinsic", "*", "-s", "2", "-r", "1"]
+
+[tasks.format_inst]
+[tasks.format-inst]
+install_crate = {crate_name = "rustfmt", rustup_component_name = "rustfmt", binary = "rustfmt", test_arg = "--help"}
+
+[tasks.format]
+dependencies = ["format-inst"]
+command = "cargo"
+args = ["fmt"]
+
+[tasks.clippy-inst]
+install_crate = {crate_name = "clippy", rustup_component_name = "clippy", binary = "clippy", test_arg = "--help"}
+
+[tasks.clippy]
+dependencies = ["clippy-inst"]
+command = "cargo"
+env = { "SKIP_WASM_BUILD" = "1" }
+args = ["clippy", "--all-targets", "--", "--deny", "warnings"]
+
+[tasks.audit-inst]
+command = "cargo"
+args = ["install", "cargo-audit"]
+
+[tasks.audit]
+dependencies = ["audit-inst"]
+command = "cargo"
+args = ["audit"]
+
+[tasks.cov]
+command = "cargo"
+args = ["llvm-cov", "--workspace", "--lcov", "--output-path", "lcov.info"]
+
+[tasks.zepter-inst]
+command = "cargo"
+args = ["install", "zepter", "--locked"]
+
+[tasks.zepter-fix-check]
+dependencies = ["zepter-inst"]
+command = "zepter"
+args = ["run", "check-fix"]
+
+[tasks.zepter-fix-format]
+dependencies = ["zepter-inst"]
+command = "zepter"
+args = ["run", "format-fix"]
+
+[tasks.zepter-fix]
+dependencies = ["zepter-inst"]
+command = "zepter"
+args = ["run", "fix"]
+
+[tasks.zepter]
+dependencies = ["zepter-fix-check", "zepter-fix-format"]
+
+[tasks.udeps-inst]
+command = "cargo"
+args = ["install", "cargo-udeps", "--locked"]
+
+[tasks.udeps]
+dependencies = ["udeps-inst"]
+command = "cargo"
+env = { "SKIP_WASM_BUILD" = "1" }
+toolchain = "nightly"
+args = ["udeps", "--all-targets", "--all-features"]
+
+[tasks.dependencies-check]
+dependencies = ["audit", "udeps"]
+
+[tasks.test-full]
+dependencies = ["test", "zombienet-tests", "test-bench"]
+
+[tasks.ci]
+dependencies = ["format", "zepter", "check", "build-dev", "test-full", "clippy", "dependencies-check"]

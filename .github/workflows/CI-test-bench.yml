@@ -1,0 +1,27 @@
+run-name: "Workflow CI/CD Step: Build and run benchmarks"
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  test-bench:
+    runs-on: warp-ubuntu-latest-x64-8x
+    name: Build and run benchmarks
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: zkv build with runtime-benchmarks
+        uses: ./.github/actions/cmd-in-docker
+        with:
+          command: "cargo build -p zkv-relay --release --features runtime-benchmarks"
+          use_cache: 'yes'
+          cache_key: 'build-runtime-benchmarks'
+          lld_install: 'yes'
+
+      - name: Run benchmarks
+        uses: ./.github/actions/cmd-in-docker
+        with:
+          command: './target/release/zkv-relay benchmark pallet --pallet "*" --extrinsic "*" -s 2 -r 1'
+          use_cache: 'no'

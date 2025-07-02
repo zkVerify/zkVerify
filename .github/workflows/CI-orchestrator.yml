@@ -20,6 +20,11 @@ jobs:
     needs: [check-lockfile-job]
     uses: ./.github/workflows/CI-test.yml
 
+  test-bench-job:
+    name: Cargo test bench job
+    needs: [check-lockfile-job]
+    uses: ./.github/workflows/CI-test-bench.yml
+
   try-runtime-job:
     name: Try runtime job
     needs: [check-lockfile-job]
@@ -64,6 +69,7 @@ jobs:
         check-lockfile-job,
         build-job,
         test-job,
+        test-bench-job,
         try-runtime-job,
         coverage-job,
         lint-format-job,
@@ -111,6 +117,7 @@ jobs:
             if [ "${{ needs.check-lockfile-job.result }}" != "success" ] ||
                 [ "${{ needs.build-job.result }}" != "success" ] ||
                 [ "${{ needs.test-job.result }}" != "success" ] ||
+                [ "${{ needs.test-bench-job.result }}" != "success" ] ||
                 [ "${{ needs.try-runtime-job.result }}" != "success" ] ||
                 [ "${{ needs.coverage-job.result }}" != "success" ] ||
                 [ "${{ needs.lint-format-job.result }}" != "success" ] ||

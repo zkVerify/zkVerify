@@ -35,29 +35,29 @@ pallet-balances = { workspace = true, features = ["std", "runtime-benchmarks"] }
 
 [features]
 std = [
-	"sp-core/std",
-	"sp-io/std",
-	"hp-verifiers/std",
+	"codec/std",
+	"frame-benchmarking?/std",
 	"frame-support/std",
 	"frame-system/std",
-	"pallet-verifiers/std",
+	"hp-verifiers/std",
+	"log/std",
 	"native/std",
 	"pallet-balances/std",
-	"frame-benchmarking?/std",
-	"log/std",
-	"codec/std",
+	"pallet-verifiers/std",
 	"scale-info/std",
+	"sp-core/std",
+	"sp-io/std",
 	"sp-runtime/std",
-	"ultraplonk-no-std/std"
+	"ultraplonk-no-std/std",
 ]
-default = ["std"]
+default = [ "std" ]
 runtime-benchmarks = [
-	"dep:hex-literal",
 	"dep:frame-benchmarking",
-	"pallet-verifiers/runtime-benchmarks",
+	"dep:hex-literal",
+	"frame-benchmarking/runtime-benchmarks",
 	"frame-support/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
-	"frame-benchmarking/runtime-benchmarks",
 	"pallet-balances/runtime-benchmarks",
-	"sp-runtime/runtime-benchmarks"
+	"pallet-verifiers/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
 ]

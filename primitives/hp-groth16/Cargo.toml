@@ -41,14 +41,10 @@ rstest_reuse = { workspace = true }
 hex-literal = { workspace = true }
 
 [features]
-default = ["std", "implementation"]
+default = [ "implementation", "std" ]
 implementation = []
 dummy-circuit = []
 std = [
-	"sp-runtime-interface/std",
-	"codec/std",
-	"scale-info/std",
-	"hp-verifiers/std",
 	"ark-bls12-381/std",
 	"ark-bn254/std",
 	"ark-crypto-primitives/std",
@@ -58,5 +54,9 @@ std = [
 	"ark-relations/std",
 	"ark-serialize/std",
 	"ark-std/std",
-	"frame-support/std"
+	"codec/std",
+	"frame-support/std",
+	"hp-verifiers/std",
+	"scale-info/std",
+	"sp-runtime-interface/std",
 ]
