@@ -98,7 +98,7 @@ pub use sp_runtime::{Perbill, Permill};
 
 pub mod governance;
 mod pallet_assets_mock;
-use governance::{pallet_custom_origins, Treasurer, TreasurySpender};
+use governance::{pallet_custom_origins, TreasurySpender};
 
 pub mod macros {
     macro_rules! prod_or_fast {
@@ -166,6 +166,7 @@ pub mod currency {
     pub const VFY: Balance = 1_000_000_000_000_000_000;
     pub const CENTS: Balance = VFY / 100;
     pub const MILLIS: Balance = VFY / 1_000;
+    pub const HUNDREDS: Balance = 100 * VFY;
     pub const THOUSANDS: Balance = 1_000 * VFY;
     pub const MILLIONS: Balance = 1_000 * THOUSANDS;
     pub const MILLICENTS: Balance = CENTS / 1_000;
@@ -552,7 +553,7 @@ parameter_types! {
 impl pallet_treasury::Config for Runtime {
     type PalletId = TreasuryPalletId;
     type Currency = Balances;
-    type RejectOrigin = EitherOfDiverse<EnsureRoot<AccountId>, Treasurer>;
+    type RejectOrigin = EnsureRoot<AccountId>;
     type RuntimeEvent = RuntimeEvent;
     type SpendPeriod = SpendPeriod;
     type Burn = Burn;
@@ -721,7 +722,7 @@ parameter_types! {
 impl pallet_claim::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type PalletId = ClaimPalletId;
-    type ManagerOrigin = EitherOfDiverse<EnsureRoot<AccountId>, Treasurer>;
+    type ManagerOrigin = EnsureRoot<AccountId>;
     type Currency = Balances;
     type UnclaimedDestination = ZKVerifyTreasuryAccount;
     type WeightInfo = weights::pallet_claim::ZKVWeight<Runtime>;
@@ -814,7 +815,6 @@ impl pallet_staking::Config for Runtime {
     type SessionsPerEra = SessionsPerEra;
     type BondingDuration = BondingDuration;
     type SlashDeferDuration = SlashDeferDuration;
-    /// A super-majority of the council can cancel the slash.
     type AdminOrigin = EnsureRoot<AccountId>;
     type SessionInterface = Self;
     type EraPayout = payout::ZKVPayout;

@@ -21,9 +21,7 @@ use frame_support::traits::EitherOf;
 use frame_system::EnsureRootWithSuccess;
 
 mod origins;
-pub use origins::{
-    pallet_custom_origins, ReferendumCanceller, ReferendumKiller, Spender, StakingAdmin, Treasurer,
-};
+pub use origins::{pallet_custom_origins, ReferendumCanceller, Spender};
 mod tracks;
 pub use tracks::TracksInfo;
 
@@ -64,7 +62,7 @@ impl pallet_referenda::Config for Runtime {
     type Currency = Balances;
     type SubmitOrigin = frame_system::EnsureSigned<AccountId>;
     type CancelOrigin = EitherOf<EnsureRoot<AccountId>, ReferendumCanceller>;
-    type KillOrigin = EitherOf<EnsureRoot<AccountId>, ReferendumKiller>;
+    type KillOrigin = EnsureRoot<AccountId>;
     type Slash = Treasury;
     type Votes = pallet_conviction_voting::VotesOf<Runtime>;
     type Tally = pallet_conviction_voting::TallyOf<Runtime>;
