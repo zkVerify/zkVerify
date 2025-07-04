@@ -8858,7 +8858,7 @@ checksum = "26995317201fa17f3656c36716aed4a7c81743a9634ac4c99c0eeda495db0cec"
 [[package]]
 name = "p3-air"
 version = "0.2.3-succinct"
-source = "git+https://github.com/zkVerify/sp1.git?branch=no-std-sp1-deps#260e17e8d089922837145f25a037103f17d5885e"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
 dependencies = [
  "p3-field",
  "p3-matrix",
@@ -8867,7 +8867,7 @@ dependencies = [
 [[package]]
 name = "p3-baby-bear"
 version = "0.2.3-succinct"
-source = "git+https://github.com/zkVerify/sp1.git?branch=no-std-sp1-deps#260e17e8d089922837145f25a037103f17d5885e"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
 dependencies = [
  "num-bigint 0.4.6",
  "p3-field",
@@ -8881,7 +8881,7 @@ dependencies = [
 [[package]]
 name = "p3-challenger"
 version = "0.2.3-succinct"
-source = "git+https://github.com/zkVerify/sp1.git?branch=no-std-sp1-deps#260e17e8d089922837145f25a037103f17d5885e"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
 dependencies = [
  "p3-field",
  "p3-maybe-rayon",
@@ -8894,7 +8894,7 @@ dependencies = [
 [[package]]
 name = "p3-commit"
 version = "0.2.3-succinct"
-source = "git+https://github.com/zkVerify/sp1.git?branch=no-std-sp1-deps#260e17e8d089922837145f25a037103f17d5885e"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
 dependencies = [
  "itertools 0.12.1",
  "p3-challenger",
@@ -8907,7 +8907,7 @@ dependencies = [
 [[package]]
 name = "p3-dft"
 version = "0.2.3-succinct"
-source = "git+https://github.com/zkVerify/sp1.git?branch=no-std-sp1-deps#260e17e8d089922837145f25a037103f17d5885e"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
 dependencies = [
  "p3-field",
  "p3-matrix",
@@ -8919,7 +8919,7 @@ dependencies = [
 [[package]]
 name = "p3-field"
 version = "0.2.3-succinct"
-source = "git+https://github.com/zkVerify/sp1.git?branch=no-std-sp1-deps#260e17e8d089922837145f25a037103f17d5885e"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
 dependencies = [
  "itertools 0.12.1",
  "num-bigint 0.4.6",
@@ -8932,7 +8932,7 @@ dependencies = [
 [[package]]
 name = "p3-fri"
 version = "0.2.3-succinct"
-source = "git+https://github.com/zkVerify/sp1.git?branch=no-std-sp1-deps#260e17e8d089922837145f25a037103f17d5885e"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
 dependencies = [
  "itertools 0.12.1",
  "p3-challenger",
@@ -8950,7 +8950,7 @@ dependencies = [
 [[package]]
 name = "p3-interpolation"
 version = "0.2.3-succinct"
-source = "git+https://github.com/zkVerify/sp1.git?branch=no-std-sp1-deps#260e17e8d089922837145f25a037103f17d5885e"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
 dependencies = [
  "p3-field",
  "p3-matrix",
@@ -8960,7 +8960,7 @@ dependencies = [
 [[package]]
 name = "p3-keccak"
 version = "0.2.3-succinct"
-source = "git+https://github.com/zkVerify/sp1.git?branch=no-std-sp1-deps#260e17e8d089922837145f25a037103f17d5885e"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
 dependencies = [
  "p3-symmetric",
  "tiny-keccak",
@@ -8969,7 +8969,7 @@ dependencies = [
 [[package]]
 name = "p3-matrix"
 version = "0.2.3-succinct"
-source = "git+https://github.com/zkVerify/sp1.git?branch=no-std-sp1-deps#260e17e8d089922837145f25a037103f17d5885e"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
 dependencies = [
  "itertools 0.12.1",
  "p3-field",
@@ -8983,12 +8983,12 @@ dependencies = [
 [[package]]
 name = "p3-maybe-rayon"
 version = "0.2.3-succinct"
-source = "git+https://github.com/zkVerify/sp1.git?branch=no-std-sp1-deps#260e17e8d089922837145f25a037103f17d5885e"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
 
 [[package]]
 name = "p3-mds"
 version = "0.2.3-succinct"
-source = "git+https://github.com/zkVerify/sp1.git?branch=no-std-sp1-deps#260e17e8d089922837145f25a037103f17d5885e"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
 dependencies = [
  "itertools 0.12.1",
  "p3-dft",
@@ -9002,7 +9002,7 @@ dependencies = [
 [[package]]
 name = "p3-merkle-tree"
 version = "0.2.3-succinct"
-source = "git+https://github.com/zkVerify/sp1.git?branch=no-std-sp1-deps#260e17e8d089922837145f25a037103f17d5885e"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
 dependencies = [
  "itertools 0.12.1",
  "p3-commit",
@@ -9018,7 +9018,7 @@ dependencies = [
 [[package]]
 name = "p3-poseidon2"
 version = "0.2.3-succinct"
-source = "git+https://github.com/zkVerify/sp1.git?branch=no-std-sp1-deps#260e17e8d089922837145f25a037103f17d5885e"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
 dependencies = [
  "gcd",
  "p3-field",
@@ -9031,7 +9031,7 @@ dependencies = [
 [[package]]
 name = "p3-symmetric"
 version = "0.2.3-succinct"
-source = "git+https://github.com/zkVerify/sp1.git?branch=no-std-sp1-deps#260e17e8d089922837145f25a037103f17d5885e"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
 dependencies = [
  "itertools 0.12.1",
  "p3-field",
@@ -9041,7 +9041,7 @@ dependencies = [
 [[package]]
 name = "p3-uni-stark"
 version = "0.2.3-succinct"
-source = "git+https://github.com/zkVerify/sp1.git?branch=no-std-sp1-deps#260e17e8d089922837145f25a037103f17d5885e"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
 dependencies = [
  "itertools 0.12.1",
  "p3-air",
@@ -9059,7 +9059,7 @@ dependencies = [
 [[package]]
 name = "p3-util"
 version = "0.2.3-succinct"
-source = "git+https://github.com/zkVerify/sp1.git?branch=no-std-sp1-deps#260e17e8d089922837145f25a037103f17d5885e"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
 dependencies = [
  "serde",
 ]
@@ -18748,7 +18748,7 @@ dependencies = [
 [[package]]
 name = "sp1-core-machine-minimal"
 version = "5.0.5"
-source = "git+https://github.com/zkVerify/sp1.git?branch=no-std-sp1-deps#260e17e8d089922837145f25a037103f17d5885e"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
 dependencies = [
  "p3-air",
  "p3-baby-bear",
@@ -18763,7 +18763,7 @@ dependencies = [
 [[package]]
 name = "sp1-derive"
 version = "5.0.5"
-source = "git+https://github.com/zkVerify/sp1.git?branch=no-std-sp1-deps#260e17e8d089922837145f25a037103f17d5885e"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
 dependencies = [
  "quote",
  "syn 1.0.109",
@@ -18772,7 +18772,7 @@ dependencies = [
 [[package]]
 name = "sp1-primitives"
 version = "5.0.5"
-source = "git+https://github.com/zkVerify/sp1.git?branch=no-std-sp1-deps#260e17e8d089922837145f25a037103f17d5885e"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
 dependencies = [
  "bincode 2.0.1",
  "blake3",
@@ -18791,7 +18791,7 @@ dependencies = [
 [[package]]
 name = "sp1-recursion-core-no-std"
 version = "5.0.5"
-source = "git+https://github.com/zkVerify/sp1.git?branch=no-std-sp1-deps#260e17e8d089922837145f25a037103f17d5885e"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
 dependencies = [
  "cfg-if",
  "ff",
@@ -18826,7 +18826,7 @@ dependencies = [
 [[package]]
 name = "sp1-stark-no-std"
 version = "5.0.5"
-source = "git+https://github.com/zkVerify/sp1.git?branch=no-std-sp1-deps#260e17e8d089922837145f25a037103f17d5885e"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
 dependencies = [
  "arrayref",
  "hashbrown 0.14.5",
@@ -18859,7 +18859,7 @@ dependencies = [
 [[package]]
 name = "sp1-zkv-verifier"
 version = "0.1.0"
-source = "git+https://github.com/zkVerify/sp1-verifier.git?branch=no-std-fork#1a7b877374a9b0d7ec7dd08abb214a299ec7e6c4"
+source = "git+https://github.com/zkVerify/sp1-verifier.git?tag=v0.1.0#8dd072157ffd1345ae536a89cc9ce574afb6523b"
 dependencies = [
  "bincode 2.0.1",
  "blake3",
@@ -19099,7 +19099,7 @@ dependencies = [
 [[package]]
 name = "std-replacement"
 version = "5.0.5"
-source = "git+https://github.com/zkVerify/sp1.git?branch=no-std-sp1-deps#260e17e8d089922837145f25a037103f17d5885e"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
 
 [[package]]
 name = "string-interner"
