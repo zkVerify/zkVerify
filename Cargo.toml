@@ -118,11 +118,11 @@ sc-rpc = { version = "43.0.0" }
 sp-blockchain = { version = "38.0.0" }
 sc-basic-authorship = { version = "0.48.0" }
 substrate-frame-rpc-system = { version = "42.0.0" }
-frame-election-provider-support = { version = "39.0.0", default-features = false }
+frame-election-provider-support = { version = "39.0.1", default-features = false }
 pallet-election-provider-support-benchmarking = { version = "38.0.0", default-features = false }
 pallet-session-benchmarking = { version = "39.1.0", default-features = false }
 pallet-transaction-payment-rpc = { version = "42.0.0" }
-frame-benchmarking-cli = { version = "46.1.0" }
+frame-benchmarking-cli = { version = "46.2.0" }
 vk-hash = { path = "./rpc/vk_hash" }
 
 codec = { package = "parity-scale-codec", version = "3.6.12", default-features = false, features = [
@@ -145,7 +145,7 @@ frame-support = { version = "39.1.0", default-features = false }
 pallet-grandpa = { version = "39.1.0", default-features = false }
 pallet-sudo = { version = "39.0.0", default-features = false }
 pallet-multisig = { version = "39.1.1", default-features = false }
-pallet-scheduler = { version = "40.1.0", default-features = false }
+pallet-scheduler = { version = "40.2.1", default-features = false }
 pallet-preimage = { version = "39.1.0", default-features = false }
 pallet-referenda = { version = "39.1.0", default-features = false }
 pallet-utility = { version = "39.1.0", default-features = false }
@@ -159,7 +159,7 @@ pallet-proxy = { version = "39.1.0", default-features = false }
 frame-system = { version = "39.1.0", default-features = false }
 frame-try-runtime = { version = "0.45.0", default-features = false }
 pallet-timestamp = { version = "38.0.0", default-features = false }
-frame-executive = { version = "39.1.0", default-features = false }
+frame-executive = { version = "39.1.1", default-features = false }
 sp-api = { version = "35.0.0", default-features = false }
 sp-block-builder = { version = "35.0.0", default-features = false }
 sp-consensus = { version = "0.41.0", default-features = false }
@@ -189,7 +189,7 @@ serde_json = { version = "1.0.114", default-features = false, features = [
 ] }
 sp-weights = { version = "31.0.0", default-features = false }
 sp-genesis-builder = { version = "0.16.0", default-features = false }
-sp-npos-elections = { version = "35.0.0", default-features = false }
+sp-npos-elections = { version = "35.1.0", default-features = false }
 aggregate-rpc = { default-features = false, path = "rpc/aggregate" }
 aggregate-rpc-runtime-api = { default-features = false, path = "rpc/aggregate/runtime-api" }
 
@@ -211,7 +211,7 @@ frame-system-rpc-runtime-api = { version = "35.0.0", default-features = false }
 pallet-transaction-payment-rpc-runtime-api = { version = "39.0.0", default-features = false }
 
 # Used for runtime benchmarking
-frame-benchmarking = { version = "39.0.0", default-features = false }
+frame-benchmarking = { version = "39.1.0", default-features = false }
 frame-system-benchmarking = { version = "39.0.0", default-features = false }
 
 substrate-wasm-builder = { version = "25.0.1" }
@@ -299,11 +299,11 @@ sp-arithmetic = { version = "26.0.0" }
 sc-utils = { version = "18.0.0" }
 sp-application-crypto = { version = "39.0.0", default-features = false }
 pallet-indices = { version = "39.1.0", default-features = false }
-pallet-xcm = { version = "18.1.0", default-features = false }
+pallet-xcm = { version = "18.1.2", default-features = false }
 pallet-xcm-benchmarks = { version = "18.1.1", default-features = false }
-xcm-builder = { version = "18.2.0", package = "staging-xcm-builder", default-features = false }
-xcm-executor = { version = "18.0.2", package = "staging-xcm-executor", default-features = false }
-xcm = { version = "15.0.3", package = "staging-xcm", default-features = false }
+xcm-builder = { version = "18.2.1", package = "staging-xcm-builder", default-features = false }
+xcm-executor = { version = "18.0.3", package = "staging-xcm-executor", default-features = false }
+xcm = { version = "15.1.0", package = "staging-xcm", default-features = false }
 xcm-procedural = { version = "11.0.1", default-features = false }
 
 pallet-aura = { version = "38.1.0", default-features = false }
@@ -312,7 +312,7 @@ sp-consensus-aura = { version = "0.41.0", default-features = false }
 # Cumulus
 cumulus-client-cli = { version = "0.21.1" }
 cumulus-client-collator = { version = "0.21.0" }
-cumulus-client-consensus-aura = { version = "0.21.0" }
+cumulus-client-consensus-aura = { version = "0.21.1" }
 cumulus-client-consensus-common = { version = "0.21.0" }
 cumulus-client-consensus-proposer = { version = "0.17.0" }
 cumulus-client-service = { version = "0.22.0" }
