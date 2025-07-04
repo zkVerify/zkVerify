@@ -232,6 +232,7 @@ std = [
 	"pallet-scheduler/std",
 	"pallet-session-benchmarking?/std",
 	"pallet-session/std",
+	"pallet-sp1-verifier/std",
 	"pallet-staking/std",
 	"pallet-sudo/std",
 	"pallet-timestamp/std",
