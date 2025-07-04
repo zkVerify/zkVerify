@@ -13,6 +13,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "addchain"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3b2e69442aa5628ea6951fa33e24efe8313f4321a91bd729fc2f75bdfc858570"
+dependencies = [
+ "num-bigint 0.3.3",
+ "num-integer",
+ "num-traits",
+]
+
+[[package]]
 name = "addr2line"
 version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -659,7 +670,7 @@ dependencies = [
  "fnv",
  "hashbrown 0.15.3",
  "itertools 0.13.0",
- "num-bigint",
+ "num-bigint 0.4.6",
  "num-integer",
  "num-traits",
  "rayon",
@@ -727,7 +738,7 @@ dependencies = [
  "ark-serialize 0.3.0",
  "ark-std 0.3.0",
  "derivative",
- "num-bigint",
+ "num-bigint 0.4.6",
  "num-traits",
  "paste",
  "rustc_version 0.3.3",
@@ -747,7 +758,7 @@ dependencies = [
  "derivative",
  "digest 0.10.7",
  "itertools 0.10.5",
- "num-bigint",
+ "num-bigint 0.4.6",
  "num-traits",
  "paste",
  "rustc_version 0.4.1",
@@ -768,7 +779,7 @@ dependencies = [
  "digest 0.10.7",
  "educe",
  "itertools 0.13.0",
- "num-bigint",
+ "num-bigint 0.4.6",
  "num-traits",
  "paste",
  "zeroize",
@@ -810,7 +821,7 @@ version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "db2fd794a08ccb318058009eefdf15bcaaaaf6f8161eb3345f907222bac38b20"
 dependencies = [
- "num-bigint",
+ "num-bigint 0.4.6",
  "num-traits",
  "quote",
  "syn 1.0.109",
@@ -822,7 +833,7 @@ version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7abe79b0e4288889c4574159ab790824d0033b9fdcb2a112a3182fac2e514565"
 dependencies = [
- "num-bigint",
+ "num-bigint 0.4.6",
  "num-traits",
  "proc-macro2",
  "quote",
@@ -835,7 +846,7 @@ version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "09be120733ee33f7693ceaa202ca41accd5653b779563608f1234f78ae07c4b3"
 dependencies = [
- "num-bigint",
+ "num-bigint 0.4.6",
  "num-traits",
  "proc-macro2",
  "quote",
@@ -921,7 +932,7 @@ dependencies = [
  "ark-relations 0.5.1",
  "ark-std 0.5.0",
  "educe",
- "num-bigint",
+ "num-bigint 0.4.6",
  "num-integer",
  "num-traits",
  "tracing",
@@ -998,7 +1009,7 @@ dependencies = [
  "ark-serialize-derive 0.4.2",
  "ark-std 0.4.0",
  "digest 0.10.7",
- "num-bigint",
+ "num-bigint 0.4.6",
 ]
 
 [[package]]
@@ -1011,7 +1022,7 @@ dependencies = [
  "ark-std 0.5.0",
  "arrayvec 0.7.6",
  "digest 0.10.7",
- "num-bigint",
+ "num-bigint 0.4.6",
  "rayon",
 ]
 
@@ -1613,6 +1624,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b1f45e9417d87227c7a56d22e471c6206462cba514c7590c09aff4cf6d1ddcad"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "bincode"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "36eaf5d7b090263e8150820482d5d93cd964a81e4019913c972f4edcc6edb740"
+dependencies = [
+ "serde",
+ "unty",
 ]
 
 [[package]]
@@ -3866,7 +3887,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8d162beedaa69905488a8da94f5ac3edb4dd4788b732fadb7bd120b2625c1976"
 dependencies = [
  "data-encoding",
- "syn 1.0.109",
+ "syn 2.0.101",
 ]
 
 [[package]]
@@ -3897,7 +3918,7 @@ dependencies = [
  "asn1-rs 0.5.2",
  "displaydoc",
  "nom",
- "num-bigint",
+ "num-bigint 0.4.6",
  "num-traits",
  "rusticata-macros",
 ]
@@ -3911,7 +3932,7 @@ dependencies = [
  "asn1-rs 0.7.1",
  "displaydoc",
  "nom",
- "num-bigint",
+ "num-bigint 0.4.6",
  "num-traits",
  "rusticata-macros",
 ]
@@ -4640,8 +4661,26 @@ version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c0b50bfb653653f9ca9095b427bed08ab8d75a137839d9ad64eb11810d5b6393"
 dependencies = [
+ "bitvec",
+ "byteorder",
+ "ff_derive",
  "rand_core 0.6.4",
  "subtle 2.6.1",
+]
+
+[[package]]
+name = "ff_derive"
+version = "0.13.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f10d12652036b0e99197587c6ba87a8fc3031986499973c030d8b44fcc151b60"
+dependencies = [
+ "addchain",
+ "num-bigint 0.3.3",
+ "num-integer",
+ "num-traits",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
 ]
 
 [[package]]
@@ -5399,6 +5438,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "gcd"
+version = "2.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1d758ba1b47b00caf47f24925c0074ecb20d6dfcffe7f6d53395c0465674841a"
+
+[[package]]
 name = "generator"
 version = "0.8.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5992,7 +6037,7 @@ dependencies = [
  "httpdate",
  "itoa",
  "pin-project-lite",
- "socket2 0.4.10",
+ "socket2 0.5.9",
  "tokio",
  "tower-service",
  "tracing",
@@ -8332,7 +8377,7 @@ dependencies = [
  "ark-ec 0.5.0",
  "ark-ff 0.5.0",
  "ark-scale 0.0.13",
- "bincode",
+ "bincode 1.3.3",
  "hp-groth16",
  "hp-verifiers",
  "log",
@@ -8547,11 +8592,22 @@ version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "35bd024e8b2ff75562e5f34e7f4905839deb4b22955ef5e73d2fea1b9813cb23"
 dependencies = [
- "num-bigint",
+ "num-bigint 0.4.6",
  "num-complex",
  "num-integer",
  "num-iter",
  "num-rational",
+ "num-traits",
+]
+
+[[package]]
+name = "num-bigint"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5f6f7833f2cbf2360a6cfd58cd41a53aa7a90bd4c202f5b1c7dd2ed73c57b2c3"
+dependencies = [
+ "autocfg",
+ "num-integer",
  "num-traits",
 ]
 
@@ -8629,7 +8685,7 @@ version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f83d14da390562dca69fc84082e73e548e1ad308d24accdedd2720017cb37824"
 dependencies = [
- "num-bigint",
+ "num-bigint 0.4.6",
  "num-integer",
  "num-traits",
 ]
@@ -8798,6 +8854,215 @@ name = "owo-colors"
 version = "4.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "26995317201fa17f3656c36716aed4a7c81743a9634ac4c99c0eeda495db0cec"
+
+[[package]]
+name = "p3-air"
+version = "0.2.3-succinct"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
+dependencies = [
+ "p3-field",
+ "p3-matrix",
+]
+
+[[package]]
+name = "p3-baby-bear"
+version = "0.2.3-succinct"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
+dependencies = [
+ "num-bigint 0.4.6",
+ "p3-field",
+ "p3-mds",
+ "p3-poseidon2",
+ "p3-symmetric",
+ "rand 0.8.5",
+ "serde",
+]
+
+[[package]]
+name = "p3-challenger"
+version = "0.2.3-succinct"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
+dependencies = [
+ "p3-field",
+ "p3-maybe-rayon",
+ "p3-symmetric",
+ "p3-util",
+ "serde",
+ "tracing",
+]
+
+[[package]]
+name = "p3-commit"
+version = "0.2.3-succinct"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
+dependencies = [
+ "itertools 0.12.1",
+ "p3-challenger",
+ "p3-field",
+ "p3-matrix",
+ "p3-util",
+ "serde",
+]
+
+[[package]]
+name = "p3-dft"
+version = "0.2.3-succinct"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
+dependencies = [
+ "p3-field",
+ "p3-matrix",
+ "p3-maybe-rayon",
+ "p3-util",
+ "tracing",
+]
+
+[[package]]
+name = "p3-field"
+version = "0.2.3-succinct"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
+dependencies = [
+ "itertools 0.12.1",
+ "num-bigint 0.4.6",
+ "num-traits",
+ "p3-util",
+ "rand 0.8.5",
+ "serde",
+]
+
+[[package]]
+name = "p3-fri"
+version = "0.2.3-succinct"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
+dependencies = [
+ "itertools 0.12.1",
+ "p3-challenger",
+ "p3-commit",
+ "p3-dft",
+ "p3-field",
+ "p3-interpolation",
+ "p3-matrix",
+ "p3-maybe-rayon",
+ "p3-util",
+ "serde",
+ "tracing",
+]
+
+[[package]]
+name = "p3-interpolation"
+version = "0.2.3-succinct"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
+dependencies = [
+ "p3-field",
+ "p3-matrix",
+ "p3-util",
+]
+
+[[package]]
+name = "p3-keccak"
+version = "0.2.3-succinct"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
+dependencies = [
+ "p3-symmetric",
+ "tiny-keccak",
+]
+
+[[package]]
+name = "p3-matrix"
+version = "0.2.3-succinct"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
+dependencies = [
+ "itertools 0.12.1",
+ "p3-field",
+ "p3-maybe-rayon",
+ "p3-util",
+ "rand 0.8.5",
+ "serde",
+ "tracing",
+]
+
+[[package]]
+name = "p3-maybe-rayon"
+version = "0.2.3-succinct"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
+
+[[package]]
+name = "p3-mds"
+version = "0.2.3-succinct"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
+dependencies = [
+ "itertools 0.12.1",
+ "p3-dft",
+ "p3-field",
+ "p3-matrix",
+ "p3-symmetric",
+ "p3-util",
+ "rand 0.8.5",
+]
+
+[[package]]
+name = "p3-merkle-tree"
+version = "0.2.3-succinct"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
+dependencies = [
+ "itertools 0.12.1",
+ "p3-commit",
+ "p3-field",
+ "p3-matrix",
+ "p3-maybe-rayon",
+ "p3-symmetric",
+ "p3-util",
+ "serde",
+ "tracing",
+]
+
+[[package]]
+name = "p3-poseidon2"
+version = "0.2.3-succinct"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
+dependencies = [
+ "gcd",
+ "p3-field",
+ "p3-mds",
+ "p3-symmetric",
+ "rand 0.8.5",
+ "serde",
+]
+
+[[package]]
+name = "p3-symmetric"
+version = "0.2.3-succinct"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
+dependencies = [
+ "itertools 0.12.1",
+ "p3-field",
+ "serde",
+]
+
+[[package]]
+name = "p3-uni-stark"
+version = "0.2.3-succinct"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
+dependencies = [
+ "itertools 0.12.1",
+ "p3-air",
+ "p3-challenger",
+ "p3-commit",
+ "p3-dft",
+ "p3-field",
+ "p3-matrix",
+ "p3-maybe-rayon",
+ "p3-util",
+ "serde",
+ "tracing",
+]
+
+[[package]]
+name = "p3-util"
+version = "0.2.3-succinct"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "pallet-aggregate"
@@ -10495,6 +10760,26 @@ dependencies = [
  "sp-arithmetic",
  "sp-io",
  "sp-runtime",
+]
+
+[[package]]
+name = "pallet-sp1-verifier"
+version = "0.1.0"
+dependencies = [
+ "bincode 2.0.1",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "hex-literal",
+ "hp-verifiers",
+ "log",
+ "pallet-balances",
+ "pallet-verifiers",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp1-zkv-verifier",
 ]
 
 [[package]]
@@ -13518,7 +13803,7 @@ version = "0.13.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "be769465445e8c1474e9c5dac2018218498557af32d9ed057325ec9a41ae81bf"
 dependencies = [
- "heck 0.4.1",
+ "heck 0.5.0",
  "itertools 0.14.0",
  "log",
  "multimap",
@@ -14611,7 +14896,7 @@ dependencies = [
  "bytes",
  "fastrlp 0.3.1",
  "fastrlp 0.4.0",
- "num-bigint",
+ "num-bigint 0.4.6",
  "num-integer",
  "num-traits",
  "parity-scale-codec",
@@ -15301,7 +15586,7 @@ dependencies = [
  "fork-tree",
  "futures",
  "log",
- "num-bigint",
+ "num-bigint 0.4.6",
  "num-rational",
  "num-traits",
  "parity-scale-codec",
@@ -16566,7 +16851,7 @@ dependencies = [
  "core-foundation 0.9.4",
  "core-foundation-sys",
  "libc",
- "num-bigint",
+ "num-bigint 0.4.6",
  "security-framework-sys",
 ]
 
@@ -17043,7 +17328,7 @@ dependencies = [
  "merlin",
  "no-std-net",
  "nom",
- "num-bigint",
+ "num-bigint 0.4.6",
  "num-rational",
  "num-traits",
  "pbkdf2",
@@ -17098,7 +17383,7 @@ dependencies = [
  "merlin",
  "no-std-net",
  "nom",
- "num-bigint",
+ "num-bigint 0.4.6",
  "num-rational",
  "num-traits",
  "pbkdf2",
@@ -17231,7 +17516,7 @@ version = "0.8.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "03c3c6b7927ffe7ecaa769ee0e3994da3b8cafc8f444578982c83ecb161af917"
 dependencies = [
- "heck 0.4.1",
+ "heck 0.5.0",
  "proc-macro2",
  "quote",
  "syn 2.0.101",
@@ -18461,6 +18746,133 @@ dependencies = [
 ]
 
 [[package]]
+name = "sp1-core-machine-minimal"
+version = "5.0.5"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
+dependencies = [
+ "p3-air",
+ "p3-baby-bear",
+ "p3-field",
+ "p3-poseidon2",
+ "sp1-derive",
+ "sp1-primitives",
+ "sp1-stark-no-std",
+ "std-replacement",
+]
+
+[[package]]
+name = "sp1-derive"
+version = "5.0.5"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
+dependencies = [
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "sp1-primitives"
+version = "5.0.5"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
+dependencies = [
+ "bincode 2.0.1",
+ "blake3",
+ "cfg-if",
+ "hex",
+ "lazy_static",
+ "num-bigint 0.4.6",
+ "p3-baby-bear",
+ "p3-field",
+ "p3-poseidon2",
+ "p3-symmetric",
+ "serde",
+ "sha2 0.10.9",
+]
+
+[[package]]
+name = "sp1-recursion-core-no-std"
+version = "5.0.5"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
+dependencies = [
+ "cfg-if",
+ "ff",
+ "hashbrown 0.14.5",
+ "itertools 0.13.0",
+ "p3-air",
+ "p3-baby-bear",
+ "p3-challenger",
+ "p3-commit",
+ "p3-dft",
+ "p3-field",
+ "p3-fri",
+ "p3-keccak",
+ "p3-matrix",
+ "p3-maybe-rayon",
+ "p3-merkle-tree",
+ "p3-poseidon2",
+ "p3-symmetric",
+ "p3-util",
+ "rand 0.8.5",
+ "serde",
+ "sp1-core-machine-minimal",
+ "sp1-derive",
+ "sp1-primitives",
+ "sp1-stark-no-std",
+ "static_assertions",
+ "std-replacement",
+ "thiserror 2.0.12",
+ "tracing",
+]
+
+[[package]]
+name = "sp1-stark-no-std"
+version = "5.0.5"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
+dependencies = [
+ "arrayref",
+ "hashbrown 0.14.5",
+ "itertools 0.13.0",
+ "num-bigint 0.4.6",
+ "num-traits",
+ "p3-air",
+ "p3-baby-bear",
+ "p3-challenger",
+ "p3-commit",
+ "p3-dft",
+ "p3-field",
+ "p3-fri",
+ "p3-matrix",
+ "p3-maybe-rayon",
+ "p3-merkle-tree",
+ "p3-poseidon2",
+ "p3-symmetric",
+ "p3-uni-stark",
+ "p3-util",
+ "serde",
+ "sp1-derive",
+ "sp1-primitives",
+ "std-replacement",
+ "strum 0.26.3",
+ "strum_macros 0.26.4",
+ "tracing",
+]
+
+[[package]]
+name = "sp1-zkv-verifier"
+version = "0.1.0"
+source = "git+https://github.com/zkVerify/sp1-verifier.git?tag=v0.1.0#8dd072157ffd1345ae536a89cc9ce574afb6523b"
+dependencies = [
+ "bincode 2.0.1",
+ "blake3",
+ "itertools 0.13.0",
+ "p3-baby-bear",
+ "p3-field",
+ "p3-symmetric",
+ "sha2 0.10.9",
+ "sp1-recursion-core-no-std",
+ "sp1-stark-no-std",
+]
+
+[[package]]
 name = "spin"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -18513,7 +18925,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "057291e5631f280978fa9c8009390663ca4613359fc1318e36a8c24c392f6d1f"
 dependencies = [
  "bitvec",
- "num-bigint",
+ "num-bigint 0.4.6",
  "sha2 0.9.9",
  "ssz_rs_derive",
 ]
@@ -18683,6 +19095,11 @@ dependencies = [
  "quote",
  "syn 1.0.109",
 ]
+
+[[package]]
+name = "std-replacement"
+version = "5.0.5"
+source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
 
 [[package]]
 name = "string-interner"
@@ -20266,6 +20683,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8ecb6da28b8a351d773b68d5825ac39017e680750f980f3a1a85cd8dd28a47c1"
 
 [[package]]
+name = "unty"
+version = "0.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6d49784317cd0d1ee7ec5c716dd598ec5b4483ea832a2dced265471cc0f690ae"
+
+[[package]]
 name = "url"
 version = "2.5.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -20656,7 +21079,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f907fdead3153cb9bfb7a93bbd5b62629472dc06dee83605358c64c52ed3dda9"
 dependencies = [
  "anyhow",
- "bincode",
+ "bincode 1.3.3",
  "cfg-if",
  "indexmap 1.9.3",
  "libc",
@@ -20694,7 +21117,7 @@ checksum = "c86437fa68626fe896e5afc69234bb2b5894949083586535f200385adfd71213"
 dependencies = [
  "anyhow",
  "base64 0.21.7",
- "bincode",
+ "bincode 1.3.3",
  "directories-next",
  "file-per-thread-logger",
  "log",
@@ -20770,7 +21193,7 @@ checksum = "0de48df552cfca1c9b750002d3e07b45772dd033b0b206d5c0968496abf31244"
 dependencies = [
  "addr2line 0.19.0",
  "anyhow",
- "bincode",
+ "bincode 1.3.3",
  "cfg-if",
  "cpp_demangle 0.3.5",
  "gimli 0.27.3",
@@ -21956,6 +22379,7 @@ dependencies = [
  "pallet-scheduler",
  "pallet-session",
  "pallet-session-benchmarking",
+ "pallet-sp1-verifier",
  "pallet-staking",
  "pallet-sudo",
  "pallet-timestamp",

@@ -117,6 +117,16 @@ zkvRpc = {
       ],
       type: 'H256'
     },
+    sp1: {
+      description: 'Get the hash of a Sp1 verification key',
+      params: [
+        {
+          name: 'vk',
+          type: 'H256',
+        },
+      ],
+      type: 'H256'
+    },
   }
 };
 

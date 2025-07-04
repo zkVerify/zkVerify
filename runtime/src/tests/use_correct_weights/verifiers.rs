@@ -114,3 +114,18 @@ fn pallet_settlement_plonky2_verify_proof() {
         crate::weights::pallet_plonky2_verifier_verify_proof::ZKVWeight::<Runtime>::verify_proof_poseidon_uncompressed_19()
     );
 }
+
+#[test]
+fn pallet_settlement_sp1() {
+    use pallet_sp1_verifier::{Sp1, WeightInfo};
+
+    assert_eq!(
+        <<Runtime as pallet_verifiers::Config<Sp1<Runtime>>>::WeightInfo as
+            pallet_verifiers::WeightInfo<Sp1<Runtime>>>
+            ::verify_proof(
+            &Vec::new(),
+            &Vec::new()
+        ),
+        crate::weights::pallet_sp1_verifier::ZKVWeight::<Runtime>::verify_proof()
+    );
+}

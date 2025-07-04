@@ -125,6 +125,8 @@ pub trait VKHashApi<ResponseType> {
     fn risc0(&self, vk: H256) -> RpcResult<ResponseType>;
     #[method(name = "ultraplonk")]
     fn ultraplonk(&self, vk: Bytes) -> RpcResult<ResponseType>;
+    #[method(name = "sp1")]
+    fn sp1(&self, vk: H256) -> RpcResult<ResponseType>;
 }
 
 #[derive(Default)]
@@ -174,5 +176,9 @@ impl VKHashApiServer<H256> for VKHash {
             )
         })?;
         Ok(Ultraplonk::<zkv_runtime::Runtime>::vk_hash(&vk))
+    }
+
+    fn sp1(&self, vk: H256) -> RpcResult<H256> {
+        Ok(vk)
     }
 }

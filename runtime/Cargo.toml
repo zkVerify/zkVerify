@@ -99,6 +99,7 @@ pallet-fflonk-verifier = { workspace = true }
 pallet-groth16-verifier = { workspace = true }
 pallet-risc0-verifier = { workspace = true, features = ["inject-native-poseidon2"] }
 pallet-ultraplonk-verifier = { workspace = true }
+pallet-sp1-verifier = { workspace = true }
 hp-dispatch = {workspace = true}
 pallet-plonky2-verifier = { workspace = true }
 
@@ -158,6 +159,7 @@ runtime-benchmarks = [
 	"pallet-risc0-verifier/runtime-benchmarks",
 	"pallet-scheduler/runtime-benchmarks",
 	"pallet-session-benchmarking/runtime-benchmarks",
+	"pallet-sp1-verifier/runtime-benchmarks",
 	"pallet-staking/runtime-benchmarks",
 	"pallet-sudo/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
@@ -230,6 +232,7 @@ std = [
 	"pallet-scheduler/std",
 	"pallet-session-benchmarking?/std",
 	"pallet-session/std",
+	"pallet-sp1-verifier/std",
 	"pallet-staking/std",
 	"pallet-sudo/std",
 	"pallet-timestamp/std",
