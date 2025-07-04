@@ -17,6 +17,7 @@ github_ref_name="${GITHUB_REF_NAME:-}"
 common_file_location="${COMMON_FILE_LOCATION:-not-set}"
 image_artifact=""
 docker_tag_full=""
+extract_runtime="${EXTRACT_RUNTIME:-true}"
 
 # Requirement
 if ! [ -f "${common_file_location}" ]; then
@@ -89,6 +90,7 @@ if [ "${is_a_release}" = "true" ]; then
     publish_tags=("${docker_tag_full}")
   elif [ "${fastruntime_release}" = "true" ]; then
     publish_tags=("fast-runtime")
+    extract_runtime="false"
   fi
 
   # Append -relay to tag names for relay chain images
@@ -111,14 +113,18 @@ if [ "${is_a_release}" = "true" ]; then
   done
 
   # Extract runtime artifact
-  log_info "=== Extract runtime artifact ==="
-  if [ "${DRY_RUN}" != "true" ]; then
-    container_id="$(docker create "index.docker.io/${docker_hub_org}/${docker_image_build_name}:${docker_tag_full}")"
-    docker cp "${container_id}":/app/zkv_runtime.compact.compressed.wasm ./zkv_runtime.compact.compressed.wasm
-    docker rm "${container_id}"  # Clean up the container
+  if [ "${extract_runtime}" == "true" ]; then
+    log_info "=== Extract runtime artifact ==="
+    if [ "${DRY_RUN}" != "true" ]; then
+      container_id="$(docker create "index.docker.io/${docker_hub_org}/${docker_image_build_name}:${docker_tag_full}")"
+      docker cp "${container_id}":/app/zkv_runtime.compact.compressed.wasm ./zkv_runtime.compact.compressed.wasm
+      docker rm "${container_id}"  # Clean up the container
+    else
+      log_warn "WARNING: 'DRY_RUN' variable is set to 'true'. CREATE FAKE WASM"
+      echo "index.docker.io/${docker_hub_org}/${docker_image_build_name}:${docker_tag_full} -> WASM" > ./zkv_runtime.compact.compressed.wasm
+    fi
   else
-    log_warn "WARNING: 'DRY_RUN' variable is set to 'true'. CREATE FAKE WASM"
-    echo "index.docker.io/${docker_hub_org}/${docker_image_build_name}:${docker_tag_full} -> WASM" > ./zkv_runtime.compact.compressed.wasm
+    log_info "=== Skipping runtime artifact extraction ==="
   fi
 else
   fn_die "ERROR: the build did NOT satisfy RELEASE build requirements(IS_A_RELEASE variable=${is_a_release}). Docker image(s) was(were) NOT published."
