@@ -21,7 +21,7 @@ edition.workspace = true
 # If you change the version here please DON'T forgot to
 # change also the one in cli/src/cli.rs `NODE_VERSION`
 ############################################################
-version = "0.9.1"
+version = "0.9.2"
 default-run = "zkv-relay"
 
 [lints]
