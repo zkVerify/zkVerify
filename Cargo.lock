@@ -22330,7 +22330,7 @@ dependencies = [
 
 [[package]]
 name = "zkv-runtime"
-version = "0.16.0"
+version = "0.17.0"
 dependencies = [
  "aggregate-rpc-runtime-api",
  "anyhow",
