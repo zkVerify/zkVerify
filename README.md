@@ -138,7 +138,7 @@ We recommend adopting at least an equivalent machine, with at least 50GB of stor
 zkVerify includes some Docker files for building the client and running one or more nodes locally.
 For more information, see [docker/README.md](docker/README.md).
 
-We also provide Docker images to run a validator, boot or RPC node directly in the public testnet, via a user-friendly installation and deployment process. Please take a look at [How to run a node](https://docs.zkverify.io/tutorials/how_to_run_a_node/getting_started) section of the official documentation. 
+We also provide Docker images to run a validator, boot or RPC node directly in the public testnet, via a user-friendly installation and deployment process. Please take a look at [Run new validator node](https://docs.zkverify.io/node-operators/run_using_docker/run_new_validator_node#register-your-node-with-the-network) section of the official documentation. 
 
 ## Documentation
 
