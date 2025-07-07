@@ -76,6 +76,21 @@ fn pallet_settlement_risc0_verify_proof() {
 }
 
 #[test]
+fn pallet_settlement_ultrahonk() {
+    use pallet_ultrahonk_verifier::{Ultrahonk, WeightInfo};
+
+    assert_eq!(
+        <<Runtime as pallet_verifiers::Config<Ultrahonk<Runtime>>>::WeightInfo as
+            pallet_verifiers::WeightInfo<Ultrahonk<Runtime>>>
+            ::verify_proof(
+            &vec![0; pallet_ultrahonk_verifier::PROOF_SIZE],
+            &Vec::new()
+        ),
+        crate::weights::pallet_ultrahonk_verifier::ZKVWeight::<Runtime>::verify_proof()
+    );
+}
+
+#[test]
 fn pallet_settlement_ultraplonk() {
     use pallet_ultraplonk_verifier::{Ultraplonk, WeightInfo};
 

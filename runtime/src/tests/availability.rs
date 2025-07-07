@@ -245,6 +245,27 @@ fn pallet_risc0() {
 }
 
 #[test]
+fn pallet_ultrahonk() {
+    test().execute_with(|| {
+        let dummy_origin = AccountId32::new([0; 32]);
+
+        let dummy_vk = [0; pallet_ultrahonk_verifier::VK_SIZE];
+        let dummy_proof = vec![0; pallet_ultrahonk_verifier::PROOF_SIZE];
+        let dummy_pubs = Vec::new();
+
+        assert!(SettlementUltrahonkPallet::submit_proof(
+            RuntimeOrigin::signed(dummy_origin),
+            VkOrHash::Vk(dummy_vk.into()),
+            dummy_proof.into(),
+            dummy_pubs.into(),
+            None,
+        )
+        .is_err());
+        // just checking code builds, hence the pallet is available to the runtime
+    });
+}
+
+#[test]
 fn pallet_ultraplonk() {
     test().execute_with(|| {
         let dummy_origin = AccountId32::new([0; 32]);

@@ -107,6 +107,16 @@ zkvRpc = {
       ],
       type: 'H256'
     },
+    ultrahonk: {
+      description: 'Get the hash of an UltraHonk verification key',
+      params: [
+        {
+          name: 'vk',
+          type: 'Bytes',
+        },
+      ],
+      type: 'H256'
+    },
     ultraplonk: {
       description: 'Get the hash of an UltraPLONK verification key',
       params: [
