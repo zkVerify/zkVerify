@@ -185,7 +185,7 @@ fn test_parachains_host_configuration() -> HostConfiguration<BlockNumber> {
         max_pov_size: MAX_POV_SIZE,
         max_head_data_size: 20 * 1024,
         max_upward_queue_count: 128,
-        max_upward_queue_size: 256 * 1024, // MaxUpwardQueueCount * MaxUpwardMessageSize * 2
+        max_upward_queue_size: 128 * 1024, // MaxUpwardQueueCount * MaxUpwardMessageSize * 2
         max_downward_message_size: 10 * 1024,
         max_upward_message_size: 1024,
         max_upward_message_num_per_candidate: 64,
