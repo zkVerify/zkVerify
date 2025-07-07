@@ -1023,6 +1023,27 @@ impl pallet_verifiers::Config<pallet_risc0_verifier::Risc0<Runtime>> for Runtime
 }
 
 parameter_types! {
+    pub const UltrahonkMaxPubs: u32 = 32;
+}
+
+impl pallet_ultrahonk_verifier::Config for Runtime {
+    type MaxPubs = UltrahonkMaxPubs;
+}
+
+pub type UltrahonkVerifier = pallet_ultrahonk_verifier::Ultrahonk<Runtime>;
+
+impl pallet_verifiers::Config<UltrahonkVerifier> for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type OnProofVerified = Aggregate;
+    type WeightInfo = pallet_ultrahonk_verifier::UltrahonkWeight<
+        weights::pallet_ultrahonk_verifier::ZKVWeight<Runtime>,
+    >;
+    type Ticket = VkRegistrationHoldConsideration;
+    #[cfg(feature = "runtime-benchmarks")]
+    type Currency = Balances;
+}
+
+parameter_types! {
     pub const UltraplonkMaxPubs: u32 = 32;
 }
 
@@ -1251,6 +1272,7 @@ construct_runtime!(
         SettlementPlonky2Pallet: pallet_plonky2_verifier = 165,
         SettlementFFlonkPallet: pallet_fflonk_verifier = 166,
         SettlementSp1Pallet: pallet_sp1_verifier = 167,
+        SettlementUltrahonkPallet: pallet_ultraplonk_verifier = 167,
     }
 );
 
@@ -1345,6 +1367,7 @@ mod benches {
         [pallet_risc0_verifier, Risc0VerifierBench::<Runtime>]
         [pallet_risc0_verifier_verify_proof, Risc0VerifierVerifyProofBench::<Runtime>]
         [pallet_risc0_verifier_extend, Risc0VerifierExtendBench::<Runtime>]
+        [pallet_ultrahonk_verifier, UltrahonkVerifierBench::<Runtime>]
         [pallet_ultraplonk_verifier, UltraplonkVerifierBench::<Runtime>]
         [pallet_plonky2_verifier, Plonky2VerifierBench::<Runtime>]
         [pallet_plonky2_verifier_verify_proof, Plonky2VerifierVerifyProofBench::<Runtime>]
@@ -1856,6 +1879,7 @@ impl_runtime_apis! {
             use pallet_risc0_verifier::benchmarking::Pallet as Risc0VerifierBench;
             use pallet_risc0_verifier::benchmarking_verify_proof::Pallet as Risc0VerifierVerifyProofBench;
             use pallet_risc0_verifier::extend_benchmarking::Pallet as Risc0VerifierExtendBench;
+            use pallet_ultrahonk_verifier::benchmarking::Pallet as UltrahonkVerifierBench;
             use pallet_ultraplonk_verifier::benchmarking::Pallet as UltraplonkVerifierBench;
             use pallet_plonky2_verifier::benchmarking_verify_proof::Pallet as Plonky2VerifierVerifyProofBench;
             use pallet_plonky2_verifier::benchmarking::Pallet as Plonky2VerifierBench;
@@ -1890,6 +1914,7 @@ impl_runtime_apis! {
             use pallet_risc0_verifier::benchmarking::Pallet as Risc0VerifierBench;
             use pallet_risc0_verifier::benchmarking_verify_proof::Pallet as Risc0VerifierVerifyProofBench;
             use pallet_risc0_verifier::extend_benchmarking::Pallet as Risc0VerifierExtendBench;
+            use pallet_ultrahonk_verifier::benchmarking::Pallet as UltrahonkVerifierBench;
             use pallet_ultraplonk_verifier::benchmarking::Pallet as UltraplonkVerifierBench;
             use pallet_plonky2_verifier::benchmarking_verify_proof::Pallet as Plonky2VerifierVerifyProofBench;
             use pallet_plonky2_verifier::benchmarking::Pallet as Plonky2VerifierBench;

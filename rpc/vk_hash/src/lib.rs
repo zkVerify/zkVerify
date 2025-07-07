@@ -22,6 +22,7 @@ use pallet_fflonk_verifier::{
 };
 use pallet_groth16_verifier::{Curve, Groth16};
 use pallet_plonky2_verifier::{Plonky2, Plonky2Config};
+use pallet_ultrahonk_verifier::{Ultrahonk, VK_SIZE};
 use pallet_ultraplonk_verifier::{Ultraplonk, VK_SIZE};
 use sp_core::{serde::Deserialize, serde::Serialize, Bytes, H256, U256};
 
@@ -123,6 +124,8 @@ pub trait VKHashApi<ResponseType> {
     fn plonky2(&self, vk: Plonky2Vk) -> RpcResult<ResponseType>;
     #[method(name = "risc0")]
     fn risc0(&self, vk: H256) -> RpcResult<ResponseType>;
+    #[method(name = "ultrahonk")]
+    fn ultrahonk(&self, vk: Bytes) -> RpcResult<ResponseType>;
     #[method(name = "ultraplonk")]
     fn ultraplonk(&self, vk: Bytes) -> RpcResult<ResponseType>;
     #[method(name = "sp1")]
@@ -158,6 +161,24 @@ impl VKHashApiServer<H256> for VKHash {
 
     fn risc0(&self, vk: H256) -> RpcResult<H256> {
         Ok(vk)
+    }
+
+    fn ultrahonk(&self, vk: Bytes) -> RpcResult<H256> {
+        if vk.len() != VK_SIZE {
+            return Err(ErrorObject::owned(
+                1,
+                "Incorrect Slice Length",
+                Some("Incorrect Slice Length".to_string()),
+            ));
+        }
+        let vk: VkOf<Ultrahonk<zkv_runtime::Runtime>> = vk.0.try_into().map_err(|_| {
+            ErrorObject::owned(
+                2,
+                "Deserialize error",
+                Some("Deserialize error".to_string()),
+            )
+        })?;
+        Ok(Ultrahonk::<zkv_runtime::Runtime>::vk_hash(&vk))
     }
 
     fn ultraplonk(&self, vk: Bytes) -> RpcResult<H256> {
