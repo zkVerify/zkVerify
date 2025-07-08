@@ -22,12 +22,8 @@ const { init_api, submitProof, receivedEvents, registerDomain, sudoRegisterDomai
     holdDomain, unregisterDomain, aggregate, getBalance } = require('zkv-lib');
 const { PROOF: FFLONK_PROOF, PUBS: FFLONK_PUBS, VK: FFLONK_VK } = require('./fflonk_data.js');
 const { PROOF: GROTH16_PROOF, PUBS: GROTH16_PUBS, VK: GROTH16_VK } = require('./groth16_data.js');
-<<<<<<< HEAD
 const { PROOF: RISC0_V2_2_PROOF, PUBS: RISC0_V2_2_PUBS, VK: RISC0_V2_2_VK } = require('./risc0_v2_2_data.js');
-=======
-const { PROOF: RISC0_V2_1_PROOF, PUBS: RISC0_V2_1_PUBS, VK: RISC0_V2_1_VK } = require('./risc0_v2_1_data.js');
-const { PROOF: ULTRAHONK_PROOF, PUBS: ULTRAHONK_PUBS, VK: ULTRAHONK_VK } = require('./ultrahonk_data.js');
->>>>>>> 227852f (Initial commit)
+const { ZKPROOF: ULTRAHONK_ZKPROOF, PUBS: ULTRAHONK_PUBS, VK: ULTRAHONK_VK } = require('./ultrahonk_data.js');
 const { PROOF: ULTRAPLONK_PROOF, PUBS: ULTRAPLONK_PUBS, VK: ULTRAPLONK_VK } = require('./ultraplonk_data.js');
 const { PROOF: PLONKY2_PROOF, PUBS: PLONKY2_PUBS, VK: PLONKY2_VK } = require('./plonky2_data.js');
 const { PROOF: SP1_PROOF, PUBS: SP1_PUBS, VK: SP1_VK } = require('./sp1_data.js');
@@ -67,7 +63,7 @@ async function run(nodeName, networkInfo, _args) {
         {
             name: "Ultrahonk",
             pallet: api.tx.settlementUltrahonkPallet,
-            args: [{ 'Vk': ULTRAHONK_VK }, ULTRAHONK_PROOF, ULTRAHONK_PUBS],
+            args: [{ 'Vk': ULTRAHONK_VK }, ULTRAHONK_ZKPROOF, ULTRAHONK_PUBS],
         },
         {
             name: "Ultraplonk",
