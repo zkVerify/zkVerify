@@ -1250,7 +1250,7 @@ construct_runtime!(
         SettlementGroth16Pallet: pallet_groth16_verifier = 161,
         SettlementRisc0Pallet: pallet_risc0_verifier = 162,
         SettlementUltraplonkPallet: pallet_ultraplonk_verifier = 163,
-        SettlementUltrahonkPallet: pallet_ultraplonk_verifier = 164,
+        SettlementUltrahonkPallet: pallet_ultrahonk_verifier = 164,
         SettlementPlonky2Pallet: pallet_plonky2_verifier = 165,
         SettlementFFlonkPallet: pallet_fflonk_verifier = 166,
     }
