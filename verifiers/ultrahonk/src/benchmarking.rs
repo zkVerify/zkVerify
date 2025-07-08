@@ -38,9 +38,9 @@ pub mod benchmarks {
 
     #[benchmark]
     fn verify_proof() {
-        let proof = include_bytes!("resources/32/32_zk_proof").to_vec().into();
+        let proof = *include_bytes!("resources/32/32_zk_proof");
         let pubs: Vec<_> = include_bytes!("resources/32/32_pubs")
-            .chunks_exact(crate::PUBS_SIZE)
+            .chunks_exact(crate::PUB_SIZE)
             .map(TryInto::try_into)
             .map(Result::unwrap)
             .collect();
@@ -83,9 +83,9 @@ pub mod benchmarks {
 
     #[benchmark]
     fn compute_statement_hash() {
-        let proof = include_bytes!("resources/32/32_zk_proof").to_vec().into();
+        let proof = *include_bytes!("resources/32/32_zk_proof");
         let pubs: Vec<_> = include_bytes!("resources/32/32_pubs")
-            .chunks_exact(crate::PUBS_SIZE)
+            .chunks_exact(crate::PUB_SIZE)
             .map(TryInto::try_into)
             .map(Result::unwrap)
             .collect();
