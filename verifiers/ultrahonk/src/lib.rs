@@ -17,7 +17,7 @@
 
 extern crate alloc;
 
-use alloc::{borrow::Cow, vec::Vec};
+use alloc::{borrow::Cow, boxed::Box, vec::Vec};
 use core::marker::PhantomData;
 use frame_support::{ensure, weights::Weight};
 use hp_verifiers::{Verifier, VerifyError};
@@ -33,7 +33,7 @@ pub use ultrahonk_no_std::ZK_PROOF_SIZE;
 pub type ZKProof = [u8; ZK_PROOF_SIZE];
 pub type Pubs = Vec<[u8; PUB_SIZE]>;
 pub type Vk = [u8; VK_SIZE];
-// pub use weight::WeightInfo;
+pub use weight::WeightInfo;
 
 pub trait Config {
     /// Maximum supported number of public inputs.
@@ -126,51 +126,46 @@ impl<T: Config> Verifier for Ultrahonk<T> {
 }
 
 impl<T: Config> Ultrahonk<T> {
-    // The encode_vk function transforms a given Vk into a format that matches:
-    // [citation needed]
+    // Utility function for future-proofing.
     fn encode_vk(vk: &Vk) -> Cow<'_, [u8]> {
-        const PADDED_VK_SIZE: usize = VK_SIZE + 15 * 32; // !!!
-        let mut buffer: Vec<u8> = Vec::from(vk);
-        buffer.resize(PADDED_VK_SIZE, 0u8);
-
-        Cow::Owned(buffer)
+        Cow::Owned(vk.to_vec())
     }
 }
 
-// /// The struct to use in runtime pallet configuration to map the weight computed by this crate
-// /// benchmarks to the weight needed by the `pallet-verifiers`.
-// pub struct UltrahonkWeight<W: weight::WeightInfo>(PhantomData<W>);
+/// The struct to use in runtime pallet configuration to map the weight computed by this crate
+/// benchmarks to the weight needed by the `pallet-verifiers`.
+pub struct UltrahonkWeight<W: weight::WeightInfo>(PhantomData<W>);
 
-// impl<T: Config, W: weight::WeightInfo> pallet_verifiers::WeightInfo<Ultrahonk<T>>
-//     for UltrahonkWeight<W>
-// {
-//     fn verify_proof(
-//         _proof: &<Ultrahonk<T> as hp_verifiers::Verifier>::Proof,
-//         _pubs: &<Ultrahonk<T> as hp_verifiers::Verifier>::Pubs,
-//     ) -> Weight {
-//         W::verify_proof()
-//     }
+impl<T: Config, W: weight::WeightInfo> pallet_verifiers::WeightInfo<Ultrahonk<T>>
+    for UltrahonkWeight<W>
+{
+    fn verify_proof(
+        _proof: &<Ultrahonk<T> as hp_verifiers::Verifier>::Proof,
+        _pubs: &<Ultrahonk<T> as hp_verifiers::Verifier>::Pubs,
+    ) -> Weight {
+        W::verify_proof()
+    }
 
-//     fn register_vk(_vk: &<Ultrahonk<T> as hp_verifiers::Verifier>::Vk) -> Weight {
-//         W::register_vk()
-//     }
+    fn register_vk(_vk: &<Ultrahonk<T> as hp_verifiers::Verifier>::Vk) -> Weight {
+        W::register_vk()
+    }
 
-//     fn unregister_vk() -> frame_support::weights::Weight {
-//         W::unregister_vk()
-//     }
+    fn unregister_vk() -> frame_support::weights::Weight {
+        W::unregister_vk()
+    }
 
-//     fn get_vk() -> Weight {
-//         W::get_vk()
-//     }
+    fn get_vk() -> Weight {
+        W::get_vk()
+    }
 
-//     fn validate_vk(_vk: &<Ultrahonk<T> as hp_verifiers::Verifier>::Vk) -> Weight {
-//         W::validate_vk()
-//     }
+    fn validate_vk(_vk: &<Ultrahonk<T> as hp_verifiers::Verifier>::Vk) -> Weight {
+        W::validate_vk()
+    }
 
-//     fn compute_statement_hash(
-//         _proof: &<Ultrahonk<T> as Verifier>::Proof,
-//         _pubs: &<Ultrahonk<T> as Verifier>::Pubs,
-//     ) -> Weight {
-//         W::compute_statement_hash()
-//     }
-// }
+    fn compute_statement_hash(
+        _proof: &<Ultrahonk<T> as Verifier>::Proof,
+        _pubs: &<Ultrahonk<T> as Verifier>::Pubs,
+    ) -> Weight {
+        W::compute_statement_hash()
+    }
+}

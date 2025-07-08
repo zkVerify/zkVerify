@@ -15,7 +15,7 @@
 
 #![cfg(test)]
 
-// use hex_literal::hex;
+use hex_literal::hex;
 use serial_test::serial;
 
 use super::*;
@@ -37,170 +37,174 @@ fn verify_valid_zk_proof() {
     assert!(Ultrahonk::<MockRuntime>::verify_proof(&vk, &proof, &pi).is_ok());
 }
 
-// #[test]
-// #[serial]
-// fn verify_valid_proof_with_8_public_inputs() {
-//     let proof = include_bytes!("resources/08_proof").to_vec();
-//     let pubs: Vec<_> = include_bytes!("resources/08_pubs")
-//         .chunks_exact(crate::PUBS_SIZE)
-//         .map(TryInto::try_into)
-//         .map(Result::unwrap)
-//         .collect();
-//     let vk = *include_bytes!("resources/08_vk");
+#[test]
+#[serial]
+fn verify_valid_proof_with_8_public_inputs() {
+    let proof = *include_bytes!("resources/08/08_zk_proof");
+    let pubs: Vec<_> = include_bytes!("resources/08/08_pubs")
+        .chunks_exact(crate::PUB_SIZE)
+        .map(TryInto::try_into)
+        .map(Result::unwrap)
+        .collect();
+    let vk = *include_bytes!("resources/08/08_vk");
 
-//     assert!(Ultraplonk::<MockRuntime>::verify_proof(&vk, &proof, &pubs).is_ok());
-// }
+    assert!(Ultrahonk::<MockRuntime>::verify_proof(&vk, &proof, &pubs).is_ok());
+}
 
-// #[test]
-// fn verify_vk_hash() {
-//     let vk = VALID_VK;
-//     let vk_hash = Ultraplonk::<MockRuntime>::vk_hash(&vk);
+#[test]
+fn verify_vk_hash() {
+    let vk = VALID_VK;
+    let vk_hash = Ultrahonk::<MockRuntime>::vk_hash(&vk);
 
-//     assert_eq!(
-//         vk_hash.as_bytes(),
-//         hex!("79bbe3df4d7cf7b3222e16f61b3869bfe33fcfac70c90fbd12dc4ccaea3db0e9")
-//     );
-// }
+    assert_eq!(
+        vk_hash.as_bytes(),
+        hex!("79bbe3df4d7cf7b3222e16f61b3869bfe33fcfac70c90fbd12dc4ccaea3db0e9") // TODO: CORRECT THIS!
+    );
+}
 
-// mod reject {
-//     use super::*;
+mod reject {
+    use super::*;
 
-//     #[test]
-//     #[serial]
-//     fn invalid_public_values() {
-//         let vk = VALID_VK;
-//         let proof = VALID_PROOF.to_vec();
+    #[test]
+    #[serial]
+    fn invalid_public_values() {
+        let vk = VALID_VK;
+        let proof = VALID_ZK_PROOF;
 
-//         let mut invalid_pubs = public_input();
-//         invalid_pubs[0][0] = 0x10;
+        let mut invalid_pubs = public_input();
+        invalid_pubs[0][0] = 0x10;
 
-//         assert_eq!(
-//             Ultraplonk::<MockRuntime>::verify_proof(&vk, &proof, &invalid_pubs),
-//             Err(VerifyError::VerifyError)
-//         );
-//     }
+        assert_eq!(
+            Ultrahonk::<MockRuntime>::verify_proof(&vk, &proof, &invalid_pubs),
+            Err(VerifyError::VerifyError)
+        );
+    }
 
-//     #[test]
-//     #[serial]
-//     fn proof_with_8_public_inputs_with_one_not_valid() {
-//         let proof = include_bytes!("resources/08_proof").to_vec();
-//         let mut pubs: Vec<[u8; PUBS_SIZE]> = include_bytes!("resources/08_pubs")
-//             .chunks_exact(crate::PUBS_SIZE)
-//             .map(TryInto::try_into)
-//             .map(Result::unwrap)
-//             .collect();
-//         pubs[0][0] += 1;
-//         let vk = *include_bytes!("resources/08_vk");
+    #[test]
+    #[serial]
+    fn zk_proof_with_8_public_inputs_with_one_not_valid() {
+        let proof = include_bytes!("resources/08/08_zk_proof");
+        let mut pubs: Vec<[u8; PUB_SIZE]> = include_bytes!("resources/08/08_pubs")
+            .chunks_exact(crate::PUB_SIZE)
+            .map(TryInto::try_into)
+            .map(Result::unwrap)
+            .collect();
+        pubs[0][0] += 1;
+        let vk = *include_bytes!("resources/08/08_vk");
 
-//         assert_eq!(
-//             Ultraplonk::<MockRuntime>::verify_proof(&vk, &proof, &pubs),
-//             Err(VerifyError::VerifyError)
-//         );
-//     }
+        assert_eq!(
+            Ultrahonk::<MockRuntime>::verify_proof(&vk, &proof, &pubs),
+            Err(VerifyError::VerifyError)
+        );
+    }
 
-//     #[test]
-//     #[serial]
-//     fn if_provided_too_much_public_inputs() {
-//         let vk = VALID_VK;
-//         let proof = VALID_PROOF.to_vec();
+    #[test]
+    #[serial]
+    fn if_provided_too_many_public_inputs() {
+        let vk = VALID_VK;
+        let proof = VALID_ZK_PROOF;
 
-//         let mut invalid_pubs = public_input();
-//         while (invalid_pubs.len() as u32) < <MockRuntime as Config>::MaxPubs::get() {
-//             invalid_pubs.push(public_input()[0]);
-//         }
+        let mut invalid_pubs = public_input();
+        while (invalid_pubs.len() as u32) < <MockRuntime as Config>::MaxPubs::get() {
+            invalid_pubs.push(public_input()[0]);
+        }
 
-//         assert_eq!(
-//             Ultraplonk::<MockRuntime>::verify_proof(&vk, &proof, &invalid_pubs),
-//             Err(VerifyError::InvalidInput)
-//         );
-//     }
+        assert_eq!(
+            Ultrahonk::<MockRuntime>::verify_proof(&vk, &proof, &invalid_pubs),
+            Err(VerifyError::InvalidInput)
+        );
+    }
 
-//     #[test]
-//     #[serial]
-//     fn invalid_number_of_public_inputs() {
-//         let vk = VALID_VK;
-//         let proof = VALID_PROOF.to_vec();
+    #[test]
+    #[serial]
+    fn invalid_number_of_public_inputs() {
+        let vk = VALID_VK;
+        let proof = VALID_ZK_PROOF;
 
-//         let invalid_pubs = vec![public_input()[0]];
+        let invalid_pubs = vec![public_input()[0]];
 
-//         assert_eq!(
-//             Ultraplonk::<MockRuntime>::verify_proof(&vk, &proof, &invalid_pubs),
-//             Err(VerifyError::InvalidInput)
-//         );
-//     }
+        assert_eq!(
+            Ultrahonk::<MockRuntime>::verify_proof(&vk, &proof, &invalid_pubs),
+            Err(VerifyError::InvalidInput)
+        );
+    }
 
-//     #[test]
-//     #[serial]
-//     fn invalid_proof() {
-//         let vk = VALID_VK;
-//         let pi = public_input();
+    #[test]
+    #[serial]
+    fn invalid_zk_proof() {
+        let vk = VALID_VK;
+        let pi = public_input();
 
-//         let mut invalid_proof: Proof = VALID_PROOF.to_vec();
-//         invalid_proof[PROOF_SIZE - 1] = 0x00;
+        let mut invalid_proof = VALID_ZK_PROOF;
+        invalid_proof[ZK_PROOF_SIZE - 1] = 0x00;
 
-//         assert_eq!(
-//             Ultraplonk::<MockRuntime>::verify_proof(&vk, &invalid_proof, &pi),
-//             Err(VerifyError::InvalidProofData)
-//         );
-//     }
+        assert_eq!(
+            Ultrahonk::<MockRuntime>::verify_proof(&vk, &invalid_proof, &pi),
+            Err(VerifyError::VerifyError)
+        );
+    }
 
-//     #[test]
-//     #[serial]
-//     fn big_proof() {
-//         let vk = VALID_VK;
-//         let pi = public_input();
+    // #[test]
+    // #[serial]
+    // fn big_zk_proof() {
+    //     let vk = VALID_VK;
+    //     let pi = public_input();
 
-//         let mut invalid_proof: Proof = VALID_PROOF.to_vec();
-//         invalid_proof.push(0);
+    //     let valid_proof: [u8; ZK_PROOF_SIZE] = VALID_ZK_PROOF;
+    //     let mut invalid_proof = [0u8; ZK_PROOF_SIZE + 1];
 
-//         assert_eq!(
-//             Ultraplonk::<MockRuntime>::verify_proof(&vk, &invalid_proof, &pi),
-//             Err(VerifyError::InvalidInput)
-//         );
-//     }
+    //     invalid_proof[..ZK_PROOF_SIZE].copy_from_slice(&valid_proof);
+    //     invalid_proof[ZK_PROOF_SIZE] = 0;
 
-//     #[test]
-//     #[serial]
-//     fn small_proof() {
-//         let vk = VALID_VK;
-//         let pi = public_input();
+    //     assert_eq!(
+    //         Ultrahonk::<MockRuntime>::verify_proof(&vk, &invalid_proof, &pi),
+    //         Err(VerifyError::InvalidInput)
+    //     );
+    // }
 
-//         let mut invalid_proof: Proof = VALID_PROOF.to_vec();
-//         invalid_proof.pop();
+    // #[test]
+    // #[serial]
+    // fn small_zk_proof() {
+    //     let vk = VALID_VK;
+    //     let pi = public_input();
 
-//         assert_eq!(
-//             Ultraplonk::<MockRuntime>::verify_proof(&vk, &invalid_proof, &pi),
-//             Err(VerifyError::InvalidInput)
-//         );
-//     }
+    //     let mut invalid_proof = VALID_ZK_PROOF.to_vec();
+    //     invalid_proof.pop();
 
-//     #[test]
-//     #[serial]
-//     fn invalid_vk() {
-//         let proof = VALID_PROOF.to_vec();
-//         let pi = public_input();
+    //     assert_eq!(
+    //         Ultrahonk::<MockRuntime>::verify_proof(&vk, &invalid_proof, &pi),
+    //         Err(VerifyError::InvalidInput)
+    //     );
+    // }
 
-//         let mut vk = VALID_VK;
-//         vk[0] = 0x10;
+    #[test]
+    #[serial]
+    fn invalid_vk() {
+        let proof = VALID_ZK_PROOF;
+        let pi = public_input();
 
-//         assert_eq!(
-//             Ultraplonk::<MockRuntime>::verify_proof(&vk, &proof, &pi),
-//             Err(VerifyError::InvalidVerificationKey)
-//         );
-//     }
+        let mut invalid_vk = [0u8; VK_SIZE];
+        invalid_vk[..VK_SIZE].copy_from_slice(&VALID_VK);
+        invalid_vk[0] = 0x10;
 
-//     #[test]
-//     #[serial]
-//     fn reject_malformed_proof() {
-//         let vk = VALID_VK;
-//         let pi = public_input();
+        assert_eq!(
+            Ultrahonk::<MockRuntime>::verify_proof(&invalid_vk, &proof, &pi),
+            Err(VerifyError::InvalidVerificationKey)
+        );
+    }
 
-//         let mut malformed_proof: Proof = VALID_PROOF.to_vec();
-//         malformed_proof[0] = 0x07;
+    #[test]
+    #[serial]
+    fn reject_malformed_zk_proof() {
+        let vk = VALID_VK;
+        let pi = public_input();
 
-//         assert_eq!(
-//             Ultraplonk::<MockRuntime>::verify_proof(&vk, &malformed_proof, &pi),
-//             Err(VerifyError::InvalidProofData)
-//         );
-//     }
-// }
+        let mut malformed_proof = VALID_ZK_PROOF;
+        malformed_proof[0] = 0x07;
+
+        assert_eq!(
+            Ultrahonk::<MockRuntime>::verify_proof(&vk, &malformed_proof, &pi),
+            Err(VerifyError::VerifyError)
+        );
+    }
+}
