@@ -24,7 +24,7 @@ include!("resources.rs");
 struct MockRuntime;
 
 impl crate::Config for MockRuntime {
-    type MaxPubs = sp_core::ConstU32<10>;
+    type MaxPubs = sp_core::ConstU32<40>;
 }
 
 #[test]
