@@ -238,9 +238,9 @@ if [ -n "${ZKV_SECRET_PHRASE}" ]; then
   declare -A session_keys=(
     ["babe"]="Sr25519"
     ["gran"]="Ed25519"
-    ["imon"]="Sr25519"
     ["para"]="Sr25519"
     ["audi"]="Sr25519"
+    ["asgn"]="Sr25519"
   )
 
   # Loop through the keys and inject each one
