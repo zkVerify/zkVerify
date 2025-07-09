@@ -38,7 +38,7 @@ pub mod benchmarks {
 
     #[benchmark]
     fn verify_proof() {
-        let proof = *include_bytes!("resources/32/32_zk_proof");
+        let proof = include_bytes!("resources/32/32_zk_proof").to_vec();
         let pubs: Vec<_> = include_bytes!("resources/32/32_pubs")
             .chunks_exact(crate::PUB_SIZE)
             .map(TryInto::try_into)
@@ -83,7 +83,7 @@ pub mod benchmarks {
 
     #[benchmark]
     fn compute_statement_hash() {
-        let proof = *include_bytes!("resources/32/32_zk_proof");
+        let proof = include_bytes!("resources/32/32_zk_proof").to_vec();
         let pubs: Vec<_> = include_bytes!("resources/32/32_pubs")
             .chunks_exact(crate::PUB_SIZE)
             .map(TryInto::try_into)
@@ -128,7 +128,7 @@ pub mod benchmarks {
         assert!(do_get_vk::<T>(&hash).is_none());
     }
 
-    // We cannot implement testing benchmarck for ultraplonk verifier due there is no way to make them
+    // We cannot implement testing benchmarck for ultrahonk verifier due there is no way to make them
     // thread safe.
     impl_benchmark_test_suite!(Pallet, super::mock::test_ext(), super::mock::Test);
 }

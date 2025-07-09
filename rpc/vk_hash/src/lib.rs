@@ -22,7 +22,7 @@ use pallet_fflonk_verifier::{
 };
 use pallet_groth16_verifier::{Curve, Groth16};
 use pallet_plonky2_verifier::{Plonky2, Plonky2Config};
-use pallet_ultrahonk_verifier::{Ultrahonk, VK_SIZE};
+use pallet_ultrahonk_verifier::{Ultrahonk, VK_SIZE as ULTRAHONK_VK_SIZE};
 use pallet_ultraplonk_verifier::{Ultraplonk, VK_SIZE};
 use sp_core::{serde::Deserialize, serde::Serialize, Bytes, H256, U256};
 
@@ -164,7 +164,7 @@ impl VKHashApiServer<H256> for VKHash {
     }
 
     fn ultrahonk(&self, vk: Bytes) -> RpcResult<H256> {
-        if vk.len() != VK_SIZE {
+        if vk.len() != ULTRAHONK_VK_SIZE {
             return Err(ErrorObject::owned(
                 1,
                 "Incorrect Slice Length",
