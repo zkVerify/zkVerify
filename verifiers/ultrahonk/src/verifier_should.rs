@@ -31,7 +31,7 @@ impl crate::Config for MockRuntime {
 #[serial]
 fn verify_valid_zk_proof() {
     let vk = VALID_VK;
-    let proof = VALID_ZK_PROOF;
+    let proof = VALID_ZK_PROOF.to_vec();
     let pi = public_input();
 
     assert!(Ultrahonk::<MockRuntime>::verify_proof(&vk, &proof, &pi).is_ok());
@@ -40,7 +40,7 @@ fn verify_valid_zk_proof() {
 #[test]
 #[serial]
 fn verify_valid_proof_with_8_public_inputs() {
-    let proof = *include_bytes!("resources/08/08_zk_proof");
+    let proof = include_bytes!("resources/08/08_zk_proof").to_vec();
     let pubs: Vec<_> = include_bytes!("resources/08/08_pubs")
         .chunks_exact(crate::PUB_SIZE)
         .map(TryInto::try_into)
@@ -51,16 +51,16 @@ fn verify_valid_proof_with_8_public_inputs() {
     assert!(Ultrahonk::<MockRuntime>::verify_proof(&vk, &proof, &pubs).is_ok());
 }
 
-// #[test]
-// fn verify_vk_hash() {
-//     let vk = VALID_VK;
-//     let vk_hash = Ultrahonk::<MockRuntime>::vk_hash(&vk);
+#[test]
+fn verify_vk_hash() {
+    let vk = VALID_VK;
+    let vk_hash = Ultrahonk::<MockRuntime>::vk_hash(&vk);
 
-//     assert_eq!(
-//         vk_hash.as_bytes(),
-//         hex!("79bbe3df4d7cf7b3222e16f61b3869bfe33fcfac70c90fbd12dc4ccaea3db0e9") // TODO: CORRECT THIS!
-//     );
-// }
+    assert_eq!(
+        vk_hash.as_bytes(),
+        hex!("862d96a25fb215e349e53f808e5cc5fff65c789f7a751c07857fdded9e3cbece")
+    );
+}
 
 mod reject {
     use super::*;
@@ -69,7 +69,7 @@ mod reject {
     #[serial]
     fn invalid_public_values() {
         let vk = VALID_VK;
-        let proof = VALID_ZK_PROOF;
+        let proof = VALID_ZK_PROOF.to_vec();
 
         let mut invalid_pubs = public_input();
         invalid_pubs[0][0] = 0x10;
@@ -83,7 +83,7 @@ mod reject {
     #[test]
     #[serial]
     fn zk_proof_with_8_public_inputs_with_one_not_valid() {
-        let proof = include_bytes!("resources/08/08_zk_proof");
+        let proof = include_bytes!("resources/08/08_zk_proof").to_vec();
         let mut pubs: Vec<[u8; PUB_SIZE]> = include_bytes!("resources/08/08_pubs")
             .chunks_exact(crate::PUB_SIZE)
             .map(TryInto::try_into)
@@ -102,7 +102,7 @@ mod reject {
     #[serial]
     fn if_provided_too_many_public_inputs() {
         let vk = VALID_VK;
-        let proof = VALID_ZK_PROOF;
+        let proof = VALID_ZK_PROOF.to_vec();
 
         let mut invalid_pubs = public_input();
         while (invalid_pubs.len() as u32) < <MockRuntime as Config>::MaxPubs::get() {
@@ -119,7 +119,7 @@ mod reject {
     #[serial]
     fn invalid_number_of_public_inputs() {
         let vk = VALID_VK;
-        let proof = VALID_ZK_PROOF;
+        let proof = VALID_ZK_PROOF.to_vec();
 
         let invalid_pubs = vec![public_input()[0]];
 
@@ -135,7 +135,7 @@ mod reject {
         let vk = VALID_VK;
         let pi = public_input();
 
-        let mut invalid_proof = VALID_ZK_PROOF;
+        let mut invalid_proof = VALID_ZK_PROOF.to_vec();
         invalid_proof[ZK_PROOF_SIZE - 1] = 0x00;
 
         assert_eq!(
@@ -180,7 +180,7 @@ mod reject {
     #[test]
     #[serial]
     fn invalid_vk() {
-        let proof = VALID_ZK_PROOF;
+        let proof = VALID_ZK_PROOF.to_vec();
         let pi = public_input();
 
         let mut invalid_vk = [0u8; VK_SIZE];
@@ -199,7 +199,7 @@ mod reject {
         let vk = VALID_VK;
         let pi = public_input();
 
-        let mut malformed_proof = VALID_ZK_PROOF;
+        let mut malformed_proof = VALID_ZK_PROOF.to_vec();
         malformed_proof[0] = 0x07;
 
         assert_eq!(

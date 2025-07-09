@@ -30,7 +30,7 @@ use ultrahonk_no_std::key::VerificationKey;
 pub use ultrahonk_no_std::PUB_SIZE;
 pub use ultrahonk_no_std::VK_SIZE;
 pub use ultrahonk_no_std::ZK_PROOF_SIZE;
-pub type ZKProof = [u8; ZK_PROOF_SIZE];
+pub type ZKProof = Vec<u8>;
 pub type Pubs = Vec<[u8; PUB_SIZE]>;
 pub type Vk = [u8; VK_SIZE];
 pub use weight::WeightInfo;
@@ -72,7 +72,10 @@ impl<T: Config> Verifier for Ultrahonk<T> {
             hp_verifiers::VerifyError::InvalidInput
         );
 
-        let proof = ProofType::ZK(Box::new(*proof));
+        let mut proof_bytes = [0u8; ZK_PROOF_SIZE];
+        proof_bytes.copy_from_slice(&proof);
+
+        let proof = ProofType::ZK(Box::new(proof_bytes));
 
         log::trace!("Verifying (no-std)");
         ultrahonk_no_std::verify::<CurveHooksImpl>(vk, &proof, pubs)
