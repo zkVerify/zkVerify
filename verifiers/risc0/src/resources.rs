@@ -41,3 +41,17 @@ pub mod v2_1 {
     pub static PROOF_UPPER_BOUND: &[u8] = include_bytes!("resources/v_2_1_poseidon2_22.bin");
     pub static PUBS_UPPER_BOUND: &[u8] = &hex_literal::hex!("00003c0000000000");
 }
+
+pub mod v2_2 {
+    pub static VK: sp_core::H256 = sp_core::H256(hex_literal::hex!(
+        "096adc2485db3717d21133bcc66068f1924b172b555be45fa9a3a68d7988d5c4"
+    ));
+    pub static PUBS_22: &[u8] = &hex_literal::hex!("00003c0000000000");
+    pub static PUBS_16: &[u8] = &hex_literal::hex!("1c40000000000000");
+
+    pub static PROOF_SUCCINCT: &[u8] = include_bytes!("resources/v_2_2_succinct_22.bin");
+    pub static PUBS_SUCCINCT: &[u8] = PUBS_22;
+
+    pub static PROOF_POSEIDON2_22: &[u8] = include_bytes!("resources/v_2_2_poseidon2_22.bin");
+    pub static PROOF_POSEIDON2_16: &[u8] = include_bytes!("resources/v_2_2_poseidon2_16.bin");
+}

@@ -14556,8 +14556,8 @@ dependencies = [
 
 [[package]]
 name = "risc0-verifier"
-version = "0.7.0"
-source = "git+https://github.com/zkVerify/risc0-verifier.git?tag=v0.7.0#968365aa398c5fad0f94be15320202cc36455675"
+version = "0.8.0"
+source = "git+https://github.com/zkVerify/risc0-verifier.git?branch=lg/v2.2#c483367174928b654d0e8a766c2e1e9ba4cf5968"
 dependencies = [
  "anyhow",
  "bytemuck",
