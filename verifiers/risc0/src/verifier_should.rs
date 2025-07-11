@@ -34,6 +34,9 @@ include!("resources.rs");
 #[case(&v2_1::VK, Proof::V2_1(v2_1::PROOF_SUCCINCT.to_vec()), &v2_1::PUBS_SUCCINCT)]
 #[case(&v2_1::VK, Proof::V2_1(v2_1::PROOF_POSEIDON2_16.to_vec()), &v2_1::PUBS_16)]
 #[case(&v2_1::VK, Proof::V2_1(v2_1::PROOF_POSEIDON2_22.to_vec()), &v2_1::PUBS_22)]
+#[case(&v2_2::VK, Proof::V2_2(v2_2::PROOF_SUCCINCT.to_vec()), &v2_2::PUBS_SUCCINCT)]
+#[case(&v2_2::VK, Proof::V2_2(v2_2::PROOF_POSEIDON2_16.to_vec()), &v2_2::PUBS_16)]
+#[case(&v2_2::VK, Proof::V2_2(v2_2::PROOF_POSEIDON2_22.to_vec()), &v2_2::PUBS_22)]
 #[case::accept_and_verify_the_upper_bound_proof(&v2_1::VK, Proof::V2_1(v2_1::PROOF_UPPER_BOUND.to_vec()), &v2_1::PUBS_UPPER_BOUND
 )]
 fn verify_valid_proof(#[case] vk: &Vk, #[case] proof: Proof, #[case] pubs: &[u8]) {
@@ -72,6 +75,10 @@ fn reject_unsupported_proof_version(#[case] proof: Proof) {
 #[case::v2_1(
     Proof::V2_1(Default::default()),
     H256::from(sp_io::hashing::sha2_256(b"risc0:v2.1"))
+)]
+#[case::v2_2(
+    Proof::V2_2(Default::default()),
+    H256::from(sp_io::hashing::sha2_256(b"risc0:v2.2"))
 )]
 #[case::do_not_depend_on_proof_content(
     Proof::V2_1([0xde;16].to_vec()),
