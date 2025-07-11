@@ -16,7 +16,6 @@
 #![cfg(test)]
 
 use hex_literal::hex;
-use serial_test::serial;
 
 use super::*;
 include!("resources.rs");
@@ -24,11 +23,10 @@ include!("resources.rs");
 struct MockRuntime;
 
 impl crate::Config for MockRuntime {
-    type MaxPubs = sp_core::ConstU32<40>;
+    type MaxPubs = sp_core::ConstU32<10>;
 }
 
 #[test]
-#[serial]
 fn verify_valid_proof() {
     let vk = VALID_VK;
     let proof = VALID_PROOF.to_vec();
@@ -38,7 +36,6 @@ fn verify_valid_proof() {
 }
 
 #[test]
-#[serial]
 fn verify_valid_proof_with_8_public_inputs() {
     let proof = include_bytes!("resources/08_proof").to_vec();
     let pubs: Vec<_> = include_bytes!("resources/08_pubs")
@@ -66,7 +63,6 @@ mod reject {
     use super::*;
 
     #[test]
-    #[serial]
     fn invalid_public_values() {
         let vk = VALID_VK;
         let proof = VALID_PROOF.to_vec();
@@ -81,7 +77,6 @@ mod reject {
     }
 
     #[test]
-    #[serial]
     fn proof_with_8_public_inputs_with_one_not_valid() {
         let proof = include_bytes!("resources/08_proof").to_vec();
         let mut pubs: Vec<[u8; PUBS_SIZE]> = include_bytes!("resources/08_pubs")
@@ -99,7 +94,6 @@ mod reject {
     }
 
     #[test]
-    #[serial]
     fn if_provided_too_much_public_inputs() {
         let vk = VALID_VK;
         let proof = VALID_PROOF.to_vec();
@@ -116,7 +110,6 @@ mod reject {
     }
 
     #[test]
-    #[serial]
     fn invalid_number_of_public_inputs() {
         let vk = VALID_VK;
         let proof = VALID_PROOF.to_vec();
@@ -130,7 +123,6 @@ mod reject {
     }
 
     #[test]
-    #[serial]
     fn invalid_proof() {
         let vk = VALID_VK;
         let pi = public_input();
@@ -145,7 +137,6 @@ mod reject {
     }
 
     #[test]
-    #[serial]
     fn big_proof() {
         let vk = VALID_VK;
         let pi = public_input();
@@ -160,7 +151,6 @@ mod reject {
     }
 
     #[test]
-    #[serial]
     fn small_proof() {
         let vk = VALID_VK;
         let pi = public_input();
@@ -175,7 +165,6 @@ mod reject {
     }
 
     #[test]
-    #[serial]
     fn invalid_vk() {
         let proof = VALID_PROOF.to_vec();
         let pi = public_input();
@@ -190,7 +179,6 @@ mod reject {
     }
 
     #[test]
-    #[serial]
     fn reject_malformed_proof() {
         let vk = VALID_VK;
         let pi = public_input();
