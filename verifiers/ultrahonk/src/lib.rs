@@ -79,10 +79,7 @@ impl<T: Config> Verifier for Ultrahonk<T> {
 
         log::trace!("Verifying (no-std)");
         ultrahonk_no_std::verify::<CurveHooksImpl>(vk, &proof, pubs)
-            .map_err(|e| {
-                log::debug!("Cannot verify proof: {e:?}");
-                e
-            })
+            .inspect_err(|e| log::debug!("Cannot verify proof: {e:?}"))
             .map_err(|e| match e {
                 ultrahonk_no_std::errors::VerifyError::VerificationError { message: _ } => {
                     hp_verifiers::VerifyError::VerifyError
