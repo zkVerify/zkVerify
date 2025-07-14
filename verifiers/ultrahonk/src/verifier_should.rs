@@ -85,10 +85,10 @@ mod reject {
             .map(Result::unwrap)
             .collect();
         pubs[0][0] += 1;
-        let vk = *include_bytes!("resources/08/08_vk");
+        let vk = include_bytes!("resources/08/08_vk");
 
         assert_eq!(
-            Ultrahonk::<MockRuntime>::verify_proof(&vk, &proof, &pubs),
+            Ultrahonk::<MockRuntime>::verify_proof(vk, &proof, &pubs),
             Err(VerifyError::VerifyError)
         );
     }
