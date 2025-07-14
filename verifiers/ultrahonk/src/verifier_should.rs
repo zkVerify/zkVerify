@@ -43,9 +43,9 @@ fn verify_valid_proof_with_8_public_inputs() {
         .map(TryInto::try_into)
         .map(Result::unwrap)
         .collect();
-    let vk = *include_bytes!("resources/08/08_vk");
+    let vk = include_bytes!("resources/08/08_vk");
 
-    assert!(Ultrahonk::<MockRuntime>::verify_proof(&vk, &proof, &pubs).is_ok());
+    assert!(Ultrahonk::<MockRuntime>::verify_proof(vk, &proof, &pubs).is_ok());
 }
 
 #[test]
