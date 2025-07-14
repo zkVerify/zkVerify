@@ -65,7 +65,7 @@ impl<T: Config> Verifier for Ultrahonk<T> {
     ) -> Result<Option<Weight>, VerifyError> {
         ensure!(
             proof.len() == ZK_PROOF_SIZE,
-            hp_verifiers::VerifyError::InvalidInput
+            hp_verifiers::VerifyError::InvalidProofData
         );
         ensure!(
             pubs.len() <= T::MaxPubs::get() as usize,

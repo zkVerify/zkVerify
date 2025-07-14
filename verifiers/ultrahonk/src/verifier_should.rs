@@ -149,7 +149,7 @@ mod reject {
 
         assert_eq!(
             Ultrahonk::<MockRuntime>::verify_proof(&vk, &invalid_proof.to_vec(), &pi),
-            Err(VerifyError::InvalidInput)
+            Err(VerifyError::InvalidProofData)
         );
     }
 
@@ -163,7 +163,7 @@ mod reject {
 
         assert_eq!(
             Ultrahonk::<MockRuntime>::verify_proof(&vk, &invalid_proof, &pi),
-            Err(VerifyError::InvalidInput)
+            Err(VerifyError::InvalidProofData)
         );
     }
 
