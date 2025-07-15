@@ -1272,7 +1272,7 @@ construct_runtime!(
         SettlementPlonky2Pallet: pallet_plonky2_verifier = 165,
         SettlementFFlonkPallet: pallet_fflonk_verifier = 166,
         SettlementSp1Pallet: pallet_sp1_verifier = 167,
-        SettlementUltrahonkPallet: pallet_ultrahonk_verifier = 167,
+        SettlementUltrahonkPallet: pallet_ultrahonk_verifier = 168,
     }
 );
 
