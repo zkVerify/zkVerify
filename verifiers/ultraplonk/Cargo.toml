@@ -26,7 +26,6 @@ ultraplonk-no-std = { workspace = true }
 
 [dev-dependencies]
 hex-literal = { workspace = true }
-serial_test = "3.1.1"
 codec = { workspace = true, features = ["std"] }
 sp-io = { workspace = true, features = ["std"] }
 scale-info = { workspace = true }

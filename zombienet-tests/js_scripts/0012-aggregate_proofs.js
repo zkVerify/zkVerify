@@ -47,13 +47,9 @@ async function run(nodeName, networkInfo, _args) {
             args: [{ 'Vk': FFLONK_VK }, FFLONK_PROOF, FFLONK_PUBS],
         },
         {
-            name: "Risc0.V.2.1",
+            name: "Risc0.V.2.2",
             pallet: api.tx.settlementRisc0Pallet,
-<<<<<<< HEAD
             args: [{ 'Vk': RISC0_V2_2_VK }, RISC0_V2_2_PROOF, RISC0_V2_2_PUBS],
-=======
-            args: [{ 'Vk': RISC0_V2_1_VK }, RISC0_V2_1_PROOF, RISC0_V2_1_PUBS],
->>>>>>> 227852f (Initial commit)
         },
         {
             name: "Groth16",
