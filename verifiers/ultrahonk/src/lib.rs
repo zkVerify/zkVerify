@@ -73,7 +73,7 @@ impl<T: Config> Verifier for Ultrahonk<T> {
         );
 
         let mut proof_bytes = [0u8; ZK_PROOF_SIZE];
-        proof_bytes.copy_from_slice(&proof);
+        proof_bytes.copy_from_slice(proof);
 
         let proof = ProofType::ZK(Box::new(proof_bytes));
 
