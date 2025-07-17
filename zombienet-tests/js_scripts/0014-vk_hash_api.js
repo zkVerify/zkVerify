@@ -23,6 +23,7 @@ const { VK: FFLONK_VK, VKEY_HASH: FFLONK_VKEY_HASH } = require('./fflonk_data.js
 const { VK: GROTH16_VK, VKEY_HASH: GROTH16_VKEY_HASH } = require('./groth16_data.js');
 const { VK: PLONKY2_VK, VKEY_HASH: PLONKY2_VKEY_HASH } = require('./plonky2_data.js');
 const { VK: RISC0_VK } = require('./risc0_v2_2_data.js');
+const { VK: ULTRAHONK_VK, VKEY_HASH: ULTRAHONK_VKEY_HASH } = require('./ultrahonk_data.js');
 const { VK: ULTRAPLONK_VK, VKEY_HASH: ULTRAPLONK_VKEY_HASH } = require('./ultraplonk_data.js');
 const { VK: SP1_VK } = require('./sp1_data.js');
 
@@ -53,6 +54,12 @@ async function run(nodeName, networkInfo, _args) {
             pallet: api.rpc.vk_hash.risc0,
             vk: RISC0_VK,
             expected_hash: RISC0_VK
+        },
+        {
+            name: "UltraHonk",
+            pallet: api.rpc.vk_hash.ultrahonk,
+            vk: ULTRAHONK_VK,
+            expected_hash: ULTRAHONK_VKEY_HASH
         },
         {
             name: "UltraPLONK",

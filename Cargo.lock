@@ -11056,6 +11056,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-ultrahonk-verifier"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "hex-literal",
+ "hp-verifiers",
+ "log",
+ "native",
+ "pallet-balances",
+ "pallet-verifiers",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "ultrahonk-no-std",
+]
+
+[[package]]
 name = "pallet-ultraplonk-verifier"
 version = "0.1.0"
 dependencies = [
@@ -11070,7 +11091,6 @@ dependencies = [
  "pallet-verifiers",
  "parity-scale-codec",
  "scale-info",
- "serial_test",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -20568,6 +20588,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "ultrahonk-no-std"
+version = "0.1.0"
+source = "git+https://github.com/zkVerify/ultrahonk_verifier.git?tag=v0.1.0#07262d1bd7e2943b4cb0c6f9317e43d7e780fa6f"
+dependencies = [
+ "ark-bn254 0.5.0",
+ "ark-bn254-ext",
+ "ark-ec 0.5.0",
+ "ark-ff 0.5.0",
+ "ark-models-ext 0.6.0",
+ "ark-std 0.5.0",
+ "hex-literal",
+ "sha3",
+ "snafu 0.8.5",
+]
+
+[[package]]
 name = "ultraplonk-no-std"
 version = "0.4.0"
 source = "git+https://github.com/zkVerify/ultraplonk_verifier.git?tag=v0.4.0#cf6e604e72580e42475fc287cd158bb747022219"
@@ -20754,6 +20790,7 @@ dependencies = [
  "pallet-fflonk-verifier",
  "pallet-groth16-verifier",
  "pallet-plonky2-verifier",
+ "pallet-ultrahonk-verifier",
  "pallet-ultraplonk-verifier",
  "parity-scale-codec",
  "serde",
@@ -22387,6 +22424,7 @@ dependencies = [
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
+ "pallet-ultrahonk-verifier",
  "pallet-ultraplonk-verifier",
  "pallet-utility",
  "pallet-verifiers",

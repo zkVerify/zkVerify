@@ -1,7 +1,7 @@
 [package]
-name = "pallet-ultraplonk-verifier"
+name = "pallet-ultrahonk-verifier"
 version = "0.1.0"
-description = "A ultra plonk (noir-lang) verifier pallet implementation based on pallet-verifiers abstraction."
+description = "An Ultra Honk (noir-lang) verifier pallet implementation based on pallet-verifiers abstraction."
 authors.workspace = true
 edition.workspace = true
 repository.workspace = true
@@ -22,7 +22,7 @@ log = { workspace = true }
 hex-literal = { workspace = true, optional = true }
 native = { workspace = true }
 sp-io = { workspace = true }
-ultraplonk-no-std = { workspace = true }
+ultrahonk-no-std = { workspace = true }
 
 [dev-dependencies]
 hex-literal = { workspace = true }
@@ -47,7 +47,7 @@ std = [
 	"sp-core/std",
 	"sp-io/std",
 	"sp-runtime/std",
-	"ultraplonk-no-std/std",
+	"ultrahonk-no-std/std",
 ]
 default = [ "std" ]
 runtime-benchmarks = [

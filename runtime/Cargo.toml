@@ -98,6 +98,7 @@ hp-verifiers = { workspace = true }
 pallet-fflonk-verifier = { workspace = true }
 pallet-groth16-verifier = { workspace = true }
 pallet-risc0-verifier = { workspace = true, features = ["inject-native-poseidon2"] }
+pallet-ultrahonk-verifier = { workspace = true }
 pallet-ultraplonk-verifier = { workspace = true }
 pallet-sp1-verifier = { workspace = true }
 hp-dispatch = {workspace = true}
@@ -166,6 +167,7 @@ runtime-benchmarks = [
 	"pallet-token-gateway/runtime-benchmarks",
 	"pallet-transaction-payment/runtime-benchmarks",
 	"pallet-treasury/runtime-benchmarks",
+	"pallet-ultrahonk-verifier/runtime-benchmarks",
 	"pallet-ultraplonk-verifier/runtime-benchmarks",
 	"pallet-utility/runtime-benchmarks",
 	"pallet-verifiers/runtime-benchmarks",
@@ -240,6 +242,7 @@ std = [
 	"pallet-transaction-payment-rpc-runtime-api/std",
 	"pallet-transaction-payment/std",
 	"pallet-treasury/std",
+	"pallet-ultrahonk-verifier/std",
 	"pallet-ultraplonk-verifier/std",
 	"pallet-utility/std",
 	"pallet-verifiers/std",
