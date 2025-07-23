@@ -48,33 +48,33 @@ fn verify_valid_plain_proof() {
 fn verify_valid_zk_proof_with_8_public_inputs() {
     let proof = RawProofWithType::new(
         ProofType::ZK,
-        include_bytes!("resources/08/08_zk_proof").to_vec(),
+        include_bytes!("resources/08/zk/zk_proof").to_vec(),
     );
-    let pubs: Vec<_> = include_bytes!("resources/08/08_pubs")
+    let pubs: Vec<_> = include_bytes!("resources/08/zk/pubs")
         .chunks_exact(crate::PUB_SIZE)
         .map(TryInto::try_into)
         .map(Result::unwrap)
         .collect();
-    let vk = include_bytes!("resources/08/08_vk");
+    let vk = include_bytes!("resources/08/zk/vk");
 
     assert!(Ultrahonk::<MockRuntime>::verify_proof(vk, &proof, &pubs).is_ok());
 }
 
-// #[test]
-// fn verify_valid_plain_proof_with_8_public_inputs() {
-//     let proof = RawProofWithType::new(
-//         ProofType::Plain,
-//         include_bytes!("resources/08/08_plain_proof").to_vec(),
-//     );
-//     let pubs: Vec<_> = include_bytes!("resources/08/08_pubs")
-//         .chunks_exact(crate::PUB_SIZE)
-//         .map(TryInto::try_into)
-//         .map(Result::unwrap)
-//         .collect();
-//     let vk = include_bytes!("resources/08/08_vk");
+#[test]
+fn verify_valid_plain_proof_with_8_public_inputs() {
+    let proof = RawProofWithType::new(
+        ProofType::Plain,
+        include_bytes!("resources/08/plain/plain_proof").to_vec(),
+    );
+    let pubs: Vec<_> = include_bytes!("resources/08/plain/pubs")
+        .chunks_exact(crate::PUB_SIZE)
+        .map(TryInto::try_into)
+        .map(Result::unwrap)
+        .collect();
+    let vk = include_bytes!("resources/08/plain/vk");
 
-//     assert!(Ultrahonk::<MockRuntime>::verify_proof(vk, &proof, &pubs).is_ok());
-// }
+    assert!(Ultrahonk::<MockRuntime>::verify_proof(vk, &proof, &pubs).is_ok());
+}
 
 #[test]
 fn verify_vk_hash() {
@@ -108,15 +108,15 @@ mod reject {
     fn zk_proof_with_8_public_inputs_with_one_not_valid() {
         let proof = RawProofWithType::new(
             ProofType::ZK,
-            include_bytes!("resources/08/08_zk_proof").to_vec(),
+            include_bytes!("resources/08/zk/zk_proof").to_vec(),
         );
-        let mut pubs: Vec<[u8; PUB_SIZE]> = include_bytes!("resources/08/08_pubs")
+        let mut pubs: Vec<[u8; PUB_SIZE]> = include_bytes!("resources/08/zk/pubs")
             .chunks_exact(crate::PUB_SIZE)
             .map(TryInto::try_into)
             .map(Result::unwrap)
             .collect();
         pubs[0][0] += 1;
-        let vk = include_bytes!("resources/08/08_vk");
+        let vk = include_bytes!("resources/08/zk/vk");
 
         assert_eq!(
             Ultrahonk::<MockRuntime>::verify_proof(vk, &proof, &pubs),
@@ -124,25 +124,25 @@ mod reject {
         );
     }
 
-    // #[test]
-    // fn plain_proof_with_8_public_inputs_with_one_not_valid() {
-    //     let proof = RawProofWithType::new(
-    //         ProofType::Plain,
-    //         include_bytes!("resources/08/08_plain_proof").to_vec(),
-    //     );
-    //     let mut pubs: Vec<[u8; PUB_SIZE]> = include_bytes!("resources/08/08_pubs")
-    //         .chunks_exact(crate::PUB_SIZE)
-    //         .map(TryInto::try_into)
-    //         .map(Result::unwrap)
-    //         .collect();
-    //     pubs[0][0] += 1;
-    //     let vk = include_bytes!("resources/08/08_vk");
+    #[test]
+    fn plain_proof_with_8_public_inputs_with_one_not_valid() {
+        let proof = RawProofWithType::new(
+            ProofType::Plain,
+            include_bytes!("resources/08/plain/plain_proof").to_vec(),
+        );
+        let mut pubs: Vec<[u8; PUB_SIZE]> = include_bytes!("resources/08/plain/pubs")
+            .chunks_exact(crate::PUB_SIZE)
+            .map(TryInto::try_into)
+            .map(Result::unwrap)
+            .collect();
+        pubs[0][0] += 1;
+        let vk = include_bytes!("resources/08/plain/vk");
 
-    //     assert_eq!(
-    //         Ultrahonk::<MockRuntime>::verify_proof(vk, &proof, &pubs),
-    //         Err(VerifyError::VerifyError)
-    //     );
-    // }
+        assert_eq!(
+            Ultrahonk::<MockRuntime>::verify_proof(vk, &proof, &pubs),
+            Err(VerifyError::VerifyError)
+        );
+    }
 
     #[test]
     fn if_provided_too_many_public_inputs_for_zk_proof() {
