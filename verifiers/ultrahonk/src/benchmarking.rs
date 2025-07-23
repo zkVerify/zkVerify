@@ -15,7 +15,7 @@
 
 #![cfg(feature = "runtime-benchmarks")]
 
-use crate::Ultrahonk as Verifier;
+use crate::{Ultrahonk as Verifier, RawProofWithType, ProofType};
 use alloc::vec::Vec;
 use frame_benchmarking::v2::*;
 use frame_system::RawOrigin;
@@ -38,13 +38,13 @@ pub mod benchmarks {
 
     #[benchmark]
     fn verify_proof() {
-        let proof = include_bytes!("resources/32/32_zk_proof").to_vec();
-        let pubs: Vec<_> = include_bytes!("resources/32/32_pubs")
+        let proof = RawProofWithType::new(ProofType::ZK, include_bytes!("resources/32/zk/zk_proof").to_vec());
+        let pubs: Vec<_> = include_bytes!("resources/32/zk/pubs")
             .chunks_exact(crate::PUB_SIZE)
             .map(TryInto::try_into)
             .map(Result::unwrap)
             .collect();
-        let vk = *include_bytes!("resources/32/32_vk");
+        let vk = *include_bytes!("resources/32/zk/vk");
 
         let r;
         #[block]
@@ -83,13 +83,13 @@ pub mod benchmarks {
 
     #[benchmark]
     fn compute_statement_hash() {
-        let proof = include_bytes!("resources/32/32_zk_proof").to_vec();
-        let pubs: Vec<_> = include_bytes!("resources/32/32_pubs")
+        let proof = RawProofWithType::new(ProofType::ZK, include_bytes!("resources/32/zk/zk_proof").to_vec());
+        let pubs: Vec<_> = include_bytes!("resources/32/zk/pubs")
             .chunks_exact(crate::PUB_SIZE)
             .map(TryInto::try_into)
             .map(Result::unwrap)
             .collect();
-        let vk = *include_bytes!("resources/32/32_vk");
+        let vk = *include_bytes!("resources/32/zk/vk");
 
         let vk = VkOrHash::Vk(vk.into());
 
