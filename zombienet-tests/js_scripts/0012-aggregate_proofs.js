@@ -23,7 +23,7 @@ const { init_api, submitProof, receivedEvents, registerDomain, sudoRegisterDomai
 const { PROOF: FFLONK_PROOF, PUBS: FFLONK_PUBS, VK: FFLONK_VK } = require('./fflonk_data.js');
 const { PROOF: GROTH16_PROOF, PUBS: GROTH16_PUBS, VK: GROTH16_VK } = require('./groth16_data.js');
 const { PROOF: RISC0_V2_3_PROOF, PUBS: RISC0_V2_3_PUBS, VK: RISC0_V2_3_VK } = require('./risc0_v2_3_data.js');
-const { PLAIN_PROOF: ULTRAHONK_PLAIN_PROOF, ZK_PROOF: ULTRAHONK_ZK_PROOF, PUBS: ULTRAHONK_PUBS, VK: ULTRAHONK_VK } = require('./ultrahonk_data.js');
+const { ZK_PROOF: ULTRAHONK_ZK_PROOF, PUBS: ULTRAHONK_PUBS, VK: ULTRAHONK_VK } = require('./ultrahonk_data.js');
 const { PROOF: ULTRAPLONK_PROOF, PUBS: ULTRAPLONK_PUBS, VK: ULTRAPLONK_VK } = require('./ultraplonk_data.js');
 const { PROOF: PLONKY2_PROOF, PUBS: PLONKY2_PUBS, VK: PLONKY2_VK } = require('./plonky2_data.js');
 const { PROOF: SP1_PROOF, PUBS: SP1_PUBS, VK: SP1_VK } = require('./sp1_data.js');
@@ -55,11 +55,6 @@ async function run(nodeName, networkInfo, _args) {
             name: "Groth16",
             pallet: api.tx.settlementGroth16Pallet,
             args: [{ 'Vk': GROTH16_VK }, GROTH16_PROOF, GROTH16_PUBS],
-        },
-        {
-            name: "Ultrahonk (Plain)", // Q: Do we want to invoke this verifier as well?
-            pallet: api.tx.settlementUltrahonkPallet,
-            args: [{ 'Vk': ULTRAHONK_VK }, ULTRAHONK_PLAIN_PROOF, ULTRAHONK_PUBS],
         },
         {
             name: "Ultrahonk (ZK)",
