@@ -373,7 +373,7 @@ pub mod pallet {
                     vk.as_ref().clone()
                 }
             };
-            let account = ensure_signed(origin).ok();
+            let account = ensure_signed_or_root(origin)?;
             let verify_proof_weight =
                 I::verify_proof(&vk, &proof, &pubs).map_err(Error::<T, I>::from)?;
             let statement = compute_statement_hash::<I>(&vk_or_hash, &proof, &pubs);

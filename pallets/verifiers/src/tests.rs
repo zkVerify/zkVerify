@@ -571,6 +571,23 @@ mod submit_proof_should {
         use super::*;
 
         #[rstest]
+        fn not_signed_user(mut def_vk: sp_io::TestExternalities) {
+            def_vk.execute_with(|| {
+                // Dispatch a signed extrinsic.
+                assert_noop!(
+                    FakeVerifierPallet::submit_proof(
+                        RuntimeOrigin::none(),
+                        VkOrHash::Vk(Box::new(REGISTERED_VK)),
+                        Box::new(42),
+                        Box::new(42),
+                        Some(1),
+                    ),
+                    DispatchError::BadOrigin
+                );
+            });
+        }
+
+        #[rstest]
         fn valid_proof_if_disabled(mut test_ext: sp_io::TestExternalities) {
             test_ext.execute_with(|| {
                 DisableStorage::set(Some(true));
