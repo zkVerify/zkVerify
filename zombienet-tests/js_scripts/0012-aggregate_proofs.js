@@ -64,11 +64,6 @@ async function run(nodeName, networkInfo, _args) {
             args: [{ 'Vk': GROTH16_VK }, GROTH16_PROOF, GROTH16_PUBS],
         },
         {
-            name: "Ultrahonk (Plain)", // Q: Do we want to invoke this verifier as well?
-            pallet: api.tx.settlementUltrahonkPallet,
-            args: [{ 'Vk': ULTRAHONK_VK }, ULTRAHONK_PLAIN_PROOF, ULTRAHONK_PUBS],
-        },
-        {
             name: "Ultrahonk (ZK)",
             pallet: api.tx.settlementUltrahonkPallet,
             args: [{ 'Vk': ULTRAHONK_VK }, ULTRAHONK_ZK_PROOF, ULTRAHONK_PUBS],
