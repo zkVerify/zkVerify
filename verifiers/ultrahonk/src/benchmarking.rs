@@ -128,7 +128,7 @@ pub mod benchmarks {
         assert!(do_get_vk::<T>(&hash).is_none());
     }
 
-    // We cannot implement testing benchmarck for ultrahonk verifier due there is no way to make them
+    // We cannot implement testing benchmark for ultrahonk verifier due there is no way to make them
     // thread safe.
     impl_benchmark_test_suite!(Pallet, super::mock::test_ext(), super::mock::Test);
 }
