@@ -18878,8 +18878,8 @@ dependencies = [
 
 [[package]]
 name = "sp1-zkv-verifier"
-version = "0.1.0"
-source = "git+https://github.com/zkVerify/sp1-verifier.git?tag=v0.1.0#8dd072157ffd1345ae536a89cc9ce574afb6523b"
+version = "0.2.0"
+source = "git+https://github.com/zkVerify/sp1-verifier.git?branch=lg/vk-merkle-path#b6ed7fb8d6354e744eead50a05187d217525ce65"
 dependencies = [
  "bincode 2.0.1",
  "blake3",
@@ -18887,7 +18887,10 @@ dependencies = [
  "p3-baby-bear",
  "p3-field",
  "p3-symmetric",
+ "p3-util",
+ "serde",
  "sha2 0.10.9",
+ "sp1-primitives",
  "sp1-recursion-core-no-std",
  "sp1-stark-no-std",
 ]

@@ -1,5 +1,5 @@
 pub static VALID_VK: sp_core::H256 = sp_core::H256(hex_literal::hex!(
-    "6fa8786b1f036c75b3d58774de54421d0172d70234009b3bbc908f4199c1d10b"
+    "45946758049372c74bceb6ba6526a9661b1915a3403125e470d5ff7f6c15c0dd"
 ));
 
 pub static VALID_PUBS: &[u8] =
