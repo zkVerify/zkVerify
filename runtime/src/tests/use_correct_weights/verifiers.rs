@@ -77,13 +77,13 @@ fn pallet_settlement_risc0_verify_proof() {
 
 #[test]
 fn pallet_settlement_ultrahonk() {
-    use pallet_ultrahonk_verifier::{Ultrahonk, RawProofWithType as Proof, WeightInfo};
+    use pallet_ultrahonk_verifier::{Ultrahonk, WeightInfo};
 
     assert_eq!(
         <<Runtime as pallet_verifiers::Config<Ultrahonk<Runtime>>>::WeightInfo as
             pallet_verifiers::WeightInfo<Ultrahonk<Runtime>>>
             ::verify_proof(
-            &pallet_ultrahonk_verifier::Proof::default(),
+            &pallet_ultrahonk_verifier::RawProofWithType::default(),
             &Vec::new()
         ),
         crate::weights::pallet_ultrahonk_verifier::ZKVWeight::<Runtime>::verify_proof()
