@@ -24,7 +24,7 @@ log = { workspace = true }
 pallet-verifiers = { workspace = true }
 sp-core = { workspace = true }
 sp-io = { workspace = true, optional = true }
-sp1-zkv-verifier = { git = "https://github.com/zkVerify/sp1-verifier.git", branch = "lg/vk-merkle-path", default-features = false }
+sp1-zkv-verifier = { git = "https://github.com/zkVerify/sp1-verifier.git", tag = "v0.2.0", default-features = false }
 
 [dev-dependencies]
 pallet-balances = { workspace = true, features = ["std", "runtime-benchmarks"] }
