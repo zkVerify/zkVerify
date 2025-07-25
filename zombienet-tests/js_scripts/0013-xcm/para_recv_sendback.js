@@ -15,7 +15,7 @@ const ReturnCode = {
     FailedRegisteringXcmResponse: 4,
     FailedSendingXcm: 5,
     TimeoutWaitingForXcmResponse: 6,
-    RelayVerificationFailed: 7,
+    RelayExecutionSucceeded: 7,
 };
 
 async function run(nodeName, networkInfo, args) {
@@ -98,7 +98,7 @@ async function run(nodeName, networkInfo, args) {
         return ReturnCode.ExtrinsicUnsuccessful;
     }
 
-    // 3. Send an XCM message which includes a Transact instruction for verifying a groth16 proof
+    // 3. Send an XCM message which includes a Transact instruction
 
     const xcm_wait_for_response = await api.tx.xcmNotifications.prepareNewQuery();
 
@@ -231,9 +231,9 @@ async function run(nodeName, networkInfo, args) {
     }
 
     if (response.data[0].toNumber() != query_id
-        || response.data[1].toString() != '{"dispatchResult":{"success":null}}') {
+        || response.data[1].toString() != '{"executionResult":[5,{"noPermission":null}]}') {
         console.log(`Unexpected XCM response: qid=${response.data[0].toString()} (!= ${query_id}); data=${response.data[1].toString()}`);
-        return ReturnCode.RelayVerificationFailed;
+        return ReturnCode.RelayExecutionSucceeded;
     }
 
     return ReturnCode.Ok;
