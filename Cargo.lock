@@ -18879,7 +18879,7 @@ dependencies = [
 [[package]]
 name = "sp1-zkv-verifier"
 version = "0.2.0"
-source = "git+https://github.com/zkVerify/sp1-verifier.git?branch=lg/vk-merkle-path#b6ed7fb8d6354e744eead50a05187d217525ce65"
+source = "git+https://github.com/zkVerify/sp1-verifier.git?tag=v0.2.0#9370b2581a4fe869c6a95d959ec73548635fd4e6"
 dependencies = [
  "bincode 2.0.1",
  "blake3",
