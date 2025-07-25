@@ -26,7 +26,7 @@ use core::marker::PhantomData;
 
 use frame_support::weights::Weight;
 use hp_verifiers::Verifier;
-use sp1_zkv_verifier::ShardProof;
+use sp1_zkv_verifier::Proof as SP1Proof;
 use sp_core::{Get, H256};
 pub use weight::WeightInfo;
 
@@ -72,7 +72,7 @@ impl<T: Config> Verifier for Sp1<T> {
             Err(hp_verifiers::VerifyError::InvalidInput)?;
         }
 
-        let proof: ShardProof =
+        let proof: SP1Proof =
             bincode::serde::decode_from_slice(&proof[..], bincode::config::legacy())
                 .inspect_err(|err| log::debug!("Cannot deserialize proof: {err}"))
                 .map_err(|_| hp_verifiers::VerifyError::InvalidProofData)?
