@@ -17,19 +17,6 @@ const ReturnCode = {
     FailedSavingFile: 4,
 };
 
-function encodeTestCall(api, filePath) {
-    console.log("Writing test call to " + filePath);
-    validTestCall = api.tx.system.remark("Hello world!");
-    const data = u8aToHex(compactAddLength(validTestCall.method.toU8a()));
-    fs.writeFile(filePath, 'const CALL = "' + data + '"\nexports.CALL = CALL;\n', function(err) {
-        if(err) {
-            console.log("Could not save the file!");
-            return ReturnCode.FailedSavingFile;
-        }
-    });
-    return ReturnCode.Ok;
-}
-
 async function run(nodeName, networkInfo, args) {
     const {wsUri, userDefinedTypes} = networkInfo.nodesByName[nodeName];
     const api = await zombie.connect(wsUri, userDefinedTypes);
@@ -101,9 +88,8 @@ async function run(nodeName, networkInfo, args) {
         console.log("Paid less than the teleport amount: " + paid.toString());
         return ReturnCode.WrongBalance;
     }
-    
-    // 3. Encode a test call, and write it to a temp file
-    return encodeTestCall(api, networkInfo["tmpDir"] + '/test_call.js');
+
+    return ReturnCode.Ok;
 }
 
 module.exports = { run }

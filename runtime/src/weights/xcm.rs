@@ -131,7 +131,8 @@ impl<T> xcm::latest::XcmWeightInfo<T> for ZKVWeight<T> {
         _require_weight_at_most: &Option<Weight>,
         _call: &DoubleEncoded<T>,
     ) -> sp_weights::Weight {
-        XcmGenericWeight::<Runtime>::transact()
+        // XCM Executor does not currently support transact
+        Weight::MAX
     }
     fn hrmp_new_channel_open_request(_: &u32, _: &u32, _: &u32) -> sp_weights::Weight {
         // XCM Executor does not currently support HRMP channel operations

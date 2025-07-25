@@ -108,13 +108,6 @@ impl<T: frame_system::Config> WeightInfo<T> {
         Weight::from_parts(4_669_000, 3465)
             .saturating_add(T::DbWeight::get().reads(1_u64))
     }
-    pub(crate) fn transact() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 5_400_000 picoseconds.
-        Weight::from_parts(5_721_000, 0)
-    }
     pub(crate) fn refund_surplus() -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `0`
