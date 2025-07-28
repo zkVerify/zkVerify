@@ -15,7 +15,7 @@
 
 #![cfg(feature = "runtime-benchmarks")]
 
-use crate::Ultrahonk as Verifier;
+use crate::{ProofType, RawProofWithType, Ultrahonk as Verifier};
 use alloc::vec::Vec;
 use frame_benchmarking::v2::*;
 use frame_system::RawOrigin;
@@ -38,13 +38,16 @@ pub mod benchmarks {
 
     #[benchmark]
     fn verify_proof() {
-        let proof = include_bytes!("resources/32/32_zk_proof").to_vec();
-        let pubs: Vec<_> = include_bytes!("resources/32/32_pubs")
+        let proof = RawProofWithType::new(
+            ProofType::ZK,
+            include_bytes!("resources/32/zk/zk_proof").to_vec(),
+        );
+        let pubs: Vec<_> = include_bytes!("resources/32/zk/pubs")
             .chunks_exact(crate::PUB_SIZE)
             .map(TryInto::try_into)
             .map(Result::unwrap)
             .collect();
-        let vk = *include_bytes!("resources/32/32_vk");
+        let vk = *include_bytes!("resources/32/zk/vk");
 
         let r;
         #[block]
@@ -83,13 +86,16 @@ pub mod benchmarks {
 
     #[benchmark]
     fn compute_statement_hash() {
-        let proof = include_bytes!("resources/32/32_zk_proof").to_vec();
-        let pubs: Vec<_> = include_bytes!("resources/32/32_pubs")
+        let proof = RawProofWithType::new(
+            ProofType::ZK,
+            include_bytes!("resources/32/zk/zk_proof").to_vec(),
+        );
+        let pubs: Vec<_> = include_bytes!("resources/32/zk/pubs")
             .chunks_exact(crate::PUB_SIZE)
             .map(TryInto::try_into)
             .map(Result::unwrap)
             .collect();
-        let vk = *include_bytes!("resources/32/32_vk");
+        let vk = *include_bytes!("resources/32/zk/vk");
 
         let vk = VkOrHash::Vk(vk.into());
 
@@ -128,7 +134,7 @@ pub mod benchmarks {
         assert!(do_get_vk::<T>(&hash).is_none());
     }
 
-    // We cannot implement testing benchmarck for ultrahonk verifier due there is no way to make them
+    // We cannot implement testing benchmark for ultrahonk verifier due there is no way to make them
     // thread safe.
     impl_benchmark_test_suite!(Pallet, super::mock::test_ext(), super::mock::Test);
 }
