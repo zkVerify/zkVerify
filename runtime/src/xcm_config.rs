@@ -19,7 +19,7 @@
 
 use super::{
     AccountId, AllPalletsWithSystem, Balances, Dmp, ParaId, Runtime, RuntimeCall, RuntimeEvent,
-    RuntimeOrigin, TransactionByteFee, XcmPallet,
+    RuntimeOrigin, Spender, TransactionByteFee, XcmPallet,
 };
 use frame_support::{
     parameter_types,
@@ -30,15 +30,18 @@ use pallet_xcm::XcmPassthrough;
 use polkadot_runtime_common::xcm_sender::{ChildParachainRouter, ExponentialPrice};
 
 use crate::{currency::MILLIS, parachains::parachains_origin, payout::DealWithFees};
+use codec::{Decode, Encode, MaxEncodedLen};
 use sp_core::ConstU32;
+use sp_runtime::{traits::TryConvert, RuntimeDebug};
 use xcm::latest::prelude::*;
+use xcm::VersionedLocation;
 use xcm_builder::{
     AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
     AllowTopLevelPaidExecutionFrom, ChildParachainAsNative, ChildParachainConvertsVia,
     DescribeAllTerminal, DescribeFamily, FrameTransactionalProcessor, FungibleAdapter,
-    HashedDescription, IsConcrete, MintLocation, SendXcmFeeToAccount, SignedAccountId32AsNative,
-    SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, TrailingSetTopicAsId,
-    UsingComponents, WeightInfoBounds, WithComputedOrigin, WithUniqueTopic,
+    HashedDescription, IsConcrete, MintLocation, OriginToPluralityVoice, SendXcmFeeToAccount,
+    SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
+    TrailingSetTopicAsId, UsingComponents, WeightInfoBounds, WithComputedOrigin, WithUniqueTopic,
     XcmFeeManagerFromComponents,
 };
 
@@ -234,9 +237,18 @@ impl xcm_executor::Config for XcmConfig {
     type HrmpChannelClosingHandler = ();
 }
 
+parameter_types! {
+    pub const TreasurerBodyId: BodyId = BodyId::Treasury;
+}
+
+pub type SpenderToTreasuryPlurality =
+    OriginToPluralityVoice<RuntimeOrigin, Spender, TreasurerBodyId>;
+
 /// Type to convert an `Origin` type value into a `Location` value which represents an interior
 /// location of this chain.
 pub type LocalOriginToLocation = (
+    // Treasurer origin to be used in XCM as a corresponding Plurality
+    SpenderToTreasuryPlurality,
     // A signed origin to be used in XCM as a corresponding AccountId32
     SignedToAccountId32<RuntimeOrigin, AccountId, ThisNetwork>,
 );
@@ -268,4 +280,92 @@ impl pallet_xcm::Config for Runtime {
     type RemoteLockConsumerIdentifier = ();
     type WeightInfo = XcmPalletZKVWeight<Runtime>;
     type AdminOrigin = EnsureRoot<AccountId>;
+}
+
+/// Versioned locatable asset type which contains both an XCM `location` and `asset_id` to identify
+/// an asset which exists on some chain.
+#[derive(
+    Encode, Decode, Eq, PartialEq, Clone, RuntimeDebug, scale_info::TypeInfo, MaxEncodedLen,
+)]
+pub enum VersionedLocatableAsset {
+    #[codec(index = 3)]
+    V3 {
+        location: xcm::v3::Location,
+        asset_id: xcm::v3::AssetId,
+    },
+    #[codec(index = 4)]
+    V4 {
+        location: xcm::v4::Location,
+        asset_id: xcm::v4::AssetId,
+    },
+    #[codec(index = 5)]
+    V5 {
+        location: xcm::v5::Location,
+        asset_id: xcm::v5::AssetId,
+    },
+}
+
+/// A conversion from latest xcm to `VersionedLocatableAsset`.
+impl From<(xcm::latest::Location, xcm::latest::AssetId)> for VersionedLocatableAsset {
+    fn from(value: (xcm::latest::Location, xcm::latest::AssetId)) -> Self {
+        VersionedLocatableAsset::V5 {
+            location: value.0,
+            asset_id: value.1,
+        }
+    }
+}
+
+/// Converts the [`VersionedLocatableAsset`] to the [`xcm_builder::LocatableAssetId`].
+pub struct LocatableAssetConverter;
+impl TryConvert<VersionedLocatableAsset, xcm_builder::LocatableAssetId>
+    for LocatableAssetConverter
+{
+    fn try_convert(
+        asset: VersionedLocatableAsset,
+    ) -> Result<xcm_builder::LocatableAssetId, VersionedLocatableAsset> {
+        match asset {
+            VersionedLocatableAsset::V3 { location, asset_id } => {
+                let v4_location: xcm::v4::Location =
+                    location.try_into().map_err(|_| asset.clone())?;
+                let v4_asset_id: xcm::v4::AssetId =
+                    asset_id.try_into().map_err(|_| asset.clone())?;
+                Ok(xcm_builder::LocatableAssetId {
+                    location: v4_location.try_into().map_err(|_| asset.clone())?,
+                    asset_id: v4_asset_id.try_into().map_err(|_| asset.clone())?,
+                })
+            }
+            VersionedLocatableAsset::V4 {
+                ref location,
+                ref asset_id,
+            } => Ok(xcm_builder::LocatableAssetId {
+                location: location.clone().try_into().map_err(|_| asset.clone())?,
+                asset_id: asset_id.clone().try_into().map_err(|_| asset.clone())?,
+            }),
+            VersionedLocatableAsset::V5 {
+                ref location,
+                ref asset_id,
+            } => Ok(xcm_builder::LocatableAssetId {
+                location: location.clone(),
+                asset_id: asset_id.clone(),
+            }),
+        }
+    }
+}
+
+/// Converts the [`VersionedLocation`] to the [`xcm::latest::Location`].
+pub struct VersionedLocationConverter;
+impl TryConvert<&VersionedLocation, xcm::latest::Location> for VersionedLocationConverter {
+    fn try_convert(
+        location: &VersionedLocation,
+    ) -> Result<xcm::latest::Location, &VersionedLocation> {
+        let latest = match location.clone() {
+            VersionedLocation::V3(l) => {
+                let v4_location: xcm::v4::Location = l.try_into().map_err(|_| location)?;
+                v4_location.try_into().map_err(|_| location)?
+            }
+            VersionedLocation::V4(l) => l.try_into().map_err(|_| location)?,
+            VersionedLocation::V5(l) => l,
+        };
+        Ok(latest)
+    }
 }
