@@ -40,7 +40,7 @@ jobs:
         id: build-docker-image
         uses: ./.github/actions/build-docker-image
         with:
-          ref: ${{ git.ref }}
+          ref: ${{ github.ref }}
           docker_image_name: ${{ inputs.docker_image_name }}
           docker_image_suffix: ${{ inputs.docker_image_suffix }}
           docker_hub_org: ${{ inputs.docker_hub_org }}
