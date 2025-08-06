@@ -12,6 +12,8 @@ license = "Apache-2.0"
 workspace = true
 
 [dependencies]
+codec = { workspace = true }
+scale-info = { workspace = true }
 sp-core = { workspace = true }
 hp-verifiers = { workspace = true }
 frame-support = { workspace = true }
