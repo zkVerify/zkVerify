@@ -12,7 +12,7 @@ jobs:
     name: Feature propagation
     steps:
       - name: Git checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Features
         uses: ./.github/actions/cmd-in-docker

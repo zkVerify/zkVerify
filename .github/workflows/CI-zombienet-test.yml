@@ -12,7 +12,7 @@ jobs:
     name: Zombienet test
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Download relay and paratest build binaries
         uses: actions/download-artifact@v4

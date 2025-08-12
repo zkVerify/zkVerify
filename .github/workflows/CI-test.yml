@@ -12,7 +12,7 @@ jobs:
     name: Cargo unit test
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Cargo unit test
         uses: ./.github/actions/cmd-in-docker
@@ -46,7 +46,7 @@ jobs:
     name: Cargo integration test
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Cargo integration test
         uses: ./.github/actions/cmd-in-docker
