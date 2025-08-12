@@ -10,7 +10,7 @@ jobs:
     name: Build and run benchmarks
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: zkv build with runtime-benchmarks
         uses: ./.github/actions/cmd-in-docker

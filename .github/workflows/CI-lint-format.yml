@@ -12,7 +12,7 @@ jobs:
     name: Lint and format
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Cargo lint
         uses: ./.github/actions/cmd-in-docker

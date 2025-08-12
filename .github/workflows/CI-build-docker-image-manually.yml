@@ -34,7 +34,7 @@ jobs:
     name: Build Docker image Manually
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Docker build
         id: build-docker-image

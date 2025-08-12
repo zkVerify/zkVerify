@@ -36,7 +36,7 @@ jobs:
     name: Build Docker Image relay
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Docker build
         id: build-docker-image
@@ -55,7 +55,7 @@ jobs:
     name: Build Docker Image relay with fast-runtime
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Docker build
         id: build-docker-image
@@ -78,7 +78,7 @@ jobs:
     needs: [build-docker]
     steps:
       - name: Git checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.ref }}
           fetch-depth: 0
@@ -116,7 +116,7 @@ jobs:
     needs: [ build-docker-fastruntime ]
     steps:
       - name: Git checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.ref }}
           fetch-depth: 0
