@@ -1,0 +1,19 @@
+[package]
+name = "supernova-verifier"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+nova-snark = "=0.41.0"
+ark-ff = { version = "=0.4.2", default-features = false, features=["serde"] }
+ark-ec = { version = "=0.4.2", default-features = false }
+ark-serialize = { version = "=0.4.2", default-features = false }
+
+[features]
+default = ["std"]
+std = [
+    "nova-snark/std",
+    "ark-ff/std",
+    "ark-ec/std",
+    "ark-serialize/std",
+]
