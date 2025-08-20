@@ -1,16 +1,36 @@
-#![cfg_attr(not(feature = "std"), no_std)]
+pub fn verify_proof(
+    vk_b64: &[u8],
+    proof_b64: &[u8],
+    num_steps: u32,
+) -> Result<bool, ()> {
+    use nova_snark::{
+        nova::{PublicParams, RecursiveSNARK},
+        provider::{PallasEngine, VestaEngine},
+        traits::Engine,
+    };
+    use ark_std::vec::Vec;
 
-//! Minimal no-std SuperNova verifier module
-//!
-//! This will be extended later to pallet interface and runtime dispatchables.
+    // engine type aliases
+    type E1 = PallasEngine;
+    type E2 = VestaEngine;
+    type F1 = <E1 as Engine>::Scalar;
 
-pub mod verifier {
-    use nova_snark::provider::ipa_pc::Evaluation; // example import
-    // use crate::... if you add types
+    // Deserialize PublicParams from base64 (vk_b64)
+    let vk_str = core::str::from_utf8(vk_b64).map_err(|_| ())?;
+    let pp: PublicParams<E1, E2, crate::verifier::FibStep> =
+        crate::verifier::decode_b64(vk_str).map_err(|_| ())?;
 
-    /// Verify a proof (placeholder, to be ported with real logic)
-    pub fn verify_proof(_bytes: &[u8]) -> Result<bool, ()> {
-        // TODO: implement deserialization & call Nova verifier
-        Ok(true)
+    // Deserialize RecursiveSNARK from base64 (proof_b64)
+    let proof_str = core::str::from_utf8(proof_b64).map_err(|_| ())?;
+    let rs: RecursiveSNARK<E1, E2, crate::verifier::FibStep> =
+        crate::verifier::decode_b64(proof_str).map_err(|_| ())?;
+
+    // z0 = [1,1] (same as in CLI)
+    let z0 = Vec::<F1>::from([F1::ONE, F1::ONE]);
+
+    // verify
+    match rs.verify(&pp, num_steps as usize, &z0) {
+        Ok(_z_final) => Ok(true),
+        Err(_) => Ok(false),
     }
 }
