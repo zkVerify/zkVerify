@@ -34,6 +34,9 @@ pub use data_structures::*;
 #[cfg(feature = "implementation")]
 pub use implementation::*;
 
+/// Groth16-Gnark Extension, with commitments
+pub mod gnark_extension;
+
 /// Errors that can occur during groth16 verification.
 #[derive(Debug, PartialEq)]
 pub enum Groth16Error {

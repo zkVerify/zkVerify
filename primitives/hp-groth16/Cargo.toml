@@ -17,7 +17,7 @@ codec = { workspace = true, features = ["max-encoded-len"] }
 scale-info = { workspace = true }
 sp-runtime-interface = { workspace = true }
 hp-verifiers = { workspace = true }
-
+sha2 = { version = "0.10", default-features = false }
 
 # ARKWORKS
 ark-groth16 = { version = "0.4.0", default-features = false }
