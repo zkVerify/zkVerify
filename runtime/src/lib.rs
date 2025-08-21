@@ -1175,6 +1175,11 @@ impl pallet_verifiers::Config<pallet_plonky2_verifier::Plonky2<Runtime>> for Run
     type Currency = Balances;
 }
 
+// STARK verifier (stwo pallet) configuration
+impl stwo::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
     pub struct Runtime {
@@ -1273,6 +1278,9 @@ construct_runtime!(
         SettlementFFlonkPallet: pallet_fflonk_verifier = 166,
         SettlementSp1Pallet: pallet_sp1_verifier = 167,
         SettlementUltrahonkPallet: pallet_ultrahonk_verifier = 168,
+        SettlementStwoPallet: stwo = 169,
+
+
     }
 );
 

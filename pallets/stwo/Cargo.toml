@@ -1,0 +1,39 @@
+[package]
+name = "stwo"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+codec = { workspace = true }
+scale-info = { workspace = true, features = ["derive"] }
+log = { workspace = true }
+
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+
+# For Phase 5: Real STARK verification (commented out for now)
+# swiftness_stark = { path = "../../../swiftness-main/crates/stark", default-features = false, features = ["starknet", "keccak_160_lsb"] }
+# swiftness_air = { path = "../../../swiftness-main/crates/air", default-features = false, features = ["starknet", "stone5"] }
+serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
+serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
+
+[features]
+default = ["std"]
+std = [
+    "codec/std",
+    "scale-info/std",
+    "frame-support/std",
+    "frame-system/std",
+    # "swiftness_stark/std",
+    # "swiftness_air/std",
+    "serde/std",
+    "serde_json/std",
+]
+runtime-benchmarks = [
+    "frame-support/runtime-benchmarks",
+    "frame-system/runtime-benchmarks",
+]
+try-runtime = [
+    "frame-support/try-runtime",
+    "frame-system/try-runtime",
+]
