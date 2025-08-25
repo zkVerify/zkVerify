@@ -19192,6 +19192,7 @@ dependencies = [
 name = "stwo"
 version = "0.1.0"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",
@@ -19199,6 +19200,9 @@ dependencies = [
  "scale-info",
  "serde",
  "serde_json",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
 ]
 
 [[package]]

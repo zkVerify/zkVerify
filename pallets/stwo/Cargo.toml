@@ -4,18 +4,23 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-codec = { workspace = true }
-scale-info = { workspace = true, features = ["derive"] }
-log = { workspace = true }
+codec = { package = "parity-scale-codec", version = "3.6.4", default-features = false, features = ["derive"] }
+scale-info = { version = "2.8.0", default-features = false, features = ["derive"] }
 
 frame-support = { workspace = true }
 frame-system = { workspace = true }
+log = { workspace = true }
 
-# For Phase 5: Real STARK verification (commented out for now)
-# swiftness_stark = { path = "../../../swiftness-main/crates/stark", default-features = false, features = ["starknet", "keccak_160_lsb"] }
-# swiftness_air = { path = "../../../swiftness-main/crates/air", default-features = false, features = ["starknet", "stone5"] }
 serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
+
+# Benchmarking dependencies
+frame-benchmarking = { workspace = true, optional = true }
+
+# Testing dependencies
+sp-core = { workspace = true, optional = true }
+sp-runtime = { workspace = true, optional = true }
+sp-io = { workspace = true, optional = true }
 
 [features]
 default = ["std"]
@@ -24,14 +29,17 @@ std = [
     "scale-info/std",
     "frame-support/std",
     "frame-system/std",
-    # "swiftness_stark/std",
-    # "swiftness_air/std",
+    "log/std",
     "serde/std",
     "serde_json/std",
+    "sp-core/std",
+    "sp-runtime/std",
+    "sp-io/std",
 ]
 runtime-benchmarks = [
     "frame-support/runtime-benchmarks",
     "frame-system/runtime-benchmarks",
+    "frame-benchmarking/runtime-benchmarks",
 ]
 try-runtime = [
     "frame-support/try-runtime",
