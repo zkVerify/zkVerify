@@ -1,0 +1,11 @@
+# Python dependencies for zkVerify STARK Verifier tools
+
+# Substrate interface for blockchain interaction
+substrate-interface>=1.7.0
+
+# Cairo language support (if available)
+cairo-lang>=0.12.0
+
+# Additional utilities
+asyncio
+pathlib

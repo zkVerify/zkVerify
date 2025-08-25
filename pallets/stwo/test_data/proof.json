@@ -1,0 +1,8 @@
+{
+  "commitments": ["commitment1", "commitment2"],
+  "decommitments": ["decommitment1", "decommitment2"],
+  "fri_proof": {
+    "layers": [1, 2, 3, 4]
+  },
+  "public_inputs": [42, 43]
+}

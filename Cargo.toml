@@ -16,6 +16,8 @@ members = [
     "pallets/verifiers",
     "pallets/verifiers/macros",
     "pallets/claim",
+    "pallets/stwo",
+
     "primitives/hp-verifiers",
     "primitives/hp-groth16",
     "verifiers/fflonk",
@@ -97,6 +99,8 @@ sp-keystore = { version = "0.41.0" }
 native = { default-features = false, path = "native" }
 pallet-aggregate = { path = "pallets/aggregate", default-features = false }
 pallet-claim = { path = "pallets/claim", default-features = false }
+stwo = { path = "pallets/stwo", default-features = false }
+
 pallet-verifiers = { path = "pallets/verifiers", default-features = false }
 pallet-verifiers-macros = { path = "pallets/verifiers/macros" }
 hp-on-proof-verified = { default-features = false, path = "primitives/hp-on-proof-verified" }
