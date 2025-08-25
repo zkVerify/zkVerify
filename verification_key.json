@@ -1,7 +1,0 @@
-{
-  "root": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
-  "params": {
-    "alpha": 12345,
-    "beta": 67890
-  }
-}
