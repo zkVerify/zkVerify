@@ -1,14 +1,13 @@
 extern crate alloc;
 
-use crate::data_structures::{vec_max_encoded_len, G1, G2};
-use alloc::{vec, vec::Vec};
-use ark_ec::{pairing::Pairing, AffineRepr};
-use ark_ff::PrimeField;
+use crate::data_structures::{G1, G2};
+use alloc::vec::Vec;
+use ark_ec::pairing::Pairing;
 use ark_serialize::SerializationError;
-use codec::{Decode, Encode, MaxEncodedLen};
+use codec::{Decode, Encode};
 use core::fmt::Debug;
 use scale_info::TypeInfo;
-use sp_runtime_interface::pass_by::{PassByCodec, PassByInner};
+use sp_runtime_interface::pass_by::PassByCodec;
 
 /// A Groth16 Proof with wire commitments, according to Gnark-Groth16 extension
 #[derive(Clone, Debug, PartialEq, Encode, Decode, TypeInfo, PassByCodec)]
@@ -81,6 +80,7 @@ pub struct PedersenVerificationKey {
     pub g_sigma_neg: G2,
 }
 
+#[derive(Debug)]
 pub(crate) struct ArkPedersenVerificationKey<E: Pairing> {
     pub g: E::G2Affine,
     pub g_sigma_neg: E::G2Affine,
@@ -139,13 +139,13 @@ pub struct VerificationKey {
     /// Verification keys for Pedersen commitments
     pub commitment_keys: Vec<PedersenVerificationKey>,
     /// Indexes of public/commitment committed variables
-    pub public_and_commitment_committed: Vec<Vec<usize>>,
+    pub public_and_commitment_committed: Vec<Vec<u8>>,
 }
 
 pub(crate) struct ArkVerificationKey<E: Pairing> {
     pub vk: ark_groth16::VerifyingKey<E>,
     pub commitment_keys: Vec<ArkPedersenVerificationKey<E>>,
-    pub public_and_commitment_committed: Vec<Vec<usize>>,
+    pub public_and_commitment_committed: Vec<Vec<u8>>,
 }
 
 impl<E: Pairing> TryFrom<VerificationKey> for ArkVerificationKey<E> {
@@ -232,6 +232,7 @@ impl VerificationKey {
         Ok(ArkVerificationKey {
             vk,
             commitment_keys,
+            public_and_commitment_committed: self.public_and_commitment_committed,
         })
     }
 }

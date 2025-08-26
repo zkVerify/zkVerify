@@ -29,9 +29,8 @@ mod implementation {
         // Initialize field hasher. This follows https://tools.ietf.org/html/draft-irtf-cfrg-hash-to-curve-06#section-5.2
         // Note: gnark leaves freedom in the choice of the hash_to_field function, but sets the above as default.
         // We need to double check if someone intends to use a different one.
-        let h = <DefaultFieldHasher<sha2::Sha256> as HashToField<E::ScalarField>>::new(
-            COMMITMENT_DST,
-        );
+        let h =
+            <DefaultFieldHasher<sha2::Sha256> as HashToField<E::ScalarField>>::new(COMMITMENT_DST);
         let mut challenge = Vec::new();
         let mut inputs_committed = Vec::new();
 
@@ -48,7 +47,7 @@ mod implementation {
                 // Iterate over all the public inputs this commitment refers to
                 comm.iter().for_each(|pub_index| {
                     // Add public input to the hasher
-                    to_hash.extend_from_slice(&inputs[pub_index - 1].0);
+                    to_hash.extend_from_slice(&inputs[(pub_index - 1) as usize].0);
                 });
 
                 // Compute hash result
@@ -70,7 +69,7 @@ mod implementation {
 
                 Ok(())
             })?;
-
+        
         // Parse proof into arkworks format
         let proof: ArkProof<E> = proof.try_into().map_err(|_| Groth16Error::InvalidProof)?;
 
@@ -143,6 +142,7 @@ mod implementation {
         let mut pairing_g1: Vec<E::G1Prepared> = vec![commitments[0].into()];
         let mut pairing_g2: Vec<E::G2Prepared> = vec![vk[0].g_sigma_neg.into()];
         let mut r = challenge;
+
         vk.iter()
             .zip(commitments.iter())
             .skip(1)
@@ -171,4 +171,130 @@ mod implementation {
             .map(|_| ())
             .map_err(|_| Groth16Error::InvalidVerificationKey)
     }
+}
+
+#[cfg(test)]
+mod should {
+    use core::marker::PhantomData;
+
+    use super::*;
+    use ark_bls12_381::Bls12_381;
+    use ark_bn254::Bn254;
+    use ark_ec::pairing::Pairing;
+    use ark_ff::One;
+    use rstest::rstest;
+    use rstest_reuse::{apply, template};
+
+    #[template]
+    #[rstest]
+    // #[case::bn254(PhantomData::<Bn254>)]
+    #[case::bls12_381(PhantomData::<Bls12_381>)]
+    fn curves<P: Pairing>(#[case] _p: P) {}
+
+    mod verify_proof {
+        use super::*;
+        include!("resources.rs");
+
+        #[apply(curves)]
+        fn succeed<E: Pairing>(#[case] _p: PhantomData<E>) {
+
+            let result = crate::gnark_extension::verify_proof::<E>(verification_key_bls12_381(), proof_bls12_381(), &pubs_bls12_381());
+            println!("{:?}", result);
+        }
+
+        // #[apply(curves)]
+        // fn fail_with_wrong_vk<E: Pairing>(#[case] _p: PhantomData<E>) {
+        //     let (proof, _, inputs) = dummy_circuit::get_instance::<E>(10, Some(0));
+        //     let (_, vk, _) = dummy_circuit::get_instance::<E>(10, Some(42));
+
+        //     assert!(!verify_proof::<E>(vk, proof, &inputs).unwrap())
+        // }
+
+        // #[apply(curves)]
+        // fn fail_with_wrong_inputs<E: Pairing>(#[case] _p: PhantomData<E>) {
+        //     let (proof, vk, _) = dummy_circuit::get_instance::<E>(10, Some(0));
+        //     let (_, _, inputs) = dummy_circuit::get_instance::<E>(10, Some(42));
+
+        //     assert!(!verify_proof::<E>(vk, proof, &inputs).unwrap())
+        // }
+
+        // #[apply(curves)]
+        // fn fail_with_wrong_proof<E: Pairing>(#[case] _p: PhantomData<E>) {
+        //     let (_, vk, inputs) = dummy_circuit::get_instance::<E>(10, Some(0));
+        //     let (proof, _, _) = dummy_circuit::get_instance::<E>(10, Some(42));
+
+        //     assert!(!verify_proof::<E>(vk, proof, &inputs).unwrap())
+        // }
+
+        // #[apply(curves)]
+        // fn fail_with_malformed_proof<E: Pairing>(#[case] _p: PhantomData<E>) {
+        //     let (mut proof, vk, inputs) = dummy_circuit::get_instance::<E>(10, None);
+        //     proof.a.0[0] += 1;
+
+        //     assert_eq!(
+        //         verify_proof::<E>(vk, proof, &inputs).err().unwrap(),
+        //         Groth16Error::InvalidProof
+        //     )
+        // }
+
+        // #[apply(curves)]
+        // fn fail_with_malformed_inputs<E: Pairing>(#[case] _p: PhantomData<E>) {
+        //     let (proof, vk, mut inputs) = dummy_circuit::get_instance::<E>(10, None);
+        //     // tamper input so that it overflows scalar modulus
+        //     for v in &mut inputs {
+        //         for byte in &mut v.0 {
+        //             *byte = 0xff;
+        //         }
+        //     }
+
+        //     assert_eq!(
+        //         verify_proof::<E>(vk, proof, &inputs).err().unwrap(),
+        //         Groth16Error::InvalidInput
+        //     )
+        // }
+
+        // #[apply(curves)]
+        // fn fail_with_too_many_inputs<E: Pairing>(#[case] _p: PhantomData<E>) {
+        //     let (proof, vk, mut inputs) = dummy_circuit::get_instance::<E>(10, None);
+        //     inputs.push(Scalar::try_from_scalar(E::ScalarField::one()).unwrap());
+
+        //     assert_eq!(
+        //         verify_proof::<E>(vk, proof, &inputs).err().unwrap(),
+        //         Groth16Error::VerifyError
+        //     )
+        // }
+
+        // #[apply(curves)]
+        // fn fail_with_too_few_inputs<E: Pairing>(#[case] _p: PhantomData<E>) {
+        //     let (proof, vk, mut inputs) = dummy_circuit::get_instance::<E>(10, None);
+        //     inputs.pop();
+
+        //     assert_eq!(
+        //         verify_proof::<E>(vk, proof, &inputs).err().unwrap(),
+        //         Groth16Error::VerifyError
+        //     )
+        // }
+    }
+
+    // mod validate_key {
+    //     use super::*;
+
+    //     #[apply(curves)]
+    //     fn accept_valid_vk<E: Pairing>(#[case] _p: PhantomData<E>) {
+    //         let (_, vk, _) = dummy_circuit::get_instance::<E>(1, Some(0));
+
+    //         assert!(validate_key::<E>(vk).is_ok());
+    //     }
+
+    //     #[apply(curves)]
+    //     fn reject_malformed_vk<E: Pairing>(#[case] _p: PhantomData<E>) {
+    //         let (_, mut vk, _) = dummy_circuit::get_instance::<E>(1, Some(0));
+    //         vk.alpha_g1.0[0] += 1;
+
+    //         assert_eq!(
+    //             validate_key::<E>(vk),
+    //             Err(Groth16Error::InvalidVerificationKey)
+    //         );
+    //     }
+    // }
 }
