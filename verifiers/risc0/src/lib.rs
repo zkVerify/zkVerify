@@ -24,7 +24,7 @@ use frame_support::{ensure, fail, pallet_prelude::*, weights::Weight};
 use hp_verifiers::{Verifier, VerifyError};
 use log::debug;
 use risc0_derive::R0Proof;
-use risc0_verifier::{v2_1, v2_2, Journal, SegmentInfo, Verifier as _, Vk as Risc0Vk};
+use risc0_verifier::{v2_1, v2_2, v2_3, Journal, SegmentInfo, Verifier as _, Vk as Risc0Vk};
 use sp_core::{Get, H256};
 
 pub mod benchmarking;
@@ -85,6 +85,7 @@ pub enum Proof {
     V2_0(Vec<u8>),
     V2_1(Vec<u8>),
     V2_2(Vec<u8>),
+    V2_3(Vec<u8>),
 }
 
 pub type Pubs = Vec<u8>;
@@ -120,6 +121,7 @@ impl R0Proof {
         match self {
             R0Proof::V2_1(_r0_proof) => v2_1().inject_native_poseidon2_if_needed().boxed(),
             R0Proof::V2_2(_r0_proof) => v2_2().inject_native_poseidon2_if_needed().boxed(),
+            R0Proof::V2_3(_r0_proof) => v2_3().inject_native_poseidon2_if_needed().boxed(),
         }
     }
 }
@@ -235,6 +237,9 @@ impl<T: Config> Verifier for Risc0<T> {
             ),
             Proof::V2_2(_) => hex_literal::hex!(
                 "b3321f8b04ee9a754860a415c691f00756990e2054e5023f1a68c260a7042efe"
+            ),
+            Proof::V2_3(_) => hex_literal::hex!(
+                "09c82225a1a8d085090e5169383d874fcca7a340517654659c4eb6fd105e79ec"
             ),
         };
         H256(h)
