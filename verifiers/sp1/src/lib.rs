@@ -89,7 +89,7 @@ impl<T: Config> Verifier for Sp1<T> {
         *vk
     }
 
-    fn pubs_bytes(pubs: &Self::Pubs) -> Cow<[u8]> {
+    fn pubs_bytes(pubs: &Self::Pubs) -> Cow<'_, [u8]> {
         Cow::Borrowed(pubs)
     }
 }

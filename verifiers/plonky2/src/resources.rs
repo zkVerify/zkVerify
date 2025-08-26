@@ -14,14 +14,6 @@
 // limitations under the License.
 
 #![cfg(any(test, feature = "runtime-benchmarks"))]
-pub struct MockConfig;
-
-impl crate::Config for MockConfig {
-    type MaxProofSize = frame_support::traits::ConstU32<1000000>;
-    type MaxPubsSize = frame_support::traits::ConstU32<1000000>;
-    type MaxVkSize = frame_support::traits::ConstU32<1000000>;
-    type WeightInfo = ();
-}
 
 pub struct TestData<T: crate::Config> {
     pub vk: crate::Vk<T>,
