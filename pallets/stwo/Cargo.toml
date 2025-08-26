@@ -14,6 +14,10 @@ log = { workspace = true }
 serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 
+# Real STARK cryptographic verification
+starknet-crypto = { version = "0.7.1", default-features = false, features = ["alloc"] }
+starknet-types-core = { version = "0.1.5", default-features = false, features = ["alloc"] }
+
 # Benchmarking dependencies
 frame-benchmarking = { workspace = true, optional = true }
 
@@ -32,6 +36,8 @@ std = [
     "log/std",
     "serde/std",
     "serde_json/std",
+    "starknet-crypto/std",
+    "starknet-types-core/std",
     "sp-core/std",
     "sp-runtime/std",
     "sp-io/std",
