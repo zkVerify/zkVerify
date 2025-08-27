@@ -20,6 +20,15 @@ use crate::resources::*;
 use frame_support::assert_ok;
 use rstest::*;
 
+pub struct MockConfig;
+
+impl crate::Config for MockConfig {
+    type MaxProofSize = frame_support::traits::ConstU32<1000000>;
+    type MaxPubsSize = frame_support::traits::ConstU32<1000000>;
+    type MaxVkSize = frame_support::traits::ConstU32<1000000>;
+    type WeightInfo = ();
+}
+
 #[fixture]
 fn worst_case_test_data() -> TestData<MockConfig> {
     get_parameterized_test_data(MAX_DEGREE_BITS, crate::vk::Plonky2Config::Poseidon)
