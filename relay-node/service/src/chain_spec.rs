@@ -45,7 +45,10 @@ fn chain_properties() -> Properties {
             "ss58Format".to_string(),
             serde_json::Value::from(runtime::SS58Prefix::get()),
         ),
+        #[cfg(feature = "volta-native")]
         ("tokenSymbol".to_string(), serde_json::Value::from("tVFY")),
+        #[cfg(feature = "zkverify-native")]
+        ("tokenSymbol".to_string(), serde_json::Value::from("VFY")),
         ("tokenDecimals".to_string(), serde_json::Value::from(18_u8)),
     ]
     .into_iter()
