@@ -10,6 +10,11 @@ jobs:
   zombienet-test:
     runs-on: warp-ubuntu-latest-x64-8x
     name: Zombienet test
+    strategy:
+      matrix:
+        network:
+          - zkverify
+          - volta
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -25,22 +30,22 @@ jobs:
         run: |
           chmod +x target/release/*
 
-      - name: Yarn install and zombienet test
+      - name: Yarn install and zombienet test for ${{ matrix.network }}
         uses: ./.github/actions/cmd-in-docker
         with:
           command: >-
             /bin/bash -c 'set -o pipefail && cd /build/zombienet-tests
             && yarn install
-            && yarn test 2>&1 | tee /build/zombienet_test_output.txt'
+            && NETWORK="${{ matrix.network }}" yarn test 2>&1 | tee /build/zombienet_test_output.txt'
           use_cache: 'no'
           lld_install: 'yes'
           nodejs_version_install: '18'
 
-      - name: Upload zombienet test results
+      - name: Upload zombienet test results for ${{ matrix.network }}
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
-          name: zombienet-test-output
+          name: zombienet-test-output-${{ matrix.network }}
           path: zombienet_test_output.txt
           retention-days: 1
           compression-level: 0

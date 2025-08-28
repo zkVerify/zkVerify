@@ -107,7 +107,7 @@ pub use sp_runtime::{
 };
 use zkv_benchmarks::hardware::zkv_reference_hardware;
 
-pub use zkv_runtime::{self, opaque::Block, RuntimeApi};
+pub use volta_runtime::{self, opaque::Block, RuntimeApi};
 
 #[cfg(feature = "full-node")]
 pub type FullBackend = sc_service::TFullBackend<Block>;
@@ -246,18 +246,21 @@ pub enum Error {
 /// Identifies the variant of the chain.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Chain {
-    /// Devnet.
-    Dev,
-    /// Testnet.
-    ZkvTestnet,
+    /// zkVerify Testnet.
+    Volta,
+    /// zkVerify Mainnet.
+    ZkVerify,
     /// Unknown chain?
     Unknown,
 }
 
 /// Can be called for a `Configuration` to identify which network the configuration targets.
 pub trait IdentifyVariant {
-    /// Returns if this is a configuration for the `ZkvTestnet` network.
-    fn is_zkv_testnet(&self) -> bool;
+    /// Returns true if this is a configuration for the `Volta` network.
+    fn is_volta(&self) -> bool;
+
+    /// Returns true if this is a configuration for the `zkVerify` network.
+    fn is_zkverify(&self) -> bool;
 
     /// Returns true if this configuration is for a development network.
     fn is_dev(&self) -> bool;
@@ -267,8 +270,14 @@ pub trait IdentifyVariant {
 }
 
 impl IdentifyVariant for Box<dyn ChainSpec> {
-    fn is_zkv_testnet(&self) -> bool {
-        self.id().starts_with("nh_testnet") || self.id().starts_with("zkv_testnet")
+    fn is_volta(&self) -> bool {
+        self.id().starts_with("nh_testnet")
+            || self.id().starts_with("volta")
+            || self.id().starts_with("zkv_testnet")
+    }
+
+    fn is_zkverify(&self) -> bool {
+        self.id().starts_with("zkv_mainnet")
     }
 
     fn is_dev(&self) -> bool {
@@ -276,10 +285,10 @@ impl IdentifyVariant for Box<dyn ChainSpec> {
     }
 
     fn identify_chain(&self) -> Chain {
-        if self.is_dev() {
-            Chain::Dev
-        } else if self.is_zkv_testnet() {
-            Chain::ZkvTestnet
+        if self.is_volta() {
+            Chain::Volta
+        } else if self.is_zkverify() {
+            Chain::ZkVerify
         } else {
             Chain::Unknown
         }
@@ -878,7 +887,7 @@ pub fn new_full<
         };
 
         // Dev gets a higher threshold, we are conservative on ZkvTestnet for now.
-        let fetch_chunks_threshold = if config.chain_spec.is_zkv_testnet() {
+        let fetch_chunks_threshold = if config.chain_spec.is_volta() {
             None
         } else {
             Some(FETCH_CHUNKS_THRESHOLD)

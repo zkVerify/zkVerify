@@ -3887,7 +3887,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8d162beedaa69905488a8da94f5ac3edb4dd4788b732fadb7bd120b2625c1976"
 dependencies = [
  "data-encoding",
- "syn 1.0.109",
+ "syn 2.0.101",
 ]
 
 [[package]]
@@ -19726,7 +19726,7 @@ dependencies = [
  "substrate-test-client",
  "test-runtime",
  "test-service",
- "zkv-runtime",
+ "volta-runtime",
 ]
 
 [[package]]
@@ -20776,7 +20776,7 @@ dependencies = [
  "parity-scale-codec",
  "serde",
  "sp-core",
- "zkv-runtime",
+ "volta-runtime",
 ]
 
 [[package]]
@@ -20784,6 +20784,107 @@ name = "void"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6a02e4885ed3bc0f2de90ea6dd45ebcbb66dacffe03547fadbb0eeae2770887d"
+
+[[package]]
+name = "volta-runtime"
+version = "1.1.0"
+dependencies = [
+ "aggregate-rpc-runtime-api",
+ "anyhow",
+ "finality-grandpa",
+ "frame-benchmarking",
+ "frame-election-provider-support",
+ "frame-executive",
+ "frame-metadata-hash-extension",
+ "frame-support",
+ "frame-system",
+ "frame-system-benchmarking",
+ "frame-system-rpc-runtime-api",
+ "frame-try-runtime",
+ "hex-literal",
+ "hp-dispatch",
+ "hp-verifiers",
+ "ismp",
+ "ismp-grandpa",
+ "log",
+ "pallet-aggregate",
+ "pallet-authority-discovery",
+ "pallet-authorship",
+ "pallet-babe",
+ "pallet-bags-list",
+ "pallet-balances",
+ "pallet-bounties",
+ "pallet-child-bounties",
+ "pallet-claim",
+ "pallet-conviction-voting",
+ "pallet-election-provider-support-benchmarking",
+ "pallet-fflonk-verifier",
+ "pallet-grandpa",
+ "pallet-groth16-verifier",
+ "pallet-hyperbridge",
+ "pallet-hyperbridge-aggregations",
+ "pallet-ismp",
+ "pallet-ismp-runtime-api",
+ "pallet-message-queue",
+ "pallet-multisig",
+ "pallet-offences",
+ "pallet-plonky2-verifier",
+ "pallet-preimage",
+ "pallet-proxy",
+ "pallet-referenda",
+ "pallet-risc0-verifier",
+ "pallet-scheduler",
+ "pallet-session",
+ "pallet-session-benchmarking",
+ "pallet-sp1-verifier",
+ "pallet-staking",
+ "pallet-sudo",
+ "pallet-timestamp",
+ "pallet-token-gateway",
+ "pallet-transaction-payment",
+ "pallet-transaction-payment-rpc-runtime-api",
+ "pallet-treasury",
+ "pallet-ultrahonk-verifier",
+ "pallet-ultraplonk-verifier",
+ "pallet-utility",
+ "pallet-verifiers",
+ "pallet-vesting",
+ "pallet-xcm",
+ "pallet-xcm-benchmarks",
+ "parity-scale-codec",
+ "polkadot-primitives",
+ "polkadot-runtime-common",
+ "polkadot-runtime-parachains",
+ "rstest",
+ "scale-info",
+ "serde_json",
+ "sp-api",
+ "sp-authority-discovery",
+ "sp-block-builder",
+ "sp-consensus-babe",
+ "sp-consensus-grandpa",
+ "sp-core",
+ "sp-genesis-builder",
+ "sp-inherents",
+ "sp-io",
+ "sp-mmr-primitives",
+ "sp-npos-elections",
+ "sp-offchain",
+ "sp-runtime",
+ "sp-session",
+ "sp-staking",
+ "sp-storage",
+ "sp-transaction-pool",
+ "sp-version",
+ "sp-weights",
+ "staging-xcm",
+ "staging-xcm-builder",
+ "staging-xcm-executor",
+ "static_assertions",
+ "substrate-wasm-builder",
+ "xcm-procedural",
+ "zkv-runtime-common",
+]
 
 [[package]]
 name = "w3f-bls"
@@ -22319,8 +22420,8 @@ dependencies = [
  "sp-runtime",
  "substrate-build-script-utils",
  "thiserror 1.0.69",
+ "volta-runtime",
  "zkv-benchmarks",
- "zkv-runtime",
  "zkv-service",
 ]
 
@@ -22338,6 +22439,7 @@ dependencies = [
  "polkadot-node-core-pvf-execute-worker",
  "polkadot-node-core-pvf-prepare-worker",
  "polkadot-overseer",
+ "rstest",
  "substrate-build-script-utils",
  "substrate-rpc-client",
  "tempfile",
@@ -22348,7 +22450,7 @@ dependencies = [
 
 [[package]]
 name = "zkv-runtime"
-version = "1.1.0"
+version = "1.0.0"
 dependencies = [
  "aggregate-rpc-runtime-api",
  "anyhow",
@@ -22444,6 +22546,38 @@ dependencies = [
  "static_assertions",
  "substrate-wasm-builder",
  "xcm-procedural",
+ "zkv-runtime-common",
+]
+
+[[package]]
+name = "zkv-runtime-common"
+version = "1.0.0"
+dependencies = [
+ "anyhow",
+ "finality-grandpa",
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-authorship",
+ "pallet-balances",
+ "pallet-staking",
+ "pallet-treasury",
+ "parity-scale-codec",
+ "polkadot-primitives",
+ "rstest",
+ "scale-info",
+ "sp-api",
+ "sp-authority-discovery",
+ "sp-consensus-babe",
+ "sp-consensus-grandpa",
+ "sp-core",
+ "sp-inherents",
+ "sp-io",
+ "sp-runtime",
+ "sp-staking",
+ "sp-storage",
+ "sp-version",
+ "sp-weights",
 ]
 
 [[package]]
@@ -22576,6 +22710,7 @@ dependencies = [
  "thiserror 1.0.69",
  "tracing-gum",
  "vk-hash",
+ "volta-runtime",
  "zkv-benchmarks",
  "zkv-runtime",
 ]

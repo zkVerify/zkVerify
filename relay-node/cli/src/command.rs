@@ -70,13 +70,27 @@ impl SubstrateCli for Cli {
         id: &str,
     ) -> std::result::Result<Box<dyn sc_service::ChainSpec + 'static>, String> {
         Ok(match id {
-            "dev" | "development" => Box::new(service::chain_spec::development_config()?),
-            "local" => Box::new(service::chain_spec::local_config()?),
-            "" | "test" | "testnet" => Box::new(service::chain_spec::ChainSpec::from_json_bytes(
-                &include_bytes!("../chain-specs/zkverify_volta.json")[..],
-            )?),
-            "testnet_build" => Box::new(service::chain_spec::testnet_config()?),
-            path => Box::new(service::chain_spec::ChainSpec::from_json_file(
+            "" | "main" | "mainnetnet" | "zkverify" => {
+                Box::new(service::chain_spec::ZkvChainSpec::from_json_bytes(
+                    &include_bytes!("../chain-specs/zkverify.json")[..],
+                )?)
+            }
+            "dev" | "development" | "volta-dev" => {
+                Box::new(service::chain_spec::volta_development_config()?)
+            }
+            "local" | "volta-local" => Box::new(service::chain_spec::volta_local_config()?),
+            "testnet_build" | "volta-staging" => {
+                Box::new(service::chain_spec::volta_staging_config()?)
+            }
+            "test" | "testnet" | "volta" => {
+                Box::new(service::chain_spec::VoltaChainSpec::from_json_bytes(
+                    &include_bytes!("../chain-specs/zkverify_volta.json")[..],
+                )?)
+            }
+            "zkverify-dev" => Box::new(service::chain_spec::zkverify_development_config()?),
+            "zkverify-local" => Box::new(service::chain_spec::zkverify_local_config()?),
+            "zkverify-staging" => Box::new(service::chain_spec::zkverify_staging_config()?),
+            path => Box::new(service::chain_spec::GenericChainSpec::from_json_file(
                 std::path::PathBuf::from(path),
             )?),
         })
@@ -84,7 +98,7 @@ impl SubstrateCli for Cli {
 }
 
 fn set_default_ss58_version(_spec: &dyn service::ChainSpec) {
-    sp_core::crypto::set_default_ss58_version(zkv_runtime::SS58Prefix::get().into());
+    sp_core::crypto::set_default_ss58_version(volta_runtime::SS58Prefix::get().into());
 }
 
 fn run_node_inner<F>(
