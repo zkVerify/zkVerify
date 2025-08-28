@@ -21,19 +21,17 @@ use sc_service::{ChainType, Properties};
 use sc_sync_state_rpc::LightSyncStateExtension;
 use serde::{Deserialize, Serialize};
 use telemetry::TelemetryEndpoints;
-use zkv_runtime::WASM_BINARY;
+
+#[cfg(feature = "volta-native")]
+use volta_runtime as runtime;
+#[cfg(feature = "zkverify-native")]
+use zkv_runtime as runtime;
 
 /// The extensions for the [`ChainSpec`].
 #[derive(Default, Clone, Serialize, Deserialize, ChainSpecExtension)]
 pub struct Extensions {
     light_sync_state: LightSyncStateExtension,
 }
-
-// The connection strings for bootnodes
-const BOOTNODE_1_DNS: &str = "boot-node-tn-volta-1.zkverify.io";
-const BOOTNODE_1_PEER_ID: &str = "12D3KooWCso7aZ93X8uY82CExtCqSDsvr8p5NAEVD43iVebF72VR";
-const BOOTNODE_2_DNS: &str = "boot-node-tn-volta-2.zkverify.io";
-const BOOTNODE_2_PEER_ID: &str = "12D3KooWKXzW6nAjfwpbHJ5oqHyCsKpMFG8UxJzEYjcrRzEry5SC";
 
 // The URL for the telemetry server.
 const TELEMETRY_URL: &str = "wss://telemetry.zkverify.io/submit/";
@@ -45,7 +43,7 @@ fn chain_properties() -> Properties {
     [
         (
             "ss58Format".to_string(),
-            serde_json::Value::from(zkv_runtime::SS58Prefix::get()),
+            serde_json::Value::from(runtime::SS58Prefix::get()),
         ),
         ("tokenSymbol".to_string(), serde_json::Value::from("tVFY")),
         ("tokenDecimals".to_string(), serde_json::Value::from(18_u8)),
@@ -56,7 +54,7 @@ fn chain_properties() -> Properties {
 
 pub fn development_config() -> Result<ChainSpec, String> {
     Ok(ChainSpec::builder(
-        WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?,
+        runtime::WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?,
         Default::default(),
     )
     .with_name("Development")
@@ -69,7 +67,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
 
 pub fn local_config() -> Result<ChainSpec, String> {
     Ok(ChainSpec::builder(
-        WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?,
+        runtime::WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?,
         Default::default(),
     )
     .with_name("ZKV Local")
@@ -81,10 +79,16 @@ pub fn local_config() -> Result<ChainSpec, String> {
     .build())
 }
 
+#[cfg(feature = "volta-native")]
 /// To be used when building new testnet chain-spec
 pub fn testnet_config() -> Result<ChainSpec, String> {
+    const BOOTNODE_1_DNS: &str = "boot-node-tn-volta-1.zkverify.io";
+    const BOOTNODE_1_PEER_ID: &str = "12D3KooWCso7aZ93X8uY82CExtCqSDsvr8p5NAEVD43iVebF72VR";
+    const BOOTNODE_2_DNS: &str = "boot-node-tn-volta-2.zkverify.io";
+    const BOOTNODE_2_PEER_ID: &str = "12D3KooWKXzW6nAjfwpbHJ5oqHyCsKpMFG8UxJzEYjcrRzEry5SC";
+
     Ok(ChainSpec::builder(
-        WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?,
+        runtime::WASM_BINARY.ok_or_else(|| "Testnet wasm not available".to_string())?,
         Default::default(),
     )
     .with_name("zkVerify Testnet")
@@ -120,6 +124,46 @@ pub fn testnet_config() -> Result<ChainSpec, String> {
     .build())
 }
 
+#[cfg(feature = "zkverify-native")]
+/// To be used when building new mainnet chain-spec
+pub fn mainnet_config() -> Result<ChainSpec, String> {
+    Ok(ChainSpec::builder(
+        runtime::WASM_BINARY.ok_or_else(|| "Mainnet wasm not available".to_string())?,
+        Default::default(),
+    )
+    .with_name("zkVerify Mainnet")
+    .with_id("zkv_mainnet")
+    .with_protocol_id("zkv")
+    .with_chain_type(ChainType::Live)
+    .with_boot_nodes(vec![
+        // format!("/dns/{BOOTNODE_1_DNS}/tcp/30333/p2p/{BOOTNODE_1_PEER_ID}")
+        //     .parse()
+        //     .expect("MultiaddrWithPeerId"),
+        // format!("/dns/{BOOTNODE_1_DNS}/tcp/30334/ws/p2p/{BOOTNODE_1_PEER_ID}")
+        //     .parse()
+        //     .expect("MultiaddrWithPeerId"),
+        // format!("/dns/{BOOTNODE_1_DNS}/tcp/443/wss/p2p/{BOOTNODE_1_PEER_ID}")
+        //     .parse()
+        //     .expect("MultiaddrWithPeerId"),
+        // format!("/dns/{BOOTNODE_2_DNS}/tcp/30333/p2p/{BOOTNODE_2_PEER_ID}")
+        //     .parse()
+        //     .expect("MultiaddrWithPeerId"),
+        // format!("/dns/{BOOTNODE_2_DNS}/tcp/30334/ws/p2p/{BOOTNODE_2_PEER_ID}")
+        //     .parse()
+        //     .expect("MultiaddrWithPeerId"),
+        // format!("/dns/{BOOTNODE_2_DNS}/tcp/443/wss/p2p/{BOOTNODE_2_PEER_ID}")
+        //     .parse()
+        //     .expect("MultiaddrWithPeerId"),
+    ])
+    .with_telemetry_endpoints(
+        TelemetryEndpoints::new(vec![(TELEMETRY_URL.to_string(), telemetry::CONSENSUS_INFO)])
+            .expect("Horizen Labs telemetry url is valid; qed"),
+    )
+    .with_properties(chain_properties())
+    .with_genesis_config_preset_name("mainnet")
+    .build())
+}
+
 // This is a sample unit test
 // Following Rust convention, unit tests are appended in the same file as the module they are
 // testing. This is acceptable and should not create confusion, as long as the tests have a
@@ -129,8 +173,15 @@ mod tests {
     use super::*;
 
     // This test checks whether the local testnet genesis configuration is generated correctly
+    #[cfg(feature = "volta-native")]
     #[test]
     fn local_testnet_genesis_should_be_valid() {
         assert!(testnet_config().is_ok());
+    }
+
+    #[cfg(feature = "zkverify-native")]
+    #[test]
+    fn local_mainnet_genesis_should_be_valid() {
+        assert!(mainnet_config().is_ok());
     }
 }

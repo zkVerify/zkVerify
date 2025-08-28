@@ -22,7 +22,7 @@ use sc_cli::SubstrateCli;
 use service::{
     self,
     benchmarking::{benchmark_inherent_data, RemarkBuilder, TransferKeepAliveBuilder},
-    HeaderBackend, IdentifyVariant,
+    HeaderBackend,
 };
 use sp_keyring::Sr25519Keyring;
 use zkv_benchmarks::hardware::zkv_reference_hardware;
@@ -72,10 +72,16 @@ impl SubstrateCli for Cli {
         Ok(match id {
             "dev" | "development" => Box::new(service::chain_spec::development_config()?),
             "local" => Box::new(service::chain_spec::local_config()?),
-            "" | "test" | "testnet" => Box::new(service::chain_spec::ChainSpec::from_json_bytes(
+            "test" | "testnet" => Box::new(service::chain_spec::ChainSpec::from_json_bytes(
                 &include_bytes!("../chain-specs/zkverify_volta.json")[..],
             )?),
+            // "" | "main" | "mainnetnet" => Box::new(service::chain_spec::ChainSpec::from_json_bytes(
+            //     &include_bytes!("../chain-specs/zkverify.json")[..],
+            // )?),
+            #[cfg(feature = "volta-native")]
             "testnet_build" => Box::new(service::chain_spec::testnet_config()?),
+            #[cfg(feature = "zkverify-native")]
+            "mainnet_build" => Box::new(service::chain_spec::mainnet_config()?),
             path => Box::new(service::chain_spec::ChainSpec::from_json_file(
                 std::path::PathBuf::from(path),
             )?),
@@ -84,7 +90,10 @@ impl SubstrateCli for Cli {
 }
 
 fn set_default_ss58_version(_spec: &dyn service::ChainSpec) {
+    #[cfg(feature = "zkverify-native")]
     sp_core::crypto::set_default_ss58_version(zkv_runtime::SS58Prefix::get().into());
+    #[cfg(feature = "volta-native")]
+    sp_core::crypto::set_default_ss58_version(volta_runtime::SS58Prefix::get().into());
 }
 
 fn run_node_inner<F>(
@@ -320,15 +329,13 @@ pub fn run() -> Result<()> {
                         let header = client.header(client.info().genesis_hash).unwrap().unwrap();
                         let inherent_data = benchmark_inherent_data(header)
                             .map_err(|e| format!("generating inherent data: {e:?}"))?;
-                        let remark_builder =
-                            RemarkBuilder::new(client.clone(), config.chain_spec.identify_chain());
+                        let remark_builder = RemarkBuilder::new(client.clone());
 
                         match cmd {
                             BenchmarkCmd::Extrinsic(cmd) => {
                                 let tka_builder = TransferKeepAliveBuilder::new(
                                     client.clone(),
                                     Sr25519Keyring::Alice.to_account_id(),
-                                    config.chain_spec.identify_chain(),
                                 );
 
                                 let ext_factory = ExtrinsicFactory(vec![

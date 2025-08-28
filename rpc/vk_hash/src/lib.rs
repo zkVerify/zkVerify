@@ -26,6 +26,11 @@ use pallet_ultrahonk_verifier::{Ultrahonk, VK_SIZE as ULTRAHONK_VK_SIZE};
 use pallet_ultraplonk_verifier::{Ultraplonk, VK_SIZE};
 use sp_core::{serde::Deserialize, serde::Serialize, Bytes, H256, U256};
 
+#[cfg(feature = "volta-native")]
+use volta_runtime as runtime;
+#[cfg(feature = "zkverify-native")]
+use zkv_runtime as runtime;
+
 type VkOf<V> = <V as hp_verifiers::Verifier>::Vk;
 
 #[derive(Debug, Encode, Decode, Serialize, Deserialize)]
@@ -148,15 +153,15 @@ impl VKHashApiServer<H256> for VKHash {
     }
 
     fn groth16(&self, vk: Groth16Vk) -> RpcResult<H256> {
-        Ok(Groth16::<zkv_runtime::Runtime>::vk_hash(&vk.into()))
+        Ok(Groth16::<runtime::Runtime>::vk_hash(&vk.into()))
     }
 
     fn plonky2(&self, vk: Plonky2Vk) -> RpcResult<H256> {
         let config = vk.config;
         let bytes = vk.bytes.0;
-        let vk_with_config: VkOf<Plonky2<zkv_runtime::Runtime>> =
+        let vk_with_config: VkOf<Plonky2<runtime::Runtime>> =
             pallet_plonky2_verifier::Vk::new(config, bytes);
-        Ok(Plonky2::<zkv_runtime::Runtime>::vk_hash(&vk_with_config))
+        Ok(Plonky2::<runtime::Runtime>::vk_hash(&vk_with_config))
     }
 
     fn risc0(&self, vk: H256) -> RpcResult<H256> {
@@ -171,14 +176,14 @@ impl VKHashApiServer<H256> for VKHash {
                 Some("Incorrect Slice Length".to_string()),
             ));
         }
-        let vk: VkOf<Ultrahonk<zkv_runtime::Runtime>> = vk.0.try_into().map_err(|_| {
+        let vk: VkOf<Ultrahonk<runtime::Runtime>> = vk.0.try_into().map_err(|_| {
             ErrorObject::owned(
                 2,
                 "Deserialize error",
                 Some("Deserialize error".to_string()),
             )
         })?;
-        Ok(Ultrahonk::<zkv_runtime::Runtime>::vk_hash(&vk))
+        Ok(Ultrahonk::<runtime::Runtime>::vk_hash(&vk))
     }
 
     fn ultraplonk(&self, vk: Bytes) -> RpcResult<H256> {
@@ -189,14 +194,14 @@ impl VKHashApiServer<H256> for VKHash {
                 Some("Incorrect Slice Length".to_string()),
             ));
         }
-        let vk: VkOf<Ultraplonk<zkv_runtime::Runtime>> = vk.0.try_into().map_err(|_| {
+        let vk: VkOf<Ultraplonk<runtime::Runtime>> = vk.0.try_into().map_err(|_| {
             ErrorObject::owned(
                 2,
                 "Deserialize error",
                 Some("Deserialize error".to_string()),
             )
         })?;
-        Ok(Ultraplonk::<zkv_runtime::Runtime>::vk_hash(&vk))
+        Ok(Ultraplonk::<runtime::Runtime>::vk_hash(&vk))
     }
 
     fn sp1(&self, vk: H256) -> RpcResult<H256> {
