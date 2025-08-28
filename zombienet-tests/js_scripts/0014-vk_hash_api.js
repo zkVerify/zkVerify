@@ -76,6 +76,7 @@ async function run(nodeName, networkInfo, _args) {
     ];
 
     for (const verifier of verifiers) {
+        console.log(`##### EXEC ${verifier.name} RPC):`);
         verifier_hash = await verifier.pallet(verifier.vk);
         console.log(`##### ${verifier.name} RPC returned (hash ${verifier_hash}): `
             + JSON.stringify(verifier_hash));

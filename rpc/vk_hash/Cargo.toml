@@ -20,7 +20,7 @@ sp-core = { default-features = false, workspace = true }
 hp-verifiers = { workspace = true }
 hp-groth16 = { workspace = true }
 serde = { default-features = false, workspace = true }
-zkv-runtime = { default-features = false, workspace = true }
+volta-runtime = { default-features = false, workspace = true }
 
 [features]
 default = [ "std" ]
@@ -35,5 +35,5 @@ std = [
 	"pallet-ultraplonk-verifier/std",
 	"serde/std",
 	"sp-core/std",
-	"zkv-runtime/std",
+	"volta-runtime/std",
 ]

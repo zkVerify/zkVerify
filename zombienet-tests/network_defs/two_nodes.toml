@@ -2,7 +2,7 @@
 default_command = "zkv-relay"
 default_args = []
 
-chain = "local"
+chain = "{{CHAIN_NETWORK}}"
 
 [[relaychain.nodes]]
 name = "alice"
