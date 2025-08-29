@@ -78,9 +78,9 @@ impl SubstrateCli for Cli {
             // "" | "main" | "mainnetnet" => Box::new(service::chain_spec::ChainSpec::from_json_bytes(
             //     &include_bytes!("../chain-specs/zkverify.json")[..],
             // )?),
-            #[cfg(feature = "volta-native")]
+            #[cfg(feature = "volta")]
             "testnet_build" => Box::new(service::chain_spec::testnet_config()?),
-            #[cfg(feature = "zkverify-native")]
+            #[cfg(feature = "zkverify")]
             "mainnet_build" => Box::new(service::chain_spec::mainnet_config()?),
             path => Box::new(service::chain_spec::ChainSpec::from_json_file(
                 std::path::PathBuf::from(path),
@@ -90,9 +90,9 @@ impl SubstrateCli for Cli {
 }
 
 fn set_default_ss58_version(_spec: &dyn service::ChainSpec) {
-    #[cfg(feature = "zkverify-native")]
+    #[cfg(feature = "zkverify")]
     sp_core::crypto::set_default_ss58_version(zkv_runtime::SS58Prefix::get().into());
-    #[cfg(feature = "volta-native")]
+    #[cfg(feature = "volta")]
     sp_core::crypto::set_default_ss58_version(volta_runtime::SS58Prefix::get().into());
 }
 

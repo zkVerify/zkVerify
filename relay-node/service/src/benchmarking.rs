@@ -23,9 +23,9 @@ use sp_runtime::OpaqueExtrinsic;
 
 use crate::*;
 
-#[cfg(feature = "volta-native")]
+#[cfg(feature = "volta")]
 use volta_runtime as runtime;
-#[cfg(feature = "zkverify-native")]
+#[cfg(feature = "zkverify")]
 use zkv_runtime as runtime;
 
 /// Generates `System::Remark` extrinsics for the benchmarks.

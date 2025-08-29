@@ -2,13 +2,31 @@ name: Tag-orchestrator
 on:
   push:
     tags:
-      - "[0-9]+.[0-9]+.[0-9]+-[0-9]+.[0-9]+.[0-9]+*"
+      - "[0-9]+.[0-9]+.[0-9]+-[0-9]+.[0-9]+.[0-9]+.*-\b(volta|zkverify)\b"
 
 jobs:
+  determine-runtime:
+    runs-on: ubuntu-latest
+    outputs:
+      network: ${{ steps.get-network.outputs.network }}
+    steps:
+      - id: get-runtime
+        run: |
+          if [[ "${{ github.ref_name }}" == *"volta" ]]; then
+            echo "network=volta" >> $GITHUB_OUTPUT 
+          elif [[ "${{ github.ref_name }}" == *"zkverify" ]]; then
+            echo "network=zkverify" >> $GITHUB_OUTPUT
+          else
+            echo "Tag does not specify runtime. Exiting."
+            exit 1
+          fi
+
   release:
+    needs: determine-runtime
     name: Create artifacts and release them
     uses: ./.github/workflows/CI-release.yml
     with:
+      network: ${{ needs.determine-runtime.outputs.network }}
       release_name: "Release ${{ github.ref_name }}"
       release_branch: release
       dry_run: ${{ vars.TAG_RELEASE_DRY_RUN == 'true' }}
@@ -18,7 +36,9 @@ jobs:
       RELEASES_PROD_SLACK_WEBHOOK_URL: ${{ secrets.RELEASES_PROD_SLACK_WEBHOOK_URL }}
 
   rustdoc-job:
+    needs: determine-runtime
     name: Rustdoc job
     uses: ./.github/workflows/CI-rustdoc.yml
     with:
+      network: ${{ needs.determine-runtime.outputs.network }}
       deploy: 'yes'

@@ -22,9 +22,9 @@ use sc_sync_state_rpc::LightSyncStateExtension;
 use serde::{Deserialize, Serialize};
 use telemetry::TelemetryEndpoints;
 
-#[cfg(feature = "volta-native")]
+#[cfg(feature = "volta")]
 use volta_runtime as runtime;
-#[cfg(feature = "zkverify-native")]
+#[cfg(feature = "zkverify")]
 use zkv_runtime as runtime;
 
 /// The extensions for the [`ChainSpec`].
@@ -45,9 +45,9 @@ fn chain_properties() -> Properties {
             "ss58Format".to_string(),
             serde_json::Value::from(runtime::SS58Prefix::get()),
         ),
-        #[cfg(feature = "volta-native")]
+        #[cfg(feature = "volta")]
         ("tokenSymbol".to_string(), serde_json::Value::from("tVFY")),
-        #[cfg(feature = "zkverify-native")]
+        #[cfg(feature = "zkverify")]
         ("tokenSymbol".to_string(), serde_json::Value::from("VFY")),
         ("tokenDecimals".to_string(), serde_json::Value::from(18_u8)),
     ]
@@ -82,7 +82,7 @@ pub fn local_config() -> Result<ChainSpec, String> {
     .build())
 }
 
-#[cfg(feature = "volta-native")]
+#[cfg(feature = "volta")]
 /// To be used when building new testnet chain-spec
 pub fn testnet_config() -> Result<ChainSpec, String> {
     const BOOTNODE_1_DNS: &str = "boot-node-tn-volta-1.zkverify.io";
@@ -127,7 +127,7 @@ pub fn testnet_config() -> Result<ChainSpec, String> {
     .build())
 }
 
-#[cfg(feature = "zkverify-native")]
+#[cfg(feature = "zkverify")]
 /// To be used when building new mainnet chain-spec
 pub fn mainnet_config() -> Result<ChainSpec, String> {
     Ok(ChainSpec::builder(
@@ -176,13 +176,13 @@ mod tests {
     use super::*;
 
     // This test checks whether the local testnet genesis configuration is generated correctly
-    #[cfg(feature = "volta-native")]
+    #[cfg(feature = "volta")]
     #[test]
     fn local_testnet_genesis_should_be_valid() {
         assert!(testnet_config().is_ok());
     }
 
-    #[cfg(feature = "zkverify-native")]
+    #[cfg(feature = "zkverify")]
     #[test]
     fn local_mainnet_genesis_should_be_valid() {
         assert!(mainnet_config().is_ok());

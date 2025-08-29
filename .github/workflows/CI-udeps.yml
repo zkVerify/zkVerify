@@ -9,7 +9,14 @@ on:
 jobs:
   udeps:
     runs-on: warp-ubuntu-latest-x64-8x
-    name: Udeps
+    strategy:
+      matrix:
+        include:
+          - runtime: zkverify
+            exclude: volta
+          - runtime: volta
+            exclude: zkverify
+    name: Udeps (${{ matrix.runtime }})
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -18,9 +25,10 @@ jobs:
         uses: ./.github/actions/cmd-in-docker
         with:
           image_tag: "noble_rust-nightly_latest"
+          # TODO: Needs to be adjusted with something like --all-features --exclude-feature ${{matrix.runtime}}
           command: "cargo +nightly udeps --all-targets --all-features"
           use_cache: "yes"
-          cache_key: "udeps"
+          cache_key: "udeps-${{ matrix.runtime }}"
           cargo_binaries_install: "cargo-udeps"
           lld_install: "yes"
           skip_wasm_build: "yes"

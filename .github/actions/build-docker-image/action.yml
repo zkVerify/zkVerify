@@ -14,7 +14,7 @@ inputs:
   docker_image_suffix:
     description: "Docker image name suffix"
     type: string
-    default: '-relay'
+    default: ''
   docker_hub_org:
     description: "Docker hub organization"
     type: string
@@ -49,10 +49,17 @@ runs:
     - name: Build docker image
       shell: bash
       run: |
+        RUNTIME=""
+        if [ "${{ inputs.network }}" == "zkverify" ]; then
+          RUNTIME="zkv_runtime"
+        elif [ "${{ inputs.network }}" == "volta" ]; then
+          RUNTIME="volta_runtime"
+        fi
         echo "Building relay chain Docker image"
         ${{inputs.dry_run}} && echo "*********************** Dry run mode enabled, skipping Docker build. ***********************"
         ${{inputs.dry_run}} || docker build --build-arg "PROFILE=${{ inputs.profile }}" \
           --build-arg "FEATURES=${{ inputs.features }}" \
+          --build-arg "RUNTIME=${RUNTIME}" \
           -f "docker/dockerfiles/zkv-relay.Dockerfile" \
           -t ${{ inputs.docker_hub_org }}/${{ inputs.docker_image_name }}${{ inputs.docker_image_suffix }} .
 

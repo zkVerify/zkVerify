@@ -71,5 +71,5 @@ jemalloc-allocator = [
 	"polkadot-node-core-pvf/jemalloc-allocator",
 	"polkadot-overseer/jemalloc-allocator",
 ]
-zkverify-native = ["zkv-cli/zkverify-native"]
-volta-native = ["zkv-cli/volta-native"]
+zkverify = ["zkv-cli/zkverify"]
+volta = ["zkv-cli/volta"]

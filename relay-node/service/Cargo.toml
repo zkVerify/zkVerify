@@ -219,8 +219,8 @@ try-runtime = [
 	"volta-runtime/try-runtime",
 ]
 
-zkverify-native = ["zkv-runtime"]
-volta-native = ["volta-runtime"]
+zkverify = ["zkv-runtime"]
+volta = ["volta-runtime"]
 
 fast-runtime = [ 
 	"zkv-runtime/fast-runtime",

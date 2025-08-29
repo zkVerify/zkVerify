@@ -7,7 +7,10 @@ on:
 jobs:
   test-bench:
     runs-on: warp-ubuntu-latest-x64-8x
-    name: Build and run benchmarks
+    strategy:
+      matrix:
+        runtime: [zkverify, volta]
+    name: Build and run benchmarks (${{ matrix.runtime }})
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -15,9 +18,9 @@ jobs:
       - name: zkv build with runtime-benchmarks
         uses: ./.github/actions/cmd-in-docker
         with:
-          command: "cargo build -p zkv-relay --release --features runtime-benchmarks"
+          command: "cargo build -p zkv-relay --release --features runtime-benchmarks,${{ matrix.runtime }}"
           use_cache: 'yes'
-          cache_key: 'build-runtime-benchmarks'
+          cache_key: 'build-runtime-benchmarks-${{ matrix.runtime }}'
           lld_install: 'yes'
 
       - name: Run benchmarks

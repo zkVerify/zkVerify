@@ -9,25 +9,28 @@ on:
 jobs:
   unit-test:
     runs-on: warp-ubuntu-latest-x64-8x
-    name: Cargo unit test
+    strategy:
+      matrix:
+        runtime: [zkverify, volta]
+    name: Cargo unit test (${{ matrix.runtime }})
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
+      # TODO: Needs to be adjusted with something like --all-features --exclude-feature ${{matrix.runtime}}
       - name: Cargo unit test
         uses: ./.github/actions/cmd-in-docker
         with:
           command: "cargo test --lib --bins --all-features --no-fail-fast --release 2>&1 | tee unit_test_output.txt"
           use_cache: 'yes'
-          cache_key: 'unit-test'
+          cache_key: 'unit-test-${{ matrix.runtime }}'
           lld_install: 'yes'
 
       - name: Cargo unit test runtime without features
         uses: ./.github/actions/cmd-in-docker
         with:
-          command: "cargo test --lib -p zkv-runtime --no-fail-fast --release 2>&1 | tee -a unit_test_output.txt"
+          command: "cargo test --lib -p ${{ matrix.runtime }} --no-fail-fast --release 2>&1 | tee -a unit_test_output_${{ matrix.runtime }}.txt"
           use_cache: 'yes'
-          cache_key: 'unit-test'
+          cache_key: 'unit-test-no-features-${{ matrix.runtime }}'
           lld_install: 'yes'
           skip_wasm_build: 'yes'
 
@@ -35,15 +38,18 @@ jobs:
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
-          name: unit-test-output
-          path: unit_test_output.txt
+          name: unit-test-output-${{ matrix.runtime }}
+          path: unit_test_output_${{ matrix.runtime }}.txt
           retention-days: 1
           compression-level: 0
           overwrite: true
 
   integration-test:
     runs-on: warp-ubuntu-latest-x64-8x
-    name: Cargo integration test
+    strategy:
+      matrix:
+        runtime: [zkverify, volta]
+    name: Cargo integration test (${{ matrix.runtime }})
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -51,17 +57,18 @@ jobs:
       - name: Cargo integration test
         uses: ./.github/actions/cmd-in-docker
         with:
-          command: "cargo test --test '*' --all-features --no-fail-fast --release 2>&1 | tee integration_test_output.txt"
+          # TODO: Needs to be adjusted with something like --all-features --exclude-feature ${{matrix.runtime}}
+          command: "cargo test --test '*' --all-features --no-fail-fast --release 2>&1 | tee integration_test_output_${{ matrix.runtime }}.txt"
           use_cache: 'yes'
-          cache_key: 'integration-test'
+          cache_key: 'integration-test-${{ matrix.runtime }}'
           lld_install: 'yes'
 
       - name: Upload integration test output
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
-          name: integration-test-output
-          path: integration_test_output.txt
+          name: integration-test-output-${{ matrix.runtime }}
+          path: integration_test_output_${{ matrix.runtime }}.txt
           retention-days: 1
           compression-level: 0
           overwrite: true

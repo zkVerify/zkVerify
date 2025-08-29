@@ -9,7 +9,11 @@ on:
         description: 'Whether to deploy rustdoc to Github'
         required: false
         type: string
-        default: 'yes'
+        default: 'no'
+      network:
+        description: "The network name (e.g., volta, zkverify)"
+        required: true
+        type: string
   workflow_dispatch:
     inputs:
       deploy:
@@ -20,11 +24,15 @@ on:
           - 'yes'
           - 'no'
         default: 'no'
+      network:
+        description: "The network name (e.g., volta, zkverify)"
+        required: true
+        type: string
 
 jobs:
   rustdoc-generation:
     runs-on: warp-ubuntu-latest-x64-8x
-    name: Rustdoc generation
+    name: Rustdoc generation (${{ inputs.network }})
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -33,10 +41,10 @@ jobs:
         uses: ./.github/actions/cmd-in-docker
         with:
           command: >-
-            /bin/bash -c 'cargo doc --no-deps --release
-            && echo "<meta http-equiv=\"refresh\" content=\"0; url=zkv_node/index.html\">" > /build/target/doc/index.html'
+            /bin/bash -c 'cargo doc --no-deps --release --features ${{ inputs.runtime }}
+            && echo "<meta http-equiv=\"refresh\" content=\"0; url=zkv_node/${{ inputs.network }}/index.html\">" > /build/target/doc/index.html'
           use_cache: 'yes'
-          cache_key: 'rustdoc'
+          cache_key: 'rustdoc-${{ inputs.runtime }}'
           lld_install: 'yes'
 
       - name: Upload documentation

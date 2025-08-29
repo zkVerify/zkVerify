@@ -26,9 +26,9 @@ use pallet_ultrahonk_verifier::{Ultrahonk, VK_SIZE as ULTRAHONK_VK_SIZE};
 use pallet_ultraplonk_verifier::{Ultraplonk, VK_SIZE};
 use sp_core::{serde::Deserialize, serde::Serialize, Bytes, H256, U256};
 
-#[cfg(feature = "volta-native")]
+#[cfg(feature = "volta")]
 use volta_runtime as runtime;
-#[cfg(feature = "zkverify-native")]
+#[cfg(feature = "zkverify")]
 use zkv_runtime as runtime;
 
 type VkOf<V> = <V as hp_verifiers::Verifier>::Vk;

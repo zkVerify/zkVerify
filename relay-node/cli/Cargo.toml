@@ -88,5 +88,5 @@ runtime-metrics = [
 	"polkadot-node-metrics/runtime-metrics",
 	"service/runtime-metrics",
 ]
-zkverify-native = ["zkv-runtime", "service/zkverify-native"]
-volta-native = ["volta-runtime", "service/volta-native"]
+zkverify = ["zkv-runtime", "service/zkverify"]
+volta = ["volta-runtime", "service/volta"]

@@ -32,6 +32,7 @@ ARG AUTHORS="infrastructure@zkverify.io"
 ARG VENDOR="zkVerify"
 ARG PROFILE="release"
 ARG FEATURES=""
+ARG RUNTIME=""
 
 ENV BINARY="${BINARY}" \
     RUN_USER="user"
@@ -64,7 +65,7 @@ RUN apt-get update -qq \
 COPY --from=builder "/usr/src/node/target/${PROFILE}/${BINARY}" "/usr/local/bin/"
 COPY --from=builder "/usr/src/node/target/${PROFILE}/${BINARY}-execute-worker" "/usr/local/bin/"
 COPY --from=builder "/usr/src/node/target/${PROFILE}/${BINARY}-prepare-worker" "/usr/local/bin/"
-COPY --from=builder "/usr/src/node/target/${PROFILE}/wbuild/zkv-runtime/zkv_runtime.compact.compressed.wasm" "./zkv_runtime.compact.compressed.wasm"
+COPY --from=builder "/usr/src/node/target/${PROFILE}/wbuild/${RUNTIME}/${RUNTIME}.compact.compressed.wasm" "./${RUNTIME}.compact.compressed.wasm"
 RUN chmod -R a+rx "/usr/local/bin"
 
 COPY docker/scripts/entrypoint.sh .

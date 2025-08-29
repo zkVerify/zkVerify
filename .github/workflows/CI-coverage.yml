@@ -9,7 +9,14 @@ on:
 jobs:
   coverage:
     runs-on: warp-ubuntu-latest-x64-8x
-    name: Coverage
+    strategy:
+      matrix:
+        include:
+          - runtime: zkverify
+            exclude: volta
+          - runtime: volta
+            exclude: zkverify
+    name: Coverage (${{ matrix.runtime }})
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -17,20 +24,21 @@ jobs:
       - name: Cargo coverage
         uses: ./.github/actions/cmd-in-docker
         with:
+          # TODO: Needs to be adjusted with something like --all-features --exclude-feature ${{matrix.runtime}}
           command: >-
             /bin/bash -c 'set -o pipefail && cargo llvm-cov clean --workspace && find . -name \"*.profraw\" -delete
             && cargo llvm-cov --all-features --workspace --exclude zkv-relay --exclude paratest-node --exclude test-service --lcov --output-path lcov.info
-            && cargo llvm-cov report --json --output-path coverage_report.json --summary-only && cargo llvm-cov report | tee coverage_summary.txt'
+            && cargo llvm-cov report --json --output-path coverage_report.json --summary-only && cargo llvm-cov report | tee coverage_summary_${{ matrix.runtime }}.txt'
           use_cache: 'yes'
-          cache_key: 'coverage'
+          cache_key: 'coverage-${{ matrix.runtime }}'
           lld_install: 'yes'
           cargo_binaries_install: cargo-llvm-cov
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-output
-          path: coverage_report.json
+          name: coverage-output-${{ matrix.runtime }}
+          path: coverage_report_${{ matrix.runtime }}.json
           retention-days: 1
           compression-level: 0
           overwrite: true

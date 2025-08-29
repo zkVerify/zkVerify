@@ -10,9 +10,9 @@ workdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." &> /dev/null && pwd )"
 github_tag="${GITHUB_REF_NAME:-}"
 release_branch="${RELEASE_BRANCH:-release}"
 maintainers_keys="${MAINTAINERS_KEYS:-}"
-prod_release_regex='^[0-9]+\.[0-9]+\.[0-9]+\-[0-9]+\.[0-9]+\.[0-9]+$'
-dev_release_regex='^[0-9]+\.[0-9]+\.[0-9]+\-[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+){1}$'
-test_release_regex='^[0-9]+\.[0-9]+\.[0-9]+\-[0-9]+\.[0-9]+\.[0-9]+-[a-zA-Z0-9]+$'
+prod_release_regex='^[0-9]+\.[0-9]+\.[0-9]+\-[0-9]+\.[0-9]+\.[0-9]+-\b(volta|zkverify)\b$'
+dev_release_regex='^[0-9]+\.[0-9]+\.[0-9]+\-[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+){1}-\b(volta|zkverify)\b$'
+test_release_regex='^[0-9]+\.[0-9]+\.[0-9]+\-[0-9]+\.[0-9]+\.[0-9]+-[a-zA-Z0-9]+-\b(volta|zkverify)\b$'
 
 export COMMON_FILE_LOCATION='ci/common.sh'
 # Requirement

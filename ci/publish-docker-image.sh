@@ -18,6 +18,8 @@ common_file_location="${COMMON_FILE_LOCATION:-not-set}"
 image_artifact=""
 docker_tag_full=""
 extract_runtime="${EXTRACT_RUNTIME:-true}"
+network=""
+runtime_name=""
 
 # Requirement
 if ! [ -f "${common_file_location}" ]; then
@@ -94,10 +96,10 @@ if [ "${is_a_release}" = "true" ]; then
   fi
 
   # Append -relay to tag names for relay chain images
-  if [[ "${image_artifact}" == "${docker_image_build_name}-relay" ]]; then
-    docker_tag_full="${docker_tag_full}-relay"
+  if [[ "${image_artifact}" == "${docker_image_build_name}-${network}" ]]; then
+    docker_tag_full="${docker_tag_full}-${network}"
     for publish_tag in "${!publish_tags[@]}"; do
-      publish_tags["${publish_tag}"]="${publish_tags["${publish_tag}"]}-relay"
+      publish_tags["${publish_tag}"]="${publish_tags["${publish_tag}"]}-${network}"
     done
   fi
 
@@ -112,16 +114,22 @@ if [ "${is_a_release}" = "true" ]; then
     fi
   done
 
+  if [ "${network}" == "zkverify" ]; then
+    runtime_name="zkv_runtime"
+  elif [ "${network}" == "volta" ]; then
+    runtime_name="volta_runtime"
+  fi
+
   # Extract runtime artifact
   if [ "${extract_runtime}" == "true" ]; then
     log_info "=== Extract runtime artifact ==="
     if [ "${DRY_RUN}" != "true" ]; then
       container_id="$(docker create "index.docker.io/${docker_hub_org}/${docker_image_build_name}:${docker_tag_full}")"
-      docker cp "${container_id}":/app/zkv_runtime.compact.compressed.wasm ./zkv_runtime.compact.compressed.wasm
+      docker cp "${container_id}":/app/${runtime_name}.compact.compressed.wasm ./runtime.compact.compressed.wasm
       docker rm "${container_id}"  # Clean up the container
     else
       log_warn "WARNING: 'DRY_RUN' variable is set to 'true'. CREATE FAKE WASM"
-      echo "index.docker.io/${docker_hub_org}/${docker_image_build_name}:${docker_tag_full} -> WASM" > ./zkv_runtime.compact.compressed.wasm
+      echo "index.docker.io/${docker_hub_org}/${docker_image_build_name}:${docker_tag_full} -> WASM" > ./runtime.compact.compressed.wasm
     fi
   else
     log_info "=== Skipping runtime artifact extraction ==="

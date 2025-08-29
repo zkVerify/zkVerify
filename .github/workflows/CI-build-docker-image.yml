@@ -2,6 +2,11 @@ name: Build Docker Image
 
 on:
   workflow_dispatch:
+    inputs:
+      network:
+        description: "The network to build for (e.g., volta, zkverify)"
+        required: true
+        type: string
   workflow_call:
 
 env:
@@ -23,6 +28,8 @@ jobs:
           ref: ${{ github.ref }}
           docker_hub_org: ${{ env.DOCKER_HUB_ORG }}
           docker_image_name: ${{ env.DOCKER_IMAGE_BUILD_NAME }}
+          docker_image_suffix: '-${{ inputs.network }}'
+          features: 'metadata-hash ${{ inputs.network }}'
 
     outputs:
       artifact_name: ${{ steps.build-docker-image.outputs.artifact_name }}

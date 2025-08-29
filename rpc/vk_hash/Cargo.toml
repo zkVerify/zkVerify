@@ -40,5 +40,5 @@ std = [
 	"volta-runtime/std",
 ]
 
-zkverify-native = [ "zkv-runtime" ]
-volta-native = [ "volta-runtime" ]
+zkverify = [ "zkv-runtime" ]
+volta = [ "volta-runtime" ]

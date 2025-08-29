@@ -12,15 +12,27 @@ jobs:
     strategy:
       matrix:
         cache_key:
-          - build-relay-paratest
-          - coverage
-          - unit-test
-          - integration-test
-          - build-runtime-benchmarks
+          - build-relay-paratest-zkverify
+          - build-relay-paratest-volta
+          - coverage-zkverify
+          - coverage-volta
+          - unit-test-zkverify
+          - unit-test-volta
+          - unit-test-no-features-zkverify
+          - unit-test-no-features-volta
+          - integration-test-zkverify
+          - integration-test-volta
+          - build-runtime-benchmarks-zkverify
+          - build-runtime-benchmarks-volta
+          - lint-output-zkverify
+          - lint-output-volta
           - lint-format
-          - udeps
-          - build-try-runtime
-          - rustdoc
+          - udeps-zkverify
+          - udeps-volta
+          - build-try-runtime-zkverify
+          - build-try-runtime-volta
+          - rustdoc-zkverify
+          - rustdoc-volta
     steps:
       - name: "Deleting '${{ matrix.cache_key }}' cache key"
         uses: WarpBuilds/cache@v1

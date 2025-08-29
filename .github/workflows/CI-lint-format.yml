@@ -9,7 +9,10 @@ on:
 jobs:
   lint-format:
     runs-on: warp-ubuntu-latest-x64-8x
-    name: Lint and format
+    strategy:
+      matrix:
+        runtime: [zkverify, volta]
+    name: Lint (${{ matrix.runtime }}) and format
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -17,9 +20,9 @@ jobs:
       - name: Cargo lint
         uses: ./.github/actions/cmd-in-docker
         with:
-          command: "cargo clippy --release --all-targets -- --deny warnings 2>&1 | tee linting_output.txt"
+          command: "cargo clippy --release --all-targets --features ${{ matrix.runtime }} -- --deny warnings 2>&1 | tee linting_output_${{ matrix.runtime }}.txt"
           use_cache: "yes"
-          cache_key: "lint-format"
+          cache_key: "lint-format-${{ matrix.runtime }}"
           lld_install: "yes"
           skip_wasm_build: "yes"
 
@@ -27,7 +30,7 @@ jobs:
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
-          name: lint-output
+          name: lint-output-${{ matrix.runtime }}
           path: linting_output.txt
           retention-days: 1
           compression-level: 0

@@ -18,6 +18,10 @@ on:
         required: true
         type: boolean
         default: false
+      network:
+        description: "The network to build for (e.g., volta, zkverify)"
+        required: true
+        type: string
     secrets:
       DOCKER_HUB_USERNAME:
         required: true
@@ -45,6 +49,8 @@ jobs:
           ref: ${{ github.ref }}
           docker_hub_org: ${{ env.DOCKER_HUB_ORG }}
           docker_image_name: ${{ env.DOCKER_IMAGE_BUILD_NAME }}
+          docker_image_suffix: '-${{ inputs.network }}'
+          features: 'metadata-hash ${{ inputs.network }}'
           dry_run: ${{ inputs.dry_run }}
 
     outputs:
@@ -63,8 +69,8 @@ jobs:
         with:
           ref: ${{ github.ref }}
           profile: release
-          docker_image_suffix: '-fastruntime'
-          features: fast-runtime
+          docker_image_suffix: '-fastruntime-${{ inputs.network }}'
+          features: 'fast-runtime ${{ inputs.network }}'
           docker_hub_org: ${{ env.DOCKER_HUB_ORG }}
           docker_image_name: ${{ env.DOCKER_IMAGE_BUILD_NAME }}
           dry_run: ${{ inputs.dry_run }}
@@ -100,13 +106,13 @@ jobs:
           export DRY_RUN=${{ inputs.dry_run }}
           # shellcheck disable=SC1090
           source "${GITHUB_WORKSPACE}/ci/setup_env.sh"
-          "${GITHUB_WORKSPACE}/ci/publish-docker-image.sh" --image-artifact ${{ needs.build-docker.outputs.artifact_name }}
+          "${GITHUB_WORKSPACE}/ci/publish-docker-image.sh" --image-artifact ${{ needs.build-docker.outputs.artifact_name }} --network ${{ inputs.network }}
 
       - name: Upload runtime artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: "zkv_runtime.relay.compact.compressed.wasm"
-          path: ./zkv_runtime.compact.compressed.wasm
+          name: "${{ inputs.network }}.runtime.compact.compressed.wasm"
+          path: ./runtime.compact.compressed.wasm
           retention-days: 7
           overwrite: true
 
@@ -139,7 +145,7 @@ jobs:
           export FAST_RUNTIME_RELEASE="true"
           # shellcheck disable=SC1090
           source "${GITHUB_WORKSPACE}/ci/setup_env.sh"
-          "${GITHUB_WORKSPACE}/ci/publish-docker-image.sh" --image-artifact ${{ needs.build-docker-fastruntime.outputs.artifact_name }}
+          "${GITHUB_WORKSPACE}/ci/publish-docker-image.sh" --image-artifact ${{ needs.build-docker-fastruntime.outputs.artifact_name }} --network ${{ inputs.network }}
 
   release:
     runs-on: warp-ubuntu-latest-x64-2x
@@ -149,7 +155,7 @@ jobs:
       - name: Retrieve saved runtime wasm
         uses: actions/download-artifact@v4
         with:
-          name: "zkv_runtime.relay.compact.compressed.wasm"
+          name: "${{ inputs.network }}.runtime.compact.compressed.wasm"
           path: wasm
 
       - name: Create Release
@@ -184,7 +190,7 @@ jobs:
                   "fields": [
                     {
                       "type": "mrkdwn",
-                      "text": "*Docker Image Tag:*  <https://hub.docker.com/r/${{ env.DOCKER_HUB_ORG }}/${{ env.DOCKER_IMAGE_BUILD_NAME }}/tags?page=1&name=${{ github.ref_name }}-relay| ${{ github.ref_name }}-relay>\n"
+                      "text": "*Docker Image Tag:*  <https://hub.docker.com/r/${{ env.DOCKER_HUB_ORG }}/${{ env.DOCKER_IMAGE_BUILD_NAME }}/tags?page=1&name=${{ github.ref_name }}-${{ inputs.network }}| ${{ github.ref_name }}-${{ inputs.network }}>\n"
                     },
                     {
                       "type": "mrkdwn",
@@ -196,7 +202,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "```docker pull ${{ env.DOCKER_HUB_ORG }}/${{ env.DOCKER_IMAGE_BUILD_NAME }}:${{ github.ref_name }}-relay```"
+                    "text": "```docker pull ${{ env.DOCKER_HUB_ORG }}/${{ env.DOCKER_IMAGE_BUILD_NAME }}:${{ github.ref_name }}-${{ inputs.network }}```"
                   }
                 }
               ]

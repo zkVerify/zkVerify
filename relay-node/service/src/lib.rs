@@ -107,9 +107,9 @@ pub use sp_runtime::{
 };
 use zkv_benchmarks::hardware::zkv_reference_hardware;
 
-#[cfg(feature = "volta-native")]
+#[cfg(feature = "volta")]
 pub use volta_runtime::{self, opaque::Block, RuntimeApi};
-#[cfg(feature = "zkverify-native")]
+#[cfg(feature = "zkverify")]
 pub use zkv_runtime::{self, opaque::Block, RuntimeApi};
 
 #[cfg(feature = "full-node")]
