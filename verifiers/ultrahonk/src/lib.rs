@@ -194,10 +194,13 @@ impl<T: Config, W: weight::WeightInfo> pallet_verifiers::WeightInfo<Ultrahonk<T>
     for UltrahonkWeight<W>
 {
     fn verify_proof(
-        _proof: &<Ultrahonk<T> as hp_verifiers::Verifier>::Proof,
+        proof: &<Ultrahonk<T> as hp_verifiers::Verifier>::Proof,
         _pubs: &<Ultrahonk<T> as hp_verifiers::Verifier>::Pubs,
     ) -> Weight {
-        W::verify_proof()
+        match proof.proof_type {
+            ProofType::ZK => W::verify_proof_zk_32(),
+            ProofType::Plain => W::verify_proof_plain_32(),
+        }
     }
 
     fn register_vk(_vk: &<Ultrahonk<T> as hp_verifiers::Verifier>::Vk) -> Weight {
