@@ -197,6 +197,24 @@ exports.aggregate = async (signer, domain_id, aggregation_id) => {
   return await submitExtrinsic(api, extrinsic, signer, BlockUntil.InBlock, (event) => event.section == "aggregate");
 }
 
+exports.sudoInitClaim = async (signer, beneficiaries, initial_balance) => {
+  // Fund claim pallet account
+  const palletAddressOption = await api.query.claim.palletAccountId();
+  const palletAddress = palletAddressOption.unwrap();
+  const transfer = api.tx.balances.transferAllowDeath(palletAddress, initial_balance);
+  await submitExtrinsic(api, transfer, signer, BlockUntil.InBlock);
+
+  // Begin airdrop and provide beneficiaries
+  let extrinsic = api.tx.sudo.sudo(api.tx.claim.beginAirdrop(beneficiaries));
+
+  return await submitExtrinsic(api, extrinsic, signer, BlockUntil.InBlock, (event) => event.section == "claim");
+}
+
+exports.claim = async (signer) => {
+  let extrinsic = api.tx.claim.claim(undefined);
+  return await submitExtrinsic(api, extrinsic, signer, BlockUntil.InBlock, (event) => event.section == "claim");
+}
+
 exports.waitForEvent = async (api, timeout, pallet, name) => {
   return await waitForEvent(api, timeout, pallet, name);
 }
