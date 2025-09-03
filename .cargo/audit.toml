@@ -16,6 +16,7 @@ ignore = [
     # use and is more strongly signaled nowadays as of bytecodealliance/wasmtime#10963.
     # Please open an issue in Wasmtime if you're using this crate directly.
     # ** We don't use this crate directly, so we can ignore it. **
+    "RUSTSEC-2025-0055", # coming from indirect dependency tracing-subscriber v0.2
 ]
 informational_warnings = ["unmaintained", "yanked"]
 
