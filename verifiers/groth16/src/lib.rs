@@ -131,12 +131,8 @@ impl<T: Config, W: WeightInfo> pallet_verifiers::WeightInfo<Groth16<T>> for Grot
     }
 
     fn validate_vk(vk: &<Groth16<T> as Verifier>::Vk) -> Weight {
-        let Vk {
-            curve,
-            gamma_abc_g1,
-            ..
-        } = vk;
-        let pubs_len = gamma_abc_g1.len().saturating_sub(1) as u32;
+        let curve = vk.curve;
+        let pubs_len = vk.gamma_abc_g1.len().saturating_sub(1) as u32;
         match curve {
             Curve::Bn254 => W::validate_vk_bn254(pubs_len),
             Curve::Bls12_381 => W::validate_vk_bls12_381(pubs_len),
@@ -147,7 +143,7 @@ impl<T: Config, W: WeightInfo> pallet_verifiers::WeightInfo<Groth16<T>> for Grot
         proof: &<Groth16<T> as Verifier>::Proof,
         pubs: &<Groth16<T> as Verifier>::Pubs,
     ) -> frame_support::weights::Weight {
-        let Proof { curve, .. } = proof;
+        let curve = proof.curve;
         let pubs_len = pubs.len() as u32;
         match curve {
             Curve::Bn254 => W::compute_statement_hash(pubs_len),
