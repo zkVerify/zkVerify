@@ -49,6 +49,7 @@ use sp_runtime::{
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
+use xcm::opaque::latest::{InteriorLocation, Junction::PalletInstance};
 
 use frame_election_provider_support::{
     bounds::{ElectionBounds, ElectionBoundsBuilder},
@@ -98,7 +99,7 @@ pub use sp_runtime::{Perbill, Permill};
 
 pub mod governance;
 mod pallet_assets_mock;
-use governance::{pallet_custom_origins, TreasurySpender};
+use governance::{pallet_custom_origins, Spender, TreasurySpender};
 
 pub mod macros {
     macro_rules! prod_or_fast {
@@ -540,6 +541,7 @@ impl pallet_scheduler::Config for Runtime {
 
 parameter_types! {
     pub const TreasuryPalletId: PalletId = PalletId(*b"zk/trsry");
+    pub const TreasuryPalletIdx: u8 = 14;
     pub const ProposalBond: Permill = Permill::from_percent(5);
     pub const ProposalBondMinimum: Balance = 2000 * CENTS;
     pub const ProposalBondMaximum: Balance = THOUSANDS;
@@ -548,6 +550,7 @@ parameter_types! {
     pub const PayoutSpendPeriod: BlockNumber = 30 * DAYS;
     pub const MaxApprovals: u32 = 100;
     pub ZKVerifyTreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
+    pub TreasuryInteriorLocation: InteriorLocation = PalletInstance(TreasuryPalletIdx::get()).into();
 }
 
 impl pallet_treasury::Config for Runtime {
@@ -562,10 +565,19 @@ impl pallet_treasury::Config for Runtime {
     type WeightInfo = weights::pallet_treasury::ZKVWeight<Runtime>;
     type SpendFunds = Bounties;
     type SpendOrigin = TreasurySpender;
-    type AssetKind = ();
-    type Beneficiary = AccountId;
+    type AssetKind = xcm_config::VersionedLocatableAsset;
+    type Beneficiary = xcm::VersionedLocation;
     type BeneficiaryLookup = IdentityLookup<Self::Beneficiary>;
-    type Paymaster = PayFromAccount<Balances, ZKVerifyTreasuryAccount>;
+    type Paymaster = xcm_builder::PayOverXcm<
+        TreasuryInteriorLocation,
+        xcm_config::XcmRouter,
+        XcmPallet,
+        ConstU32<{ 6 * HOURS }>,
+        Self::Beneficiary,
+        Self::AssetKind,
+        xcm_config::LocatableAssetConverter,
+        xcm_config::VersionedLocationConverter,
+    >;
     type BalanceConverter = UnityAssetBalanceConversion;
     type PayoutPeriod = PayoutSpendPeriod;
     type BlockNumberProvider = System;
@@ -1923,7 +1935,7 @@ impl_runtime_apis! {
             pub mod xcm {
                 use super::*;
                 use alloc::vec;
-                use xcm::latest::{Asset, AssetId, Assets, Location, InteriorLocation, Junction, Junctions::Here, NetworkId, Response, Fungibility::Fungible};
+                use xcm::latest::{Asset, AssetId, Assets, Location, Junction, Junctions::Here, NetworkId, Response, Fungibility::Fungible};
                 use frame_benchmarking::BenchmarkError;
 
                 pub use pallet_xcm::benchmarking::Pallet as XcmPalletBench;
