@@ -219,7 +219,7 @@ impl<B: Debug + PartialEq> Delivery<B> {
     where
         B: Add<Output = B> + Clone,
     {
-        self.fee.clone() + self.owner_tip.clone()
+        self.fee.clone().saturating_add(self.owner_tip.clone())
     }
 }
 
