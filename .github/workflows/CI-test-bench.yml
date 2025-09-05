@@ -20,8 +20,20 @@ jobs:
           cache_key: 'build-runtime-benchmarks'
           lld_install: 'yes'
 
-      - name: Run benchmarks
+      - name: Run benchmarks Volta
         uses: ./.github/actions/cmd-in-docker
         with:
-          command: './target/release/zkv-relay benchmark pallet --pallet "*" --extrinsic "*" -s 2 -r 1'
+          command: >-
+            ./target/release/zkv-relay benchmark pallet \
+              --runtime ./target/release/wbuild/volta-runtime/volta_runtime.compact.compressed.wasm --genesis-builder=runtime \
+              --pallet "*" --extrinsic "*" -s 2 -r 1
+          use_cache: 'no'
+
+      - name: Run benchmarks zkverify
+        uses: ./.github/actions/cmd-in-docker
+        with:
+          command: >-
+            ./target/release/zkv-relay benchmark pallet \
+              --runtime ./target/release/wbuild/zkv-runtime/zkv_runtime.compact.compressed.wasm --genesis-builder=runtime \
+              --pallet "*" --extrinsic "*" -s 2 -r 1
           use_cache: 'no'

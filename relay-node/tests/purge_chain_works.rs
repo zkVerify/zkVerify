@@ -30,7 +30,7 @@ use tempfile::tempdir;
 
 pub mod common;
 
-const DB_PATH: &str = "chains/dev";
+const DB_PATH: &str = "chains/volta_dev";
 const ROCKS: &str = "db/full";
 const PARITY: &str = "paritydb/full";
 

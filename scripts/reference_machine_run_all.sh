@@ -178,6 +178,8 @@ USE_DOCKER="true"
 ENABLE_PALLETS="${ENABLE_PALLETS:-true}"
 ENABLE_OVERHEAD="${ENABLE_OVERHEAD:-true}"
 ENABLE_MACHINE="${ENABLE_MACHINE:-true}"
+# Network to benchmark, used in run_all_benchmarks.sh
+NETWORK="${NETWORK:-zkverify}"
 # The space separated pallet list to benchmark (empty means all). Use the inent
 # version like `pallet_aggregate` and not the one with `-`
 PALLETS="${PALLETS:-}"
@@ -201,7 +203,7 @@ exlock_now || { echo -e "Error: this script cannot be run concurrently. Check no
 # this will trigger a docker build if needed
 # doing this before underclocking the CPU will be faster
 IS_BENCHMACHINE="false" ENABLE_PALLETS="false" ENABLE_OVERHEAD="false" ENABLE_MACHINE="false" \
-  sudo --preserve-env=IS_BENCHMACHINE,READ_IO,WRITE_IO,READ_BPS,WRITE_BPS,BENCH_BASE_PATH,DEVICE,USE_DOCKER,ENABLE_PALLETS,ENABLE_OVERHEAD,ENABLE_MACHINE,PALLETS,ECHO_CMD,ROOT_DIR,PALLETS \
+  sudo --preserve-env=IS_BENCHMACHINE,READ_IO,WRITE_IO,READ_BPS,WRITE_BPS,BENCH_BASE_PATH,DEVICE,USE_DOCKER,ENABLE_PALLETS,ENABLE_OVERHEAD,ENABLE_MACHINE,PALLETS,ECHO_CMD,ROOT_DIR \
   -u "${USER}" bash -c 'cd "${ROOT_DIR}"; "${ROOT_DIR}/scripts/run_all_benchmarks.sh"'
 
 # run benchmark
@@ -209,5 +211,5 @@ disable_swap
 setup_disk "${BENCH_BASE_PATH}" "${USER_ID}" "${GROUP_ID}"
 set_cpu "${cpu_profiles[${CPU_PROFILE}]}"
 BENCHMARK_STARTED="true"
-sudo --preserve-env=IS_BENCHMACHINE,READ_IO,WRITE_IO,READ_BPS,WRITE_BPS,BENCH_BASE_PATH,DEVICE,USE_DOCKER,ENABLE_PALLETS,ENABLE_OVERHEAD,ENABLE_MACHINE,PALLETS,ECHO_CMD,ROOT_DIR,PALLETS \
+sudo --preserve-env=IS_BENCHMACHINE,READ_IO,WRITE_IO,READ_BPS,WRITE_BPS,BENCH_BASE_PATH,DEVICE,USE_DOCKER,ENABLE_PALLETS,ENABLE_OVERHEAD,ENABLE_MACHINE,PALLETS,ECHO_CMD,ROOT_DIR,NETWORK \
   -u "${USER}" bash -c 'cd "${ROOT_DIR}"; "${ROOT_DIR}/scripts/run_all_benchmarks.sh"'

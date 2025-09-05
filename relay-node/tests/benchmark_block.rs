@@ -23,6 +23,7 @@ use nix::{
     sys::signal::{kill, Signal::SIGINT},
     unistd::Pid,
 };
+use rstest::rstest;
 use std::{
     path::Path,
     process::{self, Command},
@@ -34,12 +35,15 @@ use tempfile::tempdir;
 pub mod common;
 
 /// `benchmark block` works for all dev runtimes using the wasm executor.
+#[rstest]
+#[case::dev("dev")]
+#[case::volta("volta-dev")]
+#[case::zkverify("zkverify-dev")]
 #[tokio::test]
-async fn benchmark_block_works() {
+async fn benchmark_block_works(#[case] chain: &str) {
     run_with_timeout(Duration::from_secs(10 * 60), async move {
         let tmp_dir = tempdir().expect("could not create a temp dir");
         let base_path = tmp_dir.path();
-        let chain = "dev";
 
         // Build a chain with a single block.
         build_chain(chain, base_path).await;

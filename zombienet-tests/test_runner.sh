@@ -27,6 +27,18 @@ TOT_EXEC_TESTS=0
 TOT_FAIL_TESTS=0
 EXIT_STATUS=0
 
+NETWORK="${NETWORK:-zkverify}"
+
+if [[ "${NETWORK}" == "zkverify" ]]; then
+    CHAIN_NETWORK="zkverify-local"
+elif [[ "${NETWORK}" == "volta" ]]; then
+    CHAIN_NETWORK="volta-local"
+else
+    echo -e "${TXT_BIRED}ERROR: ${TXT_BIBLK}Unsupported network: ${NETWORK}. Supported networks are 'zkverify' and 'volta'.${TXT_NORML}"
+    exit 1
+fi
+export CHAIN_NETWORK
+
 # Check operating system and set variables for binary name
 OS="$(uname)"
 ARCH="$(uname -m)"
