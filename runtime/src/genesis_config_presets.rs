@@ -115,17 +115,6 @@ impl StakerData for Box<dyn StakerData> {
     }
 }
 
-impl StakerData for (AccountId, Balance) {
-    fn staker_data(&self) -> (AccountId, AccountId, Balance, StakerStatus<AccountId>) {
-        (
-            self.0.clone(),
-            self.0.clone(),
-            self.1,
-            StakerStatus::Validator,
-        )
-    }
-}
-
 /// Configure initial storage state for FRAME modules.
 #[allow(clippy::too_many_arguments)]
 fn genesis(
