@@ -171,35 +171,55 @@ impl<Model: InflationModel, Splitter: Get<Percent>> pallet_staking::EraPayout<Ba
     }
 }
 
-/// Logic for the author to get a portion of fees.
-pub struct ToAuthor<R>(core::marker::PhantomData<R>);
+pub trait AuthorResolve<AccountId> {
+    fn author() -> Option<AccountId>;
+}
 
-impl<R> OnUnbalanced<Credit<R::AccountId, pallet_balances::Pallet<R>>> for ToAuthor<R>
+impl<P: pallet_authorship::Config> AuthorResolve<<P as frame_system::Config>::AccountId>
+    for pallet_authorship::Pallet<P>
+{
+    fn author() -> Option<<P as frame_system::Config>::AccountId> {
+        <pallet_authorship::Pallet<P>>::author()
+    }
+}
+
+/// Logic for the author to get a portion of fees.
+pub struct ToAuthor<R, AuthorResolve>(core::marker::PhantomData<(R, AuthorResolve)>);
+
+impl<R, Author> OnUnbalanced<Credit<R::AccountId, pallet_balances::Pallet<R>>>
+    for ToAuthor<R, Author>
 where
-    R: pallet_balances::Config + pallet_authorship::Config,
+    R: pallet_balances::Config,
     <R as frame_system::Config>::AccountId: From<polkadot_primitives::AccountId>,
     <R as frame_system::Config>::AccountId: Into<polkadot_primitives::AccountId>,
+    Author: AuthorResolve<<R as frame_system::Config>::AccountId>,
 {
     fn on_nonzero_unbalanced(
         amount: Credit<<R as frame_system::Config>::AccountId, pallet_balances::Pallet<R>>,
     ) {
-        if let Some(author) = <pallet_authorship::Pallet<R>>::author() {
+        if let Some(author) = Author::author() {
             let _ = <pallet_balances::Pallet<R>>::resolve(&author, amount);
         }
     }
 }
-pub struct DealWithFees<R, FeesBurnSplit: Get<Percent>, FeesAuthorSplit: Get<Percent>>(
-    core::marker::PhantomData<(R, FeesBurnSplit, FeesAuthorSplit)>,
-);
-impl<R, FeesBurnSplit, FeesAuthorSplit>
+pub struct DealWithFees<
+    R,
+    FeesBurnSplit: Get<Percent>,
+    FeesAuthorSplit: Get<Percent>,
+    Author,
+    TreasuryAccount,
+>(core::marker::PhantomData<(R, FeesBurnSplit, FeesAuthorSplit, Author, TreasuryAccount)>);
+impl<R, FeesBurnSplit, FeesAuthorSplit, Author, TreasuryAccount>
     OnUnbalanced<Credit<R::AccountId, pallet_balances::Pallet<R>>>
-    for DealWithFees<R, FeesBurnSplit, FeesAuthorSplit>
+    for DealWithFees<R, FeesBurnSplit, FeesAuthorSplit, Author, TreasuryAccount>
 where
-    R: pallet_balances::Config + pallet_authorship::Config + pallet_treasury::Config,
+    R: pallet_balances::Config,
     <R as frame_system::Config>::AccountId: From<polkadot_primitives::AccountId>,
     <R as frame_system::Config>::AccountId: Into<polkadot_primitives::AccountId>,
     FeesBurnSplit: Get<Percent>,
     FeesAuthorSplit: Get<Percent>,
+    Author: AuthorResolve<<R as frame_system::Config>::AccountId>,
+    TreasuryAccount: sp_runtime::traits::TypedGet<Type = <R as frame_system::Config>::AccountId>,
 {
     fn on_unbalanceds(
         mut fees_then_tips: impl Iterator<Item = Credit<R::AccountId, pallet_balances::Pallet<R>>>,
@@ -216,8 +236,8 @@ where
                 // for tips, if any, 100% to author
                 tips.merge_into(&mut author);
             }
-            ResolveTo::<pallet_treasury::TreasuryAccountId<R>, pallet_balances::Pallet<R>>::on_unbalanced(treasury);
-            <ToAuthor<R> as OnUnbalanced<_>>::on_unbalanced(author);
+            ResolveTo::<TreasuryAccount, pallet_balances::Pallet<R>>::on_unbalanced(treasury);
+            <ToAuthor<R, Author> as OnUnbalanced<_>>::on_unbalanced(author);
         }
     }
 }
@@ -225,8 +245,14 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use frame_support::derive_impl;
+    use frame_support::pallet_prelude::ConstU32;
+    use frame_support::traits::fungible::Dust;
+    use frame_support::traits::ConstU128;
     use pallet_staking::EraPayout;
     use rstest::rstest;
+    use sp_runtime::traits::IdentityLookup;
+    use sp_runtime::BuildStorage;
 
     macro_rules! getter {
         ( const, $name:ident, $t:ty, $v:expr ) => {
@@ -410,5 +436,169 @@ mod tests {
                 "failed for {v}"
             );
         }
+    }
+
+    pub type Balance = u128;
+    pub type AccountId = polkadot_primitives::AccountId;
+
+    frame_support::construct_runtime!(
+        pub enum Runtime {
+            System: frame_system,
+            Balances: pallet_balances,
+        }
+    );
+
+    impl pallet_balances::Config for Runtime {
+        type MaxLocks = ConstU32<50>;
+        type MaxReserves = ();
+        type ReserveIdentifier = [u8; 8];
+        /// The type for recording an account's balance.
+        type Balance = Balance;
+        /// The ubiquitous event type.
+        type RuntimeEvent = RuntimeEvent;
+        type DustRemoval = ();
+        type ExistentialDeposit = ConstU128<1>;
+        type AccountStore = System;
+        type WeightInfo = ();
+        type FreezeIdentifier = ();
+        type MaxFreezes = ();
+        type RuntimeHoldReason = ();
+        type RuntimeFreezeReason = ();
+        type DoneSlashHandler = ();
+    }
+
+    #[derive_impl(frame_system::config_preludes::SolochainDefaultConfig as frame_system::DefaultConfig
+    )]
+    impl frame_system::Config for Runtime {
+        type AccountId = AccountId;
+        type Lookup = IdentityLookup<Self::AccountId>;
+        type Block = frame_system::mocking::MockBlockU32<Runtime>;
+        type AccountData = pallet_balances::AccountData<Balance>;
+    }
+
+    const AUTHOR: [u8; 32] = [1_u8; 32];
+    const TREASURY: [u8; 32] = [2_u8; 32];
+
+    struct ToAuthor;
+
+    impl AuthorResolve<AccountId> for ToAuthor {
+        fn author() -> Option<AccountId> {
+            Some(AUTHOR.into())
+        }
+    }
+
+    struct ToTreasury;
+
+    impl sp_runtime::traits::TypedGet for ToTreasury {
+        type Type = AccountId;
+        fn get() -> Self::Type {
+            TREASURY.into()
+        }
+    }
+
+    const AUTHOR_INITIAL_BALANCE: Balance = 1_000_000_000;
+    const TREASURY_INITIAL_BALANCE: Balance = 1_000_000_000_000;
+    static USERS: &[([u8; 32], Balance)] = &[
+        (AUTHOR, AUTHOR_INITIAL_BALANCE),
+        (TREASURY, TREASURY_INITIAL_BALANCE),
+    ];
+
+    // Build genesis storage according to the mock runtime.
+    pub fn test() -> sp_io::TestExternalities {
+        let mut t = frame_system::GenesisConfig::<Runtime>::default()
+            .build_storage()
+            .unwrap();
+        pallet_balances::GenesisConfig::<Runtime> {
+            balances: USERS
+                .iter()
+                .map(|(a, b)| (AccountId::from(*a), *b))
+                .collect(),
+        }
+        .assimilate_storage(&mut t)
+        .unwrap();
+
+        let mut ext = sp_io::TestExternalities::from(t);
+
+        ext.execute_with(|| {
+            System::set_block_number(1);
+        });
+        ext
+    }
+
+    #[test]
+    fn gen_deal_with_fee() {
+        getter!(FeesBurnSplit, Percent, Percent::from_percent(10));
+        getter!(FeesAuthorSplit, Percent, Percent::from_percent(70));
+
+        type D = DealWithFees<Runtime, FeesBurnSplit, FeesAuthorSplit, ToAuthor, ToTreasury>;
+
+        use frame_support::traits::OnUnbalanced;
+
+        test().execute_with(|| {
+            let start_issuance = Balances::total_issuance();
+            const FEE: Balance = 1000;
+            const TIP: Balance = 500;
+
+            D::on_unbalanceds(
+                vec![
+                    Dust::<AccountId, pallet_balances::Pallet<Runtime>>(FEE).into_credit(),
+                    Dust::<AccountId, pallet_balances::Pallet<Runtime>>(TIP).into_credit(),
+                ]
+                .into_iter(),
+            );
+
+            let expected_burn = FEE * 10 / 100; // 10% of fee
+            let remaining_fee = FEE - expected_burn;
+            let expected_treasury = remaining_fee * 30 / 100; // 30% of remaining fee
+            let expected_author = remaining_fee - expected_treasury + TIP; // 70% of remaining fee + full tip
+
+            assert_eq!(start_issuance - Balances::total_issuance(), expected_burn);
+            assert_eq!(
+                Balances::free_balance(&TREASURY.into()) - TREASURY_INITIAL_BALANCE,
+                expected_treasury
+            );
+            assert_eq!(
+                Balances::free_balance(&AUTHOR.into()) - AUTHOR_INITIAL_BALANCE,
+                expected_author
+            );
+        })
+    }
+
+    #[test]
+    fn trivial_deal_with_fee() {
+        getter!(FeesBurnSplit, Percent, Percent::from_percent(0));
+        getter!(FeesAuthorSplit, Percent, Percent::from_percent(100));
+
+        type D = DealWithFees<Runtime, FeesBurnSplit, FeesAuthorSplit, ToAuthor, ToTreasury>;
+
+        use frame_support::traits::OnUnbalanced;
+
+        test().execute_with(|| {
+            let start_issuance = Balances::total_issuance();
+            const FEE: Balance = 1000;
+            const TIP: Balance = 500;
+
+            D::on_unbalanceds(
+                vec![
+                    Dust::<AccountId, pallet_balances::Pallet<Runtime>>(FEE).into_credit(),
+                    Dust::<AccountId, pallet_balances::Pallet<Runtime>>(TIP).into_credit(),
+                ]
+                .into_iter(),
+            );
+
+            let expected_burn = 0;
+            let expected_treasury = 0;
+            let expected_author = FEE + TIP; // 70% of remaining fee + full tip
+
+            assert_eq!(Balances::total_issuance() - start_issuance, expected_burn);
+            assert_eq!(
+                Balances::free_balance(&AUTHOR.into()) - AUTHOR_INITIAL_BALANCE,
+                expected_author
+            );
+            assert_eq!(
+                Balances::free_balance(&TREASURY.into()) - TREASURY_INITIAL_BALANCE,
+                expected_treasury
+            );
+        })
     }
 }

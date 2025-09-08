@@ -46,6 +46,8 @@ polkadot-primitives = { workspace = true }
 
 [dev-dependencies]
 
+codec = { workspace = true }
+scale-info = { workspace = true, features = ["derive"] }
 rstest = { workspace = true }
 
 [features]

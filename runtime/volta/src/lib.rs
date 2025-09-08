@@ -92,6 +92,7 @@ use weights::block_weights::BlockExecutionWeight;
 use weights::extrinsic_weights::ExtrinsicBaseWeight;
 
 use pallet_transaction_payment::{FungibleAdapter, Multiplier, TargetedFeeAdjustment};
+use pallet_treasury::TreasuryAccountId;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
@@ -368,8 +369,13 @@ pub type ZKVFeeUpdate<R> = TargetedFeeAdjustment<
     MaximumMultiplier,
 >;
 
-pub type DealWithFees =
-    zkv_runtime_common::DealWithFees<Runtime, payout::FeesBurnSplit, payout::FeesAuthorSplit>;
+pub type DealWithFees = zkv_runtime_common::DealWithFees<
+    Runtime,
+    payout::FeesBurnSplit,
+    payout::FeesAuthorSplit,
+    Authorship,
+    TreasuryAccountId<Runtime>,
+>;
 
 impl pallet_transaction_payment::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
