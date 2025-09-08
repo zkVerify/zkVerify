@@ -33,9 +33,12 @@ fn benchmark_overhead_works(#[case] chain: &str) {
 /// `benchmark overhead` rejects all non-dev runtimes.
 #[rstest]
 #[case::default("")]
+#[case::zkverify_staging("testnet_build")]
 #[case::volta_staging("volta-staging")]
 #[case::volta("volta")]
+#[case::zkverify_staging("mainnet_build")]
 #[case::zkverify_staging("zkverify-staging")]
+#[case::zkverify("mainnet")]
 #[case::zkverify("zkverify")]
 fn benchmark_overhead_rejects_non_dev_runtimes(#[case] chain: &str) {
     assert!(benchmark_overhead(chain).is_err());

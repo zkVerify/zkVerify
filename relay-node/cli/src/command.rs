@@ -70,7 +70,7 @@ impl SubstrateCli for Cli {
         id: &str,
     ) -> std::result::Result<Box<dyn sc_service::ChainSpec + 'static>, String> {
         Ok(match id {
-            "" | "main" | "mainnetnet" | "zkverify" => {
+            "" | "main" | "mainnet" | "zkverify" => {
                 Box::new(service::chain_spec::ZkvChainSpec::from_json_bytes(
                     &include_bytes!("../chain-specs/zkverify.json")[..],
                 )?)
@@ -89,7 +89,9 @@ impl SubstrateCli for Cli {
             }
             "zkverify-dev" => Box::new(service::chain_spec::zkverify_development_config()?),
             "zkverify-local" => Box::new(service::chain_spec::zkverify_local_config()?),
-            "zkverify-staging" => Box::new(service::chain_spec::zkverify_staging_config()?),
+            "mainnet_build" | "zkverify-staging" => {
+                Box::new(service::chain_spec::zkverify_staging_config()?)
+            }
             path => Box::new(service::chain_spec::GenericChainSpec::from_json_file(
                 std::path::PathBuf::from(path),
             )?),
