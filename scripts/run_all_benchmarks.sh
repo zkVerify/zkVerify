@@ -47,7 +47,7 @@ ERR_FILE="${ERR_FILE:-${SOURCE_ROOT}/benchmarking_errors.txt}"
 if [ "${NETWORK}" == "zkverify" ]; then
   RUNTIME_CRATE="zkv-runtime"
 elif [ "${NETWORK}" == "volta" ]; then
-  RUNTIME_CRATE="zkv-runtime"
+  RUNTIME_CRATE="volta-runtime"
 else
   echo "[-] Unsupported NETWORK=${NETWORK}. Supported: zkverify, volta"
   exit 1
