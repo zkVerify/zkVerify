@@ -26,6 +26,14 @@ use pallet_ultrahonk_verifier::{Ultrahonk, VK_SIZE as ULTRAHONK_VK_SIZE};
 use pallet_ultraplonk_verifier::{Ultraplonk, VK_SIZE};
 use sp_core::{serde::Deserialize, serde::Serialize, Bytes, H256, U256};
 
+// In order to implement the vk-hash Rpc we need to use the Runtime definition of the Verifier.
+// The testnet verifier should be at least a superset of mainnet ones and the vk hash never really
+// depends on from the verifier configuration.
+// Anyway, a no-trivial refactoring is needed to remove the configuration dependency so we decided
+// to use the volta runtime as reference.
+// The case when a verifier was removed from testnet runtime but is still present in mainnet should
+// never happen, at least is wired because we should remove it from mainnet before. But, if that's
+// the case a use can run an older node and use it to compute the hash.
 use volta_runtime as runtime;
 
 type VkOf<V> = <V as Verifier>::Vk;
