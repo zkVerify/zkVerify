@@ -116,21 +116,6 @@ fn new_claim() {
 }
 
 #[test]
-fn new_claim_pays_no_fee() {
-    test().execute_with(|| {
-        assert_eq!(
-            Claim::begin_claim(
-                Origin::Signed(MANAGER_USER).into(),
-                EMPTY_BENEFICIARIES_MAP.clone()
-            )
-            .unwrap()
-            .pays_fee,
-            Pays::No
-        );
-    })
-}
-
-#[test]
 fn new_claim_wrong_origin() {
     test().execute_with(|| {
         assert_err!(
@@ -377,22 +362,6 @@ fn claim_for() {
 }
 
 #[test]
-fn claim_for_pays_no_fee() {
-    test_with_configs(
-        WithGenesisBeneficiaries::Yes,
-        GenesisClaimBalance::Sufficient,
-    )
-    .execute_with(|| {
-        assert_eq!(
-            Claim::claim_for(Origin::Signed(MANAGER_USER).into(), USER_1)
-                .unwrap()
-                .pays_fee,
-            Pays::No
-        );
-    });
-}
-
-#[test]
 fn claim_for_insufficient_balance() {
     // Should never happen
     test_with_configs(
@@ -539,26 +508,6 @@ fn add_beneficiaries_sufficient_funds() {
 }
 
 #[test]
-fn add_beneficiaries_pays_no_fee() {
-    test_with_configs(
-        WithGenesisBeneficiaries::Yes,
-        GenesisClaimBalance::Sufficient,
-    )
-    .execute_with(|| {
-        let _ = Balances::mint_into(&Claim::account_id(), NEW_SUFFICIENT_BALANCE).unwrap();
-        assert_eq!(
-            Claim::add_beneficiaries(
-                Origin::Signed(MANAGER_USER).into(),
-                NEW_BENEFICIARIES_MAP.clone()
-            )
-            .unwrap()
-            .pays_fee,
-            Pays::No
-        );
-    })
-}
-
-#[test]
 fn add_beneficiaries_insufficient_funds() {
     test_with_configs(
         WithGenesisBeneficiaries::Yes,
@@ -696,22 +645,6 @@ fn end_claim() {
                 Fortitude::Polite,
             ),
             SUFFICIENT_GENESIS_BALANCE * 2
-        );
-    });
-}
-
-#[test]
-fn end_claim_pays_no_fee() {
-    test_with_configs(
-        WithGenesisBeneficiaries::Yes,
-        GenesisClaimBalance::Sufficient,
-    )
-    .execute_with(|| {
-        assert_eq!(
-            Claim::end_claim(Origin::Signed(MANAGER_USER).into())
-                .unwrap()
-                .pays_fee,
-            Pays::No
         );
     });
 }

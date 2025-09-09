@@ -391,7 +391,7 @@ pub mod pallet {
         pub fn begin_claim(
             origin: OriginFor<T>,
             beneficiaries: BTreeMap<T::AccountId, BalanceOf<T>>,
-        ) -> DispatchResultWithPostInfo {
+        ) -> DispatchResult {
             T::ManagerOrigin::ensure_origin(origin)?;
 
             // Sanity check: we've removed all the beneficiaries
@@ -424,7 +424,7 @@ pub mod pallet {
                 Self::deposit_event(Event::<T>::ClaimStarted { claim_id });
             });
 
-            Ok(Pays::No.into())
+            Ok(())
         }
 
         /// Claim token claim for 'origin' and send the tokens to 'dest'.
@@ -446,11 +446,11 @@ pub mod pallet {
         /// Fails if 'dest' is not entitled to any claim.
         #[pallet::call_index(2)]
         #[pallet::weight(T::WeightInfo::claim_for())]
-        pub fn claim_for(origin: OriginFor<T>, dest: T::AccountId) -> DispatchResultWithPostInfo {
+        pub fn claim_for(origin: OriginFor<T>, dest: T::AccountId) -> DispatchResult {
             T::ManagerOrigin::ensure_origin(origin)?;
             Self::check_claim_status(true)?;
             Self::do_claim(dest, None)?;
-            Ok(Pays::No.into())
+            Ok(())
         }
 
         /// Add beneficiaries.
@@ -464,7 +464,7 @@ pub mod pallet {
         pub fn add_beneficiaries(
             origin: OriginFor<T>,
             beneficiaries: BTreeMap<T::AccountId, BalanceOf<T>>,
-        ) -> DispatchResultWithPostInfo {
+        ) -> DispatchResult {
             Self::check_claim_status(true)?;
             T::ManagerOrigin::ensure_origin(origin)?;
 
@@ -478,7 +478,7 @@ pub mod pallet {
                 Self::do_add_beneficiaries(beneficiaries)?;
             }
 
-            Ok(Pays::No.into())
+            Ok(())
         }
 
         /// End a claim. Storage variables will be cleared.
@@ -489,7 +489,7 @@ pub mod pallet {
         /// However, if there are more than T::MAX_OP_BENEFICIARIES, a subsequent call to 'remove_beneficiaries' must be made.
         #[pallet::call_index(4)]
         #[pallet::weight(T::WeightInfo::end_claim(u32::min(Beneficiaries::<T>::count(), T::MAX_OP_BENEFICIARIES)).saturating_add(T::DbWeight::get().reads(1_u64)))]
-        pub fn end_claim(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+        pub fn end_claim(origin: OriginFor<T>) -> DispatchResult {
             T::ManagerOrigin::ensure_origin(origin)?;
 
             // Set claim as inactive
@@ -520,14 +520,14 @@ pub mod pallet {
             // Start removing as many beneficiaries as possible
             Self::_remove_beneficiaries();
 
-            Ok(Pays::No.into())
+            Ok(())
         }
 
         /// Remove as many beneficiaries as possible from storage.
         /// Origin must be 'ManagerOrigin'.
         #[pallet::call_index(5)]
-        #[pallet::weight(T::WeightInfo::end_claim(u32::min(Beneficiaries::<T>::count(), T::MAX_OP_BENEFICIARIES)).saturating_add(T::DbWeight::get().reads(1_u64)))]
-        pub fn remove_beneficiaries(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+        #[pallet::weight(T::WeightInfo::remove_beneficiaries(u32::min(Beneficiaries::<T>::count(), T::MAX_OP_BENEFICIARIES)).saturating_add(T::DbWeight::get().reads(1_u64)))]
+        pub fn remove_beneficiaries(origin: OriginFor<T>) -> DispatchResult {
             T::ManagerOrigin::ensure_origin(origin)?;
 
             // Check claim inactive
@@ -536,7 +536,7 @@ pub mod pallet {
             // Remove as many beneficiaries as possible
             Self::_remove_beneficiaries();
 
-            Ok(Pays::No.into())
+            Ok(())
         }
     }
 }
