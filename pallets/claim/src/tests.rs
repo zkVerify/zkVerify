@@ -35,8 +35,8 @@ fn genesis_default_build() {
     test().execute_with(|| {
         assert!(Beneficiaries::<Test>::iter().next().is_none());
         assert_eq!(TotalClaimable::<Test>::get(), BalanceOf::<Test>::zero());
-        assert!(!AirdropActive::<Test>::get());
-        assert!(AirdropId::<Test>::get().is_none());
+        assert!(!ClaimActive::<Test>::get());
+        assert!(ClaimId::<Test>::get().is_none());
         assert_eq!(
             Balances::free_balance(Claim::account_id()),
             EXISTENTIAL_DEPOSIT
@@ -67,8 +67,8 @@ fn genesis_build_sufficient_balance() {
             GENESIS_BENEFICIARIES_MAP.clone()
         );
         assert_eq!(TotalClaimable::<Test>::get(), SUFFICIENT_GENESIS_BALANCE);
-        assert!(AirdropActive::<Test>::get());
-        assert_eq!(AirdropId::<Test>::get(), Some(0));
+        assert!(ClaimActive::<Test>::get());
+        assert_eq!(ClaimId::<Test>::get(), Some(0));
         assert_eq!(
             Balances::free_balance(Claim::account_id()),
             SUFFICIENT_GENESIS_BALANCE + EXISTENTIAL_DEPOSIT
@@ -96,17 +96,17 @@ fn account_id_as_expected() {
 }
 
 #[test]
-fn new_airdrop() {
+fn new_claim() {
     test().execute_with(|| {
-        assert_ok!(Claim::begin_airdrop(
+        assert_ok!(Claim::begin_claim(
             Origin::Signed(MANAGER_USER).into(),
             EMPTY_BENEFICIARIES_MAP.clone()
         ));
-        assert_evt(Event::AirdropStarted { airdrop_id: 0 }, "New airdrop");
+        assert_evt(Event::ClaimStarted { claim_id: 0 }, "New claim");
         assert!(Beneficiaries::<Test>::iter().next().is_none());
         assert_eq!(TotalClaimable::<Test>::get(), BalanceOf::<Test>::zero());
-        assert!(AirdropActive::<Test>::get());
-        assert_eq!(AirdropId::<Test>::get().unwrap(), 0);
+        assert!(ClaimActive::<Test>::get());
+        assert_eq!(ClaimId::<Test>::get().unwrap(), 0);
         assert_eq!(
             Balances::free_balance(Claim::account_id()),
             EXISTENTIAL_DEPOSIT
@@ -116,10 +116,10 @@ fn new_airdrop() {
 }
 
 #[test]
-fn new_airdrop_pays_no_fee() {
+fn new_claim_pays_no_fee() {
     test().execute_with(|| {
         assert_eq!(
-            Claim::begin_airdrop(
+            Claim::begin_claim(
                 Origin::Signed(MANAGER_USER).into(),
                 EMPTY_BENEFICIARIES_MAP.clone()
             )
@@ -131,50 +131,50 @@ fn new_airdrop_pays_no_fee() {
 }
 
 #[test]
-fn new_airdrop_wrong_origin() {
+fn new_claim_wrong_origin() {
     test().execute_with(|| {
         assert_err!(
-            Claim::begin_airdrop(
+            Claim::begin_claim(
                 Origin::Signed(USER_1).into(),
                 EMPTY_BENEFICIARIES_MAP.clone()
             ),
             BadOrigin
         );
-        assert_not_evt(Event::AirdropStarted { airdrop_id: 0 }, "No new airdrop");
+        assert_not_evt(Event::ClaimStarted { claim_id: 0 }, "No new claim");
     })
 }
 
 #[test]
-fn new_airdrop_sufficient_funds() {
+fn new_claim_sufficient_funds() {
     test_with_configs(
         WithGenesisBeneficiaries::No,
         GenesisClaimBalance::Sufficient,
     )
     .execute_with(|| {
-        assert_ok!(Claim::begin_airdrop(
+        assert_ok!(Claim::begin_claim(
             Origin::Signed(MANAGER_USER).into(),
             GENESIS_BENEFICIARIES_MAP.clone()
         ));
-        assert_evt(Event::AirdropStarted { airdrop_id: 0 }, "New airdrop");
+        assert_evt(Event::ClaimStarted { claim_id: 0 }, "New claim");
         assert_eq!(
             Beneficiaries::<Test>::iter().collect::<BTreeMap<_, _>>(),
             GENESIS_BENEFICIARIES_MAP.clone()
         );
         assert_eq!(TotalClaimable::<Test>::get(), SUFFICIENT_GENESIS_BALANCE);
-        assert!(AirdropActive::<Test>::get());
-        assert_eq!(AirdropId::<Test>::get(), Some(0));
+        assert!(ClaimActive::<Test>::get());
+        assert_eq!(ClaimId::<Test>::get(), Some(0));
     })
 }
 
 #[test]
-fn new_airdrop_insufficient_funds() {
+fn new_claim_insufficient_funds() {
     test_with_configs(
         WithGenesisBeneficiaries::No,
         GenesisClaimBalance::Insufficient,
     )
     .execute_with(|| {
         assert_noop!(
-            Claim::begin_airdrop(
+            Claim::begin_claim(
                 Origin::Signed(MANAGER_USER).into(),
                 GENESIS_BENEFICIARIES_MAP.clone()
             ),
@@ -184,14 +184,14 @@ fn new_airdrop_insufficient_funds() {
 }
 
 #[test]
-fn new_airdrop_adding_too_many_op_beneficiaries() {
+fn new_claim_adding_too_many_op_beneficiaries() {
     test_with_configs(
         WithGenesisBeneficiaries::No,
         GenesisClaimBalance::Sufficient,
     )
     .execute_with(|| {
         assert_noop!(
-            Claim::begin_airdrop(
+            Claim::begin_claim(
                 Origin::Signed(MANAGER_USER).into(),
                 utils::get_beneficiaries_map::<Test>(MaxOpBeneficiaries::get() + 1).0
             ),
@@ -201,21 +201,21 @@ fn new_airdrop_adding_too_many_op_beneficiaries() {
 }
 
 #[test]
-fn cannot_start_new_airdrop_if_one_already_in_progress() {
+fn cannot_start_new_claim_if_one_already_in_progress() {
     test().execute_with(|| {
-        assert_ok!(Claim::begin_airdrop(
+        assert_ok!(Claim::begin_claim(
             Origin::Signed(MANAGER_USER).into(),
             EMPTY_BENEFICIARIES_MAP.clone()
         ));
-        assert_evt(Event::AirdropStarted { airdrop_id: 0 }, "New airdrop");
+        assert_evt(Event::ClaimStarted { claim_id: 0 }, "New claim");
         assert_err!(
-            Claim::begin_airdrop(
+            Claim::begin_claim(
                 Origin::Signed(MANAGER_USER).into(),
                 GENESIS_BENEFICIARIES_MAP.clone()
             ),
             Error::<Test>::AlreadyStarted
         );
-        assert_not_evt(Event::AirdropStarted { airdrop_id: 1 }, "No new airdrop");
+        assert_not_evt(Event::ClaimStarted { claim_id: 1 }, "No new claim");
     })
 }
 
@@ -339,7 +339,7 @@ fn claim_insufficient_balance() {
 }
 
 #[test]
-fn cannot_claim_while_airdrop_inactive() {
+fn cannot_claim_while_claim_inactive() {
     test().execute_with(|| {
         assert_err!(
             Claim::claim(Origin::Signed(USER_1).into(), None),
@@ -355,7 +355,10 @@ fn claim_for() {
         GenesisClaimBalance::Sufficient,
     )
     .execute_with(|| {
-        assert_ok!(Claim::claim_for(Origin::None.into(), USER_1));
+        assert_ok!(Claim::claim_for(
+            Origin::Signed(MANAGER_USER).into(),
+            USER_1
+        ));
         assert_evt(
             Event::Claimed {
                 beneficiary: USER_1,
@@ -381,7 +384,7 @@ fn claim_for_pays_no_fee() {
     )
     .execute_with(|| {
         assert_eq!(
-            Claim::claim_for(Origin::None.into(), USER_1)
+            Claim::claim_for(Origin::Signed(MANAGER_USER).into(), USER_1)
                 .unwrap()
                 .pays_fee,
             Pays::No
@@ -399,7 +402,7 @@ fn claim_for_insufficient_balance() {
     .execute_with(|| {
         Beneficiaries::<Test>::insert(NON_BENEFICIARY, SUFFICIENT_GENESIS_BALANCE + 1);
         assert_err!(
-            Claim::claim_for(Origin::None.into(), NON_BENEFICIARY),
+            Claim::claim_for(Origin::Signed(MANAGER_USER).into(), NON_BENEFICIARY),
             TokenError::FundsUnavailable
         );
         assert_not_evt(
@@ -420,17 +423,17 @@ fn claim_for_wrong_beneficiary() {
     )
     .execute_with(|| {
         assert_noop!(
-            Claim::claim_for(Origin::None.into(), NON_BENEFICIARY),
+            Claim::claim_for(Origin::Signed(MANAGER_USER).into(), NON_BENEFICIARY),
             Error::<Test>::NotEligible
         );
     });
 }
 
 #[test]
-fn cannot_claim_for_while_airdrop_inactive() {
+fn cannot_claim_for_while_claim_inactive() {
     test().execute_with(|| {
         assert_err!(
-            Claim::claim_for(Origin::None.into(), USER_1),
+            Claim::claim_for(Origin::Signed(MANAGER_USER).into(), USER_1),
             Error::<Test>::AlreadyEnded
         );
     })
@@ -451,7 +454,7 @@ fn add_beneficiaries_wrong_origin() {
 }
 
 #[test]
-fn cannot_add_beneficiaries_while_airdrop_inactive() {
+fn cannot_add_beneficiaries_while_claim_inactive() {
     test().execute_with(|| {
         assert_err!(
             Claim::add_beneficiaries(
@@ -470,7 +473,7 @@ fn cannot_add_too_many_op_beneficiaries() {
         GenesisClaimBalance::Sufficient,
     )
     .execute_with(|| {
-        assert_ok!(Claim::begin_airdrop(
+        assert_ok!(Claim::begin_claim(
             Origin::Signed(MANAGER_USER).into(),
             EMPTY_BENEFICIARIES_MAP.clone()
         ));
@@ -593,7 +596,81 @@ fn cannot_add_already_existing_beneficiary() {
 }
 
 #[test]
-fn end_airdrop() {
+fn remove_beneficiaries_one_shot(){
+    let mut e = test();
+    
+    // Add MaxOpBeneficiaries + 1
+    e.execute_with(|| {
+        utils::get_beneficiaries_map::<Test>(MaxOpBeneficiaries::get())
+            .0
+            .into_iter()
+            .for_each(|account| Beneficiaries::<Test>::insert(account.0, account.1));
+    });
+    e.commit_all().unwrap();
+
+    e.execute_with(|| {
+        // First remove call should succeed but be insufficient
+        assert_ok!(Claim::remove_beneficiaries(
+            Origin::Signed(MANAGER_USER).into()
+        ));
+        assert_evt(Event::NoMoreBeneficiaries, "No more beneficiaries");
+        assert_eq!(Beneficiaries::<Test>::count(), 0);
+    });
+}
+
+#[test]
+fn remove_beneficiaries() {
+    let mut e = test();
+    
+    // Add MaxOpBeneficiaries + 1
+    e.execute_with(|| {
+        utils::get_beneficiaries_map::<Test>(MaxOpBeneficiaries::get() + 1)
+            .0
+            .into_iter()
+            .for_each(|account| Beneficiaries::<Test>::insert(account.0, account.1));
+    });
+    e.commit_all().unwrap();
+
+    e.execute_with(|| {
+        // First remove call should succeed but be insufficient
+        assert_ok!(Claim::remove_beneficiaries(
+            Origin::Signed(MANAGER_USER).into()
+        ));
+        let remaining = MaxBeneficiaries::get() - MaxOpBeneficiaries::get();
+        assert_evt(
+            Event::BeneficiariesRemoved { remaining },
+            "Beneficiaries removed",
+        );
+        assert_eq!(Beneficiaries::<Test>::count(), remaining);
+    });
+}
+
+#[test]
+fn cannot_remove_beneficiaries_if_claim_in_progress() {
+    test().execute_with(|| {
+        Claim::begin_claim(
+            Origin::Signed(MANAGER_USER).into(),
+            EMPTY_BENEFICIARIES_MAP.clone()
+        ).unwrap();
+        assert_noop!(
+            Claim::remove_beneficiaries(Origin::Signed(MANAGER_USER).into()),
+            Error::<Test>::AlreadyStarted
+        );
+    })
+}
+
+#[test]
+fn remove_beneficiaries_bad_origin() {
+    test().execute_with(|| {
+        assert_noop!(
+            Claim::remove_beneficiaries(Origin::Signed(USER_1).into()),
+            BadOrigin
+        );
+    })
+}
+
+#[test]
+fn end_claim() {
     test_with_configs(
         WithGenesisBeneficiaries::Yes,
         GenesisClaimBalance::Sufficient,
@@ -601,8 +678,10 @@ fn end_airdrop() {
     .execute_with(|| {
         // Give other balance. Now Self::pot() == SUFFICIENT_GENESIS_BALANCE * 2
         let _ = Balances::mint_into(&Claim::account_id(), SUFFICIENT_GENESIS_BALANCE).unwrap();
-        assert_ok!(Claim::end_airdrop(Origin::Signed(MANAGER_USER).into()));
-        assert!(!AirdropActive::<Test>::get());
+        assert_ok!(Claim::end_claim(Origin::Signed(MANAGER_USER).into()));
+        assert_evt(Event::ClaimEnded { claim_id: 0 }, "Claim finished");
+
+        assert!(!ClaimActive::<Test>::get());
         assert!(Beneficiaries::<Test>::iter().next().is_none());
         assert_eq!(Claim::pot(), 0);
         assert_eq!(
@@ -622,14 +701,14 @@ fn end_airdrop() {
 }
 
 #[test]
-fn end_airdrop_pays_no_fee() {
+fn end_claim_pays_no_fee() {
     test_with_configs(
         WithGenesisBeneficiaries::Yes,
         GenesisClaimBalance::Sufficient,
     )
     .execute_with(|| {
         assert_eq!(
-            Claim::end_airdrop(Origin::Signed(MANAGER_USER).into())
+            Claim::end_claim(Origin::Signed(MANAGER_USER).into())
                 .unwrap()
                 .pays_fee,
             Pays::No
@@ -638,49 +717,50 @@ fn end_airdrop_pays_no_fee() {
 }
 
 #[test]
-fn end_airdrop_wrong_origin() {
+fn end_claim_wrong_origin() {
     test_with_configs(
         WithGenesisBeneficiaries::Yes,
         GenesisClaimBalance::Sufficient,
     )
     .execute_with(|| {
-        assert_err!(Claim::end_airdrop(Origin::Signed(USER_1).into()), BadOrigin);
-        assert_not_evt(Event::AirdropEnded { airdrop_id: 0 }, "No end airdrop");
+        assert_err!(Claim::end_claim(Origin::Signed(USER_1).into()), BadOrigin);
+        assert_not_evt(Event::ClaimEnded { claim_id: 0 }, "No end claim");
     })
 }
 
 #[test]
-fn double_end_airdrop() {
+fn double_end_claim() {
     test_with_configs(
         WithGenesisBeneficiaries::Yes,
         GenesisClaimBalance::Sufficient,
     )
     .execute_with(|| {
-        assert_ok!(Claim::end_airdrop(Origin::Signed(MANAGER_USER).into()));
+        assert_ok!(Claim::end_claim(Origin::Signed(MANAGER_USER).into()));
         assert_err!(
-            Claim::end_airdrop(Origin::Signed(MANAGER_USER).into()),
+            Claim::end_claim(Origin::Signed(MANAGER_USER).into()),
             Error::<Test>::AlreadyEnded
         );
     });
 }
 
 #[test]
-fn end_airdrop_new_airdrop() {
+fn end_claim_new_claim() {
     test_with_configs(
         WithGenesisBeneficiaries::Yes,
         GenesisClaimBalance::Sufficient,
     )
     .execute_with(|| {
-        assert_ok!(Claim::end_airdrop(Origin::Signed(MANAGER_USER).into()));
-        assert_ok!(Claim::begin_airdrop(
+        assert_ok!(Claim::end_claim(Origin::Signed(MANAGER_USER).into()));
+
+        assert_ok!(Claim::begin_claim(
             Origin::Signed(MANAGER_USER).into(),
             EMPTY_BENEFICIARIES_MAP.clone()
         ));
-        assert_evt(Event::AirdropStarted { airdrop_id: 1 }, "New airdrop");
+        assert_evt(Event::ClaimStarted { claim_id: 1 }, "New claim");
         assert!(Beneficiaries::<Test>::iter().next().is_none());
         assert_eq!(TotalClaimable::<Test>::get(), BalanceOf::<Test>::zero());
-        assert!(AirdropActive::<Test>::get());
-        assert_eq!(AirdropId::<Test>::get(), Some(1));
+        assert!(ClaimActive::<Test>::get());
+        assert_eq!(ClaimId::<Test>::get(), Some(1));
         assert_eq!(
             Balances::free_balance(Claim::account_id()),
             EXISTENTIAL_DEPOSIT
@@ -690,9 +770,12 @@ fn end_airdrop_new_airdrop() {
 }
 
 #[test]
-fn cannot_end_airdrop_if_too_many_beneficiaries() {
-    test().execute_with(|| {
-        assert_ok!(Claim::begin_airdrop(
+fn end_claim_with_remaining_benificiaries() {
+    let mut e = test();
+
+    e.execute_with(|| {
+        // Add MaxOpBeneficiaries
+        assert_ok!(Claim::begin_claim(
             Origin::Signed(MANAGER_USER).into(),
             EMPTY_BENEFICIARIES_MAP.clone()
         ));
@@ -703,17 +786,38 @@ fn cannot_end_airdrop_if_too_many_beneficiaries() {
             Origin::Signed(MANAGER_USER).into(),
             utils::get_beneficiaries_map::<Test>(MaxOpBeneficiaries::get()).0
         ));
+    });
+    e.commit_all().unwrap();
 
+    e.execute_with(|| {
+        // End claim. All the beneficiaries should've been removed
+        assert_ok!(Claim::end_claim(Origin::Signed(MANAGER_USER).into()));
+        assert_evt(Event::ClaimEnded { claim_id: 0 }, "Claim finished");
+        assert_evt(Event::NoMoreBeneficiaries, "No more beneficiaries");
+        assert_eq!(Beneficiaries::<Test>::count(), 0);
+    });
+}
+
+#[test]
+fn cannot_init_new_claim_if_leftovers_benificiaries() {
+    test().execute_with(|| {
         Beneficiaries::<Test>::insert(USER_6, USER_6_AMOUNT);
 
         assert_noop!(
-            Claim::end_airdrop(Origin::Signed(MANAGER_USER).into(),),
-            Error::<Test>::TooManyBeneficiaries
+            Claim::begin_claim(
+                Origin::Signed(MANAGER_USER).into(),
+                EMPTY_BENEFICIARIES_MAP.clone()
+            ),
+            Error::<Test>::NonEmptyBeneficiaries
         );
 
-        // Remove 1
+        // Remove beneficiary and try again
         Beneficiaries::<Test>::remove(USER_6);
 
-        assert_ok!(Claim::end_airdrop(Origin::Signed(MANAGER_USER).into()));
+        assert_ok!(Claim::begin_claim(
+            Origin::Signed(MANAGER_USER).into(),
+            EMPTY_BENEFICIARIES_MAP.clone()
+        ));
+        assert_evt(Event::ClaimStarted { claim_id: 0 }, "New claim");
     })
 }
