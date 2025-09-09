@@ -192,8 +192,8 @@ parameter_types! {
     pub BlockLength: frame_system::limits::BlockLength = frame_system::limits::BlockLength
         ::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
 
-    // ASCII for 'Z'+'K'+'V'
-    pub const SS58Prefix: u8 = 251;
+    // Set output address to start with ZK and sometime the third is v (since 17%)'
+    pub const SS58Prefix: u16 = 8741;
 }
 
 /// The default types are being injected by [`derive_impl`](`frame_support::derive_impl`) from

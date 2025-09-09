@@ -33,13 +33,25 @@ async function run(nodeName, networkInfo, args) {
     const bob = keyring.addFromUri('//Bob');
     const charlie = keyring.addFromUri('//Charlie');
 
+    let wasm;
+    let ss58Prefix;
+    if (chain.toString().startsWith("Volta ")) {
+        wasm = fs.readFileSync('./new-runtime/volta_runtime.wasm');
+        ss58Prefix = 251;
+    } else if (chain.toString().startsWith("Zkverify ")) {
+        wasm = fs.readFileSync('./new-runtime/zkv_runtime.wasm');
+        ss58Prefix = 8741;
+    } else {
+        console.log(`Unsupported chain ${chain}, only Volta and Zkverify are supported`);
+        return ReturnCode.ErrUnsupportedNetwork;
+    }
+
     /*****************************************************************************************************
      *************************************** CREATE MULTISIG ACCOUNT *************************************
      *****************************************************************************************************/
     const threshold = 2;
     const multisigAddress = util.createKeyMulti([alice.address, bob.address, charlie.address], threshold);
-    const SS58Prefix = 251;
-    const Ss58MultiAddress = util.encodeAddress(multisigAddress, SS58Prefix);
+    const Ss58MultiAddress = util.encodeAddress(multisigAddress, ss58Prefix);
     console.log(`multisigAddress ${Ss58MultiAddress}`);
 
 
@@ -67,15 +79,6 @@ async function run(nodeName, networkInfo, args) {
 
     // Retrieve the runtime to upgrade
     const sudoAccount = await api.query.sudo.key()
-    let wasm;
-    if (chain.toString().startsWith("Volta ")) {
-        wasm = fs.readFileSync('./new-runtime/volta_runtime.wasm');
-    } else if (chain.toString().startsWith("Zkverify ")) {
-        wasm = fs.readFileSync('./new-runtime/zkv_runtime.wasm');
-    } else {
-        console.log(`Unsupported chain ${chain}, only Volta and Zkverify are supported`);
-        return ReturnCode.ErrUnsupportedNetwork;
-    }
 
     const code = wasm.toString('hex');
     const updateRuntimeCall = api.tx.system.setCode(`0x${code}`);

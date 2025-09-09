@@ -101,6 +101,7 @@ pub use sc_service::{
 };
 pub use sp_api::{ApiRef, ConstructRuntimeApi, Core as CoreApi, ProvideRuntimeApi};
 pub use sp_consensus::{Proposal, SelectChain};
+use sp_core::crypto::{default_ss58_version, Ss58AddressFormat};
 pub use sp_runtime::{
     generic,
     traits::{self as runtime_traits, BlakeTwo256, Block as BlockT, Header as HeaderT, NumberFor},
@@ -254,6 +255,16 @@ pub enum Chain {
     Unknown,
 }
 
+impl Chain {
+    pub fn ss58_format(&self) -> Ss58AddressFormat {
+        match self {
+            Chain::Volta => volta_runtime::SS58Prefix::get().into(),
+            Chain::ZkVerify => zkv_runtime::SS58Prefix::get().into(),
+            Chain::Unknown => default_ss58_version(),
+        }
+    }
+}
+
 /// Can be called for a `Configuration` to identify which network the configuration targets.
 pub trait IdentifyVariant {
     /// Returns true if this is a configuration for the `Volta` network.
@@ -269,7 +280,7 @@ pub trait IdentifyVariant {
     fn identify_chain(&self) -> Chain;
 }
 
-impl IdentifyVariant for Box<dyn ChainSpec> {
+impl IdentifyVariant for &dyn ChainSpec {
     fn is_volta(&self) -> bool {
         self.id().starts_with("nh_testnet")
             || self.id().starts_with("volta")
@@ -292,6 +303,24 @@ impl IdentifyVariant for Box<dyn ChainSpec> {
         } else {
             Chain::Unknown
         }
+    }
+}
+
+impl IdentifyVariant for Box<dyn ChainSpec> {
+    fn is_volta(&self) -> bool {
+        self.as_ref().is_volta()
+    }
+
+    fn is_zkverify(&self) -> bool {
+        self.as_ref().is_zkverify()
+    }
+
+    fn is_dev(&self) -> bool {
+        self.as_ref().is_dev()
+    }
+
+    fn identify_chain(&self) -> Chain {
+        self.as_ref().identify_chain()
     }
 }
 

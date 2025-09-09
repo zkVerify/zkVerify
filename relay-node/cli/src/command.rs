@@ -99,8 +99,9 @@ impl SubstrateCli for Cli {
     }
 }
 
-fn set_default_ss58_version(_spec: &dyn service::ChainSpec) {
-    sp_core::crypto::set_default_ss58_version(volta_runtime::SS58Prefix::get().into());
+fn set_default_ss58_version(spec: &dyn service::ChainSpec) {
+    use service::IdentifyVariant;
+    sp_core::crypto::set_default_ss58_version(spec.identify_chain().ss58_format());
 }
 
 fn run_node_inner<F>(

@@ -193,18 +193,18 @@ pub fn staging_config_genesis() -> Result<serde_json::Value, sp_core::crypto::Pu
     let nominators: &[NominatorData] = &[];
 
     let sudo_account = FundedAccount::from_id(
-        "5GReicw1vfMB4Pq9vZfhPc2epjRkAtM1Zch5c3Z5gxfmzM7k",
+        "5HU42dXPz3fde26hv6LzJRpuXbnktrY3oYZFSTnYawdfCRcB",
         SUDO_BALANCE,
     )?;
 
     let administrative_account = [
         FundedAccount::from_id(
-            "5HianRRmyp6HgfTFvbmobPX5YrvzyWRvjeqcWmMMBweEaa6m",
+            "5F6U2FsQQndhFnszdmA5ibHGiHatQ9MRxy3PtxK8arSkXJJf",
             DEV_WALLET_BALANCE,
         )?,
         // Dev Wallet 2 HL
         FundedAccount::from_id(
-            "5H4Rcaj63MBL3fuYNoMuM6XFY2EvAPKD4PasFyCCZA4WrAH3",
+            "5DnhJzvueoHbpYe5LLaLKeEZBEjHMs6wba7JCgd8iTDLpc1w",
             DEV_WALLET_BALANCE,
         )?,
     ];
