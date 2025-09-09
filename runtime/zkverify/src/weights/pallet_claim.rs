@@ -58,8 +58,8 @@ use crate::parachains;
 pub struct ZKVWeight<T>(PhantomData<T>);
 
 impl<T: frame_system::Config> pallet_claim::WeightInfo for ZKVWeight<T> {
-    /// Storage: `Claim::AirdropActive` (r:1 w:1)
-    /// Proof: `Claim::AirdropActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
+    /// Storage: `Claim::ClaimActive` (r:1 w:1)
+    /// Proof: `Claim::ClaimActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
     /// Storage: `Claim::PalletAccountId` (r:1 w:0)
     /// Proof: `Claim::PalletAccountId` (`max_values`: Some(1), `max_size`: Some(32), added: 527, mode: `MaxEncodedLen`)
     /// Storage: `System::Account` (r:1 w:0)
@@ -70,10 +70,10 @@ impl<T: frame_system::Config> pallet_claim::WeightInfo for ZKVWeight<T> {
     /// Proof: `Claim::Beneficiaries` (`max_values`: None, `max_size`: Some(56), added: 2531, mode: `MaxEncodedLen`)
     /// Storage: `Claim::CounterForBeneficiaries` (r:1 w:1)
     /// Proof: `Claim::CounterForBeneficiaries` (`max_values`: Some(1), `max_size`: Some(4), added: 499, mode: `MaxEncodedLen`)
-    /// Storage: `Claim::AirdropId` (r:1 w:1)
-    /// Proof: `Claim::AirdropId` (`max_values`: Some(1), `max_size`: Some(8), added: 503, mode: `MaxEncodedLen`)
+    /// Storage: `Claim::ClaimId` (r:1 w:1)
+    /// Proof: `Claim::ClaimId` (`max_values`: Some(1), `max_size`: Some(8), added: 503, mode: `MaxEncodedLen`)
     /// The range of component `n` is `[0, 100000]`.
-    fn begin_airdrop(n: u32, ) -> Weight {
+    fn begin_claim(n: u32, ) -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `199`
         //  Estimated: `3593 + n * (2531 ±0)`
@@ -87,8 +87,8 @@ impl<T: frame_system::Config> pallet_claim::WeightInfo for ZKVWeight<T> {
             .saturating_add(T::DbWeight::get().writes((1_u64).saturating_mul(n.into())))
             .saturating_add(Weight::from_parts(0, 2531).saturating_mul(n.into()))
     }
-    /// Storage: `Claim::AirdropActive` (r:1 w:0)
-    /// Proof: `Claim::AirdropActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
+    /// Storage: `Claim::ClaimActive` (r:1 w:0)
+    /// Proof: `Claim::ClaimActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
     /// Storage: `Claim::Beneficiaries` (r:1 w:1)
     /// Proof: `Claim::Beneficiaries` (`max_values`: None, `max_size`: Some(56), added: 2531, mode: `MaxEncodedLen`)
     /// Storage: `Claim::PalletAccountId` (r:1 w:0)
@@ -108,8 +108,8 @@ impl<T: frame_system::Config> pallet_claim::WeightInfo for ZKVWeight<T> {
             .saturating_add(T::DbWeight::get().reads(6_u64))
             .saturating_add(T::DbWeight::get().writes(4_u64))
     }
-    /// Storage: `Claim::AirdropActive` (r:1 w:0)
-    /// Proof: `Claim::AirdropActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
+    /// Storage: `Claim::ClaimActive` (r:1 w:0)
+    /// Proof: `Claim::ClaimActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
     /// Storage: `Claim::Beneficiaries` (r:1 w:1)
     /// Proof: `Claim::Beneficiaries` (`max_values`: None, `max_size`: Some(56), added: 2531, mode: `MaxEncodedLen`)
     /// Storage: `Claim::PalletAccountId` (r:1 w:0)
@@ -129,8 +129,8 @@ impl<T: frame_system::Config> pallet_claim::WeightInfo for ZKVWeight<T> {
             .saturating_add(T::DbWeight::get().reads(7_u64))
             .saturating_add(T::DbWeight::get().writes(5_u64))
     }
-    /// Storage: `Claim::AirdropActive` (r:1 w:0)
-    /// Proof: `Claim::AirdropActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
+    /// Storage: `Claim::ClaimActive` (r:1 w:0)
+    /// Proof: `Claim::ClaimActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
     /// Storage: `Claim::CounterForBeneficiaries` (r:1 w:1)
     /// Proof: `Claim::CounterForBeneficiaries` (`max_values`: Some(1), `max_size`: Some(4), added: 499, mode: `MaxEncodedLen`)
     /// Storage: `Claim::PalletAccountId` (r:1 w:0)
@@ -156,8 +156,8 @@ impl<T: frame_system::Config> pallet_claim::WeightInfo for ZKVWeight<T> {
             .saturating_add(T::DbWeight::get().writes((1_u64).saturating_mul(n.into())))
             .saturating_add(Weight::from_parts(0, 2531).saturating_mul(n.into()))
     }
-    /// Storage: `Claim::AirdropActive` (r:1 w:1)
-    /// Proof: `Claim::AirdropActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
+    /// Storage: `Claim::ClaimActive` (r:1 w:1)
+    /// Proof: `Claim::ClaimActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
     /// Storage: `Claim::CounterForBeneficiaries` (r:1 w:1)
     /// Proof: `Claim::CounterForBeneficiaries` (`max_values`: Some(1), `max_size`: Some(4), added: 499, mode: `MaxEncodedLen`)
     /// Storage: `Claim::Beneficiaries` (r:100000 w:100000)
@@ -166,12 +166,12 @@ impl<T: frame_system::Config> pallet_claim::WeightInfo for ZKVWeight<T> {
     /// Proof: `Claim::PalletAccountId` (`max_values`: Some(1), `max_size`: Some(32), added: 527, mode: `MaxEncodedLen`)
     /// Storage: `System::Account` (r:2 w:2)
     /// Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
-    /// Storage: `Claim::AirdropId` (r:1 w:0)
-    /// Proof: `Claim::AirdropId` (`max_values`: Some(1), `max_size`: Some(8), added: 503, mode: `MaxEncodedLen`)
+    /// Storage: `Claim::ClaimId` (r:1 w:0)
+    /// Proof: `Claim::ClaimId` (`max_values`: Some(1), `max_size`: Some(8), added: 503, mode: `MaxEncodedLen`)
     /// Storage: `Claim::TotalClaimable` (r:0 w:1)
     /// Proof: `Claim::TotalClaimable` (`max_values`: Some(1), `max_size`: Some(16), added: 511, mode: `MaxEncodedLen`)
     /// The range of component `n` is `[1, 100000]`.
-    fn end_airdrop(n: u32, ) -> Weight {
+    fn end_claim(n: u32, ) -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `0 + n * (60 ±0)`
         //  Estimated: `6196 + n * (2531 ±0)`

@@ -19,10 +19,7 @@ use frame_benchmarking::v2::*;
 use frame_system::RawOrigin;
 use sp_runtime::Saturating;
 
-fn init_airdrop_state<T: Config>(
-    n: u32,
-    begin_airdrop: bool,
-) -> BTreeMap<T::AccountId, BalanceOf<T>> {
+fn init_claim_state<T: Config>(n: u32, begin_claim: bool) -> BTreeMap<T::AccountId, BalanceOf<T>> {
     let (beneficiaries, total_amount) = get_beneficiaries_map::<T>(n);
     let _ = T::Currency::mint_into(
         &Pallet::<T>::account_id(),
@@ -30,8 +27,8 @@ fn init_airdrop_state<T: Config>(
     )
     .unwrap();
 
-    if begin_airdrop {
-        Pallet::<T>::begin_airdrop(RawOrigin::Root.into(), beneficiaries.clone()).unwrap();
+    if begin_claim {
+        Pallet::<T>::begin_claim(RawOrigin::Root.into(), beneficiaries.clone()).unwrap();
     }
     beneficiaries
 }
@@ -42,16 +39,16 @@ mod benchmarks {
     use super::*;
 
     #[benchmark]
-    fn begin_airdrop(n: Linear<0, <T as Config>::MAX_OP_BENEFICIARIES>) {
-        let beneficiaries = init_airdrop_state::<T>(n, false);
+    fn begin_claim(n: Linear<0, <T as Config>::MAX_OP_BENEFICIARIES>) {
+        let beneficiaries = init_claim_state::<T>(n, false);
 
         #[extrinsic_call]
-        begin_airdrop(RawOrigin::Root, beneficiaries);
+        begin_claim(RawOrigin::Root, beneficiaries);
     }
 
     #[benchmark]
     fn claim() {
-        let _ = init_airdrop_state::<T>(<T as Config>::MAX_OP_BENEFICIARIES, true);
+        let _ = init_claim_state::<T>(<T as Config>::MAX_OP_BENEFICIARIES, true);
 
         let beneficiary: T::AccountId = account("", 10, 10);
         assert!(Beneficiaries::<T>::get(beneficiary.clone()).is_some());
@@ -67,13 +64,13 @@ mod benchmarks {
 
     #[benchmark]
     fn claim_for() {
-        let _ = init_airdrop_state::<T>(<T as Config>::MAX_OP_BENEFICIARIES, true);
+        let _ = init_claim_state::<T>(<T as Config>::MAX_OP_BENEFICIARIES, true);
 
         let beneficiary: T::AccountId = account("", 10, 10);
         assert!(Beneficiaries::<T>::get(beneficiary.clone()).is_some());
 
         #[extrinsic_call]
-        claim_for(RawOrigin::None, beneficiary.clone());
+        claim_for(RawOrigin::Root, beneficiary.clone());
 
         // sanity check
         assert!(Beneficiaries::<T>::get(beneficiary).is_none());
@@ -81,8 +78,8 @@ mod benchmarks {
 
     #[benchmark]
     fn add_beneficiaries(n: Linear<1, <T as Config>::MAX_OP_BENEFICIARIES>) {
-        // Init airdrop
-        Pallet::<T>::begin_airdrop(RawOrigin::Root.into(), BTreeMap::new()).unwrap();
+        // Init claim
+        Pallet::<T>::begin_claim(RawOrigin::Root.into(), BTreeMap::new()).unwrap();
 
         // Prepare beneficiaries and sufficient amount
         let (beneficiaries, total_amount) = get_beneficiaries_map::<T>(n);
@@ -97,11 +94,31 @@ mod benchmarks {
     }
 
     #[benchmark]
-    fn end_airdrop(n: Linear<1, <T as Config>::MAX_OP_BENEFICIARIES>) {
-        let _ = init_airdrop_state::<T>(n, true);
+    fn end_claim(n: Linear<1, <T as Config>::MAX_OP_BENEFICIARIES>) {
+        let _ = init_claim_state::<T>(n, true);
 
         #[extrinsic_call]
-        end_airdrop(RawOrigin::Root);
+        end_claim(RawOrigin::Root);
+
+        assert_eq!(Beneficiaries::<T>::count(), 0);
+    }
+
+    #[benchmark]
+    fn remove_beneficiaries(n: Linear<1, <T as Config>::MAX_OP_BENEFICIARIES>) {
+        let (beneficiaries, _) =
+            get_beneficiaries_map::<T>(n + <T as Config>::MAX_OP_BENEFICIARIES);
+        beneficiaries
+            .into_iter()
+            .for_each(|(account, amount)| Beneficiaries::<T>::insert(account, amount));
+        assert_eq!(
+            Beneficiaries::<T>::count(),
+            n + <T as Config>::MAX_OP_BENEFICIARIES
+        );
+
+        #[extrinsic_call]
+        remove_beneficiaries(RawOrigin::Root);
+
+        assert_eq!(Beneficiaries::<T>::count(), 0);
     }
 
     #[cfg(test)]
