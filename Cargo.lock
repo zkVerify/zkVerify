@@ -22561,7 +22561,6 @@ dependencies = [
  "pallet-authorship",
  "pallet-balances",
  "pallet-staking",
- "pallet-treasury",
  "parity-scale-codec",
  "polkadot-primitives",
  "rstest",

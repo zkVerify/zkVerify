@@ -41,7 +41,6 @@ frame-system = { workspace = true, default-features = false }
 pallet-authorship = { workspace = true, default-features = false }
 pallet-balances = { workspace = true, default-features = false }
 pallet-staking = { workspace = true, default-features = false }
-pallet-treasury = { workspace = true, default-features = false }
 polkadot-primitives = { workspace = true }
 
 [dev-dependencies]
@@ -59,7 +58,6 @@ runtime-benchmarks = [
 	"sp-staking/runtime-benchmarks",
 	"pallet-balances/runtime-benchmarks",
 	"pallet-staking/runtime-benchmarks",
-	"pallet-treasury/runtime-benchmarks",
 ]
 fast-runtime = []
 default = [ "std" ]
@@ -75,7 +73,6 @@ std = [
 	"pallet-authorship/std",
 	"pallet-balances/std",
 	"pallet-staking/std",
-	"pallet-treasury/std",
 	"polkadot-primitives/std",
 	"scale-info/std",
 	"sp-api/std",
@@ -97,5 +94,4 @@ try-runtime = [
 	"pallet-authorship/try-runtime",
 	"pallet-balances/try-runtime",
 	"pallet-staking/try-runtime",
-	"pallet-treasury/try-runtime",
 ]

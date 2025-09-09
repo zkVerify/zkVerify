@@ -554,11 +554,11 @@ mod tests {
 
             assert_eq!(start_issuance - Balances::total_issuance(), expected_burn);
             assert_eq!(
-                Balances::free_balance(&TREASURY.into()) - TREASURY_INITIAL_BALANCE,
+                Balances::free_balance(AccountId::from(TREASURY)) - TREASURY_INITIAL_BALANCE,
                 expected_treasury
             );
             assert_eq!(
-                Balances::free_balance(&AUTHOR.into()) - AUTHOR_INITIAL_BALANCE,
+                Balances::free_balance(AccountId::from(AUTHOR)) - AUTHOR_INITIAL_BALANCE,
                 expected_author
             );
         })
@@ -592,11 +592,11 @@ mod tests {
 
             assert_eq!(Balances::total_issuance() - start_issuance, expected_burn);
             assert_eq!(
-                Balances::free_balance(&AUTHOR.into()) - AUTHOR_INITIAL_BALANCE,
+                Balances::free_balance(AccountId::from(AUTHOR)) - AUTHOR_INITIAL_BALANCE,
                 expected_author
             );
             assert_eq!(
-                Balances::free_balance(&TREASURY.into()) - TREASURY_INITIAL_BALANCE,
+                Balances::free_balance(AccountId::from(TREASURY)) - TREASURY_INITIAL_BALANCE,
                 expected_treasury
             );
         })
