@@ -1,7 +1,7 @@
 [package]
 name = "pallet-claim"
 version = "0.1.0"
-description = "A pallet to claim airdropped tokens"
+description = "A pallet to claim tokens for users who are entitled to"
 authors.workspace = true
 edition.workspace = true
 homepage.workspace = true

@@ -20,7 +20,7 @@ async function run(nodeName, networkInfo, _args) {
     const beneficiaries_map = new Map();
     beneficiaries_map.set(beneficiary_address, '1');
 
-    // Begin airdrop with beneficiary
+    // Begin claim with beneficiary
     let events = await sudoInitClaim(alice, beneficiaries_map, '10');
     if (!receivedEvents(events)) {
         console.log(`Failed to initialize claim`);

@@ -16,12 +16,12 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![deny(missing_docs)]
 
-//! A pallet implementing the possibility of making airdrops on-chain and letting **Beneficiaries**
+//! A pallet implementing the possibility of making claims on-chain and letting **Beneficiaries**
 //! manually claim the amount of tokens they have right to.
-//! Only **ManagerOrigin** is able to start and end airdrops, as well as adding beneficiaries with
+//! Only **ManagerOrigin** is able to start and end claims, as well as adding beneficiaries with
 //! their rightful balance.
-//! Currently it possible only to held one airdrop at a time.
-//! When airdrop ends, all the funds still available in the pallet's associated account
+//! Currently it possible only to held one claim at a time.
+//! When claim ends, all the funds still available in the pallet's associated account
 //! are transferred to **UnclaimedDestination**.
 //!
 #[cfg(feature = "runtime-benchmarks")]
@@ -76,7 +76,7 @@ pub mod pallet {
         #[pallet::constant]
         type PalletId: Get<PalletId>;
 
-        /// Manager allowed to begin/end airdrops and add beneficiaries
+        /// Manager allowed to begin/end claims and add beneficiaries
         type ManagerOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
         /// The staking balance.
@@ -96,22 +96,22 @@ pub mod pallet {
         const MAX_OP_BENEFICIARIES: u32;
     }
 
-    /// Candidates eligible to receive an airdrop with the associated balance they have right to
+    /// Candidates eligible to receive a claim with the associated balance they have right to
     #[pallet::storage]
     pub type Beneficiaries<T: Config> =
         CountedStorageMap<_, Twox64Concat, T::AccountId, BalanceOf<T>>;
 
-    /// Total tokens claimable from the current airdrop.  
+    /// Total tokens claimable from the current claim.  
     #[pallet::storage]
     pub type TotalClaimable<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
-    /// Whether there is an active airdrop or not
+    /// Whether there is an active claim or not
     #[pallet::storage]
-    pub type AirdropActive<T: Config> = StorageValue<_, bool, ValueQuery>;
+    pub type ClaimActive<T: Config> = StorageValue<_, bool, ValueQuery>;
 
-    /// Id of the current (or the last) airdrop
+    /// Id of the current (or the last) claim
     #[pallet::storage]
-    pub type AirdropId<T: Config> = StorageValue<_, u64>;
+    pub type ClaimId<T: Config> = StorageValue<_, u64>;
 
     /// Account id of this pallet
     #[pallet::storage]
@@ -160,8 +160,8 @@ pub mod pallet {
                 ));
 
                 // Initialize other storage variables
-                AirdropActive::<T>::put(true);
-                AirdropId::<T>::put(0);
+                ClaimActive::<T>::put(true);
+                ClaimId::<T>::put(0);
             }
         }
     }
@@ -169,10 +169,10 @@ pub mod pallet {
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
-        /// Beginning of a new airdrop campaign
-        AirdropStarted {
-            /// The id of the airdrop that has just started
-            airdrop_id: u64,
+        /// Beginning of a new claim campaign
+        ClaimStarted {
+            /// The id of the claim that has just started
+            claim_id: u64,
         },
         /// Some amount has been claimed by the beneficiary
         Claimed {
@@ -181,17 +181,24 @@ pub mod pallet {
             /// How many tokens were claimed
             amount: BalanceOf<T>,
         },
-        /// Ending of the airdrop campaign
-        AirdropEnded {
-            /// The id of the airdrop that has just ended
-            airdrop_id: u64,
+        /// Ending of the claim campaign
+        ClaimEnded {
+            /// The id of the claim that has just ended
+            claim_id: u64,
         },
+        /// Some beneficiaries have been removed
+        BeneficiariesRemoved {
+            /// The number of beneficiaries remaining in storage
+            remaining: u32,
+        },
+        /// No more beneficiaries to remove
+        NoMoreBeneficiaries,
     }
 
     /// Error for the claim pallet.
     #[pallet::error]
     pub enum Error<T> {
-        /// Attempt to start a new airdrop while there is one already in progress
+        /// Attempt to start a new claim while there is one already in progress
         AlreadyStarted,
         /// Account requested a claim but it is not present among the Beneficiaries
         NotEligible,
@@ -203,8 +210,10 @@ pub mod pallet {
         TooManyBeneficiaries,
         /// Attempt to modify the balance of an already added beneficiary
         AlreadyPresent,
-        /// Attempt to perform an action implying an open airdrop, while it has already ended
+        /// Attempt to perform an action implying an open claim, while it has already ended
         AlreadyEnded,
+        /// Attempt to start a claim while there are still beneficiaries in storage from a previous one
+        NonEmptyBeneficiaries,
     }
 
     impl<T: Config> Pallet<T> {
@@ -232,10 +241,10 @@ pub mod pallet {
         }
 
         fn do_claim(origin: T::AccountId, beneficiary: Option<T::AccountId>) -> DispatchResult {
-            // See if account is eligible to get an airdrop
+            // See if account is eligible to get a claim
             Beneficiaries::<T>::try_mutate_exists(origin.clone(), |amount| {
                 *amount = match amount {
-                    // Account is eligible to get an airdrop
+                    // Account is eligible to get a claim
                     Some(amount) => {
                         // Determine who is the beneficiary
                         let beneficiary = beneficiary.unwrap_or(origin);
@@ -293,7 +302,7 @@ pub mod pallet {
 
                     // Account doesn't exist. Add its token amount to the required amount this pallet's account should have
                     required_amount = required_amount.defensive_saturating_add(*amount);
-                    log::trace!("Added beneficiary {account:?}. Can claim: {amount:?}");
+                    log::trace!("Added beneficiary {account:?}. Ca claim: {amount:?}");
 
                     // Cannot cover for all the tokens, raise an error
                     if required_amount > available_amount {
@@ -311,8 +320,8 @@ pub mod pallet {
             Ok(())
         }
 
-        fn check_airdrop_status(should_be_active: bool) -> DispatchResult {
-            match (AirdropActive::<T>::get(), should_be_active) {
+        fn check_claim_status(should_be_active: bool) -> DispatchResult {
+            match (ClaimActive::<T>::get(), should_be_active) {
                 (false, true) => Err(Error::<T>::AlreadyEnded)?,
                 (true, false) => Err(Error::<T>::AlreadyStarted)?,
                 _ => Ok(()),
@@ -350,34 +359,56 @@ pub mod pallet {
             Self::check_max_beneficiaries(new_beneficiaries_len)?;
             Ok(())
         }
+
+        fn _remove_beneficiaries() {
+            // Start removing remaining beneficiaries if present
+
+            let num_beneficiaries = Beneficiaries::<T>::count();
+            if num_beneficiaries > 0 {
+                let result = Beneficiaries::<T>::clear(T::MAX_OP_BENEFICIARIES, None);
+
+                if result.maybe_cursor.is_some() {
+                    Self::deposit_event(Event::<T>::BeneficiariesRemoved {
+                        remaining: num_beneficiaries - result.unique,
+                    });
+                } else {
+                    Self::deposit_event(Event::<T>::NoMoreBeneficiaries);
+                }
+            }
+        }
     }
 
     #[pallet::call]
     impl<T: Config> Pallet<T> {
-        /// Declare the beginning of a new airdrop and start adding beneficiaries (if specified).
+        /// Declare the beginning of a new claim and start adding beneficiaries (if specified).
         /// Raise an Error if:
-        /// - There is an already active airdrop
+        /// - There is an already active claim
         /// - There isn't enough balance in the pallets' account to cover for the claim of the supplied beneficiaries (if specified)
         /// This is an atomic operation. If there isn't enough balance to cover for all the beneficiaries, then none will be added.
         /// Origin must be the ManagerOrigin.
         #[pallet::call_index(0)]
-        #[pallet::weight(T::WeightInfo::begin_airdrop(beneficiaries.len() as u32))]
-        pub fn begin_airdrop(
+        #[pallet::weight(T::WeightInfo::begin_claim(beneficiaries.len() as u32))]
+        pub fn begin_claim(
             origin: OriginFor<T>,
             beneficiaries: BTreeMap<T::AccountId, BalanceOf<T>>,
         ) -> DispatchResultWithPostInfo {
             T::ManagerOrigin::ensure_origin(origin)?;
 
-            // Set airdrop as active
-            Self::check_airdrop_status(false)?;
-            AirdropActive::<T>::put(true);
+            // Sanity check: we've removed all the beneficiaries
+            if Beneficiaries::<T>::count() > 0 {
+                Err(Error::<T>::NonEmptyBeneficiaries)?;
+            }
+
+            // Set claim as active
+            Self::check_claim_status(false)?;
+            ClaimActive::<T>::put(true);
 
             let num_beneficiaries = beneficiaries.len();
 
             if num_beneficiaries > 0 {
                 // Check that we are not adding too many here
                 // Note: we don't need to check for MaxBeneficiaries considering that:
-                // - When starting an airdrop there are no beneficiaries in storage
+                // - When starting a claim there are no beneficiaries in storage
                 // - It always holds that T::MaxOpBeneficiaries <= T::MaxBeneficiaries
                 // Thus the following check, alone, it's enough
                 Self::check_max_op_beneficiaries(num_beneficiaries)?;
@@ -386,18 +417,18 @@ pub mod pallet {
                 Self::do_add_beneficiaries(beneficiaries)?;
             }
 
-            // Increase airdrop id
-            AirdropId::<T>::mutate(|id| {
-                let airdrop_id = id.map_or(0, |v| v + 1);
-                *id = Some(airdrop_id);
-                Self::deposit_event(Event::<T>::AirdropStarted { airdrop_id });
+            // Increase claim id
+            ClaimId::<T>::mutate(|id| {
+                let claim_id = id.map_or(0, |v| v + 1);
+                *id = Some(claim_id);
+                Self::deposit_event(Event::<T>::ClaimStarted { claim_id });
             });
 
             Ok(Pays::No.into())
         }
 
-        /// Claim token airdrop for 'origin' and send the tokens to 'dest'.
-        /// Fails if 'origin' is not entitled to any airdrop.
+        /// Claim token claim for 'origin' and send the tokens to 'dest'.
+        /// Fails if 'origin' is not entitled to any claim.
         /// 'origin' must be signed.
         #[pallet::call_index(1)]
         #[pallet::weight(T::WeightInfo::claim())]
@@ -406,17 +437,18 @@ pub mod pallet {
             dest: Option<T::AccountId>,
         ) -> DispatchResultWithPostInfo {
             let origin_account = ensure_signed(origin)?;
-            Self::check_airdrop_status(true)?;
+            Self::check_claim_status(true)?;
             Self::do_claim(origin_account, dest)?;
             Ok(Pays::No.into())
         }
 
-        /// Claim token airdrop for 'dest'.
-        /// Fails if 'dest' is not entitled to any airdrop.
+        /// Claim token claim for 'dest'.
+        /// Fails if 'dest' is not entitled to any claim.
         #[pallet::call_index(2)]
         #[pallet::weight(T::WeightInfo::claim_for())]
-        pub fn claim_for(_origin: OriginFor<T>, dest: T::AccountId) -> DispatchResultWithPostInfo {
-            Self::check_airdrop_status(true)?;
+        pub fn claim_for(origin: OriginFor<T>, dest: T::AccountId) -> DispatchResultWithPostInfo {
+            T::ManagerOrigin::ensure_origin(origin)?;
+            Self::check_claim_status(true)?;
             Self::do_claim(dest, None)?;
             Ok(Pays::No.into())
         }
@@ -433,7 +465,7 @@ pub mod pallet {
             origin: OriginFor<T>,
             beneficiaries: BTreeMap<T::AccountId, BalanceOf<T>>,
         ) -> DispatchResultWithPostInfo {
-            Self::check_airdrop_status(true)?;
+            Self::check_claim_status(true)?;
             T::ManagerOrigin::ensure_origin(origin)?;
 
             let num_beneficiaries = beneficiaries.len();
@@ -449,28 +481,20 @@ pub mod pallet {
             Ok(Pays::No.into())
         }
 
-        /// End an airdrop. Storage variables will be cleared.
+        /// End a claim. Storage variables will be cleared.
         /// Any unclaimed balance will be sent to the destination specified as per 'UnclaimedDestination'.
-        /// Raise an Error if attempting to end an already ended airdrop.
+        /// Raise an Error if attempting to end an already ended claim.
         /// Origin must be 'ManagerOrigin'.
+        /// NOTE: This extrinsic will attempt to remove as much beneficiaries as possible from storage.
+        /// However, if there are more than T::MAX_OP_BENEFICIARIES, a subsequent call to 'remove_beneficiaries' must be made.
         #[pallet::call_index(4)]
-        #[pallet::weight(T::WeightInfo::end_airdrop(Beneficiaries::<T>::count()).saturating_add(T::DbWeight::get().reads(1_u64)))]
-        pub fn end_airdrop(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+        #[pallet::weight(T::WeightInfo::end_claim(u32::min(Beneficiaries::<T>::count(), T::MAX_OP_BENEFICIARIES)).saturating_add(T::DbWeight::get().reads(1_u64)))]
+        pub fn end_claim(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
             T::ManagerOrigin::ensure_origin(origin)?;
 
-            // Set airdrop as inactive
-            Self::check_airdrop_status(true)?;
-            AirdropActive::<T>::put(false);
-
-            let num_beneficiaries = Beneficiaries::<T>::count();
-
-            if num_beneficiaries > 0 {
-                // Check that we are not removing too many here
-                Self::check_max_op_beneficiaries(num_beneficiaries as usize)?;
-
-                // Remove all beneficiaries entries
-                let _ = Beneficiaries::<T>::clear(num_beneficiaries, None);
-            }
+            // Set claim as inactive
+            Self::check_claim_status(true)?;
+            ClaimActive::<T>::put(false);
 
             // Deal with any remaining balance in the pallet's account
             let unclaimed_destination = T::UnclaimedDestination::get();
@@ -488,10 +512,29 @@ pub mod pallet {
             // Set total claimable to 0
             TotalClaimable::<T>::put(BalanceOf::<T>::zero());
 
-            // End airdrop
-            Self::deposit_event(Event::<T>::AirdropEnded {
-                airdrop_id: AirdropId::<T>::get().unwrap(),
+            // End claim
+            Self::deposit_event(Event::<T>::ClaimEnded {
+                claim_id: ClaimId::<T>::get().unwrap(),
             });
+
+            // Start removing as many beneficiaries as possible
+            Self::_remove_beneficiaries();
+
+            Ok(Pays::No.into())
+        }
+
+        /// Remove as many beneficiaries as possible from storage.
+        /// Origin must be 'ManagerOrigin'.
+        #[pallet::call_index(5)]
+        #[pallet::weight(T::WeightInfo::end_claim(u32::min(Beneficiaries::<T>::count(), T::MAX_OP_BENEFICIARIES)).saturating_add(T::DbWeight::get().reads(1_u64)))]
+        pub fn remove_beneficiaries(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+            T::ManagerOrigin::ensure_origin(origin)?;
+
+            // Check claim inactive
+            Self::check_claim_status(false)?;
+
+            // Remove as many beneficiaries as possible
+            Self::_remove_beneficiaries();
 
             Ok(Pays::No.into())
         }

@@ -204,8 +204,8 @@ exports.sudoInitClaim = async (signer, beneficiaries, initial_balance) => {
   const transfer = api.tx.balances.transferAllowDeath(palletAddress, initial_balance);
   await submitExtrinsic(api, transfer, signer, BlockUntil.InBlock);
 
-  // Begin airdrop and provide beneficiaries
-  let extrinsic = api.tx.sudo.sudo(api.tx.claim.beginAirdrop(beneficiaries));
+  // Begin claim and provide beneficiaries
+  let extrinsic = api.tx.sudo.sudo(api.tx.claim.beginClaim(beneficiaries));
 
   return await submitExtrinsic(api, extrinsic, signer, BlockUntil.InBlock, (event) => event.section == "claim");
 }

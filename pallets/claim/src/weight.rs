@@ -53,27 +53,28 @@ use core::marker::PhantomData;
 
 /// Weight functions needed for `pallet_claim`.
 pub trait WeightInfo {
-    fn begin_airdrop(n: u32, ) -> Weight;
+    fn begin_claim(n: u32, ) -> Weight;
     fn claim() -> Weight;
     fn claim_for() -> Weight;
     fn add_beneficiaries(n: u32, ) -> Weight;
-    fn end_airdrop(n: u32, ) -> Weight;
+    fn end_claim(n: u32, ) -> Weight;
+    fn remove_beneficiaries(n: u32, ) -> Weight;
 }
 
 // For backwards compatibility and tests.
 impl WeightInfo for () {
-    /// Storage: `Claim::AirdropActive` (r:1 w:1)
-    /// Proof: `Claim::AirdropActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
+    /// Storage: `Claim::ClaimActive` (r:1 w:1)
+    /// Proof: `Claim::ClaimActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
     /// Storage: `System::Account` (r:1 w:0)
     /// Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
     /// Storage: `Claim::TotalClaimable` (r:1 w:1)
     /// Proof: `Claim::TotalClaimable` (`max_values`: Some(1), `max_size`: Some(16), added: 511, mode: `MaxEncodedLen`)
     /// Storage: `Claim::Beneficiaries` (r:999 w:999)
     /// Proof: `Claim::Beneficiaries` (`max_values`: None, `max_size`: Some(56), added: 2531, mode: `MaxEncodedLen`)
-    /// Storage: `Claim::AirdropId` (r:1 w:1)
-    /// Proof: `Claim::AirdropId` (`max_values`: Some(1), `max_size`: Some(8), added: 503, mode: `MaxEncodedLen`)
+    /// Storage: `Claim::ClaimId` (r:1 w:1)
+    /// Proof: `Claim::ClaimId` (`max_values`: Some(1), `max_size`: Some(8), added: 503, mode: `MaxEncodedLen`)
     /// The range of component `n` is `[1, 1000]`.
-    fn begin_airdrop(n: u32, ) -> Weight {
+    fn begin_claim(n: u32, ) -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `146`
         //  Estimated: `3593 + n * (2531 ±0)`
@@ -87,8 +88,8 @@ impl WeightInfo for () {
             .saturating_add(RocksDbWeight::get().writes((1_u64).saturating_mul(n.into())))
             .saturating_add(Weight::from_parts(0, 2531).saturating_mul(n.into()))
     }
-    /// Storage: `Claim::AirdropActive` (r:1 w:0)
-    /// Proof: `Claim::AirdropActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
+    /// Storage: `Claim::ClaimActive` (r:1 w:0)
+    /// Proof: `Claim::ClaimActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
     /// Storage: `Claim::Beneficiaries` (r:1 w:1)
     /// Proof: `Claim::Beneficiaries` (`max_values`: None, `max_size`: Some(56), added: 2531, mode: `MaxEncodedLen`)
     /// Storage: `System::Account` (r:1 w:1)
@@ -104,8 +105,8 @@ impl WeightInfo for () {
             .saturating_add(RocksDbWeight::get().reads(4_u64))
             .saturating_add(RocksDbWeight::get().writes(3_u64))
     }
-    /// Storage: `Claim::AirdropActive` (r:1 w:0)
-    /// Proof: `Claim::AirdropActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
+    /// Storage: `Claim::ClaimActive` (r:1 w:0)
+    /// Proof: `Claim::ClaimActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
     /// Storage: `Claim::Beneficiaries` (r:1 w:1)
     /// Proof: `Claim::Beneficiaries` (`max_values`: None, `max_size`: Some(56), added: 2531, mode: `MaxEncodedLen`)
     /// Storage: `System::Account` (r:2 w:2)
@@ -121,8 +122,8 @@ impl WeightInfo for () {
             .saturating_add(RocksDbWeight::get().reads(5_u64))
             .saturating_add(RocksDbWeight::get().writes(4_u64))
     }
-    /// Storage: `Claim::AirdropActive` (r:1 w:0)
-    /// Proof: `Claim::AirdropActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
+    /// Storage: `Claim::ClaimActive` (r:1 w:0)
+    /// Proof: `Claim::ClaimActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
     /// Storage: `System::Account` (r:1 w:0)
     /// Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
     /// Storage: `Claim::TotalClaimable` (r:1 w:1)
@@ -144,18 +145,18 @@ impl WeightInfo for () {
             .saturating_add(RocksDbWeight::get().writes((1_u64).saturating_mul(n.into())))
             .saturating_add(Weight::from_parts(0, 2531).saturating_mul(n.into()))
     }
-    /// Storage: `Claim::AirdropActive` (r:1 w:1)
-    /// Proof: `Claim::AirdropActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
+    /// Storage: `Claim::ClaimActive` (r:1 w:1)
+    /// Proof: `Claim::ClaimActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
     /// Storage: `Claim::Beneficiaries` (r:999 w:999)
     /// Proof: `Claim::Beneficiaries` (`max_values`: None, `max_size`: Some(56), added: 2531, mode: `MaxEncodedLen`)
     /// Storage: `System::Account` (r:2 w:2)
     /// Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
-    /// Storage: `Claim::AirdropId` (r:1 w:0)
-    /// Proof: `Claim::AirdropId` (`max_values`: Some(1), `max_size`: Some(8), added: 503, mode: `MaxEncodedLen`)
+    /// Storage: `Claim::ClaimId` (r:1 w:0)
+    /// Proof: `Claim::ClaimId` (`max_values`: Some(1), `max_size`: Some(8), added: 503, mode: `MaxEncodedLen`)
     /// Storage: `Claim::TotalClaimable` (r:0 w:1)
     /// Proof: `Claim::TotalClaimable` (`max_values`: Some(1), `max_size`: Some(16), added: 511, mode: `MaxEncodedLen`)
     /// The range of component `n` is `[1, 1000]`.
-    fn end_airdrop(n: u32, ) -> Weight {
+    fn end_claim(n: u32, ) -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `333 + n * (61 ±0)`
         //  Estimated: `6196 + n * (2531 ±0)`
@@ -168,5 +169,9 @@ impl WeightInfo for () {
             .saturating_add(RocksDbWeight::get().writes(4_u64))
             .saturating_add(RocksDbWeight::get().writes((1_u64).saturating_mul(n.into())))
             .saturating_add(Weight::from_parts(0, 2531).saturating_mul(n.into()))
+    }
+    
+    fn remove_beneficiaries(_n: u32, ) -> Weight {
+        Weight::from_parts(424242, 42)
     }
 }

@@ -83,7 +83,7 @@ impl MockWeightInfo {
 }
 
 impl crate::WeightInfo for MockWeightInfo {
-    fn begin_airdrop(n: u32) -> frame_support::weights::Weight {
+    fn begin_claim(n: u32) -> frame_support::weights::Weight {
         let variable = 1000 * n as u64;
         frame_support::weights::Weight::from_parts(
             Self::REF_TIME + variable,
@@ -107,7 +107,15 @@ impl crate::WeightInfo for MockWeightInfo {
         )
     }
 
-    fn end_airdrop(n: u32) -> frame_support::weights::Weight {
+    fn end_claim(n: u32) -> frame_support::weights::Weight {
+        let variable = 1000 * n as u64;
+        frame_support::weights::Weight::from_parts(
+            Self::REF_TIME + variable,
+            Self::PROOF_SIZE + variable,
+        )
+    }
+
+    fn remove_beneficiaries(n: u32) -> sp_runtime::Weight {
         let variable = 1000 * n as u64;
         frame_support::weights::Weight::from_parts(
             Self::REF_TIME + variable,
