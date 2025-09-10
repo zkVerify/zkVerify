@@ -17,6 +17,7 @@
 #![allow(clippy::type_complexity)]
 
 use sc_chain_spec::ChainSpecExtension;
+use sc_network::config::MultiaddrWithPeerId;
 use sc_service::{ChainType, Properties};
 use sc_sync_state_rpc::LightSyncStateExtension;
 use serde::{Deserialize, Serialize};
@@ -39,6 +40,21 @@ pub type ZkvChainSpec = sc_service::GenericChainSpec<Extensions>;
 
 /// The `ChainSpec` parameterized for the volta runtime.
 pub type VoltaChainSpec = sc_service::GenericChainSpec<Extensions>;
+
+fn boot_nodes(address_id: &[(&str, &str)]) -> Vec<MultiaddrWithPeerId> {
+    const PROTOCOL_PATHS: &[&str] = &["tcp/30333/p2p", "tcp/30334/ws/p2p", "tcp/443/wss/p2p"];
+
+    address_id
+        .iter()
+        .flat_map(|&(dns, id)| {
+            PROTOCOL_PATHS.iter().map(move |&p| {
+                format!("/dns/{dns}/{p}/{id}")
+                    .parse()
+                    .expect("MultiaddrWithPeerId")
+            })
+        })
+        .collect()
+}
 
 fn volta_chain_properties() -> Properties {
     [
@@ -95,26 +111,10 @@ pub fn volta_staging_config() -> Result<VoltaChainSpec, String> {
     .with_id("volta_staging")
     .with_protocol_id("tzkv")
     .with_chain_type(ChainType::Live)
-    .with_boot_nodes(vec![
-        format!("/dns/{VOLTA_BOOTNODE_1_DNS}/tcp/30333/p2p/{VOLTA_BOOTNODE_1_PEER_ID}")
-            .parse()
-            .expect("MultiaddrWithPeerId"),
-        format!("/dns/{VOLTA_BOOTNODE_1_DNS}/tcp/30334/ws/p2p/{VOLTA_BOOTNODE_1_PEER_ID}")
-            .parse()
-            .expect("MultiaddrWithPeerId"),
-        format!("/dns/{VOLTA_BOOTNODE_1_DNS}/tcp/443/wss/p2p/{VOLTA_BOOTNODE_1_PEER_ID}")
-            .parse()
-            .expect("MultiaddrWithPeerId"),
-        format!("/dns/{VOLTA_BOOTNODE_2_DNS}/tcp/30333/p2p/{VOLTA_BOOTNODE_2_PEER_ID}")
-            .parse()
-            .expect("MultiaddrWithPeerId"),
-        format!("/dns/{VOLTA_BOOTNODE_2_DNS}/tcp/30334/ws/p2p/{VOLTA_BOOTNODE_2_PEER_ID}")
-            .parse()
-            .expect("MultiaddrWithPeerId"),
-        format!("/dns/{VOLTA_BOOTNODE_2_DNS}/tcp/443/wss/p2p/{VOLTA_BOOTNODE_2_PEER_ID}")
-            .parse()
-            .expect("MultiaddrWithPeerId"),
-    ])
+    .with_boot_nodes(boot_nodes(&[
+        (VOLTA_BOOTNODE_1_DNS, VOLTA_BOOTNODE_1_PEER_ID),
+        (VOLTA_BOOTNODE_2_DNS, VOLTA_BOOTNODE_2_PEER_ID),
+    ]))
     .with_telemetry_endpoints(
         TelemetryEndpoints::new(vec![(TELEMETRY_URL.to_string(), telemetry::CONSENSUS_INFO)])
             .expect("Horizen Labs telemetry url is valid; qed"),
@@ -166,10 +166,12 @@ pub fn zkverify_local_config() -> Result<VoltaChainSpec, String> {
 
 /// To be used when building new testnet chain-spec
 pub fn zkverify_staging_config() -> Result<VoltaChainSpec, String> {
-    const ZKV_BOOTNODE_1_DNS: &str = "boot-node-tn-volta-1.zkverify.io";
-    const ZKV_BOOTNODE_1_PEER_ID: &str = "12D3KooWCso7aZ93X8uY82CExtCqSDsvr8p5NAEVD43iVebF72VR";
-    const ZKV_BOOTNODE_2_DNS: &str = "boot-node-tn-volta-2.zkverify.io";
-    const ZKV_BOOTNODE_2_PEER_ID: &str = "12D3KooWKXzW6nAjfwpbHJ5oqHyCsKpMFG8UxJzEYjcrRzEry5SC";
+    const ZKV_BOOTNODE_1_DNS: &str = "boot-node-zkverify-1.horizenlabs.io";
+    const ZKV_BOOTNODE_1_PEER_ID: &str = "12D3KooWAuwa5TH5y6h6zeWVKrYTfawqU9R2t8r8Gw4wJBCEADzX";
+    const ZKV_BOOTNODE_2_DNS: &str = "boot-node-zkverify-1.zkverify.io";
+    const ZKV_BOOTNODE_2_PEER_ID: &str = "12D3KooWQukFbZbQUbaG2iJ6ecMJhy2HTeyWaEaRvZA2BwasVCCT";
+    const ZKV_BOOTNODE_3_DNS: &str = "boot-node-zkverify-1.horizen.io";
+    const ZKV_BOOTNODE_3_PEER_ID: &str = "12D3KooWBw26BpQuNwau2dt4b65c5bB72q6kmyis4m6NX8ZeycbC";
 
     Ok(ZkvChainSpec::builder(
         zkv_runtime::WASM_BINARY.ok_or_else(|| "Mainchain wasm not available".to_string())?,
@@ -179,26 +181,11 @@ pub fn zkverify_staging_config() -> Result<VoltaChainSpec, String> {
     .with_id("zkv_mainnet_staging")
     .with_protocol_id("zkv")
     .with_chain_type(ChainType::Live)
-    .with_boot_nodes(vec![
-        format!("/dns/{ZKV_BOOTNODE_1_DNS}/tcp/30333/p2p/{ZKV_BOOTNODE_1_PEER_ID}")
-            .parse()
-            .expect("MultiaddrWithPeerId"),
-        format!("/dns/{ZKV_BOOTNODE_1_DNS}/tcp/30334/ws/p2p/{ZKV_BOOTNODE_1_PEER_ID}")
-            .parse()
-            .expect("MultiaddrWithPeerId"),
-        format!("/dns/{ZKV_BOOTNODE_1_DNS}/tcp/443/wss/p2p/{ZKV_BOOTNODE_1_PEER_ID}")
-            .parse()
-            .expect("MultiaddrWithPeerId"),
-        format!("/dns/{ZKV_BOOTNODE_2_DNS}/tcp/30333/p2p/{ZKV_BOOTNODE_2_PEER_ID}")
-            .parse()
-            .expect("MultiaddrWithPeerId"),
-        format!("/dns/{ZKV_BOOTNODE_2_DNS}/tcp/30334/ws/p2p/{ZKV_BOOTNODE_2_PEER_ID}")
-            .parse()
-            .expect("MultiaddrWithPeerId"),
-        format!("/dns/{ZKV_BOOTNODE_2_DNS}/tcp/443/wss/p2p/{ZKV_BOOTNODE_2_PEER_ID}")
-            .parse()
-            .expect("MultiaddrWithPeerId"),
-    ])
+    .with_boot_nodes(boot_nodes(&[
+        (ZKV_BOOTNODE_1_DNS, ZKV_BOOTNODE_1_PEER_ID),
+        (ZKV_BOOTNODE_2_DNS, ZKV_BOOTNODE_2_PEER_ID),
+        (ZKV_BOOTNODE_3_DNS, ZKV_BOOTNODE_3_PEER_ID),
+    ]))
     .with_telemetry_endpoints(
         TelemetryEndpoints::new(vec![(TELEMETRY_URL.to_string(), telemetry::CONSENSUS_INFO)])
             .expect("Horizen Labs telemetry url is valid; qed"),
