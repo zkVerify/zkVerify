@@ -154,32 +154,40 @@ pub fn staging_config_genesis() -> Result<serde_json::Value, sp_core::crypto::Pu
 
     const VALIDATORS_ADDRESS: &[(&str, &str)] = &[
         (
-            "5DcJTvFvLUh9qHxdjZmBtXzzG7ttNFSmDtBwohc7ws89gHuW",
-            "5G3Sqt3NqQUDYP5PXzZtiwEaWkVUQ6w6bLd58A729yQdaJ5U",
+            "5HinfZ1FcDLWp5hpMWQyuuTHPmrp2oSaivpZdhbL33kt8dXh",
+            "5E1891vFuA2DhdzRk5LCQenReaMtsQPUiQ2BAwGrh7oD93vv",
         ),
         (
-            "5CwWnDWg5wLAhyV66Synjjtt2qBDic5F2q1314eivUh8KVXv",
-            "5GShazf2w8XURufZJFhtGR1JBUsNhX9LRLjyD7G5Vizem74m",
+            "5EAS2dekMepc8T5DUQ9MSWSegzymQLee7NeMV59pYbjYEbmQ",
+            "5F2saXmrUVN9CfXLese8iGKAuVwEyJ8K3Q2NFrhgzsmwVnpn",
         ),
         (
-            "5EvNz6NKE6MTSFVZPX7S4tqPExrmgqbELUxSp8ycCGb6UKAH",
-            "5FD8ihBkU7fbMfhKqREfd5htRiqNGpQ8Gy1rUgmoyGuzU1z6",
+            "5Hozb8oD4gfhYwwcxFM2RZv81mbtEtqUetkjbJNoLCmFiHPa",
+            "5C8FxmWrrCG5FnSjch56cGEY7ktypi7vzg8SSXD3xWvECu6n",
         ),
         (
-            "5GdnMHVWPJK4rjnDXNd6oLQFGytcUGgrq1zgsWYg7hVZLL2q",
-            "5Cnu6KyiC3M1FoZx4R39GGxaVbDqDpnW66Vmaqxn9U5hJnHN",
+            "5F2DhCx7XM3c3PbzeiTT9oqpRBPmj64EHGqy6epSDnLNWPSB",
+            "5DZweKpPQtVEbw4uof2cEDoZXGRz8rdFNwKGqhvnFfACrMJw",
         ),
         (
-            "5DM8WWWYvPUJShXV4hhGXWCYjHRzCKKs3mHq4mfiaLJFxetC",
-            "5GHthqbUX4TGAJa72Jdu5BsvU5cRw2EhuaF4PiyFfEoYzb1M",
+            "5FhkW4X1KYU1fRStCTL4VoG4oMarB9ZM6gUS56Hf8XdyFF3K",
+            "5Gj3xgnHKh6CuCwhqsrVUZZezX6aEKyQPAvLq1SsjDq86GyX",
         ),
         (
-            "5HdVFRoy8AGN58rkR3dbd1MHaUSx4uuhdEUrJFzr8FGBJZMB",
-            "5EPaF1sa2Kt83yz1g8b3LCAw1DrvxE3Hspm9TLdud2ojhdaT",
+            "5GQxAhBih3uPtXnqnshrPSgWa3QvaDZbrUJ9wZCwTfydhWhU",
+            "5GRCL51gzF94gyGFsTSmeUqWH3fu69Jdka9bJSVtJrLFGzSr",
         ),
         (
-            "5GGygViDPJXaPFRsABSbsuxZvueWLfZGgAin8YoKuLCYF5MZ",
-            "5HSHuhE2WebrwXZ85Gs4n7vdWzU6PsnK9F3KGoxVeupxoH9X",
+            "5CiAdXr8gnCi3VnxcyRftVBBH82TDXEnNSBxdBdAfBBRpPKs",
+            "5CBRYsmfLC49DSnavggu7wd94ukjsADzv2Vd5FYutCguTuqa",
+        ),
+        (
+            "5Escp7EXeZj9E9pKDhQDYTkFc7RGxJhNKXFS6noeWJmNWouC",
+            "5Gs2QGQAXYvRyNUmgViDJFdaYyxhWfRxrF6ymHEXsfBygwDD",
+        ),
+        (
+            "5FHqXrqQ9fVRHVspNuEM2qELssszUntppAo4sn12D3UW9dYY",
+            "5ESGmfG7NHsbcF7JaXFe9kns1LxqsmXEQUaYwoMb65o4WQXE",
         ),
     ];
 
