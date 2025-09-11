@@ -107,12 +107,8 @@ impl crate::WeightInfo for MockWeightInfo {
         )
     }
 
-    fn end_claim(n: u32) -> frame_support::weights::Weight {
-        let variable = 1000 * n as u64;
-        frame_support::weights::Weight::from_parts(
-            Self::REF_TIME + variable,
-            Self::PROOF_SIZE + variable,
-        )
+    fn end_claim() -> frame_support::weights::Weight {
+        frame_support::weights::Weight::from_parts(Self::REF_TIME, Self::PROOF_SIZE)
     }
 
     fn remove_beneficiaries(n: u32) -> sp_runtime::Weight {

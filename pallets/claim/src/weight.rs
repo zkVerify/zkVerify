@@ -57,7 +57,7 @@ pub trait WeightInfo {
     fn claim() -> Weight;
     fn claim_for() -> Weight;
     fn add_beneficiaries(n: u32, ) -> Weight;
-    fn end_claim(n: u32, ) -> Weight;
+    fn end_claim() -> Weight;
     fn remove_beneficiaries(n: u32, ) -> Weight;
 }
 
@@ -156,19 +156,12 @@ impl WeightInfo for () {
     /// Storage: `Claim::TotalClaimable` (r:0 w:1)
     /// Proof: `Claim::TotalClaimable` (`max_values`: Some(1), `max_size`: Some(16), added: 511, mode: `MaxEncodedLen`)
     /// The range of component `n` is `[1, 1000]`.
-    fn end_claim(n: u32, ) -> Weight {
+    fn end_claim() -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `333 + n * (61 ±0)`
         //  Estimated: `6196 + n * (2531 ±0)`
         // Minimum execution time: 32_447_000 picoseconds.
         Weight::from_parts(30_536_884, 6196)
-            // Standard Error: 2_385
-            .saturating_add(Weight::from_parts(917_174, 0).saturating_mul(n.into()))
-            .saturating_add(RocksDbWeight::get().reads(4_u64))
-            .saturating_add(RocksDbWeight::get().reads((1_u64).saturating_mul(n.into())))
-            .saturating_add(RocksDbWeight::get().writes(4_u64))
-            .saturating_add(RocksDbWeight::get().writes((1_u64).saturating_mul(n.into())))
-            .saturating_add(Weight::from_parts(0, 2531).saturating_mul(n.into()))
     }
     
     fn remove_beneficiaries(_n: u32, ) -> Weight {

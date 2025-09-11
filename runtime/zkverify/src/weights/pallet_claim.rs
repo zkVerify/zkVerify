@@ -171,17 +171,25 @@ impl<T: frame_system::Config> pallet_claim::WeightInfo for ZKVWeight<T> {
     /// Storage: `Claim::TotalClaimable` (r:0 w:1)
     /// Proof: `Claim::TotalClaimable` (`max_values`: Some(1), `max_size`: Some(16), added: 511, mode: `MaxEncodedLen`)
     /// The range of component `n` is `[1, 100000]`.
-    fn end_claim(n: u32, ) -> Weight {
+    fn end_claim() -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `0 + n * (60 ±0)`
         //  Estimated: `6196 + n * (2531 ±0)`
         // Minimum execution time: 54_903_000 picoseconds.
         Weight::from_parts(55_583_000, 6196)
-            // Standard Error: 8_582
-            .saturating_add(Weight::from_parts(2_310_041, 0).saturating_mul(n.into()))
-            .saturating_add(T::DbWeight::get().reads(6_u64))
+    }
+
+    fn remove_beneficiaries(n: u32, ) -> Weight {
+        // Proof Size summary in bytes:
+        //  Measured:  `250`
+        //  Estimated: `3593 + n * (2531 ±0)`
+        // Minimum execution time: 20_558_000 picoseconds.
+        Weight::from_parts(20_809_000, 3593)
+            // Standard Error: 8_746
+            .saturating_add(Weight::from_parts(5_818_666, 0).saturating_mul(n.into()))
+            .saturating_add(T::DbWeight::get().reads(5_u64))
             .saturating_add(T::DbWeight::get().reads((1_u64).saturating_mul(n.into())))
-            .saturating_add(T::DbWeight::get().writes(5_u64))
+            .saturating_add(T::DbWeight::get().writes(2_u64))
             .saturating_add(T::DbWeight::get().writes((1_u64).saturating_mul(n.into())))
             .saturating_add(Weight::from_parts(0, 2531).saturating_mul(n.into()))
     }
