@@ -53,10 +53,8 @@ mod benchmarks {
         let beneficiary: T::AccountId = account("", 10, 10);
         assert!(Beneficiaries::<T>::get(beneficiary.clone()).is_some());
 
-        let dest = whitelisted_caller();
-
         #[extrinsic_call]
-        claim(RawOrigin::Signed(beneficiary.clone()), Some(dest));
+        claim(RawOrigin::None, beneficiary.clone());
 
         // sanity check
         assert!(Beneficiaries::<T>::get(beneficiary).is_none());
