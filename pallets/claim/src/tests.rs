@@ -545,9 +545,9 @@ fn cannot_add_already_existing_beneficiary() {
 }
 
 #[test]
-fn remove_beneficiaries_one_shot(){
+fn remove_beneficiaries_one_shot() {
     let mut e = test();
-    
+
     // Add MaxOpBeneficiaries + 1
     e.execute_with(|| {
         utils::get_beneficiaries_map::<Test>(MaxOpBeneficiaries::get())
@@ -570,7 +570,7 @@ fn remove_beneficiaries_one_shot(){
 #[test]
 fn remove_beneficiaries() {
     let mut e = test();
-    
+
     // Add MaxOpBeneficiaries + 1
     e.execute_with(|| {
         utils::get_beneficiaries_map::<Test>(MaxOpBeneficiaries::get() + 1)
@@ -599,8 +599,9 @@ fn cannot_remove_beneficiaries_if_claim_in_progress() {
     test().execute_with(|| {
         Claim::begin_claim(
             Origin::Signed(MANAGER_USER).into(),
-            EMPTY_BENEFICIARIES_MAP.clone()
-        ).unwrap();
+            EMPTY_BENEFICIARIES_MAP.clone(),
+        )
+        .unwrap();
         assert_noop!(
             Claim::remove_beneficiaries(Origin::Signed(MANAGER_USER).into()),
             Error::<Test>::AlreadyStarted

@@ -94,13 +94,20 @@ mod benchmarks {
     }
 
     #[benchmark]
-    fn end_claim(n: Linear<1, <T as Config>::MAX_OP_BENEFICIARIES>) {
-        let _ = init_claim_state::<T>(n, true);
+    fn end_claim() {
+        let _ = init_claim_state::<T>(0, true);
+
+        // Mint some tokens into pallet account just to trigger a transfer
+        let _ = T::Currency::mint_into(
+            &Pallet::<T>::account_id(),
+            T::Currency::minimum_balance().saturating_mul(100u32.into()),
+        )
+        .unwrap();
 
         #[extrinsic_call]
         end_claim(RawOrigin::Root);
 
-        assert_eq!(Beneficiaries::<T>::count(), 0);
+        assert_eq!(Pallet::<T>::pot(), BalanceOf::<T>::zero());
     }
 
     #[benchmark]
