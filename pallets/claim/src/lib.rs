@@ -488,7 +488,9 @@ pub mod pallet {
         /// NOTE: This extrinsic will attempt to remove as much beneficiaries as possible from storage.
         /// However, if there are more than T::MAX_OP_BENEFICIARIES, a subsequent call to 'remove_beneficiaries' must be made.
         #[pallet::call_index(4)]
-        #[pallet::weight(T::WeightInfo::end_claim(u32::min(Beneficiaries::<T>::count(), T::MAX_OP_BENEFICIARIES)).saturating_add(T::DbWeight::get().reads(1_u64)))]
+        #[pallet::weight(T::WeightInfo::remove_beneficiaries(u32::min(Beneficiaries::<T>::count(), T::MAX_OP_BENEFICIARIES))
+            .saturating_add(T::WeightInfo::end_claim())
+        )]
         pub fn end_claim(origin: OriginFor<T>) -> DispatchResult {
             T::ManagerOrigin::ensure_origin(origin)?;
 
