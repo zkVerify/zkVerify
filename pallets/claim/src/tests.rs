@@ -211,7 +211,7 @@ fn claim() {
         GenesisClaimBalance::Sufficient,
     )
     .execute_with(|| {
-        assert_ok!(Claim::claim(Origin::Signed(USER_1).into(), None));
+        assert_ok!(Claim::claim(Origin::None.into(), USER_1));
         assert_evt(
             Event::Claimed {
                 beneficiary: USER_1,
@@ -230,59 +230,17 @@ fn claim() {
 }
 
 #[test]
-fn claim_pays_no_fee() {
-    test_with_configs(
-        WithGenesisBeneficiaries::Yes,
-        GenesisClaimBalance::Sufficient,
-    )
-    .execute_with(|| {
-        assert_eq!(
-            Claim::claim(Origin::Signed(USER_1).into(), None)
-                .unwrap()
-                .pays_fee,
-            Pays::No
-        );
-    });
-}
-
-#[test]
 fn double_claim_is_err() {
     test_with_configs(
         WithGenesisBeneficiaries::Yes,
         GenesisClaimBalance::Sufficient,
     )
     .execute_with(|| {
-        assert_ok!(Claim::claim(Origin::Signed(USER_1).into(), None));
+        assert_ok!(Claim::claim(Origin::None.into(), USER_1));
         assert_err!(
-            Claim::claim(Origin::Signed(USER_1).into(), None),
+            Claim::claim(Origin::None.into(), USER_1),
             Error::<Test>::NotEligible
         )
-    });
-}
-
-#[test]
-fn claim_with_opt_dest() {
-    test_with_configs(
-        WithGenesisBeneficiaries::Yes,
-        GenesisClaimBalance::Sufficient,
-    )
-    .execute_with(|| {
-        assert_ok!(Claim::claim(Origin::Signed(USER_1).into(), Some(USER_2)));
-        assert_evt(
-            Event::Claimed {
-                beneficiary: USER_2,
-                amount: USER_1_AMOUNT,
-            },
-            "Successfull claim for a different dest",
-        );
-        assert_eq!(Claim::pot(), SUFFICIENT_GENESIS_BALANCE - USER_1_AMOUNT);
-        assert_eq!(
-            TotalClaimable::<Test>::get(),
-            SUFFICIENT_GENESIS_BALANCE - USER_1_AMOUNT
-        );
-        assert_eq!(Balances::free_balance(USER_1), 0);
-        assert_eq!(Balances::free_balance(USER_2), USER_1_AMOUNT);
-        assert!(Beneficiaries::<Test>::get(USER_1).is_none());
     });
 }
 
@@ -294,7 +252,7 @@ fn claim_wrong_beneficiary() {
     )
     .execute_with(|| {
         assert_noop!(
-            Claim::claim(Origin::Signed(NON_BENEFICIARY).into(), None),
+            Claim::claim(Origin::None.into(), NON_BENEFICIARY),
             Error::<Test>::NotEligible
         );
     });
@@ -310,7 +268,7 @@ fn claim_insufficient_balance() {
     .execute_with(|| {
         Beneficiaries::<Test>::insert(NON_BENEFICIARY, SUFFICIENT_GENESIS_BALANCE + 1);
         assert_err!(
-            Claim::claim(Origin::Signed(NON_BENEFICIARY).into(), None),
+            Claim::claim(Origin::None.into(), NON_BENEFICIARY),
             TokenError::FundsUnavailable
         );
         assert_not_evt(
@@ -327,7 +285,7 @@ fn claim_insufficient_balance() {
 fn cannot_claim_while_claim_inactive() {
     test().execute_with(|| {
         assert_err!(
-            Claim::claim(Origin::Signed(USER_1).into(), None),
+            Claim::claim(Origin::None.into(), USER_1),
             Error::<Test>::AlreadyEnded
         );
     })
