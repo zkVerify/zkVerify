@@ -1,4 +1,4 @@
-const { init_api, sudoInitClaim, claim, receivedEvents } = require('zkv-lib');
+const { init_api, sudoInitClaim, claim, receivedEvents, submitExtrinsic, BlockUntil } = require('zkv-lib');
 const ReturnCode = {
     Ok: 1,
     ErrInitClaim: 2,
@@ -17,15 +17,22 @@ async function run(nodeName, networkInfo, _args) {
     // Build a beneficiary starting from 0 balance
     const beneficiary = keyring.addFromUri('//Beneficiary');
     const beneficiary_address = beneficiary.address;
+    console.log('beneficiary address:', beneficiary_address);
+
+    // Build Beneficiaries Map
     const beneficiaries_map = new Map();
-    beneficiaries_map.set(beneficiary_address, '1');
+    beneficiaries_map.set(beneficiary_address, '1000000000000000000');
 
     // Begin claim with beneficiary
-    let events = await sudoInitClaim(alice, beneficiaries_map, '10');
+    let events = await sudoInitClaim(alice, beneficiaries_map, '10000000000000000000');
     if (!receivedEvents(events)) {
         console.log(`Failed to initialize claim`);
         return ReturnCode.ErrInitClaim;
     }
+
+    const keys = await api.query.claim.beneficiaries.keys();
+    const beneficiaries = keys.map(({ args: [beneficiaryId] }) => beneficiaryId);
+    console.log('all beneficiaries:', beneficiaries.join(', '));
 
     // Attempt to claim
     events = await claim(beneficiary);
@@ -36,8 +43,8 @@ async function run(nodeName, networkInfo, _args) {
 
     // Check beneficiary balance
     let balance_beneficiary = (await api.query.system.account(beneficiary_address))["data"]["free"];
-    if (balance_beneficiary != '1') {
-        console.log(`Beneficiary balance is ${balance_beneficiary}, expected 1`);
+    if (balance_beneficiary != '1000000000000000000') {
+        console.log(`Beneficiary balance is ${balance_beneficiary}, expected 1000000000000000000`);
         return ReturnCode.ErrClaimedAmount;
     }
 
