@@ -240,14 +240,12 @@ pub mod pallet {
             )
         }
 
-        fn do_claim(origin: T::AccountId, beneficiary: Option<T::AccountId>) -> DispatchResult {
+        fn do_claim(beneficiary: T::AccountId) -> DispatchResult {
             // See if account is eligible to get a claim
-            Beneficiaries::<T>::try_mutate_exists(origin.clone(), |amount| {
+            Beneficiaries::<T>::try_mutate_exists(beneficiary.clone(), |amount| {
                 *amount = match amount {
                     // Account is eligible to get a claim
                     Some(amount) => {
-                        // Determine who is the beneficiary
-                        let beneficiary = beneficiary.unwrap_or(origin);
                         // Execute payment
                         let available = Self::pot();
                         if *amount > available {
@@ -434,11 +432,11 @@ pub mod pallet {
         #[pallet::weight(T::WeightInfo::claim())]
         pub fn claim(
             origin: OriginFor<T>,
-            dest: Option<T::AccountId>,
+            dest: T::AccountId,
         ) -> DispatchResultWithPostInfo {
-            let origin_account = ensure_signed(origin)?;
+            ensure_none(origin)?;
             Self::check_claim_status(true)?;
-            Self::do_claim(origin_account, dest)?;
+            Self::do_claim(dest)?;
             Ok(Pays::No.into())
         }
 
@@ -449,7 +447,7 @@ pub mod pallet {
         pub fn claim_for(origin: OriginFor<T>, dest: T::AccountId) -> DispatchResult {
             T::ManagerOrigin::ensure_origin(origin)?;
             Self::check_claim_status(true)?;
-            Self::do_claim(dest, None)?;
+            Self::do_claim(dest)?;
             Ok(())
         }
 
