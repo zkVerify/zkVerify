@@ -369,10 +369,11 @@ pub type ZKVFeeUpdate<R> = TargetedFeeAdjustment<
     MaximumMultiplier,
 >;
 
+/// How to handle with fee: Don't burn any fee, give all fee and tip to author.
 pub type DealWithFees = zkv_runtime_common::DealWithFees<
     Runtime,
-    payout::FeesBurnSplit,
-    payout::FeesAuthorSplit,
+    payout::NoBurnFees,
+    payout::AllFeesToAuthor,
     Authorship,
     TreasuryAccountId<Runtime>,
 >;

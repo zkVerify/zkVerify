@@ -139,10 +139,10 @@ fn zkv_chain_properties() -> Properties {
 
 pub fn zkverify_development_config() -> Result<VoltaChainSpec, String> {
     Ok(ZkvChainSpec::builder(
-        zkv_runtime::WASM_BINARY.ok_or_else(|| "Mainchain wasm not available".to_string())?,
+        zkv_runtime::WASM_BINARY.ok_or_else(|| "Mainnet wasm not available".to_string())?,
         Default::default(),
     )
-    .with_name("ZkVerify Development")
+    .with_name("zkVerify Development")
     .with_id("zkv_mainnet_dev")
     .with_chain_type(ChainType::Development)
     .with_properties(zkv_chain_properties())
@@ -152,10 +152,10 @@ pub fn zkverify_development_config() -> Result<VoltaChainSpec, String> {
 
 pub fn zkverify_local_config() -> Result<VoltaChainSpec, String> {
     Ok(ZkvChainSpec::builder(
-        zkv_runtime::WASM_BINARY.ok_or_else(|| "Mainchain wasm not available".to_string())?,
+        zkv_runtime::WASM_BINARY.ok_or_else(|| "Mainnet wasm not available".to_string())?,
         Default::default(),
     )
-    .with_name("Zkverify Local Testnet")
+    .with_name("zkVerify Local Testnet")
     .with_id("zkv_mainnet_local")
     .with_protocol_id("zkv")
     .with_chain_type(ChainType::Local)
@@ -174,7 +174,7 @@ pub fn zkverify_staging_config() -> Result<VoltaChainSpec, String> {
     const ZKV_BOOTNODE_3_PEER_ID: &str = "12D3KooWBw26BpQuNwau2dt4b65c5bB72q6kmyis4m6NX8ZeycbC";
 
     Ok(ZkvChainSpec::builder(
-        zkv_runtime::WASM_BINARY.ok_or_else(|| "Mainchain wasm not available".to_string())?,
+        zkv_runtime::WASM_BINARY.ok_or_else(|| "Mainnet wasm not available".to_string())?,
         Default::default(),
     )
     .with_name("zkVerify Staging")

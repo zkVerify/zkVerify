@@ -202,6 +202,18 @@ where
         }
     }
 }
+
+/// Deals with fees: burns some of them, distributes the rest to the author and a treasury account.
+///   - `FeesBurnSplit`: percentage of fees to burn
+///   - `FeesAuthorSplit`: percentage of the unburned fees to send to the author and the rest goes
+///     treasury.
+///
+/// Tip amount goes to the author.
+///
+/// Example: FeesBurnSplit = 10%, FeesAuthorSplit = 70%, fees = 1000 tip = 500
+///   - Burned = `100` <- `1000 * 10%`
+///   - To Treasury = `270` <- `(1000-100) * 30%`
+///   - To Author = `1130` <- `(1000-100) * 70% + 500`
 pub struct DealWithFees<
     R,
     FeesBurnSplit: Get<Percent>,

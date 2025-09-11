@@ -38,11 +38,11 @@ async function run(nodeName, networkInfo, args) {
     if (chain.toString().startsWith("Volta ")) {
         wasm = fs.readFileSync('./new-runtime/volta_runtime.wasm');
         ss58Prefix = 251;
-    } else if (chain.toString().startsWith("Zkverify ")) {
+    } else if (chain.toString().startsWith("zkVerify ")) {
         wasm = fs.readFileSync('./new-runtime/zkv_runtime.wasm');
         ss58Prefix = 8741;
     } else {
-        console.log(`Unsupported chain ${chain}, only Volta and Zkverify are supported`);
+        console.log(`Unsupported chain ${chain}, only Volta and zkVerify are supported`);
         return ReturnCode.ErrUnsupportedNetwork;
     }
 
