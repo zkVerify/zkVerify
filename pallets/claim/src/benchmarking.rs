@@ -15,9 +15,35 @@
 
 use super::*;
 use crate::utils::*;
+use codec::{Decode, Encode};
 use frame_benchmarking::v2::*;
+use frame_support::traits::UnfilteredDispatchable;
 use frame_system::RawOrigin;
-use sp_runtime::Saturating;
+use sp_core::{ecdsa::*, Pair as TraitPair};
+use sp_runtime::{
+    traits::{IdentifyAccount, ValidateUnsigned},
+    MultiSignature, MultiSigner, Saturating,
+};
+
+pub trait BenchmarkHelper<Signature, Signer> {
+    type Beneficiary;
+    fn sign_claim() -> (Signature, Signer, Self::Beneficiary);
+}
+
+impl BenchmarkHelper<MultiSignature, MultiSigner> for () {
+    type Beneficiary = <MultiSigner as IdentifyAccount>::AccountId;
+
+    fn sign_claim() -> (MultiSignature, MultiSigner, Self::Beneficiary) {
+        let pair = Pair::from_seed_slice(b"//BenchSeed").unwrap();
+        let signer = MultiSigner::Ecdsa(pair.public());
+        let beneficiary = signer.clone().into_account();
+
+        // Generate Signature
+        let raw_signature = pair.sign(beneficiary.encode().as_slice());
+        let signature = MultiSignature::Ecdsa(raw_signature);
+        (signature, signer, beneficiary)
+    }
+}
 
 fn init_claim_state<T: Config>(n: u32, begin_claim: bool) -> BTreeMap<T::AccountId, BalanceOf<T>> {
     let (beneficiaries, total_amount) = get_beneficiaries_map::<T>(n);
@@ -48,13 +74,29 @@ mod benchmarks {
 
     #[benchmark]
     fn claim() {
-        let _ = init_claim_state::<T>(<T as Config>::MAX_OP_BENEFICIARIES, true);
+        let _ = init_claim_state::<T>(<T as Config>::MAX_OP_BENEFICIARIES - 1, true);
 
-        let beneficiary: T::AccountId = account("", 10, 10);
+        let (signature, signer, beneficiary) = T::BenchmarkHelper::sign_claim();
+
+        // Insert beneficiary
+        let amount =
+            BalanceOf::<T>::from(T::Currency::minimum_balance().saturating_add(1u32.into()));
+        Beneficiaries::<T>::insert(beneficiary.clone(), amount);
         assert!(Beneficiaries::<T>::get(beneficiary.clone()).is_some());
 
-        #[extrinsic_call]
-        claim(RawOrigin::None, beneficiary.clone());
+        let call_enc = Call::<T>::claim {
+            beneficiary: signer,
+            signature: signature,
+        }
+        .encode();
+        let source = sp_runtime::transaction_validity::TransactionSource::External;
+
+        #[block]
+        {
+            let call = <Call<T> as Decode>::decode(&mut &*call_enc).unwrap();
+            super::Pallet::<T>::validate_unsigned(source, &call).unwrap();
+            call.dispatch_bypass_filter(RawOrigin::None.into()).unwrap();
+        }
 
         // sanity check
         assert!(Beneficiaries::<T>::get(beneficiary).is_none());
