@@ -112,7 +112,7 @@ pub fn staging_config_genesis() -> Result<serde_json::Value, sp_core::crypto::Pu
     let institutional = [
         //Horizen Labs Locked
         FundedAccount::from_id(
-            "5EYCAe5kjJEU9CJ4QMep83WeQNvGwkWpknkU7r3Q3w7n13iV",
+            "5HEBXYayw4Nr4r9ZLFP9XwH4pfcDD8N72S9iiVUnpHWvQZGs",
             HORIZEN_LABS_LOCKED_BALANCE,
         )?,
         //EDS Locked
