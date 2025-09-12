@@ -96,59 +96,53 @@ fn main_parachains_host_configuration() -> HostConfiguration<BlockNumber> {
 }
 
 pub fn staging_config_genesis() -> Result<serde_json::Value, sp_core::crypto::PublicError> {
-    const HORIZEN_LABS_LOCKED_BALANCE: Balance = 25 * MILLIONS;
-    const EDS_LOCKED_BALANCE: Balance = 271 * MILLIONS + 300 * THOUSANDS;
-    const ZKV_FOUNDATION_LOCKED_BALANCE: Balance = 133 * MILLIONS + 162 * THOUSANDS + 740 * VFY;
-    const ZKV_FOUNDATION_LIQUID_BALANCE: Balance = 117 * MILLIONS + 522 * THOUSANDS + 385 * VFY;
-    const ZKV_COMMUNITY_LOCKED_BALANCE: Balance = 264 * MILLIONS + 343 * THOUSANDS + 111 * VFY;
-    const ZKV_COMMUNITY_LIQUID_BALANCE: Balance = 108 * MILLIONS + 721 * THOUSANDS + 764 * VFY;
-    const TOKEN_LAUNCH_LOCKED_BALANCE: Balance = 57 * MILLIONS + 106 * THOUSANDS + 649 * VFY;
-    const TOKEN_LAUNCH_LIQUID_BALANCE: Balance = 21 * MILLIONS + 913 * THOUSANDS + 351 * VFY;
+    const EDS_LOCKED_BALANCE: Balance = 271 * MILLIONS + 300 * THOUSANDS + VFY;
+    const ZKV_FOUNDATION_LOCKED_BALANCE: Balance = 133 * MILLIONS + 162 * THOUSANDS + 741 * VFY;
+    const ZKV_FOUNDATION_LIQUID_BALANCE: Balance = 117 * MILLIONS + 522 * THOUSANDS + 386 * VFY;
+    const ZKV_COMMUNITY_LOCKED_BALANCE: Balance = 264 * MILLIONS + 343 * THOUSANDS + 112 * VFY;
+    const ZKV_COMMUNITY_LIQUID_BALANCE: Balance = 108 * MILLIONS + 721 * THOUSANDS + 765 * VFY;
+    const TOKEN_LAUNCH_LOCKED_BALANCE: Balance = 79 * MILLIONS + 19 * THOUSANDS + 994 * VFY;
+    const HORIZEN_LABS_LOCKED_BALANCE: Balance = 25 * MILLIONS + VFY;
     const VALIDATOR_BALANCE: Balance = 100 * THOUSANDS;
     const VALIDATOR_BOND: Balance = VALIDATOR_BALANCE;
     const SUDO_BALANCE: Balance = 10 * THOUSANDS;
     const DEV_WALLET_BALANCE: Balance = 10 * THOUSANDS;
 
     let institutional = [
-        //Horizen Labs Locked
-        FundedAccount::from_id(
-            "5HEBXYayw4Nr4r9ZLFP9XwH4pfcDD8N72S9iiVUnpHWvQZGs",
-            HORIZEN_LABS_LOCKED_BALANCE,
-        )?,
         //EDS Locked
         FundedAccount::from_id(
-            "5CBFC7PE6rq2UmUvHwXfejTctAP6KHUDdLxS65PDcFWHkoXP",
+            "5E2bar9bJQfCm7bdBFbTD6j5AGfuEPbWohCQL8cNgvRppBxN",
             EDS_LOCKED_BALANCE,
         )?,
         //ZKV Foundation Locked
         FundedAccount::from_id(
-            "5DnrLV6bBntEa65b7NM9RBPJv3jBVgzSFqFG1eUuNUGAze4h",
+            "5H4GcaHqZN8t2sg25dx71BZUQyp5bkNeAECtTv2hbQMZL2d9",
             ZKV_FOUNDATION_LOCKED_BALANCE,
         )?,
         //ZKV Foundation Liquid
         FundedAccount::from_id(
-            "5EFBAFR49Y2XZ1rBwQXM4Wo2rdenNpi5xyiDEv3oxJmSa2Ut",
+            "5H7BYine8UZrd8aWfhGr3ANYHtrqZpo47WBuAjrvArWzs6TU",
             ZKV_FOUNDATION_LIQUID_BALANCE,
         )?,
         //ZKV Community Locked
         FundedAccount::from_id(
-            "5DF9kBMrPbqE3kSjVt4QDHBYZYze8WWmBssrhriXhut4DrKP",
+            "5HnS3BKnDXSgpoyYdtSJTuKuiU3mqnhzWeez4WSTpjYsPgvD",
             ZKV_COMMUNITY_LOCKED_BALANCE,
         )?,
         //ZKV Community Liquid
         FundedAccount::from_id(
-            "5CtatxhAjwJnsW9kjsuUpuMZazA2EZ9yb85i7xyPWETyy8Wt",
+            "5EtxUrj7UrXJWSGxaSyBz1dGLRXP5t1Q1rDq2t7Uw8PWrpwE",
             ZKV_COMMUNITY_LIQUID_BALANCE,
         )?,
         //Token Launch Locked
         FundedAccount::from_id(
-            "5DSVahZ7bhzTyoxkEjQeNJ7yU6M6tidUe89cC2PTSW9FYVaP",
+            "5EaXuxjzL29Hx4oUauScAUCeAX9Nhy7Gq82FesrSfiADrK9N",
             TOKEN_LAUNCH_LOCKED_BALANCE,
         )?,
-        //Token Launch Liquid
+        //Horizen Labs Locked
         FundedAccount::from_id(
-            "5FHz3zPfdJbDhPesCrVB1vb7EwT6jHWGTYSoQrLpAeWKJXP7",
-            TOKEN_LAUNCH_LIQUID_BALANCE,
+            "5CKQcFAbn2MGaV8D6XhBt84JkPRGWBD1jhbvkhbQcLWp2R32",
+            HORIZEN_LABS_LOCKED_BALANCE,
         )?,
     ];
 
