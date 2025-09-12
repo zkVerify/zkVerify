@@ -1,7 +1,7 @@
 use crate::mock::RuntimeEvent as TestEvent;
 use crate::mock::*;
 use crate::*;
-use frame_support::{assert_err, assert_noop, assert_ok, dispatch::Pays};
+use frame_support::{assert_err, assert_noop, assert_ok};
 use frame_system::{EventRecord, Phase};
 use sp_core::TypedGet;
 use sp_runtime::{traits::BadOrigin, TokenError};
@@ -211,7 +211,12 @@ fn claim() {
         GenesisClaimBalance::Sufficient,
     )
     .execute_with(|| {
-        assert_ok!(Claim::claim(Origin::None.into(), USER_1));
+        let (user_signer, user_signature) = USER_1_SIGN.clone();
+        assert_ok!(Claim::claim(
+            Origin::None.into(),
+            user_signer,
+            user_signature
+        ));
         assert_evt(
             Event::Claimed {
                 beneficiary: USER_1,
@@ -236,24 +241,64 @@ fn double_claim_is_err() {
         GenesisClaimBalance::Sufficient,
     )
     .execute_with(|| {
-        assert_ok!(Claim::claim(Origin::None.into(), USER_1));
-        assert_err!(
-            Claim::claim(Origin::None.into(), USER_1),
+        let (user_signer, user_signature) = USER_1_SIGN.clone();
+        assert_ok!(Claim::claim(
+            Origin::None.into(),
+            user_signer.clone(),
+            user_signature.clone()
+        ));
+        assert_noop!(
+            Claim::claim(Origin::None.into(), user_signer, user_signature),
             Error::<Test>::NotEligible
-        )
+        );
     });
 }
 
 #[test]
-fn claim_wrong_beneficiary() {
+fn claim_non_existing_beneficiary() {
     test_with_configs(
         WithGenesisBeneficiaries::Yes,
         GenesisClaimBalance::Sufficient,
     )
     .execute_with(|| {
+        let (user_signer, user_signature) = NON_BENEFICIARY_SIGN.clone();
         assert_noop!(
-            Claim::claim(Origin::None.into(), NON_BENEFICIARY),
+            Claim::claim(Origin::None.into(), user_signer, user_signature),
             Error::<Test>::NotEligible
+        );
+    });
+}
+
+#[test]
+fn claim_invalid_signature() {
+    test_with_configs(
+        WithGenesisBeneficiaries::Yes,
+        GenesisClaimBalance::Sufficient,
+    )
+    .execute_with(|| {
+        let (user_signer, mut user_signature) = USER_1_SIGN.clone();
+        user_signature.1[0] += 1u8; // Alter signature
+
+        assert_noop!(
+            Claim::claim(Origin::None.into(), user_signer, user_signature),
+            Error::<Test>::BadSignature
+        );
+    });
+}
+
+#[test]
+fn claim_invalid_beneficiary() {
+    test_with_configs(
+        WithGenesisBeneficiaries::Yes,
+        GenesisClaimBalance::Sufficient,
+    )
+    .execute_with(|| {
+        let (_, user_1_signature) = USER_1_SIGN.clone();
+        let user_2_signer = sp_runtime::testing::UintAuthorityId::from(USER_2);
+
+        assert_noop!(
+            Claim::claim(Origin::None.into(), user_2_signer, user_1_signature),
+            Error::<Test>::BadSignature
         );
     });
 }
@@ -266,15 +311,16 @@ fn claim_insufficient_balance() {
         GenesisClaimBalance::Sufficient,
     )
     .execute_with(|| {
-        Beneficiaries::<Test>::insert(NON_BENEFICIARY, SUFFICIENT_GENESIS_BALANCE + 1);
+        let (user_signer, user_signature) = USER_1_SIGN.clone();
+        Beneficiaries::<Test>::insert(USER_1, Balances::total_issuance()); // Increase astronomically
         assert_err!(
-            Claim::claim(Origin::None.into(), NON_BENEFICIARY),
+            Claim::claim(Origin::None.into(), user_signer, user_signature),
             TokenError::FundsUnavailable
         );
         assert_not_evt(
             Event::Claimed {
-                beneficiary: NON_BENEFICIARY,
-                amount: SUFFICIENT_GENESIS_BALANCE + 1,
+                beneficiary: USER_1,
+                amount: Balances::total_issuance(),
             },
             "Cannot claim if money not available",
         );
@@ -284,9 +330,25 @@ fn claim_insufficient_balance() {
 #[test]
 fn cannot_claim_while_claim_inactive() {
     test().execute_with(|| {
-        assert_err!(
-            Claim::claim(Origin::None.into(), USER_1),
+        let (user_signer, user_signature) = USER_1_SIGN.clone();
+        assert_noop!(
+            Claim::claim(Origin::None.into(), user_signer, user_signature),
             Error::<Test>::AlreadyEnded
+        );
+    })
+}
+
+#[test]
+fn cannot_claim_if_signed_origin() {
+    test_with_configs(
+        WithGenesisBeneficiaries::Yes,
+        GenesisClaimBalance::Sufficient,
+    )
+    .execute_with(|| {
+        let (user_signer, user_signature) = USER_1_SIGN.clone();
+        assert_noop!(
+            Claim::claim(Origin::Signed(USER_1).into(), user_signer, user_signature),
+            BadOrigin
         );
     })
 }
@@ -712,4 +774,108 @@ fn cannot_init_new_claim_if_leftovers_benificiaries() {
         ));
         assert_evt(Event::ClaimStarted { claim_id: 0 }, "New claim");
     })
+}
+
+#[test]
+fn validate_unsigned_works() {
+    use crate::{Call as ClaimCall, ClaimValidityError};
+    use codec::Encode;
+    use sp_runtime::{
+        traits::{IdentifyAccount, ValidateUnsigned},
+        transaction_validity::{
+            InvalidTransaction, TransactionLongevity, TransactionValidityError, ValidTransaction,
+        },
+    };
+
+    test_with_configs(
+        WithGenesisBeneficiaries::Yes,
+        GenesisClaimBalance::Sufficient,
+    )
+    .execute_with(|| {
+        let (user_signer, user_signature) = USER_1_SIGN.clone();
+        let user_address = user_signer.clone().into_account();
+        let claim_id = ClaimId::<Test>::get().unwrap();
+        let source = sp_runtime::transaction_validity::TransactionSource::External;
+
+        // Claim bad signature
+        let mut bad_signature = user_signature.clone();
+        bad_signature.1[0] += 1;
+
+        assert_eq!(
+            Pallet::<Test>::validate_unsigned(
+                source,
+                &ClaimCall::claim {
+                    beneficiary: user_signer.clone(),
+                    signature: bad_signature
+                }
+            ),
+            Err(TransactionValidityError::Invalid(
+                InvalidTransaction::Custom(ClaimValidityError::InvalidSignature.into())
+            ))
+        );
+
+        // Claim bad user
+        let user_2_signer = sp_runtime::testing::UintAuthorityId::from(USER_2);
+
+        assert_eq!(
+            Pallet::<Test>::validate_unsigned(
+                source,
+                &ClaimCall::claim {
+                    beneficiary: user_2_signer,
+                    signature: user_signature.clone()
+                }
+            ),
+            Err(TransactionValidityError::Invalid(
+                InvalidTransaction::Custom(ClaimValidityError::InvalidSignature.into())
+            ))
+        );
+
+        // Claim beneficiary non existing
+        let (nb_signer, nb_signature) = NON_BENEFICIARY_SIGN.clone();
+        assert_eq!(
+            Pallet::<Test>::validate_unsigned(
+                source,
+                &ClaimCall::claim {
+                    beneficiary: nb_signer,
+                    signature: nb_signature
+                }
+            ),
+            Err(TransactionValidityError::Invalid(
+                InvalidTransaction::Custom(ClaimValidityError::BeneficiaryNotFound.into())
+            ))
+        );
+
+        // Claim ok
+        assert_eq!(
+            Pallet::<Test>::validate_unsigned(
+                source,
+                &ClaimCall::claim {
+                    beneficiary: user_signer.clone(),
+                    signature: user_signature.clone()
+                }
+            ),
+            Ok(ValidTransaction {
+                priority: 100,
+                requires: vec![],
+                provides: vec![("claim", claim_id, user_address).encode()],
+                longevity: TransactionLongevity::max_value(),
+                propagate: true,
+            })
+        );
+
+        // Claim while inactive
+        ClaimActive::<Test>::put(false);
+        assert_eq!(
+            Pallet::<Test>::validate_unsigned(
+                source,
+                &ClaimCall::claim {
+                    beneficiary: user_signer,
+                    signature: user_signature
+                }
+            ),
+            Err(TransactionValidityError::Invalid(
+                InvalidTransaction::Custom(ClaimValidityError::ClaimInactive.into())
+            ))
+        );
+    });
 }

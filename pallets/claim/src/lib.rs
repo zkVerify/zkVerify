@@ -37,7 +37,7 @@ use core::marker::PhantomData;
 
 extern crate alloc;
 
-use alloc::{collections::btree_map::BTreeMap, vec::Vec};
+use alloc::{collections::btree_map::BTreeMap, vec, vec::Vec};
 use sp_runtime::traits::{AccountIdConversion, Zero};
 
 use frame_support::{
@@ -53,6 +53,31 @@ use frame_support::{
 pub(crate) type BalanceOf<T> =
     <<T as Config>::Currency as Inspect<<T as frame_system::Config>::AccountId>>::Balance;
 
+#[repr(u8)]
+pub(crate) enum ClaimValidityError {
+    ClaimInactive = 0,
+    BeneficiaryNotFound = 1,
+    InvalidSignature = 2,
+    Other = 3,
+}
+
+impl<T: Config> From<Error<T>> for ClaimValidityError {
+    fn from(error: Error<T>) -> Self {
+        match error {
+            Error::AlreadyEnded => ClaimValidityError::ClaimInactive,
+            Error::NotEligible => ClaimValidityError::BeneficiaryNotFound,
+            Error::BadSignature => ClaimValidityError::InvalidSignature,
+            _ => ClaimValidityError::Other,
+        }
+    }
+}
+
+impl From<ClaimValidityError> for u8 {
+    fn from(err: ClaimValidityError) -> Self {
+        err as u8
+    }
+}
+
 pub use pallet::*;
 pub use weight::WeightInfo;
 
@@ -62,7 +87,10 @@ pub mod pallet {
     use super::*;
     use frame_support::{pallet_prelude::*, traits::DefensiveSaturating};
     use frame_system::pallet_prelude::*;
-    use sp_runtime::TokenError;
+    use sp_runtime::{
+        traits::{IdentifyAccount, Verify},
+        TokenError,
+    };
 
     #[pallet::pallet]
     pub struct Pallet<T>(_);
@@ -88,12 +116,26 @@ pub mod pallet {
         /// Weight information for extrinsics in this pallet.
         type WeightInfo: WeightInfo;
 
+        /// The signer of the message for claiming assigned tokens
+        type Signer: IdentifyAccount<AccountId = Self::AccountId> + Parameter;
+
+        /// The type of signature to be supplied for claiming the tokens
+        type Signature: Verify<Signer = Self::Signer> + Parameter;
+
         /// The maximum number of allowed beneficiaries.
         #[pallet::constant]
         type MaxBeneficiaries: Get<u32>;
 
         /// The maximum number of beneficiaries allowed to be updated within a single operation. Used to restrict extrinsic weights.
         const MAX_OP_BENEFICIARIES: u32;
+
+        /// Helper to create a signature to be benchmarked.
+        #[cfg(feature = "runtime-benchmarks")]
+        type BenchmarkHelper: crate::benchmarking::BenchmarkHelper<
+            Self::Signature,
+            Self::Signer,
+            Beneficiary = Self::AccountId,
+        >;
     }
 
     /// Candidates eligible to receive a claim with the associated balance they have right to
@@ -198,7 +240,7 @@ pub mod pallet {
     /// Error for the claim pallet.
     #[pallet::error]
     pub enum Error<T> {
-        /// Attempt to start a new claim while there is one already in progress
+        /// Attempt to perform an action that is invalid when there is a claim campaign active.
         AlreadyStarted,
         /// Account requested a claim but it is not present among the Beneficiaries
         NotEligible,
@@ -210,10 +252,12 @@ pub mod pallet {
         TooManyBeneficiaries,
         /// Attempt to modify the balance of an already added beneficiary
         AlreadyPresent,
-        /// Attempt to perform an action implying an open claim, while it has already ended
+        /// Attempt to perform an action that is invalid when there is no claim campaign active.
         AlreadyEnded,
         /// Attempt to start a claim while there are still beneficiaries in storage from a previous one
         NonEmptyBeneficiaries,
+        /// Signature verification failed for a given beneficiary
+        BadSignature,
     }
 
     impl<T: Config> Pallet<T> {
@@ -318,10 +362,10 @@ pub mod pallet {
             Ok(())
         }
 
-        fn check_claim_status(should_be_active: bool) -> DispatchResult {
+        fn check_claim_status(should_be_active: bool) -> Result<(), Error<T>> {
             match (ClaimActive::<T>::get(), should_be_active) {
-                (false, true) => Err(Error::<T>::AlreadyEnded)?,
-                (true, false) => Err(Error::<T>::AlreadyStarted)?,
+                (false, true) => Err(Error::<T>::AlreadyEnded),
+                (true, false) => Err(Error::<T>::AlreadyStarted),
                 _ => Ok(()),
             }
         }
@@ -358,7 +402,7 @@ pub mod pallet {
             Ok(())
         }
 
-        fn _remove_beneficiaries() {
+        fn do_remove_beneficiaries() {
             // Start removing remaining beneficiaries if present
 
             let num_beneficiaries = Beneficiaries::<T>::count();
@@ -373,6 +417,28 @@ pub mod pallet {
                     Self::deposit_event(Event::<T>::NoMoreBeneficiaries);
                 }
             }
+        }
+
+        pub(crate) fn check_claimant(
+            beneficiary: &T::Signer,
+            signature: T::Signature,
+        ) -> Result<(), Error<T>> {
+            // Pre-requisites
+            // 1. Check claim is active
+            Self::check_claim_status(true)?;
+
+            // 2. Check beneficiary is eligible
+            let beneficiary_account = beneficiary.clone().into_account();
+            if !Beneficiaries::<T>::contains_key(&beneficiary_account) {
+                Err(Error::<T>::NotEligible)?;
+            }
+
+            // Check signature
+            if !signature.verify(beneficiary.encode().as_slice(), &beneficiary_account) {
+                Err(Error::<T>::BadSignature)?;
+            }
+
+            Ok(())
         }
     }
 
@@ -432,12 +498,12 @@ pub mod pallet {
         #[pallet::weight(T::WeightInfo::claim())]
         pub fn claim(
             origin: OriginFor<T>,
-            dest: T::AccountId,
-        ) -> DispatchResultWithPostInfo {
+            beneficiary: T::Signer,
+            signature: T::Signature,
+        ) -> DispatchResult {
             ensure_none(origin)?;
-            Self::check_claim_status(true)?;
-            Self::do_claim(dest)?;
-            Ok(Pays::No.into())
+            Self::check_claimant(&beneficiary, signature)?;
+            Self::do_claim(beneficiary.into_account())
         }
 
         /// Claim token claim for 'dest'.
@@ -518,7 +584,7 @@ pub mod pallet {
             });
 
             // Start removing as many beneficiaries as possible
-            Self::_remove_beneficiaries();
+            Self::do_remove_beneficiaries();
 
             Ok(())
         }
@@ -534,9 +600,37 @@ pub mod pallet {
             Self::check_claim_status(false)?;
 
             // Remove as many beneficiaries as possible
-            Self::_remove_beneficiaries();
+            Self::do_remove_beneficiaries();
 
             Ok(())
+        }
+    }
+
+    #[pallet::validate_unsigned]
+    impl<T: Config> ValidateUnsigned for Pallet<T> {
+        type Call = Call<T>;
+
+        fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
+            const PRIORITY: u64 = 100;
+
+            if let Call::claim {
+                beneficiary,
+                signature,
+            } = call
+            {
+                Self::check_claimant(beneficiary, signature.clone())
+                    .map_err(|e| InvalidTransaction::Custom(ClaimValidityError::from(e).into()))?;
+
+                Ok(ValidTransaction {
+                    priority: PRIORITY,
+                    requires: vec![],
+                    provides: vec![("claim", ClaimId::<T>::get().unwrap(), beneficiary).encode()],
+                    longevity: TransactionLongevity::max_value(),
+                    propagate: true,
+                })
+            } else {
+                Err(InvalidTransaction::Call.into())
+            }
         }
     }
 }

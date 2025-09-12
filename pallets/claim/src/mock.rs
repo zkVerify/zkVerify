@@ -15,6 +15,7 @@
 
 use std::{collections::BTreeMap, sync::LazyLock};
 
+use codec::Encode;
 use frame_support::{
     derive_impl, parameter_types,
     traits::{EitherOfDiverse, EnsureOrigin},
@@ -23,7 +24,11 @@ use frame_support::{
 };
 use frame_system::{EnsureRoot, RawOrigin};
 use sp_core::ConstU128;
-use sp_runtime::{traits::IdentityLookup, BuildStorage};
+use sp_runtime::{
+    testing::{TestSignature, UintAuthorityId},
+    traits::IdentityLookup,
+    BuildStorage, RuntimeAppPublic,
+};
 
 use crate::utils;
 
@@ -46,6 +51,18 @@ pub const USER_5_AMOUNT: Balance = 300_000_000;
 pub const USER_6: AccountId = 33_333;
 pub const USER_6_AMOUNT: Balance = 50_000_000_000;
 pub const NON_BENEFICIARY: AccountId = 6;
+
+pub static USER_1_SIGN: LazyLock<(UintAuthorityId, TestSignature)> = LazyLock::new(|| {
+    let user_signer = UintAuthorityId::from(USER_1);
+    let user_signature = user_signer.sign(&USER_1.encode()).unwrap();
+    (user_signer, user_signature)
+});
+
+pub static NON_BENEFICIARY_SIGN: LazyLock<(UintAuthorityId, TestSignature)> = LazyLock::new(|| {
+    let user_signer = UintAuthorityId::from(NON_BENEFICIARY);
+    let user_signature = user_signer.sign(&NON_BENEFICIARY.encode()).unwrap();
+    (user_signer, user_signature)
+});
 
 pub const MANAGER_USER: AccountId = 666;
 
@@ -153,6 +170,17 @@ parameter_types! {
     pub UnclaimedDestinationMockAccount: AccountId = 111;
 }
 
+pub struct MockBenchmarkHelper;
+
+impl crate::benchmarking::BenchmarkHelper<TestSignature, UintAuthorityId> for MockBenchmarkHelper {
+    type Beneficiary = AccountId;
+
+    fn sign_claim() -> (TestSignature, UintAuthorityId, AccountId) {
+        let signer = USER_1_SIGN.clone();
+        (signer.1, signer.0, USER_1)
+    }
+}
+
 impl crate::Config for Test {
     type RuntimeEvent = RuntimeEvent;
     type PalletId = ClaimPalletId;
@@ -161,6 +189,9 @@ impl crate::Config for Test {
     type UnclaimedDestination = UnclaimedDestinationMockAccount;
     type WeightInfo = MockWeightInfo;
     type MaxBeneficiaries = MaxBeneficiaries;
+    type Signer = UintAuthorityId;
+    type Signature = TestSignature;
+    type BenchmarkHelper = MockBenchmarkHelper;
     const MAX_OP_BENEFICIARIES: u32 = MaxOpBeneficiaries::get();
 }
 
