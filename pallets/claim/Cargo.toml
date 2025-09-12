@@ -27,6 +27,7 @@ sp-runtime = { workspace = true }
 [dev-dependencies]
 pallet-balances = { workspace = true, features = ["std"] }
 sp-io = { workspace = true, features = ["std"] }
+sp-core = { workspace = true, features = ["full_crypto"] }
 
 [features]
 runtime-benchmarks = [

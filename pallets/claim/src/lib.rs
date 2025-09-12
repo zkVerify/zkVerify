@@ -344,7 +344,7 @@ pub mod pallet {
 
                     // Account doesn't exist. Add its token amount to the required amount this pallet's account should have
                     required_amount = required_amount.defensive_saturating_add(*amount);
-                    log::trace!("Added beneficiary {account:?}. Ca claim: {amount:?}");
+                    log::trace!("Added beneficiary {account:?}. To claim: {amount:?}");
 
                     // Cannot cover for all the tokens, raise an error
                     if required_amount > available_amount {
