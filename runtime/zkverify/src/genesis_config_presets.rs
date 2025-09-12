@@ -201,7 +201,7 @@ pub fn staging_config_genesis() -> Result<serde_json::Value, sp_core::crypto::Pu
     let nominators: &[NominatorData] = &[];
 
     let sudo_account = FundedAccount::from_id(
-        "5HU42dXPz3fde26hv6LzJRpuXbnktrY3oYZFSTnYawdfCRcB",
+        "5HbqGciWqzKymMVFfDYjgeM3irRHuzV49oeqqSbMYBguc67Q",
         SUDO_BALANCE,
     )?;
 
