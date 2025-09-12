@@ -12,6 +12,7 @@ NODEJS_VERSION_INSTALL="${NODEJS_VERSION_INSTALL:-}"
 CMAKE_INSTALL="${CMAKE_INSTALL:-}"
 LLD_INSTALL="${LLD_INSTALL:-}"
 SKIP_WASM_BUILD="${SKIP_WASM_BUILD:-}"
+TRY_RUNTIME="${TRY_RUNTIME:-}"
 TARGET_DIR="${DOCKER_BUILD_DIR}/target"
 
 fn_die() {
@@ -115,6 +116,15 @@ if [ -n "${SKIP_WASM_BUILD}" ]; then
 else
   echo -e "\n=== WASM BUILD ENABLED ===\n"
   unset SKIP_WASM_BUILD
+fi
+
+if [ -n "${TRY_RUNTIME}" ]; then
+  TRY_RUNTIME_BIN="/usr/local/bin/try-runtime"
+  echo -e "\n=== TRY RUNTIME: version ${TRY_RUNTIME} to ${TRY_RUNTIME_BIN} ===\n"
+
+  curl -sL https://github.com/paritytech/try-runtime-cli/releases/download/${TRY_RUNTIME}/try-runtime-x86_64-unknown-linux-musl \
+    -o ${TRY_RUNTIME_BIN} && \
+    chmod +x ${TRY_RUNTIME_BIN}
 fi
 
 # Run

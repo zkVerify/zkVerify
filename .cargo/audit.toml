@@ -17,6 +17,8 @@ ignore = [
     # Please open an issue in Wasmtime if you're using this crate directly.
     # ** We don't use this crate directly, so we can ignore it. **
     "RUSTSEC-2025-0055", # coming from indirect dependency tracing-subscriber v0.2
+    # on the other end the v0.3.20 break console log output formatting
+    # how reported in https://github.com/tokio-rs/tracing/issues/3369
 ]
 informational_warnings = ["unmaintained", "yanked"]
 

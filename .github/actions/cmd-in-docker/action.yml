@@ -50,6 +50,11 @@ inputs:
     required: false
     type: string
     default: ''
+  try_runtime:
+    description: 'If not empty download it with the given version'
+    required: false
+    type: string
+    default: ''
 
 runs:
   using: "composite"
@@ -89,6 +94,7 @@ runs:
         CARGO_BINARIES_INSTALL: ${{ inputs.cargo_binaries_install }}
         NODEJS_VERSION_INSTALL: ${{ inputs.nodejs_version_install }}
         SKIP_WASM_BUILD: ${{ inputs.skip_wasm_build }}
+        TRY_RUNTIME: ${{ inputs.try_runtime }}
         DOCKER_BUILD_DIR: /build
         DOCKER_CARGO_HOME: /tmp/.cargo
       run: |
