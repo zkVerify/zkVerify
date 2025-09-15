@@ -716,26 +716,23 @@ pub mod pallet {
                     }
                     let root = aggregation.compute_receipt();
                     let size = aggregation.statements.len() as u32;
+                    for s in aggregation.statements.iter() {
+                        handle_held_funds::<T>(
+                            HoldReason::Aggregation,
+                            &s.account,
+                            aggregator.account(),
+                            s.reserve.aggregate,
+                        );
+                        handle_held_funds::<T>(
+                            HoldReason::Delivery,
+                            &s.account,
+                            Some(&domain.delivery.owner),
+                            s.reserve.delivery,
+                        );
+                    }
                     Published::<T>::mutate(|published: &mut _| {
                         published.push((domain_id, aggregation))
                     });
-
-                    if let Some((_, published)) = Published::<T>::get().last() {
-                        for s in published.statements.iter() {
-                            handle_held_funds::<T>(
-                                HoldReason::Aggregation,
-                                &s.account,
-                                aggregator.account(),
-                                s.reserve.aggregate,
-                            );
-                            handle_held_funds::<T>(
-                                HoldReason::Delivery,
-                                &s.account,
-                                Some(&domain.delivery.owner),
-                                s.reserve.delivery,
-                            );
-                        }
-                    }
 
                     domain.handle_hold_state();
 
