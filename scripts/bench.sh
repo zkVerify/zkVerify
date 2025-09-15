@@ -12,7 +12,7 @@ DEFAULT_LOCAL_WEIGHT_TEMPLATE="${PROJECT_ROOT}/relay-node/benchmarks/zkv-pallets
 DEFAULT_SKIP_BUILD="false"
 DEFAULT_CODE_HEADER="${PROJECT_ROOT}/HEADER-APACHE2"
 
-WEIGTH_TEMPLATE=${WEIGTH_TEMPLATE:-"${DEFAULT_LOCAL_WEIGHT_TEMPLATE}"}
+WEIGHT_TEMPLATE=${WEIGHT_TEMPLATE:-"${DEFAULT_LOCAL_WEIGHT_TEMPLATE}"}
 SKIP_BUILD=${SKIP_BUILD:-"${DEFAULT_SKIP_BUILD}"}
 CODE_HEADER=${CODE_HEADER:-"${DEFAULT_CODE_HEADER}"}
 
@@ -21,10 +21,10 @@ PALLET=$1
 function usage {
     local message=${1:-""};
 
-    echo "$0 <pallet> : get pallet crate name, execute benchamark and save the weigth file.
+    echo "$0 <pallet> : get pallet crate name, execute benchmark and save the weight file.
     Environment:
-    WEIGTH_TEMPLATE : the template file path to use for rendering [${DEFAULT_LOCAL_WEIGHT_TEMPLATE}].
-    WEIGTH_OUT_PATH : the path of the rendered weight file. If empty it will use <pallet_path>/src/weight.rs.
+    WEIGHT_TEMPLATE : the template file path to use for rendering [${DEFAULT_LOCAL_WEIGHT_TEMPLATE}].
+    WEIGHT_OUT_PATH : the path of the rendered weight file. If empty it will use <pallet_path>/src/weight.rs.
     BM_STEPS        : benchmark steps [${DEFAULT_BM_STEPS}].
     BM_REPEAT       : benchmark repeat [${DEFAULT_BM_REPEAT}].
     BM_HEAP_PAGES   : benchmark heap pages [${DEFAULT_BM_HEAP_PAGES}].
@@ -55,7 +55,7 @@ then
     usage
 fi
 
-if [ -z "${WEIGTH_OUT_PATH}" ];
+if [ -z "${WEIGHT_OUT_PATH}" ];
 then
     check_cargo
 
@@ -66,7 +66,7 @@ then
 
     CRATE_PATH=$(cargo workspaces list -l -a | grep -w  "${PALLET}" | awk '{print $3 }')
     
-    WEIGTH_OUT_PATH="${CRATE_PATH}/src/weight.rs"
+    WEIGHT_OUT_PATH="${CRATE_PATH}/src/weight.rs"
 fi
 
 echo "------------------------------------------------------------------
@@ -74,8 +74,8 @@ Use:
 SKIP_BUILD=${SKIP_BUILD}
 ZKV_NODE_EXE=${ZKV_NODE_EXE}
 PALLET=${PALLET}
-WEIGTH_OUT_PATH=${WEIGTH_OUT_PATH}
-WEIGTH_TEMPLATE=${WEIGTH_TEMPLATE}
+WEIGHT_OUT_PATH=${WEIGHT_OUT_PATH}
+WEIGHT_TEMPLATE=${WEIGHT_TEMPLATE}
 BM_STEPS=${BM_STEPS}
 BM_REPEAT=${BM_REPEAT}
 BM_HEAP_PAGES=${BM_HEAP_PAGES}
@@ -109,6 +109,6 @@ ${ZKV_NODE_EXE} \
     --repeat "${BM_REPEAT}" \
     --heap-pages="${BM_HEAP_PAGES}" \
     --header "${CODE_HEADER}" \
-    --output "${WEIGTH_OUT_PATH}" \
-    --template "${WEIGTH_TEMPLATE}" \
+    --output "${WEIGHT_OUT_PATH}" \
+    --template "${WEIGHT_TEMPLATE}" \
     ${BASE_PATH_ARG}
