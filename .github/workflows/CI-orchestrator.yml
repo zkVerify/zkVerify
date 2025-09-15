@@ -58,6 +58,7 @@ jobs:
 
   udeps-job:
     name: Udeps job
+    needs: [ check-lockfile-job ]
     uses: ./.github/workflows/CI-udeps.yml
 
   # Only for pull requests and if not canceled

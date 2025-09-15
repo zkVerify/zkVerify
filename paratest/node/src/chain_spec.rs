@@ -62,7 +62,7 @@ pub fn template_session_keys(keys: AuraId) -> paratest_runtime::SessionKeys {
 
 const PARA_ID: u32 = 1_599;
 
-pub fn development_config() -> ChainSpec {
+pub fn development_config(relay: &str) -> ChainSpec {
     // Give your base currency a unit name and decimal places
     let mut properties = sc_chain_spec::Properties::new();
     properties.insert("tokenSymbol".into(), "UNIT".into());
@@ -72,7 +72,7 @@ pub fn development_config() -> ChainSpec {
     ChainSpec::builder(
         paratest_runtime::WASM_BINARY.expect("WASM binary was not built, please build it!"),
         Extensions {
-            relay_chain: "local".into(),
+            relay_chain: relay.into(),
             // You MUST set this to the correct network!
             para_id: PARA_ID,
         },
@@ -112,7 +112,7 @@ pub fn development_config() -> ChainSpec {
     .build()
 }
 
-pub fn local_testnet_config() -> ChainSpec {
+pub fn local_testnet_config(relay: &str) -> ChainSpec {
     // Give your base currency a unit name and decimal places
     let mut properties = sc_chain_spec::Properties::new();
     properties.insert("tokenSymbol".into(), "UNIT".into());
@@ -123,7 +123,7 @@ pub fn local_testnet_config() -> ChainSpec {
     ChainSpec::builder(
         paratest_runtime::WASM_BINARY.expect("WASM binary was not built, please build it!"),
         Extensions {
-            relay_chain: "local".into(),
+            relay_chain: relay.into(),
             // You MUST set this to the correct network!
             para_id: PARA_ID,
         },

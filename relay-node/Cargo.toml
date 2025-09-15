@@ -21,7 +21,7 @@ edition.workspace = true
 # If you change the version here please DON'T forgot to
 # change also the one in cli/src/cli.rs `NODE_VERSION`
 ############################################################
-version = "0.10.0"
+version = "1.0.0"
 default-run = "zkv-relay"
 
 [lints]
@@ -52,6 +52,7 @@ tempfile = { workspace = true }
 tokio = { workspace = true }
 substrate-rpc-client = { workspace = true }
 polkadot-core-primitives = { workspace = true }
+rstest = { workspace = true }
 
 [build-dependencies]
 substrate-build-script-utils = { version = "11.0.0" }

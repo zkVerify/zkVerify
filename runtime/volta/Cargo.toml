@@ -1,0 +1,328 @@
+[package]
+name = "volta-runtime"
+version = "1.1.0"
+description = "zkVerify Volta Testnet Runtime."
+authors.workspace = true
+homepage = "https://github.com/zkVerify/zkVerify"
+edition.workspace = true
+publish = false
+repository.workspace = true
+license = "Apache-2.0"
+
+[lints]
+workspace = true
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+anyhow = { workspace = true }
+codec = { workspace = true, features = ["derive"] }
+scale-info = { workspace = true, features = ["derive", "serde"] }
+
+pallet-offences = { workspace = true }
+pallet-authorship = { workspace = true }
+pallet-session = { workspace = true }
+pallet-staking = { workspace = true }
+pallet-babe = { workspace = true }
+pallet-bags-list = { workspace = true }
+pallet-bounties = { workspace = true }
+pallet-child-bounties = { workspace = true }
+pallet-balances = { workspace = true }
+frame-support = { workspace = true }
+pallet-grandpa = { workspace = true }
+pallet-sudo = { workspace = true }
+pallet-multisig = { workspace = true }
+pallet-scheduler = { workspace = true }
+pallet-preimage = { workspace = true }
+pallet-referenda = { workspace = true }
+pallet-utility = { workspace = true }
+pallet-vesting = { workspace = true }
+ismp = { workspace = true }
+pallet-ismp = { workspace = true, features = ["unsigned"] }
+pallet-ismp-runtime-api = { workspace = true }
+ismp-grandpa = { workspace = true }
+pallet-token-gateway = { workspace = true }
+pallet-hyperbridge = { workspace = true }
+frame-metadata-hash-extension = { workspace = true }
+pallet-conviction-voting = { workspace = true }
+pallet-treasury = { workspace = true }
+pallet-proxy = { workspace = true }
+frame-system = { workspace = true }
+frame-try-runtime = { workspace = true, optional = true }
+pallet-timestamp = { workspace = true }
+pallet-transaction-payment = { workspace = true }
+frame-executive = { workspace = true }
+sp-api = { workspace = true }
+sp-block-builder = { workspace = true }
+sp-consensus-babe = { workspace = true, features = ["serde"] }
+finality-grandpa = { workspace = true }
+sp-consensus-grandpa = { workspace = true, features = ["serde"] }
+sp-core = { workspace = true, features = ["serde"] }
+sp-inherents = { workspace = true }
+sp-mmr-primitives = { workspace = true }
+sp-offchain = { workspace = true }
+sp-npos-elections = { workspace = true }
+sp-runtime = { workspace = true, features = ["serde"] }
+sp-session = { workspace = true }
+sp-staking = { workspace = true }
+sp-storage = { workspace = true }
+sp-transaction-pool = { workspace = true }
+sp-version = { workspace = true, features = ["serde"] }
+serde_json = { workspace = true, features = ["alloc"] }
+sp-genesis-builder = { workspace = true }
+sp-weights = { workspace = true }
+sp-io = { workspace = true }
+log = { workspace = true }
+
+# Used for the node template's RPCs
+frame-system-rpc-runtime-api = { workspace = true }
+frame-election-provider-support = { workspace = true }
+pallet-election-provider-support-benchmarking = { workspace = true, optional = true }
+pallet-session-benchmarking = { workspace = true, optional = true }
+pallet-transaction-payment-rpc-runtime-api = { workspace = true }
+
+# Used for runtime benchmarking
+frame-benchmarking = { workspace = true, optional = true }
+frame-system-benchmarking = { workspace = true, optional = true }
+
+# Custom logic
+pallet-aggregate = { workspace = true }
+pallet-claim = { workspace = true }
+pallet-hyperbridge-aggregations = { workspace = true }
+static_assertions = "1.1.0"
+aggregate-rpc-runtime-api = { workspace = true }
+
+pallet-verifiers = { workspace = true }
+hp-verifiers = { workspace = true }
+pallet-fflonk-verifier = { workspace = true }
+pallet-groth16-verifier = { workspace = true }
+pallet-risc0-verifier = { workspace = true, features = ["inject-native-poseidon2"] }
+pallet-ultrahonk-verifier = { workspace = true }
+pallet-ultraplonk-verifier = { workspace = true }
+pallet-sp1-verifier = { workspace = true }
+hp-dispatch = {workspace = true}
+pallet-plonky2-verifier = { workspace = true }
+
+authority-discovery-primitives = { workspace = true }
+
+polkadot-primitives = { workspace = true }
+polkadot-runtime-parachains = { workspace = true }
+pallet-authority-discovery = { workspace = true }
+
+polkadot-runtime-common = { workspace = true }
+zkv-runtime-common = { workspace = true }
+
+pallet-message-queue = { workspace = true }
+pallet-xcm = { workspace = true }
+pallet-xcm-benchmarks = { workspace = true, optional = true }
+xcm-builder = { workspace = true }
+xcm-executor = { workspace = true }
+xcm = { workspace = true }
+xcm-procedural = { workspace = true }
+hex-literal = { workspace = true }
+
+[dev-dependencies]
+rstest = { workspace = true }
+
+[build-dependencies]
+substrate-wasm-builder = { workspace = true, optional = true }
+
+[features]
+runtime-benchmarks = [
+	"frame-benchmarking/runtime-benchmarks",
+	"frame-election-provider-support/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
+	"frame-system-benchmarking/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"hp-dispatch/runtime-benchmarks",
+	"ismp-grandpa/runtime-benchmarks",
+	"pallet-aggregate/runtime-benchmarks",
+	"pallet-babe/runtime-benchmarks",
+	"pallet-bags-list/runtime-benchmarks",
+	"pallet-balances/runtime-benchmarks",
+	"pallet-bounties/runtime-benchmarks",
+	"pallet-child-bounties/runtime-benchmarks",
+	"pallet-claim/runtime-benchmarks",
+	"pallet-conviction-voting/runtime-benchmarks",
+	"pallet-election-provider-support-benchmarking/runtime-benchmarks",
+	"pallet-fflonk-verifier/runtime-benchmarks",
+	"pallet-grandpa/runtime-benchmarks",
+	"pallet-groth16-verifier/runtime-benchmarks",
+	"pallet-hyperbridge-aggregations/runtime-benchmarks",
+	"pallet-ismp/runtime-benchmarks",
+	"pallet-message-queue/runtime-benchmarks",
+	"pallet-multisig/runtime-benchmarks",
+	"pallet-offences/runtime-benchmarks",
+	"pallet-plonky2-verifier/runtime-benchmarks",
+	"pallet-preimage/runtime-benchmarks",
+	"pallet-proxy/runtime-benchmarks",
+	"pallet-referenda/runtime-benchmarks",
+	"pallet-risc0-verifier/runtime-benchmarks",
+	"pallet-scheduler/runtime-benchmarks",
+	"pallet-session-benchmarking/runtime-benchmarks",
+	"pallet-sp1-verifier/runtime-benchmarks",
+	"pallet-staking/runtime-benchmarks",
+	"pallet-sudo/runtime-benchmarks",
+	"pallet-timestamp/runtime-benchmarks",
+	"pallet-token-gateway/runtime-benchmarks",
+	"pallet-transaction-payment/runtime-benchmarks",
+	"pallet-treasury/runtime-benchmarks",
+	"pallet-ultrahonk-verifier/runtime-benchmarks",
+	"pallet-ultraplonk-verifier/runtime-benchmarks",
+	"pallet-utility/runtime-benchmarks",
+	"pallet-verifiers/runtime-benchmarks",
+	"pallet-vesting/runtime-benchmarks",
+	"pallet-xcm-benchmarks/runtime-benchmarks",
+	"pallet-xcm/runtime-benchmarks",
+	"polkadot-primitives/runtime-benchmarks",
+	"polkadot-runtime-common/runtime-benchmarks",
+	"polkadot-runtime-parachains/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"sp-staking/runtime-benchmarks",
+	"xcm-builder/runtime-benchmarks",
+	"xcm-executor/runtime-benchmarks",
+	"zkv-runtime-common/runtime-benchmarks",
+]
+fast-runtime = ["zkv-runtime-common/fast-runtime"]
+metadata-hash = [ "substrate-wasm-builder/metadata-hash" ]
+default = [ "std" ]
+std = [
+	"aggregate-rpc-runtime-api/std",
+	"anyhow/std",
+	"authority-discovery-primitives/std",
+	"codec/std",
+	"finality-grandpa/std",
+	"frame-benchmarking?/std",
+	"frame-election-provider-support/std",
+	"frame-executive/std",
+	"frame-metadata-hash-extension/std",
+	"frame-support/std",
+	"frame-system-benchmarking?/std",
+	"frame-system-rpc-runtime-api/std",
+	"frame-system/std",
+	"frame-try-runtime?/std",
+	"hp-dispatch/std",
+	"hp-verifiers/std",
+	"ismp-grandpa/std",
+	"ismp/std",
+	"log/std",
+	"pallet-aggregate/std",
+	"pallet-authority-discovery/std",
+	"pallet-authorship/std",
+	"pallet-babe/std",
+	"pallet-bags-list/std",
+	"pallet-balances/std",
+	"pallet-bounties/std",
+	"pallet-child-bounties/std",
+	"pallet-claim/std",
+	"pallet-conviction-voting/std",
+	"pallet-election-provider-support-benchmarking?/std",
+	"pallet-fflonk-verifier/std",
+	"pallet-grandpa/std",
+	"pallet-groth16-verifier/std",
+	"pallet-hyperbridge-aggregations/std",
+	"pallet-hyperbridge/std",
+	"pallet-ismp-runtime-api/std",
+	"pallet-ismp/std",
+	"pallet-message-queue/std",
+	"pallet-multisig/std",
+	"pallet-offences/std",
+	"pallet-plonky2-verifier/std",
+	"pallet-preimage/std",
+	"pallet-proxy/std",
+	"pallet-referenda/std",
+	"pallet-risc0-verifier/std",
+	"pallet-scheduler/std",
+	"pallet-session-benchmarking?/std",
+	"pallet-session/std",
+	"pallet-sp1-verifier/std",
+	"pallet-staking/std",
+	"pallet-sudo/std",
+	"pallet-timestamp/std",
+	"pallet-token-gateway/std",
+	"pallet-transaction-payment-rpc-runtime-api/std",
+	"pallet-transaction-payment/std",
+	"pallet-treasury/std",
+	"pallet-ultrahonk-verifier/std",
+	"pallet-ultraplonk-verifier/std",
+	"pallet-utility/std",
+	"pallet-verifiers/std",
+	"pallet-vesting/std",
+	"pallet-xcm-benchmarks?/std",
+	"pallet-xcm/std",
+	"polkadot-primitives/std",
+	"polkadot-runtime-common/std",
+	"polkadot-runtime-parachains/std",
+	"scale-info/std",
+	"serde_json/std",
+	"sp-api/std",
+	"sp-block-builder/std",
+	"sp-consensus-babe/std",
+	"sp-consensus-grandpa/std",
+	"sp-core/std",
+	"sp-genesis-builder/std",
+	"sp-inherents/std",
+	"sp-io/std",
+	"sp-mmr-primitives/std",
+	"sp-npos-elections/std",
+	"sp-offchain/std",
+	"sp-runtime/std",
+	"sp-session/std",
+	"sp-staking/std",
+	"sp-storage/std",
+	"sp-transaction-pool/std",
+	"sp-version/std",
+	"sp-weights/std",
+	"substrate-wasm-builder",
+	"xcm-builder/std",
+	"xcm-executor/std",
+	"xcm/std",
+	"zkv-runtime-common/std",
+]
+try-runtime = [
+	"frame-election-provider-support/try-runtime",
+	"frame-executive/try-runtime",
+	"frame-support/try-runtime",
+	"frame-system/try-runtime",
+	"frame-try-runtime/try-runtime",
+	"hp-dispatch/try-runtime",
+	"ismp-grandpa/try-runtime",
+	"pallet-aggregate/try-runtime",
+	"pallet-authority-discovery/try-runtime",
+	"pallet-authorship/try-runtime",
+	"pallet-babe/try-runtime",
+	"pallet-bags-list/try-runtime",
+	"pallet-balances/try-runtime",
+	"pallet-bounties/try-runtime",
+	"pallet-child-bounties/try-runtime",
+	"pallet-claim/try-runtime",
+	"pallet-conviction-voting/try-runtime",
+	"pallet-grandpa/try-runtime",
+	"pallet-hyperbridge-aggregations/try-runtime",
+	"pallet-hyperbridge/try-runtime",
+	"pallet-ismp/try-runtime",
+	"pallet-message-queue/try-runtime",
+	"pallet-multisig/try-runtime",
+	"pallet-offences/try-runtime",
+	"pallet-preimage/try-runtime",
+	"pallet-proxy/try-runtime",
+	"pallet-referenda/try-runtime",
+	"pallet-scheduler/try-runtime",
+	"pallet-session/try-runtime",
+	"pallet-staking/try-runtime",
+	"pallet-sudo/try-runtime",
+	"pallet-timestamp/try-runtime",
+	"pallet-token-gateway/try-runtime",
+	"pallet-transaction-payment/try-runtime",
+	"pallet-treasury/try-runtime",
+	"pallet-utility/try-runtime",
+	"pallet-verifiers/try-runtime",
+	"pallet-vesting/try-runtime",
+	"pallet-xcm/try-runtime",
+	"polkadot-runtime-common/try-runtime",
+	"polkadot-runtime-parachains/try-runtime",
+	"sp-runtime/try-runtime",
+	"zkv-runtime-common/try-runtime",
+]
+extend-benchmarks = [ "pallet-risc0-verifier/extend-benchmarks" ]

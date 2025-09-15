@@ -101,13 +101,14 @@ pub use sc_service::{
 };
 pub use sp_api::{ApiRef, ConstructRuntimeApi, Core as CoreApi, ProvideRuntimeApi};
 pub use sp_consensus::{Proposal, SelectChain};
+use sp_core::crypto::{default_ss58_version, Ss58AddressFormat};
 pub use sp_runtime::{
     generic,
     traits::{self as runtime_traits, BlakeTwo256, Block as BlockT, Header as HeaderT, NumberFor},
 };
 use zkv_benchmarks::hardware::zkv_reference_hardware;
 
-pub use zkv_runtime::{self, opaque::Block, RuntimeApi};
+pub use volta_runtime::{self, opaque::Block, RuntimeApi};
 
 #[cfg(feature = "full-node")]
 pub type FullBackend = sc_service::TFullBackend<Block>;
@@ -246,18 +247,31 @@ pub enum Error {
 /// Identifies the variant of the chain.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Chain {
-    /// Devnet.
-    Dev,
-    /// Testnet.
-    ZkvTestnet,
+    /// zkVerify Testnet.
+    Volta,
+    /// zkVerify Mainnet.
+    ZkVerify,
     /// Unknown chain?
     Unknown,
 }
 
+impl Chain {
+    pub fn ss58_format(&self) -> Ss58AddressFormat {
+        match self {
+            Chain::Volta => volta_runtime::SS58Prefix::get().into(),
+            Chain::ZkVerify => zkv_runtime::SS58Prefix::get().into(),
+            Chain::Unknown => default_ss58_version(),
+        }
+    }
+}
+
 /// Can be called for a `Configuration` to identify which network the configuration targets.
 pub trait IdentifyVariant {
-    /// Returns if this is a configuration for the `ZkvTestnet` network.
-    fn is_zkv_testnet(&self) -> bool;
+    /// Returns true if this is a configuration for the `Volta` network.
+    fn is_volta(&self) -> bool;
+
+    /// Returns true if this is a configuration for the `zkVerify` network.
+    fn is_zkverify(&self) -> bool;
 
     /// Returns true if this configuration is for a development network.
     fn is_dev(&self) -> bool;
@@ -266,9 +280,15 @@ pub trait IdentifyVariant {
     fn identify_chain(&self) -> Chain;
 }
 
-impl IdentifyVariant for Box<dyn ChainSpec> {
-    fn is_zkv_testnet(&self) -> bool {
-        self.id().starts_with("nh_testnet") || self.id().starts_with("zkv_testnet")
+impl IdentifyVariant for &dyn ChainSpec {
+    fn is_volta(&self) -> bool {
+        self.id().starts_with("nh_testnet")
+            || self.id().starts_with("volta")
+            || self.id().starts_with("zkv_testnet")
+    }
+
+    fn is_zkverify(&self) -> bool {
+        self.id().starts_with("zkv_mainnet")
     }
 
     fn is_dev(&self) -> bool {
@@ -276,13 +296,31 @@ impl IdentifyVariant for Box<dyn ChainSpec> {
     }
 
     fn identify_chain(&self) -> Chain {
-        if self.is_dev() {
-            Chain::Dev
-        } else if self.is_zkv_testnet() {
-            Chain::ZkvTestnet
+        if self.is_volta() {
+            Chain::Volta
+        } else if self.is_zkverify() {
+            Chain::ZkVerify
         } else {
             Chain::Unknown
         }
+    }
+}
+
+impl IdentifyVariant for Box<dyn ChainSpec> {
+    fn is_volta(&self) -> bool {
+        self.as_ref().is_volta()
+    }
+
+    fn is_zkverify(&self) -> bool {
+        self.as_ref().is_zkverify()
+    }
+
+    fn is_dev(&self) -> bool {
+        self.as_ref().is_dev()
+    }
+
+    fn identify_chain(&self) -> Chain {
+        self.as_ref().identify_chain()
     }
 }
 
@@ -878,7 +916,7 @@ pub fn new_full<
         };
 
         // Dev gets a higher threshold, we are conservative on ZkvTestnet for now.
-        let fetch_chunks_threshold = if config.chain_spec.is_zkv_testnet() {
+        let fetch_chunks_threshold = if config.chain_spec.is_volta() {
             None
         } else {
             Some(FETCH_CHUNKS_THRESHOLD)

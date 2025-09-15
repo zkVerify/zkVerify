@@ -5,12 +5,23 @@ const ReturnCode = {
     ErrWrongSudoAccount: 2,
     ErrClaimMembership: 3,
     ErrSameRuntimeVersion: 4,
+    ErrUnsupportedNetwork: 5,
 };
 const fs = require('fs');
 
 async function run(nodeName, networkInfo, args) {
     const { wsUri, userDefinedTypes } = networkInfo.nodesByName[nodeName];
     const api = await zombie.connect(wsUri, userDefinedTypes);
+
+    const [chain, realNodeName, nodeVersion] = await Promise.all([
+        api.rpc.system.chain(),
+        api.rpc.system.name(),
+        api.rpc.system.version()
+    ]);
+
+    console.log(`Connected to chain: ${chain}`);
+    console.log(`Node name: ${realNodeName}`);
+    console.log(`Node version: ${nodeVersion}`);
 
     const ALICE = '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY';
     const BOB = '5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty';
@@ -22,13 +33,25 @@ async function run(nodeName, networkInfo, args) {
     const bob = keyring.addFromUri('//Bob');
     const charlie = keyring.addFromUri('//Charlie');
 
+    let wasm;
+    let ss58Prefix;
+    if (chain.toString().startsWith("Volta ")) {
+        wasm = fs.readFileSync('./new-runtime/volta_runtime.wasm');
+        ss58Prefix = 251;
+    } else if (chain.toString().startsWith("zkVerify ")) {
+        wasm = fs.readFileSync('./new-runtime/zkv_runtime.wasm');
+        ss58Prefix = 8741;
+    } else {
+        console.log(`Unsupported chain ${chain}, only Volta and zkVerify are supported`);
+        return ReturnCode.ErrUnsupportedNetwork;
+    }
+
     /*****************************************************************************************************
      *************************************** CREATE MULTISIG ACCOUNT *************************************
      *****************************************************************************************************/
     const threshold = 2;
     const multisigAddress = util.createKeyMulti([alice.address, bob.address, charlie.address], threshold);
-    const SS58Prefix = 251;
-    const Ss58MultiAddress = util.encodeAddress(multisigAddress, SS58Prefix);
+    const Ss58MultiAddress = util.encodeAddress(multisigAddress, ss58Prefix);
     console.log(`multisigAddress ${Ss58MultiAddress}`);
 
 
@@ -56,7 +79,8 @@ async function run(nodeName, networkInfo, args) {
 
     // Retrieve the runtime to upgrade
     const sudoAccount = await api.query.sudo.key()
-    const code = fs.readFileSync('./new-runtime/zkv_runtime.wasm').toString('hex');
+
+    const code = wasm.toString('hex');
     const updateRuntimeCall = api.tx.system.setCode(`0x${code}`);
 
     console.log(`Upgrading from ${sudoAccount}, ${code.length / 2} bytes`);

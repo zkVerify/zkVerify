@@ -8,7 +8,9 @@ homepage = "https://horizenlabs.io"
 resolver = "2"
 
 members = [
-    "runtime",
+    "runtime/volta",
+    "runtime/zkverify",
+    "runtime/common",
     "primitives/hp-dispatch",
     "primitives/hp-on-proof-verified",
     "native",
@@ -116,7 +118,9 @@ ultraplonk-no-std = { git = "https://github.com/zkVerify/ultraplonk_verifier.git
 
 zkv-benchmarks = { path = "relay-node/benchmarks" }
 native-cache = { path = "utils/native-cache" }
-zkv-runtime = { path = "runtime", default-features = false }
+volta-runtime = { path = "runtime/volta", default-features = false }
+zkv-runtime = { path = "runtime/zkverify", default-features = false }
+zkv-runtime-common = { path = "runtime/common", default-features = false }
 
 # These dependencies are used for the node template's RPCs
 sc-rpc = { version = "43.0.0" }

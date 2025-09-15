@@ -15,21 +15,33 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use assert_cmd::cargo::cargo_bin;
+use rstest::rstest;
 use std::{process::Command, result::Result};
 use tempfile::tempdir;
 
 mod common;
 
 /// `benchmark overhead` works for all dev runtimes.
-#[test]
-fn benchmark_overhead_works() {
-    assert!(benchmark_overhead("dev").is_ok());
+#[rstest]
+#[case::dev("dev")]
+#[case::volta("volta-dev")]
+#[case::zkverify("zkverify-dev")]
+fn benchmark_overhead_works(#[case] chain: &str) {
+    assert!(benchmark_overhead(chain).is_ok());
 }
 
 /// `benchmark overhead` rejects all non-dev runtimes.
-#[test]
-fn benchmark_overhead_rejects_non_dev_runtimes() {
-    assert!(benchmark_overhead("local").is_err());
+#[rstest]
+#[case::default("")]
+#[case::zkverify_staging("testnet_build")]
+#[case::volta_staging("volta-staging")]
+#[case::volta("volta")]
+#[case::zkverify_staging("mainnet_build")]
+#[case::zkverify_staging("zkverify-staging")]
+#[case::zkverify("mainnet")]
+#[case::zkverify("zkverify")]
+fn benchmark_overhead_rejects_non_dev_runtimes(#[case] chain: &str) {
+    assert!(benchmark_overhead(chain).is_err());
 }
 
 fn benchmark_overhead(runtime: &str) -> Result<(), String> {
