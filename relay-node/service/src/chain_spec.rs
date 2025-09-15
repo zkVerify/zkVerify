@@ -128,7 +128,7 @@ fn zkv_chain_properties() -> Properties {
     [
         (
             "ss58Format".to_string(),
-            serde_json::Value::from(volta_runtime::SS58Prefix::get()),
+            serde_json::Value::from(zkv_runtime::SS58Prefix::get()),
         ),
         ("tokenSymbol".to_string(), serde_json::Value::from("VFY")),
         ("tokenDecimals".to_string(), serde_json::Value::from(18_u8)),
@@ -137,7 +137,7 @@ fn zkv_chain_properties() -> Properties {
     .collect()
 }
 
-pub fn zkverify_development_config() -> Result<VoltaChainSpec, String> {
+pub fn zkverify_development_config() -> Result<ZkvChainSpec, String> {
     Ok(ZkvChainSpec::builder(
         zkv_runtime::WASM_BINARY.ok_or_else(|| "Mainnet wasm not available".to_string())?,
         Default::default(),
@@ -150,7 +150,7 @@ pub fn zkverify_development_config() -> Result<VoltaChainSpec, String> {
     .build())
 }
 
-pub fn zkverify_local_config() -> Result<VoltaChainSpec, String> {
+pub fn zkverify_local_config() -> Result<ZkvChainSpec, String> {
     Ok(ZkvChainSpec::builder(
         zkv_runtime::WASM_BINARY.ok_or_else(|| "Mainnet wasm not available".to_string())?,
         Default::default(),
@@ -165,7 +165,7 @@ pub fn zkverify_local_config() -> Result<VoltaChainSpec, String> {
 }
 
 /// To be used when building new testnet chain-spec
-pub fn zkverify_staging_config() -> Result<VoltaChainSpec, String> {
+pub fn zkverify_staging_config() -> Result<ZkvChainSpec, String> {
     const ZKV_BOOTNODE_1_DNS: &str = "boot-node-zkverify-1.horizenlabs.io";
     const ZKV_BOOTNODE_1_PEER_ID: &str = "12D3KooWAuwa5TH5y6h6zeWVKrYTfawqU9R2t8r8Gw4wJBCEADzX";
     const ZKV_BOOTNODE_2_DNS: &str = "boot-node-zkverify-1.zkverify.io";
