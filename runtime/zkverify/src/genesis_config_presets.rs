@@ -98,10 +98,10 @@ fn main_parachains_host_configuration() -> HostConfiguration<BlockNumber> {
 pub fn staging_config_genesis() -> Result<serde_json::Value, sp_core::crypto::PublicError> {
     const EDS_LOCKED_BALANCE: Balance = 271 * MILLIONS + 300 * THOUSANDS + VFY;
     const ZKV_FOUNDATION_LOCKED_BALANCE: Balance = 133 * MILLIONS + 162 * THOUSANDS + 741 * VFY;
-    const ZKV_FOUNDATION_LIQUID_BALANCE: Balance = 117 * MILLIONS + 522 * THOUSANDS + 386 * VFY;
+    const ZKV_FOUNDATION_LIQUID_BALANCE: Balance = 116 * MILLIONS + 592 * THOUSANDS + 379 * VFY;
     const ZKV_COMMUNITY_LOCKED_BALANCE: Balance = 264 * MILLIONS + 343 * THOUSANDS + 112 * VFY;
     const ZKV_COMMUNITY_LIQUID_BALANCE: Balance = 108 * MILLIONS + 721 * THOUSANDS + 765 * VFY;
-    const TOKEN_LAUNCH_LOCKED_BALANCE: Balance = 79 * MILLIONS + 19 * THOUSANDS + 994 * VFY;
+    const TOKEN_LAUNCH_LOCKED_BALANCE: Balance = 79 * MILLIONS + 950 * THOUSANDS + VFY;
     const HORIZEN_LABS_LOCKED_BALANCE: Balance = 25 * MILLIONS + VFY;
     const VALIDATOR_BALANCE: Balance = 100 * THOUSANDS;
     const VALIDATOR_BOND: Balance = VALIDATOR_BALANCE;
