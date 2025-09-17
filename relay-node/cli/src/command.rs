@@ -37,7 +37,7 @@ type Result<T> = std::result::Result<T, Error>;
 
 impl SubstrateCli for Cli {
     fn impl_name() -> String {
-        "ZkVerify Relay".into()
+        "zkVerify".into()
     }
 
     fn impl_version() -> String {
