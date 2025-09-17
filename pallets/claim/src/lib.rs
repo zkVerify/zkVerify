@@ -47,11 +47,12 @@ use frame_support::{
         tokens::{Fortitude, Preservation},
         Get,
     },
-    PalletId,
+    BoundedVec, PalletId,
 };
 
 pub(crate) type BalanceOf<T> =
     <<T as Config>::Currency as Inspect<<T as frame_system::Config>::AccountId>>::Balance;
+pub(crate) type ClaimMessage<T> = BoundedVec<u8, <T as Config>::MaxClaimMessageLength>;
 
 #[repr(u8)]
 pub(crate) enum ClaimValidityError {
@@ -92,6 +93,10 @@ pub mod pallet {
         TokenError,
     };
 
+    pub(crate) const MSG_PREFIX: &[u8] = b"<Bytes>";
+    pub(crate) const MSG_SUFFIX: &[u8] = b"</Bytes>";
+    pub(crate) const ETH_PREFIX: &[u8] = b"\x19Ethereum Signed Message:\n";
+
     #[pallet::pallet]
     pub struct Pallet<T>(_);
 
@@ -126,6 +131,10 @@ pub mod pallet {
         #[pallet::constant]
         type MaxBeneficiaries: Get<u32>;
 
+        /// The maximum length of the message to sign for claiming tokens
+        #[pallet::constant]
+        type MaxClaimMessageLength: Get<u32>;
+
         /// The maximum number of beneficiaries allowed to be updated within a single operation. Used to restrict extrinsic weights.
         const MAX_OP_BENEFICIARIES: u32;
 
@@ -134,7 +143,6 @@ pub mod pallet {
         type BenchmarkHelper: crate::benchmarking::BenchmarkHelper<
             Self::Signature,
             Self::Signer,
-            Beneficiary = Self::AccountId,
         >;
     }
 
@@ -153,7 +161,7 @@ pub mod pallet {
 
     /// Id of the current (or the last) claim
     #[pallet::storage]
-    pub type ClaimId<T: Config> = StorageValue<_, u64>;
+    pub type ClaimId<T: Config> = StorageValue<_, (u64, ClaimMessage<T>)>;
 
     /// Account id of this pallet
     #[pallet::storage]
@@ -167,6 +175,8 @@ pub mod pallet {
         pub beneficiaries: Vec<(T::AccountId, BalanceOf<T>)>,
         /// Genesis balance for this pallet's account
         pub genesis_balance: BalanceOf<T>,
+        /// Genesis claim message
+        pub claim_message: ClaimMessage<T>,
     }
 
     #[pallet::genesis_build]
@@ -193,6 +203,7 @@ pub mod pallet {
             let num_beneficiaries = self.beneficiaries.len();
 
             if num_beneficiaries > 0 {
+                assert!(!self.claim_message.is_empty(), "InvalidClaimMessage");
                 // Start adding beneficiaries if specified
                 // Note: Considering it's a genesis build there is no need here
                 //       to enforce a check on MaxOpBeneficiaries
@@ -203,7 +214,7 @@ pub mod pallet {
 
                 // Initialize other storage variables
                 ClaimActive::<T>::put(true);
-                ClaimId::<T>::put(0);
+                ClaimId::<T>::put((0, self.claim_message.clone()));
             }
         }
     }
@@ -215,6 +226,8 @@ pub mod pallet {
         ClaimStarted {
             /// The id of the claim that has just started
             claim_id: u64,
+            /// The claim message for the claim that has just started
+            claim_message: ClaimMessage<T>,
         },
         /// Some amount has been claimed by the beneficiary
         Claimed {
@@ -227,6 +240,8 @@ pub mod pallet {
         ClaimEnded {
             /// The id of the claim that has just ended
             claim_id: u64,
+            /// The claim message for the claim that has just ended
+            claim_message: ClaimMessage<T>,
         },
         /// Some beneficiaries have been removed
         BeneficiariesRemoved {
@@ -258,6 +273,8 @@ pub mod pallet {
         NonEmptyBeneficiaries,
         /// Signature verification failed for a given beneficiary
         BadSignature,
+        /// Supplied an invalid claim message
+        InvalidClaimMessage,
     }
 
     impl<T: Config> Pallet<T> {
@@ -434,7 +451,13 @@ pub mod pallet {
             }
 
             // Check signature
-            if !signature.verify(beneficiary.encode().as_slice(), &beneficiary_account) {
+            let claim_message = ClaimId::<T>::get().unwrap().1;
+            let wrapped_message = [MSG_PREFIX, claim_message.as_slice(), MSG_SUFFIX].concat();
+            let wrapped_message_eth = [ETH_PREFIX, claim_message.as_slice()].concat();
+            if !(signature.verify(claim_message.as_slice(), &beneficiary_account)
+                || signature.verify(wrapped_message.as_slice(), &beneficiary_account)
+                || signature.verify(wrapped_message_eth.as_slice(), &beneficiary_account))
+            {
                 Err(Error::<T>::BadSignature)?;
             }
 
@@ -455,12 +478,17 @@ pub mod pallet {
         pub fn begin_claim(
             origin: OriginFor<T>,
             beneficiaries: BTreeMap<T::AccountId, BalanceOf<T>>,
+            claim_message: ClaimMessage<T>,
         ) -> DispatchResult {
             T::ManagerOrigin::ensure_origin(origin)?;
 
             // Sanity check: we've removed all the beneficiaries
             if Beneficiaries::<T>::count() > 0 {
                 Err(Error::<T>::NonEmptyBeneficiaries)?;
+            }
+
+            if claim_message.is_empty() {
+                Err(Error::<T>::InvalidClaimMessage)?;
             }
 
             // Set claim as active
@@ -482,10 +510,15 @@ pub mod pallet {
             }
 
             // Increase claim id
-            ClaimId::<T>::mutate(|id| {
-                let claim_id = id.map_or(0, |v| v + 1);
-                *id = Some(claim_id);
-                Self::deposit_event(Event::<T>::ClaimStarted { claim_id });
+            ClaimId::<T>::mutate(|t| {
+                let new_t = t.clone().map_or((0, claim_message.clone()), |v| {
+                    (v.0 + 1, claim_message.clone())
+                });
+                *t = Some(new_t.clone());
+                Self::deposit_event(Event::<T>::ClaimStarted {
+                    claim_id: new_t.0,
+                    claim_message: new_t.1,
+                });
             });
 
             Ok(())
@@ -579,8 +612,10 @@ pub mod pallet {
             TotalClaimable::<T>::put(BalanceOf::<T>::zero());
 
             // End claim
+            let (claim_id, claim_message) = ClaimId::<T>::get().unwrap();
             Self::deposit_event(Event::<T>::ClaimEnded {
-                claim_id: ClaimId::<T>::get().unwrap(),
+                claim_id,
+                claim_message,
             });
 
             // Start removing as many beneficiaries as possible

@@ -26,23 +26,28 @@ use sp_runtime::{
 };
 
 pub trait BenchmarkHelper<Signature, Signer> {
-    type Beneficiary;
-    fn sign_claim() -> (Signature, Signer, Self::Beneficiary);
+    fn sign_claim(message: &[u8]) -> (Signature, Signer);
 }
 
 impl BenchmarkHelper<MultiSignature, MultiSigner> for () {
-    type Beneficiary = <MultiSigner as IdentifyAccount>::AccountId;
 
-    fn sign_claim() -> (MultiSignature, MultiSigner, Self::Beneficiary) {
+    fn sign_claim(message: &[u8]) -> (MultiSignature, MultiSigner) {
         let pair = Pair::from_seed_slice(b"//BenchSeed").unwrap();
         let signer = MultiSigner::Ecdsa(pair.public());
-        let beneficiary = signer.clone().into_account();
 
         // Generate Signature
-        let raw_signature = pair.sign(beneficiary.encode().as_slice());
+        let raw_signature = pair.sign(message);
         let signature = MultiSignature::Ecdsa(raw_signature);
-        (signature, signer, beneficiary)
+        (signature, signer)
     }
+}
+
+fn get_claim_message<T: Config>() -> BoundedVec<u8, <T as Config>::MaxClaimMessageLength> {
+    BoundedVec::try_from(vec![
+        1u8;
+        <T as Config>::MaxClaimMessageLength::get() as usize
+    ])
+    .unwrap()
 }
 
 fn init_claim_state<T: Config>(n: u32, begin_claim: bool) -> BTreeMap<T::AccountId, BalanceOf<T>> {
@@ -54,7 +59,12 @@ fn init_claim_state<T: Config>(n: u32, begin_claim: bool) -> BTreeMap<T::Account
     .unwrap();
 
     if begin_claim {
-        Pallet::<T>::begin_claim(RawOrigin::Root.into(), beneficiaries.clone()).unwrap();
+        Pallet::<T>::begin_claim(
+            RawOrigin::Root.into(),
+            beneficiaries.clone(),
+            get_claim_message::<T>(),
+        )
+        .unwrap();
     }
     beneficiaries
 }
@@ -69,14 +79,16 @@ mod benchmarks {
         let beneficiaries = init_claim_state::<T>(n, false);
 
         #[extrinsic_call]
-        begin_claim(RawOrigin::Root, beneficiaries);
+        begin_claim(RawOrigin::Root, beneficiaries, get_claim_message::<T>());
     }
 
     #[benchmark]
     fn claim() {
         let _ = init_claim_state::<T>(<T as Config>::MAX_OP_BENEFICIARIES - 1, true);
 
-        let (signature, signer, beneficiary) = T::BenchmarkHelper::sign_claim();
+        let msg = [ETH_PREFIX, get_claim_message::<T>().as_slice()].concat(); // Maximally sized message
+        let (signature, signer) = T::BenchmarkHelper::sign_claim(msg.as_slice());
+        let beneficiary = signer.clone().into_account();
 
         // Insert beneficiary
         let amount =
@@ -119,7 +131,12 @@ mod benchmarks {
     #[benchmark]
     fn add_beneficiaries(n: Linear<1, <T as Config>::MAX_OP_BENEFICIARIES>) {
         // Init claim
-        Pallet::<T>::begin_claim(RawOrigin::Root.into(), BTreeMap::new()).unwrap();
+        Pallet::<T>::begin_claim(
+            RawOrigin::Root.into(),
+            BTreeMap::new(),
+            get_claim_message::<T>(),
+        )
+        .unwrap();
 
         // Prepare beneficiaries and sufficient amount
         let (beneficiaries, total_amount) = get_beneficiaries_map::<T>(n);
