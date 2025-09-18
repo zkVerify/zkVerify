@@ -95,7 +95,7 @@ use pallet_transaction_payment::{FungibleAdapter, Multiplier, TargetedFeeAdjustm
 use pallet_treasury::TreasuryAccountId;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
-pub use sp_runtime::{Perbill, Permill};
+pub use sp_runtime::{MultiSignature, MultiSigner, Perbill, Permill};
 
 pub mod governance;
 mod pallet_assets_mock;
@@ -633,6 +633,7 @@ parameter_types! {
     pub const ClaimPalletId: PalletId = PalletId(*b"zkv/pclm");
     pub const MaxBeneficiaries: u32 = 1_000_000;
     pub const MaxOpBeneficiaries: u32 = 100_000;
+    pub const MaxClaimMessageLength: u32 = 100;
 }
 
 impl pallet_claim::Config for Runtime {
@@ -642,8 +643,13 @@ impl pallet_claim::Config for Runtime {
     type Currency = Balances;
     type UnclaimedDestination = ZKVerifyTreasuryAccount;
     type WeightInfo = weights::pallet_claim::ZKVWeight<Runtime>;
+    type Signer = MultiSigner;
+    type Signature = MultiSignature;
     type MaxBeneficiaries = MaxBeneficiaries;
+    type MaxClaimMessageLength = MaxClaimMessageLength;
     const MAX_OP_BENEFICIARIES: u32 = MaxOpBeneficiaries::get();
+    #[cfg(feature = "runtime-benchmarks")]
+    type BenchmarkHelper = ();
 }
 
 // We should be sure that the benchmark aggregation size matches the runtime configuration.
