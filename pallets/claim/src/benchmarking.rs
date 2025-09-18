@@ -30,13 +30,12 @@ pub trait BenchmarkHelper<Signature, Signer> {
 }
 
 impl BenchmarkHelper<MultiSignature, MultiSigner> for () {
-
     fn sign_claim(message: &[u8]) -> (MultiSignature, MultiSigner) {
         let public = ecdsa_generate(0.into(), Some(b"//Beneficiary".to_vec()));
         let signer = MultiSigner::Ecdsa(public);
 
         // Generate Signature
-		let signature = MultiSignature::Ecdsa(ecdsa_sign(0.into(), &public, message).unwrap());
+        let signature = MultiSignature::Ecdsa(ecdsa_sign(0.into(), &public, message).unwrap());
         (signature, signer)
     }
 }
@@ -97,7 +96,7 @@ mod benchmarks {
 
         let call_enc = Call::<T>::claim {
             beneficiary: signer,
-            signature: signature,
+            signature,
         }
         .encode();
         let source = sp_runtime::transaction_validity::TransactionSource::External;
@@ -168,15 +167,11 @@ mod benchmarks {
 
     #[benchmark]
     fn remove_beneficiaries(n: Linear<1, <T as Config>::MAX_OP_BENEFICIARIES>) {
-        let (beneficiaries, _) =
-            get_beneficiaries_map::<T>(n + <T as Config>::MAX_OP_BENEFICIARIES);
+        let (beneficiaries, _) = get_beneficiaries_map::<T>(n);
         beneficiaries
             .into_iter()
             .for_each(|(account, amount)| Beneficiaries::<T>::insert(account, amount));
-        assert_eq!(
-            Beneficiaries::<T>::count(),
-            n + <T as Config>::MAX_OP_BENEFICIARIES
-        );
+        assert_eq!(Beneficiaries::<T>::count(), n);
 
         #[extrinsic_call]
         remove_beneficiaries(RawOrigin::Root);

@@ -24,6 +24,9 @@
 //! When claim ends, all the funds still available in the pallet's associated account
 //! are transferred to **UnclaimedDestination**.
 //!
+
+#![allow(clippy::borrow_interior_mutable_const)]
+
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 #[cfg(test)]
@@ -140,10 +143,7 @@ pub mod pallet {
 
         /// Helper to create a signature to be benchmarked.
         #[cfg(feature = "runtime-benchmarks")]
-        type BenchmarkHelper: crate::benchmarking::BenchmarkHelper<
-            Self::Signature,
-            Self::Signer,
-        >;
+        type BenchmarkHelper: crate::benchmarking::BenchmarkHelper<Self::Signature, Self::Signer>;
     }
 
     /// Candidates eligible to receive a claim with the associated balance they have right to
@@ -660,7 +660,7 @@ pub mod pallet {
                     priority: PRIORITY,
                     requires: vec![],
                     provides: vec![("claim", ClaimId::<T>::get().unwrap(), beneficiary).encode()],
-                    longevity: TransactionLongevity::max_value(),
+                    longevity: TransactionLongevity::MAX,
                     propagate: true,
                 })
             } else {
