@@ -27,7 +27,7 @@ sp-io = { workspace = true, optional = true }
 sp1-zkv-verifier = { git = "https://github.com/zkVerify/sp1-verifier.git", tag = "v0.2.0", default-features = false }
 
 [dev-dependencies]
-pallet-balances = { workspace = true, features = ["std", "runtime-benchmarks"] }
+pallet-balances = { workspace = true }
 hex-literal = { workspace = true }
 
 [features]

@@ -33,7 +33,7 @@ fflonk_verifier = { git = "https://github.com/zkVerify/fflonk_verifier.git", def
 ], tag = "v0.4.0" }
 hex-literal = { workspace = true }
 serde_json = { version = "1.0.117" }
-pallet-balances = { workspace = true, features = ["std", "runtime-benchmarks"] }
+pallet-balances = { workspace = true }
 
 [features]
 default = [ "std" ]

@@ -22,7 +22,7 @@ use ismp::router::{PostRequest, Response, Timeout};
 pub use pallet::*;
 
 mod benchmarking;
-#[cfg(test)]
+#[cfg(all(test, feature = "runtime-benchmarks"))]
 mod mock;
 mod weight;
 
