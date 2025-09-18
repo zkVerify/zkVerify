@@ -21,12 +21,12 @@ frame-support = { workspace = true }
 frame-system = { workspace = true }
 frame-benchmarking = { workspace = true, optional = true }
 sp-runtime = { workspace = true }
-sp-core = { workspace = true, optional = true }
+sp-io = { workspace = true, optional = true }
 
 [dev-dependencies]
 pallet-balances = { workspace = true, features = ["std"] }
 sp-io = { workspace = true, features = ["std"] }
-sp-core = { workspace = true, features = ["full_crypto"] }
+sp-core = { workspace = true }
 
 [features]
 runtime-benchmarks = [
@@ -35,7 +35,7 @@ runtime-benchmarks = [
 	"frame-system/runtime-benchmarks",
 	"pallet-balances/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
-	"sp-core/full_crypto",
+	"sp-io"
 ]
 default = [ "std" ]
 std = [

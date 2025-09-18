@@ -19,7 +19,7 @@ use codec::{Decode, Encode};
 use frame_benchmarking::v2::*;
 use frame_support::traits::UnfilteredDispatchable;
 use frame_system::RawOrigin;
-use sp_core::{ecdsa::*, Pair as TraitPair};
+use sp_io::crypto::{ecdsa_generate, ecdsa_sign};
 use sp_runtime::{
     traits::{IdentifyAccount, ValidateUnsigned},
     MultiSignature, MultiSigner, Saturating,
@@ -32,12 +32,11 @@ pub trait BenchmarkHelper<Signature, Signer> {
 impl BenchmarkHelper<MultiSignature, MultiSigner> for () {
 
     fn sign_claim(message: &[u8]) -> (MultiSignature, MultiSigner) {
-        let pair = Pair::from_seed_slice(b"//BenchSeed").unwrap();
-        let signer = MultiSigner::Ecdsa(pair.public());
+        let public = ecdsa_generate(0.into(), Some(b"//Beneficiary".to_vec()));
+        let signer = MultiSigner::Ecdsa(public);
 
         // Generate Signature
-        let raw_signature = pair.sign(message);
-        let signature = MultiSignature::Ecdsa(raw_signature);
+		let signature = MultiSignature::Ecdsa(ecdsa_sign(0.into(), &public, message).unwrap());
         (signature, signer)
     }
 }
