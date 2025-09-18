@@ -1,4 +1,4 @@
-const { stringToU8a, u8aToHex, u8aWrapBytes, hexToU8a } = require('@polkadot/util');
+const { hexToU8a } = require('@polkadot/util');
 
 const { init_api, sudoInitClaim, claim, receivedEvents, submitExtrinsic, BlockUntil } = require('zkv-lib');
 const ReturnCode = {
