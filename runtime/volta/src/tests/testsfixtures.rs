@@ -169,6 +169,7 @@ pub fn test() -> sp_io::TestExternalities {
             .map(|user| (user.raw_account.into(), user.starting_balance))
             .collect(),
         genesis_balance: total_balances(),
+        claim_message: frame_support::BoundedVec::try_from(b"TestMessage".to_vec()).unwrap(),
     }
     .assimilate_storage(&mut t)
     .unwrap();
