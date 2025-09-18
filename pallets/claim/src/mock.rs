@@ -13,7 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#![allow(clippy::borrow_interior_mutable_const, clippy::declare_interior_mutable_const)]
+#![allow(
+    clippy::borrow_interior_mutable_const,
+    clippy::declare_interior_mutable_const
+)]
 
 use std::{collections::BTreeMap, sync::LazyLock};
 
