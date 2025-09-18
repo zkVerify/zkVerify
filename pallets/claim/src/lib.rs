@@ -18,12 +18,17 @@
 
 //! A pallet implementing the possibility of making claims on-chain and letting **Beneficiaries**
 //! manually claim the amount of tokens they have right to.
+//! **Beneficiaries** need to provide a signature on a message, decided at claim start, and the
+//! **claim** extrinsic will be feeless. Tokens will be sent to the account they have used for signing.
 //! Only **ManagerOrigin** is able to start and end claims, as well as adding beneficiaries with
 //! their rightful balance.
 //! Currently it possible only to held one claim at a time.
 //! When claim ends, all the funds still available in the pallet's associated account
 //! are transferred to **UnclaimedDestination**.
-//!
+//! At claim end, up to **T::MaxOpBeneficiaries** are removed from storage.
+//! An event will signal if all have been removed or others are remaining.
+//! In case there are leftovers, the pallet manager needs to manually remove them
+//! by calling **remove_beneficiaries** extrinsic.
 
 #![allow(clippy::borrow_interior_mutable_const)]
 
