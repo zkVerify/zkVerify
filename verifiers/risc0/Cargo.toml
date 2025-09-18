@@ -32,7 +32,7 @@ risc0-derive = { path = "./risc0-derive" }
 sp-io = { workspace = true, features = ["std"] }
 codec = { workspace = true, features = ["std"] }
 scale-info = { workspace = true, features = ["std"] }
-pallet-balances = { workspace = true, features = ["std", "runtime-benchmarks"] }
+pallet-balances = { workspace = true }
 rstest = { workspace = true }
 
 [features]

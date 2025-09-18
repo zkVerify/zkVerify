@@ -33,7 +33,7 @@ rstest = { workspace = true }
 rstest_reuse = { workspace = true }
 hex-literal = { workspace = true }
 hp-groth16 = { workspace = true, features = ["dummy-circuit"] }
-pallet-balances = { workspace = true, features = ["std", "runtime-benchmarks"] }
+pallet-balances = { workspace = true }
 sp-io = { workspace = true, features = ["std"] }
 
 [features]
