@@ -425,7 +425,12 @@ fn reject_double_eth_prefixed_message() {
     .execute_with(|| {
         let user_signer = sp_runtime::testing::UintAuthorityId::from(USER_1);
         let claim_message = INIT_CLAIM_MESSAGE.clone();
-        let double_wrapped_message_eth = [crate::ETH_PREFIX, crate::ETH_PREFIX, claim_message.as_slice()].concat();
+        let double_wrapped_message_eth = [
+            crate::ETH_PREFIX,
+            crate::ETH_PREFIX,
+            claim_message.as_slice(),
+        ]
+        .concat();
         let user_signature = user_signer
             .sign(&double_wrapped_message_eth.as_slice())
             .unwrap();
@@ -1049,7 +1054,7 @@ fn validate_unsigned_works() {
                 priority: 100,
                 requires: vec![],
                 provides: vec![("claim", claim_id.clone(), user_address).encode()],
-                longevity: TransactionLongevity::max_value(),
+                longevity: TransactionLongevity::MAX,
                 propagate: true,
             })
         );
@@ -1067,7 +1072,7 @@ fn validate_unsigned_works() {
                 priority: 100,
                 requires: vec![],
                 provides: vec![("claim", claim_id.clone(), user_address).encode()],
-                longevity: TransactionLongevity::max_value(),
+                longevity: TransactionLongevity::MAX,
                 propagate: true,
             })
         );
@@ -1085,7 +1090,7 @@ fn validate_unsigned_works() {
                 priority: 100,
                 requires: vec![],
                 provides: vec![("claim", claim_id, user_address).encode()],
-                longevity: TransactionLongevity::max_value(),
+                longevity: TransactionLongevity::MAX,
                 propagate: true,
             })
         );
