@@ -86,10 +86,10 @@ impl WeightInfo for () {
         Weight::from_parts(12_514_000, 3593)
             // Standard Error: 8_841
             .saturating_add(Weight::from_parts(5_976_345, 0).saturating_mul(n.into()))
-            .saturating_add(T::DbWeight::get().reads(6_u64))
-            .saturating_add(T::DbWeight::get().reads((1_u64).saturating_mul(n.into())))
-            .saturating_add(T::DbWeight::get().writes(4_u64))
-            .saturating_add(T::DbWeight::get().writes((1_u64).saturating_mul(n.into())))
+            .saturating_add(RocksDbWeight::get().reads(6_u64))
+            .saturating_add(RocksDbWeight::get().reads((1_u64).saturating_mul(n.into())))
+            .saturating_add(RocksDbWeight::get().writes(4_u64))
+            .saturating_add(RocksDbWeight::get().writes((1_u64).saturating_mul(n.into())))
             .saturating_add(Weight::from_parts(0, 2531).saturating_mul(n.into()))
     }
     /// Storage: `Claim::ClaimActive` (r:1 w:0)
@@ -112,8 +112,8 @@ impl WeightInfo for () {
         //  Estimated: `6196`
         // Minimum execution time: 381_986_000 picoseconds.
         Weight::from_parts(387_275_000, 6196)
-            .saturating_add(T::DbWeight::get().reads(8_u64))
-            .saturating_add(T::DbWeight::get().writes(5_u64))
+            .saturating_add(RocksDbWeight::get().reads(8_u64))
+            .saturating_add(RocksDbWeight::get().writes(5_u64))
     }
     /// Storage: `Claim::ClaimActive` (r:1 w:0)
     /// Proof: `Claim::ClaimActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
@@ -133,8 +133,8 @@ impl WeightInfo for () {
         //  Estimated: `6196`
         // Minimum execution time: 103_414_000 picoseconds.
         Weight::from_parts(105_829_000, 6196)
-            .saturating_add(T::DbWeight::get().reads(7_u64))
-            .saturating_add(T::DbWeight::get().writes(5_u64))
+            .saturating_add(RocksDbWeight::get().reads(7_u64))
+            .saturating_add(RocksDbWeight::get().writes(5_u64))
     }
     /// Storage: `Claim::ClaimActive` (r:1 w:0)
     /// Proof: `Claim::ClaimActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
@@ -157,10 +157,10 @@ impl WeightInfo for () {
         Weight::from_parts(20_368_000, 3593)
             // Standard Error: 8_123
             .saturating_add(Weight::from_parts(5_921_589, 0).saturating_mul(n.into()))
-            .saturating_add(T::DbWeight::get().reads(5_u64))
-            .saturating_add(T::DbWeight::get().reads((1_u64).saturating_mul(n.into())))
-            .saturating_add(T::DbWeight::get().writes(2_u64))
-            .saturating_add(T::DbWeight::get().writes((1_u64).saturating_mul(n.into())))
+            .saturating_add(RocksDbWeight::get().reads(5_u64))
+            .saturating_add(RocksDbWeight::get().reads((1_u64).saturating_mul(n.into())))
+            .saturating_add(RocksDbWeight::get().writes(2_u64))
+            .saturating_add(RocksDbWeight::get().writes((1_u64).saturating_mul(n.into())))
             .saturating_add(Weight::from_parts(0, 2531).saturating_mul(n.into()))
     }
     /// Storage: `Claim::ClaimActive` (r:1 w:1)
@@ -181,8 +181,8 @@ impl WeightInfo for () {
         //  Estimated: `6196`
         // Minimum execution time: 52_107_000 picoseconds.
         Weight::from_parts(53_129_000, 6196)
-            .saturating_add(T::DbWeight::get().reads(6_u64))
-            .saturating_add(T::DbWeight::get().writes(4_u64))
+            .saturating_add(RocksDbWeight::get().reads(6_u64))
+            .saturating_add(RocksDbWeight::get().writes(4_u64))
     }
     /// Storage: `Claim::ClaimActive` (r:1 w:0)
     /// Proof: `Claim::ClaimActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
@@ -199,10 +199,10 @@ impl WeightInfo for () {
         Weight::from_parts(15_018_000, 1489)
             // Standard Error: 9_075
             .saturating_add(Weight::from_parts(2_198_902, 0).saturating_mul(n.into()))
-            .saturating_add(T::DbWeight::get().reads(2_u64))
-            .saturating_add(T::DbWeight::get().reads((1_u64).saturating_mul(n.into())))
-            .saturating_add(T::DbWeight::get().writes(1_u64))
-            .saturating_add(T::DbWeight::get().writes((1_u64).saturating_mul(n.into())))
+            .saturating_add(RocksDbWeight::get().reads(2_u64))
+            .saturating_add(RocksDbWeight::get().reads((1_u64).saturating_mul(n.into())))
+            .saturating_add(RocksDbWeight::get().writes(1_u64))
+            .saturating_add(RocksDbWeight::get().writes((1_u64).saturating_mul(n.into())))
             .saturating_add(Weight::from_parts(0, 2531).saturating_mul(n.into()))
     }
 }
