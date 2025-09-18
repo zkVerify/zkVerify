@@ -67,6 +67,16 @@ zkvRpc = {
     }
   },
   vk_hash: {
+    ezkl: {
+      description: 'Get the hash of an Ezkl verification key artifact',
+      params: [
+        {
+          name: 'vk',
+          type: 'Bytes',
+        },
+      ],
+      type: 'H256'
+    },
     fflonk: {
       description: 'Get the hash of a Fflonk verification key',
       params: [

@@ -19,6 +19,23 @@ use super::*;
 use sp_core::H256;
 
 #[test]
+fn pallet_settlement_ezkl() {
+    use pallet_ezkl_verifier::{Ezkl, WeightInfo};
+    let dummy_proof = Vec![];
+    let dummy_pubs = Vec![];
+
+    assert_eq!(
+        <<Runtime as pallet_verifiers::Config<Ezkl<Runtime>>>::WeightInfo as
+            pallet_verifiers::WeightInfo<Ezkl<Runtime>>>
+            ::verify_proof(
+            &dummy_proof,
+            &dummy_pubs
+        ),
+        crate::weights::pallet_ezkl_verifier::ZKVWeight::<Runtime>::verify_proof()
+    );
+}
+
+#[test]
 fn pallet_fflonk_verifier() {
     use pallet_fflonk_verifier::Fflonk;
     let dummy_proof = [0; pallet_fflonk_verifier::PROOF_SIZE];
