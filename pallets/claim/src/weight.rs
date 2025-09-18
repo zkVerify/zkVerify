@@ -63,108 +63,146 @@ pub trait WeightInfo {
 
 // For backwards compatibility and tests.
 impl WeightInfo for () {
+    /// Storage: `Claim::CounterForBeneficiaries` (r:1 w:1)
+    /// Proof: `Claim::CounterForBeneficiaries` (`max_values`: Some(1), `max_size`: Some(4), added: 499, mode: `MaxEncodedLen`)
     /// Storage: `Claim::ClaimActive` (r:1 w:1)
     /// Proof: `Claim::ClaimActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
+    /// Storage: `Claim::PalletAccountId` (r:1 w:0)
+    /// Proof: `Claim::PalletAccountId` (`max_values`: Some(1), `max_size`: Some(32), added: 527, mode: `MaxEncodedLen`)
     /// Storage: `System::Account` (r:1 w:0)
     /// Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
     /// Storage: `Claim::TotalClaimable` (r:1 w:1)
     /// Proof: `Claim::TotalClaimable` (`max_values`: Some(1), `max_size`: Some(16), added: 511, mode: `MaxEncodedLen`)
-    /// Storage: `Claim::Beneficiaries` (r:999 w:999)
+    /// Storage: `Claim::Beneficiaries` (r:100000 w:100000)
     /// Proof: `Claim::Beneficiaries` (`max_values`: None, `max_size`: Some(56), added: 2531, mode: `MaxEncodedLen`)
     /// Storage: `Claim::ClaimId` (r:1 w:1)
-    /// Proof: `Claim::ClaimId` (`max_values`: Some(1), `max_size`: Some(8), added: 503, mode: `MaxEncodedLen`)
-    /// The range of component `n` is `[1, 1000]`.
+    /// Proof: `Claim::ClaimId` (`max_values`: Some(1), `max_size`: Some(110), added: 605, mode: `MaxEncodedLen`)
+    /// The range of component `n` is `[0, 100000]`.
     fn begin_claim(n: u32, ) -> Weight {
         // Proof Size summary in bytes:
-        //  Measured:  `146`
+        //  Measured:  `199`
         //  Estimated: `3593 + n * (2531 ±0)`
-        // Minimum execution time: 14_518_000 picoseconds.
-        Weight::from_parts(15_151_000, 3593)
-            // Standard Error: 29_325
-            .saturating_add(Weight::from_parts(2_537_724, 0).saturating_mul(n.into()))
-            .saturating_add(RocksDbWeight::get().reads(4_u64))
-            .saturating_add(RocksDbWeight::get().reads((1_u64).saturating_mul(n.into())))
-            .saturating_add(RocksDbWeight::get().writes(3_u64))
-            .saturating_add(RocksDbWeight::get().writes((1_u64).saturating_mul(n.into())))
+        // Minimum execution time: 12_132_000 picoseconds.
+        Weight::from_parts(12_514_000, 3593)
+            // Standard Error: 8_841
+            .saturating_add(Weight::from_parts(5_976_345, 0).saturating_mul(n.into()))
+            .saturating_add(T::DbWeight::get().reads(6_u64))
+            .saturating_add(T::DbWeight::get().reads((1_u64).saturating_mul(n.into())))
+            .saturating_add(T::DbWeight::get().writes(4_u64))
+            .saturating_add(T::DbWeight::get().writes((1_u64).saturating_mul(n.into())))
             .saturating_add(Weight::from_parts(0, 2531).saturating_mul(n.into()))
     }
     /// Storage: `Claim::ClaimActive` (r:1 w:0)
     /// Proof: `Claim::ClaimActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
     /// Storage: `Claim::Beneficiaries` (r:1 w:1)
     /// Proof: `Claim::Beneficiaries` (`max_values`: None, `max_size`: Some(56), added: 2531, mode: `MaxEncodedLen`)
-    /// Storage: `System::Account` (r:1 w:1)
-    /// Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
-    /// Storage: `Claim::TotalClaimable` (r:1 w:1)
-    /// Proof: `Claim::TotalClaimable` (`max_values`: Some(1), `max_size`: Some(16), added: 511, mode: `MaxEncodedLen`)
-    fn claim() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `978`
-        //  Estimated: `3593`
-        // Minimum execution time: 47_473_000 picoseconds.
-        Weight::from_parts(48_934_000, 3593)
-            .saturating_add(RocksDbWeight::get().reads(4_u64))
-            .saturating_add(RocksDbWeight::get().writes(3_u64))
-    }
-    /// Storage: `Claim::ClaimActive` (r:1 w:0)
-    /// Proof: `Claim::ClaimActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
-    /// Storage: `Claim::Beneficiaries` (r:1 w:1)
-    /// Proof: `Claim::Beneficiaries` (`max_values`: None, `max_size`: Some(56), added: 2531, mode: `MaxEncodedLen`)
+    /// Storage: `Claim::ClaimId` (r:1 w:0)
+    /// Proof: `Claim::ClaimId` (`max_values`: Some(1), `max_size`: Some(110), added: 605, mode: `MaxEncodedLen`)
+    /// Storage: `Claim::PalletAccountId` (r:1 w:0)
+    /// Proof: `Claim::PalletAccountId` (`max_values`: Some(1), `max_size`: Some(32), added: 527, mode: `MaxEncodedLen`)
     /// Storage: `System::Account` (r:2 w:2)
     /// Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
     /// Storage: `Claim::TotalClaimable` (r:1 w:1)
     /// Proof: `Claim::TotalClaimable` (`max_values`: Some(1), `max_size`: Some(16), added: 511, mode: `MaxEncodedLen`)
-    fn claim_for() -> Weight {
+    /// Storage: `Claim::CounterForBeneficiaries` (r:1 w:1)
+    /// Proof: `Claim::CounterForBeneficiaries` (`max_values`: Some(1), `max_size`: Some(4), added: 499, mode: `MaxEncodedLen`)
+    fn claim() -> Weight {
         // Proof Size summary in bytes:
-        //  Measured:  `978`
+        //  Measured:  `2430`
         //  Estimated: `6196`
-        // Minimum execution time: 47_919_000 picoseconds.
-        Weight::from_parts(50_430_000, 6196)
-            .saturating_add(RocksDbWeight::get().reads(5_u64))
-            .saturating_add(RocksDbWeight::get().writes(4_u64))
+        // Minimum execution time: 381_986_000 picoseconds.
+        Weight::from_parts(387_275_000, 6196)
+            .saturating_add(T::DbWeight::get().reads(8_u64))
+            .saturating_add(T::DbWeight::get().writes(5_u64))
     }
     /// Storage: `Claim::ClaimActive` (r:1 w:0)
     /// Proof: `Claim::ClaimActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
+    /// Storage: `Claim::Beneficiaries` (r:1 w:1)
+    /// Proof: `Claim::Beneficiaries` (`max_values`: None, `max_size`: Some(56), added: 2531, mode: `MaxEncodedLen`)
+    /// Storage: `Claim::PalletAccountId` (r:1 w:0)
+    /// Proof: `Claim::PalletAccountId` (`max_values`: Some(1), `max_size`: Some(32), added: 527, mode: `MaxEncodedLen`)
+    /// Storage: `System::Account` (r:2 w:2)
+    /// Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
+    /// Storage: `Claim::TotalClaimable` (r:1 w:1)
+    /// Proof: `Claim::TotalClaimable` (`max_values`: Some(1), `max_size`: Some(16), added: 511, mode: `MaxEncodedLen`)
+    /// Storage: `Claim::CounterForBeneficiaries` (r:1 w:1)
+    /// Proof: `Claim::CounterForBeneficiaries` (`max_values`: Some(1), `max_size`: Some(4), added: 499, mode: `MaxEncodedLen`)
+    fn claim_for() -> Weight {
+        // Proof Size summary in bytes:
+        //  Measured:  `2330`
+        //  Estimated: `6196`
+        // Minimum execution time: 103_414_000 picoseconds.
+        Weight::from_parts(105_829_000, 6196)
+            .saturating_add(T::DbWeight::get().reads(7_u64))
+            .saturating_add(T::DbWeight::get().writes(5_u64))
+    }
+    /// Storage: `Claim::ClaimActive` (r:1 w:0)
+    /// Proof: `Claim::ClaimActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
+    /// Storage: `Claim::CounterForBeneficiaries` (r:1 w:1)
+    /// Proof: `Claim::CounterForBeneficiaries` (`max_values`: Some(1), `max_size`: Some(4), added: 499, mode: `MaxEncodedLen`)
+    /// Storage: `Claim::PalletAccountId` (r:1 w:0)
+    /// Proof: `Claim::PalletAccountId` (`max_values`: Some(1), `max_size`: Some(32), added: 527, mode: `MaxEncodedLen`)
     /// Storage: `System::Account` (r:1 w:0)
     /// Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
     /// Storage: `Claim::TotalClaimable` (r:1 w:1)
     /// Proof: `Claim::TotalClaimable` (`max_values`: Some(1), `max_size`: Some(16), added: 511, mode: `MaxEncodedLen`)
-    /// Storage: `Claim::Beneficiaries` (r:999 w:999)
+    /// Storage: `Claim::Beneficiaries` (r:100000 w:100000)
     /// Proof: `Claim::Beneficiaries` (`max_values`: None, `max_size`: Some(56), added: 2531, mode: `MaxEncodedLen`)
-    /// The range of component `n` is `[1, 1000]`.
+    /// The range of component `n` is `[1, 100000]`.
     fn add_beneficiaries(n: u32, ) -> Weight {
         // Proof Size summary in bytes:
-        //  Measured:  `233 + n * (61 ±0)`
+        //  Measured:  `253`
         //  Estimated: `3593 + n * (2531 ±0)`
-        // Minimum execution time: 14_461_000 picoseconds.
-        Weight::from_parts(14_839_000, 3593)
-            // Standard Error: 6_677
-            .saturating_add(Weight::from_parts(3_990_897, 0).saturating_mul(n.into()))
-            .saturating_add(RocksDbWeight::get().reads(3_u64))
-            .saturating_add(RocksDbWeight::get().reads((1_u64).saturating_mul(n.into())))
-            .saturating_add(RocksDbWeight::get().writes(1_u64))
-            .saturating_add(RocksDbWeight::get().writes((1_u64).saturating_mul(n.into())))
+        // Minimum execution time: 19_727_000 picoseconds.
+        Weight::from_parts(20_368_000, 3593)
+            // Standard Error: 8_123
+            .saturating_add(Weight::from_parts(5_921_589, 0).saturating_mul(n.into()))
+            .saturating_add(T::DbWeight::get().reads(5_u64))
+            .saturating_add(T::DbWeight::get().reads((1_u64).saturating_mul(n.into())))
+            .saturating_add(T::DbWeight::get().writes(2_u64))
+            .saturating_add(T::DbWeight::get().writes((1_u64).saturating_mul(n.into())))
             .saturating_add(Weight::from_parts(0, 2531).saturating_mul(n.into()))
     }
     /// Storage: `Claim::ClaimActive` (r:1 w:1)
     /// Proof: `Claim::ClaimActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
-    /// Storage: `Claim::Beneficiaries` (r:999 w:999)
-    /// Proof: `Claim::Beneficiaries` (`max_values`: None, `max_size`: Some(56), added: 2531, mode: `MaxEncodedLen`)
+    /// Storage: `Claim::PalletAccountId` (r:1 w:0)
+    /// Proof: `Claim::PalletAccountId` (`max_values`: Some(1), `max_size`: Some(32), added: 527, mode: `MaxEncodedLen`)
     /// Storage: `System::Account` (r:2 w:2)
     /// Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
     /// Storage: `Claim::ClaimId` (r:1 w:0)
-    /// Proof: `Claim::ClaimId` (`max_values`: Some(1), `max_size`: Some(8), added: 503, mode: `MaxEncodedLen`)
+    /// Proof: `Claim::ClaimId` (`max_values`: Some(1), `max_size`: Some(110), added: 605, mode: `MaxEncodedLen`)
+    /// Storage: `Claim::CounterForBeneficiaries` (r:1 w:0)
+    /// Proof: `Claim::CounterForBeneficiaries` (`max_values`: Some(1), `max_size`: Some(4), added: 499, mode: `MaxEncodedLen`)
     /// Storage: `Claim::TotalClaimable` (r:0 w:1)
     /// Proof: `Claim::TotalClaimable` (`max_values`: Some(1), `max_size`: Some(16), added: 511, mode: `MaxEncodedLen`)
-    /// The range of component `n` is `[1, 1000]`.
     fn end_claim() -> Weight {
         // Proof Size summary in bytes:
-        //  Measured:  `333 + n * (61 ±0)`
-        //  Estimated: `6196 + n * (2531 ±0)`
-        // Minimum execution time: 32_447_000 picoseconds.
-        Weight::from_parts(30_536_884, 6196)
+        //  Measured:  `453`
+        //  Estimated: `6196`
+        // Minimum execution time: 52_107_000 picoseconds.
+        Weight::from_parts(53_129_000, 6196)
+            .saturating_add(T::DbWeight::get().reads(6_u64))
+            .saturating_add(T::DbWeight::get().writes(4_u64))
     }
-    
-    fn remove_beneficiaries(_n: u32, ) -> Weight {
-        Weight::from_parts(424242, 42)
+    /// Storage: `Claim::ClaimActive` (r:1 w:0)
+    /// Proof: `Claim::ClaimActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
+    /// Storage: `Claim::CounterForBeneficiaries` (r:1 w:1)
+    /// Proof: `Claim::CounterForBeneficiaries` (`max_values`: Some(1), `max_size`: Some(4), added: 499, mode: `MaxEncodedLen`)
+    /// Storage: `Claim::Beneficiaries` (r:100000 w:100000)
+    /// Proof: `Claim::Beneficiaries` (`max_values`: None, `max_size`: Some(56), added: 2531, mode: `MaxEncodedLen`)
+    /// The range of component `n` is `[1, 100000]`.
+    fn remove_beneficiaries(n: u32, ) -> Weight {
+        // Proof Size summary in bytes:
+        //  Measured:  `0 + n * (60 ±0)`
+        //  Estimated: `1489 + n * (2531 ±0)`
+        // Minimum execution time: 14_557_000 picoseconds.
+        Weight::from_parts(15_018_000, 1489)
+            // Standard Error: 9_075
+            .saturating_add(Weight::from_parts(2_198_902, 0).saturating_mul(n.into()))
+            .saturating_add(T::DbWeight::get().reads(2_u64))
+            .saturating_add(T::DbWeight::get().reads((1_u64).saturating_mul(n.into())))
+            .saturating_add(T::DbWeight::get().writes(1_u64))
+            .saturating_add(T::DbWeight::get().writes((1_u64).saturating_mul(n.into())))
+            .saturating_add(Weight::from_parts(0, 2531).saturating_mul(n.into()))
     }
 }
