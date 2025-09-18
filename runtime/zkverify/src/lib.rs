@@ -868,6 +868,26 @@ impl pallet_verifiers::common::Config for Runtime {
     type CommonWeightInfo = Runtime;
 }
 
+parameter_types! {
+    pub const EzklMaxPubs: u32 = 32;
+}
+
+impl pallet_ezkl_verifier::Config for Runtime {
+    type MaxPubs = EzklMaxPubs;
+}
+
+pub type EzklVerifier = pallet_ezkl_verifier::Ezkl<Runtime>;
+
+impl pallet_verifiers::Config<EzklVerifier> for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type OnProofVerified = Aggregate;
+    type WeightInfo =
+        pallet_ezkl_verifier::EzklWeight<weights::pallet_ezkl_verifier::ZKVWeight<Runtime>>;
+    type Ticket = VkRegistrationHoldConsideration;
+    #[cfg(feature = "runtime-benchmarks")]
+    type Currency = Balances;
+}
+
 impl pallet_verifiers::Config<pallet_fflonk_verifier::Fflonk> for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type OnProofVerified = Aggregate;
@@ -1199,6 +1219,7 @@ construct_runtime!(
         SettlementFFlonkPallet: pallet_fflonk_verifier = 166,
         SettlementSp1Pallet: pallet_sp1_verifier = 167,
         SettlementUltrahonkPallet: pallet_ultrahonk_verifier = 168,
+        SettlementEzklPallet: pallet_ezkl_verifier = 169,
     }
 );
 
@@ -1288,6 +1309,7 @@ mod benches {
         [pallet_claim, Claim]
         [pallet_hyperbridge_aggregations, HyperbridgeAggregations]
         // verifiers
+        [pallet_ezkl_verifier, EzklVerifierBench::<Runtime>]
         [pallet_fflonk_verifier, FflonkVerifierBench::<Runtime>]
         [pallet_groth16_verifier, Groth16VerifierBench::<Runtime>]
         [pallet_risc0_verifier, Risc0VerifierBench::<Runtime>]
@@ -1800,6 +1822,7 @@ impl_runtime_apis! {
             use baseline::Pallet as BaselineBench;
             use pallet_election_provider_support_benchmarking::Pallet as ElectionProviderBench;
             use pallet_session_benchmarking::Pallet as SessionBench;
+            use pallet_ezkl_verifier::benchmarking::Pallet as EzklVerifierBench;
             use pallet_fflonk_verifier::benchmarking::Pallet as FflonkVerifierBench;
             use pallet_groth16_verifier::benchmarking::Pallet as Groth16VerifierBench;
             use pallet_risc0_verifier::benchmarking::Pallet as Risc0VerifierBench;
@@ -1835,6 +1858,7 @@ impl_runtime_apis! {
             use baseline::Pallet as BaselineBench;
             use pallet_election_provider_support_benchmarking::Pallet as ElectionProviderBench;
             use pallet_session_benchmarking::Pallet as SessionBench;
+            use pallet_ezkl_verifier::benchmarking::Pallet as EzklVerifierBench;
             use pallet_fflonk_verifier::benchmarking::Pallet as FflonkVerifierBench;
             use pallet_groth16_verifier::benchmarking::Pallet as Groth16VerifierBench;
             use pallet_risc0_verifier::benchmarking::Pallet as Risc0VerifierBench;
