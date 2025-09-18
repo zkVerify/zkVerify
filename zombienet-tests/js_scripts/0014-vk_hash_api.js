@@ -19,6 +19,7 @@ const ReturnCode = {
 };
 
 const { init_api } = require('zkv-lib')
+const { VK: EZKL_VK, VKEY_HASH: EZKL_VKEY_HASH } = require('./ezkl_data.js');
 const { VK: FFLONK_VK, VKEY_HASH: FFLONK_VKEY_HASH } = require('./fflonk_data.js');
 const { VK: GROTH16_VK, VKEY_HASH: GROTH16_VKEY_HASH } = require('./groth16_data.js');
 const { VK: PLONKY2_VK, VKEY_HASH: PLONKY2_VKEY_HASH } = require('./plonky2_data.js');
@@ -31,6 +32,12 @@ async function run(nodeName, networkInfo, _args) {
     const api = await init_api(zombie, nodeName, networkInfo);
 
     verifiers = [
+        {
+            name: "Ezkl",
+            pallet: api.rpc.vk_hash.ezkl,
+            vk: EZKL_VK,
+            expected_hash: EZKL_VKEY_HASH
+        },
         {
             name: "Fflonk",
             pallet: api.rpc.vk_hash.fflonk,

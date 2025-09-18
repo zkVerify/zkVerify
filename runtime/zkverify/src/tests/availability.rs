@@ -31,6 +31,27 @@ use sp_runtime::{AccountId32, MultiAddress};
 use std::collections::BTreeMap;
 
 #[test]
+fn pallet_ezkl() {
+    test().execute_with(|| {
+        let dummy_origin = AccountId32::new([0; 32]);
+
+        let dummy_vk = [0; pallet_ezkl_verifier::MAX_VK_SIZE];
+        let dummy_proof = Vec::new();
+        let dummy_pubs = Vec::new();
+
+        assert!(SettlementEzklPallet::submit_proof(
+            RuntimeOrigin::signed(dummy_origin),
+            VkOrHash::Vk(dummy_vk.into()),
+            dummy_proof.into(),
+            dummy_pubs.into(),
+            None,
+        )
+        .is_err());
+        // just checking code builds, hence the pallet is available to the runtime
+    });
+}
+
+#[test]
 fn pallet_fflonk() {
     test().execute_with(|| {
         let dummy_origin = AccountId32::new([0; 32]);

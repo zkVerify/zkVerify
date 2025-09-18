@@ -9,6 +9,7 @@ homepage.workspace = true
 license = "Apache-2.0"
 
 [dependencies]
+pallet-ezkl-verifier = { workspace = true }
 pallet-fflonk-verifier = { workspace = true }
 pallet-groth16-verifier = { workspace = true }
 pallet-plonky2-verifier = { workspace = true }
@@ -28,6 +29,7 @@ std = [
 	"codec/std",
 	"hp-groth16/std",
 	"hp-verifiers/std",
+	"pallet-ezkl-verifier/std",
 	"pallet-fflonk-verifier/std",
 	"pallet-groth16-verifier/std",
 	"pallet-plonky2-verifier/std",
