@@ -45,13 +45,8 @@ use xcm_builder::{
 use crate::weights::pallet_xcm::ZKVWeight as XcmPalletZKVWeight;
 use crate::weights::xcm::ZKVWeight as XcmZKVWeight;
 
-// While we're deploying the mainnet genesis, we cannot compute the genesis hash, so we put a
-// placeholder here. Indeed, we're not planning to communicate via xcm to other networks soon,
-// so we don't need to implement a real global resolver. Anyway, we'll replace this placeholder in
-// the next runtime upgrade.
-// "deadbeef" + hex(b"zkverify Mainnet Network") + "deadbeef"
 const ZKV_GENESIS_HASH: [u8; 32] =
-    hex_literal::hex!("deadbeef7a6b766572696679204d61696e6e6574204e6574776f726Bdeadbeef");
+    hex_literal::hex!("060e3dd3fa2904d031206bb913c954687a2bcc350e5a83d33d9e273ad21460f1");
 
 parameter_types! {
     pub const RootLocation: Location = Here.into_location();
