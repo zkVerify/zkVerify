@@ -129,9 +129,9 @@ use crate::weights::{WeightInfo};
 				};
 				let ok = <AdvancedStwoVerifier as StwoVerify>::verify(&vk, &proof, &public_inputs);
 				all_ok &= ok;
+				Self::deposit_event(Event::Verified { success: ok });
 			}
 			<LastVerificationResult<T>>::put(all_ok);
-			Self::deposit_event(Event::Verified { success: all_ok });
 			Ok(())
 		}
 

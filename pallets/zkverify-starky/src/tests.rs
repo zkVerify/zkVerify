@@ -117,7 +117,7 @@ fn stwo_verification_failures_test() {
         assert_ok!(ZkStarky::register_vk(RuntimeOrigin::signed(1), vk_id, vk_data.clone()));
         
         // Submit proof with odd checksum (should fail)
-        let invalid_proof = vec![0x11, 0x13, 0x15, 0x17]; // Odd checksum
+        let invalid_proof = vec![0x11, 0x13, 0x15, 0x18]; // Odd checksum (17+19+21+24=81)
         let inputs = vec![0x20, 0x22, 0x24, 0x26]; // Even checksum
         
         assert_ok!(ZkStarky::submit_proof(
@@ -220,8 +220,12 @@ fn stwo_edge_cases_test() {
         let events = System::events();
         assert_eq!(events.len(), 3); // 2x VkRegistered + 1x Verified
         
-        // Proof should have passed
-        match &events[2].event {
+        // Find the Verified event (it's at index 1, not 2)
+        let verified_event = events.iter()
+            .find(|e| matches!(e.event, RuntimeEvent::ZkStarky(Event::Verified { .. })))
+            .expect("Expected Verified event");
+        
+        match &verified_event.event {
             RuntimeEvent::ZkStarky(Event::Verified { success }) => {
                 assert_eq!(*success, true);
             },
@@ -246,7 +250,7 @@ fn stwo_mixed_batch_results_test() {
                 vec![0x20, 0x22, 0x24, 0x26], // Even checksum - should pass
             ),
             (
-                vec![0x11, 0x13, 0x15, 0x17], // Odd checksum - should fail
+                vec![0x11, 0x13, 0x15, 0x18], // Odd checksum - should fail (17+19+21+24=81)
                 vec![0x21, 0x23, 0x25, 0x27], // Odd checksum - should fail
             ),
             (

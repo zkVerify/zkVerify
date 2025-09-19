@@ -29,7 +29,6 @@ members = [
     "verifiers/ultraplonk",
     "verifiers/plonky2",
     "verifiers/sp1",
-    "verifiers/starky",
     "verifiers/stwo",
     "utils/native-cache",
     "relay-node",
@@ -48,9 +47,10 @@ members = [
     "paratest/runtime",
     "paratest/node",
     "paratest/pallets/template",
-    "patches/cumulus/client/relay-chain-inprocess-interface",
-    "patches/cumulus/client/relay-chain-minimal-node",
-]
+           "patches/cumulus/client/relay-chain-inprocess-interface",
+           "patches/cumulus/client/relay-chain-minimal-node",
+           "tools/zkv-transform",
+       ]
 
 exclude = ["utils/generate-bags/node-runtime"]
 

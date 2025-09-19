@@ -6,21 +6,20 @@
  publish = false
 
 [dependencies]
-parity-scale-codec = { workspace = true }
+codec = { workspace = true, package = "parity-scale-codec" }
 scale-info = { workspace = true }
-frame-support = { version = "33.0.0", default-features = false }
-frame-system = { version = "33.0.0", default-features = false }
-sp-runtime = { version = "36.0.0", default-features = false }
+frame-support = { workspace = true, default-features = false }
+frame-system = { workspace = true, default-features = false }
+sp-runtime = { workspace = true, default-features = false }
 sp-std = { version = "14.0.0", default-features = false }
-sp-io = { version = "36.0.0", default-features = false }
-zkv-starky = { path = "../../verifiers/starky", default-features = false }
+sp-io = { workspace = true, default-features = false }
 zkv-stwo = { path = "../../verifiers/stwo", default-features = false }
-frame-benchmarking = { version = "33.0.0", default-features = false, optional = true }
+frame-benchmarking = { workspace = true, default-features = false, optional = true }
 
 [dev-dependencies]
-pallet-balances = { version = "33.0.0", default-features = false, features = ["std"] }
-sp-core = { version = "36.0.0" }
-sp-state-machine = { version = "0.39.0" }
+pallet-balances = { workspace = true, default-features = false, features = ["std"] }
+sp-core = { workspace = true }
+sp-state-machine = { workspace = true }
 sp-tracing = { version = "12.0.0" }
 
  [features]
@@ -28,13 +27,12 @@ sp-tracing = { version = "12.0.0" }
  std = [
  	"frame-support/std",
  	"frame-system/std",
- 	"parity-scale-codec/std",
+ 	"codec/std",
  	"scale-info/std",
  	"sp-std/std",
  	"sp-runtime/std",
  	"sp-io/std",
- 	"zkv-starky/std",
- 	"zkv-stwo/std",
+	"zkv-stwo/std",
  	"frame-benchmarking/std",
  ]
 runtime-benchmarks = ["frame-benchmarking"]

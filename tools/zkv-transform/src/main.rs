@@ -1,5 +1,5 @@
 use clap::Parser;
-use parity_scale_codec::{Encode, Decode};
+use codec::{Encode, Decode};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;

@@ -47,7 +47,8 @@ frame_support::construct_runtime!(
     type PreInherents = ();
     type PostInherents = ();
     type PostTransactions = ();
- }
+    type ExtensionsWeightInfo = ();
+}
 
  impl pallet_zkverify_starky::Config for Test {
  	type RuntimeEvent = RuntimeEvent;
@@ -57,7 +58,9 @@ frame_support::construct_runtime!(
  pub fn new_test_ext() -> sp_io::TestExternalities {
 	let storage = system::GenesisConfig::<Test>::default().build_storage().unwrap();
  	let mut ext = sp_io::TestExternalities::new(storage);
- 	ext.execute_with(|| {});
+ 	ext.execute_with(|| {
+		System::set_block_number(1);
+	});
  	ext
  }
 
