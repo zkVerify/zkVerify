@@ -42,17 +42,17 @@ jobs:
             try-runtime --runtime /build/target/release/wbuild/volta-runtime/volta_runtime.compact.compressed.wasm \
               on-runtime-upgrade \
               --blocktime 6 --disable-mbm-checks --disable-spec-version-check live \
-              --uri wss://volta-rpc.zkverify.io/
+              --uri wss://zkverify-volta-rpc.zkverify.io/
           try_runtime: 'v0.8.0'
           use_cache: 'no'
-#      - name: Execute try-runtime zkverify
-#        if: ${{ inputs.execute-try-runtime == 'yes' }}
-#        uses: ./.github/actions/cmd-in-docker
-#        with:
-#          command: >-
-#            try-runtime --runtime /build/target/release/wbuild/zkv-runtime/zkv_runtime.compact.compressed.wasm \
-#              on-runtime-upgrade \
-#              --blocktime 6 --disable-mbm-checks --disable-spec-version-check live \
-#              --uri wss://rpc.zkverify.io/
-#          try_runtime: 'v0.8.0'
-#          use_cache: 'no'
+      - name: Execute try-runtime zkverify
+        if: ${{ inputs.execute-try-runtime == 'yes' }}
+        uses: ./.github/actions/cmd-in-docker
+        with:
+          command: >-
+            try-runtime --runtime /build/target/release/wbuild/zkv-runtime/zkv_runtime.compact.compressed.wasm \
+              on-runtime-upgrade \
+              --blocktime 6 --disable-mbm-checks --disable-spec-version-check live \
+              --uri wss://zkverify-rpc.zkverify.io/
+          try_runtime: 'v0.8.0'
+          use_cache: 'no'
