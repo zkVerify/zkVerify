@@ -1,0 +1,42 @@
+ [package]
+ name = "pallet-zkverify-starky"
+ version = "0.1.0"
+ edition = "2021"
+ license = "Apache-2.0"
+ publish = false
+
+[dependencies]
+parity-scale-codec = { workspace = true }
+scale-info = { workspace = true }
+frame-support = { version = "33.0.0", default-features = false }
+frame-system = { version = "33.0.0", default-features = false }
+sp-runtime = { version = "36.0.0", default-features = false }
+sp-std = { version = "14.0.0", default-features = false }
+sp-io = { version = "36.0.0", default-features = false }
+zkv-starky = { path = "../../verifiers/starky", default-features = false }
+zkv-stwo = { path = "../../verifiers/stwo", default-features = false }
+frame-benchmarking = { version = "33.0.0", default-features = false, optional = true }
+
+[dev-dependencies]
+pallet-balances = { version = "33.0.0", default-features = false, features = ["std"] }
+sp-core = { version = "36.0.0" }
+sp-state-machine = { version = "0.39.0" }
+sp-tracing = { version = "12.0.0" }
+
+ [features]
+ default = ["std"]
+ std = [
+ 	"frame-support/std",
+ 	"frame-system/std",
+ 	"parity-scale-codec/std",
+ 	"scale-info/std",
+ 	"sp-std/std",
+ 	"sp-runtime/std",
+ 	"sp-io/std",
+ 	"zkv-starky/std",
+ 	"zkv-stwo/std",
+ 	"frame-benchmarking/std",
+ ]
+runtime-benchmarks = ["frame-benchmarking"]
+verifier-stwo = []
+

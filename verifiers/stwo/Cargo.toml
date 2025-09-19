@@ -1,0 +1,53 @@
+ [package]
+ name = "zkv-stwo"
+ version = "0.1.0"
+ edition = "2021"
+ license = "Apache-2.0"
+ publish = false
+
+ [lib]
+ name = "zkv_stwo"
+ path = "src/lib.rs"
+ crate-type = ["rlib"]
+
+ [features]
+ default = ["std"]
+std = [
+	"parity-scale-codec/std",
+	"scale-info/std",
+	"sp-std/std",
+	"ark-ff/std",
+	"ark-ec/std",
+	"ark-std/std",
+	"ark-bn254/std",
+	"ark-pallas/std",
+	"ark-vesta/std",
+	"sha2/std",
+	"blake2/std",
+	"serde/std",
+]
+ no_std = []
+
+[dependencies]
+parity-scale-codec = { workspace = true }
+scale-info = { workspace = true }
+sp-std = { version = "14.0.0", default-features = false }
+# Cryptographic dependencies for real verification
+ark-ff = { version = "0.4", default-features = false }
+ark-ec = { version = "0.4", default-features = false }
+ark-std = { version = "0.4", default-features = false }
+ark-bn254 = { version = "0.4", default-features = false }
+ark-pallas = { version = "0.4", default-features = false }
+ark-vesta = { version = "0.4", default-features = false }
+# Hash functions
+sha2 = { version = "0.10", default-features = false }
+blake2 = { version = "0.10", default-features = false }
+# Serialization
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+
+
+
+
+
+
+
