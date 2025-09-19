@@ -117,7 +117,7 @@ pallet-ultraplonk-verifier = { path = "verifiers/ultraplonk", default-features =
 pallet-sp1-verifier = { path = "verifiers/sp1", default-features = false }
 risc0-verifier = { git = "https://github.com/zkVerify/risc0-verifier.git", tag = "v0.11.0", default-features = false }
 pallet-plonky2-verifier = { path = "verifiers/plonky2", default-features = false }
-ezkl-no-std = { git = "https://github.com/zkVerify/ezkl_verifier.git", branch = "dimitris/implement-ezkl", deafult-features = false }
+ezkl-no-std = { git = "https://github.com/zkVerify/ezkl_verifier.git", branch = "dimitris/implement-ezkl", default-features = false }
 ultrahonk-no-std = { git = "https://github.com/zkVerify/ultrahonk_verifier.git", default-features = false, tag = "v0.1.0" }
 ultraplonk-no-std = { git = "https://github.com/zkVerify/ultraplonk_verifier.git", default-features = false, tag = "v0.4.0" }
 
