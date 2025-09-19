@@ -50,6 +50,7 @@ use sp_runtime::traits::{AccountIdConversion, Zero};
 
 use frame_support::{
     dispatch::DispatchResult,
+    pallet_prelude::{InvalidTransaction, TransactionValidityError},
     traits::{
         fungible::{Inspect, Mutate},
         tokens::{Fortitude, Preservation},
@@ -62,28 +63,15 @@ pub(crate) type BalanceOf<T> =
     <<T as Config>::Currency as Inspect<<T as frame_system::Config>::AccountId>>::Balance;
 pub(crate) type ClaimMessage<T> = BoundedVec<u8, <T as Config>::MaxClaimMessageLength>;
 
-#[repr(u8)]
-pub(crate) enum ClaimValidityError {
-    ClaimInactive = 0,
-    BeneficiaryNotFound = 1,
-    InvalidSignature = 2,
-    Other = 3,
-}
-
-impl<T: Config> From<Error<T>> for ClaimValidityError {
-    fn from(error: Error<T>) -> Self {
-        match error {
-            Error::AlreadyEnded => ClaimValidityError::ClaimInactive,
-            Error::NotEligible => ClaimValidityError::BeneficiaryNotFound,
-            Error::BadSignature => ClaimValidityError::InvalidSignature,
-            _ => ClaimValidityError::Other,
-        }
-    }
-}
-
-impl From<ClaimValidityError> for u8 {
-    fn from(err: ClaimValidityError) -> Self {
-        err as u8
+impl<T: Config> From<Error<T>> for TransactionValidityError {
+    fn from(error: Error<T>) -> TransactionValidityError {
+        let e = match error {
+            Error::AlreadyEnded => InvalidTransaction::Stale,
+            Error::NotEligible => InvalidTransaction::BadSigner,
+            Error::BadSignature => InvalidTransaction::BadProof,
+            _ => InvalidTransaction::Custom(0u8),
+        };
+        TransactionValidityError::Invalid(e)
     }
 }
 
@@ -515,6 +503,10 @@ pub mod pallet {
             }
 
             // Increase claim id
+            // Note: Theoretically we should hold some funds from the manager account for
+            // storing claim_id and claim_message.
+            // However, considering that it's only one message, limited in size,
+            // we avoid introducing this unnecessary complexity here.
             ClaimId::<T>::mutate(|t| {
                 let new_t = t.clone().map_or((0, claim_message.clone()), |v| {
                     (v.0 + 1, claim_message.clone())
@@ -658,8 +650,7 @@ pub mod pallet {
                 signature,
             } = call
             {
-                Self::check_claimant(beneficiary, signature.clone())
-                    .map_err(|e| InvalidTransaction::Custom(ClaimValidityError::from(e).into()))?;
+                Self::check_claimant(beneficiary, signature.clone())?;
 
                 Ok(ValidTransaction {
                     priority: PRIORITY,

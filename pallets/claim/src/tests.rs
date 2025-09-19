@@ -973,7 +973,7 @@ fn cannot_init_new_claim_if_leftovers_benificiaries() {
 
 #[test]
 fn validate_unsigned_works() {
-    use crate::{Call as ClaimCall, ClaimValidityError};
+    use crate::Call as ClaimCall;
     use codec::Encode;
     use sp_runtime::{
         traits::{IdentifyAccount, ValidateUnsigned},
@@ -1006,7 +1006,7 @@ fn validate_unsigned_works() {
                 }
             ),
             Err(TransactionValidityError::Invalid(
-                InvalidTransaction::Custom(ClaimValidityError::InvalidSignature.into())
+                InvalidTransaction::BadProof
             ))
         );
 
@@ -1022,7 +1022,7 @@ fn validate_unsigned_works() {
                 }
             ),
             Err(TransactionValidityError::Invalid(
-                InvalidTransaction::Custom(ClaimValidityError::InvalidSignature.into())
+                InvalidTransaction::BadProof
             ))
         );
 
@@ -1037,7 +1037,7 @@ fn validate_unsigned_works() {
                 }
             ),
             Err(TransactionValidityError::Invalid(
-                InvalidTransaction::Custom(ClaimValidityError::BeneficiaryNotFound.into())
+                InvalidTransaction::BadSigner
             ))
         );
 
@@ -1105,9 +1105,7 @@ fn validate_unsigned_works() {
                     signature: user_signature
                 }
             ),
-            Err(TransactionValidityError::Invalid(
-                InvalidTransaction::Custom(ClaimValidityError::ClaimInactive.into())
-            ))
+            Err(TransactionValidityError::Invalid(InvalidTransaction::Stale))
         );
     });
 }
