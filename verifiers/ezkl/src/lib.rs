@@ -19,7 +19,7 @@ extern crate alloc;
 
 use alloc::{borrow::Cow, vec::Vec};
 use codec::{Decode, Encode, MaxEncodedLen};
-use core::marker::PhantomData;
+// use core::marker::PhantomData;
 use frame_support::{ensure, weights::Weight};
 use hp_verifiers::{Verifier, VerifyError};
 use scale_info::TypeInfo;
@@ -89,10 +89,6 @@ impl<T: Config> Verifier for Ezkl<T> {
         proof: &Self::Proof,
         pubs: &Self::Pubs,
     ) -> Result<Option<Weight>, VerifyError> {
-        // ensure!(
-        //     proof.len() == ZK_PROOF_SIZE,
-        //     hp_verifiers::VerifyError::InvalidProofData
-        // );
         ensure!(
             pubs.len() <= T::MaxPubs::get() as usize,
             hp_verifiers::VerifyError::InvalidInput
@@ -122,10 +118,10 @@ impl<T: Config> Verifier for Ezkl<T> {
     }
 
     fn validate_vk(vk: &Self::Vk) -> Result<(), VerifyError> {
-        // let _vk = VerificationKey::<CurveHooksImpl>::try_from(&vk[..])
-        //     .map_err(|e| log::debug!("Invalid Vk: {e:?}"))
-        //     .map_err(|_| VerifyError::InvalidVerificationKey)?;
-        if vk.vk_bytes.len() > MAX_VK_LENGTH as usize {
+        if vk.vk_bytes.len() == 0
+            || vk.vk_bytes.len() & 31 != 0
+            || vk.vk_bytes.len() > MAX_VK_LENGTH as usize
+        {
             return Err(VerifyError::InvalidVerificationKey);
         }
 
