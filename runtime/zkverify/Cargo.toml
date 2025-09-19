@@ -96,7 +96,6 @@ aggregate-rpc-runtime-api = { workspace = true }
 
 pallet-verifiers = { workspace = true }
 hp-verifiers = { workspace = true }
-pallet-ezkl-verifier = { workspace = true }
 pallet-fflonk-verifier = { workspace = true }
 pallet-groth16-verifier = { workspace = true }
 pallet-risc0-verifier = { workspace = true, features = ["inject-native-poseidon2"] }
@@ -149,7 +148,6 @@ runtime-benchmarks = [
 	"pallet-token-claim/runtime-benchmarks",
 	"pallet-conviction-voting/runtime-benchmarks",
 	"pallet-election-provider-support-benchmarking/runtime-benchmarks",
-	"pallet-ezkl-verifier/runtime-benchmarks",
 	"pallet-fflonk-verifier/runtime-benchmarks",
 	"pallet-grandpa/runtime-benchmarks",
 	"pallet-groth16-verifier/runtime-benchmarks",
@@ -223,7 +221,6 @@ std = [
 	"pallet-token-claim/std",
 	"pallet-conviction-voting/std",
 	"pallet-election-provider-support-benchmarking?/std",
-	"pallet-ezkl-verifier/std",
 	"pallet-fflonk-verifier/std",
 	"pallet-grandpa/std",
 	"pallet-groth16-verifier/std",
