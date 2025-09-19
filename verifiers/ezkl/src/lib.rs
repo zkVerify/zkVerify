@@ -19,7 +19,7 @@ extern crate alloc;
 
 use alloc::{borrow::Cow, vec::Vec};
 use codec::{Decode, Encode, MaxEncodedLen};
-// use core::marker::PhantomData;
+use core::marker::PhantomData;
 use frame_support::{ensure, weights::Weight};
 use hp_verifiers::{Verifier, VerifyError};
 use scale_info::TypeInfo;
@@ -52,7 +52,7 @@ impl EzklVk {
 pub type Proof = Vec<u8>;
 pub type Pubs = Vec<[u8; PUBS_SIZE]>;
 pub type Vk = EzklVk;
-// pub use weight::WeightInfo;
+pub use weight::WeightInfo;
 
 pub trait Config {
     /// Maximum supported number of public inputs.
@@ -129,7 +129,8 @@ impl<T: Config> Verifier for Ezkl<T> {
     }
 
     fn vk_hash(vk: &Self::Vk) -> H256 {
-        sp_io::hashing::sha2_256(&Self::vk_bytes(vk)).into()
+        // sp_io::hashing::sha2_256(&Self::vk_bytes(vk)).into()
+        sp_io::hashing::keccak_256(&Self::vk_bytes(vk)).into()
     }
 
     fn vk_bytes(vk: &Self::Vk) -> Cow<'_, [u8]> {
@@ -152,38 +153,38 @@ impl<T: Config> Ezkl<T> {
     }
 }
 
-// /// The struct to use in runtime pallet configuration to map the weight computed by this crate
-// /// benchmarks to the weight needed by the `pallet-verifiers`.
-// pub struct EzklWeight<W: weight::WeightInfo>(PhantomData<W>);
+/// The struct to use in runtime pallet configuration to map the weight computed by this crate
+/// benchmarks to the weight needed by the `pallet-verifiers`.
+pub struct EzklWeight<W: weight::WeightInfo>(PhantomData<W>);
 
-// impl<T: Config, W: weight::WeightInfo> pallet_verifiers::WeightInfo<Ezkl<T>> for EzklWeight<W> {
-//     fn verify_proof(
-//         _proof: &<Ezkl<T> as hp_verifiers::Verifier>::Proof,
-//         _pubs: &<Ezkl<T> as hp_verifiers::Verifier>::Pubs,
-//     ) -> Weight {
-//         W::verify_proof()
-//     }
+impl<T: Config, W: weight::WeightInfo> pallet_verifiers::WeightInfo<Ezkl<T>> for EzklWeight<W> {
+    fn verify_proof(
+        _proof: &<Ezkl<T> as hp_verifiers::Verifier>::Proof,
+        _pubs: &<Ezkl<T> as hp_verifiers::Verifier>::Pubs,
+    ) -> Weight {
+        W::verify_proof()
+    }
 
-//     fn register_vk(_vk: &<Ezkl<T> as hp_verifiers::Verifier>::Vk) -> Weight {
-//         W::register_vk()
-//     }
+    fn register_vk(_vk: &<Ezkl<T> as hp_verifiers::Verifier>::Vk) -> Weight {
+        W::register_vk()
+    }
 
-//     fn unregister_vk() -> frame_support::weights::Weight {
-//         W::unregister_vk()
-//     }
+    fn unregister_vk() -> frame_support::weights::Weight {
+        W::unregister_vk()
+    }
 
-//     fn get_vk() -> Weight {
-//         W::get_vk()
-//     }
+    fn get_vk() -> Weight {
+        W::get_vk()
+    }
 
-//     fn validate_vk(_vk: &<Ezkl<T> as hp_verifiers::Verifier>::Vk) -> Weight {
-//         W::validate_vk()
-//     }
+    fn validate_vk(_vk: &<Ezkl<T> as hp_verifiers::Verifier>::Vk) -> Weight {
+        W::validate_vk()
+    }
 
-//     fn compute_statement_hash(
-//         _proof: &<Ezkl<T> as Verifier>::Proof,
-//         _pubs: &<Ezkl<T> as Verifier>::Pubs,
-//     ) -> Weight {
-//         W::compute_statement_hash()
-//     }
-// }
+    fn compute_statement_hash(
+        _proof: &<Ezkl<T> as Verifier>::Proof,
+        _pubs: &<Ezkl<T> as Verifier>::Pubs,
+    ) -> Weight {
+        W::compute_statement_hash()
+    }
+}
