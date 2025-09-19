@@ -33,12 +33,6 @@ async function run(nodeName, networkInfo, _args) {
 
     verifiers = [
         {
-            name: "Ezkl",
-            pallet: api.rpc.vk_hash.ezkl,
-            vk: EZKL_VK,
-            expected_hash: EZKL_VKEY_HASH
-        },
-        {
             name: "Fflonk",
             pallet: api.rpc.vk_hash.fflonk,
             vk: FFLONK_VK,
@@ -79,6 +73,12 @@ async function run(nodeName, networkInfo, _args) {
             pallet: api.rpc.vk_hash.sp1,
             vk: SP1_VK,
             expected_hash: SP1_VK
+        },
+        {
+            name: "Ezkl",
+            pallet: api.rpc.vk_hash.ezkl,
+            vk: EZKL_VK,
+            expected_hash: EZKL_VKEY_HASH
         },
     ];
 
