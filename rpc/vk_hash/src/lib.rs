@@ -158,7 +158,7 @@ impl VKHash {
 impl VKHashApiServer<H256> for VKHash {
     fn ezkl(&self, vk: Bytes) -> RpcResult<H256> {
         let vk_bytes = vk.0;
-        if vk_bytes.len() == 0 || vk_bytes.len() & 31 != 0 || vk_bytes.len() > MAX_VK_LENGTH {
+        if vk_bytes.len() == 0 || vk_bytes.len() & 31 != 0 || vk_bytes.len() > MAX_VK_LENGTH as usize {
             return Err(ErrorObject::owned(
                 1,
                 "Incorrect Slice Length",
