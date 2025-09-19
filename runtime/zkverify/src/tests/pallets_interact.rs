@@ -465,7 +465,7 @@ mod claim {
         test().execute_with(|| {
             let pre_balance = Balances::free_balance(Treasury::account_id());
 
-            assert_ok!(Claim::end_airdrop(RuntimeOrigin::root()));
+            assert_ok!(Claim::end_claim(RuntimeOrigin::root()));
 
             // Check that treasury balance increased
             assert_eq!(

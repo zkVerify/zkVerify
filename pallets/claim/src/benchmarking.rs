@@ -15,14 +15,40 @@
 
 use super::*;
 use crate::utils::*;
+use codec::{Decode, Encode};
 use frame_benchmarking::v2::*;
+use frame_support::traits::UnfilteredDispatchable;
 use frame_system::RawOrigin;
-use sp_runtime::Saturating;
+use sp_io::crypto::{ecdsa_generate, ecdsa_sign};
+use sp_runtime::{
+    traits::{IdentifyAccount, ValidateUnsigned},
+    MultiSignature, MultiSigner, Saturating,
+};
 
-fn init_airdrop_state<T: Config>(
-    n: u32,
-    begin_airdrop: bool,
-) -> BTreeMap<T::AccountId, BalanceOf<T>> {
+pub trait BenchmarkHelper<Signature, Signer> {
+    fn sign_claim(message: &[u8]) -> (Signature, Signer);
+}
+
+impl BenchmarkHelper<MultiSignature, MultiSigner> for () {
+    fn sign_claim(message: &[u8]) -> (MultiSignature, MultiSigner) {
+        let public = ecdsa_generate(0.into(), Some(b"//Beneficiary".to_vec()));
+        let signer = MultiSigner::Ecdsa(public);
+
+        // Generate Signature
+        let signature = MultiSignature::Ecdsa(ecdsa_sign(0.into(), &public, message).unwrap());
+        (signature, signer)
+    }
+}
+
+fn get_claim_message<T: Config>() -> BoundedVec<u8, <T as Config>::MaxClaimMessageLength> {
+    BoundedVec::try_from(vec![
+        1u8;
+        <T as Config>::MaxClaimMessageLength::get() as usize
+    ])
+    .unwrap()
+}
+
+fn init_claim_state<T: Config>(n: u32, begin_claim: bool) -> BTreeMap<T::AccountId, BalanceOf<T>> {
     let (beneficiaries, total_amount) = get_beneficiaries_map::<T>(n);
     let _ = T::Currency::mint_into(
         &Pallet::<T>::account_id(),
@@ -30,8 +56,13 @@ fn init_airdrop_state<T: Config>(
     )
     .unwrap();
 
-    if begin_airdrop {
-        Pallet::<T>::begin_airdrop(RawOrigin::Root.into(), beneficiaries.clone()).unwrap();
+    if begin_claim {
+        Pallet::<T>::begin_claim(
+            RawOrigin::Root.into(),
+            beneficiaries.clone(),
+            get_claim_message::<T>(),
+        )
+        .unwrap();
     }
     beneficiaries
 }
@@ -42,24 +73,40 @@ mod benchmarks {
     use super::*;
 
     #[benchmark]
-    fn begin_airdrop(n: Linear<0, <T as Config>::MAX_OP_BENEFICIARIES>) {
-        let beneficiaries = init_airdrop_state::<T>(n, false);
+    fn begin_claim(n: Linear<0, <T as Config>::MAX_OP_BENEFICIARIES>) {
+        let beneficiaries = init_claim_state::<T>(n, false);
 
         #[extrinsic_call]
-        begin_airdrop(RawOrigin::Root, beneficiaries);
+        begin_claim(RawOrigin::Root, beneficiaries, get_claim_message::<T>());
     }
 
     #[benchmark]
     fn claim() {
-        let _ = init_airdrop_state::<T>(<T as Config>::MAX_OP_BENEFICIARIES, true);
+        let _ = init_claim_state::<T>(<T as Config>::MAX_OP_BENEFICIARIES - 1, true);
 
-        let beneficiary: T::AccountId = account("", 10, 10);
+        let msg = [ETH_PREFIX, get_claim_message::<T>().as_slice()].concat(); // Maximally sized message
+        let (signature, signer) = T::BenchmarkHelper::sign_claim(msg.as_slice());
+        let beneficiary = signer.clone().into_account();
+
+        // Insert beneficiary
+        let amount =
+            BalanceOf::<T>::from(T::Currency::minimum_balance().saturating_add(1u32.into()));
+        Beneficiaries::<T>::insert(beneficiary.clone(), amount);
         assert!(Beneficiaries::<T>::get(beneficiary.clone()).is_some());
 
-        let dest = whitelisted_caller();
+        let call_enc = Call::<T>::claim {
+            beneficiary: signer,
+            signature,
+        }
+        .encode();
+        let source = sp_runtime::transaction_validity::TransactionSource::External;
 
-        #[extrinsic_call]
-        claim(RawOrigin::Signed(beneficiary.clone()), Some(dest));
+        #[block]
+        {
+            let call = <Call<T> as Decode>::decode(&mut &*call_enc).unwrap();
+            super::Pallet::<T>::validate_unsigned(source, &call).unwrap();
+            call.dispatch_bypass_filter(RawOrigin::None.into()).unwrap();
+        }
 
         // sanity check
         assert!(Beneficiaries::<T>::get(beneficiary).is_none());
@@ -67,13 +114,13 @@ mod benchmarks {
 
     #[benchmark]
     fn claim_for() {
-        let _ = init_airdrop_state::<T>(<T as Config>::MAX_OP_BENEFICIARIES, true);
+        let _ = init_claim_state::<T>(<T as Config>::MAX_OP_BENEFICIARIES, true);
 
         let beneficiary: T::AccountId = account("", 10, 10);
         assert!(Beneficiaries::<T>::get(beneficiary.clone()).is_some());
 
         #[extrinsic_call]
-        claim_for(RawOrigin::None, beneficiary.clone());
+        claim_for(RawOrigin::Root, beneficiary.clone());
 
         // sanity check
         assert!(Beneficiaries::<T>::get(beneficiary).is_none());
@@ -81,8 +128,13 @@ mod benchmarks {
 
     #[benchmark]
     fn add_beneficiaries(n: Linear<1, <T as Config>::MAX_OP_BENEFICIARIES>) {
-        // Init airdrop
-        Pallet::<T>::begin_airdrop(RawOrigin::Root.into(), BTreeMap::new()).unwrap();
+        // Init claim
+        Pallet::<T>::begin_claim(
+            RawOrigin::Root.into(),
+            BTreeMap::new(),
+            get_claim_message::<T>(),
+        )
+        .unwrap();
 
         // Prepare beneficiaries and sufficient amount
         let (beneficiaries, total_amount) = get_beneficiaries_map::<T>(n);
@@ -97,11 +149,34 @@ mod benchmarks {
     }
 
     #[benchmark]
-    fn end_airdrop(n: Linear<1, <T as Config>::MAX_OP_BENEFICIARIES>) {
-        let _ = init_airdrop_state::<T>(n, true);
+    fn end_claim() {
+        let _ = init_claim_state::<T>(0, true);
+
+        // Mint some tokens into pallet account just to trigger a transfer
+        let _ = T::Currency::mint_into(
+            &Pallet::<T>::account_id(),
+            T::Currency::minimum_balance().saturating_mul(100u32.into()),
+        )
+        .unwrap();
 
         #[extrinsic_call]
-        end_airdrop(RawOrigin::Root);
+        end_claim(RawOrigin::Root);
+
+        assert_eq!(Pallet::<T>::pot(), BalanceOf::<T>::zero());
+    }
+
+    #[benchmark]
+    fn remove_beneficiaries(n: Linear<1, <T as Config>::MAX_OP_BENEFICIARIES>) {
+        let (beneficiaries, _) = get_beneficiaries_map::<T>(n);
+        beneficiaries
+            .into_iter()
+            .for_each(|(account, amount)| Beneficiaries::<T>::insert(account, amount));
+        assert_eq!(Beneficiaries::<T>::count(), n);
+
+        #[extrinsic_call]
+        remove_beneficiaries(RawOrigin::Root);
+
+        assert_eq!(Beneficiaries::<T>::count(), 0);
     }
 
     #[cfg(test)]

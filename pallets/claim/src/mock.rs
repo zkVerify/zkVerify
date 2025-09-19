@@ -13,17 +13,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#![allow(
+    clippy::borrow_interior_mutable_const,
+    clippy::declare_interior_mutable_const
+)]
+
 use std::{collections::BTreeMap, sync::LazyLock};
 
 use frame_support::{
     derive_impl, parameter_types,
     traits::{EitherOfDiverse, EnsureOrigin},
     weights::RuntimeDbWeight,
-    PalletId,
+    BoundedVec, PalletId,
 };
 use frame_system::{EnsureRoot, RawOrigin};
 use sp_core::ConstU128;
-use sp_runtime::{traits::IdentityLookup, BuildStorage};
+use sp_runtime::{
+    testing::{TestSignature, UintAuthorityId},
+    traits::IdentityLookup,
+    BuildStorage, RuntimeAppPublic,
+};
 
 use crate::utils;
 
@@ -46,6 +55,58 @@ pub const USER_5_AMOUNT: Balance = 300_000_000;
 pub const USER_6: AccountId = 33_333;
 pub const USER_6_AMOUNT: Balance = 50_000_000_000;
 pub const NON_BENEFICIARY: AccountId = 6;
+
+pub static USER_1_SIGN: LazyLock<(UintAuthorityId, TestSignature, TestSignature, TestSignature)> =
+    LazyLock::new(|| {
+        let user_signer = UintAuthorityId::from(USER_1);
+        let claim_message = INIT_CLAIM_MESSAGE.clone();
+        let wrapped_message = [
+            crate::MSG_PREFIX,
+            claim_message.as_slice(),
+            crate::MSG_SUFFIX,
+        ]
+        .concat();
+        let wrapped_message_eth = [crate::ETH_PREFIX, claim_message.as_slice()].concat();
+        let user_signature = user_signer
+            .sign(&INIT_CLAIM_MESSAGE.clone().as_slice())
+            .unwrap();
+        let user_signature_wrapped = user_signer.sign(&wrapped_message.as_slice()).unwrap();
+        let user_signature_eth_wrapped = user_signer.sign(&wrapped_message_eth.as_slice()).unwrap();
+        (
+            user_signer,
+            user_signature,
+            user_signature_wrapped,
+            user_signature_eth_wrapped,
+        )
+    });
+
+pub static NON_BENEFICIARY_SIGN: LazyLock<(
+    UintAuthorityId,
+    TestSignature,
+    TestSignature,
+    TestSignature,
+)> = LazyLock::new(|| {
+    let user_signer = UintAuthorityId::from(NON_BENEFICIARY);
+    let claim_message = INIT_CLAIM_MESSAGE.clone();
+    let wrapped_message = [
+        crate::MSG_PREFIX,
+        claim_message.as_slice(),
+        crate::MSG_SUFFIX,
+    ]
+    .concat();
+    let wrapped_message_eth = [crate::ETH_PREFIX, claim_message.as_slice()].concat();
+    let user_signature = user_signer
+        .sign(&INIT_CLAIM_MESSAGE.clone().as_slice())
+        .unwrap();
+    let user_signature_wrapped = user_signer.sign(&wrapped_message.as_slice()).unwrap();
+    let user_signature_eth_wrapped = user_signer.sign(&wrapped_message_eth.as_slice()).unwrap();
+    (
+        user_signer,
+        user_signature,
+        user_signature_wrapped,
+        user_signature_eth_wrapped,
+    )
+});
 
 pub const MANAGER_USER: AccountId = 666;
 
@@ -75,6 +136,12 @@ pub static NEW_BENEFICIARIES_MAP: LazyLock<BTreeMap<AccountId, Balance>> =
 
 pub static NEW_SUFFICIENT_BALANCE: Balance = USER_4_AMOUNT + USER_5_AMOUNT + USER_6_AMOUNT;
 
+pub const INIT_CLAIM_MESSAGE: LazyLock<BoundedVec<u8, MaxClaimMessageLength>> =
+    LazyLock::new(|| BoundedVec::try_from(b"TestMessage".to_vec()).unwrap());
+
+pub const EMPTY_CLAIM_MESSAGE: LazyLock<BoundedVec<u8, MaxClaimMessageLength>> =
+    LazyLock::new(|| BoundedVec::try_from(vec![]).unwrap());
+
 pub struct MockWeightInfo;
 
 impl MockWeightInfo {
@@ -83,7 +150,7 @@ impl MockWeightInfo {
 }
 
 impl crate::WeightInfo for MockWeightInfo {
-    fn begin_airdrop(n: u32) -> frame_support::weights::Weight {
+    fn begin_claim(n: u32) -> frame_support::weights::Weight {
         let variable = 1000 * n as u64;
         frame_support::weights::Weight::from_parts(
             Self::REF_TIME + variable,
@@ -107,7 +174,11 @@ impl crate::WeightInfo for MockWeightInfo {
         )
     }
 
-    fn end_airdrop(n: u32) -> frame_support::weights::Weight {
+    fn end_claim() -> frame_support::weights::Weight {
+        frame_support::weights::Weight::from_parts(Self::REF_TIME, Self::PROOF_SIZE)
+    }
+
+    fn remove_beneficiaries(n: u32) -> sp_runtime::Weight {
         let variable = 1000 * n as u64;
         frame_support::weights::Weight::from_parts(
             Self::REF_TIME + variable,
@@ -146,7 +217,20 @@ parameter_types! {
     pub const ClaimPalletId: PalletId = PalletId(*b"zkvt/clm");
     pub const MaxBeneficiaries: u32 = 100;
     pub const MaxOpBeneficiaries: u32 = MaxBeneficiaries::get() - 1;
+    pub const MaxClaimMessageLength: u32 = 100;
     pub UnclaimedDestinationMockAccount: AccountId = 111;
+}
+
+#[cfg(feature = "runtime-benchmarks")]
+pub struct MockBenchmarkHelper;
+
+#[cfg(feature = "runtime-benchmarks")]
+impl crate::benchmarking::BenchmarkHelper<TestSignature, UintAuthorityId> for MockBenchmarkHelper {
+    fn sign_claim(message: &[u8]) -> (TestSignature, UintAuthorityId) {
+        let signer = UintAuthorityId::from(USER_1);
+        let signature = signer.sign(&message).unwrap();
+        (signature, signer)
+    }
 }
 
 impl crate::Config for Test {
@@ -157,6 +241,11 @@ impl crate::Config for Test {
     type UnclaimedDestination = UnclaimedDestinationMockAccount;
     type WeightInfo = MockWeightInfo;
     type MaxBeneficiaries = MaxBeneficiaries;
+    type MaxClaimMessageLength = MaxClaimMessageLength;
+    type Signer = UintAuthorityId;
+    type Signature = TestSignature;
+    #[cfg(feature = "runtime-benchmarks")]
+    type BenchmarkHelper = MockBenchmarkHelper;
     const MAX_OP_BENEFICIARIES: u32 = MaxOpBeneficiaries::get();
 }
 
@@ -223,6 +312,7 @@ pub fn test_with_configs(
             GenesisClaimBalance::Insufficient => INSUFFICIENT_GENESIS_BALANCE,
             GenesisClaimBalance::None => 0,
         },
+        claim_message: INIT_CLAIM_MESSAGE.clone(),
     }
     .assimilate_storage(&mut t)
     .unwrap();
@@ -252,6 +342,37 @@ pub fn test_genesis_with_beneficiaries(n: u32) -> sp_io::TestExternalities {
             .into_iter()
             .collect(),
         genesis_balance: 42_000_000_000,
+        claim_message: INIT_CLAIM_MESSAGE.clone(),
+    }
+    .assimilate_storage(&mut t)
+    .unwrap();
+
+    let mut ext = sp_io::TestExternalities::from(t);
+
+    ext.execute_with(|| {
+        System::set_block_number(1);
+    });
+    ext
+}
+
+pub fn test_genesis_empty_claim_message(n: u32) -> sp_io::TestExternalities {
+    let mut t = frame_system::GenesisConfig::<Test>::default()
+        .build_storage()
+        .unwrap();
+
+    pallet_balances::GenesisConfig::<Test> {
+        balances: vec![(MANAGER_USER, 42_000_000_000)],
+    }
+    .assimilate_storage(&mut t)
+    .unwrap();
+
+    crate::GenesisConfig::<Test> {
+        beneficiaries: utils::get_beneficiaries_map::<Test>(n)
+            .0
+            .into_iter()
+            .collect(),
+        genesis_balance: 42_000_000_000,
+        claim_message: EMPTY_CLAIM_MESSAGE.clone(),
     }
     .assimilate_storage(&mut t)
     .unwrap();
