@@ -62,7 +62,7 @@ pub trait Config {
 impl MaxEncodedLen for EzklVk {
     fn max_encoded_len() -> usize {
         // codec::Compact(len).encoded_size() + element_size * len as usize
-        codec::Compact(MAX_VK_LENGTH).encoded_size() + 1 * MAX_VK_LENGTH as usize
+        codec::Compact(MAX_VK_LENGTH).encoded_size() + MAX_VK_LENGTH as usize
     }
 }
 
@@ -95,7 +95,7 @@ impl<T: Config> Verifier for Ezkl<T> {
         );
 
         log::trace!("Verifying (no-std)");
-        ezkl_no_std::verify::<CurveHooksImpl>(&vk.vk_bytes, &proof, pubs)
+        ezkl_no_std::verify::<CurveHooksImpl>(&vk.vk_bytes, proof, pubs)
             .inspect_err(|e| log::debug!("Cannot verify proof: {e:?}"))
             .map_err(|e| match e {
                 ezkl_no_std::errors::VerifyError::VerificationError => {
@@ -118,7 +118,7 @@ impl<T: Config> Verifier for Ezkl<T> {
     }
 
     fn validate_vk(vk: &Self::Vk) -> Result<(), VerifyError> {
-        if vk.vk_bytes.len() == 0
+        if vk.vk_bytes.is_empty()
             || vk.vk_bytes.len() & 31 != 0
             || vk.vk_bytes.len() > MAX_VK_LENGTH as usize
         {
