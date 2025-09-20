@@ -1,37 +1,32 @@
- [package]
- name = "zkv-stwo"
- version = "0.1.0"
- edition = "2021"
- license = "Apache-2.0"
- publish = false
+[package]
+name = "pallet-stwo-verifier"
+version = "0.1.0"
+description = "A Stwo STARK verifier pallet"
+homepage.workspace = true
+edition.workspace = true
+authors.workspace = true
+repository.workspace = true
+license = "Apache-2.0"
 
- [lib]
- name = "zkv_stwo"
- path = "src/lib.rs"
- crate-type = ["rlib"]
+[lints]
+workspace = true
 
- [features]
- default = ["std"]
-std = [
-	"codec/std",
-	"scale-info/std",
-	"sp-std/std",
-	"ark-ff/std",
-	"ark-ec/std",
-	"ark-std/std",
-	"ark-bn254/std",
-	"ark-pallas/std",
-	"ark-vesta/std",
-	"sha2/std",
-	"blake2/std",
-	"serde/std",
-]
- no_std = []
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-codec = { workspace = true, package = "parity-scale-codec" }
+hp-verifiers = { workspace = true }
+pallet-verifiers = { workspace = true }
+
+codec = { workspace = true }
 scale-info = { workspace = true }
-sp-std = { version = "14.0.0", default-features = false }
+
+frame-support = { workspace = true }
+sp-core = { workspace = true }
+frame-system = { workspace = true }
+frame-benchmarking = { workspace = true, optional = true }
+native = { workspace = true }
+
 # Cryptographic dependencies for real verification
 ark-ff = { version = "0.4", default-features = false }
 ark-ec = { version = "0.4", default-features = false }
@@ -44,6 +39,46 @@ sha2 = { version = "0.10", default-features = false }
 blake2 = { version = "0.10", default-features = false }
 # Serialization
 serde = { version = "1.0", default-features = false, features = ["derive"] }
+
+[dev-dependencies]
+rstest = { workspace = true }
+rstest_reuse = { workspace = true }
+hex-literal = { workspace = true }
+pallet-balances = { workspace = true }
+sp-io = { workspace = true, features = ["std"] }
+
+[features]
+std = [
+	"codec/std",
+	"frame-benchmarking?/std",
+	"frame-support/std",
+	"frame-system/std",
+	"hp-verifiers/std",
+	"native/std",
+	"pallet-balances/std",
+	"pallet-verifiers/std",
+	"scale-info/std",
+	"sp-core/std",
+	"sp-io/std",
+	"ark-ff/std",
+	"ark-ec/std",
+	"ark-std/std",
+	"ark-bn254/std",
+	"ark-pallas/std",
+	"ark-vesta/std",
+	"sha2/std",
+	"blake2/std",
+	"serde/std",
+]
+default = [ "std" ]
+runtime-benchmarks = [
+	"dep:frame-benchmarking",
+	"frame-benchmarking/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"pallet-balances/runtime-benchmarks",
+	"pallet-verifiers/runtime-benchmarks",
+]
 
 
 
