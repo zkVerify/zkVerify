@@ -1,0 +1,10 @@
+Description: Testing STARK (Stwo) verifier proof submission with VK registration and hash-based verification
+Network: ./network_defs/single_node.toml
+Creds: config
+
+alice: is up
+
+alice: reports node_roles is 4
+
+### Javascript test invocation
+alice: js-script ./js_scripts/0015-stwo_proof_with_vk.js return is equal to 1 within 30 seconds

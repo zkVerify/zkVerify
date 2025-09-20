@@ -969,6 +969,32 @@ impl pallet_verifiers::Config<UltrahonkVerifier> for Runtime {
     type Currency = Balances;
 }
 
+pub const STWO_MAX_NUM_INPUTS: u32 = 64;
+parameter_types! {
+    pub const StwoMaxNumInputs: u32 = STWO_MAX_NUM_INPUTS;
+}
+
+impl pallet_stwo_verifier::Config for Runtime {
+    const MAX_NUM_INPUTS: u32 = StwoMaxNumInputs::get();
+}
+
+// We should be sure that the max number of inputs does not exceed the max number of inputs in the verifier crate.
+const_assert!(
+    <Runtime as pallet_stwo_verifier::Config>::MAX_NUM_INPUTS
+        <= pallet_stwo_verifier::MAX_NUM_INPUTS
+);
+
+impl pallet_verifiers::Config<pallet_stwo_verifier::Stwo<Runtime>> for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type OnProofVerified = Aggregate;
+    type WeightInfo = pallet_stwo_verifier::StwoWeight<
+        weights::pallet_stwo_verifier::ZKVWeight<Runtime>,
+    >;
+    type Ticket = VkRegistrationHoldConsideration;
+    #[cfg(feature = "runtime-benchmarks")]
+    type Currency = Balances;
+}
+
 parameter_types! {
     pub const UltraplonkMaxPubs: u32 = 32;
 }
@@ -1199,6 +1225,7 @@ construct_runtime!(
         SettlementFFlonkPallet: pallet_fflonk_verifier = 166,
         SettlementSp1Pallet: pallet_sp1_verifier = 167,
         SettlementUltrahonkPallet: pallet_ultrahonk_verifier = 168,
+        SettlementStwoPallet: pallet_stwo_verifier = 169,
     }
 );
 

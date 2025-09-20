@@ -18,6 +18,7 @@ members = [
     "pallets/verifiers",
     "pallets/verifiers/macros",
     "pallets/claim",
+    "pallets/zkverify-starky",
     "primitives/hp-verifiers",
     "primitives/hp-groth16",
     "verifiers/fflonk",
@@ -28,6 +29,7 @@ members = [
     "verifiers/ultraplonk",
     "verifiers/plonky2",
     "verifiers/sp1",
+    "verifiers/stwo",
     "utils/native-cache",
     "relay-node",
     "relay-node/benchmarks",
@@ -45,9 +47,10 @@ members = [
     "paratest/runtime",
     "paratest/node",
     "paratest/pallets/template",
-    "patches/cumulus/client/relay-chain-inprocess-interface",
-    "patches/cumulus/client/relay-chain-minimal-node",
-]
+           "patches/cumulus/client/relay-chain-inprocess-interface",
+           "patches/cumulus/client/relay-chain-minimal-node",
+           "tools/zkv-transform",
+       ]
 
 exclude = ["utils/generate-bags/node-runtime"]
 
@@ -111,6 +114,7 @@ pallet-risc0-verifier = { path = "verifiers/risc0", default-features = false }
 pallet-ultrahonk-verifier = { path = "verifiers/ultrahonk", default-features = false }
 pallet-ultraplonk-verifier = { path = "verifiers/ultraplonk", default-features = false }
 pallet-sp1-verifier = { path = "verifiers/sp1", default-features = false }
+pallet-stwo-verifier = { path = "verifiers/stwo", default-features = false }
 risc0-verifier = { git = "https://github.com/zkVerify/risc0-verifier.git", tag = "v0.10.0", default-features = false }
 pallet-plonky2-verifier = { path = "verifiers/plonky2", default-features = false }
 ultrahonk-no-std = { git = "https://github.com/zkVerify/ultrahonk_verifier.git", default-features = false, tag = "v0.1.0" }

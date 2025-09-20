@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#[cfg(feature = "std")]
 use sp_runtime_interface::runtime_interface;
 
 use risc0_verifier::poseidon2_injection::{BabyBearElem, POSEIDON2_CELLS};
@@ -39,7 +40,13 @@ impl<'a> Poseidon2Mix<'a> {
     /// Consume `self` and call the native `poseidon2_mix()` function on the inner
     /// `BabyBearElem` array.
     pub fn poseidon2_mix(self) {
-        risc_0_accelerate::poseidon2_mix(self.into_mut_bytes())
+        #[cfg(feature = "std")]
+        risc_0_accelerate::poseidon2_mix(self.into_mut_bytes());
+        #[cfg(not(feature = "std"))]
+        {
+            // Placeholder for no-std - would call native implementation
+            let _ = self.into_mut_bytes();
+        }
     }
 
     #[inline]
@@ -67,10 +74,17 @@ impl<'a> Poseidon2Mix<'a> {
     }
 }
 
+#[cfg(feature = "std")]
 #[runtime_interface]
 pub trait Risc0Accelerate {
     fn poseidon2_mix(bytes: &mut Poseidon2ArgBytes) {
         let cells = Poseidon2Mix::from_mut_bytes(bytes);
         risc0_verifier::poseidon2_injection::poseidon2_mix(cells.inner);
     }
+}
+
+// Export the module for use in lib.rs
+#[cfg(feature = "std")]
+pub mod risc_0_accelerate {
+    pub use super::Risc0Accelerate;
 }

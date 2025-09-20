@@ -1,0 +1,517 @@
+// Copyright 2024, zkVerify Contributors
+// SPDX-License-Identifier: Apache-2.0
+
+use clap::{Parser, Subcommand};
+use serde::{Deserialize, Serialize};
+use std::fs;
+use std::path::PathBuf;
+
+/// STARK proof transformation tool for zkVerify
+/// 
+/// This tool converts STARK proofs from various formats (Cairo, Starkware zkRollup)
+/// to the format accepted by the zkVerify blockchain STARK verifier.
+#[derive(Parser)]
+#[command(name = "zkv-stark-transform")]
+#[command(about = "Transform STARK proofs for zkVerify blockchain")]
+#[command(version = "1.0.0")]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    /// Convert Cairo proof to zkVerify format
+    ConvertCairo {
+        /// Input Cairo proof file (JSON)
+        #[arg(short, long)]
+        input: PathBuf,
+        /// Output zkVerify proof file (JSON)
+        #[arg(short, long)]
+        output: PathBuf,
+        /// Verification key file (JSON)
+        #[arg(short, long)]
+        vk: PathBuf,
+    },
+    /// Convert Starkware zkRollup proof to zkVerify format
+    ConvertRollup {
+        /// Input zkRollup proof file (JSON)
+        #[arg(short, long)]
+        input: PathBuf,
+        /// Output zkVerify proof file (JSON)
+        #[arg(short, long)]
+        output: PathBuf,
+        /// Verification key file (JSON)
+        #[arg(short, long)]
+        vk: PathBuf,
+    },
+    /// Validate zkVerify proof format
+    Validate {
+        /// Proof file to validate (JSON)
+        #[arg(short, long)]
+        proof: PathBuf,
+        /// Verification key file (JSON)
+        #[arg(short, long)]
+        vk: PathBuf,
+    },
+    /// Generate test data for development
+    GenerateTestData {
+        /// Output directory for test files
+        #[arg(short, long)]
+        output: PathBuf,
+        /// Number of test proofs to generate
+        #[arg(short, long, default_value = "3")]
+        count: usize,
+    },
+}
+
+/// Cairo proof format (input)
+#[derive(Debug, Serialize, Deserialize)]
+struct CairoProof {
+    pub proof: Vec<u8>,
+    pub public_inputs: Vec<u8>,
+    pub verification_key: CairoVk,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct CairoVk {
+    pub domain_size: u32,
+    pub constraint_count: u32,
+    pub public_input_count: u32,
+    pub fri_lde_degree: u32,
+    pub fri_last_layer_degree_bound: u32,
+    pub fri_n_queries: u32,
+    pub fri_commitment_merkle_tree_depth: u32,
+    pub fri_lde_commitment_merkle_tree_depth: u32,
+    pub fri_lde_commitment_merkle_tree_root: Vec<u8>,
+    pub fri_query_commitments_crc: u32,
+    pub fri_lde_commitments_crc: u32,
+    pub constraint_polynomials_info: Vec<u8>,
+    pub public_input_polynomials_info: Vec<u8>,
+    pub composition_polynomial_info: Vec<u8>,
+    pub n_verifier_friendly_commitment_hashes: u32,
+    pub verifier_friendly_commitment_hashes: Vec<Vec<u8>>,
+}
+
+/// Starkware zkRollup proof format (input)
+#[derive(Debug, Serialize, Deserialize)]
+struct RollupProof {
+    pub batch_proof: Vec<u8>,
+    pub state_transitions: Vec<u8>,
+    pub verification_key: RollupVk,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct RollupVk {
+    pub domain_size: u32,
+    pub constraint_count: u32,
+    pub public_input_count: u32,
+    pub fri_lde_degree: u32,
+    pub fri_last_layer_degree_bound: u32,
+    pub fri_n_queries: u32,
+    pub fri_commitment_merkle_tree_depth: u32,
+    pub fri_lde_commitment_merkle_tree_depth: u32,
+    pub fri_lde_commitment_merkle_tree_root: Vec<u8>,
+    pub fri_query_commitments_crc: u32,
+    pub fri_lde_commitments_crc: u32,
+    pub constraint_polynomials_info: Vec<u8>,
+    pub public_input_polynomials_info: Vec<u8>,
+    pub composition_polynomial_info: Vec<u8>,
+    pub n_verifier_friendly_commitment_hashes: u32,
+    pub verifier_friendly_commitment_hashes: Vec<Vec<u8>>,
+}
+
+/// zkVerify STARK proof format (output)
+#[derive(Debug, Serialize, Deserialize)]
+struct ZkvStarkProof {
+    pub fri_proof: FriProof,
+    pub trace_lde_commitment: Vec<u8>,
+    pub constraint_polynomials_lde_commitment: Vec<u8>,
+    pub public_input_polynomials_lde_commitment: Vec<u8>,
+    pub composition_polynomial_lde_commitment: Vec<u8>,
+    pub trace_lde_commitment_merkle_tree_root: Vec<u8>,
+    pub constraint_polynomials_lde_commitment_merkle_tree_root: Vec<u8>,
+    pub public_input_polynomials_lde_commitment_merkle_tree_root: Vec<u8>,
+    pub composition_polynomial_lde_commitment_merkle_tree_root: Vec<u8>,
+    pub trace_lde_commitment_merkle_tree_path: Vec<Vec<u8>>,
+    pub constraint_polynomials_lde_commitment_merkle_tree_path: Vec<Vec<u8>>,
+    pub public_input_polynomials_lde_commitment_merkle_tree_path: Vec<Vec<u8>>,
+    pub composition_polynomial_lde_commitment_merkle_tree_path: Vec<Vec<u8>>,
+    pub trace_lde_commitment_merkle_tree_leaf_index: u32,
+    pub constraint_polynomials_lde_commitment_merkle_tree_leaf_index: u32,
+    pub public_input_polynomials_lde_commitment_merkle_tree_leaf_index: u32,
+    pub composition_polynomial_lde_commitment_merkle_tree_leaf_index: u32,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct FriProof {
+    pub fri_lde_commitment: Vec<u8>,
+    pub fri_lde_commitment_merkle_tree_root: Vec<u8>,
+    pub fri_lde_commitment_merkle_tree_path: Vec<Vec<u8>>,
+    pub fri_lde_commitment_merkle_tree_leaf_index: u32,
+    pub fri_query_proofs: Vec<FriQueryProof>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct FriQueryProof {
+    pub fri_layer_proofs: Vec<FriLayerProof>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct FriLayerProof {
+    pub fri_layer_commitment: Vec<u8>,
+    pub fri_layer_commitment_merkle_tree_root: Vec<u8>,
+    pub fri_layer_commitment_merkle_tree_path: Vec<Vec<u8>>,
+    pub fri_layer_commitment_merkle_tree_leaf_index: u32,
+    pub fri_layer_value: Vec<u8>,
+}
+
+/// zkVerify STARK verification key format
+#[derive(Debug, Serialize, Deserialize)]
+struct ZkvStarkVk {
+    pub domain_size: u32,
+    pub constraint_count: u32,
+    pub public_input_count: u32,
+    pub fri_lde_degree: u32,
+    pub fri_last_layer_degree_bound: u32,
+    pub fri_n_queries: u32,
+    pub fri_commitment_merkle_tree_depth: u32,
+    pub fri_lde_commitment_merkle_tree_depth: u32,
+    pub fri_lde_commitment_merkle_tree_root: Vec<u8>,
+    pub fri_query_commitments_crc: u32,
+    pub fri_lde_commitments_crc: u32,
+    pub constraint_polynomials_info: Vec<u8>,
+    pub public_input_polynomials_info: Vec<u8>,
+    pub composition_polynomial_info: Vec<u8>,
+    pub n_verifier_friendly_commitment_hashes: u32,
+    pub verifier_friendly_commitment_hashes: Vec<Vec<u8>>,
+}
+
+/// zkVerify STARK public inputs format
+#[derive(Debug, Serialize, Deserialize)]
+struct ZkvStarkInputs {
+    pub inputs: Vec<u8>,
+}
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let cli = Cli::parse();
+
+    match cli.command {
+        Commands::ConvertCairo { input, output, vk } => {
+            convert_cairo_proof(&input, &output, &vk)?;
+        }
+        Commands::ConvertRollup { input, output, vk } => {
+            convert_rollup_proof(&input, &output, &vk)?;
+        }
+        Commands::Validate { proof, vk } => {
+            validate_proof(&proof, &vk)?;
+        }
+        Commands::GenerateTestData { output, count } => {
+            generate_test_data(&output, count)?;
+        }
+    }
+
+    Ok(())
+}
+
+/// Convert Cairo proof to zkVerify format
+fn convert_cairo_proof(
+    input_path: &PathBuf,
+    output_path: &PathBuf,
+    vk_path: &PathBuf,
+) -> Result<(), Box<dyn std::error::Error>> {
+    println!("Converting Cairo proof to zkVerify format...");
+
+    // Read input files
+    let cairo_proof: CairoProof = serde_json::from_str(&fs::read_to_string(input_path)?)?;
+    let cairo_vk: CairoVk = serde_json::from_str(&fs::read_to_string(vk_path)?)?;
+
+    // Convert verification key
+    let zkv_vk = ZkvStarkVk {
+        domain_size: cairo_vk.domain_size,
+        constraint_count: cairo_vk.constraint_count,
+        public_input_count: cairo_vk.public_input_count,
+        fri_lde_degree: cairo_vk.fri_lde_degree,
+        fri_last_layer_degree_bound: cairo_vk.fri_last_layer_degree_bound,
+        fri_n_queries: cairo_vk.fri_n_queries,
+        fri_commitment_merkle_tree_depth: cairo_vk.fri_commitment_merkle_tree_depth,
+        fri_lde_commitment_merkle_tree_depth: cairo_vk.fri_lde_commitment_merkle_tree_depth,
+        fri_lde_commitment_merkle_tree_root: cairo_vk.fri_lde_commitment_merkle_tree_root,
+        fri_query_commitments_crc: cairo_vk.fri_query_commitments_crc,
+        fri_lde_commitments_crc: cairo_vk.fri_lde_commitments_crc,
+        constraint_polynomials_info: cairo_vk.constraint_polynomials_info,
+        public_input_polynomials_info: cairo_vk.public_input_polynomials_info,
+        composition_polynomial_info: cairo_vk.composition_polynomial_info,
+        n_verifier_friendly_commitment_hashes: cairo_vk.n_verifier_friendly_commitment_hashes,
+        verifier_friendly_commitment_hashes: cairo_vk.verifier_friendly_commitment_hashes,
+    };
+
+    // Convert proof (simplified transformation for demonstration)
+    let zkv_proof = convert_proof_structure(&cairo_proof.proof)?;
+
+    // Convert public inputs
+    let zkv_inputs = ZkvStarkInputs {
+        inputs: cairo_proof.public_inputs,
+    };
+
+    // Write output files
+    fs::write(output_path, serde_json::to_string_pretty(&zkv_proof)?)?;
+    fs::write(
+        output_path.with_extension("vk.json"),
+        serde_json::to_string_pretty(&zkv_vk)?,
+    )?;
+    fs::write(
+        output_path.with_extension("inputs.json"),
+        serde_json::to_string_pretty(&zkv_inputs)?,
+    )?;
+
+    println!("✓ Cairo proof converted successfully!");
+    println!("  Proof: {}", output_path.display());
+    println!("  VK: {}", output_path.with_extension("vk.json").display());
+    println!("  Inputs: {}", output_path.with_extension("inputs.json").display());
+
+    Ok(())
+}
+
+/// Convert Starkware zkRollup proof to zkVerify format
+fn convert_rollup_proof(
+    input_path: &PathBuf,
+    output_path: &PathBuf,
+    vk_path: &PathBuf,
+) -> Result<(), Box<dyn std::error::Error>> {
+    println!("Converting Starkware zkRollup proof to zkVerify format...");
+
+    // Read input files
+    let rollup_proof: RollupProof = serde_json::from_str(&fs::read_to_string(input_path)?)?;
+    let rollup_vk: RollupVk = serde_json::from_str(&fs::read_to_string(vk_path)?)?;
+
+    // Convert verification key
+    let zkv_vk = ZkvStarkVk {
+        domain_size: rollup_vk.domain_size,
+        constraint_count: rollup_vk.constraint_count,
+        public_input_count: rollup_vk.public_input_count,
+        fri_lde_degree: rollup_vk.fri_lde_degree,
+        fri_last_layer_degree_bound: rollup_vk.fri_last_layer_degree_bound,
+        fri_n_queries: rollup_vk.fri_n_queries,
+        fri_commitment_merkle_tree_depth: rollup_vk.fri_commitment_merkle_tree_depth,
+        fri_lde_commitment_merkle_tree_depth: rollup_vk.fri_lde_commitment_merkle_tree_depth,
+        fri_lde_commitment_merkle_tree_root: rollup_vk.fri_lde_commitment_merkle_tree_root,
+        fri_query_commitments_crc: rollup_vk.fri_query_commitments_crc,
+        fri_lde_commitments_crc: rollup_vk.fri_lde_commitments_crc,
+        constraint_polynomials_info: rollup_vk.constraint_polynomials_info,
+        public_input_polynomials_info: rollup_vk.public_input_polynomials_info,
+        composition_polynomial_info: rollup_vk.composition_polynomial_info,
+        n_verifier_friendly_commitment_hashes: rollup_vk.n_verifier_friendly_commitment_hashes,
+        verifier_friendly_commitment_hashes: rollup_vk.verifier_friendly_commitment_hashes,
+    };
+
+    // Convert proof (simplified transformation for demonstration)
+    let zkv_proof = convert_proof_structure(&rollup_proof.batch_proof)?;
+
+    // Convert public inputs (state transitions)
+    let zkv_inputs = ZkvStarkInputs {
+        inputs: rollup_proof.state_transitions,
+    };
+
+    // Write output files
+    fs::write(output_path, serde_json::to_string_pretty(&zkv_proof)?)?;
+    fs::write(
+        output_path.with_extension("vk.json"),
+        serde_json::to_string_pretty(&zkv_vk)?,
+    )?;
+    fs::write(
+        output_path.with_extension("inputs.json"),
+        serde_json::to_string_pretty(&zkv_inputs)?,
+    )?;
+
+    println!("✓ zkRollup proof converted successfully!");
+    println!("  Proof: {}", output_path.display());
+    println!("  VK: {}", output_path.with_extension("vk.json").display());
+    println!("  Inputs: {}", output_path.with_extension("inputs.json").display());
+
+    Ok(())
+}
+
+/// Convert proof structure (simplified for demonstration)
+fn convert_proof_structure(input_proof: &[u8]) -> Result<ZkvStarkProof, Box<dyn std::error::Error>> {
+    // This is a simplified conversion for demonstration
+    // In practice, this would involve parsing the actual STARK proof structure
+    // and extracting FRI proofs, Merkle tree paths, etc.
+
+    let zkv_proof = ZkvStarkProof {
+        fri_proof: FriProof {
+            fri_lde_commitment: input_proof[0..32].to_vec(),
+            fri_lde_commitment_merkle_tree_root: input_proof[32..64].to_vec(),
+            fri_lde_commitment_merkle_tree_path: vec![input_proof[64..96].to_vec()],
+            fri_lde_commitment_merkle_tree_leaf_index: 0,
+            fri_query_proofs: vec![FriQueryProof {
+                fri_layer_proofs: vec![FriLayerProof {
+                    fri_layer_commitment: input_proof[96..128].to_vec(),
+                    fri_layer_commitment_merkle_tree_root: input_proof[128..160].to_vec(),
+                    fri_layer_commitment_merkle_tree_path: vec![input_proof[160..192].to_vec()],
+                    fri_layer_commitment_merkle_tree_leaf_index: 0,
+                    fri_layer_value: input_proof[192..208].to_vec(),
+                }],
+            }],
+        },
+        trace_lde_commitment: input_proof[208..240].to_vec(),
+        constraint_polynomials_lde_commitment: input_proof[240..272].to_vec(),
+        public_input_polynomials_lde_commitment: input_proof[272..304].to_vec(),
+        composition_polynomial_lde_commitment: input_proof[304..336].to_vec(),
+        trace_lde_commitment_merkle_tree_root: input_proof[336..368].to_vec(),
+        constraint_polynomials_lde_commitment_merkle_tree_root: input_proof[368..400].to_vec(),
+        public_input_polynomials_lde_commitment_merkle_tree_root: input_proof[400..432].to_vec(),
+        composition_polynomial_lde_commitment_merkle_tree_root: input_proof[432..464].to_vec(),
+        trace_lde_commitment_merkle_tree_path: vec![input_proof[464..496].to_vec()],
+        constraint_polynomials_lde_commitment_merkle_tree_path: vec![input_proof[496..528].to_vec()],
+        public_input_polynomials_lde_commitment_merkle_tree_path: vec![input_proof[528..560].to_vec()],
+        composition_polynomial_lde_commitment_merkle_tree_path: vec![input_proof[560..592].to_vec()],
+        trace_lde_commitment_merkle_tree_leaf_index: 0,
+        constraint_polynomials_lde_commitment_merkle_tree_leaf_index: 0,
+        public_input_polynomials_lde_commitment_merkle_tree_leaf_index: 0,
+        composition_polynomial_lde_commitment_merkle_tree_leaf_index: 0,
+    };
+
+    Ok(zkv_proof)
+}
+
+/// Validate zkVerify proof format
+fn validate_proof(proof_path: &PathBuf, vk_path: &PathBuf) -> Result<(), Box<dyn std::error::Error>> {
+    println!("Validating zkVerify STARK proof format...");
+
+    // Read files
+    let proof: ZkvStarkProof = serde_json::from_str(&fs::read_to_string(proof_path)?)?;
+    let vk: ZkvStarkVk = serde_json::from_str(&fs::read_to_string(vk_path)?)?;
+
+    // Validate proof structure
+    validate_proof_structure(&proof, &vk)?;
+
+    println!("✓ Proof format validation successful!");
+    println!("  Domain size: {}", vk.domain_size);
+    println!("  Constraint count: {}", vk.constraint_count);
+    println!("  Public input count: {}", vk.public_input_count);
+    println!("  FRI queries: {}", vk.fri_n_queries);
+
+    Ok(())
+}
+
+/// Validate proof structure
+fn validate_proof_structure(proof: &ZkvStarkProof, vk: &ZkvStarkVk) -> Result<(), Box<dyn std::error::Error>> {
+    // Basic structure validation
+    if proof.fri_proof.fri_lde_commitment.len() != 32 {
+        return Err("Invalid FRI LDE commitment length".into());
+    }
+
+    if proof.trace_lde_commitment.len() != 32 {
+        return Err("Invalid trace LDE commitment length".into());
+    }
+
+    if vk.domain_size == 0 {
+        return Err("Invalid domain size".into());
+    }
+
+    if vk.constraint_count == 0 {
+        return Err("Invalid constraint count".into());
+    }
+
+    if vk.public_input_count > 64 {
+        return Err("Too many public inputs".into());
+    }
+
+    Ok(())
+}
+
+/// Generate test data for development
+fn generate_test_data(output_dir: &PathBuf, count: usize) -> Result<(), Box<dyn std::error::Error>> {
+    println!("Generating {} STARK test proofs...", count);
+
+    // Create output directory
+    fs::create_dir_all(output_dir)?;
+
+    for i in 0..count {
+        let proof_file = output_dir.join(format!("test_proof_{}.json", i));
+        let vk_file = output_dir.join(format!("test_vk_{}.json", i));
+        let inputs_file = output_dir.join(format!("test_inputs_{}.json", i));
+
+        // Generate test proof
+        let test_proof = generate_test_proof(i);
+        let test_vk = generate_test_vk(i);
+        let test_inputs = generate_test_inputs(i);
+
+        // Write files
+        fs::write(proof_file, serde_json::to_string_pretty(&test_proof)?)?;
+        fs::write(vk_file, serde_json::to_string_pretty(&test_vk)?)?;
+        fs::write(inputs_file, serde_json::to_string_pretty(&test_inputs)?)?;
+    }
+
+    println!("✓ Generated {} test proofs in {}", count, output_dir.display());
+    Ok(())
+}
+
+/// Generate test proof
+fn generate_test_proof(index: usize) -> ZkvStarkProof {
+    let base_data = vec![index as u8; 1000]; // Generate 1000 bytes of test data
+
+    ZkvStarkProof {
+        fri_proof: FriProof {
+            fri_lde_commitment: base_data[0..32].to_vec(),
+            fri_lde_commitment_merkle_tree_root: base_data[32..64].to_vec(),
+            fri_lde_commitment_merkle_tree_path: vec![base_data[64..96].to_vec()],
+            fri_lde_commitment_merkle_tree_leaf_index: 0,
+            fri_query_proofs: vec![FriQueryProof {
+                fri_layer_proofs: vec![FriLayerProof {
+                    fri_layer_commitment: base_data[96..128].to_vec(),
+                    fri_layer_commitment_merkle_tree_root: base_data[128..160].to_vec(),
+                    fri_layer_commitment_merkle_tree_path: vec![base_data[160..192].to_vec()],
+                    fri_layer_commitment_merkle_tree_leaf_index: 0,
+                    fri_layer_value: base_data[192..208].to_vec(),
+                }],
+            }],
+        },
+        trace_lde_commitment: base_data[208..240].to_vec(),
+        constraint_polynomials_lde_commitment: base_data[240..272].to_vec(),
+        public_input_polynomials_lde_commitment: base_data[272..304].to_vec(),
+        composition_polynomial_lde_commitment: base_data[304..336].to_vec(),
+        trace_lde_commitment_merkle_tree_root: base_data[336..368].to_vec(),
+        constraint_polynomials_lde_commitment_merkle_tree_root: base_data[368..400].to_vec(),
+        public_input_polynomials_lde_commitment_merkle_tree_root: base_data[400..432].to_vec(),
+        composition_polynomial_lde_commitment_merkle_tree_root: base_data[432..464].to_vec(),
+        trace_lde_commitment_merkle_tree_path: vec![base_data[464..496].to_vec()],
+        constraint_polynomials_lde_commitment_merkle_tree_path: vec![base_data[496..528].to_vec()],
+        public_input_polynomials_lde_commitment_merkle_tree_path: vec![base_data[528..560].to_vec()],
+        composition_polynomial_lde_commitment_merkle_tree_path: vec![base_data[560..592].to_vec()],
+        trace_lde_commitment_merkle_tree_leaf_index: 0,
+        constraint_polynomials_lde_commitment_merkle_tree_leaf_index: 0,
+        public_input_polynomials_lde_commitment_merkle_tree_leaf_index: 0,
+        composition_polynomial_lde_commitment_merkle_tree_leaf_index: 0,
+    }
+}
+
+/// Generate test verification key
+fn generate_test_vk(index: usize) -> ZkvStarkVk {
+    ZkvStarkVk {
+        domain_size: 1024 + (index as u32 * 512),
+        constraint_count: 100 + (index as u32 * 50),
+        public_input_count: 4 + (index as u32 * 2),
+        fri_lde_degree: 8,
+        fri_last_layer_degree_bound: 2,
+        fri_n_queries: 10,
+        fri_commitment_merkle_tree_depth: 10,
+        fri_lde_commitment_merkle_tree_depth: 8,
+        fri_lde_commitment_merkle_tree_root: vec![index as u8; 32],
+        fri_query_commitments_crc: 12345 + (index as u32 * 1000),
+        fri_lde_commitments_crc: 67890 + (index as u32 * 1000),
+        constraint_polynomials_info: vec![index as u8; 4],
+        public_input_polynomials_info: vec![index as u8; 4],
+        composition_polynomial_info: vec![index as u8; 4],
+        n_verifier_friendly_commitment_hashes: 2,
+        verifier_friendly_commitment_hashes: vec![vec![index as u8; 32], vec![(index + 1) as u8; 32]],
+    }
+}
+
+/// Generate test public inputs
+fn generate_test_inputs(index: usize) -> ZkvStarkInputs {
+    ZkvStarkInputs {
+        inputs: vec![index as u8; 8], // 8 public inputs
+    }
+}

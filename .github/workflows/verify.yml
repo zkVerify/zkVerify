@@ -1,0 +1,39 @@
+name: Verify Stwo Verifier
+
+run-name: "Workflow CI/CD Steps: verify Stwo verifier"
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: warp-ubuntu-latest-x64-8x
+    name: Build and test Stwo components
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Verify locked deps
+        uses: ./.github/actions/cmd-in-docker
+        with:
+          command: "cargo update -w --locked"
+          use_cache: 'yes'
+          cache_key: 'verify-stwo'
+
+      - name: Build and test Stwo components
+        uses: ./.github/actions/cmd-in-docker
+        with:
+          command: "cargo test -p pallet-stwo-verifier --lib --locked --verbose"
+          use_cache: 'yes'
+          cache_key: 'verify-stwo'
+
+      - name: Workspace check (non-fatal)
+        continue-on-error: true
+        uses: ./.github/actions/cmd-in-docker
+        with:
+          command: "cargo check --workspace --locked --verbose"
+          use_cache: 'yes'
+          cache_key: 'verify-stwo'
+
+

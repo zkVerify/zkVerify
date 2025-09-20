@@ -16,14 +16,17 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode};
+#[cfg(feature = "std")]
 use sp_runtime_interface::pass_by::PassByCodec;
 
 mod accelerated_bn;
 mod groth16;
 mod risc0;
+mod stwo_verify;
 
-#[derive(PassByCodec, Encode, Decode)]
+#[derive(Encode, Decode)]
 #[cfg_attr(test, derive(Debug))]
+#[cfg_attr(feature = "std", derive(sp_runtime_interface::pass_by::PassByCodec))]
 pub enum VerifyError {
     InvalidInput,
     InvalidProofData,
@@ -48,12 +51,19 @@ impl From<VerifyError> for hp_verifiers::VerifyError {
 pub use risc0::risc_0_accelerate::HostFunctions as Risc0AccelerateHostFunctions;
 pub use risc0::Poseidon2Mix;
 
+#[cfg(feature = "std")]
 pub use groth16::groth_16_bls_12_381_verify;
 #[cfg(feature = "std")]
 pub use groth16::groth_16_bls_12_381_verify::HostFunctions as Groth16Bls12VerifierHostFunctions;
+#[cfg(feature = "std")]
 pub use groth16::groth_16_bn_254_verify;
 #[cfg(feature = "std")]
 pub use groth16::groth_16_bn_254_verify::HostFunctions as Groth16Bn254VerifierHostFunctions;
+
+#[cfg(feature = "std")]
+pub use stwo_verify::stwo_verify as stwo_verifier;
+#[cfg(feature = "std")]
+pub use stwo_verify::stwo_verify::HostFunctions as StwoVerifierHostFunctions;
 
 pub use accelerated_bn::bn254;
 #[cfg(feature = "std")]
@@ -65,4 +75,5 @@ pub type HLNativeHostFunctions = (
     Groth16Bls12VerifierHostFunctions,
     Risc0AccelerateHostFunctions,
     AcceleratedBn254HostFunctions,
+    StwoVerifierHostFunctions,
 );
