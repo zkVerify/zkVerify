@@ -14,6 +14,7 @@
 // limitations under the License.
 
 use hp_groth16::{Groth16Error, Proof, Scalar, VerificationKey};
+#[cfg(feature = "std")]
 use sp_runtime_interface::runtime_interface;
 
 use crate::VerifyError;
@@ -29,6 +30,7 @@ impl From<Groth16Error> for VerifyError {
     }
 }
 
+#[cfg(feature = "std")]
 #[runtime_interface]
 pub trait Groth16Bn254Verify {
     fn verify(vk: VerificationKey, proof: Proof, pubs: &[Scalar]) -> Result<bool, VerifyError> {
@@ -39,6 +41,7 @@ pub trait Groth16Bn254Verify {
     }
 }
 
+#[cfg(feature = "std")]
 #[runtime_interface]
 pub trait Groth16Bls12_381Verify {
     fn verify(vk: VerificationKey, proof: Proof, pubs: &[Scalar]) -> Result<bool, VerifyError> {
@@ -47,4 +50,15 @@ pub trait Groth16Bls12_381Verify {
     fn validate_key(vk: VerificationKey) -> Result<(), VerifyError> {
         hp_groth16::validate_key::<hp_groth16::Bls12_381>(vk).map_err(Into::into)
     }
+}
+
+// Export the modules for use in lib.rs
+#[cfg(feature = "std")]
+pub mod groth_16_bn_254_verify {
+    pub use super::Groth16Bn254Verify;
+}
+
+#[cfg(feature = "std")]
+pub mod groth_16_bls_12_381_verify {
+    pub use super::Groth16Bls12_381Verify;
 }

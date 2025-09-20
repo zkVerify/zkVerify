@@ -19,11 +19,12 @@ ark-scale = { features = ["hazmat"], version = "0.0.13", default-features = fals
 bincode = { version = "1.3", optional = true }
 risc0-verifier = { workspace = true }
 
-sp-runtime-interface = { workspace = true }
+sp-runtime-interface = { workspace = true, optional = true }
 codec = { workspace = true }
 log = { workspace = true }
 hp-verifiers = { workspace = true }
 hp-groth16 = { workspace = true }
+sha2 = { version = "0.10", default-features = false }
 
 [dev-dependencies]
 ark-ff = { version = "0.5.0", default-features = false }
@@ -43,5 +44,7 @@ std = [
 	"hp-groth16/std",
 	"hp-verifiers/std",
 	"log/std",
+	"dep:sp-runtime-interface",
 	"sp-runtime-interface/std",
+	"sha2/std",
 ]

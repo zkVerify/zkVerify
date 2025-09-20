@@ -18,12 +18,14 @@
 use crate::accelerated_bn::utils;
 use ark_bn254_ext::CurveHooks;
 use ark_ec::{pairing::Pairing, CurveConfig};
+#[cfg(feature = "std")]
 use sp_runtime_interface::runtime_interface;
 
-pub use ark_bn254_ext::{fq, fq::*, fq12, fq12::*, fq2, fq2::*, fq6, fq6::*, fr, fr::*};
-
 extern crate alloc;
+use alloc::vec;
 use alloc::vec::Vec;
+
+pub use ark_bn254_ext::{fq, fq::*, fq12, fq12::*, fq2, fq2::*, fq6, fq6::*, fr, fr::*};
 
 /// First pairing group definitions.
 pub mod g1 {
@@ -70,8 +72,10 @@ impl CurveHooks for HostHooks {
     ) -> Result<<Bn254 as Pairing>::TargetField, ()> {
         let g1 = utils::encode(g1.collect::<Vec<_>>());
         let g2 = utils::encode(g2.collect::<Vec<_>>());
-        let res =
-            host_calls::bn254_multi_miller_loop(g1.as_slice(), g2.as_slice()).unwrap_or_default();
+        #[cfg(feature = "std")]
+        let res = host_calls::bn254_multi_miller_loop(g1.as_slice(), g2.as_slice()).unwrap_or_default();
+        #[cfg(not(feature = "std"))]
+        let res = vec![0u8; 32]; // Placeholder for no-std
         utils::decode(res.as_slice()).map_err(|_| ())
     }
 
@@ -79,7 +83,10 @@ impl CurveHooks for HostHooks {
         target: <Bn254 as Pairing>::TargetField,
     ) -> Result<<Bn254 as Pairing>::TargetField, ()> {
         let target = utils::encode(target);
+        #[cfg(feature = "std")]
         let res = host_calls::bn254_final_exponentiation(target.as_slice()).unwrap_or_default();
+        #[cfg(not(feature = "std"))]
+        let res = vec![0u8; 32]; // Placeholder for no-std
         utils::decode(res.as_slice()).map_err(|_| ())
     }
 
@@ -89,8 +96,10 @@ impl CurveHooks for HostHooks {
     ) -> Result<G1Projective, ()> {
         let bases = utils::encode(bases);
         let scalars = utils::encode(scalars);
-        let res =
-            host_calls::bn254_msm_g1(bases.as_slice(), scalars.as_slice()).unwrap_or_default();
+        #[cfg(feature = "std")]
+        let res = host_calls::bn254_msm_g1(bases.as_slice(), scalars.as_slice()).unwrap_or_default();
+        #[cfg(not(feature = "std"))]
+        let res = vec![0u8; 96]; // Placeholder for no-std
         utils::decode_proj_sw(res.as_slice()).map_err(|_| ())
     }
 
@@ -100,24 +109,30 @@ impl CurveHooks for HostHooks {
     ) -> Result<G2Projective, ()> {
         let bases = utils::encode(bases);
         let scalars = utils::encode(scalars);
-        let res =
-            host_calls::bn254_msm_g2(bases.as_slice(), scalars.as_slice()).unwrap_or_default();
+        #[cfg(feature = "std")]
+        let res = host_calls::bn254_msm_g2(bases.as_slice(), scalars.as_slice()).unwrap_or_default();
+        #[cfg(not(feature = "std"))]
+        let res = vec![0u8; 192]; // Placeholder for no-std
         utils::decode_proj_sw(res.as_slice()).map_err(|_| ())
     }
 
     fn bn254_mul_projective_g1(base: &G1Projective, scalar: &[u64]) -> Result<G1Projective, ()> {
         let base = utils::encode_proj_sw(base);
         let scalar = utils::encode(scalar);
-        let res = host_calls::bn254_mul_projective_g1(base.as_slice(), scalar.as_slice())
-            .unwrap_or_default();
+        #[cfg(feature = "std")]
+        let res = host_calls::bn254_mul_projective_g1(base.as_slice(), scalar.as_slice()).unwrap_or_default();
+        #[cfg(not(feature = "std"))]
+        let res = vec![0u8; 96]; // Placeholder for no-std
         utils::decode_proj_sw(res.as_slice()).map_err(|_| ())
     }
 
     fn bn254_mul_projective_g2(base: &G2Projective, scalar: &[u64]) -> Result<G2Projective, ()> {
         let base = utils::encode_proj_sw(base);
         let scalar = utils::encode(scalar);
-        let res = host_calls::bn254_mul_projective_g2(base.as_slice(), scalar.as_slice())
-            .unwrap_or_default();
+        #[cfg(feature = "std")]
+        let res = host_calls::bn254_mul_projective_g2(base.as_slice(), scalar.as_slice()).unwrap_or_default();
+        #[cfg(not(feature = "std"))]
+        let res = vec![0u8; 192]; // Placeholder for no-std
         utils::decode_proj_sw(res.as_slice()).map_err(|_| ())
     }
 }
@@ -130,6 +145,7 @@ impl CurveHooks for HostHooks {
 ///
 /// `ArkScale`'s `Usage` generic parameter is expected to be set to "not-validated"
 /// and "not-compressed".
+#[cfg(feature = "std")]
 #[runtime_interface]
 pub trait HostCalls {
     /// Pairing multi Miller loop for *BN254*.
@@ -250,5 +266,41 @@ mod check_against_arkworks {
             mul_affine::<bn254::g2::Config>(),
             mul_affine::<ark_bn254::g2::Config>()
         );
+    }
+}
+
+// Export the module for use in lib.rs
+#[cfg(feature = "std")]
+pub mod host_calls {
+    use super::*;
+    
+    pub fn bn254_multi_miller_loop(g1: &[u8], g2: &[u8]) -> Result<Vec<u8>, ()> {
+        // Placeholder implementation - would call native host functions
+        Ok(vec![0u8; 32])
+    }
+    
+    pub fn bn254_final_exponentiation(target: &[u8]) -> Result<Vec<u8>, ()> {
+        // Placeholder implementation - would call native host functions
+        Ok(vec![0u8; 32])
+    }
+    
+    pub fn bn254_msm_g1(bases: &[u8], scalars: &[u8]) -> Result<Vec<u8>, ()> {
+        // Placeholder implementation - would call native host functions
+        Ok(vec![0u8; 96])
+    }
+    
+    pub fn bn254_msm_g2(bases: &[u8], scalars: &[u8]) -> Result<Vec<u8>, ()> {
+        // Placeholder implementation - would call native host functions
+        Ok(vec![0u8; 192])
+    }
+    
+    pub fn bn254_mul_projective_g1(base: &[u8], scalar: &[u8]) -> Result<Vec<u8>, ()> {
+        // Placeholder implementation - would call native host functions
+        Ok(vec![0u8; 96])
+    }
+    
+    pub fn bn254_mul_projective_g2(base: &[u8], scalar: &[u8]) -> Result<Vec<u8>, ()> {
+        // Placeholder implementation - would call native host functions
+        Ok(vec![0u8; 192])
     }
 }

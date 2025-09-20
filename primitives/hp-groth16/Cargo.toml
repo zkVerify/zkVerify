@@ -15,7 +15,7 @@ workspace = true
 [dependencies]
 codec = { workspace = true, features = ["max-encoded-len"] }
 scale-info = { workspace = true }
-sp-runtime-interface = { workspace = true }
+sp-runtime-interface = { workspace = true, optional = true }
 hp-verifiers = { workspace = true }
 
 
@@ -58,5 +58,6 @@ std = [
 	"frame-support/std",
 	"hp-verifiers/std",
 	"scale-info/std",
+	"dep:sp-runtime-interface",
 	"sp-runtime-interface/std",
 ]
