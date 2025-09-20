@@ -12,7 +12,7 @@ mod mock;
 use frame_support::{dispatch::DispatchResult, pallet_prelude::*, BoundedVec};
 use frame_system::pallet_prelude::*;
 use sp_std::vec::Vec;
-use zkv_stwo::{StwoVerifier, StwoVerificationKey, StwoProof, StwoPublicInputs};
+use pallet_stwo_verifier::{StwoVerificationKey, StwoProof, StwoPublicInputs, stwo::StwoVerifier};
 use hp_verifiers::Verifier;
 use crate::weights::{WeightInfo};
 
@@ -210,13 +210,13 @@ use crate::weights::{WeightInfo};
 			}
 			
 			let proof_struct = StwoProof { 
-				fri_proof: zkv_stwo::FriProof {
+				fri_proof: pallet_stwo_verifier::FriProof {
 					fri_lde_commitment: vec![0u8; 32],
 					fri_lde_commitment_merkle_tree_root: vec![1u8; 32],
 					fri_lde_commitment_merkle_tree_path: vec![vec![2u8; 32]],
 					fri_lde_commitment_merkle_tree_leaf_index: 0,
-					fri_query_proofs: vec![zkv_stwo::FriQueryProof {
-						fri_layer_proofs: vec![zkv_stwo::FriLayerProof {
+					fri_query_proofs: vec![pallet_stwo_verifier::FriQueryProof {
+						fri_layer_proofs: vec![pallet_stwo_verifier::FriLayerProof {
 							fri_layer_commitment: vec![3u8; 32],
 							fri_layer_commitment_merkle_tree_root: vec![4u8; 32],
 							fri_layer_commitment_merkle_tree_path: vec![vec![5u8; 32]],

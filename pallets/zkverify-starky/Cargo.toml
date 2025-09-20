@@ -13,7 +13,7 @@ frame-system = { workspace = true, default-features = false }
 sp-runtime = { workspace = true, default-features = false }
 sp-std = { version = "14.0.0", default-features = false }
 sp-io = { workspace = true, default-features = false }
-zkv-stwo = { path = "../../verifiers/stwo", default-features = false, package = "pallet-stwo-verifier" }
+pallet-stwo-verifier = { path = "../../verifiers/stwo", default-features = false }
 hp-verifiers = { workspace = true }
 frame-benchmarking = { workspace = true, default-features = false, optional = true }
 
@@ -33,7 +33,7 @@ sp-tracing = { version = "12.0.0" }
  	"sp-std/std",
  	"sp-runtime/std",
  	"sp-io/std",
-	"zkv-stwo/std",
+	"pallet-stwo-verifier/std",
 	"hp-verifiers/std",
  	"frame-benchmarking/std",
  ]
