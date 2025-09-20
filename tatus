@@ -1,0 +1,69 @@
+[1mdiff --git a/.github/workflows/verify.yml b/.github/workflows/verify.yml[m
+[1mindex f13e176b..400726ba 100644[m
+[1m--- a/.github/workflows/verify.yml[m
+[1m+++ b/.github/workflows/verify.yml[m
+[36m@@ -1,43 +1,39 @@[m
+ name: Verify Stwo Verifier[m
+ [m
+[32m+[m[32mrun-name: "Workflow CI/CD Steps: verify Stwo verifier"[m
+[32m+[m
+ on:[m
+[31m-  pull_request:[m
+[31m-    branches: [ main ][m
+[32m+[m[32m  workflow_call:[m
+   workflow_dispatch:[m
+ [m
+ jobs:[m
+   build-and-test:[m
+[31m-    runs-on: ubuntu-latest[m
+[32m+[m[32m    runs-on: warp-ubuntu-latest-x64-8x[m
+[32m+[m[32m    name: Build and test Stwo components[m
+     steps:[m
+[31m-      - name: Checkout[m
+[32m+[m[32m      - name: Checkout code[m
+         uses: actions/checkout@v4[m
+ [m
+[31m-      - name: Set up Rust[m
+[31m-        uses: dtolnay/rust-toolchain@stable[m
+[31m-[m
+[31m-      - name: Cache cargo[m
+[31m-        uses: Swatinem/rust-cache@v2[m
+[31m-        with:[m
+[31m-          save-if: ${{ github.ref == 'refs/heads/main' }}[m
+[31m-[m
+[31m-      - name: Install dependencies (protoc, wasm target)[m
+[31m-        run: |[m
+[31m-          sudo apt-get update[m
+[31m-          sudo apt-get install -y protobuf-compiler[m
+[31m-          rustup target add wasm32-unknown-unknown[m
+[31m-[m
+       - name: Verify locked deps[m
+[31m-        run: |[m
+[31m-          cargo update -w --locked[m
+[32m+[m[32m        uses: ./.github/actions/cmd-in-docker[m
+[32m+[m[32m        with:[m
+[32m+[m[32m          command: "cargo update -w --locked"[m
+[32m+[m[32m          use_cache: 'yes'[m
+[32m+[m[32m          cache_key: 'verify-stwo'[m
+ [m
+       - name: Build and test Stwo components[m
+[31m-        run: |[m
+[31m-          cargo test -p zkv-stwo --lib --locked --verbose[m
+[31m-          cargo test -p pallet-zkverify-starky --lib --locked --verbose[m
+[32m+[m[32m        uses: ./.github/actions/cmd-in-docker[m
+[32m+[m[32m        with:[m
+[32m+[m[32m          command: "cargo test -p pallet-stwo-verifier --lib --locked --verbose"[m
+[32m+[m[32m          use_cache: 'yes'[m
+[32m+[m[32m          cache_key: 'verify-stwo'[m
+ [m
+       - name: Workspace check (non-fatal)[m
+         continue-on-error: true[m
+[31m-        run: |[m
+[31m-          cargo check --workspace --locked --verbose[m
+[32m+[m[32m        uses: ./.github/actions/cmd-in-docker[m
+[32m+[m[32m        with:[m
+[32m+[m[32m          command: "cargo check --workspace --locked --verbose"[m
+[32m+[m[32m          use_cache: 'yes'[m
+[32m+[m[32m          cache_key: 'verify-stwo'[m
+ [m
+ [m

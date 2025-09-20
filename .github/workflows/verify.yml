@@ -1,43 +1,39 @@
 name: Verify Stwo Verifier
 
+run-name: "Workflow CI/CD Steps: verify Stwo verifier"
+
 on:
-  pull_request:
-    branches: [ main ]
+  workflow_call:
   workflow_dispatch:
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest
+    runs-on: warp-ubuntu-latest-x64-8x
+    name: Build and test Stwo components
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache cargo
-        uses: Swatinem/rust-cache@v2
-        with:
-          save-if: ${{ github.ref == 'refs/heads/main' }}
-
-      - name: Install dependencies (protoc, wasm target)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y protobuf-compiler
-          rustup target add wasm32-unknown-unknown
-
       - name: Verify locked deps
-        run: |
-          cargo update -w --locked
+        uses: ./.github/actions/cmd-in-docker
+        with:
+          command: "cargo update -w --locked"
+          use_cache: 'yes'
+          cache_key: 'verify-stwo'
 
       - name: Build and test Stwo components
-        run: |
-          cargo test -p zkv-stwo --lib --locked --verbose
-          cargo test -p pallet-zkverify-starky --lib --locked --verbose
+        uses: ./.github/actions/cmd-in-docker
+        with:
+          command: "cargo test -p pallet-stwo-verifier --lib --locked --verbose"
+          use_cache: 'yes'
+          cache_key: 'verify-stwo'
 
       - name: Workspace check (non-fatal)
         continue-on-error: true
-        run: |
-          cargo check --workspace --locked --verbose
+        uses: ./.github/actions/cmd-in-docker
+        with:
+          command: "cargo check --workspace --locked --verbose"
+          use_cache: 'yes'
+          cache_key: 'verify-stwo'
 
 
