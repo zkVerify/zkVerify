@@ -22,6 +22,14 @@ use crate::proxy::ProxyType;
 use crate::RuntimeCall;
 
 #[rstest]
+#[case::ezkl_submit_proof(
+    RuntimeCall::SettlementEzklPallet(pallet_verifiers::Call::submit_proof {
+        vk_or_hash: Default::default(),
+        proof: Default::default(),
+        pubs: Default::default(),
+        domain_id: None,
+    })
+)]
 #[case::fflonk_submit_proof(
     RuntimeCall::SettlementFFlonkPallet(pallet_verifiers::Call::submit_proof{
         vk_or_hash: Default::default(),
