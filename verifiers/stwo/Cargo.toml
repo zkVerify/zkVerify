@@ -27,18 +27,19 @@ frame-system = { workspace = true }
 frame-benchmarking = { workspace = true, optional = true }
 native = { workspace = true }
 
-# Cryptographic dependencies for real verification
+# Cryptographic dependencies for real verification (no-std compatible)
 ark-ff = { version = "0.4", default-features = false }
 ark-ec = { version = "0.4", default-features = false }
 ark-std = { version = "0.4", default-features = false }
 ark-bn254 = { version = "0.4", default-features = false }
 ark-pallas = { version = "0.4", default-features = false }
 ark-vesta = { version = "0.4", default-features = false }
-# Hash functions
+# Hash functions (no-std compatible)
 sha2 = { version = "0.10", default-features = false }
 blake2 = { version = "0.10", default-features = false }
-# Serialization
+# Serialization (no-std compatible)
 serde = { version = "1.0", default-features = false, features = ["derive"] }
+# Random number generation removed - not essential for STARK verification
 
 [dev-dependencies]
 rstest = { workspace = true }
