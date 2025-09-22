@@ -129,7 +129,6 @@ impl<T: Config> Verifier for Ezkl<T> {
     }
 
     fn vk_hash(vk: &Self::Vk) -> H256 {
-        // sp_io::hashing::sha2_256(&Self::vk_bytes(vk)).into()
         sp_io::hashing::keccak_256(&Self::vk_bytes(vk)).into()
     }
 
