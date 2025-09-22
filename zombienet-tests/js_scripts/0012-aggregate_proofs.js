@@ -44,11 +44,6 @@ async function run(nodeName, networkInfo, _args) {
 
     verifiers = [
         {
-            name: "Ezkl",
-            pallet: api.tx.settlementEzklPallet,
-            args: [{ 'Vk': EZKL_VK }, EZKL_PROOF, EZKL_PUBS],
-        },
-        {
             name: "FFlonk",
             pallet: api.tx.settlementFFlonkPallet,
             args: [{ 'Vk': FFLONK_VK }, FFLONK_PROOF, FFLONK_PUBS],
@@ -87,7 +82,12 @@ async function run(nodeName, networkInfo, _args) {
             name: "Sp1",
             pallet: api.tx.settlementSp1Pallet,
             args: [{ 'Vk': SP1_VK }, SP1_PROOF, SP1_PUBS],
-        }
+        },
+        {
+            name: "Ezkl",
+            pallet: api.tx.settlementEzklPallet,
+            args: [{ 'Vk': EZKL_VK }, EZKL_PROOF, EZKL_PUBS],
+        },
     ];
 
     // Only manager can register a Hyperbridge delivery domain.
@@ -255,7 +255,7 @@ async function run(nodeName, networkInfo, _args) {
         return ReturnCode.ErrWrongDomainId;
     }
 
-    // Now we are checking the hold  state machine.
+    // Now we are checking the hold state machine.
     let verifier = verifiers[0];
     data = await submitProof(verifier.pallet, alice, ...verifier.args, newDomainId);
     if (!receivedEvents(data)) {
