@@ -35,7 +35,9 @@ fn pallet_ezkl() {
     test().execute_with(|| {
         let dummy_origin = AccountId32::new([0; 32]);
 
-        let dummy_vk = [0; pallet_ezkl_verifier::MAX_VK_SIZE];
+        let dummy_vk = pallet_ezkl_verifier::EzklVk::new(
+            [0u8; pallet_ezkl_verifier::MAX_VK_LENGTH as usize].to_vec(),
+        );
         let dummy_proof = Vec::new();
         let dummy_pubs = Vec::new();
 
