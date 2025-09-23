@@ -15,8 +15,6 @@
 
 #![cfg(test)]
 
-use hex_literal::hex;
-
 use super::*;
 include!("resources.rs");
 
