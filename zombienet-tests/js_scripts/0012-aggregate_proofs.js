@@ -22,6 +22,7 @@ const { init_api, submitProof, receivedEvents, registerDomain, sudoRegisterDomai
     holdDomain, unregisterDomain, aggregate, getBalance } = require('zkv-lib');
 const { PROOF: FFLONK_PROOF, PUBS: FFLONK_PUBS, VK: FFLONK_VK } = require('./fflonk_data.js');
 const { PROOF: GROTH16_PROOF, PUBS: GROTH16_PUBS, VK: GROTH16_VK } = require('./groth16_data.js');
+const { PROOF: RISC0_V2_2_PROOF, PUBS: RISC0_V2_2_PUBS, VK: RISC0_V2_2_VK } = require('./risc0_v2_2_data.js');
 const { PROOF: RISC0_V3_0_PROOF, PUBS: RISC0_V3_0_PUBS, VK: RISC0_V3_0_VK } = require('./risc0_v3_0_data.js');
 const { ZKPROOF: ULTRAHONK_ZKPROOF, PUBS: ULTRAHONK_PUBS, VK: ULTRAHONK_VK } = require('./ultrahonk_data.js');
 const { PROOF: ULTRAPLONK_PROOF, PUBS: ULTRAPLONK_PUBS, VK: ULTRAPLONK_VK } = require('./ultraplonk_data.js');
@@ -45,6 +46,11 @@ async function run(nodeName, networkInfo, _args) {
             name: "FFlonk",
             pallet: api.tx.settlementFFlonkPallet,
             args: [{ 'Vk': FFLONK_VK }, FFLONK_PROOF, FFLONK_PUBS],
+        },
+        {
+            name: "Risc0.V.2.2",
+            pallet: api.tx.settlementRisc0Pallet,
+            args: [{ 'Vk': RISC0_V2_2_VK }, RISC0_V2_2_PROOF, RISC0_V2_2_PUBS],
         },
         {
             name: "Risc0.V.3.0",
