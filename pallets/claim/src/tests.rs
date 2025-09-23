@@ -1,3 +1,5 @@
+use crate::beneficiary::Beneficiary;
+use crate::ethereum::{EthereumAddress, EthereumSignature};
 use crate::mock::RuntimeEvent as TestEvent;
 use crate::mock::*;
 use crate::*;
@@ -139,7 +141,7 @@ fn new_claim_wrong_origin() {
     test().execute_with(|| {
         assert_err!(
             Claim::begin_claim(
-                Origin::Signed(USER_1).into(),
+                Origin::Signed(USER_1_RAW).into(),
                 EMPTY_BENEFICIARIES_MAP.clone(),
                 INIT_CLAIM_MESSAGE.clone()
             ),
@@ -281,7 +283,7 @@ fn claim() {
         GenesisClaimBalance::Sufficient,
     )
     .execute_with(|| {
-        let (user_signer, user_signature, _, _) = USER_1_SIGN.clone();
+        let (user_signer, user_signature, _) = USER_1_SIGN.clone();
         assert_ok!(Claim::claim(
             Origin::None.into(),
             user_signer,
@@ -299,9 +301,54 @@ fn claim() {
             TotalClaimable::<Test>::get(),
             SUFFICIENT_GENESIS_BALANCE - USER_1_AMOUNT
         );
-        assert_eq!(Balances::free_balance(USER_1), USER_1_AMOUNT);
+        assert_eq!(Balances::free_balance(USER_1_RAW), USER_1_AMOUNT);
         assert!(Beneficiaries::<Test>::get(USER_1).is_none());
     });
+}
+
+#[test]
+fn claim_ethereum() {
+    test_with_configs(
+        WithGenesisBeneficiaries::No,
+        GenesisClaimBalance::Sufficient,
+    )
+    .execute_with(|| {
+        Claim::begin_claim(
+            Origin::Signed(MANAGER_USER).into(),
+            ETH_BENEFICIARIES_MAP.clone(),
+            INIT_CLAIM_MESSAGE.clone(),
+        )
+        .unwrap();
+
+        // Insert Eth Beneficiary
+        let eth_address = EthereumAddress(hex_literal::hex!(
+            "308046c262264a11445865f727f94fb699b3a1b8"
+        ));
+        let amount = USER_1_AMOUNT;
+        let beneficiary = Beneficiary::<Test>::Ethereum(eth_address);
+        Beneficiaries::<Test>::insert(beneficiary.clone(), amount);
+
+        // Prepare claim message and signature
+        let eth_signature = EthereumSignature(hex_literal::hex!("64ca60bf905cd76ecbbd49b7e4bdaad957e8059353a35ba3fb4e8481009050006c16d2a5df31773dfa24da047e540cbbc4ccd1e407ad06f3b0d89da2a01dd7231b"));
+        assert_ok!(Claim::claim_ethereum(
+            Origin::None.into(),
+            eth_address,
+            eth_signature,
+            USER_1_RAW
+        ));
+
+        assert_evt(
+            Event::Claimed {
+                beneficiary,
+                amount: USER_1_AMOUNT,
+            },
+            "Successfull claim",
+        );
+        assert_eq!(Claim::pot(), SUFFICIENT_GENESIS_BALANCE - USER_1_AMOUNT);
+        assert_eq!(TotalClaimable::<Test>::get(), 0);
+        assert_eq!(Balances::free_balance(USER_1_RAW), USER_1_AMOUNT);
+        assert!(Beneficiaries::<Test>::get(USER_1).is_none());
+    })
 }
 
 #[test]
@@ -311,23 +358,7 @@ fn claim_prefixed() {
         GenesisClaimBalance::Sufficient,
     )
     .execute_with(|| {
-        let (user_signer, _, user_signature, _) = USER_1_SIGN.clone();
-        assert_ok!(Claim::claim(
-            Origin::None.into(),
-            user_signer,
-            user_signature
-        ));
-    });
-}
-
-#[test]
-fn claim_eth_prefixed() {
-    test_with_configs(
-        WithGenesisBeneficiaries::Yes,
-        GenesisClaimBalance::Sufficient,
-    )
-    .execute_with(|| {
-        let (user_signer, _, _, user_signature) = USER_1_SIGN.clone();
+        let (user_signer, _, user_signature) = USER_1_SIGN.clone();
         assert_ok!(Claim::claim(
             Origin::None.into(),
             user_signer,
@@ -343,7 +374,7 @@ fn double_claim_is_err() {
         GenesisClaimBalance::Sufficient,
     )
     .execute_with(|| {
-        let (user_signer, user_signature, _, _) = USER_1_SIGN.clone();
+        let (user_signer, user_signature, _) = USER_1_SIGN.clone();
         assert_ok!(Claim::claim(
             Origin::None.into(),
             user_signer.clone(),
@@ -363,7 +394,7 @@ fn claim_non_existing_beneficiary() {
         GenesisClaimBalance::Sufficient,
     )
     .execute_with(|| {
-        let (user_signer, user_signature, _, _) = NON_BENEFICIARY_SIGN.clone();
+        let (user_signer, user_signature, _) = NON_BENEFICIARY_SIGN.clone();
         assert_noop!(
             Claim::claim(Origin::None.into(), user_signer, user_signature),
             Error::<Test>::NotEligible
@@ -378,7 +409,7 @@ fn claim_invalid_signature() {
         GenesisClaimBalance::Sufficient,
     )
     .execute_with(|| {
-        let (user_signer, mut user_signature, _, _) = USER_1_SIGN.clone();
+        let (user_signer, mut user_signature, _) = USER_1_SIGN.clone();
         user_signature.1[0] += 1u8; // Alter signature
 
         assert_noop!(
@@ -398,41 +429,15 @@ fn reject_double_prefixed_message() {
         let user_signer = sp_runtime::testing::UintAuthorityId::from(USER_1);
         let claim_message = INIT_CLAIM_MESSAGE.clone();
         let double_wrapped_message = [
-            crate::MSG_PREFIX,
-            crate::MSG_PREFIX,
+            crate::beneficiary::MSG_PREFIX,
+            crate::beneficiary::MSG_PREFIX,
             claim_message.as_slice(),
-            crate::MSG_SUFFIX,
-            crate::MSG_SUFFIX,
+            crate::beneficiary::MSG_SUFFIX,
+            crate::beneficiary::MSG_SUFFIX,
         ]
         .concat();
         let user_signature = user_signer
             .sign(&double_wrapped_message.as_slice())
-            .unwrap();
-
-        assert_noop!(
-            Claim::claim(Origin::None.into(), user_signer, user_signature),
-            Error::<Test>::BadSignature
-        );
-    });
-}
-
-#[test]
-fn reject_double_eth_prefixed_message() {
-    test_with_configs(
-        WithGenesisBeneficiaries::Yes,
-        GenesisClaimBalance::Sufficient,
-    )
-    .execute_with(|| {
-        let user_signer = sp_runtime::testing::UintAuthorityId::from(USER_1);
-        let claim_message = INIT_CLAIM_MESSAGE.clone();
-        let double_wrapped_message_eth = [
-            crate::ETH_PREFIX,
-            crate::ETH_PREFIX,
-            claim_message.as_slice(),
-        ]
-        .concat();
-        let user_signature = user_signer
-            .sign(&double_wrapped_message_eth.as_slice())
             .unwrap();
 
         assert_noop!(
@@ -449,7 +454,7 @@ fn claim_invalid_beneficiary() {
         GenesisClaimBalance::Sufficient,
     )
     .execute_with(|| {
-        let (_, user_1_signature, _, _) = USER_1_SIGN.clone();
+        let (_, user_1_signature, _) = USER_1_SIGN.clone();
         let user_2_signer = sp_runtime::testing::UintAuthorityId::from(USER_2);
 
         assert_noop!(
@@ -467,7 +472,7 @@ fn claim_insufficient_balance() {
         GenesisClaimBalance::Sufficient,
     )
     .execute_with(|| {
-        let (user_signer, user_signature, _, _) = USER_1_SIGN.clone();
+        let (user_signer, user_signature, _) = USER_1_SIGN.clone();
         Beneficiaries::<Test>::insert(USER_1, Balances::total_issuance()); // Increase astronomically
         assert_err!(
             Claim::claim(Origin::None.into(), user_signer, user_signature),
@@ -486,7 +491,7 @@ fn claim_insufficient_balance() {
 #[test]
 fn cannot_claim_while_claim_inactive() {
     test().execute_with(|| {
-        let (user_signer, user_signature, _, _) = USER_1_SIGN.clone();
+        let (user_signer, user_signature, _) = USER_1_SIGN.clone();
         assert_noop!(
             Claim::claim(Origin::None.into(), user_signer, user_signature),
             Error::<Test>::AlreadyEnded
@@ -501,9 +506,13 @@ fn cannot_claim_if_signed_origin() {
         GenesisClaimBalance::Sufficient,
     )
     .execute_with(|| {
-        let (user_signer, user_signature, _, _) = USER_1_SIGN.clone();
+        let (user_signer, user_signature, _) = USER_1_SIGN.clone();
         assert_noop!(
-            Claim::claim(Origin::Signed(USER_1).into(), user_signer, user_signature),
+            Claim::claim(
+                Origin::Signed(USER_1_RAW).into(),
+                user_signer,
+                user_signature
+            ),
             BadOrigin
         );
     })
@@ -518,7 +527,7 @@ fn claim_for() {
     .execute_with(|| {
         assert_ok!(Claim::claim_for(
             Origin::Signed(MANAGER_USER).into(),
-            USER_1
+            USER_1_RAW
         ));
         assert_evt(
             Event::Claimed {
@@ -532,7 +541,7 @@ fn claim_for() {
             TotalClaimable::<Test>::get(),
             SUFFICIENT_GENESIS_BALANCE - USER_1_AMOUNT
         );
-        assert_eq!(Balances::free_balance(USER_1), USER_1_AMOUNT);
+        assert_eq!(Balances::free_balance(USER_1_RAW), USER_1_AMOUNT);
         assert!(Beneficiaries::<Test>::get(USER_1).is_none());
     });
 }
@@ -547,7 +556,7 @@ fn claim_for_insufficient_balance() {
     .execute_with(|| {
         Beneficiaries::<Test>::insert(NON_BENEFICIARY, SUFFICIENT_GENESIS_BALANCE + 1);
         assert_err!(
-            Claim::claim_for(Origin::Signed(MANAGER_USER).into(), NON_BENEFICIARY),
+            Claim::claim_for(Origin::Signed(MANAGER_USER).into(), NON_BENEFICIARY_RAW),
             TokenError::FundsUnavailable
         );
         assert_not_evt(
@@ -568,7 +577,7 @@ fn claim_for_wrong_beneficiary() {
     )
     .execute_with(|| {
         assert_noop!(
-            Claim::claim_for(Origin::Signed(MANAGER_USER).into(), NON_BENEFICIARY),
+            Claim::claim_for(Origin::Signed(MANAGER_USER).into(), NON_BENEFICIARY_RAW),
             Error::<Test>::NotEligible
         );
     });
@@ -578,7 +587,7 @@ fn claim_for_wrong_beneficiary() {
 fn cannot_claim_for_while_claim_inactive() {
     test().execute_with(|| {
         assert_err!(
-            Claim::claim_for(Origin::Signed(MANAGER_USER).into(), USER_1),
+            Claim::claim_for(Origin::Signed(MANAGER_USER).into(), USER_1_RAW),
             Error::<Test>::AlreadyEnded
         );
     })
@@ -592,7 +601,10 @@ fn add_beneficiaries_wrong_origin() {
     )
     .execute_with(|| {
         assert_err!(
-            Claim::add_beneficiaries(Origin::Signed(USER_1).into(), NEW_BENEFICIARIES_MAP.clone()),
+            Claim::add_beneficiaries(
+                Origin::Signed(USER_1_RAW).into(),
+                NEW_BENEFICIARIES_MAP.clone()
+            ),
             BadOrigin
         );
     })
@@ -791,7 +803,7 @@ fn cannot_remove_beneficiaries_if_claim_in_progress() {
 fn remove_beneficiaries_bad_origin() {
     test().execute_with(|| {
         assert_noop!(
-            Claim::remove_beneficiaries(Origin::Signed(USER_1).into()),
+            Claim::remove_beneficiaries(Origin::Signed(USER_1_RAW).into()),
             BadOrigin
         );
     })
@@ -841,7 +853,10 @@ fn end_claim_wrong_origin() {
         GenesisClaimBalance::Sufficient,
     )
     .execute_with(|| {
-        assert_err!(Claim::end_claim(Origin::Signed(USER_1).into()), BadOrigin);
+        assert_err!(
+            Claim::end_claim(Origin::Signed(USER_1_RAW).into()),
+            BadOrigin
+        );
         assert_not_evt(
             Event::ClaimEnded {
                 claim_id: 0,
@@ -987,8 +1002,8 @@ fn validate_unsigned_works() {
         GenesisClaimBalance::Sufficient,
     )
     .execute_with(|| {
-        let (user_signer, user_signature, user_signature_prefixed, user_signature_eth) =
-            USER_1_SIGN.clone();
+        let empty_dest: Option<AccountId> = None;
+        let (user_signer, user_signature, user_signature_prefixed) = USER_1_SIGN.clone();
         let user_address = user_signer.clone().into_account();
         let claim_id = ClaimId::<Test>::get().unwrap();
         let source = sp_runtime::transaction_validity::TransactionSource::External;
@@ -1027,7 +1042,7 @@ fn validate_unsigned_works() {
         );
 
         // Claim beneficiary non existing
-        let (nb_signer, nb_signature, _, _) = NON_BENEFICIARY_SIGN.clone();
+        let (nb_signer, nb_signature, _) = NON_BENEFICIARY_SIGN.clone();
         assert_eq!(
             Pallet::<Test>::validate_unsigned(
                 source,
@@ -1053,7 +1068,13 @@ fn validate_unsigned_works() {
             Ok(ValidTransaction {
                 priority: 100,
                 requires: vec![],
-                provides: vec![("claim", claim_id.clone(), user_address).encode()],
+                provides: vec![(
+                    "claim",
+                    claim_id.clone(),
+                    crate::beneficiary::Beneficiary::<Test>::Substrate(user_address),
+                    empty_dest
+                )
+                    .encode()],
                 longevity: TransactionLongevity::MAX,
                 propagate: true,
             })
@@ -1071,25 +1092,13 @@ fn validate_unsigned_works() {
             Ok(ValidTransaction {
                 priority: 100,
                 requires: vec![],
-                provides: vec![("claim", claim_id.clone(), user_address).encode()],
-                longevity: TransactionLongevity::MAX,
-                propagate: true,
-            })
-        );
-
-        // Claim ok eth prefixed
-        assert_eq!(
-            Pallet::<Test>::validate_unsigned(
-                source,
-                &ClaimCall::claim {
-                    beneficiary: user_signer.clone(),
-                    signature: user_signature_eth.clone()
-                }
-            ),
-            Ok(ValidTransaction {
-                priority: 100,
-                requires: vec![],
-                provides: vec![("claim", claim_id, user_address).encode()],
+                provides: vec![(
+                    "claim",
+                    claim_id.clone(),
+                    crate::beneficiary::Beneficiary::<Test>::Substrate(user_address),
+                    empty_dest
+                )
+                    .encode()],
                 longevity: TransactionLongevity::MAX,
                 propagate: true,
             })

@@ -1,4 +1,6 @@
 const { hexToU8a } = require('@polkadot/util');
+import { Keyring } from '@polkadot/keyring';
+
 
 const { init_api, sudoInitClaim, claim, receivedEvents, submitExtrinsic, BlockUntil } = require('zkv-lib');
 const ReturnCode = {

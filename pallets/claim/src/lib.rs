@@ -34,6 +34,9 @@
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
+mod beneficiary;
+pub use beneficiary::{AccountId32ToBytes, AccountIdToBytesLiteral};
+mod ethereum;
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
@@ -82,16 +85,15 @@ pub use weight::WeightInfo;
 pub mod pallet {
 
     use super::*;
+    use crate::beneficiary::{Beneficiary, ClaimSignature};
+    use crate::ethereum::*;
+    use codec::Encode;
     use frame_support::{pallet_prelude::*, traits::DefensiveSaturating};
     use frame_system::pallet_prelude::*;
     use sp_runtime::{
         traits::{IdentifyAccount, Verify},
         TokenError,
     };
-
-    pub(crate) const MSG_PREFIX: &[u8] = b"<Bytes>";
-    pub(crate) const MSG_SUFFIX: &[u8] = b"</Bytes>";
-    pub(crate) const ETH_PREFIX: &[u8] = b"\x19Ethereum Signed Message:\n";
 
     #[pallet::pallet]
     pub struct Pallet<T>(_);
@@ -123,6 +125,12 @@ pub mod pallet {
         /// The type of signature to be supplied for claiming the tokens
         type Signature: Verify<Signer = Self::Signer> + Parameter;
 
+        /// Means of converting an account ID to bytes suitable to be signed from Ethereum bytes
+        type AccountIdToBytesLiteral: crate::beneficiary::AccountIdToBytesLiteral<
+            Self,
+            AccountId = Self::AccountId,
+        >;
+
         /// The maximum number of allowed beneficiaries.
         #[pallet::constant]
         type MaxBeneficiaries: Get<u32>;
@@ -142,7 +150,7 @@ pub mod pallet {
     /// Candidates eligible to receive a claim with the associated balance they have right to
     #[pallet::storage]
     pub type Beneficiaries<T: Config> =
-        CountedStorageMap<_, Twox64Concat, T::AccountId, BalanceOf<T>>;
+        CountedStorageMap<_, Twox64Concat, Beneficiary<T>, BalanceOf<T>>;
 
     /// Total tokens claimable from the current claim.  
     #[pallet::storage]
@@ -165,7 +173,7 @@ pub mod pallet {
     #[derive(frame_support::DefaultNoBound)]
     pub struct GenesisConfig<T: Config> {
         /// Genesis beneficiaries
-        pub beneficiaries: Vec<(T::AccountId, BalanceOf<T>)>,
+        pub beneficiaries: Vec<(Beneficiary<T>, BalanceOf<T>)>,
         /// Genesis balance for this pallet's account
         pub genesis_balance: BalanceOf<T>,
         /// Genesis claim message
@@ -225,7 +233,7 @@ pub mod pallet {
         /// Some amount has been claimed by the beneficiary
         Claimed {
             /// Who claimed the tokens
-            beneficiary: T::AccountId,
+            beneficiary: Beneficiary<T>,
             /// How many tokens were claimed
             amount: BalanceOf<T>,
         },
@@ -294,7 +302,7 @@ pub mod pallet {
             )
         }
 
-        fn do_claim(beneficiary: T::AccountId) -> DispatchResult {
+        fn do_claim(beneficiary: Beneficiary<T>, dest: Option<T::AccountId>) -> DispatchResult {
             // See if account is eligible to get a claim
             Beneficiaries::<T>::try_mutate_exists(beneficiary.clone(), |amount| {
                 *amount = match amount {
@@ -306,9 +314,13 @@ pub mod pallet {
                             log::warn!("Claimable amount {amount:?} bigger than total available {available:?}");
                             Err(TokenError::FundsUnavailable)?; // Prevent going under the existential deposit of the account
                         }
+                        let dest = match beneficiary.clone() {
+                            Beneficiary::<T>::Substrate(address) => address,
+                            Beneficiary::<T>::Ethereum(_) => dest.unwrap(),
+                        };
                         T::Currency::transfer(
                             &Self::account_id(),
-                            &beneficiary,
+                            &dest,
                             *amount,
                             Preservation::Preserve,
                         )?;
@@ -332,7 +344,7 @@ pub mod pallet {
         }
 
         fn do_add_beneficiaries(
-            beneficiaries: BTreeMap<T::AccountId, BalanceOf<T>>,
+            beneficiaries: BTreeMap<Beneficiary<T>, BalanceOf<T>>,
         ) -> DispatchResult {
             // Check that the pot has enough funds to cover for all the beneficiaries
             let available_amount = Self::pot();
@@ -340,28 +352,28 @@ pub mod pallet {
 
             beneficiaries
                 .iter()
-                .try_for_each::<_, DispatchResult>(|(account, amount)| {
-                    if Beneficiaries::<T>::contains_key(account) {
+                .try_for_each::<_, DispatchResult>(|(beneficiary, amount)| {
+                    if Beneficiaries::<T>::contains_key(beneficiary) {
                         // Account already exists
-                        log::warn!("Beneficiary {account:?} already added.");
+                        log::warn!("Beneficiary {beneficiary:?} already added.");
                         Err(Error::<T>::AlreadyPresent)?;
                     }
                     if amount.is_zero() {
                         // Attempting to add a beneficiary with nothing to claim
-                        log::warn!("Beneficiary {account:?} with nothing to claim.");
+                        log::warn!("Beneficiary {beneficiary:?} with nothing to claim.");
                         Err(Error::<T>::NothingToClaim)?;
                     }
 
                     // Account doesn't exist. Add its token amount to the required amount this pallet's account should have
                     required_amount = required_amount.defensive_saturating_add(*amount);
-                    log::trace!("Added beneficiary {account:?}. To claim: {amount:?}");
+                    log::trace!("Added beneficiary {beneficiary:?}. To claim: {amount:?}");
 
                     // Cannot cover for all the tokens, raise an error
                     if required_amount > available_amount {
                         Err(TokenError::FundsUnavailable)?;
                     }
 
-                    Beneficiaries::<T>::insert(account, amount);
+                    Beneficiaries::<T>::insert(beneficiary, amount);
 
                     Ok(())
                 })?;
@@ -430,28 +442,23 @@ pub mod pallet {
         }
 
         pub(crate) fn check_claimant(
-            beneficiary: &T::Signer,
-            signature: T::Signature,
+            beneficiary: &Beneficiary<T>,
+            signature: ClaimSignature<T>,
+            dest: Option<T::AccountId>,
         ) -> Result<(), Error<T>> {
             // Pre-requisites
             // 1. Check claim is active
             Self::check_claim_status(true)?;
 
             // 2. Check beneficiary is eligible
-            let beneficiary_account = beneficiary.clone().into_account();
-            if !Beneficiaries::<T>::contains_key(&beneficiary_account) {
+            if !Beneficiaries::<T>::contains_key(beneficiary) {
                 Err(Error::<T>::NotEligible)?;
             }
 
             // Check signature
             let claim_message = ClaimId::<T>::get().unwrap().1;
-            let wrapped_message = [MSG_PREFIX, claim_message.as_slice(), MSG_SUFFIX].concat();
-            let wrapped_message_eth = [ETH_PREFIX, claim_message.as_slice()].concat();
-            if !(signature.verify(claim_message.as_slice(), &beneficiary_account)
-                || signature.verify(wrapped_message.as_slice(), &beneficiary_account)
-                || signature.verify(wrapped_message_eth.as_slice(), &beneficiary_account))
-            {
-                Err(Error::<T>::BadSignature)?;
+            if !signature.verify(claim_message.as_slice(), beneficiary, dest) {
+                Err(Error::<T>::BadSignature)?
             }
 
             Ok(())
@@ -470,7 +477,7 @@ pub mod pallet {
         #[pallet::weight(T::WeightInfo::begin_claim(beneficiaries.len() as u32))]
         pub fn begin_claim(
             origin: OriginFor<T>,
-            beneficiaries: BTreeMap<T::AccountId, BalanceOf<T>>,
+            beneficiaries: BTreeMap<Beneficiary<T>, BalanceOf<T>>,
             claim_message: ClaimMessage<T>,
         ) -> DispatchResult {
             T::ManagerOrigin::ensure_origin(origin)?;
@@ -532,8 +539,10 @@ pub mod pallet {
             signature: T::Signature,
         ) -> DispatchResult {
             ensure_none(origin)?;
-            Self::check_claimant(&beneficiary, signature)?;
-            Self::do_claim(beneficiary.into_account())
+            let beneficiary = Beneficiary::<T>::Substrate(beneficiary.clone().into_account());
+            let signature = ClaimSignature::<T>::Substrate(signature);
+            Self::check_claimant(&beneficiary, signature, None)?;
+            Self::do_claim(beneficiary, None)
         }
 
         /// Claim token claim for 'dest'.
@@ -543,7 +552,7 @@ pub mod pallet {
         pub fn claim_for(origin: OriginFor<T>, dest: T::AccountId) -> DispatchResult {
             T::ManagerOrigin::ensure_origin(origin)?;
             Self::check_claim_status(true)?;
-            Self::do_claim(dest)?;
+            Self::do_claim(Beneficiary::<T>::Substrate(dest), None)?;
             Ok(())
         }
 
@@ -557,7 +566,7 @@ pub mod pallet {
         #[pallet::weight(T::WeightInfo::add_beneficiaries(beneficiaries.len() as u32))]
         pub fn add_beneficiaries(
             origin: OriginFor<T>,
-            beneficiaries: BTreeMap<T::AccountId, BalanceOf<T>>,
+            beneficiaries: BTreeMap<Beneficiary<T>, BalanceOf<T>>,
         ) -> DispatchResult {
             Self::check_claim_status(true)?;
             T::ManagerOrigin::ensure_origin(origin)?;
@@ -636,6 +645,39 @@ pub mod pallet {
 
             Ok(())
         }
+
+        /// Claim token claim for 'origin' and send the tokens to 'dest'.
+        /// Fails if 'origin' is not entitled to any claim.
+        /// 'origin' must be signed.
+        #[pallet::call_index(6)]
+        #[pallet::weight(T::WeightInfo::claim_ethereum())]
+        pub fn claim_ethereum(
+            origin: OriginFor<T>,
+            beneficiary: EthereumAddress,
+            signature: EthereumSignature,
+            dest: T::AccountId,
+        ) -> DispatchResult {
+            ensure_none(origin)?;
+            let beneficiary = Beneficiary::<T>::Ethereum(beneficiary);
+            let signature = ClaimSignature::<T>::Ethereum(signature);
+            Self::check_claimant(&beneficiary, signature, Some(dest.clone()))?;
+            Self::do_claim(beneficiary, Some(dest))
+        }
+
+        /// Claim token claim for 'dest'.
+        /// Fails if 'dest' is not entitled to any claim.
+        #[pallet::call_index(7)]
+        #[pallet::weight(T::WeightInfo::claim_ethereum_for())]
+        pub fn claim_ethereum_for(
+            origin: OriginFor<T>,
+            beneficiary: EthereumAddress,
+            dest: T::AccountId,
+        ) -> DispatchResult {
+            T::ManagerOrigin::ensure_origin(origin)?;
+            Self::check_claim_status(true)?;
+            Self::do_claim(Beneficiary::<T>::Ethereum(beneficiary), Some(dest))?;
+            Ok(())
+        }
     }
 
     #[pallet::validate_unsigned]
@@ -645,23 +687,37 @@ pub mod pallet {
         fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
             const PRIORITY: u64 = 100;
 
-            if let Call::claim {
-                beneficiary,
-                signature,
-            } = call
-            {
-                Self::check_claimant(beneficiary, signature.clone())?;
+            let (beneficiary, dest) = match call {
+                Call::claim {
+                    beneficiary,
+                    signature,
+                } => {
+                    let beneficiary =
+                        Beneficiary::<T>::Substrate(beneficiary.clone().into_account());
+                    let signature = ClaimSignature::<T>::Substrate(signature.clone());
+                    Self::check_claimant(&beneficiary, signature, None)?;
+                    (beneficiary, None)
+                }
+                Call::claim_ethereum {
+                    beneficiary,
+                    signature,
+                    dest,
+                } => {
+                    let beneficiary = Beneficiary::<T>::Ethereum(*beneficiary);
+                    let signature = ClaimSignature::<T>::Ethereum(signature.clone());
+                    Self::check_claimant(&beneficiary, signature, Some(dest.clone()))?;
+                    (beneficiary, Some(dest))
+                }
+                _ => return Err(InvalidTransaction::Call.into()),
+            };
 
-                Ok(ValidTransaction {
-                    priority: PRIORITY,
-                    requires: vec![],
-                    provides: vec![("claim", ClaimId::<T>::get().unwrap(), beneficiary).encode()],
-                    longevity: TransactionLongevity::MAX,
-                    propagate: true,
-                })
-            } else {
-                Err(InvalidTransaction::Call.into())
-            }
+            Ok(ValidTransaction {
+                priority: PRIORITY,
+                requires: vec![],
+                provides: vec![("claim", ClaimId::<T>::get().unwrap(), beneficiary, dest).encode()],
+                longevity: TransactionLongevity::MAX,
+                propagate: true,
+            })
         }
     }
 }

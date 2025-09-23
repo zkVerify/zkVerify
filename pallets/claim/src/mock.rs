@@ -34,7 +34,8 @@ use sp_runtime::{
     BuildStorage, RuntimeAppPublic,
 };
 
-use crate::utils;
+use crate::beneficiary::{AccountIdToBytesLiteral, Beneficiary};
+use crate::utils::{get_beneficiaries_map, secp_utils::*};
 
 pub type Balance = u128;
 pub type AccountId = u64;
@@ -42,99 +43,102 @@ pub type Origin = RawOrigin<AccountId>;
 
 pub const EXISTENTIAL_DEPOSIT: Balance = 1;
 
-pub const USER_1: AccountId = 42;
+pub const USER_1_RAW: AccountId = 42;
+pub const USER_1: Beneficiary<Test> = Beneficiary::<Test>::Substrate(USER_1_RAW);
 pub const USER_1_AMOUNT: Balance = 42_000_000_000;
-pub const USER_2: AccountId = 24;
+pub const USER_2: Beneficiary<Test> = Beneficiary::<Test>::Substrate(24);
 pub const USER_2_AMOUNT: Balance = 24_000_000_000;
-pub const USER_3: AccountId = 42_000;
+pub const USER_3: Beneficiary<Test> = Beneficiary::<Test>::Substrate(42_000);
 pub const USER_3_AMOUNT: Balance = 100_000_000_000;
-pub const USER_4: AccountId = 24_000;
+pub const USER_4: Beneficiary<Test> = Beneficiary::<Test>::Substrate(24_000);
 pub const USER_4_AMOUNT: Balance = 200_000_000_000;
-pub const USER_5: AccountId = 99_000;
+pub const USER_5: Beneficiary<Test> = Beneficiary::<Test>::Substrate(99_000);
 pub const USER_5_AMOUNT: Balance = 300_000_000;
-pub const USER_6: AccountId = 33_333;
+pub const USER_6: Beneficiary<Test> = Beneficiary::<Test>::Substrate(33_333);
 pub const USER_6_AMOUNT: Balance = 50_000_000_000;
-pub const NON_BENEFICIARY: AccountId = 6;
+pub const NON_BENEFICIARY_RAW: AccountId = 6;
+pub const NON_BENEFICIARY: Beneficiary<Test> = Beneficiary::<Test>::Substrate(NON_BENEFICIARY_RAW);
 
-pub static USER_1_SIGN: LazyLock<(UintAuthorityId, TestSignature, TestSignature, TestSignature)> =
+impl From<Beneficiary<Test>> for UintAuthorityId {
+    fn from(b: Beneficiary<Test>) -> UintAuthorityId {
+        match b {
+            Beneficiary::<Test>::Substrate(address) => UintAuthorityId::from(address),
+            Beneficiary::<Test>::Ethereum(_) => unreachable!(),
+        }
+    }
+}
+
+pub static USER_1_SIGN: LazyLock<(UintAuthorityId, TestSignature, TestSignature)> =
     LazyLock::new(|| {
         let user_signer = UintAuthorityId::from(USER_1);
         let claim_message = INIT_CLAIM_MESSAGE.clone();
         let wrapped_message = [
-            crate::MSG_PREFIX,
+            crate::beneficiary::MSG_PREFIX,
             claim_message.as_slice(),
-            crate::MSG_SUFFIX,
+            crate::beneficiary::MSG_SUFFIX,
         ]
         .concat();
-        let wrapped_message_eth = [crate::ETH_PREFIX, claim_message.as_slice()].concat();
         let user_signature = user_signer
             .sign(&INIT_CLAIM_MESSAGE.clone().as_slice())
             .unwrap();
         let user_signature_wrapped = user_signer.sign(&wrapped_message.as_slice()).unwrap();
-        let user_signature_eth_wrapped = user_signer.sign(&wrapped_message_eth.as_slice()).unwrap();
-        (
-            user_signer,
-            user_signature,
-            user_signature_wrapped,
-            user_signature_eth_wrapped,
-        )
+        (user_signer, user_signature, user_signature_wrapped)
     });
 
-pub static NON_BENEFICIARY_SIGN: LazyLock<(
-    UintAuthorityId,
-    TestSignature,
-    TestSignature,
-    TestSignature,
-)> = LazyLock::new(|| {
-    let user_signer = UintAuthorityId::from(NON_BENEFICIARY);
-    let claim_message = INIT_CLAIM_MESSAGE.clone();
-    let wrapped_message = [
-        crate::MSG_PREFIX,
-        claim_message.as_slice(),
-        crate::MSG_SUFFIX,
-    ]
-    .concat();
-    let wrapped_message_eth = [crate::ETH_PREFIX, claim_message.as_slice()].concat();
-    let user_signature = user_signer
-        .sign(&INIT_CLAIM_MESSAGE.clone().as_slice())
-        .unwrap();
-    let user_signature_wrapped = user_signer.sign(&wrapped_message.as_slice()).unwrap();
-    let user_signature_eth_wrapped = user_signer.sign(&wrapped_message_eth.as_slice()).unwrap();
-    (
-        user_signer,
-        user_signature,
-        user_signature_wrapped,
-        user_signature_eth_wrapped,
-    )
-});
+pub static NON_BENEFICIARY_SIGN: LazyLock<(UintAuthorityId, TestSignature, TestSignature)> =
+    LazyLock::new(|| {
+        let user_signer = UintAuthorityId::from(NON_BENEFICIARY);
+        let claim_message = INIT_CLAIM_MESSAGE.clone();
+        let wrapped_message = [
+            crate::beneficiary::MSG_PREFIX,
+            claim_message.as_slice(),
+            crate::beneficiary::MSG_SUFFIX,
+        ]
+        .concat();
+        let user_signature = user_signer
+            .sign(&INIT_CLAIM_MESSAGE.clone().as_slice())
+            .unwrap();
+        let user_signature_wrapped = user_signer.sign(&wrapped_message.as_slice()).unwrap();
+        (user_signer, user_signature, user_signature_wrapped)
+    });
 
 pub const MANAGER_USER: AccountId = 666;
 
-pub static GENESIS_BENEFICIARIES: [(AccountId, Balance); 3] = [
+pub static GENESIS_BENEFICIARIES: [(Beneficiary<Test>, Balance); 3] = [
     (USER_1, USER_1_AMOUNT),
     (USER_2, USER_2_AMOUNT),
     (USER_3, USER_3_AMOUNT),
 ];
 
-pub static EMPTY_BENEFICIARIES_MAP: LazyLock<BTreeMap<AccountId, Balance>> =
+pub static EMPTY_BENEFICIARIES_MAP: LazyLock<BTreeMap<Beneficiary<Test>, Balance>> =
     LazyLock::new(BTreeMap::new);
 
-pub static GENESIS_BENEFICIARIES_MAP: LazyLock<BTreeMap<AccountId, Balance>> =
-    LazyLock::new(|| GENESIS_BENEFICIARIES.into_iter().collect());
+pub static GENESIS_BENEFICIARIES_MAP: LazyLock<BTreeMap<Beneficiary<Test>, Balance>> =
+    LazyLock::new(|| GENESIS_BENEFICIARIES.clone().into_iter().collect());
 
 pub static SUFFICIENT_GENESIS_BALANCE: Balance = USER_1_AMOUNT + USER_2_AMOUNT + USER_3_AMOUNT;
 pub const INSUFFICIENT_GENESIS_BALANCE: Balance = USER_5_AMOUNT;
 
-pub static NEW_BENEFICIARIES: [(AccountId, Balance); 3] = [
+pub static NEW_BENEFICIARIES: [(Beneficiary<Test>, Balance); 3] = [
     (USER_4, USER_4_AMOUNT),
     (USER_5, USER_5_AMOUNT),
     (USER_6, USER_6_AMOUNT),
 ];
 
-pub static NEW_BENEFICIARIES_MAP: LazyLock<BTreeMap<AccountId, Balance>> =
-    LazyLock::new(|| NEW_BENEFICIARIES.into_iter().collect());
+pub static NEW_BENEFICIARIES_MAP: LazyLock<BTreeMap<Beneficiary<Test>, Balance>> =
+    LazyLock::new(|| NEW_BENEFICIARIES.clone().into_iter().collect());
 
 pub static NEW_SUFFICIENT_BALANCE: Balance = USER_4_AMOUNT + USER_5_AMOUNT + USER_6_AMOUNT;
+
+pub static ETH_BENEFICIARIES: [(Beneficiary<Test>, Balance); 1] = [(
+    Beneficiary::<Test>::Ethereum(crate::ethereum::EthereumAddress(hex_literal::hex!(
+        "308046c262264a11445865f727f94fb699b3a1b8"
+    ))),
+    USER_1_AMOUNT,
+)];
+
+pub static ETH_BENEFICIARIES_MAP: LazyLock<BTreeMap<Beneficiary<Test>, Balance>> =
+    LazyLock::new(|| ETH_BENEFICIARIES.clone().into_iter().collect());
 
 pub const INIT_CLAIM_MESSAGE: LazyLock<BoundedVec<u8, MaxClaimMessageLength>> =
     LazyLock::new(|| BoundedVec::try_from(b"TestMessage".to_vec()).unwrap());
@@ -185,6 +189,14 @@ impl crate::WeightInfo for MockWeightInfo {
             Self::PROOF_SIZE + variable,
         )
     }
+
+    fn claim_ethereum() -> sp_runtime::Weight {
+        frame_support::weights::Weight::from_parts(Self::REF_TIME, Self::PROOF_SIZE)
+    }
+
+    fn claim_ethereum_for() -> sp_runtime::Weight {
+        frame_support::weights::Weight::from_parts(Self::REF_TIME, Self::PROOF_SIZE)
+    }
 }
 
 parameter_types! {
@@ -213,6 +225,15 @@ impl<O: Into<Result<RawOrigin<AccountId>, O>> + From<RawOrigin<AccountId>>> Ensu
     }
 }
 
+pub struct MockAccountIdToBytesConversion;
+
+impl AccountIdToBytesLiteral<Test> for MockAccountIdToBytesConversion {
+    type AccountId = <Test as frame_system::Config>::AccountId;
+    fn to_bytes_literal(account: &Self::AccountId) -> Vec<u8> {
+        account.to_string().into_bytes()
+    }
+}
+
 parameter_types! {
     pub const ClaimPalletId: PalletId = PalletId(*b"zkvt/clm");
     pub const MaxBeneficiaries: u32 = 100;
@@ -231,6 +252,16 @@ impl crate::benchmarking::BenchmarkHelper<TestSignature, UintAuthorityId> for Mo
         let signature = signer.sign(&message).unwrap();
         (signature, signer)
     }
+
+    fn sign_claim_ethereum(
+        message: &[u8],
+    ) -> (
+        crate::ethereum::EthereumSignature,
+        crate::ethereum::EthereumAddress,
+    ) {
+        let sk = secret_from_seed(b"//TestBeneficiary");
+        (sig(&sk, message), eth(&sk))
+    }
 }
 
 impl crate::Config for Test {
@@ -247,6 +278,7 @@ impl crate::Config for Test {
     #[cfg(feature = "runtime-benchmarks")]
     type BenchmarkHelper = MockBenchmarkHelper;
     const MAX_OP_BENEFICIARIES: u32 = MaxOpBeneficiaries::get();
+    type AccountIdToBytesLiteral = MockAccountIdToBytesConversion;
 }
 
 // Configure a mock runtime to test the pallet.
@@ -337,10 +369,7 @@ pub fn test_genesis_with_beneficiaries(n: u32) -> sp_io::TestExternalities {
     .unwrap();
 
     crate::GenesisConfig::<Test> {
-        beneficiaries: utils::get_beneficiaries_map::<Test>(n)
-            .0
-            .into_iter()
-            .collect(),
+        beneficiaries: get_beneficiaries_map::<Test>(n).0.into_iter().collect(),
         genesis_balance: 42_000_000_000,
         claim_message: INIT_CLAIM_MESSAGE.clone(),
     }
@@ -367,10 +396,7 @@ pub fn test_genesis_empty_claim_message(n: u32) -> sp_io::TestExternalities {
     .unwrap();
 
     crate::GenesisConfig::<Test> {
-        beneficiaries: utils::get_beneficiaries_map::<Test>(n)
-            .0
-            .into_iter()
-            .collect(),
+        beneficiaries: get_beneficiaries_map::<Test>(n).0.into_iter().collect(),
         genesis_balance: 42_000_000_000,
         claim_message: EMPTY_CLAIM_MESSAGE.clone(),
     }
