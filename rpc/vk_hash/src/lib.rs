@@ -91,6 +91,12 @@ pub struct Plonky2Vk {
 }
 
 #[derive(Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EzklVk {
+    pub vkBytes: Bytes,
+}
+
+#[derive(Debug, Encode, Decode, Serialize, Deserialize)]
 pub struct FflonkVk {
     pub power: u8,
     pub k1: U256,
@@ -128,7 +134,7 @@ impl From<FflonkVk> for pallet_fflonk_verifier::vk::Vk {
 #[rpc(client, server, namespace = "vk_hash")]
 pub trait VKHashApi<ResponseType> {
     #[method(name = "ezkl")]
-    fn ezkl(&self, vk: Bytes) -> RpcResult<ResponseType>;
+    fn ezkl(&self, vk: EzklVk) -> RpcResult<ResponseType>;
     #[method(name = "fflonk")]
     fn fflonk(&self, vk: FflonkVk) -> RpcResult<ResponseType>;
     #[method(name = "groth16")]
@@ -156,8 +162,8 @@ impl VKHash {
 }
 
 impl VKHashApiServer<H256> for VKHash {
-    fn ezkl(&self, vk: Bytes) -> RpcResult<H256> {
-        let vk_bytes = vk.0;
+    fn ezkl(&self, vk: EzklVk) -> RpcResult<H256> {
+        let vk_bytes = vk.vkBytes;
         if vk_bytes.is_empty()
             || vk_bytes.len() & 31 != 0
             || vk_bytes.len() > MAX_VK_LENGTH as usize
@@ -168,7 +174,7 @@ impl VKHashApiServer<H256> for VKHash {
                 Some("Incorrect Slice Length".to_string()),
             ));
         }
-        let vk: VkOf<Ezkl<runtime::Runtime>> = pallet_ezkl_verifier::Vk::new(vk_bytes);
+        let vk: VkOf<Ezkl<runtime::Runtime>> = pallet_ezkl_verifier::Vk::new(vk_bytes.to_vec());
         Ok(Ezkl::<runtime::Runtime>::vk_hash(&vk))
     }
 

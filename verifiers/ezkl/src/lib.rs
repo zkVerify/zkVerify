@@ -31,6 +31,9 @@ pub use ezkl_no_std::PUBS_SIZE;
 
 // Maximum supported VKA length in bytes. Set to a multiple of 32.
 pub const MAX_VK_LENGTH: u32 = 3808;
+// Maximum supported proof length in bytes.
+pub const MAX_PROOF_LENGTH: u32 = 1872;
+
 pub struct EzklVkMaxByteLen;
 impl frame_support::traits::Get<u32> for EzklVkMaxByteLen {
     fn get() -> u32 {
@@ -92,6 +95,10 @@ impl<T: Config> Verifier for Ezkl<T> {
         ensure!(
             pubs.len() <= T::MaxPubs::get() as usize,
             hp_verifiers::VerifyError::InvalidInput
+        );
+        ensure!(
+            proof.len() <= MAX_PROOF_LENGTH as usize,
+            hp_verifiers::VerifyError::InvalidProofData
         );
 
         log::trace!("Verifying (no-std)");
