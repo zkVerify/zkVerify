@@ -255,6 +255,7 @@ impl crate::benchmarking::BenchmarkHelper<TestSignature, UintAuthorityId> for Mo
         crate::ethereum::EthereumSignature,
         crate::ethereum::EthereumAddress,
     ) {
+        use crate::utils::secp_utils::*;
         let sk = secret_from_seed(b"//TestBeneficiary");
         (sig(&sk, message), eth(&sk))
     }
