@@ -278,7 +278,7 @@ impl crate::Config for Test {
     #[cfg(feature = "runtime-benchmarks")]
     type BenchmarkHelper = MockBenchmarkHelper;
     const MAX_OP_BENEFICIARIES: u32 = MaxOpBeneficiaries::get();
-    type AccountIdToBytesLiteral = MockAccountIdToBytesConversion;
+    type AccountIdBytesToSign = MockAccountIdToBytesConversion;
 }
 
 // Configure a mock runtime to test the pallet.

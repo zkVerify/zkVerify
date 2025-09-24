@@ -203,10 +203,10 @@ exports.sudoInitClaim = async (signer, beneficiaries, initial_balance, message) 
   const palletAddress = palletAddressOption.unwrap();
   const transfer = api.tx.balances.transferAllowDeath(palletAddress, initial_balance);
   await submitExtrinsic(api, transfer, signer, BlockUntil.InBlock);
+  console.log(`Claim pallet funded with ${initial_balance} tokens`);
 
   // Begin claim and provide beneficiaries
   let extrinsic = api.tx.sudo.sudo(api.tx.claim.beginClaim(beneficiaries, message));
-
   return await submitExtrinsic(api, extrinsic, signer, BlockUntil.InBlock, (event) => event.section == "claim");
 }
 
@@ -215,11 +215,30 @@ exports.claim = async (signer, signature) => {
   return await submitExtrinsicUnsigned(api, extrinsic, BlockUntil.InBlock, (event) => event.section == "claim");
 }
 
+exports.claimEthereum = async (signer, signature, dest) => {
+  let extrinsic = api.tx.claim.claimEthereum(signer, signature, dest);
+  return await submitExtrinsicUnsigned(api, extrinsic, BlockUntil.InBlock, (event) => event.section == "claim");
+}
+
 exports.waitForEvent = async (api, timeout, pallet, name) => {
   return await waitForEvent(api, timeout, pallet, name);
 }
 
-// Wait for the next attestaion id to be published
+exports.getSS58Prefix = async() => {
+  const chain = await api.rpc.system.chain();
+  let ss58Prefix;
+  if (chain.toString().startsWith("Volta ")) {
+      ss58Prefix = 251;
+  } else if (chain.toString().startsWith("zkVerify ")) {
+      ss58Prefix = 8741;
+  } else {
+      console.log(`Unsupported chain ${chain}, only Volta and zkVerify are supported`);
+      throw new Error();
+  }
+  return ss58Prefix
+}
+
+// Wait for the next attestation id to be published
 async function waitForEvent(api, timeout, pallet, name) {
 
   const retVal = await new Promise(async (resolve, reject) => {

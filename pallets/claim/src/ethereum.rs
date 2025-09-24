@@ -1,10 +1,10 @@
 use super::*;
+use alloc::vec::Vec;
+use alloc::{format, string::String};
 use codec::DecodeWithMemTracking;
 use frame_support::pallet_prelude::*;
 use serde::{self, Deserialize, Deserializer, Serialize, Serializer};
 use sp_io::{crypto::secp256k1_ecdsa_recover, hashing::keccak_256};
-use alloc::{format, string::String};
-use alloc::vec::Vec;
 
 const ETH_PREFIX: &[u8] = b"\x19Ethereum Signed Message:\n";
 
@@ -117,17 +117,6 @@ impl<'de> Deserialize<'de> for EthereumSignature {
         Ok(r)
     }
 }
-
-// // Converts the given binary data into ASCII-encoded hex. It will be twice the length.
-// pub(crate) fn to_ascii_hex(data: &[u8]) -> Vec<u8> {
-//     let mut r = Vec::with_capacity(data.len() * 2);
-//     let mut push_nibble = |n| r.push(if n < 10 { b'0' + n } else { b'a' - 10 + n });
-//     for &b in data.iter() {
-//         push_nibble(b / 16);
-//         push_nibble(b % 16);
-//     }
-//     r
-// }
 
 // Constructs the message that Ethereum RPC's `personal_sign` and `eth_sign` would sign.
 pub(crate) fn ethereum_signable_message(msg: &[u8]) -> Vec<u8> {

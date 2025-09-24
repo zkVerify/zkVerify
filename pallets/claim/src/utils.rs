@@ -48,44 +48,47 @@ pub(crate) mod secp_utils {
     }
 }
 
-// mod test {
-//     use super::secp_utils::*;
-//     use crate::ethereum::{to_ascii_hex, EthereumAddress, EthereumSignature};
-//     use codec::Encode;
+mod test {
 
-//     fn parse_secret(secret_bytes: &[u8]) -> libsecp256k1::SecretKey {
-//         libsecp256k1::SecretKey::parse_slice(secret_bytes).unwrap()
-//     }
-// 
-//     #[test]
-//     fn consistency_check() {
-//         // Check we derive same address
-//         let eth_address = EthereumAddress(hex_literal::hex!(
-//             ""
-//         ));
+    #[test]
+    fn consistency_check() {
+        use super::secp_utils::*;
+        use crate::ethereum::{EthereumAddress, EthereumSignature};
 
-//         let secret_bytes =
-//             hex_literal::hex!("");
-//         let secret = parse_secret(&secret_bytes[..]);
-//         let derived_address = eth(&secret);
+        fn parse_secret(secret_bytes: &[u8]) -> libsecp256k1::SecretKey {
+            libsecp256k1::SecretKey::parse_slice(secret_bytes).unwrap()
+        }
 
-//         assert_eq!(derived_address, eth_address);
+        // Check consistency with EOA wallets (e.g. Metamask, Talisman, ...)
 
-//         // Check signature and verification works the same
-//         // The hardcoded signature was generated via Etherscan "Verified Signature" tool linked to a Metamask wallet
-//         let message = b"TestMessage42";
-//         let derived_signature = sig(&secret, &message[..]);
+        // Check we derive same address
+        let eth_address = EthereumAddress(hex_literal::hex!(
+            "CFb405552868d9906DeDCAbe2F387a37E35e9610"
+        ));
 
-//         assert_eq!(
-//             eth_address,
-//             crate::ethereum::eth_recover(&derived_signature, &message[..]).unwrap()
-//         );
-//         assert_eq!(
-//             derived_address,
-//             crate::ethereum::eth_recover(
-//                 &EthereumSignature(hex_literal::hex!("")),
-//                 &message[..]
-//             ).unwrap()
-//         );
-//     }
-// }
+        // Useless key
+        let secret_bytes =
+            hex_literal::hex!("7b2d076abcc1215ef9c5a37da07f50c92de1048b2e1e7a27b74c0ce154f9cbae");
+        let secret = parse_secret(&secret_bytes[..]);
+        let derived_address = eth(&secret);
+
+        assert_eq!(derived_address, eth_address);
+
+        // Check signature and verification works the same
+        // The hardcoded signature was generated via Etherscan "Verified Signature" tool linked to a Metamask wallet
+        let message = b"TestMessage42";
+        let derived_signature = sig(&secret, &message[..]);
+
+        assert_eq!(
+            eth_address,
+            crate::ethereum::eth_recover(&derived_signature, &message[..]).unwrap()
+        );
+        assert_eq!(
+            derived_address,
+            crate::ethereum::eth_recover(
+                &EthereumSignature(hex_literal::hex!("731dd59f3e8685917f883c9b70645a157704d877784a61593abb8635c063bfb02df081d2a99316b4710aab27b878ce496a882342312ba857b84823164c667be31c")),
+                &message[..]
+            ).unwrap()
+        );
+    }
+}

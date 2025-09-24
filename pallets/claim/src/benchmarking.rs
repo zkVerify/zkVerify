@@ -132,7 +132,7 @@ mod benchmarks {
         let claim_message = [
             msg.as_slice(),
             ETH_MSG_SEPARATOR,
-            T::AccountIdToBytesLiteral::to_bytes_literal(&dest).as_slice(),
+            T::AccountIdBytesToSign::to_bytes_literal(&dest).as_slice(),
         ]
         .concat();
         let (signature, signer) = T::BenchmarkHelper::sign_claim_ethereum(claim_message.as_slice());
