@@ -6,6 +6,7 @@ use sp_runtime::Saturating;
 pub(crate) fn get_beneficiaries_map<T: Config>(
     n: u32,
 ) -> (BTreeMap<Beneficiary<T>, BalanceOf<T>>, BalanceOf<T>) {
+    use secp_utils::{eth, secret_from_seed};
     let base_amount = BalanceOf::<T>::from(T::Currency::minimum_balance());
     let mut total_amount = BalanceOf::<T>::zero();
     let beneficiaries_map = (1..=n)
@@ -13,7 +14,15 @@ pub(crate) fn get_beneficiaries_map<T: Config>(
         .map(|i| {
             let amount = base_amount.saturating_add(i.into());
             total_amount = total_amount.saturating_add(amount);
-            (Beneficiary::<T>::Substrate(account("", i, i)), amount)
+            // Mix Substrate and Ethereum beneficiaries
+            if i % 2 == 0 {
+                (Beneficiary::<T>::Substrate(account("", i, i)), amount)
+            } else {
+                (
+                    Beneficiary::<T>::Ethereum(eth(&secret_from_seed(&i.to_string().into_bytes()))),
+                    amount,
+                )
+            }
         })
         .collect::<BTreeMap<_, _>>();
     (beneficiaries_map, total_amount)
