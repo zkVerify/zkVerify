@@ -15,6 +15,10 @@
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
 #![allow(clippy::all)]
+// From rust 1.90.0 `RelayChainResult<(Arc<(dyn RelayChainInterface + 'static)>, Option<CollatorPair>)>`
+// become a lint warning due the `unused_parens`. That is the less invasive way to avoid it without
+// putting it in the middle of the code.
+#![allow(unused_parens)]
 
 use collator_overseer::NewMinimalNode;
 
