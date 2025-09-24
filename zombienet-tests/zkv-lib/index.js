@@ -224,20 +224,6 @@ exports.waitForEvent = async (api, timeout, pallet, name) => {
   return await waitForEvent(api, timeout, pallet, name);
 }
 
-exports.getSS58Prefix = async() => {
-  const chain = await api.rpc.system.chain();
-  let ss58Prefix;
-  if (chain.toString().startsWith("Volta ")) {
-      ss58Prefix = 251;
-  } else if (chain.toString().startsWith("zkVerify ")) {
-      ss58Prefix = 8741;
-  } else {
-      console.log(`Unsupported chain ${chain}, only Volta and zkVerify are supported`);
-      throw new Error();
-  }
-  return ss58Prefix
-}
-
 // Wait for the next attestation id to be published
 async function waitForEvent(api, timeout, pallet, name) {
 

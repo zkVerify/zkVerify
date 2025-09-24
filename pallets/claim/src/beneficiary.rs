@@ -26,8 +26,8 @@ impl<T: Config> PartialOrd for Beneficiary<T> {
         use Beneficiary::*;
 
         match (self, other) {
-            (Substrate(_), Ethereum(_)) => Some(Ordering::Greater),
-            (Ethereum(_), Substrate(_)) => Some(Ordering::Less),
+            (Substrate(_), Ethereum(_)) => Some(Ordering::Less),
+            (Ethereum(_), Substrate(_)) => Some(Ordering::Greater),
             (Substrate(sa), Substrate(sb)) => sa.partial_cmp(&sb),
             (Ethereum(ea), Ethereum(eb)) => ea.partial_cmp(&eb),
         }
@@ -39,8 +39,8 @@ impl<T: Config> Ord for Beneficiary<T> {
         use Beneficiary::*;
 
         match (self, other) {
-            (Substrate(_), Ethereum(_)) => Ordering::Greater,
-            (Ethereum(_), Substrate(_)) => Ordering::Less,
+            (Substrate(_), Ethereum(_)) => Ordering::Less,
+            (Ethereum(_), Substrate(_)) => Ordering::Greater,
             (Substrate(sa), Substrate(sb)) => sa.cmp(&sb),
             (Ethereum(ea), Ethereum(eb)) => ea.cmp(&eb),
         }
