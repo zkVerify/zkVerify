@@ -1,5 +1,5 @@
 use crate::beneficiary::Beneficiary;
-use crate::ethereum::{EthereumAddress, EthereumSignature};
+use crate::ethereum::EthereumSignature;
 use crate::mock::RuntimeEvent as TestEvent;
 use crate::mock::*;
 use crate::*;
@@ -307,47 +307,82 @@ fn claim() {
 }
 
 #[test]
-fn claim_ethereum() {
+fn claim_ethereum_regression() {
     test_with_configs(
-        WithGenesisBeneficiaries::No,
+        WithGenesisBeneficiaries::Yes,
         GenesisClaimBalance::Sufficient,
     )
     .execute_with(|| {
-        Claim::begin_claim(
-            Origin::Signed(MANAGER_USER).into(),
-            ETH_BENEFICIARIES_MAP.clone(),
-            INIT_CLAIM_MESSAGE.clone(),
-        )
-        .unwrap();
-
-        // Insert Eth Beneficiary
-        let eth_address = EthereumAddress(hex_literal::hex!(
-            "CFb405552868d9906DeDCAbe2F387a37E35e9610"
-        ));
-        let amount = USER_1_AMOUNT;
-        let beneficiary = Beneficiary::<Test>::Ethereum(eth_address);
-        Beneficiaries::<Test>::insert(beneficiary.clone(), amount);
-
         // Prepare claim message and signature
+        // Signature on "INIT_CLAIM_MESSAGE||\n||USER_1_RAW"
         let eth_signature = EthereumSignature(hex_literal::hex!("cb88919aba9de0cac6fe685f93d7fdad484e1d17aeedea6c01120c9f6aaa823f247a9a47b2390489417f63c0300b8f72301aadf7a2060f429ed9733b841b31851b"));
         assert_ok!(Claim::claim_ethereum(
             Origin::None.into(),
-            eth_address,
+            USER_3_RAW,
             eth_signature,
             USER_1_RAW
         ));
 
         assert_evt(
             Event::Claimed {
-                beneficiary,
+                beneficiary: USER_3,
+                amount: USER_3_AMOUNT,
+            },
+            "Successfull claim",
+        );
+        assert_eq!(Claim::pot(), SUFFICIENT_GENESIS_BALANCE - USER_3_AMOUNT);
+        assert_eq!(TotalClaimable::<Test>::get(), SUFFICIENT_GENESIS_BALANCE - USER_3_AMOUNT);
+        assert_eq!(Balances::free_balance(USER_1_RAW), USER_3_AMOUNT);
+        assert!(Beneficiaries::<Test>::get(USER_3).is_none());
+    })
+}
+
+#[test]
+fn claim_ethereum() {
+    test_with_configs(
+        WithGenesisBeneficiaries::Yes,
+        GenesisClaimBalance::Sufficient,
+    )
+    .execute_with(|| {
+        use crate::utils::secp_utils::*;
+
+        // Create beneficiary
+        let secret = secret_from_seed(b"//TestClaimEthereum");
+        let address = eth(&secret);
+        let beneficiary = Beneficiary::<Test>::Ethereum(address);
+        Beneficiaries::<Test>::insert(beneficiary.clone(), USER_1_AMOUNT);
+
+        // Prepare signature
+        let msg_to_sign = [
+            INIT_CLAIM_MESSAGE.clone().as_slice(),
+            crate::beneficiary::ETH_MSG_SEPARATOR,
+            MockAccountIdToBytesConversion::to_bytes_literal(&USER_1_RAW).as_slice(),
+        ]
+        .concat();
+        let eth_signature = sig(&secret, msg_to_sign.as_slice());
+
+        // Claim
+        assert_ok!(Claim::claim_ethereum(
+            Origin::None.into(),
+            address,
+            eth_signature,
+            USER_1_RAW
+        ));
+
+        assert_evt(
+            Event::Claimed {
+                beneficiary: beneficiary.clone(),
                 amount: USER_1_AMOUNT,
             },
             "Successfull claim",
         );
         assert_eq!(Claim::pot(), SUFFICIENT_GENESIS_BALANCE - USER_1_AMOUNT);
-        assert_eq!(TotalClaimable::<Test>::get(), 0);
+        assert_eq!(
+            TotalClaimable::<Test>::get(),
+            SUFFICIENT_GENESIS_BALANCE - USER_1_AMOUNT
+        );
         assert_eq!(Balances::free_balance(USER_1_RAW), USER_1_AMOUNT);
-        assert!(Beneficiaries::<Test>::get(USER_1).is_none());
+        assert!(Beneficiaries::<Test>::get(beneficiary).is_none());
     })
 }
 
@@ -955,7 +990,7 @@ fn end_claim_with_remaining_benificiaries() {
 }
 
 #[test]
-fn cannot_init_new_claim_if_leftovers_benificiaries() {
+fn cannot_init_new_claim_if_leftovers_beneficiaries() {
     test().execute_with(|| {
         Beneficiaries::<Test>::insert(USER_6, USER_6_AMOUNT);
 
@@ -1071,7 +1106,7 @@ fn validate_unsigned_works() {
                 provides: vec![(
                     "claim",
                     claim_id.clone(),
-                    crate::beneficiary::Beneficiary::<Test>::Substrate(user_address),
+                    Beneficiary::<Test>::Substrate(user_address),
                     empty_dest
                 )
                     .encode()],
@@ -1095,8 +1130,35 @@ fn validate_unsigned_works() {
                 provides: vec![(
                     "claim",
                     claim_id.clone(),
-                    crate::beneficiary::Beneficiary::<Test>::Substrate(user_address),
+                    Beneficiary::<Test>::Substrate(user_address),
                     empty_dest
+                )
+                    .encode()],
+                longevity: TransactionLongevity::MAX,
+                propagate: true,
+            })
+        );
+
+        // Claim Ethereum ok
+        // Signature on "INIT_CLAIM_MESSAGE||\n||USER_1_RAW"
+        let eth_signature = EthereumSignature(hex_literal::hex!("cb88919aba9de0cac6fe685f93d7fdad484e1d17aeedea6c01120c9f6aaa823f247a9a47b2390489417f63c0300b8f72301aadf7a2060f429ed9733b841b31851b"));
+        assert_eq!(
+            Pallet::<Test>::validate_unsigned(
+                source,
+                &ClaimCall::claim_ethereum {
+                    beneficiary: USER_3_RAW,
+                    signature: eth_signature,
+                    dest: USER_1_RAW
+                }
+            ),
+            Ok(ValidTransaction {
+                priority: 100,
+                requires: vec![],
+                provides: vec![(
+                    "claim",
+                    claim_id.clone(),
+                    USER_3,
+                    Some(USER_1_RAW)
                 )
                     .encode()],
                 longevity: TransactionLongevity::MAX,

@@ -166,7 +166,7 @@ pub fn test() -> sp_io::TestExternalities {
         beneficiaries: SAMPLE_USERS
             .iter()
             .cloned()
-            .map(|user| (user.raw_account.into(), user.starting_balance))
+            .map(|user| (pallet_claim::Beneficiary::<super::Runtime>::Substrate(user.raw_account.into()), user.starting_balance))
             .collect(),
         genesis_balance: total_balances(),
         claim_message: frame_support::BoundedVec::try_from(b"TestMessage".to_vec()).unwrap(),

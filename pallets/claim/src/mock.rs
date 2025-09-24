@@ -35,6 +35,7 @@ use sp_runtime::{
 };
 
 use crate::beneficiary::{AccountIdToBytesLiteral, Beneficiary};
+use crate::ethereum::EthereumAddress;
 use crate::utils::{get_beneficiaries_map, secp_utils::*};
 
 pub type Balance = u128;
@@ -48,14 +49,19 @@ pub const USER_1: Beneficiary<Test> = Beneficiary::<Test>::Substrate(USER_1_RAW)
 pub const USER_1_AMOUNT: Balance = 42_000_000_000;
 pub const USER_2: Beneficiary<Test> = Beneficiary::<Test>::Substrate(24);
 pub const USER_2_AMOUNT: Balance = 24_000_000_000;
-pub const USER_3: Beneficiary<Test> = Beneficiary::<Test>::Substrate(42_000);
-pub const USER_3_AMOUNT: Balance = 100_000_000_000;
+pub const USER_3_RAW: EthereumAddress = EthereumAddress(hex_literal::hex!(
+    "CFb405552868d9906DeDCAbe2F387a37E35e9610"
+));
+pub const USER_3: Beneficiary<Test> = Beneficiary::<Test>::Ethereum(USER_3_RAW);
+pub const USER_3_AMOUNT: Balance = 50_000_000_000;
 pub const USER_4: Beneficiary<Test> = Beneficiary::<Test>::Substrate(24_000);
 pub const USER_4_AMOUNT: Balance = 200_000_000_000;
 pub const USER_5: Beneficiary<Test> = Beneficiary::<Test>::Substrate(99_000);
 pub const USER_5_AMOUNT: Balance = 300_000_000;
-pub const USER_6: Beneficiary<Test> = Beneficiary::<Test>::Substrate(33_333);
-pub const USER_6_AMOUNT: Balance = 50_000_000_000;
+pub const USER_6: Beneficiary<Test> = Beneficiary::<Test>::Ethereum(EthereumAddress(
+    hex_literal::hex!("308046c262264a11445865f727f94fb699b3a1b8"),
+));
+pub const USER_6_AMOUNT: Balance = 100_000_000_000;
 pub const NON_BENEFICIARY_RAW: AccountId = 6;
 pub const NON_BENEFICIARY: Beneficiary<Test> = Beneficiary::<Test>::Substrate(NON_BENEFICIARY_RAW);
 
@@ -129,16 +135,6 @@ pub static NEW_BENEFICIARIES_MAP: LazyLock<BTreeMap<Beneficiary<Test>, Balance>>
     LazyLock::new(|| NEW_BENEFICIARIES.clone().into_iter().collect());
 
 pub static NEW_SUFFICIENT_BALANCE: Balance = USER_4_AMOUNT + USER_5_AMOUNT + USER_6_AMOUNT;
-
-pub static ETH_BENEFICIARIES: [(Beneficiary<Test>, Balance); 1] = [(
-    Beneficiary::<Test>::Ethereum(crate::ethereum::EthereumAddress(hex_literal::hex!(
-        "308046c262264a11445865f727f94fb699b3a1b8"
-    ))),
-    USER_1_AMOUNT,
-)];
-
-pub static ETH_BENEFICIARIES_MAP: LazyLock<BTreeMap<Beneficiary<Test>, Balance>> =
-    LazyLock::new(|| ETH_BENEFICIARIES.clone().into_iter().collect());
 
 pub const INIT_CLAIM_MESSAGE: LazyLock<BoundedVec<u8, MaxClaimMessageLength>> =
     LazyLock::new(|| BoundedVec::try_from(b"TestMessage".to_vec()).unwrap());
