@@ -16,26 +16,38 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![deny(missing_docs)]
 
-//! A pallet implementing the possibility of making claims on-chain and letting **Beneficiaries**
-//! manually claim the amount of tokens they have right to.
-//! **Beneficiaries** need to provide a signature on a message, decided at claim start, and the
-//! **claim** extrinsic will be feeless. Tokens will be sent to the account they have used for signing.
-//! Only **ManagerOrigin** is able to start and end claims, as well as adding beneficiaries with
-//! their rightful balance.
-//! Currently it possible only to held one claim at a time.
-//! When claim ends, all the funds still available in the pallet's associated account
-//! are transferred to **UnclaimedDestination**.
-//! At claim end, up to **T::MaxOpBeneficiaries** are removed from storage.
-//! An event will signal if all have been removed or others are remaining.
-//! In case there are leftovers, the pallet manager needs to manually remove them
-//! by calling **remove_beneficiaries** extrinsic.
+//! This pallet allows to perform token giveaways to selected beneficiaries with a manual claiming process.
+//! Only a **ManagerOrigin** is allowed to start and end a claiming process, as well as adding the corresponding
+//! beneficiaries and remove leftover ones. Only one claim can be held at a time.
+//! The claiming process for beneficiaries is completely feeless, and handled via unsigned extrinsics.
+//! A Beneficiary can be either a Substrate addresses (of type **T::AccountId**) or Ethereum addresses,
+//! and the procedure for claiming is slightly different:
+//!
+//! Substrate beneficiaries need to provide a signature on a claiming message, established at the
+//! time of claim start, from the same address that is loaded in the beneficiaries list. The
+//! tokens will be sent to that very same address. All types of Substrate signatures are supported
+//! (sr25519, ed25519, ecdsa).
+//! Signature can be generated either locally (e.g. via sub-key tool) or via PolkadotJS 'Sign&Verify' tool.
+//!
+//! Ethereum beneficiaries need to provide a Substrate destination address on which they want the tokens
+//! to be sent. In order to be allowed to do that, they need to provide a signature on a claiming message,
+//! established at the time of claim start, followed by a separator (currently '\n') and a byte encoding of
+//! the destination address as defined by **T::AccountIdBytesToSign**.
+//!
+//! When claim ends, unclaimed funds will be transferred to **T::UnclaimedDestination**, and the beneficiaries
+//! list will be cleared.
+//! Please note that is possible to add/remove up to **T::MaxOpBeneficiaries** at a time.
+//! Larger batches require multiple, separate calls to **add_beneficiaries** and **remove_beneficiaries**.
+//! It is possible to add new beneficiaries only when a claim has started (or at the moment of start) and if
+//! the account associated to the pallet has enough funds to cover all of them, and remove them only when
+//! a claim has ended.
 
 #![allow(clippy::borrow_interior_mutable_const)]
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 mod beneficiary;
-pub use beneficiary::{AccountId32ToBytes, AccountIdToBytesLiteral};
+pub use beneficiary::{AccountId32ToBytes, AccountIdToBytesLiteral, Beneficiary};
 mod ethereum;
 #[cfg(test)]
 mod mock;
@@ -107,10 +119,10 @@ pub mod pallet {
         #[pallet::constant]
         type PalletId: Get<PalletId>;
 
-        /// Manager allowed to begin/end claims and add beneficiaries
+        /// Manager allowed to begin/end claims and add/remove beneficiaries
         type ManagerOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
-        /// The staking balance.
+        /// The currency type.
         type Currency: Mutate<Self::AccountId>;
 
         /// Destination for unclaimed assets
@@ -119,13 +131,13 @@ pub mod pallet {
         /// Weight information for extrinsics in this pallet.
         type WeightInfo: WeightInfo;
 
-        /// The signer of the message for claiming assigned tokens
+        /// The signer of the message for claiming assigned tokens, for Substrate beneficiaries.
         type Signer: IdentifyAccount<AccountId = Self::AccountId> + Parameter;
 
-        /// The type of signature to be supplied for claiming the tokens
+        /// The type of signature to be supplied for claiming the tokens for Substrate beneiciaries
         type Signature: Verify<Signer = Self::Signer> + Parameter;
 
-        /// Means of converting an account ID to bytes suitable to be signed from Ethereum bytes
+        /// Means of converting an account ID to bytes suitable to be signed on Ethereum-side
         type AccountIdBytesToSign: crate::beneficiary::AccountIdToBytesLiteral<
             Self,
             AccountId = Self::AccountId,
@@ -470,8 +482,11 @@ pub mod pallet {
         /// Declare the beginning of a new claim and start adding beneficiaries (if specified).
         /// Raise an Error if:
         /// - There is an already active claim
-        /// - There isn't enough balance in the pallets' account to cover for the claim of the supplied beneficiaries (if specified)
-        /// This is an atomic operation. If there isn't enough balance to cover for all the beneficiaries, then none will be added.
+        /// - The claim message is empty
+        /// - An error has occurred during insertion of the beneficiaries (insufficient amount,
+        ///   duplicates, pallet doesn't have enough funds)
+        /// - Trying to add too many beneficiaries (more than **T::MaxOpBeneficiaries**)
+        /// The add_beneficiaries operation is atomic. If one insertion fails, the whole extrinsic fails.
         /// Origin must be the ManagerOrigin.
         #[pallet::call_index(0)]
         #[pallet::weight(T::WeightInfo::begin_claim(beneficiaries.len() as u32))]
@@ -528,9 +543,13 @@ pub mod pallet {
             Ok(())
         }
 
-        /// Claim token claim for 'origin' and send the tokens to 'dest'.
-        /// Fails if 'origin' is not entitled to any claim.
-        /// 'origin' must be signed.
+        /// Claim tokens for a 'beneficiary' with a Substrate address, provided a
+        /// 'signature' on the actual claim message.
+        /// 'origin' must be none.
+        /// Fails if:
+        /// - 'beneficiary' is not entitled to any token
+        /// - The supplied 'signature' is invalid.
+        /// - There is no active airdrop
         #[pallet::call_index(1)]
         #[pallet::weight(T::WeightInfo::claim())]
         pub fn claim(
@@ -545,8 +564,11 @@ pub mod pallet {
             Self::do_claim(beneficiary, None)
         }
 
-        /// Claim token claim for 'dest'.
-        /// Fails if 'dest' is not entitled to any claim.
+        /// Allows an 'origin' to claim tokens in place of a Substrate beneficiary 'dest' (taking care of the fees).
+        /// Fails if:
+        /// - 'dest' is not entitled to any token
+        /// - There is no active airdrop
+        /// 'origin' must be signed
         #[pallet::call_index(2)]
         #[pallet::weight(T::WeightInfo::claim_for())]
         pub fn claim_for(origin: OriginFor<T>, dest: T::AccountId) -> DispatchResult {
@@ -558,9 +580,11 @@ pub mod pallet {
 
         /// Add beneficiaries.
         /// Raise an Error if:
-        /// - There isn't enough balance in the pallets' account to cover for the claim of the supplied beneficiaries (if specified)
-        /// - Attempt to modify the claimable amount of an already existing beneficiary
-        /// This is an atomic operation. If there isn't enough balance to cover for all the beneficiaries, then none will be added.
+        /// - There is no active airdrop
+        /// - There isn't enough balance in the pallets' account to cover for the tokens belonging to the supplied beneficiaries
+        /// - Attempt to modify the claimable amount of an already existing beneficiary or adding a duplicate
+        /// - Attempt to assign 0 tokens to a beneficiary.
+        /// This is an atomic operation.
         /// Origin must be the ManagerOrigin.
         #[pallet::call_index(3)]
         #[pallet::weight(T::WeightInfo::add_beneficiaries(beneficiaries.len() as u32))]
@@ -587,9 +611,9 @@ pub mod pallet {
         /// End a claim. Storage variables will be cleared.
         /// Any unclaimed balance will be sent to the destination specified as per 'UnclaimedDestination'.
         /// Raise an Error if attempting to end an already ended claim.
+        /// This extrinsic will attempt to remove as many beneficiaries as possible from storage.
+        /// However, if there are more than **T::MaxOpBeneficiaries**, subsequent call(s) to 'remove_beneficiaries' must be made.
         /// Origin must be 'ManagerOrigin'.
-        /// NOTE: This extrinsic will attempt to remove as much beneficiaries as possible from storage.
-        /// However, if there are more than T::MAX_OP_BENEFICIARIES, a subsequent call to 'remove_beneficiaries' must be made.
         #[pallet::call_index(4)]
         #[pallet::weight(T::WeightInfo::remove_beneficiaries(u32::min(Beneficiaries::<T>::count(), T::MAX_OP_BENEFICIARIES))
             .saturating_add(T::WeightInfo::end_claim())
@@ -630,7 +654,8 @@ pub mod pallet {
             Ok(())
         }
 
-        /// Remove as many beneficiaries as possible from storage.
+        /// Remove as many beneficiaries as possible (up to **T::MaxOpBeneficiaries**) from storage.
+        /// Fails if there is a claim in progress.
         /// Origin must be 'ManagerOrigin'.
         #[pallet::call_index(5)]
         #[pallet::weight(T::WeightInfo::remove_beneficiaries(u32::min(Beneficiaries::<T>::count(), T::MAX_OP_BENEFICIARIES)).saturating_add(T::DbWeight::get().reads(1_u64)))]
@@ -646,9 +671,13 @@ pub mod pallet {
             Ok(())
         }
 
-        /// Claim token claim for 'origin' and send the tokens to 'dest'.
-        /// Fails if 'origin' is not entitled to any claim.
-        /// 'origin' must be signed.
+        /// Claim tokens for a 'beneficiary' with an Ethereum address and send them to 'dest',
+        ///  provided a 'signature' on the actual claim message and 'dest'.
+        /// 'origin' must be none.
+        /// Fails if:
+        /// - 'beneficiary' is not entitled to any token
+        /// - The supplied 'signature' is invalid.
+        /// - There is no active airdrop
         #[pallet::call_index(6)]
         #[pallet::weight(T::WeightInfo::claim_ethereum())]
         pub fn claim_ethereum(
@@ -664,8 +693,11 @@ pub mod pallet {
             Self::do_claim(beneficiary, Some(dest))
         }
 
-        /// Claim token claim for 'dest'.
-        /// Fails if 'dest' is not entitled to any claim.
+        /// Allows an 'origin' to claim tokens in place of an Ethereum beneficiary 'dest' (taking care of the fees).
+        /// Fails if:
+        /// - 'dest' is not entitled to any token
+        /// - There is no active airdrop
+        /// 'origin' must be signed
         #[pallet::call_index(7)]
         #[pallet::weight(T::WeightInfo::claim_ethereum_for())]
         pub fn claim_ethereum_for(

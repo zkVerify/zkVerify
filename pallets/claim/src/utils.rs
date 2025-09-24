@@ -6,7 +6,9 @@ use sp_runtime::Saturating;
 pub(crate) fn get_beneficiaries_map<T: Config>(
     n: u32,
 ) -> (BTreeMap<Beneficiary<T>, BalanceOf<T>>, BalanceOf<T>) {
+    use crate::alloc::string::ToString;
     use secp_utils::{eth, secret_from_seed};
+
     let base_amount = BalanceOf::<T>::from(T::Currency::minimum_balance());
     let mut total_amount = BalanceOf::<T>::zero();
     let beneficiaries_map = (1..=n)

@@ -582,6 +582,35 @@ fn claim_for() {
 }
 
 #[test]
+fn claim_ethereum_for() {
+    test_with_configs(
+        WithGenesisBeneficiaries::Yes,
+        GenesisClaimBalance::Sufficient,
+    )
+    .execute_with(|| {
+        assert_ok!(Claim::claim_ethereum_for(
+            Origin::Signed(MANAGER_USER).into(),
+            USER_3_RAW,
+            USER_1_RAW
+        ));
+        assert_evt(
+            Event::Claimed {
+                beneficiary: USER_3,
+                amount: USER_3_AMOUNT,
+            },
+            "Successfull claim for another beneficiary",
+        );
+        assert_eq!(Claim::pot(), SUFFICIENT_GENESIS_BALANCE - USER_3_AMOUNT);
+        assert_eq!(
+            TotalClaimable::<Test>::get(),
+            SUFFICIENT_GENESIS_BALANCE - USER_3_AMOUNT
+        );
+        assert_eq!(Balances::free_balance(USER_1_RAW), USER_3_AMOUNT);
+        assert!(Beneficiaries::<Test>::get(USER_3).is_none());
+    });
+}
+
+#[test]
 fn claim_for_insufficient_balance() {
     // Should never happen
     test_with_configs(

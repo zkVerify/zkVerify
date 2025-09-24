@@ -77,7 +77,7 @@ impl core::default::Default for EthereumSignature {
 
 impl PartialEq for EthereumSignature {
     fn eq(&self, other: &Self) -> bool {
-        &self.0[..] == &other.0[..]
+        self.0[..] == other.0[..]
     }
 }
 

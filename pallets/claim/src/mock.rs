@@ -36,7 +36,7 @@ use sp_runtime::{
 
 use crate::beneficiary::{AccountIdToBytesLiteral, Beneficiary};
 use crate::ethereum::EthereumAddress;
-use crate::utils::{get_beneficiaries_map, secp_utils::*};
+use crate::utils::get_beneficiaries_map;
 
 pub type Balance = u128;
 pub type AccountId = u64;

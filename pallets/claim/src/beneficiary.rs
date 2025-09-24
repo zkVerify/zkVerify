@@ -23,14 +23,7 @@ pub enum Beneficiary<T: Config> {
 
 impl<T: Config> PartialOrd for Beneficiary<T> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        use Beneficiary::*;
-
-        match (self, other) {
-            (Substrate(_), Ethereum(_)) => Some(Ordering::Less),
-            (Ethereum(_), Substrate(_)) => Some(Ordering::Greater),
-            (Substrate(sa), Substrate(sb)) => sa.partial_cmp(&sb),
-            (Ethereum(ea), Ethereum(eb)) => ea.partial_cmp(&eb),
-        }
+        Some(self.cmp(other))
     }
 }
 
@@ -41,8 +34,8 @@ impl<T: Config> Ord for Beneficiary<T> {
         match (self, other) {
             (Substrate(_), Ethereum(_)) => Ordering::Less,
             (Ethereum(_), Substrate(_)) => Ordering::Greater,
-            (Substrate(sa), Substrate(sb)) => sa.cmp(&sb),
-            (Ethereum(ea), Ethereum(eb)) => ea.cmp(&eb),
+            (Substrate(sa), Substrate(sb)) => sa.cmp(sb),
+            (Ethereum(ea), Ethereum(eb)) => ea.cmp(eb),
         }
     }
 }
@@ -102,8 +95,8 @@ impl<T: Config> ClaimSignature<T> {
                 // the message is wrapped in this way "<Bytes>MSG</Bytes>"", w.r.t. to signing with
                 // the keyring directly. Thus we need to take into consideration both cases here
                 let prefixed_message = [MSG_PREFIX, claim_message, MSG_SUFFIX].concat();
-                sub_sig.verify(claim_message, &sub_addr)
-                    || sub_sig.verify(prefixed_message.as_slice(), &sub_addr)
+                sub_sig.verify(claim_message, sub_addr)
+                    || sub_sig.verify(prefixed_message.as_slice(), sub_addr)
             }
 
             // Beneficiary with Ethereum address
@@ -115,7 +108,7 @@ impl<T: Config> ClaimSignature<T> {
                 let msg_with_dest =
                     [claim_message, ETH_MSG_SEPARATOR, dest_account.as_slice()].concat();
                 // Check signature is successful and signer from signature is the same as beneficiary
-                eth_recover(&eth_sig, msg_with_dest.as_slice())
+                eth_recover(eth_sig, msg_with_dest.as_slice())
                     .map_or_else(|| false, |extracted_signer| extracted_signer == *eth_addr)
             }
             _ => unreachable!(), // Other combinations not allowed
