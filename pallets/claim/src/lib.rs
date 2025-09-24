@@ -126,7 +126,7 @@ pub mod pallet {
         type Signature: Verify<Signer = Self::Signer> + Parameter;
 
         /// Means of converting an account ID to bytes suitable to be signed from Ethereum bytes
-        type AccountIdToBytesLiteral: crate::beneficiary::AccountIdToBytesLiteral<
+        type AccountIdBytesToSign: crate::beneficiary::AccountIdToBytesLiteral<
             Self,
             AccountId = Self::AccountId,
         >;

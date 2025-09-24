@@ -322,14 +322,14 @@ fn claim_ethereum() {
 
         // Insert Eth Beneficiary
         let eth_address = EthereumAddress(hex_literal::hex!(
-            "308046c262264a11445865f727f94fb699b3a1b8"
+            "CFb405552868d9906DeDCAbe2F387a37E35e9610"
         ));
         let amount = USER_1_AMOUNT;
         let beneficiary = Beneficiary::<Test>::Ethereum(eth_address);
         Beneficiaries::<Test>::insert(beneficiary.clone(), amount);
 
         // Prepare claim message and signature
-        let eth_signature = EthereumSignature(hex_literal::hex!("64ca60bf905cd76ecbbd49b7e4bdaad957e8059353a35ba3fb4e8481009050006c16d2a5df31773dfa24da047e540cbbc4ccd1e407ad06f3b0d89da2a01dd7231b"));
+        let eth_signature = EthereumSignature(hex_literal::hex!("cb88919aba9de0cac6fe685f93d7fdad484e1d17aeedea6c01120c9f6aaa823f247a9a47b2390489417f63c0300b8f72301aadf7a2060f429ed9733b841b31851b"));
         assert_ok!(Claim::claim_ethereum(
             Origin::None.into(),
             eth_address,
