@@ -199,7 +199,7 @@ exports.aggregate = async (signer, domain_id, aggregation_id) => {
 
 exports.sudoInitClaim = async (signer, beneficiaries, initial_balance, message) => {
   // Fund claim pallet account
-  const palletAddressOption = await api.query.claim.palletAccountId();
+  const palletAddressOption = await api.query.tokenClaim.palletAccountId();
   const palletAddress = palletAddressOption.unwrap();
   const transfer = api.tx.balances.transferAllowDeath(palletAddress, initial_balance);
   await submitExtrinsic(api, transfer, signer, BlockUntil.InBlock);
