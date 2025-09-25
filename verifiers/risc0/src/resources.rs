@@ -69,3 +69,17 @@ pub mod v2_3 {
     pub static PROOF_POSEIDON2_22: &[u8] = include_bytes!("resources/v_2_3_poseidon2_22.bin");
     pub static PROOF_POSEIDON2_16: &[u8] = include_bytes!("resources/v_2_3_poseidon2_16.bin");
 }
+
+pub mod v3_0 {
+    pub static VK: sp_core::H256 = sp_core::H256(hex_literal::hex!(
+        "7f423b2f1095359fe3305c5328e9f5cc3eba01c9f9559bfbf6a3a59d73cc77ae"
+    ));
+    pub static PUBS_22: &[u8] = &hex_literal::hex!("22003c0000000000");
+    pub static PUBS_16: &[u8] = &hex_literal::hex!("3a40000000000000");
+
+    pub static PROOF_SUCCINCT: &[u8] = include_bytes!("resources/v_3_0_succinct_22.bin");
+    pub static PUBS_SUCCINCT: &[u8] = PUBS_22;
+
+    pub static PROOF_POSEIDON2_22: &[u8] = include_bytes!("resources/v_3_0_poseidon2_22.bin");
+    pub static PROOF_POSEIDON2_16: &[u8] = include_bytes!("resources/v_3_0_poseidon2_16.bin");
+}
