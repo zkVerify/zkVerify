@@ -1,0 +1,10 @@
+Description: Testing that token claim operation is no-fee
+Network: ./network_defs/single_node.toml
+Creds: config
+
+alice: is up
+
+alice: reports node_roles is 4
+
+### Javascript test invocation
+alice: js-script ./js_scripts/0015-claim_no_fee.js return is equal to 1 within 300 seconds

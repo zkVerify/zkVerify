@@ -53,11 +53,11 @@ rstest = { workspace = true }
 runtime-benchmarks = [
 	"frame-support/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
+	"pallet-balances/runtime-benchmarks",
+	"pallet-staking/runtime-benchmarks",
 	"polkadot-primitives/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
 	"sp-staking/runtime-benchmarks",
-	"pallet-balances/runtime-benchmarks",
-	"pallet-staking/runtime-benchmarks",
 ]
 fast-runtime = []
 default = [ "std" ]
@@ -69,7 +69,6 @@ std = [
 	"frame-support/std",
 	"frame-system/std",
 	"log/std",
-	"pallet-staking/std",
 	"pallet-authorship/std",
 	"pallet-balances/std",
 	"pallet-staking/std",
@@ -90,8 +89,8 @@ std = [
 try-runtime = [
 	"frame-support/try-runtime",
 	"frame-system/try-runtime",
-	"sp-runtime/try-runtime",
 	"pallet-authorship/try-runtime",
 	"pallet-balances/try-runtime",
 	"pallet-staking/try-runtime",
+	"sp-runtime/try-runtime",
 ]

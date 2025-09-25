@@ -77,10 +77,10 @@ try-runtime = [
 	"sp-runtime/try-runtime",
 	"volta-runtime/try-runtime",
 ]
-fast-runtime = ["service/fast-runtime", "volta-runtime/fast-runtime"]
+fast-runtime = [ "service/fast-runtime", "volta-runtime/fast-runtime" ]
 pyroscope = [ "pyro", "pyroscope_pprofrs" ]
-metadata-hash = ["service/metadata-hash", "volta-runtime/metadata-hash"]
-extend-benchmarks = ["volta-runtime/extend-benchmarks"]
+metadata-hash = [ "service/metadata-hash", "volta-runtime/metadata-hash" ]
+extend-benchmarks = [ "volta-runtime/extend-benchmarks" ]
 runtime-metrics = [
 	"polkadot-node-metrics/runtime-metrics",
 	"service/runtime-metrics",
