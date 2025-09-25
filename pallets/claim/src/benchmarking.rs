@@ -84,8 +84,8 @@ mod benchmarks {
     use super::*;
 
     #[benchmark]
-    fn begin_claim(n: Linear<0, <T as Config>::MAX_OP_BENEFICIARIES>) {
-        let beneficiaries = init_claim_state::<T>(n, false);
+    fn begin_claim() {
+        let beneficiaries = init_claim_state::<T>(0, false);
 
         #[extrinsic_call]
         begin_claim(RawOrigin::Root, beneficiaries, get_claim_message::<T>());

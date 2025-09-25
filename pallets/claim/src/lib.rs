@@ -489,7 +489,9 @@ pub mod pallet {
         /// The add_beneficiaries operation is atomic. If one insertion fails, the whole extrinsic fails.
         /// Origin must be the ManagerOrigin.
         #[pallet::call_index(0)]
-        #[pallet::weight(T::WeightInfo::begin_claim(beneficiaries.len() as u32))]
+        #[pallet::weight(T::WeightInfo::add_beneficiaries(u32::min(beneficiaries.len() as u32, T::MAX_OP_BENEFICIARIES))
+        .saturating_add(T::WeightInfo::begin_claim())
+        )]
         pub fn begin_claim(
             origin: OriginFor<T>,
             beneficiaries: BTreeMap<Beneficiary<T>, BalanceOf<T>>,
