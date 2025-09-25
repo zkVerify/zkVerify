@@ -35,8 +35,8 @@ use sp_runtime::{
 };
 
 use crate::beneficiary::{AccountIdToBytesLiteral, Beneficiary};
-use crate::ethereum::EthereumAddress;
-use crate::utils::get_beneficiaries_map;
+use crate::ethereum::{EthereumAddress, EthereumSignature};
+use crate::utils::{get_beneficiaries_map, secp_utils::*};
 
 pub type Balance = u128;
 pub type AccountId = u64;
@@ -58,9 +58,10 @@ pub const USER_4: Beneficiary<Test> = Beneficiary::<Test>::Substrate(24_000);
 pub const USER_4_AMOUNT: Balance = 200_000_000_000;
 pub const USER_5: Beneficiary<Test> = Beneficiary::<Test>::Substrate(99_000);
 pub const USER_5_AMOUNT: Balance = 300_000_000;
-pub const USER_6: Beneficiary<Test> = Beneficiary::<Test>::Ethereum(EthereumAddress(
-    hex_literal::hex!("308046c262264a11445865f727f94fb699b3a1b8"),
+pub const USER_6_RAW: EthereumAddress = EthereumAddress(hex_literal::hex!(
+    "308046c262264a11445865f727f94fb699b3a1b8"
 ));
+pub const USER_6: Beneficiary<Test> = Beneficiary::<Test>::Ethereum(USER_6_RAW);
 pub const USER_6_AMOUNT: Balance = 100_000_000_000;
 pub const NON_BENEFICIARY_RAW: AccountId = 6;
 pub const NON_BENEFICIARY: Beneficiary<Test> = Beneficiary::<Test>::Substrate(NON_BENEFICIARY_RAW);
@@ -91,21 +92,23 @@ pub static USER_1_SIGN: LazyLock<(UintAuthorityId, TestSignature, TestSignature)
         (user_signer, user_signature, user_signature_wrapped)
     });
 
-pub static NON_BENEFICIARY_SIGN: LazyLock<(UintAuthorityId, TestSignature, TestSignature)> =
+pub static USER_3_SIGN_USER_1_DEST: LazyLock<(EthereumAddress, EthereumSignature)> =
     LazyLock::new(|| {
-        let user_signer = UintAuthorityId::from(NON_BENEFICIARY);
-        let claim_message = INIT_CLAIM_MESSAGE.clone();
-        let wrapped_message = [
-            crate::beneficiary::MSG_PREFIX,
-            claim_message.as_slice(),
-            crate::beneficiary::MSG_SUFFIX,
+        // Create beneficiary
+        let secret_bytes =
+            hex_literal::hex!("7b2d076abcc1215ef9c5a37da07f50c92de1048b2e1e7a27b74c0ce154f9cbae");
+        let secret = parse_secret(&secret_bytes[..]);
+        let address = eth(&secret);
+
+        // Prepare signature
+        let msg_to_sign = [
+            INIT_CLAIM_MESSAGE.clone().as_slice(),
+            crate::beneficiary::ETH_MSG_SEPARATOR,
+            MockAccountIdToBytesConversion::to_bytes_literal(&USER_1_RAW).as_slice(),
         ]
         .concat();
-        let user_signature = user_signer
-            .sign(&INIT_CLAIM_MESSAGE.clone().as_slice())
-            .unwrap();
-        let user_signature_wrapped = user_signer.sign(&wrapped_message.as_slice()).unwrap();
-        (user_signer, user_signature, user_signature_wrapped)
+        let eth_signature = sig(&secret, msg_to_sign.as_slice());
+        (address, eth_signature)
     });
 
 pub const MANAGER_USER: AccountId = 666;

@@ -34,6 +34,10 @@ pub(crate) mod secp_utils {
     use crate::ethereum::*;
     use sp_io::hashing::keccak_256;
 
+    pub(crate) fn parse_secret(secret_bytes: &[u8]) -> libsecp256k1::SecretKey {
+        libsecp256k1::SecretKey::parse_slice(secret_bytes).unwrap()
+    }
+
     pub(crate) fn secret_from_seed(seed: &[u8]) -> libsecp256k1::SecretKey {
         libsecp256k1::SecretKey::parse(&keccak_256(seed)).unwrap()
     }
@@ -65,10 +69,6 @@ mod test {
     fn consistency_check() {
         use super::secp_utils::*;
         use crate::ethereum::{EthereumAddress, EthereumSignature};
-
-        fn parse_secret(secret_bytes: &[u8]) -> libsecp256k1::SecretKey {
-            libsecp256k1::SecretKey::parse_slice(secret_bytes).unwrap()
-        }
 
         // Check consistency with EOA wallets (e.g. Metamask, Talisman, ...)
 
