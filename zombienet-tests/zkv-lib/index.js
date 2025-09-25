@@ -197,11 +197,34 @@ exports.aggregate = async (signer, domain_id, aggregation_id) => {
   return await submitExtrinsic(api, extrinsic, signer, BlockUntil.InBlock, (event) => event.section == "aggregate");
 }
 
+exports.sudoInitClaim = async (signer, beneficiaries, initial_balance, message) => {
+  // Fund claim pallet account
+  const palletAddressOption = await api.query.claim.palletAccountId();
+  const palletAddress = palletAddressOption.unwrap();
+  const transfer = api.tx.balances.transferAllowDeath(palletAddress, initial_balance);
+  await submitExtrinsic(api, transfer, signer, BlockUntil.InBlock);
+  console.log(`Claim pallet funded with ${initial_balance} tokens`);
+
+  // Begin claim and provide beneficiaries
+  let extrinsic = api.tx.sudo.sudo(api.tx.tokenClaim.beginClaim(beneficiaries, message));
+  return await submitExtrinsic(api, extrinsic, signer, BlockUntil.InBlock, (event) => event.section == "claim");
+}
+
+exports.claim = async (signer, signature) => {
+  let extrinsic = api.tx.tokenClaim.claim(signer, signature);
+  return await submitExtrinsicUnsigned(api, extrinsic, BlockUntil.InBlock, (event) => event.section == "claim");
+}
+
+exports.claimEthereum = async (signer, signature, dest) => {
+  let extrinsic = api.tx.tokenClaim.claimEthereum(signer, signature, dest);
+  return await submitExtrinsicUnsigned(api, extrinsic, BlockUntil.InBlock, (event) => event.section == "claim");
+}
+
 exports.waitForEvent = async (api, timeout, pallet, name) => {
   return await waitForEvent(api, timeout, pallet, name);
 }
 
-// Wait for the next attestaion id to be published
+// Wait for the next attestation id to be published
 async function waitForEvent(api, timeout, pallet, name) {
 
   const retVal = await new Promise(async (resolve, reject) => {
@@ -255,6 +278,10 @@ exports.submitExtrinsic = async (api, extrinsic, signer, blockUntil, filter) => 
   return await submitExtrinsic(api, extrinsic, signer, blockUntil, filter);
 }
 
+exports.submitExtrinsicUnsigned = async (api, extrinsic, blockUntil, filter) => {
+  return await submitExtrinsic(api, extrinsic, undefined, blockUntil, filter);
+}
+
 async function waitForEmptyMempool(api) {
   let pending = 0;
   do {
@@ -264,7 +291,7 @@ async function waitForEmptyMempool(api) {
   } while (pending.length > 0);
 }
 
-async function submitExtrinsic(api, extrinsic, signer, blockUntil, filter) {
+async function _handleTransactionLifecycle(api, sendFunction, blockUntil, filter) {
   let transactionSuccessEvent = false;
   let done = false;
   let max_retries = 5;
@@ -277,7 +304,7 @@ async function submitExtrinsic(api, extrinsic, signer, blockUntil, filter) {
   let retVal = -1;
   while (!done && max_retries > 0) {
     retVal = await new Promise(async (resolve, reject) => {
-      const unsub = await extrinsic.signAndSend(signer, ({ events: records = [], status }) => {
+      const unsub = await sendFunction(({ events: records = [], status }) => {
         let blockHash = null;
         if (status.isReady) {
           hasBeenReady = true;
@@ -351,6 +378,23 @@ async function submitExtrinsic(api, extrinsic, signer, blockUntil, filter) {
   }
 
   return retVal;
+}
+
+async function submitExtrinsic(api, extrinsic, signer, blockUntil, filter) {
+  // Create a function that encapsulates the `signAndSend` call.
+  const sendFunction = (callback) => extrinsic.signAndSend(signer, callback);
+  
+  // Delegate all the hard work to the handler.
+  return _handleTransactionLifecycle(api, sendFunction, blockUntil, filter);
+}
+
+
+async function submitExtrinsicUnsigned(api, extrinsic, blockUntil, filter) {
+  // Create a function that encapsulates the `send` call.
+  const sendFunction = (callback) => extrinsic.send(callback);
+  
+  // Delegate all the hard work to the handler.
+  return _handleTransactionLifecycle(api, sendFunction, blockUntil, filter);
 }
 
 exports.receivedEvents = (data) => {

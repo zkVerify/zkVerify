@@ -173,6 +173,25 @@ pub fn test() -> sp_io::TestExternalities {
     .assimilate_storage(&mut t)
     .unwrap();
 
+    pallet_token_claim::GenesisConfig::<super::Runtime> {
+        beneficiaries: SAMPLE_USERS
+            .iter()
+            .cloned()
+            .map(|user| {
+                (
+                    pallet_token_claim::Beneficiary::<super::Runtime>::Substrate(
+                        user.raw_account.into(),
+                    ),
+                    user.starting_balance,
+                )
+            })
+            .collect(),
+        genesis_balance: total_balances(),
+        claim_message: frame_support::BoundedVec::try_from(b"TestMessage".to_vec()).unwrap(),
+    }
+    .assimilate_storage(&mut t)
+    .unwrap();
+
     let mut ext = sp_io::TestExternalities::from(t);
 
     ext.execute_with(initialize);

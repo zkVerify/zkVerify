@@ -89,6 +89,7 @@ frame-system-benchmarking = { workspace = true, optional = true }
 # Custom logic
 pallet-aggregate = { workspace = true }
 pallet-claim = { workspace = true }
+pallet-token-claim = { workspace = true }
 pallet-hyperbridge-aggregations = { workspace = true }
 static_assertions = "1.1.0"
 aggregate-rpc-runtime-api = { workspace = true }
@@ -165,6 +166,7 @@ runtime-benchmarks = [
 	"pallet-staking/runtime-benchmarks",
 	"pallet-sudo/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
+	"pallet-token-claim/runtime-benchmarks",
 	"pallet-token-gateway/runtime-benchmarks",
 	"pallet-transaction-payment/runtime-benchmarks",
 	"pallet-treasury/runtime-benchmarks",
@@ -184,7 +186,7 @@ runtime-benchmarks = [
 	"xcm-executor/runtime-benchmarks",
 	"zkv-runtime-common/runtime-benchmarks",
 ]
-fast-runtime = ["zkv-runtime-common/fast-runtime"]
+fast-runtime = [ "zkv-runtime-common/fast-runtime" ]
 metadata-hash = [ "substrate-wasm-builder/metadata-hash" ]
 default = [ "std" ]
 std = [
@@ -240,6 +242,7 @@ std = [
 	"pallet-staking/std",
 	"pallet-sudo/std",
 	"pallet-timestamp/std",
+	"pallet-token-claim/std",
 	"pallet-token-gateway/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
 	"pallet-transaction-payment/std",
@@ -313,6 +316,7 @@ try-runtime = [
 	"pallet-staking/try-runtime",
 	"pallet-sudo/try-runtime",
 	"pallet-timestamp/try-runtime",
+	"pallet-token-claim/try-runtime",
 	"pallet-token-gateway/try-runtime",
 	"pallet-transaction-payment/try-runtime",
 	"pallet-treasury/try-runtime",
