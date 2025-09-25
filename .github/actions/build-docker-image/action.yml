@@ -18,7 +18,11 @@ inputs:
   docker_hub_org:
     description: "Docker hub organization"
     type: string
-    default: 'horizenlabs'
+    default: 'zkverify'
+  type:
+    description: "Type of docker image. If 'node' compile the node, otherwise just the given runtime [zkverify|volta]"
+    type: string
+    default: 'node'
   profile:
     description: "Build profile"
     type: string
@@ -50,10 +54,25 @@ runs:
       shell: bash
       run: |
         echo "Building relay chain Docker image"
-        ${{inputs.dry_run}} && echo "*********************** Dry run mode enabled, skipping Docker build. ***********************"
+        runtime_build_arg=""
+        if [ "${{ inputs.type }}" = "node" ]; then
+          dockerfile="zkv-relay.Dockerfile"
+          runtime_build_arg=""
+        elif [ "${{ inputs.type }}" = "zkverify" ]; then
+          dockerfile="rt-build.Dockerfile"
+          runtime_build_arg='--build-arg "RUNTIME_CRATE=zkv-runtime"'
+        elif [ "${{ inputs.type }}" = "volta" ]; then
+          dockerfile="rt-build.Dockerfile"
+          runtime_build_arg='--build-arg "RUNTIME_CRATE=volta-runtime"'
+        else 
+          echo "Invalid type specified: ${{ inputs.type }}. Valid values are: [node|zkverify|volta]"
+          exit 1
+        fi
+        ${{inputs.dry_run}} && echo "*********************** Dry run mode enabled, skipping Docker build [${dockerfile},'${runtime_build_arg}'] . ***********************"
         ${{inputs.dry_run}} || docker build --build-arg "PROFILE=${{ inputs.profile }}" \
           --build-arg "FEATURES=${{ inputs.features }}" \
-          -f "docker/dockerfiles/zkv-relay.Dockerfile" \
+          ${runtime_build_arg} \
+          -f "docker/dockerfiles/${dockerfile}" \
           -t ${{ inputs.docker_hub_org }}/${{ inputs.docker_image_name }}${{ inputs.docker_image_suffix }} .
 
         echo "DOCKER_IMAGE_NAME=${{ inputs.docker_hub_org }}/${{ inputs.docker_image_name }}${{ inputs.docker_image_suffix }}" >> "${GITHUB_ENV}"
@@ -69,7 +88,7 @@ runs:
         echo "TAR_FILE=$TAR_FILE" >> "${GITHUB_ENV}"
 
         ${{inputs.dry_run}} && echo "*********************** Dry run mode enabled, skipping Docker build. ***********************"
-        ${{inputs.dry_run}} && echo "DRY-RUN -> ${DOCKER_IMAGE_NAME}" > "${TAR_FILE}"
+        ${{inputs.dry_run}} && echo "DRY-RUN -> ${DOCKER_IMAGE_NAME} -- ${{ inputs.type }}" > "${TAR_FILE}"
         ${{inputs.dry_run}} || docker save "${DOCKER_IMAGE_NAME}" -o "${TAR_FILE}"
 
     - name: Upload Docker image artifact

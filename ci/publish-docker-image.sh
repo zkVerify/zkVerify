@@ -4,17 +4,17 @@
 set -eEuo pipefail
 
 workdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." &> /dev/null && pwd )"
-docker_image_build_name="${DOCKER_IMAGE_BUILD_NAME:-zkverify}"
-docker_hub_org="${DOCKER_HUB_ORG:-horizenlabs}"
+docker_image_build_name="${DOCKER_IMAGE_BUILD_NAME:-relay-node}"
+docker_hub_org="${DOCKER_HUB_ORG:-zkverify}"
 docker_hub_username="${DOCKER_HUB_USERNAME:-}"
 docker_hub_token="${DOCKER_HUB_TOKEN:-}"
 is_a_release="${IS_A_RELEASE:-false}"
 prod_release="${PROD_RELEASE:-false}"
-dev_release="${DEV_RELEASE:-false}"
+rc_release="${RC_RELEASE:-false}"
 test_release="${TEST_RELEASE:-false}"
 fastruntime_release="${FAST_RUNTIME_RELEASE:-false}"
-github_ref_name="${GITHUB_REF_NAME:-}"
-common_file_location="${COMMON_FILE_LOCATION:-not-set}"
+version_name="${VERSION_STR:-}"
+common_file_location="${COMMON_FILE_LOCATION:-ci/common.sh}"
 image_artifact=""
 docker_tag_full=""
 extract_runtime="${EXTRACT_RUNTIME:-true}"
@@ -64,7 +64,7 @@ fi
 
 # Load docker image
 if [ "${is_a_release}" = "true" ]; then
-  docker_tag_full="${github_ref_name}"
+  docker_tag_full="${version_name}"
 
   log_info "=== Using Docker image artifact from upstream ==="
   if [ "${DRY_RUN}" != "true" ]; then
@@ -80,25 +80,21 @@ if [ "${is_a_release}" = "true" ]; then
   echo "${docker_hub_token}" | docker login -u "${docker_hub_username}" --password-stdin
 
   # Docker image(s) tags for PROD vs DEV release
-  if [ "${prod_release}" = "true" ]; then
+  if [ "${fastruntime_release}" = "true" ]; then
+      publish_tags=("fast-runtime")
+      extract_runtime="false"
+  elif [ "${prod_release}" = "true" ]; then
+    # Tags in prod release are always <version>-<YYYYMMDD>, <version>, latest
     docker_tag_node="$(cut -d '-' -f1 <<< "${docker_tag_full}")"
-    publish_tags=("${docker_tag_full}" "${docker_tag_node}" "latest")
-  elif [ "${dev_release}" = "true" ]; then
-    docker_tag_node="$(cut -d '-' -f1 <<< "${docker_tag_full}")-$(cut -d '-' -f3- <<< "${docker_tag_full}")"
-    publish_tags=("${docker_tag_full}" "${docker_tag_node}")
+    docker_tag_dated="${docker_tag_full}"
+    if [[ "${docker_tag_node}" = "${docker_tag_full}" ]]; then
+      docker_tag_dated="${docker_tag_node}-$(date +"%Y%m%d")"
+    fi
+    publish_tags=("${docker_tag_dated}" "${docker_tag_node}" "latest")
+  elif [ "${rc_release}" = "true" ]; then
+    publish_tags=("${docker_tag_full}")
   elif [ "${test_release}" = "true" ]; then
     publish_tags=("${docker_tag_full}")
-  elif [ "${fastruntime_release}" = "true" ]; then
-    publish_tags=("fast-runtime")
-    extract_runtime="false"
-  fi
-
-  # Append -relay to tag names for relay chain images
-  if [[ "${image_artifact}" == "${docker_image_build_name}-relay" ]]; then
-    docker_tag_full="${docker_tag_full}-relay"
-    for publish_tag in "${!publish_tags[@]}"; do
-      publish_tags["${publish_tag}"]="${publish_tags["${publish_tag}"]}-relay"
-    done
   fi
 
   for publish_tag in "${publish_tags[@]}"; do
@@ -112,17 +108,9 @@ if [ "${is_a_release}" = "true" ]; then
     fi
   done
 
-  # Extract runtime artifact
+  # Extract runtime artifacts
   if [ "${extract_runtime}" == "true" ]; then
-    log_info "=== Extract runtime artifact ==="
-    if [ "${DRY_RUN}" != "true" ]; then
-      container_id="$(docker create "index.docker.io/${docker_hub_org}/${docker_image_build_name}:${docker_tag_full}")"
-      docker cp "${container_id}":/app/zkv_runtime.compact.compressed.wasm ./zkv_runtime.compact.compressed.wasm
-      docker rm "${container_id}"  # Clean up the container
-    else
-      log_warn "WARNING: 'DRY_RUN' variable is set to 'true'. CREATE FAKE WASM"
-      echo "index.docker.io/${docker_hub_org}/${docker_image_build_name}:${docker_tag_full} -> WASM" > ./zkv_runtime.compact.compressed.wasm
-    fi
+    ./ci/extract-wasm.sh --image "index.docker.io/${docker_hub_org}/${docker_image_build_name}:${docker_tag_full}"
   else
     log_info "=== Skipping runtime artifact extraction ==="
   fi

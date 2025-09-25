@@ -1,0 +1,35 @@
+name: Create Runtime Release
+
+run-name: "Create a runtime release : manually triggerable"
+
+on:
+  workflow_dispatch:
+    inputs:
+      runtime:
+        description: "Runtime to build [zkverify|volta]"
+        required: true
+        type: string
+      release_name:
+        description: "The release name"
+        required: true
+        type: string
+      release_branch:
+        description: "Github branch name release can be created from"
+        required: true
+        type: string
+      dry_run:
+        description: "Dry run execution"
+        required: true
+        type: boolean
+        default: false
+jobs:
+  release:
+    name: Create artifacts and release them
+    uses: ./.github/workflows/CI-release-runtime.yml
+    with:
+      runtime: ${{ inputs.runtime }}
+      release_name: ${{ inputs.release_name }}
+      release_branch: ${{ inputs.release_branch }}
+      dry_run: ${{ inputs.dry_run }}
+    secrets:
+      RELEASES_PROD_SLACK_WEBHOOK_URL: ${{ secrets.RELEASES_PROD_SLACK_WEBHOOK_URL }}
