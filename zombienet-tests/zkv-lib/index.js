@@ -26,6 +26,9 @@ zkvTypes = {
     config: "Plonky2Config",
     bytes: "Bytes"
   },
+  EvklVK: {
+    vkBytes: "Bytes"
+  },
   FflonkVk: {
     power: "u8",
     k1: "U256",
@@ -67,6 +70,16 @@ zkvRpc = {
     }
   },
   vk_hash: {
+    ezkl: {
+      description: 'Get the hash of an Ezkl verification key artifact',
+      params: [
+        {
+          name: 'vk',
+          type: 'EvklVK',
+        },
+      ],
+      type: 'H256'
+    },
     fflonk: {
       description: 'Get the hash of a Fflonk verification key',
       params: [
