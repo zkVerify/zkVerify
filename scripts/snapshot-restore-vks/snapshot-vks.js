@@ -87,13 +87,17 @@ async function takeSnapshot(api, pallets, snapshotVksFile, gqlEndpoint = DEFAULT
         vks[p] = {};
         for (const [{args: [hash]}, data] of vkeys) {
             const {vk: vk} = JSON.parse(data);
-            const stat = await getVkStats(gqlEndpoint, palletToGraphQl(p), hash);
-            console.log(
-                `vk ${hash} in pallet ${p} has ${stat.total} submissions, last used ${stat.lastUsed}.`
-            )
+            let stat = null;
+            if (gqlEndpoint !== null) {
+                stat = await getVkStats(gqlEndpoint, palletToGraphQl(p), hash);
+                console.log(
+                    `vk ${hash} in pallet ${p} has ${stat.total} submissions, last used ${stat.lastUsed}.`
+                )
+            }
             vks[p][hash] = {
                 vk: vk,
                 owners: [],
+                bonded: 0.0,
                 stat
             };
         }
@@ -101,7 +105,9 @@ async function takeSnapshot(api, pallets, snapshotVksFile, gqlEndpoint = DEFAULT
         let bonded = 0.0;
         tickets.forEach(([{args: [[owner, hash]]}, value]) => {
             if (vks[p][hash].owners.length === 0) {
-                bonded += value / 1000000000000000000.0;
+                let b = value / 1000000000000000000.0;
+                vks[p][hash].bonded = b;
+                bonded += b;
             }
             vks[p][hash].owners.push(owner);
         });
@@ -111,12 +117,18 @@ async function takeSnapshot(api, pallets, snapshotVksFile, gqlEndpoint = DEFAULT
     console.log('Snapshot saved.');
 }
 
-async function restore(api, keyring, pallets, snapshotVksFile, sudo, replace = null) {
+async function restore(api, keyring, pallets, snapshotVksFile, sudo, replace = null, usedAfter = null) {
     let vksMap = JSON.parse(fs.readFileSync(snapshotVksFile));
     let nonce = (await api.query.system.account(sudo.address)).nonce.toNumber();
 
     for (let [p, vks] of Object.entries(vksMap)) {
-        for (let [_hash, {vk, owners}] of Object.entries(vks)) {
+        for (let [hash, {vk, owners, stat}] of Object.entries(vks)) {
+            if (usedAfter !== null) {
+                if (stat.lastUsed === null || new Date(stat.lastUsed) < usedAfter) {
+                    console.log(`Skip vk ${hash} in pallet ${p} because it was not used after ${usedAfter}`);
+                    continue;
+                }
+            }
             if (replace !== undefined && replace !== false && replace !== null) {
                 owners = [replace];
             }
@@ -150,6 +162,8 @@ function usage() {
     -s, --snapshot [${DEFAULT_SNAPSHOT_PATH}]
     -p, --pallets [${DEFAULT_PALLETS}]
     -r, --replace = null => Do not replace owner otherwise use this address instead
+    -u, --used Recover only the vk that are used at least once
+    -U, --used-after Recover only the vk that are used after the given date
     -q, --gql [${DEFAULT_GRAPHQL}] => GraphQL endpoint to get vk usage statistics
     -h, --help : Show this help and exists 
     `);
@@ -163,6 +177,7 @@ async function main() {
     let pallets = DEFAULT_PALLETS;
     let gqlEndpoint = DEFAULT_GRAPHQL;
     let replace = null;
+    let usedAfter = null;
     // Skipping command and remove general options like -e
     const newArgs = [];
     let i = 0;
@@ -185,10 +200,21 @@ async function main() {
         }
         if (args[i] === '-q' || args[i] === '--gql') {
             gqlEndpoint = args[++i];
+            if (gqlEndpoint === 'null') {
+                gqlEndpoint = null;
+            }
             continue
         }
         if (args[i] === '-r' || args[i] === '--replace') {
             replace = args[++i];
+            continue
+        }
+        if (args[i] === '-u' || args[i] === '--used') {
+            usedAfter = new Date(0); // Epoch
+            continue
+        }
+        if (args[i] === '-u' || args[i] === '--used-after') {
+            usedAfter = new Date(args[++i]);
             continue
         }
         if (args[i] === '-h' || args[i] === '--help') {
@@ -221,7 +247,7 @@ async function main() {
             usage();
         }
         const sudo = keyring.addFromUri(args[0]);
-        await restore(api, keyring, pallets, snapshotFile, sudo, replace);
+        await restore(api, keyring, pallets, snapshotFile, sudo, replace, usedAfter);
     } else {
         usage();
     }
