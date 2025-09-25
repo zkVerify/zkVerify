@@ -34,6 +34,7 @@ pub(crate) mod secp_utils {
     use crate::ethereum::*;
     use sp_io::hashing::keccak_256;
 
+    #[allow(dead_code)]
     pub(crate) fn parse_secret(secret_bytes: &[u8]) -> libsecp256k1::SecretKey {
         libsecp256k1::SecretKey::parse_slice(secret_bytes).unwrap()
     }

@@ -306,7 +306,7 @@ mod claim_common {
             let (address, eth_signature) = USER_3_SIGN_USER_1_DEST.clone();
             assert_ok!(Claim::claim_ethereum(
                 Origin::None.into(),
-                address.clone(),
+                address,
                 eth_signature.clone(),
                 USER_1_RAW
             ));
@@ -383,7 +383,12 @@ mod claim_common {
             Beneficiaries::<Test>::insert(USER_6, USER_6_AMOUNT);
             let (_, user_3_signature) = USER_3_SIGN_USER_1_DEST.clone();
             assert_noop!(
-                Claim::claim_ethereum(Origin::None.into(), USER_6_RAW, user_3_signature, USER_1_RAW),
+                Claim::claim_ethereum(
+                    Origin::None.into(),
+                    USER_6_RAW,
+                    user_3_signature,
+                    USER_1_RAW
+                ),
                 Error::<Test>::BadSignature
             );
         });
@@ -1291,7 +1296,7 @@ mod validate_unsigned {
             Pallet::<Test>::validate_unsigned(
                 source,
                 &ClaimCall::claim_ethereum {
-                    beneficiary: user_signer.clone(),
+                    beneficiary: user_signer,
                     signature: bad_signature,
                     dest
                 }
@@ -1319,7 +1324,7 @@ mod validate_unsigned {
         );
 
         // Claim beneficiary non existing
-        let mut nb_signer = USER_3_RAW.clone();
+        let mut nb_signer = USER_3_RAW;
         nb_signer.0[0] += 1;
         assert_eq!(
             Pallet::<Test>::validate_unsigned(
