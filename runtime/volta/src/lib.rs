@@ -653,7 +653,7 @@ parameter_types! {
 
 impl pallet_token_claim::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
-    type PalletId = ClaimPalletId;
+    type PalletId = TokenClaimPalletId;
     type ManagerOrigin = EnsureRoot<AccountId>;
     type Currency = Balances;
     type UnclaimedDestination = ZKVerifyTreasuryAccount;

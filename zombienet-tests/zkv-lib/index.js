@@ -207,17 +207,17 @@ exports.sudoInitClaim = async (signer, beneficiaries, initial_balance, message) 
 
   // Begin claim and provide beneficiaries
   let extrinsic = api.tx.sudo.sudo(api.tx.tokenClaim.beginClaim(beneficiaries, message));
-  return await submitExtrinsic(api, extrinsic, signer, BlockUntil.InBlock, (event) => event.section == "claim");
+  return await submitExtrinsic(api, extrinsic, signer, BlockUntil.InBlock, (event) => event.section == "tokenClaim");
 }
 
 exports.claim = async (signer, signature) => {
   let extrinsic = api.tx.tokenClaim.claim(signer, signature);
-  return await submitExtrinsicUnsigned(api, extrinsic, BlockUntil.InBlock, (event) => event.section == "claim");
+  return await submitExtrinsicUnsigned(api, extrinsic, BlockUntil.InBlock, (event) => event.section == "tokenClaim");
 }
 
 exports.claimEthereum = async (signer, signature, dest) => {
   let extrinsic = api.tx.tokenClaim.claimEthereum(signer, signature, dest);
-  return await submitExtrinsicUnsigned(api, extrinsic, BlockUntil.InBlock, (event) => event.section == "claim");
+  return await submitExtrinsicUnsigned(api, extrinsic, BlockUntil.InBlock, (event) => event.section == "tokenClaim");
 }
 
 exports.waitForEvent = async (api, timeout, pallet, name) => {
