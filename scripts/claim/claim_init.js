@@ -17,7 +17,6 @@ const DEFAULT_WS_ENDPOINTS = {
     'volta': 'wss://zkverify-volta-rpc.zkverify.io',
     'mainnet': 'wss://zkverify-rpc.zkverify.io',
 }
-const CLAIM_PALLET_ADDRESS = '5EYCAe5kjJxfPU3Ym64bZm7RA478jjHo9Pu6mEnFW2R3tLEZ';
 const EXISTENTIAL_DEPOSIT = '10000000000000000';
 const MAX_PER_BLOCK = 11000;
 
@@ -29,6 +28,8 @@ const DEFAULT_MULTISIG_ADDRESSES = []
 const DEFAULT_OUT_FILE_PATH = '.';
 
 const INIT_CAMPAIGN = true;
+const USE_PALLET_TOKEN_CLAIM = true;
+const DEFAULT_CLAIM_MSG_PREFIX = 'zkverify claim';
 
 const INITIAL_CONFIRMATION_MSG =
 `
@@ -80,7 +81,12 @@ async function read_airdrop_csv(csv_file, address_col, amount_col) {
         if (current_map.has(address)) {
             throw new Error("Duplicate address found!");
         };
-        current_map.set(address, parse_amount(amount));
+        if (USE_PALLET_TOKEN_CLAIM) {
+            // TODO: DO NOT HARDCODE THIS!
+            current_map.set({'Substrate': address}, parse_amount(amount));
+        } else {
+            current_map.set(address, parse_amount(amount));
+        }
         count++;
         if (count % MAX_PER_BLOCK == 0) {
             beneficiaries.push(current_map);
@@ -197,33 +203,59 @@ async function send(api, account, threshold, signatories, call, fname) {
     return send_as_sudo(api, account, call);
 }
 
-async function send_begin_claim_tx(api, account, threshold, signatories, beneficiaries, fname) {
-    const begin_claim_tx = api.tx.claim.beginAirdrop(beneficiaries);
+async function send_begin_claim_tx(api, account, threshold, signatories, beneficiaries, msg, fname) {
+    let begin_claim_tx = undefined;
+    if (USE_PALLET_TOKEN_CLAIM) {
+        begin_claim_tx = api.tx.tokenClaim.beginClaim(beneficiaries, msg);
+    } else {
+        begin_claim_tx = api.tx.claim.beginAirdrop(beneficiaries);
+    }
     return send(api, account, threshold, signatories, begin_claim_tx, fname);
 }
 
 async function send_add_beneficiaries_tx(api, account, threshold, signatories, beneficiaries, fname) {
-    const tx = api.tx.claim.addBeneficiaries(beneficiaries);
-    return send(api, account, threshold, signatories, tx, fname);
+    let add_claim_tx = undefined;
+    if (USE_PALLET_TOKEN_CLAIM) {
+        add_claim_tx = api.tx.tokenClaim.addBeneficiaries(beneficiaries);
+    } else {
+        add_claim_tx = api.tx.claim.addBeneficiaries(beneficiaries);
+    }
+    return send(api, account, threshold, signatories, add_claim_tx, fname);
 }
 
 async function check_preconditions(api, beneficiaries) {
-    const claim_active = (await api.query.claim.airdropActive());
-    if (claim_active == INIT_CAMPAIGN) {
+    let claim_active = undefined;
+    let free_balance = undefined;
+
+    // fetch data
+    if (USE_PALLET_TOKEN_CLAIM) {
+        claim_active = await api.query.claim.airdropActive();
+        const pallet_address = await api.query.tokenClaim.palletAccountId();
+        free_balance = (await api.query.system.account(String(pallet_address)))["data"]["free"];
+    } else {
+        claim_active = await api.query.tokenClaim.airdropActive();
+        const pallet_address = await api.query.claim.palletAccountId();
+        free_balance = (await api.query.system.account(String(pallet_address)))["data"]["free"];
+    }
+
+    // check state
+    if (claim_active === INIT_CAMPAIGN) {
         console.log("A claim is already active on chain!");
         return false;
     }
+
+    // check balance
     tot = BigInt(EXISTENTIAL_DEPOSIT);
     for (let m = 0; m < beneficiaries.length; m++) {
         for (let [k, v] of beneficiaries[m]) {
             tot += BigInt(v);
         }
     }
-    const available = (await api.query.system.account(CLAIM_PALLET_ADDRESS))["data"]["free"];
-    if (available < tot) {
-        console.log("Not enough tokens!");
-        console.log("Need at least " + tot);
-        console.log("Available  " + available);
+
+    if (free_balance < tot) {
+        console.log(`Not enough tokens!`);
+        console.log(`Need at least ${tot}`);
+        console.log(`free_balance ${free_balance}`);
         return false;
     }
     return true;
@@ -235,16 +267,17 @@ function usage() {
 
     OPTIONS:
     -e, --end-point: url or key from ${Object.keys(DEFAULT_WS_ENDPOINTS)} | ${DEFAULT_WS_ENDPOINT}
-    -o, --out: path where multisig call data are stored | ${DEFAULT_OUT_FILE_PATH}
-    --col-address: name of the column representing the beneficiary address in the csv file | ${DEFAULT_ADDRESS_COL}
-    --col-amount: name of the column representing the amount for a beneficiary in the csv file | ${DEFAULT_AMOUNT_COL}
-    -u, --uri: secret seed to sign the extrinsics | ${DEFAULT_SEED}
-    -t, --multi-threshold: threshold for the multisig account | ${DEFAULT_MULTISIG_THRESHOLD}
-    -m, --multi-address: address of the other signatories of the multisig account (can be repeated to add multiple addresses) | ${DEFAULT_MULTISIG_ADDRESSES}
     -h, --help: Show this help and exist
+    -k, --claim-msg: claim message to pass to the beginClaim extrinsic (only for pallet tokenClaim) | ${DEFAULT_CLAIM_MSG_PREFIX}
+    -m, --multi-address: address of the other signatories of the multisig account (can be repeated to add multiple addresses) | ${DEFAULT_MULTISIG_ADDRESSES}
+    -n, --multi-threshold: threshold for the multisig account | ${DEFAULT_MULTISIG_THRESHOLD}
+    -o, --out: path where multisig call data are stored | ${DEFAULT_OUT_FILE_PATH}
+    -s, --col-address: name of the column representing the beneficiary address in the csv file | ${DEFAULT_ADDRESS_COL}
+    -t, --col-amount: name of the column representing the amount for a beneficiary in the csv file | ${DEFAULT_AMOUNT_COL}
+    -u, --uri: secret seed to sign the extrinsics | ${DEFAULT_SEED}
 
     EXAMPLE (multisig address [Alice, Bob, Charlie] with 2/3 threshold, proposed by Charlie):
-    node claim_init.js claim_data.csv -t 2 -m xpjztNMwdaEqGLJ6sH6p7WTnuyHHroUAw9HELRxdPNzKr2Efi -m xpiRj6HmVSWqNBHcMrArAm7swsSGyLvmbeT61NbViK1QcFMqY -m xpiUPATuXmWizou22NxSVknLEhZxMLEeT5EMLubnpbQb8YWhU --uri //Charlie
+    node claim_init.js claim_data.csv -n 2 -m xpjztNMwdaEqGLJ6sH6p7WTnuyHHroUAw9HELRxdPNzKr2Efi -m xpiRj6HmVSWqNBHcMrArAm7swsSGyLvmbeT61NbViK1QcFMqY -m xpiUPATuXmWizou22NxSVknLEhZxMLEeT5EMLubnpbQb8YWhU --uri //Charlie
     `);
     process.exit(1);
 }
@@ -260,6 +293,7 @@ function parse_args() {
         threshold: DEFAULT_MULTISIG_THRESHOLD,
         multisig_addresses: DEFAULT_MULTISIG_ADDRESSES,
         out_file_path: DEFAULT_OUT_FILE_PATH,
+        claim_msg: `${DEFAULT_CLAIM_MSG_PREFIX} ${Date.now()}`,
     }
 
     // Skipping command and remove general options like -e
@@ -274,12 +308,12 @@ function parse_args() {
             }
             continue
         }
+        else if (args[i] === '-k' || args[i] === '--claim-msg') {
+            result.claim_msg = args[++i];
+            continue
+        }
         else if (args[i] === '-u' || args[i] === '--uri') {
             result.secret = args[++i] 
-            continue;
-        }
-        else if (args[i] === '-t' || args[i] === '--multi-threshold') {
-            result.threshold = args[++i];
             continue;
         }
         else if (args[i] === '-m' || args[i] === '--multi-address') {
@@ -290,16 +324,20 @@ function parse_args() {
             result.multisig_addresses.push(args[++i]);
             continue;
         }
-        else if (args[i] === '--col-address') {
-            result.address_col_label = args[++i];
-            continue
-        }
-        else if (args[i] === '--col-amount') {
-            result.amount_col_label = args[++i];
-            continue
+        else if (args[i] === '-n' || args[i] === '--multi-threshold') {
+            result.threshold = args[++i];
+            continue;
         }
         else if (args[i] === '-o' || args[i] === '--out') {
             result.out_file_path = args[++i];
+            continue
+        }
+        else if (args[i] === '-s' || args[i] === '--col-address') {
+            result.address_col_label = args[++i];
+            continue
+        }
+        else if (args[i] === '-t' || args[i] === '--col-amount') {
+            result.amount_col_label = args[++i];
             continue
         }
         else if (args[i] === '-h' || args[i] === '--help') {
@@ -372,19 +410,20 @@ async function main() {
         let result = 0;
         if (INIT_CAMPAIGN && m == 0) {
             result = await send_begin_claim_tx(api,
-                                      account,
-                                      options.threshold,
-                                      options.multisig_addresses,
-                                      beneficiaries[m],
-                                      fname);
+                                               account,
+                                               options.threshold,
+                                               options.multisig_addresses,
+                                               beneficiaries[m],
+                                               options.claim_msg,
+                                               fname);
         }
         else {
             result = await send_add_beneficiaries_tx(api,
-                                            account,
-                                            options.threshold,
-                                            options.multisig_addresses,
-                                            beneficiaries[m],
-                                            fname);
+                                                     account,
+                                                     options.threshold,
+                                                     options.multisig_addresses,
+                                                     beneficiaries[m],
+                                                     fname);
         }
         if (result === -1) {
             print_error("Something went wrong with the extrinsic; bailing out");
