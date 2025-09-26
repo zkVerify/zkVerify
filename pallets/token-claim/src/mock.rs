@@ -23,7 +23,6 @@ use std::{collections::BTreeMap, sync::LazyLock};
 use frame_support::{
     derive_impl, parameter_types,
     traits::{EitherOfDiverse, EnsureOrigin},
-    weights::RuntimeDbWeight,
     BoundedVec, PalletId,
 };
 use frame_system::{EnsureRoot, RawOrigin};
@@ -145,62 +144,6 @@ pub const INIT_CLAIM_MESSAGE: LazyLock<BoundedVec<u8, MaxClaimMessageLength>> =
 pub const EMPTY_CLAIM_MESSAGE: LazyLock<BoundedVec<u8, MaxClaimMessageLength>> =
     LazyLock::new(|| BoundedVec::try_from(vec![]).unwrap());
 
-pub struct MockWeightInfo;
-
-impl MockWeightInfo {
-    pub const REF_TIME: u64 = 42;
-    pub const PROOF_SIZE: u64 = 24;
-}
-
-impl crate::WeightInfo for MockWeightInfo {
-    fn begin_claim() -> frame_support::weights::Weight {
-        frame_support::weights::Weight::from_parts(Self::REF_TIME, Self::PROOF_SIZE)
-    }
-
-    fn claim() -> frame_support::weights::Weight {
-        frame_support::weights::Weight::from_parts(Self::REF_TIME, Self::PROOF_SIZE)
-    }
-
-    fn claim_for() -> frame_support::weights::Weight {
-        frame_support::weights::Weight::from_parts(Self::REF_TIME, Self::PROOF_SIZE)
-    }
-
-    fn add_beneficiaries(n: u32) -> frame_support::weights::Weight {
-        let variable = 1000 * n as u64;
-        frame_support::weights::Weight::from_parts(
-            Self::REF_TIME + variable,
-            Self::PROOF_SIZE + variable,
-        )
-    }
-
-    fn end_claim() -> frame_support::weights::Weight {
-        frame_support::weights::Weight::from_parts(Self::REF_TIME, Self::PROOF_SIZE)
-    }
-
-    fn remove_beneficiaries(n: u32) -> sp_runtime::Weight {
-        let variable = 1000 * n as u64;
-        frame_support::weights::Weight::from_parts(
-            Self::REF_TIME + variable,
-            Self::PROOF_SIZE + variable,
-        )
-    }
-
-    fn claim_ethereum() -> sp_runtime::Weight {
-        frame_support::weights::Weight::from_parts(Self::REF_TIME, Self::PROOF_SIZE)
-    }
-
-    fn claim_ethereum_for() -> sp_runtime::Weight {
-        frame_support::weights::Weight::from_parts(Self::REF_TIME, Self::PROOF_SIZE)
-    }
-}
-
-parameter_types! {
-    pub const MockDbWeight: RuntimeDbWeight = RuntimeDbWeight {
-        read: 4_200_000,
-       write: 2_400_000,
-    };
-}
-
 pub struct MockManager;
 impl<O: Into<Result<RawOrigin<AccountId>, O>> + From<RawOrigin<AccountId>>> EnsureOrigin<O>
     for MockManager
@@ -261,7 +204,7 @@ impl crate::Config for Test {
     type ManagerOrigin = EitherOfDiverse<EnsureRoot<AccountId>, MockManager>;
     type Currency = Balances;
     type UnclaimedDestination = UnclaimedDestinationMockAccount;
-    type WeightInfo = MockWeightInfo;
+    type WeightInfo = ();
     type MaxBeneficiaries = MaxBeneficiaries;
     type MaxClaimMessageLength = MaxClaimMessageLength;
     type Signer = UintAuthorityId;
@@ -288,7 +231,6 @@ impl frame_system::Config for Test {
     type Lookup = IdentityLookup<Self::AccountId>;
     type Block = frame_system::mocking::MockBlockU32<Test>;
     type AccountData = pallet_balances::AccountData<Balance>;
-    type DbWeight = MockDbWeight;
 }
 
 #[derive_impl(pallet_balances::config_preludes::TestDefaultConfig)]
@@ -299,12 +241,12 @@ impl pallet_balances::Config for Test {
     type ExistentialDeposit = ConstU128<EXISTENTIAL_DEPOSIT>;
 }
 
-pub(crate) enum WithGenesisBeneficiaries {
+pub enum WithGenesisBeneficiaries {
     Yes,
     No,
 }
 
-pub(crate) enum GenesisClaimBalance {
+pub enum GenesisClaimBalance {
     Sufficient,
     Insufficient,
     None,
