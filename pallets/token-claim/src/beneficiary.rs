@@ -2,7 +2,7 @@ use crate::{Config, EthereumAddress, EthereumSignature};
 use alloc::vec::Vec;
 use codec::{Decode, Encode, MaxEncodedLen};
 use core::cmp::Ordering;
-use frame_support::pallet_prelude::TypeInfo;
+use frame_support::{defensive, pallet_prelude::TypeInfo};
 use serde::{self, Deserialize, Serialize};
 use sp_runtime::traits::Verify;
 
@@ -65,9 +65,9 @@ pub trait AccountIdToBytesLiteral<T: frame_system::Config> {
 }
 
 /// Convert an AccountId32 to the Ss58 bytes string representation
-pub struct AccountId32ToBytes;
+pub struct AccountId32ToSs58BytesToSign;
 
-impl<T: frame_system::Config> AccountIdToBytesLiteral<T> for AccountId32ToBytes {
+impl<T: frame_system::Config> AccountIdToBytesLiteral<T> for AccountId32ToSs58BytesToSign {
     type AccountId = sp_runtime::AccountId32;
     fn to_bytes_literal(account: &Self::AccountId) -> Vec<u8> {
         let version = Ss58AddressFormat::custom(T::SS58Prefix::get());
@@ -77,16 +77,11 @@ impl<T: frame_system::Config> AccountIdToBytesLiteral<T> for AccountId32ToBytes 
 
 pub(crate) enum ClaimSignature<T: Config> {
     Substrate(T::Signature),
-    Ethereum(EthereumSignature),
+    Ethereum((EthereumSignature, T::AccountId)),
 }
 
 impl<T: Config> ClaimSignature<T> {
-    pub(crate) fn verify(
-        &self,
-        claim_message: &[u8],
-        beneficiary: &Beneficiary<T>,
-        dest: Option<T::AccountId>,
-    ) -> bool {
+    pub(crate) fn verify(&self, claim_message: &[u8], beneficiary: &Beneficiary<T>) -> bool {
         use alloy_primitives::{Address, PrimitiveSignature};
         match (beneficiary, self) {
             // Beneficiary with Substrate address
@@ -95,16 +90,18 @@ impl<T: Config> ClaimSignature<T> {
                 // the message is wrapped in this way "<Bytes>MSG</Bytes>"", w.r.t. to signing with
                 // the keyring directly. Thus we need to take into consideration both cases here
                 let prefixed_message = [MSG_PREFIX, claim_message, MSG_SUFFIX].concat();
-                sub_sig.verify(claim_message, sub_addr)
-                    || sub_sig.verify(prefixed_message.as_slice(), sub_addr)
+                sub_sig.verify(prefixed_message.as_slice(), sub_addr)
+                    || sub_sig.verify(claim_message, sub_addr)
             }
 
             // Beneficiary with Ethereum address
-            (Beneficiary::<T>::Ethereum(eth_addr), ClaimSignature::<T>::Ethereum(eth_sig)) => {
+            (
+                Beneficiary::<T>::Ethereum(eth_addr),
+                ClaimSignature::<T>::Ethereum((eth_sig, dest)),
+            ) => {
                 // We need to append to the message the destination Substrate account, otherwise anyone could
                 // intercept the transaction and change the destination
-                let dest_account =
-                    T::AccountIdBytesToSign::to_bytes_literal(&dest.clone().unwrap());
+                let dest_account = T::AccountIdBytesToSign::to_bytes_literal(&dest);
                 let msg_with_dest =
                     [claim_message, ETH_MSG_SEPARATOR, dest_account.as_slice()].concat();
 
@@ -121,7 +118,10 @@ impl<T: Config> ClaimSignature<T> {
                     false
                 }
             }
-            _ => unreachable!(), // Other combinations not allowed
+            _ => {
+                defensive!();
+                false
+            } // Other combinations not allowed
         }
     }
 }

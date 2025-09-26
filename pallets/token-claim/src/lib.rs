@@ -47,7 +47,7 @@
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 mod beneficiary;
-pub use beneficiary::{AccountId32ToBytes, AccountIdToBytesLiteral, Beneficiary};
+pub use beneficiary::{AccountId32ToSs58BytesToSign, AccountIdToBytesLiteral, Beneficiary};
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
@@ -63,6 +63,7 @@ use alloc::{collections::btree_map::BTreeMap, vec, vec::Vec};
 use sp_runtime::traits::{AccountIdConversion, Zero};
 
 use frame_support::{
+    defensive,
     dispatch::DispatchResult,
     pallet_prelude::{InvalidTransaction, TransactionValidityError},
     traits::{
@@ -75,9 +76,10 @@ use frame_support::{
 
 pub use sp_core::{ecdsa::Signature as EthereumSignature, H160 as EthereumAddress};
 
-pub(crate) type BalanceOf<T> =
+type BalanceOf<T> =
     <<T as Config>::Currency as Inspect<<T as frame_system::Config>::AccountId>>::Balance;
-pub(crate) type ClaimMessage<T> = BoundedVec<u8, <T as Config>::MaxClaimMessageLength>;
+
+type ClaimMessage<T> = BoundedVec<u8, <T as Config>::MaxClaimMessageLength>;
 
 impl<T: Config> From<Error<T>> for TransactionValidityError {
     fn from(error: Error<T>) -> TransactionValidityError {
@@ -85,7 +87,10 @@ impl<T: Config> From<Error<T>> for TransactionValidityError {
             Error::AlreadyEnded => InvalidTransaction::Stale,
             Error::NotEligible => InvalidTransaction::BadSigner,
             Error::BadSignature => InvalidTransaction::BadProof,
-            _ => InvalidTransaction::Custom(0u8),
+            _ => {
+                defensive!();
+                InvalidTransaction::Custom(0u8)
+            }
         };
         TransactionValidityError::Invalid(e)
     }
@@ -314,45 +319,46 @@ pub mod pallet {
             )
         }
 
-        fn do_claim(beneficiary: Beneficiary<T>, dest: Option<T::AccountId>) -> DispatchResult {
-            // See if account is eligible to get a claim
-            Beneficiaries::<T>::try_mutate_exists(beneficiary.clone(), |amount| {
-                *amount = match amount {
-                    // Account is eligible to get a claim
-                    Some(amount) => {
-                        // Execute payment
-                        let available = Self::pot();
-                        if *amount > available {
-                            log::warn!("Claimable amount {amount:?} bigger than total available {available:?}");
-                            Err(TokenError::FundsUnavailable)?; // Prevent going under the existential deposit of the account
-                        }
-                        let dest = match beneficiary.clone() {
-                            Beneficiary::<T>::Substrate(address) => address,
-                            Beneficiary::<T>::Ethereum(_) => dest.unwrap(),
-                        };
-                        T::Currency::transfer(
-                            &Self::account_id(),
-                            &dest,
-                            *amount,
-                            Preservation::Preserve,
-                        )?;
-                        // Subtract the claimed token from the TotalClaimable
-                        TotalClaimable::<T>::mutate(|required_amount| {
-                            *required_amount = required_amount.defensive_saturating_sub(*amount)
-                        });
-                        log::trace!("Claimed {amount:?} for {beneficiary:?}");
-                        Self::deposit_event(Event::<T>::Claimed {
-                            beneficiary,
-                            amount: *amount,
-                        });
-                        None
-                    }
-                    // Account is not eligible to receive funds
-                    _ => Err(Error::<T>::NotEligible)?,
-                };
-                Ok::<_, DispatchError>(())
-            })?;
+        fn do_claim(dest: T::AccountId, amount: BalanceOf<T>) -> DispatchResult {
+            T::Currency::transfer(&Self::account_id(), &dest, amount, Preservation::Preserve)?;
+            // Subtract the claimed token from the TotalClaimable
+            TotalClaimable::<T>::mutate(|required_amount| {
+                *required_amount = required_amount.defensive_saturating_sub(amount)
+            });
             Ok(())
+        }
+
+        fn process_claim(
+            beneficiary: Beneficiary<T>,
+        ) -> core::result::Result<BalanceOf<T>, DispatchError> {
+            // See if account is eligible to get a claim
+            Ok(Beneficiaries::<T>::try_mutate_exists(
+                beneficiary.clone(),
+                |amount| {
+                    let mut ret_amount = BalanceOf::<T>::zero();
+                    *amount = match amount {
+                        // Account is eligible to get a claim
+                        Some(amount) => {
+                            // Execute payment
+                            let available = Self::pot();
+                            if *amount > available {
+                                log::warn!("Claimable amount {amount:?} bigger than total available {available:?}");
+                                Err(TokenError::FundsUnavailable)?; // Prevent going under the existential deposit of the account
+                            }
+                            log::trace!("Claimed {amount:?} for {beneficiary:?}");
+                            Self::deposit_event(Event::<T>::Claimed {
+                                beneficiary,
+                                amount: *amount,
+                            });
+                            ret_amount = *amount;
+                            None
+                        }
+                        // Account is not eligible to receive funds
+                        _ => Err(Error::<T>::NotEligible)?,
+                    };
+                    Ok::<_, DispatchError>(ret_amount)
+                },
+            )?)
         }
 
         fn do_add_beneficiaries(
@@ -453,10 +459,9 @@ pub mod pallet {
             }
         }
 
-        pub(crate) fn check_claimant(
+        fn check_claimant(
             beneficiary: &Beneficiary<T>,
             signature: ClaimSignature<T>,
-            dest: Option<T::AccountId>,
         ) -> Result<(), Error<T>> {
             // Pre-requisites
             // 1. Check claim is active
@@ -469,7 +474,7 @@ pub mod pallet {
 
             // Check signature
             let claim_message = ClaimId::<T>::get().unwrap().1;
-            if !signature.verify(claim_message.as_slice(), beneficiary, dest) {
+            if !signature.verify(claim_message.as_slice(), beneficiary) {
                 Err(Error::<T>::BadSignature)?
             }
 
@@ -560,13 +565,15 @@ pub mod pallet {
             signature: T::Signature,
         ) -> DispatchResult {
             ensure_none(origin)?;
-            let beneficiary = Beneficiary::<T>::Substrate(beneficiary.clone().into_account());
+            let beneficiary_account = beneficiary.into_account();
+            let beneficiary = Beneficiary::<T>::Substrate(beneficiary_account.clone());
             let signature = ClaimSignature::<T>::Substrate(signature);
-            Self::check_claimant(&beneficiary, signature, None)?;
-            Self::do_claim(beneficiary, None)
+            Self::check_claimant(&beneficiary, signature)?;
+            let amount = Self::process_claim(beneficiary)?;
+            Self::do_claim(beneficiary_account, amount)
         }
 
-        /// Allows an 'origin' to claim tokens in place of a Substrate beneficiary 'dest' (taking care of the fees).
+        /// Allows ManagerOrigin to claim tokens in place of a Substrate beneficiary 'dest' (taking care of the fees).
         /// Fails if:
         /// - 'dest' is not entitled to any token
         /// - There is no active airdrop
@@ -576,8 +583,8 @@ pub mod pallet {
         pub fn claim_for(origin: OriginFor<T>, dest: T::AccountId) -> DispatchResult {
             T::ManagerOrigin::ensure_origin(origin)?;
             Self::check_claim_status(true)?;
-            Self::do_claim(Beneficiary::<T>::Substrate(dest), None)?;
-            Ok(())
+            let amount = Self::process_claim(Beneficiary::<T>::Substrate(dest.clone()))?;
+            Self::do_claim(dest, amount)
         }
 
         /// Add beneficiaries.
@@ -690,12 +697,13 @@ pub mod pallet {
         ) -> DispatchResult {
             ensure_none(origin)?;
             let beneficiary = Beneficiary::<T>::Ethereum(beneficiary);
-            let signature = ClaimSignature::<T>::Ethereum(signature);
-            Self::check_claimant(&beneficiary, signature, Some(dest.clone()))?;
-            Self::do_claim(beneficiary, Some(dest))
+            let signature = ClaimSignature::<T>::Ethereum((signature, dest.clone()));
+            Self::check_claimant(&beneficiary, signature)?;
+            let amount = Self::process_claim(beneficiary)?;
+            Self::do_claim(dest, amount)
         }
 
-        /// Allows an 'origin' to claim tokens in place of an Ethereum beneficiary 'dest' (taking care of the fees).
+        /// Allows ManagerOrigin to claim tokens in place of a Substrate beneficiary 'dest' (taking care of the fees).
         /// Fails if:
         /// - 'dest' is not entitled to any token
         /// - There is no active airdrop
@@ -709,8 +717,8 @@ pub mod pallet {
         ) -> DispatchResult {
             T::ManagerOrigin::ensure_origin(origin)?;
             Self::check_claim_status(true)?;
-            Self::do_claim(Beneficiary::<T>::Ethereum(beneficiary), Some(dest))?;
-            Ok(())
+            let amount = Self::process_claim(Beneficiary::<T>::Ethereum(beneficiary))?;
+            Self::do_claim(dest, amount)
         }
     }
 
@@ -721,7 +729,7 @@ pub mod pallet {
         fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
             const PRIORITY: u64 = 100;
 
-            let (beneficiary, dest) = match call {
+            let provides = match call {
                 Call::claim {
                     beneficiary,
                     signature,
@@ -729,8 +737,8 @@ pub mod pallet {
                     let beneficiary =
                         Beneficiary::<T>::Substrate(beneficiary.clone().into_account());
                     let signature = ClaimSignature::<T>::Substrate(signature.clone());
-                    Self::check_claimant(&beneficiary, signature, None)?;
-                    (beneficiary, None)
+                    Self::check_claimant(&beneficiary, signature)?;
+                    vec![("claim", ClaimId::<T>::get().unwrap(), beneficiary).encode()]
                 }
                 Call::claim_ethereum {
                     beneficiary,
@@ -738,9 +746,16 @@ pub mod pallet {
                     dest,
                 } => {
                     let beneficiary = Beneficiary::<T>::Ethereum(*beneficiary);
-                    let signature = ClaimSignature::<T>::Ethereum(signature.clone());
-                    Self::check_claimant(&beneficiary, signature, Some(dest.clone()))?;
-                    (beneficiary, Some(dest))
+                    let signature =
+                        ClaimSignature::<T>::Ethereum((signature.clone(), dest.clone()));
+                    Self::check_claimant(&beneficiary, signature)?;
+                    vec![(
+                        "claim_ethereum",
+                        ClaimId::<T>::get().unwrap(),
+                        beneficiary,
+                        dest,
+                    )
+                        .encode()]
                 }
                 _ => return Err(InvalidTransaction::Call.into()),
             };
@@ -748,7 +763,7 @@ pub mod pallet {
             Ok(ValidTransaction {
                 priority: PRIORITY,
                 requires: vec![],
-                provides: vec![("claim", ClaimId::<T>::get().unwrap(), beneficiary, dest).encode()],
+                provides,
                 longevity: TransactionLongevity::MAX,
                 propagate: true,
             })

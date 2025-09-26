@@ -3,7 +3,7 @@ use crate::{beneficiary::Beneficiary, EthereumAddress, EthereumSignature};
 use frame_benchmarking::account;
 use sp_runtime::Saturating;
 
-pub(crate) fn get_beneficiaries_map<T: Config>(
+pub fn get_beneficiaries_map<T: Config>(
     n: u32,
 ) -> (BTreeMap<Beneficiary<T>, BalanceOf<T>>, BalanceOf<T>) {
     use crate::alloc::string::ToString;
@@ -30,32 +30,32 @@ pub(crate) fn get_beneficiaries_map<T: Config>(
     (beneficiaries_map, total_amount)
 }
 
-pub(crate) mod secp_utils {
+pub mod secp_utils {
     use super::*;
     use libsecp256k1::{sign, Message, PublicKey, SecretKey};
     use sp_io::hashing::keccak_256;
 
     #[allow(dead_code)]
-    pub(crate) fn parse_secret(secret_bytes: &[u8]) -> SecretKey {
+    pub fn parse_secret(secret_bytes: &[u8]) -> SecretKey {
         SecretKey::parse_slice(secret_bytes).unwrap()
     }
 
-    pub(crate) fn secret_from_seed(seed: &[u8]) -> SecretKey {
+    pub fn secret_from_seed(seed: &[u8]) -> SecretKey {
         SecretKey::parse(&keccak_256(seed)).unwrap()
     }
 
-    pub(crate) fn public(secret: &SecretKey) -> PublicKey {
+    pub fn public(secret: &SecretKey) -> PublicKey {
         PublicKey::from_secret_key(secret)
     }
 
-    pub(crate) fn eth(secret: &SecretKey) -> EthereumAddress {
+    pub fn eth(secret: &SecretKey) -> EthereumAddress {
         let mut res = EthereumAddress::default();
         res.0
             .copy_from_slice(&keccak_256(&public(secret).serialize()[1..65])[12..]);
         res
     }
 
-    pub(crate) fn sig(secret: &SecretKey, msg: &[u8]) -> EthereumSignature {
+    pub fn sig(secret: &SecretKey, msg: &[u8]) -> EthereumSignature {
         let msg = alloy_primitives::eip191_hash_message(msg);
         let (sig, recovery_id) = sign(&Message::parse(&msg), secret);
         let mut r = [0u8; 65];

@@ -1189,7 +1189,6 @@ mod validate_unsigned {
             GenesisClaimBalance::Sufficient,
         )
         .execute_with(|| {
-            let empty_dest: Option<AccountId> = None;
             let (user_signer, user_signature, user_signature_prefixed) = USER_1_SIGN.clone();
             let user_address = user_signer.clone().into_account();
             let claim_id = ClaimId::<Test>::get().unwrap();
@@ -1260,7 +1259,6 @@ mod validate_unsigned {
                         "claim",
                         claim_id.clone(),
                         Beneficiary::<Test>::Substrate(user_address),
-                        empty_dest
                     )
                         .encode()],
                     longevity: TransactionLongevity::MAX,
@@ -1284,7 +1282,6 @@ mod validate_unsigned {
                         "claim",
                         claim_id.clone(),
                         Beneficiary::<Test>::Substrate(user_address),
-                        empty_dest
                     )
                         .encode()],
                     longevity: TransactionLongevity::MAX,
@@ -1387,10 +1384,10 @@ mod validate_unsigned {
                     priority: 100,
                     requires: vec![],
                     provides: vec![(
-                        "claim",
+                        "claim_ethereum",
                         claim_id.clone(),
                         USER_3,
-                        Some(USER_1_RAW)
+                        USER_1_RAW
                     )
                         .encode()],
                     longevity: TransactionLongevity::MAX,
