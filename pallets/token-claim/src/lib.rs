@@ -48,7 +48,6 @@
 mod benchmarking;
 mod beneficiary;
 pub use beneficiary::{AccountId32ToBytes, AccountIdToBytesLiteral, Beneficiary};
-mod ethereum;
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
@@ -74,6 +73,8 @@ use frame_support::{
     BoundedVec, PalletId,
 };
 
+pub use sp_core::{ecdsa::Signature as EthereumSignature, H160 as EthereumAddress};
+
 pub(crate) type BalanceOf<T> =
     <<T as Config>::Currency as Inspect<<T as frame_system::Config>::AccountId>>::Balance;
 pub(crate) type ClaimMessage<T> = BoundedVec<u8, <T as Config>::MaxClaimMessageLength>;
@@ -98,7 +99,6 @@ pub mod pallet {
 
     use super::*;
     use crate::beneficiary::{Beneficiary, ClaimSignature};
-    use crate::ethereum::*;
     use codec::Encode;
     use frame_support::{pallet_prelude::*, traits::DefensiveSaturating};
     use frame_system::pallet_prelude::*;

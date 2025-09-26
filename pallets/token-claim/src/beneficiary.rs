@@ -1,5 +1,4 @@
-use crate::ethereum::*;
-use crate::Config;
+use crate::{Config, EthereumAddress, EthereumSignature};
 use alloc::vec::Vec;
 use codec::{Decode, Encode, MaxEncodedLen};
 use core::cmp::Ordering;
@@ -88,6 +87,7 @@ impl<T: Config> ClaimSignature<T> {
         beneficiary: &Beneficiary<T>,
         dest: Option<T::AccountId>,
     ) -> bool {
+        use alloy_primitives::{Address, PrimitiveSignature};
         match (beneficiary, self) {
             // Beneficiary with Substrate address
             (Beneficiary::<T>::Substrate(sub_addr), ClaimSignature::<T>::Substrate(sub_sig)) => {
@@ -107,9 +107,19 @@ impl<T: Config> ClaimSignature<T> {
                     T::AccountIdBytesToSign::to_bytes_literal(&dest.clone().unwrap());
                 let msg_with_dest =
                     [claim_message, ETH_MSG_SEPARATOR, dest_account.as_slice()].concat();
+
                 // Check signature is successful and signer from signature is the same as beneficiary
-                eth_recover(eth_sig, msg_with_dest.as_slice())
-                    .map_or_else(|| false, |extracted_signer| extracted_signer == *eth_addr)
+                if let Ok(sig) = PrimitiveSignature::from_raw_array(&eth_sig.0) {
+                    sig.recover_address_from_msg(msg_with_dest.as_slice())
+                        .map_or_else(
+                            |_| false,
+                            |extracted_signer| {
+                                extracted_signer == Address::from(eth_addr.as_fixed_bytes())
+                            },
+                        )
+                } else {
+                    false
+                }
             }
             _ => unreachable!(), // Other combinations not allowed
         }

@@ -35,8 +35,8 @@ use sp_runtime::{
 };
 
 use crate::beneficiary::{AccountIdToBytesLiteral, Beneficiary};
-use crate::ethereum::{EthereumAddress, EthereumSignature};
 use crate::utils::{get_beneficiaries_map, secp_utils::*};
+use crate::{EthereumAddress, EthereumSignature};
 
 pub type Balance = u128;
 pub type AccountId = u64;
@@ -248,12 +248,7 @@ impl crate::benchmarking::BenchmarkHelper<TestSignature, UintAuthorityId> for Mo
         (signature, signer)
     }
 
-    fn sign_claim_ethereum(
-        message: &[u8],
-    ) -> (
-        crate::ethereum::EthereumSignature,
-        crate::ethereum::EthereumAddress,
-    ) {
+    fn sign_claim_ethereum(message: &[u8]) -> (EthereumSignature, EthereumAddress) {
         use crate::utils::secp_utils::*;
         let sk = secret_from_seed(b"//TestBeneficiary");
         (sig(&sk, message), eth(&sk))

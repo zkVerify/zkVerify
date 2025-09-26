@@ -1,7 +1,7 @@
 use crate::beneficiary::Beneficiary;
-use crate::ethereum::EthereumSignature;
 use crate::mock::RuntimeEvent as TestEvent;
 use crate::mock::*;
+use crate::EthereumSignature;
 use crate::*;
 use frame_support::{assert_err, assert_noop, assert_ok};
 use frame_system::{EventRecord, Phase};
@@ -332,7 +332,7 @@ mod claim_common {
             );
 
             let (mut address, eth_signature) = USER_3_SIGN_USER_1_DEST.clone();
-            address.0[0] += 1;
+            address.as_mut()[0] += 1;
             assert_noop!(
                 Claim::claim_ethereum(Origin::None.into(), address, eth_signature, USER_1_RAW),
                 Error::<Test>::NotEligible
@@ -603,7 +603,7 @@ mod claim_ethereum_specific {
         .execute_with(|| {
             // Prepare claim message and signature
             // Signature on "INIT_CLAIM_MESSAGE||\n||USER_1_RAW"
-            let eth_signature = EthereumSignature(hex_literal::hex!("cb88919aba9de0cac6fe685f93d7fdad484e1d17aeedea6c01120c9f6aaa823f247a9a47b2390489417f63c0300b8f72301aadf7a2060f429ed9733b841b31851b"));
+            let eth_signature = EthereumSignature::from_raw(hex_literal::hex!("cb88919aba9de0cac6fe685f93d7fdad484e1d17aeedea6c01120c9f6aaa823f247a9a47b2390489417f63c0300b8f72301aadf7a2060f429ed9733b841b31851b"));
             assert_ok!(Claim::claim_ethereum(
                 Origin::None.into(),
                 USER_3_RAW,
@@ -874,6 +874,39 @@ mod add_beneficiaries {
                 ),
                 Error::<Test>::AlreadyPresent
             );
+        })
+    }
+
+    #[test]
+    fn cannot_add_beneficiary_with_zero_amount() {
+        test_with_configs(
+            WithGenesisBeneficiaries::Yes,
+            GenesisClaimBalance::Sufficient,
+        )
+        .execute_with(|| {
+            assert_err!(
+                Claim::add_beneficiaries(
+                    Origin::Signed(MANAGER_USER).into(),
+                    vec![(USER_6, BalanceOf::<Test>::zero())]
+                        .into_iter()
+                        .collect()
+                ),
+                Error::<Test>::NothingToClaim
+            );
+        })
+    }
+
+    #[test]
+    fn can_add_zero_beneficiaries() {
+        test_with_configs(
+            WithGenesisBeneficiaries::Yes,
+            GenesisClaimBalance::Sufficient,
+        )
+        .execute_with(|| {
+            assert_ok!(Claim::add_beneficiaries(
+                Origin::Signed(MANAGER_USER).into(),
+                BTreeMap::new()
+            ));
         })
     }
 }
@@ -1277,107 +1310,120 @@ mod validate_unsigned {
     #[test]
     fn validate_unsigned_ethereum_works() {
         test_with_configs(
-        WithGenesisBeneficiaries::Yes,
-        GenesisClaimBalance::Sufficient,
-    )
-    .execute_with(|| {
-        // Signature on "INIT_CLAIM_MESSAGE||\n||USER_1_RAW"
-        let user_signer = USER_3_RAW;
-        let user_signature = EthereumSignature(hex_literal::hex!("cb88919aba9de0cac6fe685f93d7fdad484e1d17aeedea6c01120c9f6aaa823f247a9a47b2390489417f63c0300b8f72301aadf7a2060f429ed9733b841b31851b"));
-        let claim_id = ClaimId::<Test>::get().unwrap();
-        let source = sp_runtime::transaction_validity::TransactionSource::External;
-        let dest = USER_1_RAW;
+            WithGenesisBeneficiaries::Yes,
+            GenesisClaimBalance::Sufficient,
+        )
+        .execute_with(|| {
+            // Signature on "INIT_CLAIM_MESSAGE||\n||USER_1_RAW"
+            let user_signer = USER_3_RAW;
+            let user_signature = EthereumSignature::from_raw(hex_literal::hex!("cb88919aba9de0cac6fe685f93d7fdad484e1d17aeedea6c01120c9f6aaa823f247a9a47b2390489417f63c0300b8f72301aadf7a2060f429ed9733b841b31851b"));
+            let claim_id = ClaimId::<Test>::get().unwrap();
+            let source = sp_runtime::transaction_validity::TransactionSource::External;
+            let dest = USER_1_RAW;
 
-        // Claim bad signature
-        let mut bad_signature = user_signature.clone();
-        bad_signature.0[0] += 1;
+            // Claim bad signature
+            let mut bad_signature = user_signature.clone();
+            bad_signature.0[0] += 1;
 
-        assert_eq!(
-            Pallet::<Test>::validate_unsigned(
-                source,
-                &ClaimCall::claim_ethereum {
-                    beneficiary: user_signer,
-                    signature: bad_signature,
-                    dest
-                }
-            ),
-            Err(TransactionValidityError::Invalid(
-                InvalidTransaction::BadProof
-            ))
-        );
+            assert_eq!(
+                Pallet::<Test>::validate_unsigned(
+                    source,
+                    &ClaimCall::claim_ethereum {
+                        beneficiary: user_signer,
+                        signature: bad_signature,
+                        dest
+                    }
+                ),
+                Err(TransactionValidityError::Invalid(
+                    InvalidTransaction::BadProof
+                ))
+            );
 
-        // Claim bad user
-        let _ = Balances::mint_into(&Claim::account_id(), USER_6_AMOUNT).unwrap();
-        Beneficiaries::<Test>::insert(USER_6, USER_6_AMOUNT);
-        assert_eq!(
-            Pallet::<Test>::validate_unsigned(
-                source,
-                &ClaimCall::claim_ethereum {
-                    beneficiary: USER_6_RAW,
-                    signature: user_signature.clone(),
-                    dest
-                }
-            ),
-            Err(TransactionValidityError::Invalid(
-                InvalidTransaction::BadProof
-            ))
-        );
+            // Claim bad user
+            let _ = Balances::mint_into(&Claim::account_id(), USER_6_AMOUNT).unwrap();
+            Beneficiaries::<Test>::insert(USER_6, USER_6_AMOUNT);
+            assert_eq!(
+                Pallet::<Test>::validate_unsigned(
+                    source,
+                    &ClaimCall::claim_ethereum {
+                        beneficiary: USER_6_RAW,
+                        signature: user_signature.clone(),
+                        dest
+                    }
+                ),
+                Err(TransactionValidityError::Invalid(
+                    InvalidTransaction::BadProof
+                ))
+            );
 
-        // Claim beneficiary non existing
-        let mut nb_signer = USER_3_RAW;
-        nb_signer.0[0] += 1;
-        assert_eq!(
-            Pallet::<Test>::validate_unsigned(
-                source,
-                &ClaimCall::claim_ethereum {
-                    beneficiary: nb_signer,
-                    signature: user_signature.clone(),
-                    dest
-                }
-            ),
-            Err(TransactionValidityError::Invalid(
-                InvalidTransaction::BadSigner
-            ))
-        );
+            // Claim beneficiary non existing
+            let mut nb_signer = USER_3_RAW;
+            nb_signer.as_mut()[0] += 1;
+            assert_eq!(
+                Pallet::<Test>::validate_unsigned(
+                    source,
+                    &ClaimCall::claim_ethereum {
+                        beneficiary: nb_signer,
+                        signature: user_signature.clone(),
+                        dest
+                    }
+                ),
+                Err(TransactionValidityError::Invalid(
+                    InvalidTransaction::BadSigner
+                ))
+            );
 
-        // Claim ok
-        assert_eq!(
-            Pallet::<Test>::validate_unsigned(
-                source,
-                &ClaimCall::claim_ethereum {
-                    beneficiary: USER_3_RAW,
-                    signature: user_signature.clone(),
-                    dest
-                }
-            ),
-            Ok(ValidTransaction {
-                priority: 100,
-                requires: vec![],
-                provides: vec![(
-                    "claim",
-                    claim_id.clone(),
-                    USER_3,
-                    Some(USER_1_RAW)
-                )
-                    .encode()],
-                longevity: TransactionLongevity::MAX,
-                propagate: true,
-            })
-        );
+            // Claim ok
+            assert_eq!(
+                Pallet::<Test>::validate_unsigned(
+                    source,
+                    &ClaimCall::claim_ethereum {
+                        beneficiary: USER_3_RAW,
+                        signature: user_signature.clone(),
+                        dest
+                    }
+                ),
+                Ok(ValidTransaction {
+                    priority: 100,
+                    requires: vec![],
+                    provides: vec![(
+                        "claim",
+                        claim_id.clone(),
+                        USER_3,
+                        Some(USER_1_RAW)
+                    )
+                        .encode()],
+                    longevity: TransactionLongevity::MAX,
+                    propagate: true,
+                })
+            );
 
-        // Claim while inactive
-        ClaimActive::<Test>::put(false);
-        assert_eq!(
-            Pallet::<Test>::validate_unsigned(
-                source,
-                &ClaimCall::claim_ethereum {
-                    beneficiary: user_signer,
-                    signature: user_signature,
-                    dest
-                }
-            ),
-            Err(TransactionValidityError::Invalid(InvalidTransaction::Stale))
-        );
-    });
+            // Claim while inactive
+            ClaimActive::<Test>::put(false);
+            assert_eq!(
+                Pallet::<Test>::validate_unsigned(
+                    source,
+                    &ClaimCall::claim_ethereum {
+                        beneficiary: user_signer,
+                        signature: user_signature,
+                        dest
+                    }
+                ),
+                Err(TransactionValidityError::Invalid(InvalidTransaction::Stale))
+            );
+        });
+    }
+
+    #[test]
+    fn validate_unsigned_rejects_unexpected_call() {
+        test().execute_with(|| {
+            assert_eq!(
+                Pallet::<Test>::validate_unsigned(
+                    sp_runtime::transaction_validity::TransactionSource::External,
+                    &ClaimCall::end_claim {}
+                ),
+                Err(TransactionValidityError::Invalid(InvalidTransaction::Call))
+            );
+        });
     }
 }
