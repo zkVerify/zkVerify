@@ -475,3 +475,22 @@ mod claim {
         });
     }
 }
+
+mod token_claim {
+    use super::*;
+
+    #[test]
+    fn unclaimed_go_to_treasury() {
+        test().execute_with(|| {
+            let pre_balance = Balances::free_balance(Treasury::account_id());
+
+            assert_ok!(TokenClaim::end_claim(RuntimeOrigin::root()));
+
+            // Check that treasury balance increased
+            assert_eq!(
+                pre_balance.saturating_add(testsfixtures::total_balances()),
+                Balances::free_balance(Treasury::account_id())
+            )
+        });
+    }
+}

@@ -31,28 +31,28 @@ pallet-balances = { workspace = true }
 hex-literal = { workspace = true }
 
 [features]
-default = ["std"]
+default = [ "std" ]
 std = [
-    "bincode/std",
-    "codec/std",
-    "frame-system/std",
-    "frame-benchmarking?/std",
-    "frame-support/std",
-    "hp-verifiers/std",
-    "log/std",
-    "pallet-balances/std",
-    "pallet-verifiers/std",
-    "scale-info/std",
-    "sp-core/std",
-    "sp-io?/std"
+	"bincode/std",
+	"codec/std",
+	"frame-benchmarking?/std",
+	"frame-support/std",
+	"frame-system/std",
+	"hp-verifiers/std",
+	"log/std",
+	"pallet-balances/std",
+	"pallet-verifiers/std",
+	"scale-info/std",
+	"sp-core/std",
+	"sp-io?/std",
 ]
 runtime-benchmarks = [
-    "dep:frame-benchmarking",
-    "dep:hex-literal",
-    "dep:sp-io",
-    "frame-benchmarking/runtime-benchmarks",
-    "frame-support/runtime-benchmarks",
-    "frame-system/runtime-benchmarks",
-    "pallet-balances/runtime-benchmarks",
-    "pallet-verifiers/runtime-benchmarks",
+	"dep:frame-benchmarking",
+	"dep:hex-literal",
+	"dep:sp-io",
+	"frame-benchmarking/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"pallet-balances/runtime-benchmarks",
+	"pallet-verifiers/runtime-benchmarks",
 ]

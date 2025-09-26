@@ -58,4 +58,5 @@ pub mod xcm;
 
 pub mod pallet_claim;
 pub mod pallet_hyperbridge_aggregations;
+pub mod pallet_token_claim;
 pub mod parachains;
