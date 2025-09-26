@@ -14,8 +14,8 @@ workspace = true
 [dependencies]
 log = { workspace = true}
 serde = { workspace = true }
-rustc-hex = { version = "2.1.0", default-features = false }
 libsecp256k1 = { version = "0.7.0", default-features = false, optional = true }
+alloy-primitives = { workspace = true, features = ["k256"] }
 
 codec = { workspace = true }
 scale-info = { workspace = true, features = ["derive"] }
@@ -50,12 +50,12 @@ std = [
 	"frame-system/std",
 	"log/std",
 	"pallet-balances/std",
-	"rustc-hex/std",
 	"scale-info/std",
 	"serde/std",
 	"sp-core/std",
 	"sp-io/std",
 	"sp-runtime/std",
+	"alloy-primitives/std",
 ]
 try-runtime = [
 	"frame-support/try-runtime",

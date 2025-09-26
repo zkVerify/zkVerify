@@ -76,7 +76,7 @@ async function run(nodeName, networkInfo, _args) {
   }
   console.log("Claim initialized");
 
-  const keys = await api.query.claim.beneficiaries.keys();
+  const keys = await api.query.tokenClaim.beneficiaries.keys();
   const beneficiaries = keys.map(({ args: [beneficiaryId] }) => beneficiaryId);
   console.log('all beneficiaries:', beneficiaries.join(', ')); 
 

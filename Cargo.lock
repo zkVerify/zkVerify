@@ -10932,6 +10932,7 @@ dependencies = [
 name = "pallet-token-claim"
 version = "0.1.0"
 dependencies = [
+ "alloy-primitives 0.8.25",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -10940,7 +10941,6 @@ dependencies = [
  "log",
  "pallet-balances",
  "parity-scale-codec",
- "rustc-hex",
  "scale-info",
  "serde",
  "sp-core",

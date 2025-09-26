@@ -289,6 +289,16 @@ fn pallet_claim() {
 }
 
 #[test]
+fn pallet_token_claim() {
+    use pallet_token_claim::WeightInfo;
+
+    assert_eq!(
+        <Runtime as pallet_token_claim::Config>::WeightInfo::claim(),
+        crate::weights::pallet_token_claim::ZKVWeight::<Runtime>::claim()
+    );
+}
+
+#[test]
 fn pallet_message_queue() {
     use pallet_message_queue::WeightInfo;
 

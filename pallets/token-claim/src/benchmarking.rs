@@ -15,8 +15,8 @@
 
 use super::*;
 use crate::beneficiary::{Beneficiary, ETH_MSG_SEPARATOR};
-use crate::ethereum::*;
-use crate::utils::*;
+use crate::utils::{secp_utils::*, *};
+use crate::{EthereumAddress, EthereumSignature};
 use codec::{Decode, Encode};
 use frame_benchmarking::v2::*;
 use frame_support::traits::UnfilteredDispatchable;
@@ -43,8 +43,8 @@ impl BenchmarkHelper<MultiSignature, MultiSigner> for () {
     }
 
     fn sign_claim_ethereum(message: &[u8]) -> (EthereumSignature, EthereumAddress) {
-        let sk = secp_utils::secret_from_seed(b"//EthBeneficiary");
-        (secp_utils::sig(&sk, message), secp_utils::eth(&sk))
+        let sk = secret_from_seed(b"//EthBeneficiary");
+        (sig(&sk, message), eth(&sk))
     }
 }
 
