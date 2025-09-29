@@ -367,6 +367,7 @@ async function _handleTransactionLifecycle(api, sendFunction, blockUntil, filter
       async function (error) {
         if (error !== "retry") {
           console.log("Not retrying!");
+          done = true;
           return -1;
         }
         console.log("Transaction should be resubmitted, waiting for empty mempool...");

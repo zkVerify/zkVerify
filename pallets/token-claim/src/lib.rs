@@ -203,12 +203,6 @@ pub mod pallet {
             // Sanity check
             assert!(T::MAX_OP_BENEFICIARIES <= T::MaxBeneficiaries::get());
 
-            // Create Claim account
-            let account_id = <Pallet<T>>::account_id();
-
-            // Mint existential deposit
-            let min = T::Currency::minimum_balance();
-            let _ = T::Currency::mint_into(&account_id, min);
             TotalClaimable::<T>::put(BalanceOf::<T>::zero());
 
             // Add beneficiaries
@@ -287,6 +281,18 @@ pub mod pallet {
         BadSignature,
         /// Supplied an invalid claim message
         InvalidClaimMessage,
+    }
+
+    #[pallet::hooks]
+    impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+        fn on_initialize(_now: BlockNumberFor<T>) -> Weight {
+            let account = Self::account_id();
+            if T::Currency::balance(&account).is_zero() {
+                // Mint existential deposit
+                let _ = T::Currency::mint_into(&account, T::Currency::minimum_balance());
+            }
+            Weight::zero()
+        }
     }
 
     impl<T: Config> Pallet<T> {

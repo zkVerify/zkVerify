@@ -87,7 +87,7 @@ pub fn test() -> sp_io::TestExternalities {
     // Fund also token claim pallet
     balances.push((
         crate::TokenClaimPalletId::get().into_account_truncating(),
-        total_balances(),
+        total_balances() + crate::ExistentialDeposit::get(),
     ));
 
     pallet_balances::GenesisConfig::<super::Runtime> { balances }

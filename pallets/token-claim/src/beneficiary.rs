@@ -6,9 +6,9 @@ use frame_support::{defensive, pallet_prelude::TypeInfo};
 use serde::{self, Deserialize, Serialize};
 use sp_runtime::traits::Verify;
 
-pub(crate) const MSG_PREFIX: &[u8] = b"<Bytes>";
-pub(crate) const MSG_SUFFIX: &[u8] = b"</Bytes>";
-pub(crate) const ETH_MSG_SEPARATOR: &[u8] = b"\n";
+pub const MSG_PREFIX: &[u8] = b"<Bytes>";
+pub const MSG_SUFFIX: &[u8] = b"</Bytes>";
+pub const ETH_MSG_SEPARATOR: &[u8] = b"\n";
 
 #[derive(Clone, PartialEq, Encode, Decode, TypeInfo, Serialize, Deserialize, Eq, MaxEncodedLen)]
 #[scale_info(skip_type_params(T))]
@@ -75,13 +75,13 @@ impl<T: frame_system::Config> AccountIdToBytesLiteral<T> for AccountId32ToSs58By
     }
 }
 
-pub(crate) enum ClaimSignature<T: Config> {
+pub enum ClaimSignature<T: Config> {
     Substrate(T::Signature),
     Ethereum((EthereumSignature, T::AccountId)),
 }
 
 impl<T: Config> ClaimSignature<T> {
-    pub(crate) fn verify(&self, claim_message: &[u8], beneficiary: &Beneficiary<T>) -> bool {
+    pub fn verify(&self, claim_message: &[u8], beneficiary: &Beneficiary<T>) -> bool {
         use alloy_primitives::{Address, PrimitiveSignature};
         match (beneficiary, self) {
             // Beneficiary with Substrate address

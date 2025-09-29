@@ -271,7 +271,7 @@ pub fn test_with_configs(
         GenesisClaimBalance::Sufficient => SUFFICIENT_GENESIS_BALANCE,
         GenesisClaimBalance::Insufficient => INSUFFICIENT_GENESIS_BALANCE,
         GenesisClaimBalance::None => 0,
-    };
+    } + EXISTENTIAL_DEPOSIT;
 
     let mut balances = vec![(MANAGER_USER, 42_000_000_000)];
     if claim_genesis_balance != 0 {

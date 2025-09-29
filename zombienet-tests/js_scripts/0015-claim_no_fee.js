@@ -40,6 +40,15 @@ async function run(nodeName, networkInfo, _args) {
       return ReturnCode.ErrUnsupportedNetwork;
   }
 
+  // Check token claim pallet account exists
+  const palletAddressOption = await api.query.tokenClaim.palletAccountId();
+  const palletAddress = palletAddressOption.unwrap();
+  const account_balance = (await api.query.system.account(palletAddress))["data"]["free"];
+  if (account_balance <= 0) {
+    console.log(`Token Claim pallet account doesn't exist`);
+    return ReturnCode.ErrInitClaim;
+  }
+
   // Build a keyring and import Alice's credential
   let keyring = new zombie.Keyring({ type: 'sr25519' });
   const alice = keyring.addFromUri('//Alice');
