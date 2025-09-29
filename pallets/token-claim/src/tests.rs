@@ -303,11 +303,11 @@ mod claim_common {
                 Error::<Test>::NotEligible
             );
 
-            let (address, eth_signature) = USER_3_SIGN_USER_1_DEST.clone();
+            let (address, eth_signature) = *USER_3_SIGN_USER_1_DEST;
             assert_ok!(Claim::claim_ethereum(
                 Origin::None.into(),
                 address,
-                eth_signature.clone(),
+                eth_signature,
                 USER_1_RAW
             ));
             assert_noop!(
@@ -331,7 +331,7 @@ mod claim_common {
                 Error::<Test>::NotEligible
             );
 
-            let (mut address, eth_signature) = USER_3_SIGN_USER_1_DEST.clone();
+            let (mut address, eth_signature) = *USER_3_SIGN_USER_1_DEST;
             address.as_mut()[0] += 1;
             assert_noop!(
                 Claim::claim_ethereum(Origin::None.into(), address, eth_signature, USER_1_RAW),
@@ -355,7 +355,7 @@ mod claim_common {
                 Error::<Test>::BadSignature
             );
 
-            let (address, mut eth_signature) = USER_3_SIGN_USER_1_DEST.clone();
+            let (address, mut eth_signature) = *USER_3_SIGN_USER_1_DEST;
             eth_signature.0[0] += 1;
             assert_noop!(
                 Claim::claim_ethereum(Origin::None.into(), address, eth_signature, USER_1_RAW),
@@ -381,7 +381,7 @@ mod claim_common {
 
             let _ = Balances::mint_into(&Claim::account_id(), USER_6_AMOUNT).unwrap();
             Beneficiaries::<Test>::insert(USER_6, USER_6_AMOUNT);
-            let (_, user_3_signature) = USER_3_SIGN_USER_1_DEST.clone();
+            let (_, user_3_signature) = *USER_3_SIGN_USER_1_DEST;
             assert_noop!(
                 Claim::claim_ethereum(
                     Origin::None.into(),
@@ -416,7 +416,7 @@ mod claim_common {
                 "Cannot claim if money not available",
             );
 
-            let (address, eth_signature) = USER_3_SIGN_USER_1_DEST.clone();
+            let (address, eth_signature) = *USER_3_SIGN_USER_1_DEST;
             Beneficiaries::<Test>::insert(USER_3, Balances::total_issuance()); // Increase astronomically
             assert_err!(
                 Claim::claim_ethereum(Origin::None.into(), address, eth_signature, USER_1_RAW),
@@ -441,7 +441,7 @@ mod claim_common {
                 Error::<Test>::AlreadyEnded
             );
 
-            let (address, eth_signature) = USER_3_SIGN_USER_1_DEST.clone();
+            let (address, eth_signature) = *USER_3_SIGN_USER_1_DEST;
             assert_noop!(
                 Claim::claim_ethereum(Origin::None.into(), address, eth_signature, USER_1_RAW),
                 Error::<Test>::AlreadyEnded
@@ -466,7 +466,7 @@ mod claim_common {
                 BadOrigin
             );
 
-            let (address, eth_signature) = USER_3_SIGN_USER_1_DEST.clone();
+            let (address, eth_signature) = *USER_3_SIGN_USER_1_DEST;
             assert_noop!(
                 Claim::claim_ethereum(
                     Origin::Signed(USER_1_RAW).into(),
@@ -567,7 +567,7 @@ mod claim_ethereum_specific {
             GenesisClaimBalance::Sufficient,
         )
         .execute_with(|| {
-            let (address, eth_signature) = USER_3_SIGN_USER_1_DEST.clone();
+            let (address, eth_signature) = *USER_3_SIGN_USER_1_DEST;
 
             // Claim
             assert_ok!(Claim::claim_ethereum(
@@ -1319,7 +1319,7 @@ mod validate_unsigned {
             let dest = USER_1_RAW;
 
             // Claim bad signature
-            let mut bad_signature = user_signature.clone();
+            let mut bad_signature = user_signature;
             bad_signature.0[0] += 1;
 
             assert_eq!(
@@ -1344,7 +1344,7 @@ mod validate_unsigned {
                     source,
                     &ClaimCall::claim_ethereum {
                         beneficiary: USER_6_RAW,
-                        signature: user_signature.clone(),
+                        signature: user_signature,
                         dest
                     }
                 ),
@@ -1361,7 +1361,7 @@ mod validate_unsigned {
                     source,
                     &ClaimCall::claim_ethereum {
                         beneficiary: nb_signer,
-                        signature: user_signature.clone(),
+                        signature: user_signature,
                         dest
                     }
                 ),
@@ -1376,7 +1376,7 @@ mod validate_unsigned {
                     source,
                     &ClaimCall::claim_ethereum {
                         beneficiary: USER_3_RAW,
-                        signature: user_signature.clone(),
+                        signature: user_signature,
                         dest
                     }
                 ),
@@ -1422,5 +1422,22 @@ mod validate_unsigned {
                 Err(TransactionValidityError::Invalid(InvalidTransaction::Call))
             );
         });
+    }
+
+    #[test]
+    fn account_id_32_to_ss58_is_correct() {
+        use sp_core::{
+            crypto::{AccountId32, Pair as TraitPair},
+            sr25519::Pair,
+        };
+        let phrase: &str =
+            "poverty popular note inform state innocent grant crumble manage tornado primary list";
+        let account: AccountId32 = Pair::from_phrase(phrase, None).unwrap().0.public().into();
+        assert_eq!(
+            <AccountId32ToSs58BytesToSign as AccountIdToBytesLiteral<Test>>::to_bytes_literal(
+                &account
+            ),
+            b"hQh2WM3CAzYWSuwjXcPJabvhRv8kKSqfC8zqKdMHrVSZjVMfj"
+        );
     }
 }

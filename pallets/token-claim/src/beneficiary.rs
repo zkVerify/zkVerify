@@ -101,7 +101,7 @@ impl<T: Config> ClaimSignature<T> {
             ) => {
                 // We need to append to the message the destination Substrate account, otherwise anyone could
                 // intercept the transaction and change the destination
-                let dest_account = T::AccountIdBytesToSign::to_bytes_literal(&dest);
+                let dest_account = T::AccountIdBytesToSign::to_bytes_literal(dest);
                 let msg_with_dest =
                     [claim_message, ETH_MSG_SEPARATOR, dest_account.as_slice()].concat();
 

@@ -191,8 +191,6 @@ pub mod pallet {
     pub struct GenesisConfig<T: Config> {
         /// Genesis beneficiaries
         pub beneficiaries: Vec<(Beneficiary<T>, BalanceOf<T>)>,
-        /// Genesis balance for this pallet's account
-        pub genesis_balance: BalanceOf<T>,
         /// Genesis claim message
         pub claim_message: ClaimMessage<T>,
     }
@@ -208,13 +206,9 @@ pub mod pallet {
             // Create Claim account
             let account_id = <Pallet<T>>::account_id();
 
-            // Fill account with genesis balance
+            // Mint existential deposit
             let min = T::Currency::minimum_balance();
-            let _ = T::Currency::mint_into(
-                &account_id,
-                min.defensive_saturating_add(self.genesis_balance),
-            );
-
+            let _ = T::Currency::mint_into(&account_id, min);
             TotalClaimable::<T>::put(BalanceOf::<T>::zero());
 
             // Add beneficiaries
@@ -332,33 +326,30 @@ pub mod pallet {
             beneficiary: Beneficiary<T>,
         ) -> core::result::Result<BalanceOf<T>, DispatchError> {
             // See if account is eligible to get a claim
-            Ok(Beneficiaries::<T>::try_mutate_exists(
-                beneficiary.clone(),
-                |amount| {
-                    let mut ret_amount = BalanceOf::<T>::zero();
-                    *amount = match amount {
-                        // Account is eligible to get a claim
-                        Some(amount) => {
-                            // Execute payment
-                            let available = Self::pot();
-                            if *amount > available {
-                                log::warn!("Claimable amount {amount:?} bigger than total available {available:?}");
-                                Err(TokenError::FundsUnavailable)?; // Prevent going under the existential deposit of the account
-                            }
-                            log::trace!("Claimed {amount:?} for {beneficiary:?}");
-                            Self::deposit_event(Event::<T>::Claimed {
-                                beneficiary,
-                                amount: *amount,
-                            });
-                            ret_amount = *amount;
-                            None
+            Beneficiaries::<T>::try_mutate_exists(beneficiary.clone(), |amount| {
+                let mut ret_amount = BalanceOf::<T>::zero();
+                *amount = match amount {
+                    // Account is eligible to get a claim
+                    Some(amount) => {
+                        // Execute payment
+                        let available = Self::pot();
+                        if *amount > available {
+                            log::warn!("Claimable amount {amount:?} bigger than total available {available:?}");
+                            Err(TokenError::FundsUnavailable)?; // Prevent going under the existential deposit of the account
                         }
-                        // Account is not eligible to receive funds
-                        _ => Err(Error::<T>::NotEligible)?,
-                    };
-                    Ok::<_, DispatchError>(ret_amount)
-                },
-            )?)
+                        log::trace!("Claimed {amount:?} for {beneficiary:?}");
+                        Self::deposit_event(Event::<T>::Claimed {
+                            beneficiary,
+                            amount: *amount,
+                        });
+                        ret_amount = *amount;
+                        None
+                    }
+                    // Account is not eligible to receive funds
+                    _ => Err(Error::<T>::NotEligible)?,
+                };
+                Ok::<_, DispatchError>(ret_amount)
+            })
         }
 
         fn do_add_beneficiaries(
@@ -746,8 +737,7 @@ pub mod pallet {
                     dest,
                 } => {
                     let beneficiary = Beneficiary::<T>::Ethereum(*beneficiary);
-                    let signature =
-                        ClaimSignature::<T>::Ethereum((signature.clone(), dest.clone()));
+                    let signature = ClaimSignature::<T>::Ethereum((*signature, dest.clone()));
                     Self::check_claimant(&beneficiary, signature)?;
                     vec![(
                         "claim_ethereum",

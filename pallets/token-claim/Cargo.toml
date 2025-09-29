@@ -44,6 +44,7 @@ runtime-benchmarks = [
 ]
 default = [ "std" ]
 std = [
+	"alloy-primitives/std",
 	"codec/std",
 	"frame-benchmarking/std",
 	"frame-support/std",
@@ -55,7 +56,6 @@ std = [
 	"sp-core/std",
 	"sp-io/std",
 	"sp-runtime/std",
-	"alloy-primitives/std",
 ]
 try-runtime = [
 	"frame-support/try-runtime",

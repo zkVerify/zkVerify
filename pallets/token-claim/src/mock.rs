@@ -29,7 +29,7 @@ use frame_system::{EnsureRoot, RawOrigin};
 use sp_core::ConstU128;
 use sp_runtime::{
     testing::{TestSignature, UintAuthorityId},
-    traits::IdentityLookup,
+    traits::{AccountIdConversion, IdentityLookup},
     BuildStorage, RuntimeAppPublic,
 };
 
@@ -225,12 +225,17 @@ frame_support::construct_runtime!(
     }
 );
 
+parameter_types! {
+    pub const SS58Prefix: u16 = 111;
+}
+
 #[derive_impl(frame_system::config_preludes::SolochainDefaultConfig as frame_system::DefaultConfig)]
 impl frame_system::Config for Test {
     type AccountId = AccountId;
     type Lookup = IdentityLookup<Self::AccountId>;
     type Block = frame_system::mocking::MockBlockU32<Test>;
     type AccountData = pallet_balances::AccountData<Balance>;
+    type SS58Prefix = SS58Prefix;
 }
 
 #[derive_impl(pallet_balances::config_preludes::TestDefaultConfig)]
@@ -261,21 +266,26 @@ pub fn test_with_configs(
         .build_storage()
         .unwrap();
 
-    pallet_balances::GenesisConfig::<Test> {
-        balances: vec![(MANAGER_USER, 42_000_000_000)],
+    let claim_account_id = ClaimPalletId::get().into_account_truncating();
+    let claim_genesis_balance = match genesis_claim_balance {
+        GenesisClaimBalance::Sufficient => SUFFICIENT_GENESIS_BALANCE,
+        GenesisClaimBalance::Insufficient => INSUFFICIENT_GENESIS_BALANCE,
+        GenesisClaimBalance::None => 0,
+    };
+
+    let mut balances = vec![(MANAGER_USER, 42_000_000_000)];
+    if claim_genesis_balance != 0 {
+        balances.push((claim_account_id, claim_genesis_balance))
     }
-    .assimilate_storage(&mut t)
-    .unwrap();
+
+    pallet_balances::GenesisConfig::<Test> { balances }
+        .assimilate_storage(&mut t)
+        .unwrap();
 
     crate::GenesisConfig::<Test> {
         beneficiaries: match with_genesis_beneficiaries {
             WithGenesisBeneficiaries::Yes => GENESIS_BENEFICIARIES.to_vec(),
             WithGenesisBeneficiaries::No => vec![],
-        },
-        genesis_balance: match genesis_claim_balance {
-            GenesisClaimBalance::Sufficient => SUFFICIENT_GENESIS_BALANCE,
-            GenesisClaimBalance::Insufficient => INSUFFICIENT_GENESIS_BALANCE,
-            GenesisClaimBalance::None => 0,
         },
         claim_message: INIT_CLAIM_MESSAGE.clone(),
     }
@@ -295,15 +305,20 @@ pub fn test_genesis_with_beneficiaries(n: u32) -> sp_io::TestExternalities {
         .build_storage()
         .unwrap();
 
+    let claim_account_id = ClaimPalletId::get().into_account_truncating();
+    let claim_genesis_balance = 42_000_000_000;
+
     pallet_balances::GenesisConfig::<Test> {
-        balances: vec![(MANAGER_USER, 42_000_000_000)],
+        balances: vec![
+            (MANAGER_USER, 42_000_000_000),
+            (claim_account_id, claim_genesis_balance),
+        ],
     }
     .assimilate_storage(&mut t)
     .unwrap();
 
     crate::GenesisConfig::<Test> {
         beneficiaries: get_beneficiaries_map::<Test>(n).0.into_iter().collect(),
-        genesis_balance: 42_000_000_000,
         claim_message: INIT_CLAIM_MESSAGE.clone(),
     }
     .assimilate_storage(&mut t)
@@ -322,15 +337,20 @@ pub fn test_genesis_empty_claim_message(n: u32) -> sp_io::TestExternalities {
         .build_storage()
         .unwrap();
 
+    let claim_account_id = ClaimPalletId::get().into_account_truncating();
+    let claim_genesis_balance = 42_000_000_000;
+
     pallet_balances::GenesisConfig::<Test> {
-        balances: vec![(MANAGER_USER, 42_000_000_000)],
+        balances: vec![
+            (MANAGER_USER, 42_000_000_000),
+            (claim_account_id, claim_genesis_balance),
+        ],
     }
     .assimilate_storage(&mut t)
     .unwrap();
 
     crate::GenesisConfig::<Test> {
         beneficiaries: get_beneficiaries_map::<Test>(n).0.into_iter().collect(),
-        genesis_balance: 42_000_000_000,
         claim_message: EMPTY_CLAIM_MESSAGE.clone(),
     }
     .assimilate_storage(&mut t)
