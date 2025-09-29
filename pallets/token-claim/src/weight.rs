@@ -82,49 +82,49 @@ impl WeightInfo for () {
             .saturating_add(RocksDbWeight::get().reads(3_u64))
             .saturating_add(RocksDbWeight::get().writes(2_u64))
     }
-    /// Storage: `Claim::ClaimActive` (r:1 w:0)
-    /// Proof: `Claim::ClaimActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
-    /// Storage: `Claim::Beneficiaries` (r:1 w:1)
-    /// Proof: `Claim::Beneficiaries` (`max_values`: None, `max_size`: Some(57), added: 2532, mode: `MaxEncodedLen`)
-    /// Storage: `Claim::ClaimId` (r:1 w:0)
-    /// Proof: `Claim::ClaimId` (`max_values`: Some(1), `max_size`: Some(510), added: 1005, mode: `MaxEncodedLen`)
-    /// Storage: `Claim::PalletAccountId` (r:1 w:0)
-    /// Proof: `Claim::PalletAccountId` (`max_values`: Some(1), `max_size`: Some(32), added: 527, mode: `MaxEncodedLen`)
+    /// Storage: `TokenClaim::ClaimActive` (r:1 w:0)
+    /// Proof: `TokenClaim::ClaimActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
+    /// Storage: `TokenClaim::Beneficiaries` (r:1 w:1)
+    /// Proof: `TokenClaim::Beneficiaries` (`max_values`: None, `max_size`: Some(57), added: 2532, mode: `MaxEncodedLen`)
+    /// Storage: `TokenClaim::ClaimId` (r:1 w:0)
+    /// Proof: `TokenClaim::ClaimId` (`max_values`: Some(1), `max_size`: Some(510), added: 1005, mode: `MaxEncodedLen`)
+    /// Storage: `TokenClaim::PalletAccountId` (r:1 w:0)
+    /// Proof: `TokenClaim::PalletAccountId` (`max_values`: Some(1), `max_size`: Some(32), added: 527, mode: `MaxEncodedLen`)
     /// Storage: `System::Account` (r:2 w:2)
     /// Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
-    /// Storage: `Claim::TotalClaimable` (r:1 w:1)
-    /// Proof: `Claim::TotalClaimable` (`max_values`: Some(1), `max_size`: Some(16), added: 511, mode: `MaxEncodedLen`)
-    /// Storage: `Claim::CounterForBeneficiaries` (r:1 w:1)
-    /// Proof: `Claim::CounterForBeneficiaries` (`max_values`: Some(1), `max_size`: Some(4), added: 499, mode: `MaxEncodedLen`)
+    /// Storage: `TokenClaim::CounterForBeneficiaries` (r:1 w:1)
+    /// Proof: `TokenClaim::CounterForBeneficiaries` (`max_values`: Some(1), `max_size`: Some(4), added: 499, mode: `MaxEncodedLen`)
+    /// Storage: `TokenClaim::TotalClaimable` (r:1 w:1)
+    /// Proof: `TokenClaim::TotalClaimable` (`max_values`: Some(1), `max_size`: Some(16), added: 511, mode: `MaxEncodedLen`)
     fn claim() -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `2764`
         //  Estimated: `6196`
-        // Minimum execution time: 210_873_000 picoseconds.
-        Weight::from_parts(213_619_000, 6196)
+        // Minimum execution time: 297_874_000 picoseconds.
+        Weight::from_parts(301_131_000, 6196)
             .saturating_add(RocksDbWeight::get().reads(8_u64))
             .saturating_add(RocksDbWeight::get().writes(5_u64))
     }
-    /// Storage: `Claim::ClaimActive` (r:1 w:0)
-    /// Proof: `Claim::ClaimActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
-    /// Storage: `Claim::Beneficiaries` (r:1 w:1)
-    /// Proof: `Claim::Beneficiaries` (`max_values`: None, `max_size`: Some(57), added: 2532, mode: `MaxEncodedLen`)
-    /// Storage: `Claim::ClaimId` (r:1 w:0)
-    /// Proof: `Claim::ClaimId` (`max_values`: Some(1), `max_size`: Some(510), added: 1005, mode: `MaxEncodedLen`)
-    /// Storage: `Claim::PalletAccountId` (r:1 w:0)
-    /// Proof: `Claim::PalletAccountId` (`max_values`: Some(1), `max_size`: Some(32), added: 527, mode: `MaxEncodedLen`)
+    /// Storage: `TokenClaim::ClaimActive` (r:1 w:0)
+    /// Proof: `TokenClaim::ClaimActive` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
+    /// Storage: `TokenClaim::Beneficiaries` (r:1 w:1)
+    /// Proof: `TokenClaim::Beneficiaries` (`max_values`: None, `max_size`: Some(57), added: 2532, mode: `MaxEncodedLen`)
+    /// Storage: `TokenClaim::ClaimId` (r:1 w:0)
+    /// Proof: `TokenClaim::ClaimId` (`max_values`: Some(1), `max_size`: Some(510), added: 1005, mode: `MaxEncodedLen`)
+    /// Storage: `TokenClaim::PalletAccountId` (r:1 w:0)
+    /// Proof: `TokenClaim::PalletAccountId` (`max_values`: Some(1), `max_size`: Some(32), added: 527, mode: `MaxEncodedLen`)
     /// Storage: `System::Account` (r:2 w:2)
     /// Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
-    /// Storage: `Claim::TotalClaimable` (r:1 w:1)
-    /// Proof: `Claim::TotalClaimable` (`max_values`: Some(1), `max_size`: Some(16), added: 511, mode: `MaxEncodedLen`)
-    /// Storage: `Claim::CounterForBeneficiaries` (r:1 w:1)
-    /// Proof: `Claim::CounterForBeneficiaries` (`max_values`: Some(1), `max_size`: Some(4), added: 499, mode: `MaxEncodedLen`)
+    /// Storage: `TokenClaim::CounterForBeneficiaries` (r:1 w:1)
+    /// Proof: `TokenClaim::CounterForBeneficiaries` (`max_values`: Some(1), `max_size`: Some(4), added: 499, mode: `MaxEncodedLen`)
+    /// Storage: `TokenClaim::TotalClaimable` (r:1 w:1)
+    /// Proof: `TokenClaim::TotalClaimable` (`max_values`: Some(1), `max_size`: Some(16), added: 511, mode: `MaxEncodedLen`)
     fn claim_ethereum() -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `2869`
         //  Estimated: `6196`
-        // Minimum execution time: 226_543_000 picoseconds.
-        Weight::from_parts(229_368_000, 6196)
+        // Minimum execution time: 1_277_538_000 picoseconds.
+        Weight::from_parts(1_282_478_000, 6196)
             .saturating_add(RocksDbWeight::get().reads(8_u64))
             .saturating_add(RocksDbWeight::get().writes(5_u64))
     }
