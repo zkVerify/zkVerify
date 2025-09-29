@@ -71,15 +71,16 @@ mod test {
     #[test]
     fn consistency_check() {
         use super::secp_utils::*;
+        use crate::beneficiary::{eip191_hash_message, eth_recover};
         use crate::{EthereumAddress, EthereumSignature};
-        use crate::beneficiary::{eth_recover, eip191_hash_message};
 
         // Check consistency with EOA wallets (e.g. Metamask, Talisman, ...)
 
         // Check we derive same address
         let eth_address: [u8; 20] = EthereumAddress::from_slice(&hex_literal::hex!(
             "CFb405552868d9906DeDCAbe2F387a37E35e9610"
-        )).into();
+        ))
+        .into();
         let eth_sig = EthereumSignature::from_raw(
             hex_literal::hex!("731dd59f3e8685917f883c9b70645a157704d877784a61593abb8635c063bfb02df081d2a99316b4710aab27b878ce496a882342312ba857b84823164c667be31c")
         );
@@ -99,7 +100,11 @@ mod test {
 
         assert_eq!(
             eth_address,
-            eth_recover(&eip191_hash_message(message.as_slice()), &(derived_signature.into())).unwrap()
+            eth_recover(
+                &eip191_hash_message(message.as_slice()),
+                &(derived_signature.into())
+            )
+            .unwrap()
         );
         assert_eq!(
             derived_address,

@@ -81,6 +81,8 @@ pub enum ClaimSignature<T: Config> {
 }
 
 pub fn eip191_hash_message(message: &[u8]) -> [u8; 32] {
+    use crate::alloc::string::ToString;
+
     let mut eth_message = b"\x19Ethereum Signed Message:\n".to_vec();
     eth_message.extend_from_slice(message.len().to_string().as_bytes());
     eth_message.extend_from_slice(message);

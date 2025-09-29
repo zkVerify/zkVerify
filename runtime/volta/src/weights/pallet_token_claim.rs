@@ -92,8 +92,8 @@ impl<T: frame_system::Config> pallet_token_claim::WeightInfo for ZKVWeight<T> {
         // Proof Size summary in bytes:
         //  Measured:  `2764`
         //  Estimated: `6196`
-        // Minimum execution time: 297_874_000 picoseconds.
-        Weight::from_parts(301_131_000, 6196)
+        // Minimum execution time: 299_391_000 picoseconds.
+        Weight::from_parts(303_609_000, 6196)
             .saturating_add(T::DbWeight::get().reads(8_u64))
             .saturating_add(T::DbWeight::get().writes(5_u64))
     }
@@ -115,8 +115,8 @@ impl<T: frame_system::Config> pallet_token_claim::WeightInfo for ZKVWeight<T> {
         // Proof Size summary in bytes:
         //  Measured:  `2869`
         //  Estimated: `6196`
-        // Minimum execution time: 1_277_538_000 picoseconds.
-        Weight::from_parts(1_282_478_000, 6196)
+        // Minimum execution time: 256_574_000 picoseconds.
+        Weight::from_parts(263_514_000, 6196)
             .saturating_add(T::DbWeight::get().reads(8_u64))
             .saturating_add(T::DbWeight::get().writes(5_u64))
     }
