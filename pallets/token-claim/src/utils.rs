@@ -32,6 +32,7 @@ pub fn get_beneficiaries_map<T: Config>(
 
 pub mod secp_utils {
     use super::*;
+    use beneficiary::eip191_hash_message;
     use libsecp256k1::{sign, Message, PublicKey, SecretKey};
     use sp_io::hashing::keccak_256;
 
@@ -56,7 +57,7 @@ pub mod secp_utils {
     }
 
     pub fn sig(secret: &SecretKey, msg: &[u8]) -> EthereumSignature {
-        let msg = alloy_primitives::eip191_hash_message(msg);
+        let msg = eip191_hash_message(msg);
         let (sig, recovery_id) = sign(&Message::parse(&msg), secret);
         let mut r = [0u8; 65];
         r[0..64].copy_from_slice(&sig.serialize()[..]);
@@ -70,38 +71,39 @@ mod test {
     #[test]
     fn consistency_check() {
         use super::secp_utils::*;
-        use alloc::str::FromStr;
-        use alloy_primitives::{address, Address, PrimitiveSignature};
+        use crate::{EthereumAddress, EthereumSignature};
+        use crate::beneficiary::{eth_recover, eip191_hash_message};
 
         // Check consistency with EOA wallets (e.g. Metamask, Talisman, ...)
 
         // Check we derive same address
-        let eth_address = address!("0xCFb405552868d9906DeDCAbe2F387a37E35e9610");
-        let eth_sig = PrimitiveSignature::from_str("0x731dd59f3e8685917f883c9b70645a157704d877784a61593abb8635c063bfb02df081d2a99316b4710aab27b878ce496a882342312ba857b84823164c667be31c").unwrap();
+        let eth_address: [u8; 20] = EthereumAddress::from_slice(&hex_literal::hex!(
+            "CFb405552868d9906DeDCAbe2F387a37E35e9610"
+        )).into();
+        let eth_sig = EthereumSignature::from_raw(
+            hex_literal::hex!("731dd59f3e8685917f883c9b70645a157704d877784a61593abb8635c063bfb02df081d2a99316b4710aab27b878ce496a882342312ba857b84823164c667be31c")
+        );
 
         // Useless key
         let secret_bytes =
             hex_literal::hex!("7b2d076abcc1215ef9c5a37da07f50c92de1048b2e1e7a27b74c0ce154f9cbae");
         let secret = parse_secret(&secret_bytes[..]);
-        let derived_address = Address::from(&eth(&secret).0);
+        let derived_address: [u8; 20] = eth(&secret).into();
 
         assert_eq!(derived_address, eth_address);
 
         // Check signature and verification works the same
         // The hardcoded signature was generated via Etherscan "Verified Signature" tool linked to a Metamask wallet
         let message = b"TestMessage42";
-        let derived_signature =
-            PrimitiveSignature::from_raw_array(&sig(&secret, &message[..]).0).unwrap();
+        let derived_signature = sig(&secret, &message[..]);
 
         assert_eq!(
             eth_address,
-            derived_signature
-                .recover_address_from_msg(&message[..])
-                .unwrap()
+            eth_recover(&eip191_hash_message(message.as_slice()), &(derived_signature.into())).unwrap()
         );
         assert_eq!(
             derived_address,
-            eth_sig.recover_address_from_msg(&message[..]).unwrap()
+            eth_recover(&eip191_hash_message(message.as_slice()), &(eth_sig.into())).unwrap()
         );
     }
 }

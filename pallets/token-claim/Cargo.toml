@@ -15,7 +15,6 @@ workspace = true
 log = { workspace = true}
 serde = { workspace = true }
 libsecp256k1 = { version = "0.7.0", default-features = false, optional = true }
-alloy-primitives = { workspace = true, features = ["k256"] }
 
 codec = { workspace = true }
 scale-info = { workspace = true, features = ["derive"] }
@@ -44,7 +43,6 @@ runtime-benchmarks = [
 ]
 default = [ "std" ]
 std = [
-	"alloy-primitives/std",
 	"codec/std",
 	"frame-benchmarking/std",
 	"frame-support/std",

@@ -80,9 +80,25 @@ pub enum ClaimSignature<T: Config> {
     Ethereum((EthereumSignature, T::AccountId)),
 }
 
+pub fn eip191_hash_message(message: &[u8]) -> [u8; 32] {
+    let mut eth_message = b"\x19Ethereum Signed Message:\n".to_vec();
+    eth_message.extend_from_slice(message.len().to_string().as_bytes());
+    eth_message.extend_from_slice(message);
+    sp_core::keccak_256(&eth_message)
+}
+
+pub fn eth_recover(msg_to_sign: &[u8; 32], eth_sig: &[u8; 65]) -> Result<[u8; 20], ()> {
+    use frame_support::crypto::ecdsa::ECDSAExt;
+    use sp_core::ecdsa::Public;
+    use sp_io::crypto::secp256k1_ecdsa_recover;
+
+    let pk_raw = secp256k1_ecdsa_recover(eth_sig, msg_to_sign).map_err(|_| ())?;
+    let pk = Public::from_full(pk_raw.as_slice()).map_err(|_| ())?;
+    pk.to_eth_address()
+}
+
 impl<T: Config> ClaimSignature<T> {
     pub fn verify(&self, claim_message: &[u8], beneficiary: &Beneficiary<T>) -> bool {
-        use alloy_primitives::{Address, PrimitiveSignature};
         match (beneficiary, self) {
             // Beneficiary with Substrate address
             (Beneficiary::<T>::Substrate(sub_addr), ClaimSignature::<T>::Substrate(sub_sig)) => {
@@ -106,17 +122,11 @@ impl<T: Config> ClaimSignature<T> {
                     [claim_message, ETH_MSG_SEPARATOR, dest_account.as_slice()].concat();
 
                 // Check signature is successful and signer from signature is the same as beneficiary
-                if let Ok(sig) = PrimitiveSignature::from_raw_array(&eth_sig.0) {
-                    sig.recover_address_from_msg(msg_with_dest.as_slice())
-                        .map_or_else(
-                            |_| false,
-                            |extracted_signer| {
-                                extracted_signer == Address::from(eth_addr.as_fixed_bytes())
-                            },
-                        )
-                } else {
-                    false
-                }
+                let msg_to_sign = eip191_hash_message(msg_with_dest.as_slice());
+                eth_recover(&msg_to_sign, &eth_sig.0).map_or_else(
+                    |_| false,
+                    |derived_address| &EthereumAddress::from(derived_address) == eth_addr,
+                )
             }
             _ => {
                 defensive!();
