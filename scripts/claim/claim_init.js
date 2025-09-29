@@ -1,6 +1,5 @@
 const { ApiPromise, WsProvider } = require('@polkadot/api');
 const Keyring = require('@polkadot/keyring').default;
-const { BN } = require('@polkadot/util');
 const { BigInt } = require('@polkadot/x-bigint');
 const fs = require('fs');
 const neatCsv = require('neat-csv').default;
@@ -28,7 +27,7 @@ const DEFAULT_MULTISIG_ADDRESSES = []
 const DEFAULT_OUT_FILE_PATH = '.';
 
 const INIT_CAMPAIGN = true;
-const USE_PALLET_TOKEN_CLAIM = true;
+const USE_PALLET_TOKEN_CLAIM = false;
 const DEFAULT_CLAIM_MSG_PREFIX = 'zkverify claim';
 
 const INITIAL_CONFIRMATION_MSG =
@@ -72,6 +71,8 @@ async function read_airdrop_csv(csv_file, address_col, amount_col) {
         if (amount == undefined) {
             throw new Error(`Cannot find any amount in column ${amount_col}`);
         }
+        amount = parse_amount(amount);
+
         if (BigInt(amount) == 0) return;
 
         address = entry[address_col];
@@ -83,9 +84,9 @@ async function read_airdrop_csv(csv_file, address_col, amount_col) {
         };
         if (USE_PALLET_TOKEN_CLAIM) {
             // TODO: DO NOT HARDCODE THIS!
-            current_map.set({'Substrate': address}, parse_amount(amount));
+            current_map.set({'Substrate': address}, amount);
         } else {
-            current_map.set(address, parse_amount(amount));
+            current_map.set(address, amount);
         }
         count++;
         if (count % MAX_PER_BLOCK == 0) {
@@ -155,10 +156,11 @@ async function _handleTransactionLifecycle(api, sendFunction) {
               async function (error) {
                 if (error !== "retry") {
                   console.log("Not retrying!");
+                  done = true;
                   return -1;
                 }
                 console.log("Retrying");
-                ++max_retries;
+                --max_retries;
             }
         );
     }
@@ -229,17 +231,17 @@ async function check_preconditions(api, beneficiaries) {
 
     // fetch data
     if (USE_PALLET_TOKEN_CLAIM) {
-        claim_active = await api.query.claim.airdropActive();
+        claim_active = await api.query.tokenClaim.claimActive();
         const pallet_address = await api.query.tokenClaim.palletAccountId();
         free_balance = (await api.query.system.account(String(pallet_address)))["data"]["free"];
     } else {
-        claim_active = await api.query.tokenClaim.airdropActive();
+        claim_active = await api.query.claim.airdropActive();
         const pallet_address = await api.query.claim.palletAccountId();
         free_balance = (await api.query.system.account(String(pallet_address)))["data"]["free"];
     }
 
     // check state
-    if (claim_active === INIT_CAMPAIGN) {
+    if (claim_active == INIT_CAMPAIGN) {
         console.log("A claim is already active on chain!");
         return false;
     }
