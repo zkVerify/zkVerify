@@ -678,7 +678,8 @@ pub mod pallet {
         }
 
         /// Claim tokens for a 'beneficiary' with an Ethereum address and send them to 'dest',
-        ///  provided a 'signature' on the actual claim message and 'dest'.
+        /// provided a 'signature' on the actual claim message and 'dest'.
+        /// The message to sign should follow the EIP-191 standard. 
         /// 'origin' must be none.
         /// Fails if:
         /// - 'beneficiary' is not entitled to any token
