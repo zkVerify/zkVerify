@@ -184,7 +184,7 @@ runtime-benchmarks = [
 	"xcm-executor/runtime-benchmarks",
 	"zkv-runtime-common/runtime-benchmarks",
 ]
-fast-runtime = ["zkv-runtime-common/fast-runtime"]
+fast-runtime = [ "zkv-runtime-common/fast-runtime" ]
 metadata-hash = [ "substrate-wasm-builder/metadata-hash" ]
 default = [ "std" ]
 std = [

@@ -10950,6 +10950,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-token-claim"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "hex-literal",
+ "libsecp256k1",
+ "log",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+]
+
+[[package]]
 name = "pallet-token-gateway"
 version = "2412.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -20963,6 +20982,7 @@ dependencies = [
  "pallet-staking",
  "pallet-sudo",
  "pallet-timestamp",
+ "pallet-token-claim",
  "pallet-token-gateway",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",

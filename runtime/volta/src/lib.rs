@@ -95,7 +95,7 @@ use pallet_transaction_payment::{FungibleAdapter, Multiplier, TargetedFeeAdjustm
 use pallet_treasury::TreasuryAccountId;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
-pub use sp_runtime::{Perbill, Permill};
+pub use sp_runtime::{MultiSignature, MultiSigner, Perbill, Permill};
 
 pub mod governance;
 mod pallet_assets_mock;
@@ -646,6 +646,28 @@ impl pallet_claim::Config for Runtime {
     const MAX_OP_BENEFICIARIES: u32 = MaxOpBeneficiaries::get();
 }
 
+parameter_types! {
+    pub const TokenClaimPalletId: PalletId = PalletId(*b"zkv/ptkc");
+    pub const MaxClaimMessageLength: u32 = 500;
+}
+
+impl pallet_token_claim::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type PalletId = TokenClaimPalletId;
+    type ManagerOrigin = EnsureRoot<AccountId>;
+    type Currency = Balances;
+    type UnclaimedDestination = ZKVerifyTreasuryAccount;
+    type WeightInfo = weights::pallet_token_claim::ZKVWeight<Runtime>;
+    type Signer = MultiSigner;
+    type Signature = MultiSignature;
+    type MaxBeneficiaries = MaxBeneficiaries;
+    type MaxClaimMessageLength = MaxClaimMessageLength;
+    type AccountIdBytesToSign = pallet_token_claim::AccountId32ToSs58BytesToSign;
+    const MAX_OP_BENEFICIARIES: u32 = MaxOpBeneficiaries::get();
+    #[cfg(feature = "runtime-benchmarks")]
+    type BenchmarkHelper = ();
+}
+
 // We should be sure that the benchmark aggregation size matches the runtime configuration.
 #[cfg(feature = "runtime-benchmarks")]
 static_assertions::const_assert!(
@@ -1152,6 +1174,7 @@ construct_runtime!(
         // Our stuff
         Aggregate: pallet_aggregate = 81,
         Claim: pallet_claim = 82,
+        TokenClaim: pallet_token_claim = 83,
 
         // ISMP
         Ismp: pallet_ismp = 90,
@@ -1286,6 +1309,7 @@ mod benches {
         // our pallets
         [pallet_aggregate, Aggregate]
         [pallet_claim, Claim]
+        [pallet_token_claim, TokenClaim]
         [pallet_hyperbridge_aggregations, HyperbridgeAggregations]
         // verifiers
         [pallet_fflonk_verifier, FflonkVerifierBench::<Runtime>]

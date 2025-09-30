@@ -1,0 +1,63 @@
+[package]
+name = "pallet-token-claim"
+version = "0.1.0"
+description = "A pallet to claim tokens for Substrate and Ethereum users who are entitled to"
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license = "Apache-2.0"
+
+[lints]
+workspace = true
+
+[dependencies]
+log = { workspace = true}
+serde = { workspace = true }
+libsecp256k1 = { version = "0.7.0", default-features = false, optional = true }
+
+codec = { workspace = true }
+scale-info = { workspace = true, features = ["derive"] }
+
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+frame-benchmarking = { workspace = true, optional = true }
+sp-runtime = { workspace = true }
+sp-io = { workspace = true }
+sp-core = { workspace = true }
+
+[dev-dependencies]
+pallet-balances = { workspace = true, features = ["std"] }
+sp-io = { workspace = true, features = ["std"] }
+libsecp256k1 = { version = "0.7.0", features = ["std"] }
+hex-literal = { workspace = true }
+
+[features]
+runtime-benchmarks = [
+	"frame-benchmarking/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"libsecp256k1",
+	"pallet-balances/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+]
+default = [ "std" ]
+std = [
+	"codec/std",
+	"frame-benchmarking/std",
+	"frame-support/std",
+	"frame-system/std",
+	"log/std",
+	"pallet-balances/std",
+	"scale-info/std",
+	"serde/std",
+	"sp-core/std",
+	"sp-io/std",
+	"sp-runtime/std",
+]
+try-runtime = [
+	"frame-support/try-runtime",
+	"frame-system/try-runtime",
+	"pallet-balances/try-runtime",
+	"sp-runtime/try-runtime",
+]
