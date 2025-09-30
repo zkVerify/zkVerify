@@ -77,7 +77,7 @@ mod test {
         // Check consistency with EOA wallets (e.g. Metamask, Talisman, ...)
 
         // Check we derive same address
-        let eth_address: [u8; 20] = EthereumAddress::from_slice(&hex_literal::hex!(
+        let eth_address = EthereumAddress::from_slice(&hex_literal::hex!(
             "CFb405552868d9906DeDCAbe2F387a37E35e9610"
         ))
         .into();
@@ -89,7 +89,7 @@ mod test {
         let secret_bytes =
             hex_literal::hex!("7b2d076abcc1215ef9c5a37da07f50c92de1048b2e1e7a27b74c0ce154f9cbae");
         let secret = parse_secret(&secret_bytes[..]);
-        let derived_address: [u8; 20] = eth(&secret).into();
+        let derived_address = eth(&secret);
 
         assert_eq!(derived_address, eth_address);
 

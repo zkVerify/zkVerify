@@ -61,11 +61,13 @@ fn init_claim_state<T: Config>(
     begin_claim: bool,
 ) -> BTreeMap<Beneficiary<T>, BalanceOf<T>> {
     let (beneficiaries, total_amount) = get_beneficiaries_map::<T>(n);
-    let _ = T::Currency::mint_into(
-        &Pallet::<T>::account_id(),
-        total_amount.saturating_mul(2u32.into()), // Just to be extra safe
-    )
-    .unwrap();
+    if n > 0 {
+        let _ = T::Currency::mint_into(
+            &Pallet::<T>::account_id(),
+            total_amount.saturating_mul(2u32.into()), // Just to be extra safe
+        )
+        .unwrap();
+    }
 
     if begin_claim {
         Pallet::<T>::begin_claim(

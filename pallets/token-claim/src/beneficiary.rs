@@ -89,14 +89,15 @@ pub fn eip191_hash_message(message: &[u8]) -> [u8; 32] {
     sp_core::keccak_256(&eth_message)
 }
 
-pub fn eth_recover(msg_to_sign: &[u8; 32], eth_sig: &[u8; 65]) -> Result<[u8; 20], ()> {
+pub fn eth_recover(
+    msg_to_sign: &[u8; 32],
+    eth_sig: &EthereumSignature,
+) -> Result<EthereumAddress, ()> {
     use frame_support::crypto::ecdsa::ECDSAExt;
-    use sp_core::ecdsa::Public;
-    use sp_io::crypto::secp256k1_ecdsa_recover;
 
-    let pk_raw = secp256k1_ecdsa_recover(eth_sig, msg_to_sign).map_err(|_| ())?;
-    let pk = Public::from_full(pk_raw.as_slice()).map_err(|_| ())?;
-    pk.to_eth_address()
+    let pk_raw = sp_io::crypto::secp256k1_ecdsa_recover(&eth_sig.0, msg_to_sign).map_err(|_| ())?;
+    let pk = sp_core::ecdsa::Public::from_full(pk_raw.as_slice()).map_err(|_| ())?;
+    Ok(EthereumAddress::from(pk.to_eth_address()?))
 }
 
 impl<T: Config> ClaimSignature<T> {
@@ -125,10 +126,8 @@ impl<T: Config> ClaimSignature<T> {
 
                 // Check signature is successful and signer from signature is the same as beneficiary
                 let msg_to_sign = eip191_hash_message(msg_with_dest.as_slice());
-                eth_recover(&msg_to_sign, &eth_sig.0).map_or_else(
-                    |_| false,
-                    |derived_address| &EthereumAddress::from(derived_address) == eth_addr,
-                )
+                eth_recover(&msg_to_sign, eth_sig)
+                    .map_or_else(|_| false, |derived_address| &derived_address == eth_addr)
             }
             _ => {
                 defensive!();
