@@ -84,6 +84,10 @@ async function read_airdrop_csv(csv_file, address_col, amount_col) {
         };
         if (USE_PALLET_TOKEN_CLAIM) {
             const type = address.startsWith("0x") ? `Ethereum` : `Substrate`;
+            if (type == "Ethereum" && address.length != 42
+                || type == "Substrate" && address.length != 49) {
+                throw new Error(`Unexpected format for ${type} address: ${address}`);
+            }
             current_map.set({[`${type}`]: address}, amount);
         } else {
             current_map.set(address, amount);
