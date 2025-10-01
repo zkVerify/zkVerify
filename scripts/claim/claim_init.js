@@ -19,7 +19,7 @@ const DEFAULT_WS_ENDPOINTS = {
 const EXISTENTIAL_DEPOSIT = '10000000000000000';
 const MAX_PER_BLOCK = 11000;
 
-// SUDO ACCOUNT
+// Claim Manager Account
 const DEFAULT_SEED = '//Alice';
 const DEFAULT_MULTISIG_THRESHOLD = 0;
 const DEFAULT_MULTISIG_ADDRESSES = []
@@ -27,7 +27,7 @@ const DEFAULT_MULTISIG_ADDRESSES = []
 const DEFAULT_OUT_FILE_PATH = '.';
 
 const INIT_CAMPAIGN = true;
-const USE_PALLET_TOKEN_CLAIM = false;
+const USE_PALLET_TOKEN_CLAIM = true;
 const DEFAULT_CLAIM_MSG_PREFIX = 'zkverify claim';
 
 const INITIAL_CONFIRMATION_MSG =
@@ -83,8 +83,8 @@ async function read_airdrop_csv(csv_file, address_col, amount_col) {
             throw new Error("Duplicate address found!");
         };
         if (USE_PALLET_TOKEN_CLAIM) {
-            // TODO: DO NOT HARDCODE THIS!
-            current_map.set({'Substrate': address}, amount);
+            const type = address.startsWith("0x") ? `Ethereum` : `Substrate`;
+            current_map.set({[`${type}`]: address}, amount);
         } else {
             current_map.set(address, amount);
         }
