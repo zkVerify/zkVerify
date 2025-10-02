@@ -249,8 +249,10 @@ mod benchmarks {
             .for_each(|(account, amount)| Beneficiaries::<T>::insert(account, amount));
         assert_eq!(Beneficiaries::<T>::count(), n);
 
+        let caller: T::AccountId = whitelisted_caller();
+
         #[extrinsic_call]
-        remove_beneficiaries(RawOrigin::Root);
+        remove_beneficiaries(RawOrigin::Signed(caller), Some(n));
 
         assert_eq!(Beneficiaries::<T>::count(), 0);
     }

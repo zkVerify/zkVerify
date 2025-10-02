@@ -930,7 +930,8 @@ mod remove_beneficiaries {
         e.execute_with(|| {
             // First remove call should succeed but be insufficient
             assert_ok!(Claim::remove_beneficiaries(
-                Origin::Signed(MANAGER_USER).into()
+                Origin::Signed(USER_1_RAW).into(),
+                None
             ));
             assert_evt(Event::NoMoreBeneficiaries, "No more beneficiaries");
             assert_eq!(Beneficiaries::<Test>::count(), 0);
@@ -943,7 +944,7 @@ mod remove_beneficiaries {
 
         // Add MaxOpBeneficiaries + 1
         e.execute_with(|| {
-            utils::get_beneficiaries_map::<Test>(MaxOpBeneficiaries::get() + 1)
+            utils::get_beneficiaries_map::<Test>(MaxOpBeneficiaries::get())
                 .0
                 .into_iter()
                 .for_each(|account| Beneficiaries::<Test>::insert(account.0, account.1));
@@ -951,11 +952,13 @@ mod remove_beneficiaries {
         e.commit_all().unwrap();
 
         e.execute_with(|| {
+            let limit = MaxOpBeneficiaries::get().saturating_div(2);
             // First remove call should succeed but be insufficient
             assert_ok!(Claim::remove_beneficiaries(
-                Origin::Signed(MANAGER_USER).into()
+                Origin::Signed(USER_1_RAW).into(),
+                Some(limit)
             ));
-            let remaining = MaxBeneficiaries::get() - MaxOpBeneficiaries::get();
+            let remaining = MaxOpBeneficiaries::get() - limit;
             assert_evt(
                 Event::BeneficiariesRemoved { remaining },
                 "Beneficiaries removed",
@@ -974,18 +977,8 @@ mod remove_beneficiaries {
             )
             .unwrap();
             assert_noop!(
-                Claim::remove_beneficiaries(Origin::Signed(MANAGER_USER).into()),
+                Claim::remove_beneficiaries(Origin::Signed(USER_1_RAW).into(), None),
                 Error::<Test>::AlreadyStarted
-            );
-        })
-    }
-
-    #[test]
-    fn remove_beneficiaries_bad_origin() {
-        test().execute_with(|| {
-            assert_noop!(
-                Claim::remove_beneficiaries(Origin::Signed(USER_1_RAW).into()),
-                BadOrigin
             );
         })
     }
@@ -1012,7 +1005,10 @@ mod end_claim {
             );
 
             assert!(!ClaimActive::<Test>::get());
-            assert!(Beneficiaries::<Test>::iter().next().is_none());
+            assert_eq!(
+                Beneficiaries::<Test>::count() as usize,
+                GENESIS_BENEFICIARIES.len()
+            ); // Sanity check: beneficiaries not removed
             assert_eq!(Claim::pot(), 0);
             assert_eq!(
                 Balances::free_balance(Claim::account_id()),
@@ -1074,6 +1070,10 @@ mod end_claim {
         )
         .execute_with(|| {
             assert_ok!(Claim::end_claim(Origin::Signed(MANAGER_USER).into()));
+            assert_ok!(Claim::remove_beneficiaries(
+                Origin::Signed(USER_1_RAW).into(),
+                None
+            ));
 
             assert_ok!(Claim::begin_claim(
                 Origin::Signed(MANAGER_USER).into(),
@@ -1099,42 +1099,6 @@ mod end_claim {
                 EXISTENTIAL_DEPOSIT
             );
             assert_eq!(Claim::pot(), 0);
-        });
-    }
-
-    #[test]
-    fn end_claim_with_remaining_beneficiaries() {
-        let mut e = test();
-
-        e.execute_with(|| {
-            // Add MaxOpBeneficiaries
-            assert_ok!(Claim::begin_claim(
-                Origin::Signed(MANAGER_USER).into(),
-                EMPTY_BENEFICIARIES_MAP.clone(),
-                INIT_CLAIM_MESSAGE.clone()
-            ));
-
-            let _ = Balances::mint_into(&Claim::account_id(), 1000000000).unwrap(); // Just to be safe
-
-            assert_ok!(Claim::add_beneficiaries(
-                Origin::Signed(MANAGER_USER).into(),
-                utils::get_beneficiaries_map::<Test>(MaxOpBeneficiaries::get()).0
-            ));
-        });
-        e.commit_all().unwrap();
-
-        e.execute_with(|| {
-            // End claim. All the beneficiaries should've been removed
-            assert_ok!(Claim::end_claim(Origin::Signed(MANAGER_USER).into()));
-            assert_evt(
-                Event::ClaimEnded {
-                    claim_id: 0,
-                    claim_message: INIT_CLAIM_MESSAGE.clone(),
-                },
-                "Claim finished",
-            );
-            assert_evt(Event::NoMoreBeneficiaries, "No more beneficiaries");
-            assert_eq!(Beneficiaries::<Test>::count(), 0);
         });
     }
 
