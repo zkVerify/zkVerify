@@ -439,12 +439,12 @@ pub mod pallet {
             Ok(())
         }
 
-        fn do_remove_beneficiaries() {
+        fn do_remove_beneficiaries(limit: u32) {
             // Start removing remaining beneficiaries if present
 
             let num_beneficiaries = Beneficiaries::<T>::count();
             if num_beneficiaries > 0 {
-                let result = Beneficiaries::<T>::clear(T::MAX_OP_BENEFICIARIES, None);
+                let result = Beneficiaries::<T>::clear(limit, None);
 
                 if result.maybe_cursor.is_some() {
                     Self::deposit_event(Event::<T>::BeneficiariesRemoved {
@@ -621,9 +621,7 @@ pub mod pallet {
         /// However, if there are more than **T::MaxOpBeneficiaries**, subsequent call(s) to 'remove_beneficiaries' must be made.
         /// Origin must be 'ManagerOrigin'.
         #[pallet::call_index(4)]
-        #[pallet::weight(T::WeightInfo::remove_beneficiaries(u32::min(Beneficiaries::<T>::count(), T::MAX_OP_BENEFICIARIES))
-            .saturating_add(T::WeightInfo::end_claim())
-        )]
+        #[pallet::weight(T::WeightInfo::end_claim())]
         pub fn end_claim(origin: OriginFor<T>) -> DispatchResult {
             T::ManagerOrigin::ensure_origin(origin)?;
 
@@ -654,25 +652,25 @@ pub mod pallet {
                 claim_message,
             });
 
-            // Start removing as many beneficiaries as possible
-            Self::do_remove_beneficiaries();
-
             Ok(())
         }
 
-        /// Remove as many beneficiaries as possible (up to **T::MaxOpBeneficiaries**) from storage.
-        /// Fails if there is a claim in progress.
-        /// Origin must be 'ManagerOrigin'.
+        /// Remove up to 'limit' beneficiaries (or up to **T::MaxOpBeneficiaries** if 'limit'
+        /// is not specified) from storage. Fails if there is a claim in progress.
+        /// Origin must be signed.
         #[pallet::call_index(5)]
-        #[pallet::weight(T::WeightInfo::remove_beneficiaries(u32::min(Beneficiaries::<T>::count(), T::MAX_OP_BENEFICIARIES)).saturating_add(T::DbWeight::get().reads(1_u64)))]
-        pub fn remove_beneficiaries(origin: OriginFor<T>) -> DispatchResult {
-            T::ManagerOrigin::ensure_origin(origin)?;
+        #[pallet::weight(T::WeightInfo::remove_beneficiaries(
+            u32::min(Beneficiaries::<T>::count(), limit.unwrap_or(T::MAX_OP_BENEFICIARIES)))
+            .saturating_add(T::DbWeight::get().reads(1_u64))
+        )]
+        pub fn remove_beneficiaries(origin: OriginFor<T>, limit: Option<u32>) -> DispatchResult {
+            let _ = ensure_signed(origin)?;
 
             // Check claim inactive
             Self::check_claim_status(false)?;
 
             // Remove as many beneficiaries as possible
-            Self::do_remove_beneficiaries();
+            Self::do_remove_beneficiaries(limit.unwrap_or(T::MAX_OP_BENEFICIARIES));
 
             Ok(())
         }

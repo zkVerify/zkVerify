@@ -632,7 +632,7 @@ impl pallet_aggregate::Config for Runtime {
 parameter_types! {
     pub const ClaimPalletId: PalletId = PalletId(*b"zkv/pclm");
     pub const MaxBeneficiaries: u32 = 1_000_000;
-    pub const MaxOpBeneficiaries: u32 = 100_000;
+    pub const MaxOpBeneficiaries: u32 = 10_000;
 }
 
 impl pallet_claim::Config for Runtime {
