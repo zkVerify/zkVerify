@@ -18,6 +18,7 @@ const DEFAULT_WS_ENDPOINTS = {
 }
 const EXISTENTIAL_DEPOSIT = '10000000000000000';
 const MAX_PER_BLOCK = 11000;
+const DEFAULT_PREFIX = 251;
 
 // Claim Manager Account
 const DEFAULT_SEED = '//Alice';
@@ -111,18 +112,20 @@ async function _handleTransactionLifecycle(api, sendFunction) {
     let retVal = -1;
     while (!done && max_retries > 0) {
         retVal = await new Promise(async (resolve, reject) => {
-            const unsub = await sendFunction(({ events: records = [], status }) => {
+            const unsub = await sendFunction(({ blockNumber, events: records = [], status }) => {
                 let blockHash = null;
                 let callHash = null;
+                let indexInBlock = null;
                 if (status.isInBlock) {
                     blockHash = status.asInBlock;
                     console.log(`Transaction included at blockhash ${blockHash}`);
-                    records.forEach(({ event: { method, section, data } }) => {
+                    records.forEach(({ event: { method, section, data }, phase }) => {
                         if (section == "system" && method == "ExtrinsicSuccess") {
                             transactionSuccessEvent = true;
                         }
                         else if (section == "multisig" && method == "NewMultisig") {
                             callHash = data[2];
+                            indexInBlock = phase.asApplyExtrinsic;
                         }
                     });
                     done = true;
@@ -134,7 +137,7 @@ async function _handleTransactionLifecycle(api, sendFunction) {
                   if (done) {
                       unsub();
                       if (transactionSuccessEvent) {
-                          resolve([blockHash, callHash]);
+                          resolve([blockHash, callHash, blockNumber, indexInBlock]);
                       } else {
                           reject("ExtrinsicSuccess has not been seen");
                       }
@@ -150,10 +153,12 @@ async function _handleTransactionLifecycle(api, sendFunction) {
                     }
                 );
           })  .then(
-              ([blockHash, callHash]) => {
+              ([blockHash, callHash, blockNumber, indexInBlock]) => {
                 console.log(`Transaction successfully processed [${blockHash}]`);
                 return {
                   block: blockHash,
+                  number: blockNumber,
+                  index: indexInBlock,
                   call: callHash,
                 };
               },
@@ -172,7 +177,7 @@ async function _handleTransactionLifecycle(api, sendFunction) {
     return retVal;
 }
 
-async function send_as_multi_sudo(api, account, threshold, signatories, call, fname) {
+async function send_as_multi_sudo(api, account, threshold, signatories, call) {
     const sudo_call = api.tx.sudo.sudo(call);
     const proposal = api.tx.multisig.asMulti(
         threshold,
@@ -190,8 +195,12 @@ async function send_as_multi_sudo(api, account, threshold, signatories, call, fn
         return send_result;
     }
 
-    const data = `CALL_HASH: ${send_result.call}\nCALL_DATA: ${sudo_call.method.toHex()}`;
-    fs.writeFileSync(fname, data);
+    return {
+           "block": send_result.number,
+           "index": send_result.index,
+           "hash": send_result.call,
+           "weight": (await sudo_call.paymentInfo(account)).weight,
+           "data": sudo_call.method.toHex()};
 }
 
 async function send_as_sudo(api, account, call) {
@@ -202,31 +211,31 @@ async function send_as_sudo(api, account, call) {
     return await _handleTransactionLifecycle(api, sendFunction);
 }
 
-async function send(api, account, threshold, signatories, call, fname) {
+async function send(api, account, threshold, signatories, call) {
     if (threshold > 0) {
-        return send_as_multi_sudo(api, account, threshold, signatories, call, fname);
+        return send_as_multi_sudo(api, account, threshold, signatories, call);
     }
     return send_as_sudo(api, account, call);
 }
 
-async function send_begin_claim_tx(api, account, threshold, signatories, beneficiaries, msg, fname) {
+async function send_begin_claim_tx(api, account, threshold, signatories, beneficiaries, msg) {
     let begin_claim_tx = undefined;
     if (USE_PALLET_TOKEN_CLAIM) {
         begin_claim_tx = api.tx.tokenClaim.beginClaim(beneficiaries, msg);
     } else {
         begin_claim_tx = api.tx.claim.beginAirdrop(beneficiaries);
     }
-    return send(api, account, threshold, signatories, begin_claim_tx, fname);
+    return send(api, account, threshold, signatories, begin_claim_tx);
 }
 
-async function send_add_beneficiaries_tx(api, account, threshold, signatories, beneficiaries, fname) {
+async function send_add_beneficiaries_tx(api, account, threshold, signatories, beneficiaries) {
     let add_claim_tx = undefined;
     if (USE_PALLET_TOKEN_CLAIM) {
         add_claim_tx = api.tx.tokenClaim.addBeneficiaries(beneficiaries);
     } else {
         add_claim_tx = api.tx.claim.addBeneficiaries(beneficiaries);
     }
-    return send(api, account, threshold, signatories, add_claim_tx, fname);
+    return send(api, account, threshold, signatories, add_claim_tx);
 }
 
 async function check_preconditions(api, beneficiaries) {
@@ -278,6 +287,7 @@ function usage() {
     -m, --multi-address: address of the other signatories of the multisig account (can be repeated to add multiple addresses) | ${DEFAULT_MULTISIG_ADDRESSES}
     -n, --multi-threshold: threshold for the multisig account | ${DEFAULT_MULTISIG_THRESHOLD}
     -o, --out: path where multisig call data are stored | ${DEFAULT_OUT_FILE_PATH}
+    -p, --prefix: the prefix for ss58 addresses on the chain | ${DEFAULT_PREFIX}
     -s, --col-address: name of the column representing the beneficiary address in the csv file | ${DEFAULT_ADDRESS_COL}
     -t, --col-amount: name of the column representing the amount for a beneficiary in the csv file | ${DEFAULT_AMOUNT_COL}
     -u, --uri: secret seed to sign the extrinsics | ${DEFAULT_SEED}
@@ -293,6 +303,7 @@ function parse_args() {
     let result = {
         csv_file: undefined,
         ws_endpoint: DEFAULT_WS_ENDPOINT,
+        ss58_prefix: DEFAULT_PREFIX,
         address_col_label: DEFAULT_ADDRESS_COL,
         amount_col_label: DEFAULT_AMOUNT_COL,
         secret: DEFAULT_SEED,
@@ -313,6 +324,10 @@ function parse_args() {
                 result.ws_endpoint = address
             }
             continue
+        }
+        else if (args[i] === '-p' || args[i] === '--prefix') {
+            result.ss58_prefix = args[++i];
+            continue;
         }
         else if (args[i] === '-k' || args[i] === '--claim-msg') {
             result.claim_msg = args[++i];
@@ -373,6 +388,49 @@ function confirmation(query) {
     }))
 }
 
+function get_approve_as_multi(api, approvee, threshold, approver, signatories) {
+    return api.tx.multisig.approveAsMulti(
+        threshold,
+        signatories.filter(key => key != approver).sort(),
+        { "height": approvee.block, "index": approvee.index },
+        approvee.hash,
+        0
+    );
+}
+
+function get_approve_batch(api, approvees, threshold, approver, signatories) {
+    let calls = [];
+    approvees.forEach(a => {
+        calls.push(get_approve_as_multi(api, a, threshold, approver, signatories));
+    });
+    return api.tx.utility.batchAll(calls);
+}
+
+function get_final_approve(api, approvee, threshold, approver, signatories) {
+    return api.tx.multisig.asMulti(
+        threshold,
+        signatories.filter(key => key != approver).sort(),
+        { "height": approvee.block, "index": approvee.index },
+        approvee.data,
+        approvee.weight
+    );
+}
+
+function write_new_file_name(path, fname_prefix, addr, data) {
+    path = `${path}/${addr}`;
+    fs.mkdirSync(path, { recursive: true });
+    // Find a non-existing filename
+    fname_index = 0;
+    fname = "";
+    do {
+        fname = `${path}/${fname_prefix}_${addr}_${fname_index}.txt`;
+        ++fname_index;
+    } while (fs.existsSync(fname));
+
+    fs.writeFileSync(fname, data);
+    return fname;
+}
+
 async function main() {
     const options = parse_args();
     console.log(`USING PARAMETERS:`);
@@ -404,15 +462,12 @@ async function main() {
         return;
     }
 
-    const keyring = new Keyring({ type: 'sr25519', ss58Format: 251 });
+    const keyring = new Keyring({ type: 'sr25519', ss58Format: options.ss58_prefix });
     const account = keyring.addFromUri(options.secret);
 
+    multi_calls_to_be_approved = [];
     for (let m = 0; m < beneficiaries.length; m++) {
-        let fname = `${options.out_file_path}/call_data_${m}.txt`;
         print_highlight(`Sending chunk ${m}`);
-        if (options.threshold > 0) {
-            print_highlight(`Writing call data to ${fname}; <== SHARE THIS FILE WITH THE OTHER SIGNATORIES FOR APPROVAL`);
-        }
         let result = 0;
         if (INIT_CAMPAIGN && m == 0) {
             result = await send_begin_claim_tx(api,
@@ -420,20 +475,56 @@ async function main() {
                                                options.threshold,
                                                options.multisig_addresses,
                                                beneficiaries[m],
-                                               options.claim_msg,
-                                               fname);
+                                               options.claim_msg);
         }
         else {
             result = await send_add_beneficiaries_tx(api,
                                                      account,
                                                      options.threshold,
                                                      options.multisig_addresses,
-                                                     beneficiaries[m],
-                                                     fname);
+                                                     beneficiaries[m]);
         }
         if (result === -1) {
-            print_error("Something went wrong with the extrinsic; bailing out");
-            process.exit(-1);
+            print_error("Something went wrong with the extrinsic; stop sending");
+            break;
+        }
+
+        if (options.threshold > 0) {
+            multi_calls_to_be_approved.push(result);
+        }
+    }
+
+    console.log(`Have ${multi_calls_to_be_approved.length} multi calls to be approved`);
+
+    for (addr of options.multisig_addresses) {
+        // batched calls for intermediate approvals
+        approve_call_hex = get_approve_batch(api,
+                                     multi_calls_to_be_approved,
+                                     options.threshold,
+                                     addr,
+                                     options.multisig_addresses);
+
+        fname = write_new_file_name(options.out_file_path,
+                                    "encoded_batch_approve",
+                                    addr,
+                                    approve_call_hex.toHex());
+
+        print_highlight(`Written ${fname} <== SHARE THIS FILE WITH ${addr} FOR BATCHED INTERMEDIATE APPROVAL`);
+
+        // calls for final approve
+        for (m of multi_calls_to_be_approved) {
+            final_approve_call = get_final_approve(api,
+                                                   m,
+                                                   options.threshold,
+                                                   addr,
+                                                   options.multisig_addresses);
+
+            fname = write_new_file_name(options.out_file_path,
+                                        "encoded_final_approve",
+                                        addr,
+                                        final_approve_call.toHex());
+
+            print_highlight(`Written ${fname} <== SHARE THIS FILE WITH ${addr} FOR FINAL APPROVAL`);
         }
     }
 
