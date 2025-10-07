@@ -1351,7 +1351,6 @@ mod validate_unsigned {
                         "claim_ethereum",
                         claim_id.clone(),
                         USER_3,
-                        USER_1_RAW
                     )
                         .encode()],
                     longevity: TransactionLongevity::MAX,

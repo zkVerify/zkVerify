@@ -744,13 +744,11 @@ pub mod pallet {
                     let beneficiary = Beneficiary::<T>::Ethereum(*beneficiary);
                     let signature = ClaimSignature::<T>::Ethereum((*signature, dest.clone()));
                     Self::check_claimant(&beneficiary, signature)?;
-                    vec![(
-                        "claim_ethereum",
-                        ClaimId::<T>::get().unwrap(),
-                        beneficiary,
-                        dest,
-                    )
-                        .encode()]
+                    // Note: 'dest' is not included in the 'provides' as to avoid a possible attack
+                    // where a valid beneficiary would be able to craft multiple valid transactions
+                    // with different 'dest' parameter, filling the mempool for a given block and
+                    // effectively forbidding other transactions to go through.
+                    vec![("claim_ethereum", ClaimId::<T>::get().unwrap(), beneficiary).encode()]
                 }
                 _ => return Err(InvalidTransaction::Call.into()),
             };
