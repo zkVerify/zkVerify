@@ -17,7 +17,7 @@ const DEFAULT_WS_ENDPOINTS = {
     'mainnet': 'wss://zkverify-rpc.zkverify.io',
 }
 const EXISTENTIAL_DEPOSIT = '10000000000000000';
-const MAX_PER_BLOCK = 11000;
+const DEFAULT_BATCH_SIZE = 10000;
 const DEFAULT_PREFIX = 251;
 
 // Claim Manager Account
@@ -61,7 +61,7 @@ function parse_amount(tokens) {
     return tokens;
 }
 
-async function read_airdrop_csv(csv_file, address_col, amount_col) {
+async function read_airdrop_csv(csv_file, address_col, amount_col, batch_size) {
     const fdata = fs.readFileSync(csv_file);
     const csv_data = await neatCsv(fdata);
     beneficiaries = [];
@@ -94,7 +94,7 @@ async function read_airdrop_csv(csv_file, address_col, amount_col) {
             current_map.set(address, amount);
         }
         count++;
-        if (count % MAX_PER_BLOCK == 0) {
+        if (count % batch_size == 0) {
             beneficiaries.push(current_map);
             current_map = new Map();
         }
@@ -238,9 +238,10 @@ async function send_add_beneficiaries_tx(api, account, threshold, signatories, b
     return send(api, account, threshold, signatories, add_claim_tx);
 }
 
-async function check_preconditions(api, beneficiaries) {
+async function check_preconditions(api, beneficiaries, batch_size) {
     let claim_active = undefined;
     let free_balance = undefined;
+    const max_batch = 10000; // to be read from the chain, hardcoded for the time being
 
     // fetch data
     if (USE_PALLET_TOKEN_CLAIM) {
@@ -273,6 +274,12 @@ async function check_preconditions(api, beneficiaries) {
         console.log(`free_balance ${free_balance}`);
         return false;
     }
+
+    if (batch_size > max_batch) {
+        console.log(`Batch size ${batch_size} exceeds the maximum supported ${max_batch}`);
+        return false;
+    }
+
     return true;
 }
 
@@ -281,8 +288,9 @@ function usage() {
     node claim_init.js [OPTIONS] csv_input_file
 
     OPTIONS:
+    -b, --batch-size: max num of addresses for a single extrinsic | ${DEFAULT_BATCH_SIZE}
     -e, --end-point: url or key from ${Object.keys(DEFAULT_WS_ENDPOINTS)} | ${DEFAULT_WS_ENDPOINT}
-    -h, --help: Show this help and exist
+    -h, --help: show this help and exit
     -k, --claim-msg: claim message to pass to the beginClaim extrinsic (only for pallet tokenClaim) | ${DEFAULT_CLAIM_MSG_PREFIX}
     -m, --multi-address: address of the other signatories of the multisig account (can be repeated to add multiple addresses) | ${DEFAULT_MULTISIG_ADDRESSES}
     -n, --multi-threshold: threshold for the multisig account | ${DEFAULT_MULTISIG_THRESHOLD}
@@ -304,6 +312,7 @@ function parse_args() {
         csv_file: undefined,
         ws_endpoint: DEFAULT_WS_ENDPOINT,
         ss58_prefix: DEFAULT_PREFIX,
+        batch_size: DEFAULT_BATCH_SIZE,
         address_col_label: DEFAULT_ADDRESS_COL,
         amount_col_label: DEFAULT_AMOUNT_COL,
         secret: DEFAULT_SEED,
@@ -327,6 +336,10 @@ function parse_args() {
         }
         else if (args[i] === '-p' || args[i] === '--prefix') {
             result.ss58_prefix = args[++i];
+            continue;
+        }
+        else if (args[i] === '-b' || args[i] === '--batch-size') {
+            result.batch_size = args[++i];
             continue;
         }
         else if (args[i] === '-k' || args[i] === '--claim-msg') {
@@ -369,6 +382,7 @@ function parse_args() {
     if (extra_args.length != 1
         || result.multisig_addresses.length < result.threshold
         || result.multisig_addresses.length && (result.threshold == 0)
+        || result.batch_size <= 0
         ) {
         usage();
     }
@@ -416,8 +430,18 @@ function get_final_approve(api, approvee, threshold, approver, signatories) {
     );
 }
 
+function check_no_prev_calls(out_path, addrs) {
+    for (addr of addrs) {
+        const path = `${out_path}/${addr}`;
+        if (fs.existsSync(path)) {
+            console.log(`Out dir ${path} already exists, please delete that before proceeding`);
+            return false;
+        }
+    }
+    return true;
+}
+
 function write_new_file_name(path, fname_prefix, addr, data) {
-    path = `${path}/${addr}`;
     fs.mkdirSync(path, { recursive: true });
     // Find a non-existing filename
     fname_index = 0;
@@ -444,9 +468,15 @@ async function main() {
         process.exit(0);
     }
 
+    if (!check_no_prev_calls(options.out_file_path, options.multisig_addresses)) {
+        print_error("Found leftovers from previous runs; quitting");
+        process.exit(1);
+    }
+
     const beneficiaries = await read_airdrop_csv(options.csv_file,
                                                   options.address_col_label,
-                                                  options.amount_col_label);
+                                                  options.amount_col_label,
+                                                  options.batch_size);
 
     console.log(`Number of batches: ${beneficiaries.length}`);
 
@@ -456,7 +486,7 @@ async function main() {
     // Initialize the API
     const api = await ApiPromise.create({ provider: wsProvider });
 
-    if (!await check_preconditions(api, beneficiaries)) {
+    if (!await check_preconditions(api, beneficiaries, options.batch_size)) {
         print_error("Some preconditions are not met; bailing out");
         wsProvider.disconnect();
         return;
@@ -497,6 +527,7 @@ async function main() {
     console.log(`Have ${multi_calls_to_be_approved.length} multi calls to be approved`);
 
     for (addr of options.multisig_addresses) {
+        const path = `${options.out_file_path}/${addr}`;
         // batched calls for intermediate approvals
         approve_call_hex = get_approve_batch(api,
                                      multi_calls_to_be_approved,
@@ -504,12 +535,10 @@ async function main() {
                                      addr,
                                      options.multisig_addresses);
 
-        fname = write_new_file_name(options.out_file_path,
+        fname = write_new_file_name(path,
                                     "encoded_batch_approve",
                                     addr,
                                     approve_call_hex.toHex());
-
-        print_highlight(`Written ${fname} <== SHARE THIS FILE WITH ${addr} FOR BATCHED INTERMEDIATE APPROVAL`);
 
         // calls for final approve
         for (m of multi_calls_to_be_approved) {
@@ -519,15 +548,17 @@ async function main() {
                                                    addr,
                                                    options.multisig_addresses);
 
-            fname = write_new_file_name(options.out_file_path,
+            fname = write_new_file_name(path,
                                         "encoded_final_approve",
                                         addr,
                                         final_approve_call.toHex());
 
-            print_highlight(`Written ${fname} <== SHARE THIS FILE WITH ${addr} FOR FINAL APPROVAL`);
         }
+
+        print_highlight(`Written encoded calls to ${path} <== SHARE THIS DIR WITH ${addr} FOR APPROVAL`);
     }
 
+    print_highlight(`All done, closing the connection!`);
     wsProvider.disconnect();
 }
 

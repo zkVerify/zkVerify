@@ -122,7 +122,7 @@ async function send(api, account, call) {
 
 function usage() {
     console.error(`Usage:
-    node claim_init.js [OPTIONS] csv_input_file
+    node claim_final_approve.js [OPTIONS] csv_input_file
 
     OPTIONS:
     -e, --end-point: url or key from ${Object.keys(DEFAULT_WS_ENDPOINTS)} | ${DEFAULT_WS_ENDPOINT}
@@ -131,8 +131,8 @@ function usage() {
     -p, --prefix: the prefix for ss58 addresses on the chain | ${DEFAULT_PREFIX}
     -u, --uri: secret seed to sign the extrinsics | ${DEFAULT_SEED}
 
-    EXAMPLE (multisig address [Alice, Bob, Charlie] with 2/3 threshold, proposed by Charlie):
-    node claim_final_approve.js -n 2 -m xpjztNMwdaEqGLJ6sH6p7WTnuyHHroUAw9HELRxdPNzKr2Efi -m xpiRj6HmVSWqNBHcMrArAm7swsSGyLvmbeT61NbViK1QcFMqY -m xpiUPATuXmWizou22NxSVknLEhZxMLEeT5EMLubnpbQb8YWhU --uri //Charlie
+    EXAMPLE (multisig address [Alice, Bob, Charlie] with 2/3 threshold, finalized by Bob):
+    node claim_final_approve.js -n 2 -m xpjztNMwdaEqGLJ6sH6p7WTnuyHHroUAw9HELRxdPNzKr2Efi -m xpiRj6HmVSWqNBHcMrArAm7swsSGyLvmbeT61NbViK1QcFMqY -m xpiUPATuXmWizou22NxSVknLEhZxMLEeT5EMLubnpbQb8YWhU --uri //Bob
     `);
     process.exit(1);
 }
