@@ -102,7 +102,7 @@ pub static USER_3_SIGN_USER_1_DEST: LazyLock<(EthereumAddress, EthereumSignature
         // Prepare signature
         let msg_to_sign = [
             INIT_CLAIM_MESSAGE.clone().as_slice(),
-            crate::beneficiary::ETH_MSG_SEPARATOR,
+            EthMsgSeparator::get(),
             MockAccountIdToBytesConversion::to_bytes_literal(&USER_1_RAW).as_slice(),
         ]
         .concat();
@@ -177,6 +177,7 @@ parameter_types! {
     pub const MaxBeneficiaries: u32 = 100;
     pub const MaxOpBeneficiaries: u32 = MaxBeneficiaries::get() - 1;
     pub const MaxClaimMessageLength: u32 = 100;
+    pub const EthMsgSeparator: &'static [u8] = b"@";
     pub UnclaimedDestinationMockAccount: AccountId = 111;
 }
 
@@ -209,10 +210,13 @@ impl crate::Config for Test {
     type MaxClaimMessageLength = MaxClaimMessageLength;
     type Signer = UintAuthorityId;
     type Signature = TestSignature;
+    type MaxOpBeneficiaries = MaxOpBeneficiaries;
+    type AccountIdBytesToSign = MockAccountIdToBytesConversion;
+    type EthMsgSeparator = EthMsgSeparator;
     #[cfg(feature = "runtime-benchmarks")]
     type BenchmarkHelper = MockBenchmarkHelper;
+    #[cfg(feature = "runtime-benchmarks")]
     const MAX_OP_BENEFICIARIES: u32 = MaxOpBeneficiaries::get();
-    type AccountIdBytesToSign = MockAccountIdToBytesConversion;
 }
 
 // Configure a mock runtime to test the pallet.

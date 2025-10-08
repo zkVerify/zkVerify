@@ -649,6 +649,7 @@ impl pallet_claim::Config for Runtime {
 parameter_types! {
     pub const TokenClaimPalletId: PalletId = PalletId(*b"zkv/ptkc");
     pub const MaxClaimMessageLength: u32 = 500;
+    pub const EthMsgSeparator: &'static [u8] = b"@";
 }
 
 impl pallet_token_claim::Config for Runtime {
@@ -663,6 +664,9 @@ impl pallet_token_claim::Config for Runtime {
     type MaxBeneficiaries = MaxBeneficiaries;
     type MaxClaimMessageLength = MaxClaimMessageLength;
     type AccountIdBytesToSign = pallet_token_claim::AccountId32ToSs58BytesToSign;
+    type MaxOpBeneficiaries = MaxOpBeneficiaries;
+    type EthMsgSeparator = EthMsgSeparator;
+    #[cfg(feature = "runtime-benchmarks")]
     const MAX_OP_BENEFICIARIES: u32 = MaxOpBeneficiaries::get();
     #[cfg(feature = "runtime-benchmarks")]
     type BenchmarkHelper = ();

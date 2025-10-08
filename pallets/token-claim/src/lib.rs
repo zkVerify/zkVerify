@@ -157,6 +157,16 @@ pub mod pallet {
         type MaxClaimMessageLength: Get<u32>;
 
         /// The maximum number of beneficiaries allowed to be updated within a single operation. Used to restrict extrinsic weights.
+        #[pallet::constant]
+        type MaxOpBeneficiaries: Get<u32>;
+
+        /// Special character to be used to separated, for Ethereum claimers, the Claim Message and the destination address.
+        #[pallet::constant]
+        type EthMsgSeparator: Get<&'static [u8]>;
+
+        /// The maximum number of beneficiaries allowed to be updated within a single operation. Used in benchmarks.
+        /// Must be equal to T::MaxOpBeneficiaries::get()
+        #[cfg(feature = "runtime-benchmarks")]
         const MAX_OP_BENEFICIARIES: u32;
 
         /// Helper to create a signature to be benchmarked.
@@ -201,7 +211,7 @@ pub mod pallet {
             use frame_support::assert_ok;
 
             // Sanity check
-            assert!(T::MAX_OP_BENEFICIARIES <= T::MaxBeneficiaries::get());
+            assert!(T::MaxOpBeneficiaries::get() <= T::MaxBeneficiaries::get());
 
             TotalClaimable::<T>::put(BalanceOf::<T>::zero());
 
@@ -408,7 +418,7 @@ pub mod pallet {
         }
 
         fn check_max_op_beneficiaries(new_beneficiaries_len: usize) -> DispatchResult {
-            if new_beneficiaries_len > T::MAX_OP_BENEFICIARIES as usize {
+            if new_beneficiaries_len > T::MaxOpBeneficiaries::get() as usize {
                 log::warn!(
                     "Too many beneficiaries for this single operation: {new_beneficiaries_len:?}."
                 );
@@ -491,7 +501,7 @@ pub mod pallet {
         /// The add_beneficiaries operation is atomic. If one insertion fails, the whole extrinsic fails.
         /// Origin must be the ManagerOrigin.
         #[pallet::call_index(0)]
-        #[pallet::weight(T::WeightInfo::add_beneficiaries(u32::min(beneficiaries.len() as u32, T::MAX_OP_BENEFICIARIES))
+        #[pallet::weight(T::WeightInfo::add_beneficiaries(u32::min(beneficiaries.len() as u32, T::MaxOpBeneficiaries::get()))
         .saturating_add(T::WeightInfo::begin_claim())
         )]
         pub fn begin_claim(
