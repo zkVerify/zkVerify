@@ -89,6 +89,7 @@ frame-system-benchmarking = { workspace = true, optional = true }
 # Custom logic
 pallet-aggregate = { workspace = true }
 pallet-claim = { workspace = true }
+pallet-token-claim = { workspace = true }
 pallet-hyperbridge-aggregations = { workspace = true }
 static_assertions = "1.1.0"
 aggregate-rpc-runtime-api = { workspace = true }
@@ -144,6 +145,7 @@ runtime-benchmarks = [
 	"pallet-bounties/runtime-benchmarks",
 	"pallet-child-bounties/runtime-benchmarks",
 	"pallet-claim/runtime-benchmarks",
+	"pallet-token-claim/runtime-benchmarks",
 	"pallet-conviction-voting/runtime-benchmarks",
 	"pallet-election-provider-support-benchmarking/runtime-benchmarks",
 	"pallet-fflonk-verifier/runtime-benchmarks",
@@ -216,6 +218,7 @@ std = [
 	"pallet-bounties/std",
 	"pallet-child-bounties/std",
 	"pallet-claim/std",
+	"pallet-token-claim/std",
 	"pallet-conviction-voting/std",
 	"pallet-election-provider-support-benchmarking?/std",
 	"pallet-fflonk-verifier/std",
@@ -297,6 +300,7 @@ try-runtime = [
 	"pallet-bounties/try-runtime",
 	"pallet-child-bounties/try-runtime",
 	"pallet-claim/try-runtime",
+	"pallet-token-claim/try-runtime",
 	"pallet-conviction-voting/try-runtime",
 	"pallet-grandpa/try-runtime",
 	"pallet-hyperbridge-aggregations/try-runtime",

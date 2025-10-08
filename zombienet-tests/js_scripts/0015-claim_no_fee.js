@@ -19,16 +19,10 @@ async function run(nodeName, networkInfo, _args) {
 
   const api = await init_api(zombie, nodeName, networkInfo);
   
-  // TODO: Handle this at CI level
-  const chain = await api.rpc.system.chain();
-  if (chain.toString().startsWith("zkVerify ")) {
-    console.log("Pallet token claim is not present yet on zkVerify. Skip test.")
-    return ReturnCode.Ok;
-  }
-
   // Signature generated with https://etherscan.io/verifiedSignatures#
   let eth_signature;
   let ss58Prefix;
+  const chain = await api.rpc.system.chain();
   if (chain.toString().startsWith("Volta ")) {
       ss58Prefix = 251;
       // Dest address: xpkQVjJtgK2jwbAkNLEPnWxxuxmBkaLtie7oug3WuRBSZXHz8

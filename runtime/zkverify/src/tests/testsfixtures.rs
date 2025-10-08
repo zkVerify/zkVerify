@@ -78,15 +78,21 @@ pub fn test() -> sp_io::TestExternalities {
         .build_storage()
         .unwrap();
 
-    pallet_balances::GenesisConfig::<super::Runtime> {
-        balances: SAMPLE_USERS
-            .iter()
-            .cloned()
-            .map(|user| (user.raw_account.into(), user.starting_balance))
-            .collect(),
-    }
-    .assimilate_storage(&mut t)
-    .unwrap();
+    let mut balances: Vec<_> = SAMPLE_USERS
+        .iter()
+        .cloned()
+        .map(|user| (user.raw_account.into(), user.starting_balance))
+        .collect();
+
+    // Fund also token claim pallet
+    balances.push((
+        crate::TokenClaimPalletId::get().into_account_truncating(),
+        total_balances() + crate::ExistentialDeposit::get(),
+    ));
+
+    pallet_balances::GenesisConfig::<super::Runtime> { balances }
+        .assimilate_storage(&mut t)
+        .unwrap();
 
     pallet_babe::GenesisConfig::<super::Runtime> {
         authorities: vec![],
@@ -169,6 +175,24 @@ pub fn test() -> sp_io::TestExternalities {
             .map(|user| (user.raw_account.into(), user.starting_balance))
             .collect(),
         genesis_balance: total_balances(),
+    }
+    .assimilate_storage(&mut t)
+    .unwrap();
+
+    pallet_token_claim::GenesisConfig::<super::Runtime> {
+        beneficiaries: SAMPLE_USERS
+            .iter()
+            .cloned()
+            .map(|user| {
+                (
+                    pallet_token_claim::Beneficiary::<super::Runtime>::Substrate(
+                        user.raw_account.into(),
+                    ),
+                    user.starting_balance,
+                )
+            })
+            .collect(),
+        claim_message: frame_support::BoundedVec::try_from(b"TestMessage".to_vec()).unwrap(),
     }
     .assimilate_storage(&mut t)
     .unwrap();
