@@ -8,7 +8,7 @@ use sp_runtime::traits::Verify;
 
 pub const MSG_PREFIX: &[u8] = b"<Bytes>";
 pub const MSG_SUFFIX: &[u8] = b"</Bytes>";
-pub const ETH_MSG_SEPARATOR: &[u8] = b"\n";
+pub const ETH_MSG_SEPARATOR: &[u8] = b"@";
 
 #[derive(Clone, PartialEq, Encode, Decode, TypeInfo, Serialize, Deserialize, Eq, MaxEncodedLen)]
 #[scale_info(skip_type_params(T))]

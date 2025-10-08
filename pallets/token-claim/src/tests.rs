@@ -602,8 +602,8 @@ mod claim_ethereum_specific {
         )
         .execute_with(|| {
             // Prepare claim message and signature
-            // Signature on "INIT_CLAIM_MESSAGE||\n||USER_1_RAW"
-            let eth_signature = EthereumSignature::from_raw(hex_literal::hex!("cb88919aba9de0cac6fe685f93d7fdad484e1d17aeedea6c01120c9f6aaa823f247a9a47b2390489417f63c0300b8f72301aadf7a2060f429ed9733b841b31851b"));
+            // Signature on "INIT_CLAIM_MESSAGE||@||USER_1_RAW"
+            let eth_signature = EthereumSignature::from_raw(hex_literal::hex!("40d1584a3e935358410d5e7bdca3082806c2af6a8a71baf44ece9a3f117499c03cf03116c0ed28b66704660870d41af1719e8e9d2271c7276bde0bd1b117e0c81b"));
             assert_ok!(Claim::claim_ethereum(
                 Origin::None.into(),
                 USER_3_RAW,
@@ -1275,9 +1275,9 @@ mod validate_unsigned {
             GenesisClaimBalance::Sufficient,
         )
         .execute_with(|| {
-            // Signature on "INIT_CLAIM_MESSAGE||\n||USER_1_RAW"
+            // Signature on "INIT_CLAIM_MESSAGE||@||USER_1_RAW"
             let user_signer = USER_3_RAW;
-            let user_signature = EthereumSignature::from_raw(hex_literal::hex!("cb88919aba9de0cac6fe685f93d7fdad484e1d17aeedea6c01120c9f6aaa823f247a9a47b2390489417f63c0300b8f72301aadf7a2060f429ed9733b841b31851b"));
+            let user_signature = EthereumSignature::from_raw(hex_literal::hex!("40d1584a3e935358410d5e7bdca3082806c2af6a8a71baf44ece9a3f117499c03cf03116c0ed28b66704660870d41af1719e8e9d2271c7276bde0bd1b117e0c81b"));
             let claim_id = ClaimId::<Test>::get().unwrap();
             let source = sp_runtime::transaction_validity::TransactionSource::External;
             let dest = USER_1_RAW;
