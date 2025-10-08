@@ -14,7 +14,7 @@
 // limitations under the License.
 
 use super::*;
-use crate::beneficiary::{Beneficiary, ETH_MSG_SEPARATOR};
+use crate::beneficiary::Beneficiary;
 use crate::utils::{secp_utils::*, *};
 use crate::{EthereumAddress, EthereumSignature};
 use codec::{Decode, Encode};
@@ -133,7 +133,7 @@ mod benchmarks {
         let dest: T::AccountId = account("test dest", 0, 0);
         let claim_message = [
             msg.as_slice(),
-            ETH_MSG_SEPARATOR,
+            T::EthMsgSeparator::get(),
             T::AccountIdBytesToSign::to_bytes_literal(&dest).as_slice(),
         ]
         .concat();

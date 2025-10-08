@@ -31,10 +31,12 @@ async function run(nodeName, networkInfo, _args) {
   let ss58Prefix;
   if (chain.toString().startsWith("Volta ")) {
       ss58Prefix = 251;
-      eth_signature = '0x4bf1809daada1bd90a45f4d1edef422b48c728528cc524879e4238a48050bed16795eba745e89f70802ab0fc39d686c58301fa95980c0050ff81dad99a55b2b81b';
+      // Dest address: xpkQVjJtgK2jwbAkNLEPnWxxuxmBkaLtie7oug3WuRBSZXHz8
+      eth_signature = '0x3485f6726eb2efee5356f3b5bdd4df6287c70a73e2b3b9b82e54d8df5395421543456d948bff2109db8fc2342bf4cdc424f70c0161091ff83cb68227a32713e81c';
   } else if (chain.toString().startsWith("zkVerify ")) {
       ss58Prefix = 8741;
-      eth_signature = '0xbbeb577a5e4a33cbdbfecf321e35fb2bbc7ec389e5eb80069f6a60be59c7ec9d046e6496ea04654f79f056762b2bbfea664e087ae4faa09c1911852b892b044b1c';
+      // Dest address: ZKZCeKKpTeBwyoDngETfHfdbSFdWSkWRjZqE8N3BTf5ppbBHY
+      eth_signature = '0x79bd9a9c63bbbd918b4a125854a449cdde8bb1fb20df372b15fe74319a1b545324fc75981fea5a401fddcfd65bcaad50710c40e191185364ee1baea3dda286321c';
   } else {
       console.log(`Unsupported chain ${chain}, only Volta and zkVerify are supported`);
       return ReturnCode.ErrUnsupportedNetwork;

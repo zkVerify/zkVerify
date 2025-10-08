@@ -157,6 +157,16 @@ pub mod pallet {
         type MaxClaimMessageLength: Get<u32>;
 
         /// The maximum number of beneficiaries allowed to be updated within a single operation. Used to restrict extrinsic weights.
+        #[pallet::constant]
+        type MaxOpBeneficiaries: Get<u32>;
+
+        /// Special character to be used to separated, for Ethereum claimers, the Claim Message and the destination address.
+        #[pallet::constant]
+        type EthMsgSeparator: Get<&'static [u8]>;
+
+        /// The maximum number of beneficiaries allowed to be updated within a single operation. Used in benchmarks.
+        /// Must be equal to T::MaxOpBeneficiaries::get()
+        #[cfg(feature = "runtime-benchmarks")]
         const MAX_OP_BENEFICIARIES: u32;
 
         /// Helper to create a signature to be benchmarked.
@@ -201,7 +211,7 @@ pub mod pallet {
             use frame_support::assert_ok;
 
             // Sanity check
-            assert!(T::MAX_OP_BENEFICIARIES <= T::MaxBeneficiaries::get());
+            assert!(T::MaxOpBeneficiaries::get() <= T::MaxBeneficiaries::get());
 
             TotalClaimable::<T>::put(BalanceOf::<T>::zero());
 
@@ -408,7 +418,7 @@ pub mod pallet {
         }
 
         fn check_max_op_beneficiaries(new_beneficiaries_len: usize) -> DispatchResult {
-            if new_beneficiaries_len > T::MAX_OP_BENEFICIARIES as usize {
+            if new_beneficiaries_len > T::MaxOpBeneficiaries::get() as usize {
                 log::warn!(
                     "Too many beneficiaries for this single operation: {new_beneficiaries_len:?}."
                 );
@@ -491,7 +501,7 @@ pub mod pallet {
         /// The add_beneficiaries operation is atomic. If one insertion fails, the whole extrinsic fails.
         /// Origin must be the ManagerOrigin.
         #[pallet::call_index(0)]
-        #[pallet::weight(T::WeightInfo::add_beneficiaries(u32::min(beneficiaries.len() as u32, T::MAX_OP_BENEFICIARIES))
+        #[pallet::weight(T::WeightInfo::add_beneficiaries(u32::min(beneficiaries.len() as u32, T::MaxOpBeneficiaries::get()))
         .saturating_add(T::WeightInfo::begin_claim())
         )]
         pub fn begin_claim(
@@ -660,7 +670,7 @@ pub mod pallet {
         /// Origin must be signed.
         #[pallet::call_index(5)]
         #[pallet::weight(T::WeightInfo::remove_beneficiaries(
-            u32::min(Beneficiaries::<T>::count(), limit.unwrap_or(T::MAX_OP_BENEFICIARIES)))
+            u32::min(Beneficiaries::<T>::count(), limit.unwrap_or(T::MaxOpBeneficiaries::get())))
             .saturating_add(T::DbWeight::get().reads(1_u64))
         )]
         pub fn remove_beneficiaries(origin: OriginFor<T>, limit: Option<u32>) -> DispatchResult {
@@ -670,7 +680,7 @@ pub mod pallet {
             Self::check_claim_status(false)?;
 
             // Remove as many beneficiaries as possible
-            Self::do_remove_beneficiaries(limit.unwrap_or(T::MAX_OP_BENEFICIARIES));
+            Self::do_remove_beneficiaries(limit.unwrap_or(T::MaxOpBeneficiaries::get()));
 
             Ok(())
         }
@@ -744,13 +754,11 @@ pub mod pallet {
                     let beneficiary = Beneficiary::<T>::Ethereum(*beneficiary);
                     let signature = ClaimSignature::<T>::Ethereum((*signature, dest.clone()));
                     Self::check_claimant(&beneficiary, signature)?;
-                    vec![(
-                        "claim_ethereum",
-                        ClaimId::<T>::get().unwrap(),
-                        beneficiary,
-                        dest,
-                    )
-                        .encode()]
+                    // Note: 'dest' is not included in the 'provides' as to avoid a possible attack
+                    // where a valid beneficiary would be able to craft multiple valid transactions
+                    // with different 'dest' parameter, filling the mempool for a given block and
+                    // effectively forbidding other transactions to go through.
+                    vec![("claim_ethereum", ClaimId::<T>::get().unwrap(), beneficiary).encode()]
                 }
                 _ => return Err(InvalidTransaction::Call.into()),
             };

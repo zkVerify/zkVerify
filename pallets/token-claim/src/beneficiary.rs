@@ -8,7 +8,6 @@ use sp_runtime::traits::Verify;
 
 pub const MSG_PREFIX: &[u8] = b"<Bytes>";
 pub const MSG_SUFFIX: &[u8] = b"</Bytes>";
-pub const ETH_MSG_SEPARATOR: &[u8] = b"\n";
 
 #[derive(Clone, PartialEq, Encode, Decode, TypeInfo, Serialize, Deserialize, Eq, MaxEncodedLen)]
 #[scale_info(skip_type_params(T))]
@@ -121,8 +120,12 @@ impl<T: Config> ClaimSignature<T> {
                 // We need to append to the message the destination Substrate account, otherwise anyone could
                 // intercept the transaction and change the destination
                 let dest_account = T::AccountIdBytesToSign::to_bytes_literal(dest);
-                let msg_with_dest =
-                    [claim_message, ETH_MSG_SEPARATOR, dest_account.as_slice()].concat();
+                let msg_with_dest = [
+                    claim_message,
+                    T::EthMsgSeparator::get(),
+                    dest_account.as_slice(),
+                ]
+                .concat();
 
                 // Check signature is successful and signer from signature is the same as beneficiary
                 let msg_to_sign = eip191_hash_message(msg_with_dest.as_slice());
