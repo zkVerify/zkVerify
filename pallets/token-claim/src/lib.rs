@@ -670,7 +670,7 @@ pub mod pallet {
         /// Origin must be signed.
         #[pallet::call_index(5)]
         #[pallet::weight(T::WeightInfo::remove_beneficiaries(
-            u32::min(Beneficiaries::<T>::count(), limit.unwrap_or(T::MAX_OP_BENEFICIARIES)))
+            u32::min(Beneficiaries::<T>::count(), limit.unwrap_or(T::MaxOpBeneficiaries::get())))
             .saturating_add(T::DbWeight::get().reads(1_u64))
         )]
         pub fn remove_beneficiaries(origin: OriginFor<T>, limit: Option<u32>) -> DispatchResult {
@@ -680,7 +680,7 @@ pub mod pallet {
             Self::check_claim_status(false)?;
 
             // Remove as many beneficiaries as possible
-            Self::do_remove_beneficiaries(limit.unwrap_or(T::MAX_OP_BENEFICIARIES));
+            Self::do_remove_beneficiaries(limit.unwrap_or(T::MaxOpBeneficiaries::get()));
 
             Ok(())
         }
