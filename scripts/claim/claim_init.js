@@ -239,13 +239,14 @@ async function send_add_beneficiaries_tx(api, account, threshold, signatories, b
 }
 
 async function check_preconditions(api, beneficiaries, batch_size) {
-    let claim_active = undefined;
-    let free_balance = undefined;
-    const max_batch = 10000; // to be read from the chain, hardcoded for the time being
+    let claim_active   = undefined;
+    let free_balance   = undefined;
+    let max_batch_size = 10000; // this is the default for the old pallet
 
     // fetch data
     if (USE_PALLET_TOKEN_CLAIM) {
         claim_active = await api.query.tokenClaim.claimActive();
+        max_batch_size = await api.consts.tokenClaim.maxOpBeneficiaries.toNumber();
         const pallet_address = await api.query.tokenClaim.palletAccountId();
         free_balance = (await api.query.system.account(String(pallet_address)))["data"]["free"];
     } else {
@@ -275,8 +276,8 @@ async function check_preconditions(api, beneficiaries, batch_size) {
         return false;
     }
 
-    if (batch_size > max_batch) {
-        console.log(`Batch size ${batch_size} exceeds the maximum supported ${max_batch}`);
+    if (batch_size > max_batch_size) {
+        console.log(`Batch size ${batch_size} exceeds the maximum supported ${max_batch_size}`);
         return false;
     }
 
