@@ -32,3 +32,12 @@ fn verify_valid_proof() {
 
     assert!(Ezkl::<MockRuntime>::verify_proof(&vk, &proof, &pi).is_ok());
 }
+
+#[test]
+fn verify_valid_proof_alt() {
+    let vk = EzklVk::new(VALID_VKA_ALT.to_vec());
+    let proof = VALID_PROOF_ALT.to_vec();
+    let pi = valid_instances_alt();
+
+    assert!(Ezkl::<MockRuntime>::verify_proof(&vk, &proof, &pi).is_ok());
+}
