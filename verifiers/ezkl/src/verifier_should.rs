@@ -138,7 +138,7 @@ mod reject {
 
         assert_eq!(
             Ezkl::<MockRuntime>::verify_proof(&invalid_vk, &proof, &pi),
-            Err(VerifyError::VerifyError) // note that this is not a `InvalidVerificationKey` since verification fails
+            Err(VerifyError::VerifyError) // note that this is not an `InvalidVerificationKey` variant since verification fails
         );
     }
 
@@ -152,7 +152,7 @@ mod reject {
 
         assert_eq!(
             Ezkl::<MockRuntime>::verify_proof(&vk, &malformed_proof, &pi),
-            Err(VerifyError::InvalidProofData)
+            Err(VerifyError::InvalidProofData) // note that this is not an `VerifyError` variant since the faulty bytes get intercepted earlier
         );
     }
 }
