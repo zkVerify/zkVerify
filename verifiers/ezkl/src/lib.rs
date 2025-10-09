@@ -30,9 +30,9 @@ use native::bn254::HostHooks as CurveHooksImpl;
 pub use ezkl_no_std::PUBS_SIZE;
 
 // Maximum supported VKA length in bytes. Set to a multiple of 32.
-pub const MAX_VK_LENGTH: u32 = 3808;
-// Maximum supported proof length in bytes.
-pub const MAX_PROOF_LENGTH: u32 = 1872;
+pub const MAX_VK_LENGTH: u32 = 9216;
+// Maximum supported proof length in bytes. Set to a multiple of 32.
+pub const MAX_PROOF_LENGTH: u32 = 6304;
 
 pub struct EzklVkMaxByteLen;
 impl frame_support::traits::Get<u32> for EzklVkMaxByteLen {
