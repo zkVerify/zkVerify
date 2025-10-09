@@ -100,12 +100,25 @@ mod reject {
     }
 
     #[test]
+    fn big_vka() {
+        let proof = VALID_PROOF.to_vec();
+        let pi = valid_instances();
+
+        let invalid_vka_bytes = [0u8; MAX_VK_LENGTH as usize + 1].to_vec();
+        let invalid_vka = EzklVk::new(invalid_vka_bytes);
+
+        assert_eq!(
+            Ezkl::<MockRuntime>::verify_proof(&invalid_vka, &proof, &pi),
+            Err(VerifyError::InvalidVerificationKey)
+        );
+    }
+
+    #[test]
     fn big_proof() {
         let vk = EzklVk::new(VALID_VKA.to_vec());
         let pi = valid_instances();
 
-        let mut invalid_proof = VALID_PROOF.to_vec();
-        invalid_proof.push(1);
+        let invalid_proof = [0u8; MAX_PROOF_LENGTH as usize + 1].to_vec();
 
         assert_eq!(
             Ezkl::<MockRuntime>::verify_proof(&vk, &invalid_proof, &pi),
