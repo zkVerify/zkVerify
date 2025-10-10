@@ -38,15 +38,9 @@ pub mod benchmarks {
 
     #[benchmark]
     fn verify_proof() {
-        let proof = VALID_PROOF.to_vec();
-        let pubs: Vec<_> = valid_instances();
-        // .chunks_exact(crate::PUBS_SIZE)
-        // .map(TryInto::try_into)
-        // .map(Result::unwrap)
-        // .collect();
-        let vk = crate::EzklVk {
-            vk_bytes: VALID_VKA.to_vec(),
-        };
+        let proof = VALID_PROOF_ALT.to_vec();
+        let pubs: Vec<_> = valid_instances_alt();
+        let vk = crate::EzklVk::new(VALID_VKA_ALT.to_vec());
 
         let r;
         #[block]
@@ -58,9 +52,7 @@ pub mod benchmarks {
 
     #[benchmark]
     fn get_vk() {
-        let vk = crate::EzklVk {
-            vk_bytes: VALID_VKA.to_vec(),
-        };
+        let vk = crate::EzklVk::new(VALID_VKA_ALT.to_vec());
         let hash = sp_core::H256::repeat_byte(2);
 
         insert_vk_anonymous::<T>(vk, hash);
@@ -75,9 +67,7 @@ pub mod benchmarks {
 
     #[benchmark]
     fn validate_vk() {
-        let vk = crate::EzklVk {
-            vk_bytes: VALID_VKA.to_vec(),
-        };
+        let vk = crate::EzklVk::new(VALID_VKA_ALT.to_vec());
 
         let r;
         #[block]
@@ -89,15 +79,9 @@ pub mod benchmarks {
 
     #[benchmark]
     fn compute_statement_hash() {
-        let proof = VALID_PROOF.to_vec();
-        let pubs: Vec<_> = valid_instances();
-        // .chunks_exact(crate::PUB_SIZE)
-        // .map(TryInto::try_into)
-        // .map(Result::unwrap)
-        // .collect();
-        let vk = crate::EzklVk {
-            vk_bytes: VALID_VKA.to_vec(),
-        };
+        let proof = VALID_PROOF_ALT.to_vec();
+        let pubs: Vec<_> = valid_instances_alt();
+        let vk = crate::EzklVk::new(VALID_VKA_ALT.to_vec());
 
         let vk = VkOrHash::Vk(vk.into());
 
@@ -111,9 +95,7 @@ pub mod benchmarks {
     fn register_vk() {
         // setup code
         let caller = funded_account::<T>();
-        let vk = crate::EzklVk {
-            vk_bytes: VALID_VKA.to_vec(),
-        };
+        let vk = crate::EzklVk::new(VALID_VKA_ALT.to_vec());
 
         #[extrinsic_call]
         register_vk(RawOrigin::Signed(caller), vk.clone().into());
@@ -127,9 +109,7 @@ pub mod benchmarks {
         // setup code
         let caller = funded_account::<T>();
         let hash = sp_core::H256::repeat_byte(2);
-        let vk = crate::EzklVk {
-            vk_bytes: VALID_VKA.to_vec(),
-        };
+        let vk = crate::EzklVk::new(VALID_VKA_ALT.to_vec());
 
         insert_vk::<T>(caller.clone(), vk, hash);
 
