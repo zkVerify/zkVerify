@@ -715,7 +715,7 @@ pub const MAX_TARGETS: u32 = 1_000;
 pub const MAX_VOTERS: u32 = 5_000;
 // The maximum number of number of active validators that we want to handle.
 // This *must always be greater or equal* to staking.validatorCount storage value.
-pub const MAX_ACTIVE_VALIDATORS: u32 = 30;
+pub const MAX_ACTIVE_VALIDATORS: u32 = 200;
 
 parameter_types! {
     // Maximum number of election voters and targets that can be handled by OnChainSeqPhragmen
