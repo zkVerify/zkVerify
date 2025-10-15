@@ -20,7 +20,7 @@ jobs:
       - name: Write release version
         id: data
         run: |
-          tag=${{ github.ref_name }}
+          tag="${{ github.ref_name }}"
           # rt-<runtime>-<version>
           runtime="$(cut -d '-' -f 2 <<< "${tag}")"
           if [[ "${runtime}" == "zkverify" ]]; then

@@ -81,8 +81,8 @@ if [ "${is_a_release}" = "true" ]; then
 
   # Docker image(s) tags for PROD vs DEV release
   if [ "${fastruntime_release}" = "true" ]; then
-      publish_tags=("fast-runtime")
-      extract_runtime="false"
+    publish_tags=("fast-runtime")
+    extract_runtime="false"
   elif [ "${prod_release}" = "true" ]; then
     # Tags in prod release are always <version>-<YYYYMMDD>, <version>, latest
     docker_tag_node="$(cut -d '-' -f1 <<< "${docker_tag_full}")"

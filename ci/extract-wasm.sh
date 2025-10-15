@@ -55,8 +55,8 @@ if [ -n "${image_artifact}" ]; then
   if [ "${DRY_RUN}" != "true" ]; then
     image="$(docker load -i "${GITHUB_WORKSPACE}/${image_artifact}.tar" | awk '/Loaded image:/ { print $3 }')"
   else
-      log_info "GITHUB_WORKSPACE=${GITHUB_WORKSPACE} image_artifact=${image_artifact}"
-      image="__from-artifact--dry-run__"
+    log_info "GITHUB_WORKSPACE=${GITHUB_WORKSPACE} image_artifact=${image_artifact}"
+    image="__from-artifact--dry-run__"
   fi
 fi
 
