@@ -16,7 +16,7 @@ jobs:
       - name: Write release version
         id: version-str
         run: |
-          TAG=${{ github.ref_name }}
+          TAG="${{ github.ref_name }}"
           # Strip v prefix
           echo "VERSION_STR=${TAG#v}" >> "${GITHUB_OUTPUT}"
 
