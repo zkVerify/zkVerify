@@ -217,8 +217,8 @@ pallet-token-gateway = { default-features = false, version = "2412.0.0" }
 pallet-hyperbridge = { default-features = false, version = "2412.0.0" }
 frame-metadata-hash-extension = { version = "0.7.0", default-features = false }
 pallet-hyperbridge-aggregations = { path = "pallets/hyperbridge_aggregations", default-features = false }
-alloy-dyn-abi = { default-features = false, version = "0.8.14" }
-alloy-primitives = { default-features = false, version = "0.8.14" }
+alloy-dyn-abi = { default-features = false, version = "0.8.26" }
+alloy-primitives = { default-features = false, version = "0.8.26" }
 
 # Used for the node template's RPCs
 frame-system-rpc-runtime-api = { version = "35.0.0", default-features = false }
