@@ -31,7 +31,7 @@ hex-literal = { workspace = true }
 sp-io = { workspace = true, features = ["std"] }
 scale-info = { workspace = true }
 sp-runtime = { workspace = true }
-pallet-balances = { workspace = true, features = ["std", "runtime-benchmarks"] }
+pallet-balances = { workspace = true }
 
 [features]
 std = [
