@@ -1,0 +1,46 @@
+name: Tag-runtime-orchestrator
+on:
+  push:
+    tags:
+      - "rt-zkverify-[0-9]+.[0-9]+.[0-9]+"
+      - "rt-zkverify-[0-9]+.[0-9]+.[0-9]+-rc[0-9]*"
+      - "rt-zkverify-[0-9]+.[0-9]+.[0-9]+-[a-zA-Z]*"
+      - "rt-volta-[0-9]+.[0-9]+.[0-9]+"
+      - "rt-volta-[0-9]+.[0-9]+.[0-9]+-rc[0-9]*"
+      - "rt-volta-[0-9]+.[0-9]+.[0-9]+-[a-zA-Z]*"
+jobs:
+  release-version:
+    name: Define release data
+    runs-on: warp-ubuntu-latest-x64-2x
+    outputs:
+      runtime: ${{ steps.data.outputs.RUNTIME }}
+      runtime-name: ${{ steps.data.outputs.RUNTIME_NAME }}
+
+    steps:
+      - name: Write release version
+        id: data
+        run: |
+          tag="${{ github.ref_name }}"
+          # rt-<runtime>-<version>
+          runtime="$(cut -d '-' -f 2 <<< "${tag}")"
+          if [[ "${runtime}" == "zkverify" ]]; then
+            runtime_name="zkVerify"
+          elif [[ "${runtime}" == "volta" ]]; then
+            runtime_name="Volta"
+          else
+            echo "ERROR: Unknown runtime ${runtime}"
+            exit 1
+          fi
+          echo "RUNTIME=${runtime}" >> "${GITHUB_OUTPUT}"
+          echo "RUNTIME_NAME=${runtime_name}" >> "${GITHUB_OUTPUT}"
+
+  release:
+    needs: [ release-version ]
+    uses: ./.github/workflows/CI-release-runtime.yml
+    with:
+      runtime: ${{ needs.release-version.outputs.runtime }}
+      release_name: "Release Runtime ${{ needs.release-version.outputs.runtime-name }} ${{ needs.release-version.outputs.version-str }}"
+      release_branch: release
+      dry_run: ${{ vars.TAG_RELEASE_DRY_RUN == 'true' }}
+    secrets:
+      RELEASES_PROD_SLACK_WEBHOOK_URL: ${{ secrets.RELEASES_PROD_SLACK_WEBHOOK_URL }}

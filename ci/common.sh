@@ -1,5 +1,7 @@
 #!/bin/bash
 
+IS_A_RELEASE=${IS_A_RELEASE:-"false"}
+
 log() {
   # Usage: log style color "message"
   # style: bold, italic, normal, light
@@ -110,4 +112,38 @@ check_requirements() {
   log_info "\n=== Checking all the requirements ==="
   verify_required_commands
   docker info >/dev/null 2>&1 || fn_die "${FUNCNAME[0]} ERROR: 'docker daemon' is not running, start it before running this script."
+}
+
+# Functions
+import_gpg_keys() {
+  # shellcheck disable=SC2207
+  declare -r keys=( $(echo "${@}" | tr " " "\n") )
+
+  if [ "${#keys[@]}" -eq 0 ]; then
+    log_warn "WARNING: there are ZERO gpg keys to import. Please check if 'MAINTAINERS_KEYS' variable is set correctly. The build is not going to be released ..."
+    IS_A_RELEASE="false"
+  else
+    # shellcheck disable=SC2145
+    printf "%s\n" "Tagged build, fetching keys:" "${@}" ""
+    for key in "${keys[@]}"; do
+      gpg -v --batch --keyserver hkps://keys.openpgp.org --recv-keys "${key}" ||
+      gpg -v --batch --keyserver hkp://keyserver.ubuntu.com --recv-keys "${key}" ||
+      gpg -v --batch --keyserver hkp://pgp.mit.edu:80 --recv-keys "${key}" ||
+      gpg -v --batch --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys "${key}" ||
+      { log_warn "WARNING: ${key} can not be found on GPG key servers. Please upload it to at least one of the following GPG key servers:\nhttps://keys.openpgp.org/\nhttps://keyserver.ubuntu.com/\nhttps://pgp.mit.edu/"
+        IS_A_RELEASE="false"
+      }
+    done
+  fi
+}
+
+check_signed_tag() {
+  local tag="${1}"
+
+  if git verify-tag -v "${tag}"; then
+    log_info "INFO: ${tag} is a valid signed tag"
+  else
+    log_warn "WARNING: GIT's tag = ${tag} signature is NOT valid. The build is not going to be released ..."
+    IS_A_RELEASE="false"
+  fi
 }

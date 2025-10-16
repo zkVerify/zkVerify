@@ -2,14 +2,29 @@ name: Tag-orchestrator
 on:
   push:
     tags:
-      - "[0-9]+.[0-9]+.[0-9]+-[0-9]+.[0-9]+.[0-9]+*"
-
+      - "v[0-9]+.[0-9]+.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+-[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+-rc[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+-[a-zA-Z]*"
 jobs:
+  release-version:
+    name: Define release version
+    runs-on: warp-ubuntu-latest-x64-2x
+    outputs:
+      version-str: ${{ steps.version-str.outputs.VERSION_STR }}
+    steps:
+      - name: Write release version
+        id: version-str
+        run: |
+          TAG="${{ github.ref_name }}"
+          # Strip v prefix
+          echo "VERSION_STR=${TAG#v}" >> "${GITHUB_OUTPUT}"
+
   release:
-    name: Create artifacts and release them
+    needs: [ release-version ]
     uses: ./.github/workflows/CI-release.yml
     with:
-      release_name: "Release ${{ github.ref_name }}"
+      release_name: "Release ${{ needs.release-version.outputs.version-str }}"
       release_branch: release
       dry_run: ${{ vars.TAG_RELEASE_DRY_RUN == 'true' }}
     secrets:
@@ -20,5 +35,6 @@ jobs:
   rustdoc-job:
     name: Rustdoc job
     uses: ./.github/workflows/CI-rustdoc.yml
+    if: ${{ vars.TAG_RELEASE_DRY_RUN != 'true' }}
     with:
       deploy: 'yes'

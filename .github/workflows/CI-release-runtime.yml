@@ -1,10 +1,14 @@
-name: Docker image build and publish
+name: Release runtime
 
 run-name: "Workflow Release Steps: build docker images, publish them, create release and notify on slack"
 
 on:
   workflow_call:
     inputs:
+      runtime:
+        description: "Runtime to build [zkverify|volta]"
+        required: true
+        type: string
       release_name:
         description: "The release name"
         required: true
@@ -19,14 +23,10 @@ on:
         type: boolean
         default: false
     secrets:
-      DOCKER_HUB_USERNAME:
-        required: true
-      DOCKER_HUB_TOKEN:
-        required: true
       RELEASES_PROD_SLACK_WEBHOOK_URL:
         required: true
 env:
-  DOCKER_IMAGE_BUILD_NAME: ${{ vars.DOCKER_IMAGE_BUILD_NAME }}
+  DOCKER_IMAGE_NAME: rt-${{ inputs.runtime }}
   DOCKER_HUB_ORG: ${{ vars.DOCKER_HUB_ORG }}
 
 jobs:
@@ -47,12 +47,13 @@ jobs:
       - name: Check Requirements
         id: check-requirements
         env:
+          RUNTIME: ${{ inputs.runtime }}
           RELEASE_BRANCH: ${{ inputs.release_branch }}
           MAINTAINERS_KEYS: ${{ vars.MAINTAINERS_KEYS }}
           DRY_RUN: ${{ inputs.dry_run }}
         run: |
           # shellcheck disable=SC1090
-          source "${GITHUB_WORKSPACE}/ci/check_release_requirements.sh"
+          source "${GITHUB_WORKSPACE}/ci/check_runtime_requirements.sh"
           echo "IS_A_RELEASE=${IS_A_RELEASE}" >> "${GITHUB_OUTPUT}"
           echo "PROD_RELEASE=${PROD_RELEASE}" >> "${GITHUB_OUTPUT}"
           echo "RC_RELEASE=${RC_RELEASE}" >> "${GITHUB_OUTPUT}"
@@ -60,7 +61,7 @@ jobs:
 
   build-docker:
     runs-on: warp-ubuntu-latest-x64-8x
-    name: Build Docker Image Runtime
+    name: Build Docker Image ${{ inputs.runtime }} Runtime
     needs: [ check-requirements ]
     steps:
       - name: Checkout code
@@ -71,40 +72,19 @@ jobs:
         uses: ./.github/actions/build-docker-image
         with:
           ref: ${{ github.ref }}
-          docker_hub_org: ${{ env.DOCKER_HUB_ORG }}
-          docker_image_name: ${{ env.DOCKER_IMAGE_BUILD_NAME }}
+          docker_hub_org: ${{ vars.DOCKER_HUB_ORG }}
+          docker_image_name: ${{ env.DOCKER_IMAGE_NAME }}
+          docker_image_suffix: ''
+          type: ${{ inputs.runtime }}
           dry_run: ${{ inputs.dry_run }}
 
     outputs:
       artifact_name: ${{ steps.build-docker-image.outputs.artifact_name }}
 
-  build-docker-fastruntime:
-    runs-on: warp-ubuntu-latest-x64-8x
-    name: Build Docker Image relay with fast-runtime
-    needs: [ check-requirements ]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Docker build
-        id: build-docker-image
-        uses: ./.github/actions/build-docker-image
-        with:
-          ref: ${{ github.ref }}
-          profile: release
-          docker_image_suffix: '-fastruntime'
-          features: fast-runtime
-          docker_hub_org: ${{ env.DOCKER_HUB_ORG }}
-          docker_image_name: ${{ env.DOCKER_IMAGE_BUILD_NAME }}
-          dry_run: ${{ inputs.dry_run }}
-
-    outputs:
-      artifact_name: ${{ steps.build-docker-image.outputs.artifact_name }}
-
-  publish-docker-image:
+  extract-runtimes:
     runs-on: warp-ubuntu-latest-x64-2x
-    name: Publish Docker Image relay
-    needs: [ check-requirements, build-docker ]
+    name: Extract runtime wasm
+    needs: [ build-docker ]
     steps:
       - name: Git checkout
         uses: actions/checkout@v4
@@ -112,24 +92,23 @@ jobs:
           ref: ${{ github.ref }}
           fetch-depth: 0
 
-      - name: Download zkVerify Docker image artifact
+      - name: Download Docker runtime image artifact
         uses: actions/download-artifact@v4
         with:
           name: ${{ needs.build-docker.outputs.artifact_name }}
           path: ./
 
-      - name: Publish Docker image(s)
+      - name: Extract runtime wasm from dockers
         env:
+          RELEASE_BRANCH: ${{ inputs.release_branch }}
+          MAINTAINERS_KEYS: ${{ vars.MAINTAINERS_KEYS }}
+          DOCKER_IMAGE_NAME: ${{ env.DOCKER_IMAGE_NAME }}
           DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
           DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
           DRY_RUN: ${{ inputs.dry_run }}
-          IS_A_RELEASE: ${{ needs.check-requirements.outputs.is-a-release }}
-          PROD_RELEASE: ${{ needs.check-requirements.outputs.is-a-prod-release }}
-          RC_RELEASE: ${{ needs.check-requirements.outputs.is-a-rc-release }}
-          TEST_RELEASE: ${{ needs.check-requirements.outputs.is-a-test-release }}
         shell: bash
         run: |
-          "${GITHUB_WORKSPACE}/ci/publish-docker-image.sh" --image-artifact ${{ needs.build-docker.outputs.artifact_name }}
+          "${GITHUB_WORKSPACE}/ci/extract-wasm.sh" --image-artifact ${{ needs.build-docker.outputs.artifact_name }}
 
       - name: Upload runtime artifacts
         uses: actions/upload-artifact@v4
@@ -139,46 +118,17 @@ jobs:
           retention-days: 7
           overwrite: true
 
-  publish-docker-image-fastruntime:
-    runs-on: warp-ubuntu-latest-x64-2x
-    name: Publish Docker Image relay fast-runtime
-    needs: [ check-requirements, build-docker-fastruntime ]
-    steps:
-      - name: Git checkout
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref }}
-          fetch-depth: 0
-
-      - name: Download zkVerify Docker image fastruntime artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ needs.build-docker-fastruntime.outputs.artifact_name }}
-          path: ./
-
-      - name: Publish fast-runtime Docker image(s)
-        id: publish-docker
-        env:
-          RELEASE_BRANCH: ${{ inputs.release_branch }}
-          MAINTAINERS_KEYS: ${{ vars.MAINTAINERS_KEYS }}
-          DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
-          DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
-          IS_A_RELEASE: ${{ needs.check-requirements.outputs.is-a-release }}
-          PROD_RELEASE: ${{ needs.check-requirements.outputs.is-a-prod-release }}
-          RC_RELEASE: ${{ needs.check-requirements.outputs.is-a-rc-release }}
-          TEST_RELEASE: ${{ needs.check-requirements.outputs.is-a-test-release }}
-          DRY_RUN: ${{ inputs.dry_run }}
-          FAST_RUNTIME_RELEASE: 'true'
-        shell: bash
-        run: |
-          # shellcheck disable=SC1090
-          "${GITHUB_WORKSPACE}/ci/publish-docker-image.sh" --image-artifact ${{ needs.build-docker-fastruntime.outputs.artifact_name }}
-
   release:
     runs-on: warp-ubuntu-latest-x64-2x
     name: Create release
-    needs: [ check-requirements, publish-docker-image, publish-docker-image-fastruntime ]
+    needs: [ check-requirements, build-docker, extract-runtimes ]
     steps:
+      - name: Retrieve Docker runtime image artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-docker.outputs.artifact_name }}
+          path: docker-images/
+
       - name: Retrieve saved runtimes wasm
         uses: actions/download-artifact@v4
         with:
@@ -195,12 +145,13 @@ jobs:
           generate_release_notes: true
           draft: ${{ inputs.dry_run || ( needs.check-requirements.outputs.is-a-prod-release != 'true' ) }}
           prerelease: ${{ needs.check-requirements.outputs.is-a-prod-release != 'true' }}
-          make_latest: true
           preserve_order: true
           files: |
             wasm/*
+            docker-images/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Notify Slack Production Releases
         if: ${{ inputs.dry_run == false }}
         uses: slackapi/slack-github-action@v1.25.0
@@ -212,7 +163,7 @@ jobs:
                   "type": "header",
                   "text": {
                     "type": "plain_text",
-                    "text": ":tada:  :zk-logo-icon-square-black:  ${{ env.DOCKER_IMAGE_BUILD_NAME }} Docker Image Released  :zk-logo-icon-square-black:  :tada:"
+                    "text": ":tada:  :zk-logo-icon-square-black:  ${{ inputs.release_name }}  :zk-logo-icon-square-black:  :tada:"
                   }
                 },
                 {
@@ -220,20 +171,13 @@ jobs:
                   "fields": [
                     {
                       "type": "mrkdwn",
-                      "text": "*Docker Image Tag:*  <https://hub.docker.com/r/${{ env.DOCKER_HUB_ORG }}/${{ env.DOCKER_IMAGE_BUILD_NAME }}/tags?page=1&name=${{ github.ref_name }}-relay| ${{ github.ref_name }}-relay>\n"
+                      "text": "*Release:*  <${{ steps.create-release.outputs.url }}| ${{ inputs.release_name }}>\n"
                     },
                     {
                       "type": "mrkdwn",
                       "text": "*Build URL:*  <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Build>"
                     }
                   ]
-                },
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "```docker pull ${{ env.DOCKER_HUB_ORG }}/${{ env.DOCKER_IMAGE_BUILD_NAME }}:${{ github.ref_name }}-relay```"
-                  }
                 }
               ]
             }
