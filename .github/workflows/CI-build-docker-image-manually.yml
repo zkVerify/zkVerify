@@ -10,11 +10,11 @@ on:
       docker_image_suffix:
         description: "Docker image name suffix"
         type: string
-        default: '-relay'
+        default: ''
       docker_hub_org:
         description: "Docker hub organization"
         type: string
-        default: 'horizenlabs'
+        default: 'zkverify'
       profile:
         description: "Build profile"
         type: string
