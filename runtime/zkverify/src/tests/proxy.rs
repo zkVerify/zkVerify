@@ -60,7 +60,15 @@ use crate::RuntimeCall;
         proof: Default::default(),
         pubs: Default::default(),
         domain_id: None,
-    })
+        })
+)]
+#[case::ultraplonk_submit_proof(
+    RuntimeCall::SettlementUltraplonkPallet(pallet_verifiers::Call::submit_proof{
+        vk_or_hash: Default::default(),
+        proof: Default::default(),
+        pubs: Default::default(),
+        domain_id: None,
+        })
 )]
 #[case::sp1(
     RuntimeCall::SettlementSp1Pallet(pallet_verifiers::Call::submit_proof{
@@ -74,4 +82,46 @@ fn nontransfer_deny_extrinsic(#[case] call: RuntimeCall) {
     let proxy = ProxyType::NonTransfer;
 
     assert!(!proxy.filter(&call))
+}
+
+#[rstest]
+#[case::fflonk_unregister_vk(
+    RuntimeCall::SettlementFFlonkPallet(pallet_verifiers::Call::unregister_vk{
+        vk_hash: Default::default(),
+        })
+)]
+#[case::groth16_submit_proof(
+    RuntimeCall::SettlementGroth16Pallet(pallet_verifiers::Call::unregister_vk{
+        vk_hash: Default::default(),
+        })
+)]
+#[case::plonky2_submit_proof(
+    RuntimeCall::SettlementPlonky2Pallet(pallet_verifiers::Call::unregister_vk{
+        vk_hash: Default::default(),
+        })
+)]
+#[case::risc0_submit_proof(
+    RuntimeCall::SettlementRisc0Pallet(pallet_verifiers::Call::unregister_vk{
+        vk_hash: Default::default(),
+        })
+)]
+#[case::ultrahonk_submit_proof(
+    RuntimeCall::SettlementUltrahonkPallet(pallet_verifiers::Call::unregister_vk{
+        vk_hash: Default::default(),
+        })
+)]
+#[case::ultraplonk_submit_proof(
+    RuntimeCall::SettlementUltraplonkPallet(pallet_verifiers::Call::unregister_vk{
+        vk_hash: Default::default(),
+        })
+)]
+#[case::sp1(
+    RuntimeCall::SettlementSp1Pallet(pallet_verifiers::Call::unregister_vk{
+        vk_hash: Default::default(),
+        })
+)]
+fn nontransfer_verifier_accept_extrinsic(#[case] call: RuntimeCall) {
+    let proxy = ProxyType::NonTransfer;
+
+    assert!(proxy.filter(&call))
 }

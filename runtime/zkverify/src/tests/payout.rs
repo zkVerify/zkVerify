@@ -21,6 +21,7 @@ use frame_support::traits::fungible::Balanced;
 use frame_support::traits::OnUnbalanced;
 use pallet_staking::EraPayout;
 use sp_runtime::traits::Convert;
+
 #[test]
 fn check_params_sanity() {
     // staking_target should be at least 0.5 (and so 0 <= s_c / s_t <= 2)

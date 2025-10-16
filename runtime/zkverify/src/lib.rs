@@ -745,9 +745,9 @@ impl pallet_staking::BenchmarkingConfig for StakingBenchmarkConfig {
     type MaxValidators = ConstU32<MAX_TARGETS>;
 }
 
-pub struct ZkvInflation;
+pub struct Inflation;
 
-impl zkv_runtime_common::InflationModel for ZkvInflation {
+impl zkv_runtime_common::InflationModel for Inflation {
     type ExpPrecision = payout::ExpPrecision;
     type InflationBase = payout::InflationBase;
     type StakingTarget = payout::StakingTarget;
@@ -769,7 +769,7 @@ impl pallet_staking::Config for Runtime {
     type SlashDeferDuration = SlashDeferDuration;
     type AdminOrigin = EnsureRoot<AccountId>;
     type SessionInterface = Self;
-    type EraPayout = ZKVPayout<ZkvInflation, payout::EraPayoutValidatorsSplit>;
+    type EraPayout = ZKVPayout<Inflation, payout::EraPayoutValidatorsSplit>;
     type NextNewSession = Session;
     type ElectionProvider = OnChainExecution<OnChainSeqPhragmen>;
     type GenesisElectionProvider = OnChainExecution<OnChainSeqPhragmen>;

@@ -44,7 +44,7 @@ use sp_runtime::{
         NumberFor, One, OpaqueKeys,
     },
     transaction_validity::{TransactionSource, TransactionValidity},
-    ApplyExtrinsicResult, FixedPointNumber, Perquintill,
+    ApplyExtrinsicResult, FixedPointNumber, MultiSignature, MultiSigner, Perquintill,
 };
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -95,7 +95,7 @@ use pallet_transaction_payment::{FungibleAdapter, Multiplier, TargetedFeeAdjustm
 use pallet_treasury::TreasuryAccountId;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
-pub use sp_runtime::{MultiSignature, MultiSigner, Perbill, Permill};
+pub use sp_runtime::{Perbill, Permill};
 
 pub mod governance;
 mod pallet_assets_mock;
@@ -290,7 +290,7 @@ impl pallet_utility::Config for Runtime {
 }
 
 parameter_types! {
-    pub const MinVestedTransfer: Balance = 100 * CENTS;
+    pub const MinVestedTransfer: Balance = VFY;
     pub UnvestedFundsAllowedWithdrawReasons: WithdrawReasons =
         WithdrawReasons::except(WithdrawReasons::TRANSFER | WithdrawReasons::RESERVE);
 }
@@ -715,7 +715,7 @@ pub const MAX_TARGETS: u32 = 1_000;
 pub const MAX_VOTERS: u32 = 5_000;
 // The maximum number of number of active validators that we want to handle.
 // This *must always be greater or equal* to staking.validatorCount storage value.
-pub const MAX_ACTIVE_VALIDATORS: u32 = 20;
+pub const MAX_ACTIVE_VALIDATORS: u32 = 200;
 
 parameter_types! {
     // Maximum number of election voters and targets that can be handled by OnChainSeqPhragmen
@@ -745,9 +745,9 @@ impl pallet_staking::BenchmarkingConfig for StakingBenchmarkConfig {
     type MaxValidators = ConstU32<MAX_TARGETS>;
 }
 
-pub struct VoltaInflation;
+pub struct Inflation;
 
-impl zkv_runtime_common::InflationModel for VoltaInflation {
+impl zkv_runtime_common::InflationModel for Inflation {
     type ExpPrecision = payout::ExpPrecision;
     type InflationBase = payout::InflationBase;
     type StakingTarget = payout::StakingTarget;
@@ -769,7 +769,7 @@ impl pallet_staking::Config for Runtime {
     type SlashDeferDuration = SlashDeferDuration;
     type AdminOrigin = EnsureRoot<AccountId>;
     type SessionInterface = Self;
-    type EraPayout = ZKVPayout<VoltaInflation, payout::EraPayoutValidatorsSplit>;
+    type EraPayout = ZKVPayout<Inflation, payout::EraPayoutValidatorsSplit>;
     type NextNewSession = Session;
     type ElectionProvider = OnChainExecution<OnChainSeqPhragmen>;
     type GenesisElectionProvider = OnChainExecution<OnChainSeqPhragmen>;

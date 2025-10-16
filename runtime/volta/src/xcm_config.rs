@@ -29,7 +29,7 @@ use frame_system::EnsureRoot;
 use pallet_xcm::XcmPassthrough;
 use polkadot_runtime_common::xcm_sender::{ChildParachainRouter, ExponentialPrice};
 
-use crate::{currency::MILLIS, parachains::parachains_origin};
+use crate::{currency::MILLIS, parachains::parachains_origin, DealWithFees};
 use sp_core::ConstU32;
 use xcm::latest::prelude::*;
 use xcm_builder::{
@@ -208,7 +208,7 @@ impl xcm_executor::Config for XcmConfig {
         TokenLocation,
         AccountId,
         Balances,
-        crate::DealWithFees,
+        DealWithFees,
     >;
     type ResponseHandler = XcmPallet;
     type AssetTrap = XcmPallet;

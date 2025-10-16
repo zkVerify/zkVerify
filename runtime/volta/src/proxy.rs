@@ -49,6 +49,7 @@ impl ProxyType {
                     pallet_verifiers::Call::submit_proof { .. }
                 )
                 | RuntimeCall::SettlementPlonky2Pallet(pallet_verifiers::Call::submit_proof { .. })
+                | RuntimeCall::SettlementSp1Pallet(pallet_verifiers::Call::submit_proof { .. })
         )
     }
 }
@@ -89,7 +90,8 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
                 RuntimeCall::SettlementRisc0Pallet(..) |
                 RuntimeCall::SettlementUltrahonkPallet(..) |
                 RuntimeCall::SettlementUltraplonkPallet(..) |
-                RuntimeCall::SettlementPlonky2Pallet(..)
+                RuntimeCall::SettlementPlonky2Pallet(..) |
+                RuntimeCall::SettlementSp1Pallet(..)
                 ) && !Self::is_a_submit_proof_extrinsic(c)
             }
             ProxyType::Governance => matches!(
