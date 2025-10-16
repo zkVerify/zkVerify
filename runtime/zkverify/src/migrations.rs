@@ -15,4 +15,7 @@
 
 //! This module contains the code for all the current and past runtime migrations.
 
-pub type Unreleased = ();
+pub type Unreleased = (
+    pallet_aggregate::migrations::v3::MigrateV2ToV3<crate::Runtime>,
+    (),
+);

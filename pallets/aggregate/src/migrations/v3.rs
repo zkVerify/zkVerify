@@ -13,25 +13,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Migrate from storage v1 to v2.
+//! Migrate from storage v2 to v3.
 
-mod v1;
+mod v2;
+
+use crate::ProofSecurityRules;
 use alloc::vec::Vec;
 use frame_support::{migrations::VersionedMigration, traits::UncheckedOnRuntimeUpgrade};
 use sp_core::Get;
 
-/// Implements [`UncheckedOnRuntimeUpgrade`], migrating the state of this pallet from V1 to V2.
+/// Implements [`UncheckedOnRuntimeUpgrade`], migrating the state of this pallet from V2 to V3.
 ///
-/// In V1 of the template, the value of the [`crate::Domains`] `StorageMap` is the old `Domain`
-/// without owner tip.
+/// In V2 of the template, the value of the [`crate::Domains`] `StorageMap` is the old `Domain`
+/// without an allowlist consideration ticket.
 ///
-/// We migrate every domain by adding a zero owner tip.
-pub struct InnerMigrateV1ToV2<T>(core::marker::PhantomData<T>);
+/// We migrate every domain by adding a `None` to allowlist consideration ticket.
+pub struct InnerMigrateV2ToV3<T>(core::marker::PhantomData<T>);
 
-impl<T: crate::Config> UncheckedOnRuntimeUpgrade for InnerMigrateV1ToV2<T> {
+impl<T: crate::Config> UncheckedOnRuntimeUpgrade for InnerMigrateV2ToV3<T> {
     /// Migrate the storage from V1 to v2.
     fn on_runtime_upgrade() -> frame_support::weights::Weight {
-        let old_storage = v1::Domains::<T>::drain().collect::<Vec<_>>();
+        let old_storage = v2::Domains::<T>::drain().collect::<Vec<_>>();
         let (reads, mut writes) = (old_storage.len() as u64, old_storage.len() as u64);
         let converted = old_storage
             .into_iter()
@@ -46,16 +48,11 @@ impl<T: crate::Config> UncheckedOnRuntimeUpgrade for InnerMigrateV1ToV2<T> {
                         max_aggregation_size: domain.max_aggregation_size,
                         should_publish: domain.should_publish,
                         publish_queue_size: domain.publish_queue_size,
-                        ticket: domain.ticket,
+                        ticket_domain: domain.ticket,
+                        ticket_allowlist: None,
                         aggregate_rules: domain.aggregate_rules,
-                        delivery: crate::data::DeliveryParams::new(
-                            domain.delivery.owner,
-                            crate::data::Delivery::new(
-                                domain.delivery.data.destination,
-                                domain.delivery.data.fee,
-                                0_u32.into(), // 0 as owner tip initially
-                            ),
-                        ),
+                        proof_rules: ProofSecurityRules::Untrusted,
+                        delivery: domain.delivery,
                     }),
                 )
             })
@@ -68,38 +65,41 @@ impl<T: crate::Config> UncheckedOnRuntimeUpgrade for InnerMigrateV1ToV2<T> {
     }
 }
 
-/// [`UncheckedOnRuntimeUpgrade`] implementation [`InnerMigrateV0ToV1`] wrapped in a
-/// [`VersionedMigration`](frame_support::migrations::VersionedMigration), which ensures that:
-/// - The migration only runs once when the on-chain storage version is 1
-/// - The on-chain storage version is updated to `2` after the migration executes
-/// - Reads/Writes from checking/settings the on-chain storage version are accounted for
-pub type MigrateV1ToV2<T> = VersionedMigration<
-    1, // The migration will only execute when the on-chain storage version is 1
-    2, // The on-chain storage version will be set to 2 after the migration is complete
-    InnerMigrateV1ToV2<T>,
+/// [`UncheckedOnRuntimeUpgrade`] implementation [`InnerMigrateV2ToV3`] wrapped in a
+/// [`VersionedMigration`](VersionedMigration), which ensures that:
+/// - The migration only runs once when the on-chain storage version is 2
+/// - The on-chain storage version is updated to `3` after the migration executes
+/// - Reads/Writes from checking/settings the on-chain storage version is accounted for
+pub type MigrateV2ToV3<T> = VersionedMigration<
+    2, // The migration will only execute when the on-chain storage version is 1
+    3, // The on-chain storage version will be set to 2 after the migration is complete
+    InnerMigrateV2ToV3<T>,
     crate::Pallet<T>,
     <T as frame_system::Config>::DbWeight,
 >;
 
 #[cfg(test)]
-mod test {
-    // use self::InnerMigrateV0ToV1;
+mod tests {
+    use super::v2 as old_v;
     use super::*;
+    use crate::data::{Delivery, DeliveryParams};
     use crate::mock::*;
-    use frame_support::{pallet_prelude::*, weights::RuntimeDbWeight};
+    use crate::ProofSecurityRules;
+    use frame_support::weights::RuntimeDbWeight;
+    use frame_support::{BoundedBTreeMap, BoundedVec};
     use hp_dispatch::Destination;
+    use sp_core::Get;
 
     fn create_old_domain(
         id: u32,
-        owner: v1::User<u64>,
-        state: v1::DomainState,
-        ticket_owner: Option<u64>,
-    ) -> v1::Domain<Test> {
-        v1::Domain::<Test> {
+        owner: old_v::User<u64>,
+        state: old_v::DomainState,
+    ) -> old_v::Domain<Test> {
+        old_v::Domain::<Test> {
             id,
             owner,
             state,
-            next: v1::AggregationEntry {
+            next: old_v::AggregationEntry {
                 id: 42,
                 size: 16,
                 statements: BoundedVec::default(),
@@ -107,19 +107,16 @@ mod test {
             max_aggregation_size: 32,
             should_publish: BoundedBTreeMap::new(),
             publish_queue_size: 5,
-            ticket: ticket_owner.map(|who| MockConsideration {
-                who,
-                count: 10,
-                size: 1000,
-            }),
-            aggregate_rules: v1::AggregateSecurityRules::Untrusted,
-            delivery: v1::DeliveryParams {
-                owner: 123_u64,
-                data: v1::Delivery {
+            ticket: None,
+            aggregate_rules: old_v::AggregateSecurityRules::Untrusted,
+            delivery: DeliveryParams::new(
+                123,
+                Delivery {
                     destination: Destination::None,
                     fee: 100,
+                    owner_tip: 33,
                 },
-            },
+            ),
         }
     }
 
@@ -127,23 +124,23 @@ mod test {
     fn successful_migration() {
         test().execute_with(|| {
             // CLEAN THE TEST STORAGE
-            v1::Domains::<Test>::drain().count();
+            old_v::Domains::<Test>::drain().count();
 
-            v1::Domains::<Test>::insert(
+            old_v::Domains::<Test>::insert(
                 23,
-                create_old_domain(23, v1::User::from(123), v1::DomainState::Ready, Some(321)),
+                create_old_domain(23, old_v::User::from(123), old_v::DomainState::Ready),
             );
-            v1::Domains::<Test>::insert(
+            old_v::Domains::<Test>::insert(
                 42,
-                create_old_domain(42, v1::User::from(321), v1::DomainState::Hold, Some(123)),
+                create_old_domain(42, old_v::User::from(321), old_v::DomainState::Hold),
             );
-            v1::Domains::<Test>::insert(
+            old_v::Domains::<Test>::insert(
                 2,
-                create_old_domain(2, v1::User::from(42), v1::DomainState::Removable, Some(33)),
+                create_old_domain(2, old_v::User::from(42), old_v::DomainState::Removable),
             );
 
             // Perform runtime upgrade
-            let weight = InnerMigrateV1ToV2::<Test>::on_runtime_upgrade();
+            let weight = InnerMigrateV2ToV3::<Test>::on_runtime_upgrade();
 
             // Check that `Domains` contains the expected number
             assert_eq!(crate::Domains::<Test>::iter().count(), 3);
@@ -152,33 +149,42 @@ mod test {
                 let crate::Domain::<Test>(crate::data::DomainEntry {
                     owner,
                     state,
-                    ticket,
-                    delivery,
+                    ticket_allowlist,
+                    proof_rules,
                     ..
                 }) = crate::Domains::<Test>::take(id).unwrap();
-                (
-                    owner,
-                    state,
-                    ticket.unwrap().who,
-                    *delivery.fee(),
-                    *delivery.owner_tip(),
-                )
+                (owner, state, ticket_allowlist, proof_rules)
             };
             use crate::data::{DomainState, User};
             assert_eq!(
                 domain_data(23),
-                (User::from(123), DomainState::Ready, 321, 100, 0)
+                (
+                    User::from(123),
+                    DomainState::Ready,
+                    None,
+                    ProofSecurityRules::Untrusted
+                )
             );
             assert_eq!(
                 domain_data(42),
-                (User::from(321), DomainState::Hold, 123, 100, 0)
+                (
+                    User::from(321),
+                    DomainState::Hold,
+                    None,
+                    ProofSecurityRules::Untrusted
+                )
             );
             assert_eq!(
                 domain_data(2),
-                (User::from(42), DomainState::Removable, 33, 100, 0)
+                (
+                    User::from(42),
+                    DomainState::Removable,
+                    None,
+                    ProofSecurityRules::Untrusted
+                )
             );
 
-            // Check that weight are as expected
+            // Check that weight is as expected
             assert_eq!(
                 weight,
                 <<Test as frame_system::Config>::DbWeight as Get<RuntimeDbWeight>>::get()

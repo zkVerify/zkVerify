@@ -16,10 +16,14 @@ const ReturnCode = {
     ErrPublishShouldNotPay: 11,
     ErrDomainHyperbridgeRegistrationOk: 12,
     ErrDomainHyperbridgeRegistrationErr: 13,
+    ErrProofFromInvalidSubmitter: 14,
+    ErrProofFromValidSubmitter: 15,
+    ErrAllowlist: 16,
 };
 
 const { init_api, submitProof, receivedEvents, registerDomain, sudoRegisterDomain,
-    holdDomain, unregisterDomain, aggregate, getBalance, isVolta } = require('zkv-lib');
+    holdDomain, unregisterDomain, allowlistProofSubmitters, removeProofSubmitters, aggregate, getBalance, isVolta
+} = require('zkv-lib');
 const { PROOF: EZKL_PROOF, PUBS: EZKL_PUBS, VK: EZKL_VK } = require('./ezkl_data.js');
 const { PROOF: FFLONK_PROOF, PUBS: FFLONK_PUBS, VK: FFLONK_VK } = require('./fflonk_data.js');
 const { PROOF: GROTH16_PROOF, PUBS: GROTH16_PUBS, VK: GROTH16_VK } = require('./groth16_data.js');
@@ -112,20 +116,20 @@ async function run(nodeName, networkInfo, _args) {
 
     };
 
-    let events = await registerDomain(bob, 4, 8, "OnlyOwnerUncompleted", hyperbridge, null);
+    let events = await registerDomain(bob, 4, 8, "OnlyOwnerUncompleted", "Untrusted", hyperbridge, null);
     if (receivedEvents(events)) {
         console.log(`Normal user should not register a Hyperbridge delivery domain`);
         return ReturnCode.ErrDomainHyperbridgeRegistrationOk;
     }
 
-    events = await sudoRegisterDomain(alice, 4, 8, "OnlyOwnerUncompleted", hyperbridge, bob.address);
+    events = await sudoRegisterDomain(alice, 4, 8, "OnlyOwnerUncompleted", "Untrusted", hyperbridge, bob.address);
     if (!receivedEvents(events)) {
         console.log(`Manager cannot register a Hyperbridge delivery domain`);
         return ReturnCode.ErrDomainHyperbridgeRegistrationErr;
     }
     console.log(`Domain SUDO registered successfully: ${events.events}`);
 
-    events = await registerDomain(bob, verifiers.length, null, "Untrusted", destination, null);
+    events = await registerDomain(bob, verifiers.length, null, "Untrusted", "Untrusted", destination, null);
     if (!receivedEvents(events)) {
         console.log(`Register Domain Error`);
         return ReturnCode.ErrDomainRegistrationFailed;
@@ -251,7 +255,7 @@ async function run(nodeName, networkInfo, _args) {
         return ReturnCode.ErrProofOnUnregisteredDomain;
     }
 
-    data = await registerDomain(bob, 4, 8, "Untrusted", destination, null);
+    data = await registerDomain(bob, 4, 8, "Untrusted", "Untrusted", destination, null);
     if (!receivedEvents(data)) {
         console.log(`Register Domain Error`);
         return ReturnCode.ErrDomainRegistrationFailed;
@@ -294,9 +298,90 @@ async function run(nodeName, networkInfo, _args) {
         return ReturnCode.ErrDomainHoldFailed;
     }
 
+    // Only Owner can submit
+    data = await registerDomain(bob, 4, 8, "Untrusted", "OnlyOwner", destination, null);
+    if (!receivedEvents(data)) {
+        console.log(`Register Domain Error`);
+        return ReturnCode.ErrDomainRegistrationFailed;
+    }
+
+    console.log(`Domain registered successfully: ${data.events}`);
+    domainId = data.events[0].data[0];
+
+    // Now we are checking the hold state machine.
+    verifier = verifiers[0];
+
+    // Alice cannot post proof
+    data = await submitProof(verifier.pallet, alice, ...verifier.args, domainId);
+    if (data.events.filter((event) => event.method === 'NewProof').length > 0) {
+        console.log(`Accept proof from invalid user [OnlyOwner]`);
+        return ReturnCode.ErrProofFromInvalidSubmitter;
+    }
+
+    // Bob can post proof
+    data = await submitProof(verifier.pallet, bob, ...verifier.args, domainId);
+    if (data.events.filter((event) => event.method === 'NewProof').length === 0) {
+        console.log(`Don't proof from valid user [OnlyOwner]`);
+        return ReturnCode.ErrProofFromValidSubmitter;
+    }
+
+    // OnlyAllowlisted can submit
+    data = await registerDomain(bob, 4, 8, "Untrusted", "OnlyAllowlisted", destination, null);
+    if (!receivedEvents(data)) {
+        console.log(`Register Domain Error`);
+        return ReturnCode.ErrDomainRegistrationFailed;
+    }
+
+    console.log(`Domain registered successfully: ${data.events}`);
+    domainId = data.events[0].data[0];
+
+    let err1 = await submitShouldFail(verifiers[0], alice, domainId, ReturnCode.ErrProofFromInvalidSubmitter, "Accept proof from invalid user (alice) [OnlyAllowlisted]");
+    let err2 = await submitShouldFail(verifiers[0], bob, domainId, ReturnCode.ErrProofFromInvalidSubmitter, "Accept proof from invalid user (bob) [OnlyAllowlisted]");
+    if (err1 !== ReturnCode.Ok || err2 !== ReturnCode.Ok) {
+        return err1;
+    }
+
+    data = await allowlistProofSubmitters(bob, domainId, [alice.address]);
+    if (!receivedEvents(data)) {
+        console.log(`Allowlist proof submitters error`);
+        return ReturnCode.ErrAllowlist;
+    }
+
+    err1 = await submitShouldFail(verifiers[0], bob, domainId, ReturnCode.ErrProofFromInvalidSubmitter, "Accept proof from invalid user (bob) [OnlyAllowlisted]");
+    err2 = await submitShouldSuccess(verifiers[0], alice, domainId, ReturnCode.ErrProofFromInvalidSubmitter, "Reject proof from valid user (alice) [OnlyAllowlisted]");
+
+    if (err1 !== ReturnCode.Ok || err2 !== ReturnCode.Ok) {
+        return err1;
+    }
+
+    data = await removeProofSubmitters(bob, domainId, [alice.address]);
+    if (!receivedEvents(data)) {
+        console.log(`Allowlist proof submitters error (remove)`);
+        return ReturnCode.ErrAllowlist;
+    }
+
     // Any return value different from 1 is considered an error
     return ReturnCode.Ok;
 }
+
+async function submitShouldFail(verifier, who, domainId, error, msg) {
+    let data = await submitProof(verifier.pallet, who, ...verifier.args, domainId);
+    if (data.events.filter((event) => event.method === 'NewProof').length > 0) {
+        console.log(msg);
+        return error;
+    }
+    return ReturnCode.Ok;
+}
+
+async function submitShouldSuccess(verifier, who, domainId, error, msg) {
+    let data = await submitProof(verifier.pallet, who, ...verifier.args, domainId);
+    if (data.events.filter((event) => event.method === 'NewProof').length === 0) {
+        console.log(msg);
+        return error;
+    }
+    return ReturnCode.Ok;
+}
+
 
 function stripHexPrefix(input_str) {
     return input_str.toString().replace(/^0x/, '');

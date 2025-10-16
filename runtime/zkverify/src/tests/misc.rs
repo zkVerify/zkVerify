@@ -27,7 +27,7 @@ fn check_starting_balances_and_existential_limit() {
         use frame_support::traits::{fungible::Inspect, Currency};
         // This creates a few public keys used to be converted to AccountId
 
-        for sample_user in &testsfixtures::SAMPLE_USERS {
+        for sample_user in testsfixtures::SAMPLE_USERS {
             assert_eq!(
                 Balances::balance(&sample_user.raw_account.into()),
                 sample_user.starting_balance
@@ -37,17 +37,14 @@ fn check_starting_balances_and_existential_limit() {
         // Now perform a withdraw on the fourth account, leaving its balance under the EXISTENTIAL_DEPOSIT limit
         // This should kill the account, when executed with the ExistenceRequirement::AllowDeath option
         let _id_3_withdraw = Balances::withdraw(
-            &testsfixtures::SAMPLE_USERS[3].raw_account.into(),
+            &sample_user_account(3),
             testsfixtures::EXISTENTIAL_DEPOSIT_REMAINDER, // Withdrawing more th
             WithdrawReasons::TIP,
             ExistenceRequirement::AllowDeath,
         );
 
         // Verify that the fourth account balance is now 0
-        assert_eq!(
-            Balances::balance(&testsfixtures::SAMPLE_USERS[3].raw_account.into()),
-            0
-        );
+        assert_eq!(Balances::balance(&sample_user_account(3)), 0);
     });
 }
 
@@ -102,6 +99,147 @@ fn submit_proof_weights_composition_should_ignore_aggregate_if_no_domain() {
         // We check that is lesser than half of the aggregate weight... just a reference to be sure that not use it
         assert!(proof_size < <Runtime as pallet_aggregate::Config>::WeightInfo::on_proof_verified().proof_size()/2);
     });
+}
+
+mod aggregate {
+    use super::*;
+    use frame_support::traits::fungible::InspectHold;
+    use pallet_aggregate::*;
+
+    #[test]
+    fn hold_expected_amount_for_domain() {
+        test().execute_with(|| {
+            let register_account = sample_user_account(0);
+            //Sanity check
+            assert_eq!(
+                0,
+                Balances::balance_on_hold(&AggregateDomainHoldReason::get(), &register_account)
+            );
+
+            Aggregate::register_domain(
+                RuntimeOrigin::signed(register_account.clone()),
+                16,
+                None,
+                AggregateSecurityRules::Untrusted,
+                ProofSecurityRules::Untrusted,
+                Default::default(),
+                None,
+            )
+            .unwrap();
+
+            let hold =
+                Balances::balance_on_hold(&AggregateDomainHoldReason::get(), &register_account);
+
+            // Sure that is greater than domain minimum size and less than domain maximum size (approx)
+            assert!(
+                hold > AggregateDomainBaseDeposit::get() + AggregateDomainByteDeposit::get() * 1500
+            );
+            assert!(
+                hold < AggregateDomainBaseDeposit::get()
+                    + AggregateDomainByteDeposit::get() * 40000
+            );
+        });
+    }
+
+    #[test]
+    fn hold_expected_amount_for_allow_list() {
+        test().execute_with(|| {
+            let register_account = sample_user_account(0);
+            //Sanity check
+            assert_eq!(
+                0,
+                Balances::balance_on_hold(&AggregateAllowlistHoldReason::get(), &register_account)
+            );
+
+            Aggregate::register_domain(
+                RuntimeOrigin::signed(register_account.clone()),
+                16,
+                None,
+                AggregateSecurityRules::Untrusted,
+                ProofSecurityRules::Untrusted,
+                Default::default(),
+                None,
+            )
+            .unwrap();
+
+            //Sanity check
+            assert_eq!(
+                0,
+                Balances::balance_on_hold(&AggregateAllowlistHoldReason::get(), &register_account)
+            );
+
+            Aggregate::register_domain(
+                RuntimeOrigin::signed(register_account.clone()),
+                16,
+                None,
+                AggregateSecurityRules::Untrusted,
+                ProofSecurityRules::OnlyOwner,
+                Default::default(),
+                None,
+            )
+            .unwrap();
+
+            //Sanity check
+            assert_eq!(
+                0,
+                Balances::balance_on_hold(&AggregateAllowlistHoldReason::get(), &register_account)
+            );
+
+            Aggregate::register_domain(
+                RuntimeOrigin::signed(register_account.clone()),
+                16,
+                None,
+                AggregateSecurityRules::Untrusted,
+                ProofSecurityRules::OnlyAllowlisted,
+                Default::default(),
+                None,
+            )
+            .unwrap();
+            let domain_id = 2;
+
+            let hold =
+                Balances::balance_on_hold(&AggregateAllowlistHoldReason::get(), &register_account);
+            // Just the base
+            assert_eq!(hold, AggregateAllowlistHoldBaseDeposit::get());
+
+            Aggregate::allowlist_proof_submitters(
+                RuntimeOrigin::signed(register_account.clone()),
+                domain_id,
+                vec![
+                    sample_user_account(1),
+                    sample_user_account(2),
+                    sample_user_account(3),
+                    sample_user_account(1),
+                ],
+            )
+            .unwrap();
+
+            let hold =
+                Balances::balance_on_hold(&AggregateAllowlistHoldReason::get(), &register_account);
+            // Add 3 account
+            assert_eq!(
+                hold,
+                AggregateAllowlistHoldBaseDeposit::get()
+                    + 3 * AggregateAllowlistHoldSingleElementDeposit::get()
+            );
+
+            Aggregate::remove_proof_submitters(
+                RuntimeOrigin::signed(register_account.clone()),
+                domain_id,
+                vec![sample_user_account(2), sample_user_account(1)],
+            )
+            .unwrap();
+
+            let hold =
+                Balances::balance_on_hold(&AggregateAllowlistHoldReason::get(), &register_account);
+            // Just one remained
+            assert_eq!(
+                hold,
+                AggregateAllowlistHoldBaseDeposit::get()
+                    + AggregateAllowlistHoldSingleElementDeposit::get()
+            );
+        });
+    }
 }
 
 #[test]

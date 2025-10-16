@@ -66,9 +66,7 @@ mod authorship {
         test().execute_with(|| {
             assert_eq!(
                 Authorship::author(),
-                Some(AccountId32::new(
-                    testsfixtures::SAMPLE_USERS[BABE_AUTHOR_ID as usize].raw_account
-                ))
+                Some(sample_user_account(BABE_AUTHOR_ID))
             );
         });
     }
@@ -152,9 +150,7 @@ mod offences {
     #[test]
     fn notifies_staking() {
         test().execute_with(|| {
-            let offender_account = sp_runtime::AccountId32::new(
-                testsfixtures::SAMPLE_USERS[BABE_AUTHOR_ID as usize].raw_account,
-            );
+            let offender_account = sample_user_account(BABE_AUTHOR_ID);
 
             let expected_slashing_event = EventRecord {
                 phase: Phase::Initialization,
@@ -184,11 +180,9 @@ mod offences {
     #[test]
     fn notified_by_grandpa() {
         test().execute_with(|| {
-            let offender_account =
-                AccountId32::new(testsfixtures::SAMPLE_USERS[BABE_AUTHOR_ID as usize].raw_account);
-            let offender = testsfixtures::get_from_seed::<GrandpaId>(
-                testsfixtures::SAMPLE_USERS[BABE_AUTHOR_ID as usize].session_key_seed,
-            );
+            let offender_account = sample_user_account(BABE_AUTHOR_ID);
+            let offender =
+                testsfixtures::get_from_seed::<GrandpaId>(sample_user_seed(BABE_AUTHOR_ID));
 
             const EQUIVOCATION_KIND: &offence::Kind = b"grandpa:equivoca";
 
@@ -248,11 +242,8 @@ mod offences {
     #[test]
     fn notified_by_babe() {
         test().execute_with(|| {
-            let offender_account =
-                AccountId32::new(testsfixtures::SAMPLE_USERS[BABE_AUTHOR_ID as usize].raw_account);
-            let offender = testsfixtures::get_from_seed::<BabeId>(
-                testsfixtures::SAMPLE_USERS[BABE_AUTHOR_ID as usize].session_key_seed,
-            );
+            let offender_account = sample_user_account(BABE_AUTHOR_ID);
+            let offender = testsfixtures::get_from_seed::<BabeId>(sample_user_seed(BABE_AUTHOR_ID));
 
             let seal_header = |mut header: Header| {
                 let pre_hash = header.hash();
@@ -316,11 +307,8 @@ mod staking {
     #[test]
     fn slashes_go_to_treasury() {
         test().execute_with(|| {
-            let offender_account = &sp_runtime::AccountId32::new(
-                testsfixtures::SAMPLE_USERS[BABE_AUTHOR_ID as usize].raw_account,
-            );
-            let offender_balance =
-                testsfixtures::SAMPLE_USERS[BABE_AUTHOR_ID as usize].starting_balance;
+            let offender_account = sample_user_account(BABE_AUTHOR_ID);
+            let offender_balance = sample_user_start_balance(BABE_AUTHOR_ID);
 
             let pre_balance = Balances::free_balance(Treasury::account_id());
 

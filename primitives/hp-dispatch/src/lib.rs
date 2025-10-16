@@ -79,9 +79,10 @@ pub struct HyperbridgeDispatchParameters {
 }
 
 /// Configuration for Destination
-#[derive(Clone, PartialEq, Eq, Encode, Decode, TypeInfo, MaxEncodedLen, Debug)]
+#[derive(Clone, PartialEq, Eq, Encode, Decode, TypeInfo, MaxEncodedLen, Debug, Default)]
 pub enum Destination {
     /// No Destination
+    #[default]
     None,
     /// Hyperbridge Destination
     Hyperbridge(HyperbridgeDispatchParameters),

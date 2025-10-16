@@ -185,13 +185,13 @@ exports.submitProof = async (pallet, signer, ...verifierArgs) => {
   );
 }
 
-exports.registerDomain = async (signer, aggregation_size, queue_len, rules, destination, deliveryOwner) => {
-  let extrinsic = api.tx.aggregate.registerDomain(aggregation_size, queue_len, rules, destination, deliveryOwner);
+exports.registerDomain = async (signer, aggregation_size, queue_len, rules, proof_rules, destination, deliveryOwner) => {
+  let extrinsic = api.tx.aggregate.registerDomain(aggregation_size, queue_len, rules, proof_rules, destination, deliveryOwner);
   return await submitExtrinsic(api, extrinsic, signer, BlockUntil.InBlock, (event) => event.section == "aggregate" && event.method == "NewDomain");
 }
 
-exports.sudoRegisterDomain = async (signer, aggregation_size, queue_len, rules, destination, deliveryOwner) => {
-  let extrinsic = api.tx.sudo.sudo(api.tx.aggregate.registerDomain(aggregation_size, queue_len, rules, destination, deliveryOwner));
+exports.sudoRegisterDomain = async (signer, aggregation_size, queue_len, rules, proof_rules, destination, deliveryOwner) => {
+  let extrinsic = api.tx.sudo.sudo(api.tx.aggregate.registerDomain(aggregation_size, queue_len, rules, proof_rules, destination, deliveryOwner));
   return await submitExtrinsic(api, extrinsic, signer, BlockUntil.InBlock, (event) => event.section == "aggregate" && event.method == "NewDomain");
 }
 
@@ -202,6 +202,16 @@ exports.unregisterDomain = async (signer, domain_id) => {
 
 exports.holdDomain = async (signer, domain_id) => {
   let extrinsic = api.tx.aggregate.holdDomain(domain_id);
+  return await submitExtrinsic(api, extrinsic, signer, BlockUntil.InBlock);
+}
+
+exports.allowlistProofSubmitters = async (signer, domain_id, allowList) => {
+  let extrinsic = api.tx.aggregate.allowlistProofSubmitters(domain_id, allowList);
+  return await submitExtrinsic(api, extrinsic, signer, BlockUntil.InBlock);
+}
+
+exports.removeProofSubmitters = async (signer, domain_id, allowList) => {
+  let extrinsic = api.tx.aggregate.removeProofSubmitters(domain_id, allowList);
   return await submitExtrinsic(api, extrinsic, signer, BlockUntil.InBlock);
 }
 

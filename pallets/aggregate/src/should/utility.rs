@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::data::{AggregateSecurityRules, Delivery, Reserve};
+use crate::data::{AggregateSecurityRules, Delivery, ProofSecurityRules, Reserve};
 use crate::mock::RuntimeEvent as TestEvent;
 use crate::mock::{self, *};
 use crate::*;
@@ -164,6 +164,7 @@ pub fn register_domain(
     size: AggregationSize,
     queue: Option<u32>,
     aggregate_rules: AggregateSecurityRules,
+    proof_rules: ProofSecurityRules,
     delivery: Delivery<crate::mock::Balance>,
     delivery_owner: Option<crate::mock::AccountId>,
 ) -> u32 {
@@ -172,10 +173,19 @@ pub fn register_domain(
         size,
         queue,
         aggregate_rules,
+        proof_rules,
         delivery,
         delivery_owner
     ));
     registered_ids()[0]
+}
+
+pub fn consideration(domain_id: u32) -> Option<MockConsideration> {
+    Domains::<Test>::get(domain_id)
+        .unwrap()
+        .ticket_allowlist
+        .as_ref()
+        .map(|c| c.ticket.0.clone())
 }
 
 fn assert_evt_gen(contains: bool, event: Event<Test>, context: &str) {

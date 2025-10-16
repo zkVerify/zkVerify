@@ -24,7 +24,6 @@ use crate::{currency, Balance, EXISTENTIAL_DEPOSIT};
 use crate::*;
 // Existential deposit used in pallet_balances
 pub const EXISTENTIAL_DEPOSIT_REMAINDER: Balance = 1;
-pub const NUM_TEST_ACCOUNTS: u32 = 4;
 pub const STASH_DEPOSIT: Balance = 1 * currency::VFY; // MUST not be smaller than EXISTENTIAL_DEPOSIT
 pub const NUM_VALIDATORS: u32 = 2;
 
@@ -43,15 +42,15 @@ const TEST_BABE_GENESIS_EPOCH_CONFIG: sp_consensus_babe::BabeEpochConfiguration 
 // Any random values for these constants should do
 pub const BLOCK_NUMBER: BlockNumber = 1;
 pub const SLOT_ID: u64 = 87;
-pub const BABE_AUTHOR_ID: u32 = 1;
+pub const BABE_AUTHOR_ID: usize = 1;
 
 // Initialize block #BLOCK_NUMBER, authored at slot SLOT_ID by BABE_AUTHOR_ID using Babe
 pub fn initialize() {
     let slot = Slot::from(SLOT_ID);
-    let authority_index = BABE_AUTHOR_ID;
+    let authority_index = BABE_AUTHOR_ID as u32;
     let transcript = sp_consensus_babe::VrfTranscript::new(b"test", &[]);
     let pair: &sp_consensus_babe::AuthorityPair =
-        &get_from_seed::<BabeId>(SAMPLE_USERS[BABE_AUTHOR_ID as usize].session_key_seed);
+        &get_from_seed::<BabeId>(sample_user_seed(BABE_AUTHOR_ID));
     let vrf_signature = pair.as_ref().vrf_sign(&transcript.into());
     let digest_data = sp_consensus_babe::digests::PreDigest::Primary(
         sp_consensus_babe::digests::PrimaryPreDigest {
@@ -213,7 +212,7 @@ pub struct SampleAccount {
 }
 
 // Build a vector containing a few sample user accounts, along with their starting balances
-pub static SAMPLE_USERS: [SampleAccount; NUM_TEST_ACCOUNTS as usize] = [
+pub static SAMPLE_USERS: &[SampleAccount] = &[
     SampleAccount {
         raw_account: [
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -253,4 +252,15 @@ pub fn total_balances() -> Balance {
         .iter()
         .map(|account| account.starting_balance)
         .sum()
+}
+
+pub fn sample_user_account(id: usize) -> AccountId {
+    sp_runtime::AccountId32::new(SAMPLE_USERS[id].raw_account)
+}
+
+pub fn sample_user_start_balance(id: usize) -> Balance {
+    SAMPLE_USERS[id].starting_balance
+}
+pub fn sample_user_seed(id: usize) -> u8 {
+    SAMPLE_USERS[id].session_key_seed
 }

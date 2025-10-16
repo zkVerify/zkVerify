@@ -29,9 +29,9 @@ use alloc::{
     collections::{btree_map::BTreeMap, vec_deque::VecDeque},
     vec::Vec,
 };
-
 use authority_discovery_primitives::AuthorityId as AuthorityDiscoveryId;
 use codec::MaxEncodedLen;
+use core::marker::PhantomData;
 use pallet_babe::AuthorityId as BabeId;
 use pallet_grandpa::AuthorityId as GrandpaId;
 use sp_api::impl_runtime_apis;
@@ -56,6 +56,7 @@ use frame_election_provider_support::{
     SequentialPhragmen,
 };
 
+use frame_support::traits::Footprint;
 use frame_support::{
     construct_runtime, derive_impl,
     dispatch::{DispatchClass, DispatchResult},
@@ -406,15 +407,11 @@ impl pallet_preimage::Config for Runtime {
     type WeightInfo = weights::pallet_preimage::ZKVWeight<Runtime>;
     type Currency = Balances;
     type ManagerOrigin = EnsureRoot<AccountId>;
-    type Consideration = frame_support::traits::fungible::HoldConsideration<
+    type Consideration = HoldConsideration<
         AccountId,
         Balances,
         PreimageHoldReason,
-        frame_support::traits::LinearStoragePrice<
-            PreimageBaseDeposit,
-            PreimageByteDeposit,
-            Balance,
-        >,
+        LinearStoragePrice<PreimageBaseDeposit, PreimageByteDeposit, Balance>,
     >;
 }
 
@@ -512,13 +509,18 @@ impl pallet_child_bounties::Config for Runtime {
 }
 
 parameter_types! {
-    pub const AggregateBaseDeposit: Balance = currency::deposit(2, 64);
-    pub const AggregateByteDeposit: Balance = currency::deposit(0, 1);
-    pub const AggregateRegisterHoldReason: RuntimeHoldReason = RuntimeHoldReason::Aggregate(pallet_aggregate::HoldReason::Domain);
+    pub const AggregateDomainBaseDeposit: Balance = currency::deposit(2, 64);
+    pub const AggregateDomainByteDeposit: Balance = currency::deposit(0, 1);
+    pub const AggregateDomainHoldReason: RuntimeHoldReason = RuntimeHoldReason::Aggregate(pallet_aggregate::HoldReason::Domain);
     pub const AggregateBaseTip: Balance = 10 * CENTS;
     pub const AggregateLinearTip: Permill = Permill::from_percent(10);
     pub const AggregateMaxSize: pallet_aggregate::AggregationSize = 128;
     pub const AggregateQueueSize: u32 = 16;
+    pub const AggregateAllowlistHoldBaseDeposit: Balance = currency::deposit(2, 0);
+    // From KeyLenOf di double_map.rs in substrate.
+    // k1.size + k2.size + 2 * Twox128.size = 4 + 32 + 2 * 16 = 68
+    pub const AggregateAllowlistHoldSingleElementDeposit: Balance = currency::deposit(0, 68);
+    pub const AggregateAllowlistHoldReason: RuntimeHoldReason = RuntimeHoldReason::Aggregate(pallet_aggregate::HoldReason::Allowlist);
 }
 
 /// Linear increment.
@@ -579,6 +581,24 @@ impl DispatchAggregation<Balance, AccountId> for Runtime {
     }
 }
 
+/// A storage price that increases with the number of items in the storage but not consider the size of the items.
+pub struct StoreItemsStoragePrice<Base, ItemPrice, Balance>(
+    PhantomData<(Base, ItemPrice, Balance)>,
+);
+impl<Base, ItemPrice, Balance> Convert<Footprint, Balance>
+    for StoreItemsStoragePrice<Base, ItemPrice, Balance>
+where
+    Base: Get<Balance>,
+    ItemPrice: Get<Balance>,
+    Balance: From<u64> + sp_runtime::Saturating,
+{
+    fn convert(a: Footprint) -> Balance {
+        let s: Balance = a.count.into();
+        s.saturating_mul(ItemPrice::get())
+            .saturating_add(Base::get())
+    }
+}
+
 impl pallet_aggregate::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type RuntimeHoldReason = RuntimeHoldReason;
@@ -587,13 +607,19 @@ impl pallet_aggregate::Config for Runtime {
     type ManagerOrigin = EnsureRoot<AccountId>;
     type Hold = Balances;
 
-    type Consideration = frame_support::traits::fungible::HoldConsideration<
+    type ConsiderationDomain = HoldConsideration<
         AccountId,
         Balances,
-        AggregateRegisterHoldReason,
-        frame_support::traits::LinearStoragePrice<
-            AggregateBaseDeposit,
-            AggregateByteDeposit,
+        AggregateDomainHoldReason,
+        LinearStoragePrice<AggregateDomainBaseDeposit, AggregateDomainByteDeposit, Balance>,
+    >;
+    type ConsiderationAllowList = HoldConsideration<
+        AccountId,
+        Balances,
+        AggregateAllowlistHoldReason,
+        StoreItemsStoragePrice<
+            AggregateAllowlistHoldBaseDeposit,
+            AggregateAllowlistHoldSingleElementDeposit,
             Balance,
         >,
     >;
@@ -610,6 +636,9 @@ impl pallet_aggregate::Config for Runtime {
     type Currency = Balances;
 
     type DispatchAggregation = Self;
+
+    #[cfg(feature = "runtime-benchmarks")]
+    const SUBMITTER_LIST_MAX_SIZE: u32 = 1_000;
 }
 
 parameter_types! {
@@ -1384,6 +1413,7 @@ use currency::{Balance, CENTS, EXISTENTIAL_DEPOSIT, THOUSANDS, VFY};
 pub use polkadot_runtime_parachains::runtime_api_impl::{
     v11 as parachains_runtime_api_impl, vstaging as parachains_staging_runtime_api_impl,
 };
+use sp_runtime::traits::Convert;
 pub use types::{currency, opaque};
 
 // Used for testing purposes only.
