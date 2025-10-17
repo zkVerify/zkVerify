@@ -93,7 +93,7 @@ pub struct Plonky2Vk {
 #[derive(Debug, Encode, Decode, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EzklVk {
-    pub vkBytes: Bytes,
+    pub vk_bytes: Bytes,
 }
 
 #[derive(Debug, Encode, Decode, Serialize, Deserialize)]
@@ -163,7 +163,7 @@ impl VKHash {
 
 impl VKHashApiServer<H256> for VKHash {
     fn ezkl(&self, vk: EzklVk) -> RpcResult<H256> {
-        let vk_bytes = vk.vkBytes;
+        let vk_bytes = vk.vk_bytes;
         if vk_bytes.is_empty()
             || vk_bytes.len() & 31 != 0
             || vk_bytes.len() > MAX_VK_LENGTH as usize
