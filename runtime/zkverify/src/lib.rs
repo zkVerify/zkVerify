@@ -25,7 +25,6 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 extern crate alloc;
 
 use alloc::{
-    borrow::Cow,
     boxed::Box,
     collections::{btree_map::BTreeMap, vec_deque::VecDeque},
     vec::Vec,
@@ -106,6 +105,7 @@ pub mod parachains;
 pub mod xcm_config;
 
 mod bag_thresholds;
+mod configs;
 mod genesis_config_presets;
 mod migrations;
 mod payout;
@@ -113,6 +113,8 @@ mod proxy;
 #[cfg(test)]
 mod tests;
 mod weights;
+
+pub use configs::*;
 
 pub(crate) mod weight_aliases {
     pub mod pallet_plonky2_verifier_verify_proof {
@@ -127,23 +129,6 @@ pub(crate) mod weight_aliases {
         pub use frame_system::ExtensionsWeightInfo as WeightInfo;
     }
 }
-
-// To learn more about runtime versioning, see:
-// https://docs.substrate.io/main-docs/build/upgrade#runtime-versioning
-#[sp_version::runtime_version]
-pub const VERSION: RuntimeVersion = RuntimeVersion {
-    spec_name: Cow::Borrowed("zkv-runtime"),
-    impl_name: Cow::Borrowed("zkv-node"),
-    authoring_version: 1,
-    // The version of the runtime specification. A full node will not attempt to use its native
-    //   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
-    //   `spec_version`, and `authoring_version` are the same between Wasm and native.
-    spec_version: 1_002_001,
-    impl_version: 1,
-    apis: RUNTIME_API_VERSIONS,
-    transaction_version: 1,
-    system_version: 1,
-};
 
 // 1 in 4 blocks will be primary babe blocks.
 pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
@@ -192,8 +177,7 @@ parameter_types! {
     pub BlockLength: frame_system::limits::BlockLength = frame_system::limits::BlockLength
         ::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
 
-    // Set output address to start with ZK and sometime the third is v (since 17%)'
-    pub const SS58Prefix: u16 = 8741;
+    pub const SS58Prefix: u16 = SS58_PREFIX;
 }
 
 /// The default types are being injected by [`derive_impl`](`frame_support::derive_impl`) from
@@ -1017,7 +1001,7 @@ impl pallet_verifiers::Config<UltraplonkVerifier> for Runtime {
 }
 
 parameter_types! {
-    pub const Coprocessor: Option<StateMachine> = Some(StateMachine::Polkadot(3367));
+    pub const Coprocessor: Option<StateMachine> = HYPERBRIDGE_DEST_STATE_MACHINE;
     pub const HostStateMachine: StateMachine = StateMachine::Substrate(*b"zkv_");
 }
 

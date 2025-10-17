@@ -19,6 +19,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 anyhow = { workspace = true }
 codec = { workspace = true, features = ["derive"] }
 scale-info = { workspace = true, features = ["derive", "serde"] }
+cfg-if = "1.0"
 
 pallet-offences = { workspace = true }
 pallet-authorship = { workspace = true }
@@ -128,6 +129,7 @@ rstest = { workspace = true }
 
 [build-dependencies]
 substrate-wasm-builder = { workspace = true, optional = true }
+cfg-if = "1.0.0"
 
 [features]
 runtime-benchmarks = [

@@ -45,9 +45,6 @@ use xcm_builder::{
 use crate::weights::pallet_xcm::ZKVWeight as XcmPalletZKVWeight;
 use crate::weights::xcm::ZKVWeight as XcmZKVWeight;
 
-const ZKV_GENESIS_HASH: [u8; 32] =
-    hex_literal::hex!("060e3dd3fa2904d031206bb913c954687a2bcc350e5a83d33d9e273ad21460f1");
-
 parameter_types! {
     pub const RootLocation: Location = Here.into_location();
     /// The location of the VFY token, from the context of this chain. Since this token is native to this
@@ -55,7 +52,7 @@ parameter_types! {
     /// the context".
     pub const TokenLocation: Location = Here.into_location();
     /// The ZKV network ID.
-    pub const ThisNetwork: NetworkId = NetworkId::ByGenesis(ZKV_GENESIS_HASH);
+    pub const ThisNetwork: NetworkId = NetworkId::ByGenesis(crate::configs::ZKV_GENESIS_HASH);
     /// Our location in the universe of consensus systems.
     pub UniversalLocation: InteriorLocation = [GlobalConsensus(ThisNetwork::get())].into();
     /// The Checking Account, which holds any native assets that have been teleported out and not back in (yet).

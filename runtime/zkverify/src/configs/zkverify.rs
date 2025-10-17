@@ -13,15 +13,16 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-use super::*;
-/// Reexport `test` runner
-pub use testsfixtures::{test, BABE_AUTHOR_ID, BLOCK_NUMBER, SLOT_ID};
+use crate::{runtime_version, RuntimeVersion, RUNTIME_API_VERSIONS};
+use alloc::borrow::Cow;
 
-mod availability;
-mod misc;
-mod pallets_interact;
-mod payout;
-mod proxy;
-mod specs;
-mod testsfixtures;
-mod use_correct_weights;
+runtime_version!("zkv-runtime");
+
+// Set the output address to start with ZK, and sometimes the third is v (since 17%)
+pub const SS58_PREFIX: u16 = 8741;
+
+pub const HYPERBRIDGE_DEST_STATE_MACHINE: Option<ismp::host::StateMachine> =
+    Some(ismp::host::StateMachine::Polkadot(3367));
+
+pub const ZKV_GENESIS_HASH: [u8; 32] =
+    hex_literal::hex!("060e3dd3fa2904d031206bb913c954687a2bcc350e5a83d33d9e273ad21460f1");

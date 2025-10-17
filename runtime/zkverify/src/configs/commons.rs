@@ -13,15 +13,21 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-use super::*;
-/// Reexport `test` runner
-pub use testsfixtures::{test, BABE_AUTHOR_ID, BLOCK_NUMBER, SLOT_ID};
-
-mod availability;
-mod misc;
-mod pallets_interact;
-mod payout;
-mod proxy;
-mod specs;
-mod testsfixtures;
-mod use_correct_weights;
+#[macro_export]
+macro_rules! runtime_version {
+    ( $spec_name:tt ) => {
+        // To learn more about runtime versioning, see:
+        // https://docs.substrate.io/main-docs/build/upgrade#runtime-versioning
+        #[sp_version::runtime_version]
+        pub const VERSION: RuntimeVersion = RuntimeVersion {
+            spec_name: Cow::Borrowed($spec_name),
+            impl_name: Cow::Borrowed("zkv-node"),
+            authoring_version: 1,
+            spec_version: 1_002_001,
+            impl_version: 1,
+            apis: RUNTIME_API_VERSIONS,
+            transaction_version: 1,
+            system_version: 1,
+        };
+    };
+}
