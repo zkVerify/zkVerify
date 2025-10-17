@@ -18,16 +18,40 @@ fn main() {
     {
         std::env::remove_var("CARGO_FEATURE_STD");
         std::env::remove_var("CARGO_FEATURE_DEFAULT");
-        let builder = substrate_wasm_builder::WasmBuilder::init_with_defaults();
-        // We cannot enable it as default because this option require to build the WASM runtime two
-        // time, one to get the metadata and te recompile it with the metadata hash in an environment
-        // variable.
+        use wasm_builder_ext::WasmBuilderExt;
+        substrate_wasm_builder::WasmBuilder::init_with_defaults()
+            .handle_metadata_hash()
+            .build()
+    }
+}
+
+#[cfg(feature = "std")]
+mod wasm_builder_ext {
+    use substrate_wasm_builder::WasmBuilder;
+
+    pub trait WasmBuilderExt: Sized {
+        fn handle_metadata_hash(self) -> Self {
+            self
+        }
+    }
+
+    impl WasmBuilderExt for WasmBuilder {
+        /// We cannot enable it as default because this option requires building the WASM runtime two
+        /// times, one to get the metadata and te recompile it with the metadata hash in an environment
+        /// variable.
         #[cfg(feature = "metadata-hash")]
-        let builder = if std::env::var_os("ZKV_FORCE_DISABLE_METADATA_HASH").is_none() {
-            builder.enable_metadata_hash("VFY", 18)
-        } else {
-            builder
-        };
-        builder.build()
+        fn handle_metadata_hash(self) -> Self {
+            if std::env::var_os("ZKV_FORCE_DISABLE_METADATA_HASH").is_none() {
+                const TOKEN_SYMBOL: &str = if cfg!(not(feature = "volta")) {
+                    "VFY"
+                } else {
+                    "tVFY"
+                };
+                const TOKEN_DECIMAL: u8 = 18;
+                self.enable_metadata_hash(TOKEN_SYMBOL, TOKEN_DECIMAL)
+            } else {
+                self
+            }
+        }
     }
 }

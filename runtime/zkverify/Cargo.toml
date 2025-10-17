@@ -1,7 +1,7 @@
 [package]
 name = "zkv-runtime"
-version = "1.1.0"
-description = "zkVerify Mainnet Runtime."
+version = "1.2.1"
+description = "zkVerify Runtime."
 authors.workspace = true
 homepage = "https://github.com/zkVerify/zkVerify"
 edition.workspace = true
@@ -188,6 +188,7 @@ runtime-benchmarks = [
 ]
 fast-runtime = [ "zkv-runtime-common/fast-runtime" ]
 metadata-hash = [ "substrate-wasm-builder/metadata-hash" ]
+volta = []
 default = [ "std" ]
 std = [
 	"aggregate-rpc-runtime-api/std",
