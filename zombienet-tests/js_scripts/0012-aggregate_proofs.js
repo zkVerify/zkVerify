@@ -19,7 +19,7 @@ const ReturnCode = {
 };
 
 const { init_api, submitProof, receivedEvents, registerDomain, sudoRegisterDomain,
-    holdDomain, unregisterDomain, aggregate, getBalance } = require('zkv-lib');
+    holdDomain, unregisterDomain, aggregate, getBalance, isVolta } = require('zkv-lib');
 const { PROOF: EZKL_PROOF, PUBS: EZKL_PUBS, VK: EZKL_VK } = require('./ezkl_data.js');
 const { PROOF: FFLONK_PROOF, PUBS: FFLONK_PUBS, VK: FFLONK_VK } = require('./fflonk_data.js');
 const { PROOF: GROTH16_PROOF, PUBS: GROTH16_PUBS, VK: GROTH16_VK } = require('./groth16_data.js');
@@ -85,10 +85,8 @@ async function run(nodeName, networkInfo, _args) {
         }
     ];
 
-    const chain = await api.rpc.system.chain();
-    if (chain.toString().startsWith("zkVerify ")) {
-        console.log("Pallet Ezkl is not present yet on zkVerify. Skip test.")
-    } else {
+    // For verifiers still on testnet.
+    if (await isVolta()) {
         verifiers.push({
             name: "Ezkl",
             pallet: api.tx.settlementEzklPallet,

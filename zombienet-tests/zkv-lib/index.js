@@ -397,7 +397,7 @@ async function _handleTransactionLifecycle(api, sendFunction, blockUntil, filter
 async function submitExtrinsic(api, extrinsic, signer, blockUntil, filter) {
   // Create a function that encapsulates the `signAndSend` call.
   const sendFunction = (callback) => extrinsic.signAndSend(signer, callback);
-  
+
   // Delegate all the hard work to the handler.
   return _handleTransactionLifecycle(api, sendFunction, blockUntil, filter);
 }
@@ -406,7 +406,7 @@ async function submitExtrinsic(api, extrinsic, signer, blockUntil, filter) {
 async function submitExtrinsicUnsigned(api, extrinsic, blockUntil, filter) {
   // Create a function that encapsulates the `send` call.
   const sendFunction = (callback) => extrinsic.send(callback);
-  
+
   // Delegate all the hard work to the handler.
   return _handleTransactionLifecycle(api, sendFunction, blockUntil, filter);
 }
@@ -422,4 +422,12 @@ exports.getBalance = async (user) => {
 
 async function getBalance(user) {
   return (await api.query.system.account(user.address))["data"]["free"]
+}
+
+exports.isVolta = async () => {
+  return await isVolta();
+}
+
+async function isVolta() {
+  return !(await api.rpc.system.chain().toString().startsWith("zkVerify "))
 }
