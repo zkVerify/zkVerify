@@ -85,7 +85,7 @@ async function run(nodeName, networkInfo, _args) {
         }
     ];
 
-    // For verifiers still on testnet.
+    // Verifiers to be included only if the network is Volta.
     if (await isVolta()) {
         verifiers.push({
             name: "Ezkl",
