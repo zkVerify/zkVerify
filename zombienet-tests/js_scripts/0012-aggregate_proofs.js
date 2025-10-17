@@ -82,13 +82,19 @@ async function run(nodeName, networkInfo, _args) {
             name: "Sp1",
             pallet: api.tx.settlementSp1Pallet,
             args: [{ 'Vk': SP1_VK }, SP1_PROOF, SP1_PUBS],
-        },
-        {
+        }
+    ];
+
+    const chain = await api.rpc.system.chain();
+    if (chain.toString().startsWith("zkVerify ")) {
+        console.log("Pallet Ezkl is not present yet on zkVerify. Skip test.")
+    } else {
+        verifiers.push({
             name: "Ezkl",
             pallet: api.tx.settlementEzklPallet,
             args: [{ 'Vk': EZKL_VK }, EZKL_PROOF, EZKL_PUBS],
-        },
-    ];
+        });
+    }
 
     // Only manager can register a Hyperbridge delivery domain.
     let hyperbridge = {
