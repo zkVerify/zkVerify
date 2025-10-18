@@ -424,11 +424,11 @@ async function getBalance(user) {
   return (await api.query.system.account(user.address))["data"]["free"]
 }
 
-exports.isVolta = async () => {
-  return await isVolta();
+exports.isVolta = async (api) => {
+  return await isVolta(api);
 }
 
-async function isVolta() {
+async function isVolta(api) {
   let chain = await api.rpc.system.chain().toString();
   console.log("NETWORK = ", chain); // NETWORK =  [object Promise]
   return !chain.startsWith("zkVerify ");

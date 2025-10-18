@@ -86,7 +86,7 @@ async function run(nodeName, networkInfo, _args) {
     ];
 
     // Verifiers to be included only if the network is Volta.
-    if (await isVolta()) {
+    if (await isVolta(api)) {
         verifiers.push({
             name: "Ezkl",
             pallet: api.tx.settlementEzklPallet,
