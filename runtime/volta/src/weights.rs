@@ -28,6 +28,7 @@ pub mod pallet_balances;
 pub mod pallet_bounties;
 pub mod pallet_child_bounties;
 pub mod pallet_conviction_voting;
+pub mod pallet_ezkl_verifier;
 pub mod pallet_fflonk_verifier;
 pub mod pallet_grandpa;
 pub mod pallet_groth16_verifier;

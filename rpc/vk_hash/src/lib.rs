@@ -16,6 +16,7 @@
 use codec::{Decode, Encode};
 use hp_verifiers::Verifier;
 use jsonrpsee::{core::RpcResult, proc_macros::rpc, types::ErrorObject};
+use pallet_ezkl_verifier::{Ezkl, MAX_VK_LENGTH};
 use pallet_fflonk_verifier::{
     vk::{Fq, Fq2, Fr, G1, G2},
     Fflonk,
@@ -90,6 +91,12 @@ pub struct Plonky2Vk {
 }
 
 #[derive(Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EzklVk {
+    pub vk_bytes: Bytes,
+}
+
+#[derive(Debug, Encode, Decode, Serialize, Deserialize)]
 pub struct FflonkVk {
     pub power: u8,
     pub k1: U256,
@@ -126,6 +133,8 @@ impl From<FflonkVk> for pallet_fflonk_verifier::vk::Vk {
 
 #[rpc(client, server, namespace = "vk_hash")]
 pub trait VKHashApi<ResponseType> {
+    #[method(name = "ezkl")]
+    fn ezkl(&self, vk: EzklVk) -> RpcResult<ResponseType>;
     #[method(name = "fflonk")]
     fn fflonk(&self, vk: FflonkVk) -> RpcResult<ResponseType>;
     #[method(name = "groth16")]
@@ -153,6 +162,22 @@ impl VKHash {
 }
 
 impl VKHashApiServer<H256> for VKHash {
+    fn ezkl(&self, vk: EzklVk) -> RpcResult<H256> {
+        let vk_bytes = vk.vk_bytes;
+        if vk_bytes.is_empty()
+            || vk_bytes.len() & 31 != 0
+            || vk_bytes.len() > MAX_VK_LENGTH as usize
+        {
+            return Err(ErrorObject::owned(
+                1,
+                "Incorrect Slice Length",
+                Some("Incorrect Slice Length".to_string()),
+            ));
+        }
+        let vk: VkOf<Ezkl<runtime::Runtime>> = pallet_ezkl_verifier::Vk::new(vk_bytes.to_vec());
+        Ok(Ezkl::<runtime::Runtime>::vk_hash(&vk))
+    }
+
     fn fflonk(&self, vk: FflonkVk) -> RpcResult<H256> {
         Ok(Fflonk::vk_hash(&vk.into()))
     }

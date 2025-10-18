@@ -19,7 +19,8 @@ const ReturnCode = {
 };
 
 const { init_api, submitProof, receivedEvents, registerDomain, sudoRegisterDomain,
-    holdDomain, unregisterDomain, aggregate, getBalance } = require('zkv-lib');
+    holdDomain, unregisterDomain, aggregate, getBalance, isVolta } = require('zkv-lib');
+const { PROOF: EZKL_PROOF, PUBS: EZKL_PUBS, VK: EZKL_VK } = require('./ezkl_data.js');
 const { PROOF: FFLONK_PROOF, PUBS: FFLONK_PUBS, VK: FFLONK_VK } = require('./fflonk_data.js');
 const { PROOF: GROTH16_PROOF, PUBS: GROTH16_PUBS, VK: GROTH16_VK } = require('./groth16_data.js');
 const { PROOF: RISC0_V2_2_PROOF, PUBS: RISC0_V2_2_PUBS, VK: RISC0_V2_2_VK } = require('./risc0_v2_2_data.js');
@@ -83,6 +84,15 @@ async function run(nodeName, networkInfo, _args) {
             args: [{ 'Vk': SP1_VK }, SP1_PROOF, SP1_PUBS],
         }
     ];
+
+    // Verifiers to be included only if the network is Volta.
+    if (await isVolta(api)) {
+        verifiers.push({
+            name: "Ezkl",
+            pallet: api.tx.settlementEzklPallet,
+            args: [{ 'Vk': EZKL_VK }, EZKL_PROOF, EZKL_PUBS],
+        });
+    }
 
     // Only manager can register a Hyperbridge delivery domain.
     let hyperbridge = {
@@ -249,7 +259,7 @@ async function run(nodeName, networkInfo, _args) {
         return ReturnCode.ErrWrongDomainId;
     }
 
-    // Now we are checking the hold  state machine.
+    // Now we are checking the hold state machine.
     let verifier = verifiers[0];
     data = await submitProof(verifier.pallet, alice, ...verifier.args, newDomainId);
     if (!receivedEvents(data)) {

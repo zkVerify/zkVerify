@@ -27,6 +27,7 @@ members = [
     "verifiers/risc0/risc0-derive",
     "verifiers/ultrahonk",
     "verifiers/ultraplonk",
+    "verifiers/ezkl",
     "verifiers/plonky2",
     "verifiers/sp1",
     "utils/native-cache",
@@ -107,6 +108,7 @@ hp-on-proof-verified = { default-features = false, path = "primitives/hp-on-proo
 hp-dispatch = { default-features = false, path = "primitives/hp-dispatch" }
 hp-verifiers = { path = "primitives/hp-verifiers", default-features = false }
 hp-groth16 = { path = "primitives/hp-groth16", default-features = false }
+pallet-ezkl-verifier = { path = "verifiers/ezkl", default-features = false }
 pallet-fflonk-verifier = { path = "verifiers/fflonk", default-features = false }
 pallet-groth16-verifier = { path = "verifiers/groth16", default-features = false }
 pallet-risc0-verifier = { path = "verifiers/risc0", default-features = false }
@@ -115,6 +117,7 @@ pallet-ultraplonk-verifier = { path = "verifiers/ultraplonk", default-features =
 pallet-sp1-verifier = { path = "verifiers/sp1", default-features = false }
 risc0-verifier = { git = "https://github.com/zkVerify/risc0-verifier.git", tag = "v0.11.0", default-features = false }
 pallet-plonky2-verifier = { path = "verifiers/plonky2", default-features = false }
+ezkl-no-std = { git = "https://github.com/zkVerify/ezkl_verifier.git", default-features = false, tag = "v0.1.0" }
 ultrahonk-no-std = { git = "https://github.com/zkVerify/ultrahonk_verifier.git", default-features = false, tag = "v0.1.0" }
 ultraplonk-no-std = { git = "https://github.com/zkVerify/ultraplonk_verifier.git", default-features = false, tag = "v0.4.0" }
 
@@ -214,8 +217,8 @@ pallet-token-gateway = { default-features = false, version = "2412.0.0" }
 pallet-hyperbridge = { default-features = false, version = "2412.0.0" }
 frame-metadata-hash-extension = { version = "0.7.0", default-features = false }
 pallet-hyperbridge-aggregations = { path = "pallets/hyperbridge_aggregations", default-features = false }
-alloy-dyn-abi = { default-features = false, version = "0.8.14" }
-alloy-primitives = { default-features = false, version = "0.8.14" }
+alloy-dyn-abi = { default-features = false, version = "0.8.26" }
+alloy-primitives = { default-features = false, version = "0.8.26" }
 
 # Used for the node template's RPCs
 frame-system-rpc-runtime-api = { version = "35.0.0", default-features = false }
