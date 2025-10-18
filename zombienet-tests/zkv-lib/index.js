@@ -429,7 +429,5 @@ exports.isVolta = async (api) => {
 }
 
 async function isVolta(api) {
-  let chain = await api.rpc.system.chain().toString();
-  console.log("NETWORK = ", chain); // NETWORK =  [object Promise]
-  return !chain.startsWith("zkVerify ");
+  return (await api.rpc.system.chain().toString().startsWith("Volta "));
 }
