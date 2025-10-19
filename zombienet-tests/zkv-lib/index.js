@@ -429,5 +429,6 @@ exports.isVolta = async (api) => {
 }
 
 async function isVolta(api) {
-  return (await api.rpc.system.chain().toString().startsWith("Volta "));
+  let chain = api.rpc.system.chain();
+  return (await chain.toString().startsWith("Volta "));
 }
