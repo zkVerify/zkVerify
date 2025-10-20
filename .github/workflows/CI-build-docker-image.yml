@@ -5,7 +5,7 @@ on:
   workflow_call:
 
 env:
-  DOCKER_HUB_ORG: horizenlabs
+  DOCKER_HUB_ORG: ${{ vars.DOCKER_HUB_ORG }}
   DOCKER_IMAGE_BUILD_NAME: ${{ vars.DOCKER_IMAGE_BUILD_NAME }}
 
 jobs:
