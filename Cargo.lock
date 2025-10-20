@@ -4573,23 +4573,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ezkl-no-std"
-version = "0.1.0"
-source = "git+https://github.com/zkVerify/ezkl_verifier.git?tag=v0.1.0#a7251b17acc62a893a63bfc664731d010c091eb4"
-dependencies = [
- "ark-bn254 0.5.0",
- "ark-bn254-ext",
- "ark-ec 0.5.0",
- "ark-ff 0.5.0",
- "ark-models-ext 0.6.0",
- "ark-serialize 0.5.0",
- "ark-std 0.5.0",
- "hex-literal",
- "sha3",
- "snafu 0.8.5",
-]
-
-[[package]]
 name = "fallible-iterator"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9880,27 +9863,6 @@ dependencies = [
  "sp-npos-elections",
  "sp-runtime",
  "sp-staking",
-]
-
-[[package]]
-name = "pallet-ezkl-verifier"
-version = "0.1.0"
-dependencies = [
- "ezkl-no-std",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "hex-literal",
- "hp-verifiers",
- "log",
- "native",
- "pallet-balances",
- "pallet-verifiers",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-io",
- "sp-runtime",
 ]
 
 [[package]]
@@ -20948,7 +20910,6 @@ dependencies = [
  "hp-groth16",
  "hp-verifiers",
  "jsonrpsee 0.24.9",
- "pallet-ezkl-verifier",
  "pallet-fflonk-verifier",
  "pallet-groth16-verifier",
  "pallet-plonky2-verifier",
@@ -20999,7 +20960,6 @@ dependencies = [
  "pallet-claim",
  "pallet-conviction-voting",
  "pallet-election-provider-support-benchmarking",
- "pallet-ezkl-verifier",
  "pallet-fflonk-verifier",
  "pallet-grandpa",
  "pallet-groth16-verifier",
