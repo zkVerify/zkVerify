@@ -178,6 +178,9 @@ parameter_types! {
         ::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
 
     pub const SS58Prefix: u16 = SS58_PREFIX;
+    pub const SS58ZkvPrefix: u16 = SS58_ZKV_PREFIX;
+    pub const SS58VoltaPrefix: u16 = SS58_VOLTA_PREFIX;
+    pub const TokenSymbol: &'static str = TOKEN_SYMBOL;
 }
 
 /// The default types are being injected by [`derive_impl`](`frame_support::derive_impl`) from

@@ -108,7 +108,7 @@ pub use sp_runtime::{
 };
 use zkv_benchmarks::hardware::zkv_reference_hardware;
 
-pub use volta_runtime::{self, opaque::Block, RuntimeApi};
+pub use zkv_runtime::{self, opaque::Block, RuntimeApi};
 
 #[cfg(feature = "full-node")]
 pub type FullBackend = sc_service::TFullBackend<Block>;
@@ -258,8 +258,8 @@ pub enum Chain {
 impl Chain {
     pub fn ss58_format(&self) -> Ss58AddressFormat {
         match self {
-            Chain::Volta => volta_runtime::SS58Prefix::get().into(),
-            Chain::ZkVerify => zkv_runtime::SS58Prefix::get().into(),
+            Chain::Volta => zkv_runtime::SS58VoltaPrefix::get().into(),
+            Chain::ZkVerify => zkv_runtime::SS58ZkvPrefix::get().into(),
             Chain::Unknown => default_ss58_version(),
         }
     }

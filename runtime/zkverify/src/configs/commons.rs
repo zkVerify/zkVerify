@@ -31,3 +31,8 @@ macro_rules! runtime_version {
         };
     };
 }
+
+// Set the output address to start with ZK, and sometimes the third is v (since 17%)
+pub const SS58_ZKV_PREFIX: u16 = 8741;
+// ASCII for 'Z'+'K'+'V'
+pub const SS58_VOLTA_PREFIX: u16 = 251;

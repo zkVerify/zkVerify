@@ -11,12 +11,12 @@ description = "Utils to tie different ZkVerify Realy chain components together a
 workspace = true
 
 [dependencies]
-volta-runtime = { workspace = true, features = ["std"] }
 zkv-runtime = { workspace = true, features = ["std"] }
 zkv-benchmarks = { workspace = true }
 native = { workspace = true, features = ["std"] }
 aggregate-rpc = { workspace = true, features = ["std"] }
 vk-hash = { workspace = true }
+cfg-if = "1.0"
 
 sc-authority-discovery = { workspace = true }
 sc-consensus-babe = { workspace = true }
@@ -203,7 +203,6 @@ runtime-benchmarks = [
 	"sp-runtime/runtime-benchmarks",
 	"sp-staking/runtime-benchmarks",
 	"test-client/runtime-benchmarks",
-	"volta-runtime/runtime-benchmarks",
 	"zkv-runtime/runtime-benchmarks",
 ]
 
@@ -215,12 +214,12 @@ try-runtime = [
 	"pallet-transaction-payment/try-runtime",
 	"polkadot-runtime-parachains/try-runtime",
 	"sp-runtime/try-runtime",
-	"volta-runtime/try-runtime",
 	"zkv-runtime/try-runtime",
 ]
 
-fast-runtime = [ "volta-runtime/fast-runtime", "zkv-runtime/fast-runtime" ]
+fast-runtime = ["zkv-runtime/fast-runtime"]
 
 malus = [ "full-node" ]
 runtime-metrics = [ "polkadot-runtime-parachains/runtime-metrics" ]
-metadata-hash = [ "volta-runtime/metadata-hash", "zkv-runtime/metadata-hash" ]
+metadata-hash = ["zkv-runtime/metadata-hash"]
+volta = ["zkv-runtime/volta"]

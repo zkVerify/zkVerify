@@ -19,7 +19,8 @@ use alloc::borrow::Cow;
 runtime_version!("tzkv-runtime");
 
 // ASCII for 'Z'+'K'+'V'
-pub const SS58_PREFIX: u16 = 251;
+pub const SS58_PREFIX: u16 = super::SS58_VOLTA_PREFIX;
+pub const TOKEN_SYMBOL: &str = "tVFY";
 
 pub const HYPERBRIDGE_DEST_STATE_MACHINE: Option<ismp::host::StateMachine> =
     Some(ismp::host::StateMachine::Kusama(4009));

@@ -19906,7 +19906,7 @@ dependencies = [
  "substrate-test-client",
  "test-runtime",
  "test-service",
- "volta-runtime",
+ "zkv-runtime",
 ]
 
 [[package]]
@@ -22603,8 +22603,8 @@ dependencies = [
  "sp-runtime",
  "substrate-build-script-utils",
  "thiserror 1.0.69",
- "volta-runtime",
  "zkv-benchmarks",
+ "zkv-runtime",
  "zkv-service",
 ]
 
@@ -22613,6 +22613,7 @@ name = "zkv-relay"
 version = "1.0.0"
 dependencies = [
  "assert_cmd",
+ "cfg-if",
  "color-eyre",
  "native-cache",
  "nix 0.27.1",
@@ -22637,6 +22638,7 @@ version = "1.2.1"
 dependencies = [
  "aggregate-rpc-runtime-api",
  "anyhow",
+ "cfg-if",
  "finality-grandpa",
  "frame-benchmarking",
  "frame-election-provider-support",
@@ -22770,6 +22772,7 @@ dependencies = [
  "aggregate-rpc",
  "assert_matches",
  "async-trait",
+ "cfg-if",
  "env_logger",
  "frame-benchmarking",
  "frame-benchmarking-cli",
@@ -22893,7 +22896,6 @@ dependencies = [
  "thiserror 1.0.69",
  "tracing-gum",
  "vk-hash",
- "volta-runtime",
  "zkv-benchmarks",
  "zkv-runtime",
 ]

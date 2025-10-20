@@ -26,7 +26,7 @@ use sp_consensus_babe::{
 use sp_runtime::{traits::Block as BlockT, Digest, DigestItem};
 use sp_state_machine::BasicExternalities;
 use test_runtime::UncheckedExtrinsic;
-use volta_runtime::GetLastTimestamp;
+use zkv_runtime::GetLastTimestamp;
 
 /// An extension for the test client to initialize a Polkadot specific block builder.
 pub trait InitPolkadotBlockBuilder {

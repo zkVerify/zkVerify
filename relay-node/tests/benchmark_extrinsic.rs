@@ -20,28 +20,43 @@ use std::{process::Command, result::Result};
 
 mod common;
 
-static EXTRINSICS: [(&str, &str); 2] = [("system", "remark"), ("balances", "transfer_keep_alive")];
-
-/// `benchmark extrinsic` works for all dev runtimes and some extrinsics.
-#[rstest]
-#[case::dev("dev")]
-#[case::volta("volta-dev")]
-#[case::zkverify("zkverify-dev")]
-fn benchmark_extrinsic_works(#[case] chain: &str) {
+fn _benchmark_extrinsic_works(chain: &str) {
+    static EXTRINSICS: [(&str, &str); 2] =
+        [("system", "remark"), ("balances", "transfer_keep_alive")];
     for (pallet, extrinsic) in EXTRINSICS {
         assert!(benchmark_extrinsic(chain, pallet, extrinsic).is_ok());
     }
 }
 
-/// `benchmark extrinsic` rejects all non-dev runtimes.
+cfg_if::cfg_if! {
+    if #[cfg(feature = "volta")] {
+        #[rstest]
+        #[case::dev("dev")]
+        #[case::volta("volta-dev")]
+        fn benchmark_extrinsic_works(#[case] chain: &str) {
+            _benchmark_extrinsic_works(chain)
+        }
+    } else {
+        #[rstest]
+        #[case::zkverify("zkverify-dev")]
+        fn benchmark_extrinsic_works(#[case] chain: &str) {
+            _benchmark_extrinsic_works(chain)
+        }
+    }
+}
+
+/// `benchmark extrinsic` works for all dev runtimes and some extrinsics.
+
+fn _benchmark_extrinsic_rejects_non_dev_runtimes(runtime: &str) {
+    assert!(benchmark_extrinsic(runtime, "system", "remark").is_err());
+}
+
 #[rstest]
 #[case::default("")]
-#[case::volta_staging("volta-staging")]
 #[case::volta("volta")]
-#[case::zkverify_staging("zkverify-staging")]
 #[case::zkverify("zkverify")]
 fn benchmark_extrinsic_rejects_non_dev_runtimes(#[case] runtime: &str) {
-    assert!(benchmark_extrinsic(runtime, "system", "remark").is_err());
+    _benchmark_extrinsic_rejects_non_dev_runtimes(runtime)
 }
 
 fn benchmark_extrinsic(runtime: &str, pallet: &str, extrinsic: &str) -> Result<(), String> {

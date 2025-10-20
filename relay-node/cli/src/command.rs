@@ -34,6 +34,7 @@ use pyroscope_pprofrs::{pprof_backend, PprofConfig};
 use std::net::ToSocketAddrs;
 
 type Result<T> = std::result::Result<T, Error>;
+type ChainSpecResult = std::result::Result<Box<dyn sc_service::ChainSpec + 'static>, String>;
 
 impl SubstrateCli for Cli {
     fn impl_name() -> String {
@@ -65,10 +66,7 @@ impl SubstrateCli for Cli {
         "zkv-relay".into()
     }
 
-    fn load_spec(
-        &self,
-        id: &str,
-    ) -> std::result::Result<Box<dyn sc_service::ChainSpec + 'static>, String> {
+    fn load_spec(&self, id: &str) -> ChainSpecResult {
         Ok(match id {
             "" | "main" | "mainnet" | "zkverify" => {
                 Box::new(service::chain_spec::ZkvChainSpec::from_json_bytes(
@@ -79,9 +77,6 @@ impl SubstrateCli for Cli {
                 Box::new(service::chain_spec::volta_development_config()?)
             }
             "local" | "volta-local" => Box::new(service::chain_spec::volta_local_config()?),
-            "testnet_build" | "volta-staging" => {
-                Box::new(service::chain_spec::volta_staging_config()?)
-            }
             "test" | "testnet" | "volta" => {
                 Box::new(service::chain_spec::VoltaChainSpec::from_json_bytes(
                     &include_bytes!("../chain-specs/zkverify_volta.json")[..],
@@ -89,9 +84,6 @@ impl SubstrateCli for Cli {
             }
             "zkverify-dev" => Box::new(service::chain_spec::zkverify_development_config()?),
             "zkverify-local" => Box::new(service::chain_spec::zkverify_local_config()?),
-            "mainnet_build" | "zkverify-staging" => {
-                Box::new(service::chain_spec::zkverify_staging_config()?)
-            }
             path => Box::new(service::chain_spec::GenericChainSpec::from_json_file(
                 std::path::PathBuf::from(path),
             )?),

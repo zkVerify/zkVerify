@@ -13,7 +13,7 @@ workspace = true
 [dependencies]
 codec = { workspace = true, features = ["derive"] }
 test-runtime = { path = "../runtime" }
-volta-runtime = { workspace = true }
+zkv-runtime = { workspace = true }
 test-service = { path = "../service" }
 polkadot-primitives = { workspace = true }
 polkadot-node-subsystem = { workspace = true }
@@ -46,5 +46,5 @@ runtime-benchmarks = [
 	"sp-runtime/runtime-benchmarks",
 	"test-runtime/runtime-benchmarks",
 	"test-service/runtime-benchmarks",
-	"volta-runtime/runtime-benchmarks",
+	"zkv-runtime/runtime-benchmarks",
 ]

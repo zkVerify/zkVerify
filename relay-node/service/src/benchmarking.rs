@@ -34,26 +34,10 @@ macro_rules! identify_chain {
 		$generic_code:expr $(,)*
 	) => {
         match $chain {
-            Chain::ZkVerify => {
-                use zkv_runtime as runtime;
-
+            Chain::ZkVerify | Chain::Volta => {
                 let call = $generic_code;
 
-                Ok(zkv_sign_call(
-                    call,
-                    $nonce,
-                    $current_block,
-                    $period,
-                    $genesis,
-                    $signer,
-                ))
-            }
-            Chain::Volta => {
-                use volta_runtime as runtime;
-
-                let call = $generic_code;
-
-                Ok(volta_sign_call(
+                Ok(sign_call(
                     call,
                     $nonce,
                     $current_block,
@@ -114,8 +98,8 @@ impl frame_benchmarking_cli::ExtrinsicBuilder for RemarkBuilder {
             genesis,
             signer,
             {
-                runtime::RuntimeCall::System(
-                    runtime::SystemCall::remark { remark: vec![] }
+                zkv_runtime::RuntimeCall::System(
+                    zkv_runtime::SystemCall::remark { remark: vec![] }
                 )
             },
         }
@@ -167,70 +151,16 @@ impl frame_benchmarking_cli::ExtrinsicBuilder for TransferKeepAliveBuilder {
             genesis,
             signer,
             {
-                runtime::RuntimeCall::Balances(runtime::BalancesCall::transfer_keep_alive {
+                zkv_runtime::RuntimeCall::Balances(zkv_runtime::BalancesCall::transfer_keep_alive {
                     dest: _dest.into(),
-                    value: runtime::currency::EXISTENTIAL_DEPOSIT,
+                    value: zkv_runtime::currency::EXISTENTIAL_DEPOSIT,
                 })
             },
         }
     }
 }
 
-fn volta_sign_call(
-    call: volta_runtime::RuntimeCall,
-    nonce: u32,
-    current_block: u64,
-    period: u64,
-    genesis: sp_core::H256,
-    acc: sp_core::sr25519::Pair,
-) -> OpaqueExtrinsic {
-    use codec::Encode;
-    use sp_core::Pair;
-    use volta_runtime as runtime;
-
-    let tx_ext: runtime::TxExtension = (
-        frame_system::CheckNonZeroSender::<runtime::Runtime>::new(),
-        frame_system::CheckSpecVersion::<runtime::Runtime>::new(),
-        frame_system::CheckTxVersion::<runtime::Runtime>::new(),
-        frame_system::CheckGenesis::<runtime::Runtime>::new(),
-        frame_system::CheckMortality::<runtime::Runtime>::from(sp_runtime::generic::Era::mortal(
-            period,
-            current_block,
-        )),
-        frame_system::CheckNonce::<runtime::Runtime>::from(nonce),
-        frame_system::CheckWeight::<runtime::Runtime>::new(),
-        pallet_transaction_payment::ChargeTransactionPayment::<runtime::Runtime>::from(0),
-        frame_metadata_hash_extension::CheckMetadataHash::<runtime::Runtime>::new(false),
-    )
-        .into();
-
-    let payload = runtime::SignedPayload::from_raw(
-        call.clone(),
-        tx_ext.clone(),
-        (
-            (),
-            runtime::VERSION.spec_version,
-            runtime::VERSION.transaction_version,
-            genesis,
-            genesis,
-            (),
-            (),
-            (),
-            None,
-        ),
-    );
-
-    let signature = payload.using_encoded(|p| acc.sign(p));
-    runtime::UncheckedExtrinsic::new_signed(
-        call,
-        sp_runtime::AccountId32::from(acc.public()).into(),
-        polkadot_core_primitives::Signature::Sr25519(signature),
-        tx_ext,
-    )
-    .into()
-}
-
-fn zkv_sign_call(
+fn sign_call(
     call: zkv_runtime::RuntimeCall,
     nonce: u32,
     current_block: u64,

@@ -18,8 +18,9 @@ use alloc::borrow::Cow;
 
 runtime_version!("zkv-runtime");
 
-// Set the output address to start with ZK, and sometimes the third is v (since 17%)
-pub const SS58_PREFIX: u16 = 8741;
+pub const SS58_PREFIX: u16 = super::SS58_ZKV_PREFIX;
+
+pub const TOKEN_SYMBOL: &str = "VFY";
 
 pub const HYPERBRIDGE_DEST_STATE_MACHINE: Option<ismp::host::StateMachine> =
     Some(ismp::host::StateMachine::Polkadot(3367));

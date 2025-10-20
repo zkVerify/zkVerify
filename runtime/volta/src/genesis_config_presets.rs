@@ -44,56 +44,7 @@ fn session_keys(
     }
 }
 
-/// Configure initial storage state for FRAME modules.
-#[allow(clippy::too_many_arguments)]
-fn genesis(
-    initial_authorities: Vec<Ids>,
-    root_key: AccountId,
-    endowed_accounts: Vec<(AccountId, Balance)>,
-    stakers: Vec<Box<dyn StakerData>>,
-    min_validator_count: u32,
-    validator_count: u32,
-    max_validator_count: Option<u32>,
-    min_validator_bond: Balance,
-    min_nominator_bond: Balance,
-    parachains_host_configuration: HostConfiguration<BlockNumber>,
-) -> serde_json::Value {
-    serde_json::json!({
-        "balances": {
-            // Configure endowed accounts with initial balance.
-            "balances": endowed_accounts,
-        },
-        "babe": {
-            "epochConfig": Some(BABE_GENESIS_EPOCH_CONFIG),
-        },
-        "session": {
-            "keys": initial_authorities.iter()
-                .cloned()
-                .map(|(account, babe, grandpa, para, assign, auth)| { (account.clone(), account, session_keys(babe, grandpa, para, assign, auth)) })
-                .collect::<Vec<_>>(),
-        },
-        "staking": {
-            "minimumValidatorCount": min_validator_count,
-            "maxValidatorCount": max_validator_count,
-            "minValidatorBond": min_validator_bond,
-            "minNominatorBond": min_nominator_bond,
-            "validatorCount": validator_count,
-            "stakers": stakers.iter()
-                .map(StakerData::staker_data)
-                .collect::<Vec<_>>(),
-        },
-        "sudo": {
-            // Assign network admin rights.
-            "key": Some(root_key),
-        },
-        "configuration": {
-            "config": parachains_host_configuration,
-        },
-
-    })
-}
-
-fn test_parachains_host_configuration() -> HostConfiguration<BlockNumber> {
+fn parachains_host_configuration() -> HostConfiguration<BlockNumber> {
     use polkadot_primitives::{MAX_CODE_SIZE, MAX_POV_SIZE};
 
     HostConfiguration {
@@ -319,7 +270,7 @@ pub fn staging_config_genesis() -> Result<serde_json::Value, sp_core::crypto::Pu
         10 * THOUSANDS,
         // min nominator bond
         10 * VFY,
-        test_parachains_host_configuration(),
+        parachains_host_configuration(),
     ))
 }
 
@@ -381,7 +332,7 @@ pub fn local_config_genesis() -> serde_json::Value {
         0,
         // min nominator bond
         0,
-        test_parachains_host_configuration(),
+        parachains_host_configuration(),
     )
 }
 
@@ -453,7 +404,7 @@ pub fn development_config_genesis() -> serde_json::Value {
         0,
         // min nominator bond
         0,
-        test_parachains_host_configuration(),
+        parachains_host_configuration(),
     )
 }
 
@@ -477,4 +428,53 @@ pub fn get_preset(id: &sp_genesis_builder::PresetId) -> Option<Vec<u8>> {
             .expect("genesis cfg must be serializable. qed.")
             .into_bytes(),
     )
+}
+
+/// Configure initial storage state for FRAME modules.
+#[allow(clippy::too_many_arguments)]
+fn genesis(
+    initial_authorities: Vec<Ids>,
+    root_key: AccountId,
+    endowed_accounts: Vec<(AccountId, Balance)>,
+    stakers: Vec<Box<dyn StakerData>>,
+    min_validator_count: u32,
+    validator_count: u32,
+    max_validator_count: Option<u32>,
+    min_validator_bond: Balance,
+    min_nominator_bond: Balance,
+    parachains_host_configuration: HostConfiguration<BlockNumber>,
+) -> serde_json::Value {
+    serde_json::json!({
+        "balances": {
+            // Configure endowed accounts with initial balance.
+            "balances": endowed_accounts,
+        },
+        "babe": {
+            "epochConfig": Some(BABE_GENESIS_EPOCH_CONFIG),
+        },
+        "session": {
+            "keys": initial_authorities.iter()
+                .cloned()
+                .map(|(account, babe, grandpa, para, assign, auth)| { (account.clone(), account, session_keys(babe, grandpa, para, assign, auth)) })
+                .collect::<Vec<_>>(),
+        },
+        "staking": {
+            "minimumValidatorCount": min_validator_count,
+            "maxValidatorCount": max_validator_count,
+            "minValidatorBond": min_validator_bond,
+            "minNominatorBond": min_nominator_bond,
+            "validatorCount": validator_count,
+            "stakers": stakers.iter()
+                .map(StakerData::staker_data)
+                .collect::<Vec<_>>(),
+        },
+        "sudo": {
+            // Assign network admin rights.
+            "key": Some(root_key),
+        },
+        "configuration": {
+            "config": parachains_host_configuration,
+        },
+
+    })
 }

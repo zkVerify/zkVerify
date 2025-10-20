@@ -21,23 +21,28 @@ use tempfile::tempdir;
 
 mod common;
 
-/// `benchmark overhead` works for all dev runtimes.
-#[rstest]
-#[case::dev("dev")]
-#[case::volta("volta-dev")]
-#[case::zkverify("zkverify-dev")]
-fn benchmark_overhead_works(#[case] chain: &str) {
-    assert!(benchmark_overhead(chain).is_ok());
+cfg_if::cfg_if! {
+    if #[cfg(feature = "volta")] {
+        #[rstest]
+        #[case::dev("dev")]
+        #[case::volta("volta-dev")]
+        fn benchmark_overhead_works(#[case] chain: &str) {
+            assert!(benchmark_overhead(chain).is_ok());
+        }
+    } else {
+        #[rstest]
+        #[case::zkverify("zkverify-dev")]
+        fn benchmark_overhead_works(#[case] chain: &str) {
+            assert!(benchmark_overhead(chain).is_ok());
+        }
+    }
 }
-
 /// `benchmark overhead` rejects all non-dev runtimes.
 #[rstest]
 #[case::default("")]
 #[case::zkverify_staging("testnet_build")]
-#[case::volta_staging("volta-staging")]
 #[case::volta("volta")]
 #[case::zkverify_staging("mainnet_build")]
-#[case::zkverify_staging("zkverify-staging")]
 #[case::zkverify("mainnet")]
 #[case::zkverify("zkverify")]
 fn benchmark_overhead_rejects_non_dev_runtimes(#[case] chain: &str) {
