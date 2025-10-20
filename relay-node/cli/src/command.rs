@@ -74,16 +74,14 @@ impl SubstrateCli for Cli {
                 )?)
             }
             "dev" | "development" | "volta-dev" => {
-                Box::new(service::chain_spec::volta_development_config()?)
+                Box::new(service::chain_spec::development_config()?)
             }
-            "local" | "volta-local" => Box::new(service::chain_spec::volta_local_config()?),
+            "local" | "volta-local" => Box::new(service::chain_spec::local_config()?),
             "test" | "testnet" | "volta" => {
                 Box::new(service::chain_spec::VoltaChainSpec::from_json_bytes(
                     &include_bytes!("../chain-specs/zkverify_volta.json")[..],
                 )?)
             }
-            "zkverify-dev" => Box::new(service::chain_spec::zkverify_development_config()?),
-            "zkverify-local" => Box::new(service::chain_spec::zkverify_local_config()?),
             path => Box::new(service::chain_spec::GenericChainSpec::from_json_file(
                 std::path::PathBuf::from(path),
             )?),

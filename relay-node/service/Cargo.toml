@@ -11,12 +11,11 @@ description = "Utils to tie different ZkVerify Realy chain components together a
 workspace = true
 
 [dependencies]
-zkv-runtime = { workspace = true, features = ["std"] }
+zkv-runtime = { workspace = true, features = ["std", "volta"] }
 zkv-benchmarks = { workspace = true }
 native = { workspace = true, features = ["std"] }
 aggregate-rpc = { workspace = true, features = ["std"] }
 vk-hash = { workspace = true }
-cfg-if = "1.0"
 
 sc-authority-discovery = { workspace = true }
 sc-consensus-babe = { workspace = true }
@@ -222,4 +221,3 @@ fast-runtime = ["zkv-runtime/fast-runtime"]
 malus = [ "full-node" ]
 runtime-metrics = [ "polkadot-runtime-parachains/runtime-metrics" ]
 metadata-hash = ["zkv-runtime/metadata-hash"]
-volta = ["zkv-runtime/volta"]

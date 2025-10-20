@@ -73,4 +73,3 @@ jemalloc-allocator = [
 	"polkadot-node-core-pvf/jemalloc-allocator",
 	"polkadot-overseer/jemalloc-allocator",
 ]
-volta = ["zkv-cli/volta"]

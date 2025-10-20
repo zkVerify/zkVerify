@@ -22580,7 +22580,6 @@ dependencies = [
 name = "zkv-cli"
 version = "11.0.0"
 dependencies = [
- "cfg-if",
  "clap",
  "frame-benchmarking-cli",
  "futures",
@@ -22772,7 +22771,6 @@ dependencies = [
  "aggregate-rpc",
  "assert_matches",
  "async-trait",
- "cfg-if",
  "env_logger",
  "frame-benchmarking",
  "frame-benchmarking-cli",

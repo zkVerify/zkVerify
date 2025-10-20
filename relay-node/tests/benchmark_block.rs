@@ -34,7 +34,11 @@ use tempfile::tempdir;
 
 pub mod common;
 
-async fn _benchmark_block_works(chain: &str) {
+#[rstest]
+#[case::dev("dev")]
+#[case::volta("volta-dev")]
+#[tokio::test]
+async fn benchmark_block_works(#[case] chain: &str) {
     run_with_timeout(Duration::from_secs(10 * 60), async move {
         let tmp_dir = tempdir().expect("could not create a temp dir");
         let base_path = tmp_dir.path();
@@ -45,25 +49,6 @@ async fn _benchmark_block_works(chain: &str) {
         benchmark_block(chain, base_path, 1).unwrap();
     })
     .await
-}
-
-cfg_if::cfg_if! {
-    if #[cfg(feature = "volta")] {
-        #[rstest]
-        #[case::dev("dev")]
-        #[case::volta("volta-dev")]
-        #[tokio::test]
-        async fn benchmark_block_works(#[case] chain: &str) {
-            _benchmark_block_works(chain).await
-        }
-    } else {
-        #[rstest]
-        #[case::zkverify("zkverify-dev")]
-        #[tokio::test]
-        async fn benchmark_block_works(#[case] chain: &str) {
-            _benchmark_block_works(chain).await
-        }
-    }
 }
 
 /// Builds a chain with one block for the given runtime and base path.

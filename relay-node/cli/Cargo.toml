@@ -18,7 +18,6 @@ wasm-opt = false
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-cfg-if = "1.0"
 clap = { workspace = true, features = ["derive"], optional = true }
 log = { workspace = true }
 thiserror = "1.0.48"
@@ -46,7 +45,7 @@ sc-storage-monitor = { workspace = true }
 zkv-benchmarks = { workspace = true }
 native = { workspace = true, features = ["std"] }
 
-zkv-runtime = { workspace = true, features = ["std"] }
+zkv-runtime = { workspace = true, features = ["std", "volta"] }
 
 [build-dependencies]
 substrate-build-script-utils = { workspace = true }
@@ -85,4 +84,3 @@ runtime-metrics = [
 	"polkadot-node-metrics/runtime-metrics",
 	"service/runtime-metrics",
 ]
-volta = ["zkv-runtime/volta", "service/volta"]
