@@ -90,7 +90,7 @@ async function run(nodeName, networkInfo, _args) {
         }
     ];
 
-    // Verifiers to be included only if the network is Volta.
+    // Verifiers exclusive to Volta.
     if (await isVolta(api)) {
         verifiers.push({
             name: "Ezkl",
