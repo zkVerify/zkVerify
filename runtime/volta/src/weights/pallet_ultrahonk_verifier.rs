@@ -18,7 +18,7 @@
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 46.2.0
 //! DATE: 2025-10-21, STEPS: `50`, REPEAT: `20`, LOW RANGE: `[]`, HIGH RANGE: `[]`
 //! WORST CASE MAP SIZE: `1000000`
-//! HOSTNAME: `64cf05b73c8a`, CPU: `AMD Ryzen 7 7700 8-Core Processor`
+//! HOSTNAME: `289e1dcf5dbe`, CPU: `AMD Ryzen 7 7700 8-Core Processor`
 //! WASM-EXECUTION: `Compiled`, CHAIN: `None`, DB CACHE: `1024`
 
 // Executed Command:
@@ -43,7 +43,7 @@
 // /data/benchmark/runtime/volta/src/weights/pallet_ultrahonk_verifier.rs
 // --template
 // /data/benchmark/relay-node/benchmarks/zkv-deploy-weight-template.hbs
-// --base-path=/tmp/tmp.LtGvvN4rNm
+// --base-path=/tmp/tmp.QSOB8byyoR
 
 #![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
@@ -63,15 +63,15 @@ impl<T: frame_system::Config> pallet_ultrahonk_verifier::WeightInfo for ZKVWeigh
         // Proof Size summary in bytes:
         //  Measured:  `0`
         //  Estimated: `0`
-        // Minimum execution time: 3_309_888_000 picoseconds.
-        Weight::from_parts(3_367_053_000, 0)
+        // Minimum execution time: 3_327_196_000 picoseconds.
+        Weight::from_parts(3_363_453_000, 0)
     }
     fn verify_proof_plain_32() -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `0`
         //  Estimated: `0`
-        // Minimum execution time: 3_048_696_000 picoseconds.
-        Weight::from_parts(3_076_547_000, 0)
+        // Minimum execution time: 3_052_494_000 picoseconds.
+        Weight::from_parts(3_080_978_000, 0)
     }
     /// Storage: `SettlementUltrahonkPallet::Vks` (r:1 w:0)
     /// Proof: `SettlementUltrahonkPallet::Vks` (`max_values`: None, `max_size`: Some(1800), added: 4275, mode: `MaxEncodedLen`)
@@ -79,23 +79,23 @@ impl<T: frame_system::Config> pallet_ultrahonk_verifier::WeightInfo for ZKVWeigh
         // Proof Size summary in bytes:
         //  Measured:  `1949`
         //  Estimated: `5265`
-        // Minimum execution time: 5_410_000 picoseconds.
-        Weight::from_parts(5_801_000, 5265)
+        // Minimum execution time: 5_289_000 picoseconds.
+        Weight::from_parts(5_680_000, 5265)
             .saturating_add(T::DbWeight::get().reads(1_u64))
     }
     fn validate_vk() -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `0`
         //  Estimated: `0`
-        // Minimum execution time: 16_640_000 picoseconds.
-        Weight::from_parts(16_821_000, 0)
+        // Minimum execution time: 16_862_000 picoseconds.
+        Weight::from_parts(17_032_000, 0)
     }
     fn compute_statement_hash() -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `0`
         //  Estimated: `0`
-        // Minimum execution time: 8_826_000 picoseconds.
-        Weight::from_parts(8_957_000, 0)
+        // Minimum execution time: 8_707_000 picoseconds.
+        Weight::from_parts(8_866_000, 0)
     }
     /// Storage: `SettlementUltrahonkPallet::Disabled` (r:1 w:0)
     /// Proof: `SettlementUltrahonkPallet::Disabled` (`max_values`: Some(1), `max_size`: Some(1), added: 496, mode: `MaxEncodedLen`)
@@ -109,8 +109,8 @@ impl<T: frame_system::Config> pallet_ultrahonk_verifier::WeightInfo for ZKVWeigh
         // Proof Size summary in bytes:
         //  Measured:  `109`
         //  Estimated: `5265`
-        // Minimum execution time: 63_277_000 picoseconds.
-        Weight::from_parts(64_249_000, 5265)
+        // Minimum execution time: 63_088_000 picoseconds.
+        Weight::from_parts(64_681_000, 5265)
             .saturating_add(T::DbWeight::get().reads(4_u64))
             .saturating_add(T::DbWeight::get().writes(3_u64))
     }
@@ -124,8 +124,8 @@ impl<T: frame_system::Config> pallet_ultrahonk_verifier::WeightInfo for ZKVWeigh
         // Proof Size summary in bytes:
         //  Measured:  `2114`
         //  Estimated: `5265`
-        // Minimum execution time: 40_164_000 picoseconds.
-        Weight::from_parts(40_564_000, 5265)
+        // Minimum execution time: 39_844_000 picoseconds.
+        Weight::from_parts(40_556_000, 5265)
             .saturating_add(T::DbWeight::get().reads(3_u64))
             .saturating_add(T::DbWeight::get().writes(3_u64))
     }
