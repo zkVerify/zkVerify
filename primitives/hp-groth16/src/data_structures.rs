@@ -29,7 +29,7 @@ pub const G1_MAX_SIZE: u32 = 96;
 /// Maximum sizes for G2 in bytes
 pub const G2_MAX_SIZE: u32 = G1_MAX_SIZE * 2;
 
-/// Len of encoded vec with a give element size
+/// Len of encoded vec with a given element size
 pub fn vec_max_encoded_len(element_size: usize, len: u32) -> usize {
     codec::Compact(len).encoded_size() + element_size * len as usize
 }

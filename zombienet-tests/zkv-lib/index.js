@@ -26,6 +26,9 @@ zkvTypes = {
     config: "Plonky2Config",
     bytes: "Bytes"
   },
+  EvklVK: {
+    vkBytes: "Bytes"
+  },
   FflonkVk: {
     power: "u8",
     k1: "U256",
@@ -67,6 +70,16 @@ zkvRpc = {
     }
   },
   vk_hash: {
+    ezkl: {
+      description: 'Get the hash of an Ezkl verification key artifact',
+      params: [
+        {
+          name: 'vk',
+          type: 'EvklVK',
+        },
+      ],
+      type: 'H256'
+    },
     fflonk: {
       description: 'Get the hash of a Fflonk verification key',
       params: [
@@ -384,7 +397,7 @@ async function _handleTransactionLifecycle(api, sendFunction, blockUntil, filter
 async function submitExtrinsic(api, extrinsic, signer, blockUntil, filter) {
   // Create a function that encapsulates the `signAndSend` call.
   const sendFunction = (callback) => extrinsic.signAndSend(signer, callback);
-  
+
   // Delegate all the hard work to the handler.
   return _handleTransactionLifecycle(api, sendFunction, blockUntil, filter);
 }
@@ -393,7 +406,7 @@ async function submitExtrinsic(api, extrinsic, signer, blockUntil, filter) {
 async function submitExtrinsicUnsigned(api, extrinsic, blockUntil, filter) {
   // Create a function that encapsulates the `send` call.
   const sendFunction = (callback) => extrinsic.send(callback);
-  
+
   // Delegate all the hard work to the handler.
   return _handleTransactionLifecycle(api, sendFunction, blockUntil, filter);
 }
@@ -409,4 +422,13 @@ exports.getBalance = async (user) => {
 
 async function getBalance(user) {
   return (await api.query.system.account(user.address))["data"]["free"]
+}
+
+exports.isVolta = async (api) => {
+  return await isVolta(api);
+}
+
+async function isVolta(api) {
+  let chain = await api.rpc.system.chain();
+  return chain.toString().startsWith("Volta ");
 }

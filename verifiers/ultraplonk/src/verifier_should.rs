@@ -99,7 +99,7 @@ mod reject {
         let proof = VALID_PROOF.to_vec();
 
         let mut invalid_pubs = public_input();
-        while (invalid_pubs.len() as u32) < <MockRuntime as Config>::MaxPubs::get() {
+        while (invalid_pubs.len() as u32) <= <MockRuntime as Config>::MaxPubs::get() {
             invalid_pubs.push(public_input()[0]);
         }
 
