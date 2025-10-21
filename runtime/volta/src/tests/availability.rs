@@ -282,7 +282,7 @@ fn pallet_ultrahonk() {
         assert!(SettlementUltrahonkPallet::submit_proof(
             RuntimeOrigin::signed(dummy_origin),
             VkOrHash::Vk(dummy_vk.into()),
-            dummy_proof.into(),
+            dummy_proof,
             dummy_pubs.into(),
             None,
         )
