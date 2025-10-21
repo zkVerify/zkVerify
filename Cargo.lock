@@ -14582,6 +14582,7 @@ dependencies = [
  "postcard",
  "risc0-zkp 2.0.2",
  "risc0-zkvm-platform 2.2.1",
+<<<<<<< HEAD
  "semver 1.0.26",
  "serde",
  "tracing",
@@ -14603,6 +14604,8 @@ dependencies = [
  "risc0-zkp 3.0.2",
  "risc0-zkvm-platform 2.2.1",
  "ruint",
+=======
+>>>>>>> 9b63aaf (Commit lockfile)
  "semver 1.0.26",
  "serde",
  "tracing",
@@ -14766,6 +14769,7 @@ dependencies = [
  "rand_core 0.6.4",
  "risc0-core 2.0.0",
  "risc0-zkvm-platform 2.2.1",
+<<<<<<< HEAD
  "serde",
  "sha2 0.10.9",
  "stability",
@@ -14791,6 +14795,8 @@ dependencies = [
  "rand_core 0.9.3",
  "risc0-core 3.0.0",
  "risc0-zkvm-platform 2.2.1",
+=======
+>>>>>>> 9b63aaf (Commit lockfile)
  "serde",
  "sha2 0.10.9",
  "stability",
@@ -20751,7 +20757,7 @@ dependencies = [
 [[package]]
 name = "ultrahonk-no-std"
 version = "0.1.0"
-source = "git+https://github.com/zkVerify/ultrahonk_verifier.git?tag=v0.2.0#ada0943dddbb875f8c603c9673e34a0f6c588029"
+source = "git+https://github.com/zkVerify/ultrahonk_verifier.git?tag=v0.2.1#4d2c8ca9b32e94e58f3918fc87b456de4dbfcea3"
 dependencies = [
  "ark-bn254 0.5.0",
  "ark-bn254-ext",
