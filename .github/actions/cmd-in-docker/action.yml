@@ -19,7 +19,7 @@ inputs:
     description: 'Docker image name to use for the command(s) to run in'
     required: false
     type: string
-    default: 'zencash/sc-ci-base'
+    default: 'horizenlabs/ci-base'
   image_tag:
     description: 'Docker image tag to use for the command(s) to run in'
     required: false
