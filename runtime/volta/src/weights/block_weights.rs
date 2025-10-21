@@ -14,8 +14,8 @@
 // limitations under the License.
 
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 46.2.0
-//! DATE: 2025-10-15 (Y/M/D)
-//! HOSTNAME: `6f65929b14f0`, CPU: `AMD Ryzen 7 7700 8-Core Processor`
+//! DATE: 2025-10-21 (Y/M/D)
+//! HOSTNAME: `1ae5520e363f`, CPU: `AMD Ryzen 7 7700 8-Core Processor`
 //!
 //! SHORT-NAME: `block`, LONG-NAME: `BlockExecution`, RUNTIME: `Development`
 //! WARMUPS: `10`, REPEAT: `100`
@@ -31,7 +31,7 @@
 //   --header=/data/benchmark/HEADER-APACHE2
 //   --warmup=10
 //   --repeat=100
-//   --base-path=/tmp/tmp.aPl9slxYIh
+//   --base-path=/tmp/tmp.LtGvvN4rNm
 
 use sp_core::parameter_types;
 use sp_weights::{constants::WEIGHT_REF_TIME_PER_NANOS, Weight};
@@ -41,17 +41,17 @@ parameter_types! {
         /// Calculated by multiplying the *Average* with `1.0` and adding `0`.
         ///
         /// Stats nanoseconds:
-        ///   Min, Max: 422_830, 452_836
-        ///   Average:  431_175
-        ///   Median:   431_245
-        ///   Std-Dev:  4483.95
+        ///   Min, Max: 474_965, 495_994
+        ///   Average:  483_881
+        ///   Median:   483_872
+        ///   Std-Dev:  4349.65
         ///
         /// Percentiles nanoseconds:
-        ///   99th: 438_770
-        ///   95th: 437_216
-        ///   75th: 434_322
+        ///   99th: 495_363
+        ///   95th: 490_644
+        ///   75th: 486_947
         pub const BlockExecutionWeight: Weight =
-                Weight::from_parts(WEIGHT_REF_TIME_PER_NANOS.saturating_mul(431_175), 0);
+                Weight::from_parts(WEIGHT_REF_TIME_PER_NANOS.saturating_mul(483_881), 0);
 }
 
 #[cfg(test)]
