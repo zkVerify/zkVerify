@@ -44,14 +44,7 @@ BENCH_SH="${BENCH_SH:-${SOURCE_ROOT}/scripts/bench.sh}"
 # Define the error file.
 ERR_FILE="${ERR_FILE:-${SOURCE_ROOT}/benchmarking_errors.txt}"
 
-if [ "${NETWORK}" == "zkverify" ]; then
-  RUNTIME_CRATE="zkv-runtime"
-elif [ "${NETWORK}" == "volta" ]; then
-  RUNTIME_CRATE="volta-runtime"
-else
-  echo "[-] Unsupported NETWORK=${NETWORK}. Supported: zkverify, volta"
-  exit 1
-fi
+RUNTIME_CRATE="zkv-runtime"
 
 
 if [ "${USE_DOCKER}" = "false" ]; then
@@ -97,7 +90,7 @@ DEFAULT_DEPLOY_WEIGHT_TEMPLATE_XCM="${PROJECT_ROOT}/relay-node/benchmarks/zkv-de
 WEIGTH_TEMPLATE="${WEIGTH_TEMPLATE:-${DEFAULT_DEPLOY_WEIGHT_TEMPLATE}}"
 WEIGTH_TEMPLATE_XCM="${WEIGTH_TEMPLATE_XCM:-${DEFAULT_DEPLOY_WEIGHT_TEMPLATE_XCM}}"
 
-WEIGHTS_FOLDER="${WEIGHTS_FOLDER:-${PROJECT_ROOT}/runtime/${NETWORK}/src/weights}"
+WEIGHTS_FOLDER="${WEIGHTS_FOLDER:-${PROJECT_ROOT}/runtime/zkverify/src/weights}"
 
 CODE_HEADER="${PROJECT_ROOT}/HEADER-APACHE2"
 
@@ -198,7 +191,7 @@ if [ "${ENABLE_OVERHEAD:-}" = "true" ]; then
   # shellcheck disable=SC2086
   OUTPUT="$(
     ${ZKV_NODE} benchmark overhead \
-    --chain=${NETWORK}-dev \
+    --chain=dev \
     --weight-path="${WEIGHTS_FOLDER}" \
     --header="${CODE_HEADER}" \
     --warmup=10 \

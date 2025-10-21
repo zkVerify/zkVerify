@@ -46,6 +46,19 @@ if [ "${tag_runtime}" != "${runtime}" ]; then
   fn_die "ERROR: Runtime in the tag (${tag_runtime}) does not match the expected runtime (${runtime}). Exiting ..."
 fi
 
+function git_tag_ref {
+  local tag="$1"
+  git show-ref -s "${tag}"
+}
+
+if [[ "${runtime}" = "zkverify" && -z "${version_ext}" ]]; then
+  log_info "zkverify production release tag should be the same as volta version tag for the same version."
+  volta_tag="rt-volta-${version}"
+  if [ "$(git_tag_ref "${github_tag}")" != "$(git_tag_ref "${volta_tag}")" ]; then
+    fn_die "ERROR: zkverify production release tag (${github_tag}) does not match the volta tag (${volta_tag}). Exiting ..."
+  fi
+fi
+
 # Checking if it is a release build
 if git branch -r --contains "${github_tag}" | grep -xqE ". origin\/${release_branch}\/rt-${runtime}\/${version_str}$"; then
   IS_A_RELEASE="true"

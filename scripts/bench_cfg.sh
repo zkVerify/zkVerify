@@ -1,7 +1,6 @@
 DEFAULT_BM_STEPS=50
 DEFAULT_BM_REPEAT=20
 DEFAULT_BM_HEAP_PAGES=4096
-DEFAULT_NETWORK="zkverify"
 
 # The following line ensure we know the project root
 PROJECT_ROOT=${PROJECT_ROOT:-$(git rev-parse --show-toplevel)}
@@ -11,4 +10,3 @@ ZKV_RUNTIME=${ZKV_RUNTIME:-"${PROJECT_ROOT}/target/production/wbuild/zkv-runtime
 BM_STEPS=${BM_STEPS:-${DEFAULT_BM_STEPS}}
 BM_REPEAT=${BM_REPEAT:-${DEFAULT_BM_REPEAT}}
 BM_HEAP_PAGES=${BM_HEAP_PAGES:-${DEFAULT_BM_HEAP_PAGES}}
-NETWORK=${NETWORK:-${DEFAULT_NETWORK}}

@@ -55,22 +55,24 @@ runs:
       run: |
         echo "Building relay chain Docker image"
         runtime_build_arg=""
+        features=${{ inputs.features }}
         if [ "${{ inputs.type }}" = "node" ]; then
           dockerfile="zkv-relay.Dockerfile"
           runtime_build_arg=""
         elif [ "${{ inputs.type }}" = "zkverify" ]; then
           dockerfile="rt-build.Dockerfile"
-          runtime_build_arg='--build-arg "RUNTIME_CRATE=zkv-runtime"'
+          runtime_build_arg='--build-arg "RUNTIME_NAME=zkverify"'
         elif [ "${{ inputs.type }}" = "volta" ]; then
           dockerfile="rt-build.Dockerfile"
-          runtime_build_arg='--build-arg "RUNTIME_CRATE=volta-runtime"'
+          runtime_build_arg='--build-arg "RUNTIME_NAME=volta"'
+          features="${features},volta"
         else 
           echo "Invalid type specified: ${{ inputs.type }}. Valid values are: [node|zkverify|volta]"
           exit 1
         fi
-        ${{inputs.dry_run}} && echo "*********************** Dry run mode enabled, skipping Docker build [${dockerfile},'${runtime_build_arg}'] . ***********************"
+        ${{inputs.dry_run}} && echo "*********************** Dry run mode enabled, skipping Docker build [${dockerfile},'${runtime_build_arg}',features='${features}'] . ***********************"
         ${{inputs.dry_run}} || docker build --build-arg "PROFILE=${{ inputs.profile }}" \
-          --build-arg "FEATURES=${{ inputs.features }}" \
+          --build-arg "FEATURES=${features}" \
           ${runtime_build_arg} \
           -f "docker/dockerfiles/${dockerfile}" \
           -t ${{ inputs.docker_hub_org }}/${{ inputs.docker_image_name }}${{ inputs.docker_image_suffix }} .

@@ -113,8 +113,8 @@ jobs:
       - name: Upload runtime artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: runtimes
-          path: ./*.compact.compressed.wasm
+          name: runtime
+          path: ./zkv-runtime.compact.compressed.wasm
           retention-days: 7
           overwrite: true
 
@@ -132,7 +132,7 @@ jobs:
       - name: Retrieve saved runtimes wasm
         uses: actions/download-artifact@v4
         with:
-          name: runtimes
+          name: runtime
           path: wasm
 
       - name: Create Release

@@ -22,10 +22,19 @@ jobs:
           cache_key: 'unit-test'
           lld_install: 'yes'
 
-      - name: Cargo unit test runtimes without features
+      - name: Cargo unit test runtime without features (zkverify flavor)
         uses: ./.github/actions/cmd-in-docker
         with:
-          command: "cargo test --lib -p zkv-runtime -p volta-runtime --no-fail-fast --release 2>&1 | tee -a unit_test_output.txt"
+          command: "cargo test --lib -p zkv-runtime --no-fail-fast --release 2>&1 | tee -a unit_test_output.txt"
+          use_cache: 'yes'
+          cache_key: 'unit-test'
+          lld_install: 'yes'
+          skip_wasm_build: 'yes'
+
+      - name: Cargo unit test runtimes with volta feature (volta flavor)
+        uses: ./.github/actions/cmd-in-docker
+        with:
+          command: "cargo test --lib -p zkv-runtime --no-fail-fast --release --features volta 2>&1 | tee -a unit_test_output.txt"
           use_cache: 'yes'
           cache_key: 'unit-test'
           lld_install: 'yes'
