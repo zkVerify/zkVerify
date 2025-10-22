@@ -26,7 +26,7 @@ zkvTypes = {
     config: "Plonky2Config",
     bytes: "Bytes"
   },
-  EvklVK: {
+  EzklVK: {
     vkBytes: "Bytes"
   },
   FflonkVk: {
@@ -75,7 +75,7 @@ zkvRpc = {
       params: [
         {
           name: 'vk',
-          type: 'EvklVK',
+          type: 'EzklVK',
         },
       ],
       type: 'H256'
