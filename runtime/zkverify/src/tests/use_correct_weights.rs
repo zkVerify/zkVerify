@@ -320,7 +320,9 @@ fn pallet_transaction_payment() {
 
 mod parachains {
     use super::*;
-    use crate::parachains::*;
+    use polkadot_runtime_parachains::{
+        configuration, coretime, disputes, hrmp, inclusion, initializer, paras, paras_inherent,
+    };
 
     #[test]
     fn configuration() {
@@ -399,10 +401,10 @@ mod parachains {
 
     #[test]
     fn slashing() {
-        use slashing::WeightInfo;
+        use disputes::{slashing, slashing::WeightInfo};
 
         assert_eq!(
-            <<Runtime as slashing::Config>::WeightInfo as slashing::WeightInfo>::report_dispute_lost(12),
+            <<Runtime as slashing::Config>::WeightInfo as WeightInfo>::report_dispute_lost(12),
             crate::weights::parachains::slashing::ZKVWeight::<Runtime>::report_dispute_lost(12)
         )
     }

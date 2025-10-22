@@ -16,11 +16,10 @@
 //! This module tests the correct computation of rewards for validators.
 
 use super::*;
-use crate::{payout::*, AccountId, Balance, Balances, Perbill, Runtime, Treasury, VFY};
-use frame_support::traits::fungible::Balanced;
-use frame_support::traits::OnUnbalanced;
+use crate::{payout_conf::*, AccountId, Balance, Balances, Perbill, Runtime, Treasury, VFY};
+use frame_support::traits::{fungible::Balanced, OnUnbalanced};
 use pallet_staking::EraPayout;
-use sp_runtime::traits::Convert;
+use sp_runtime::{traits::Convert, Percent};
 
 #[test]
 fn check_params_sanity() {
@@ -30,8 +29,9 @@ fn check_params_sanity() {
         "too low staking target"
     );
     // base inflation is not too high
-    assert!(
-        InflationBase::get() * 1000u64 == 25u64, // 2.5%
+    assert_eq!(
+        InflationBase::get() * 1000u64,
+        25u64,
         "unexpected base inflation"
     );
 }

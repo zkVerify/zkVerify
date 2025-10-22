@@ -16,7 +16,10 @@
 
 #![allow(clippy::type_complexity)]
 
-use crate::*;
+use crate::{
+    currency::{Balance, VFY},
+    types::{AccountId, Signature},
+};
 use alloc::{boxed::Box, format, vec::Vec};
 use polkadot_primitives::{AssignmentId, AuthorityDiscoveryId, ValidatorId};
 use sp_consensus_babe::AuthorityId as BabeId;
@@ -135,7 +138,6 @@ pub struct ValidatorData {
     pub account: FundedAccount,
     ///  Bonded data
     bonded: Balance,
-
     babe_id: BabeId,
     grandpa_id: GrandpaId,
     validator_id: ValidatorId,
@@ -190,6 +192,7 @@ impl ValidatorData {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Clone)]
 pub struct NominatorData {
     /// The account-id sr25519 public key

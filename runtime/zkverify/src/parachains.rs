@@ -17,44 +17,31 @@
 //! FIXME: this configuration is meant for testing only, and MUST not deployed to a production
 //! network without proper assessment.
 
-use frame_support::{
-    traits::{ProcessMessage, ProcessMessageError},
-    weights::WeightMeter,
+use crate::{
+    currency::Balance, weights, xcm_config, AccountId, Babe, Balances, BlockNumber, BlockWeights,
+    Coretime, Get, Historical, KeyOwnerProofSystem, KeyTypeId, MaxAuthorities, MessageQueue,
+    Offences, PalletId, ParaInclusion, ParachainsAssignmentProvider, ParasDisputes, ParasSlashing,
+    Perbill, ReportLongevity, Runtime, RuntimeEvent, RuntimeOrigin, Session, Weight, XcmPallet,
 };
 use frame_system::EnsureRoot;
+use inclusion::AggregateMessageOrigin;
 use polkadot_primitives::ValidatorId;
+use sp_core::parameter_types;
+use sp_runtime::{
+    traits::AccountIdConversion, transaction_validity::TransactionPriority, FixedU128, Percent,
+};
 use xcm::latest::{InteriorLocation, Junction};
 
 pub use polkadot_runtime_parachains::{
     assigner_coretime as parachains_assigner_coretime, configuration,
-    configuration::ActiveConfigHrmpChannelSizeAndCapacityRatio,
-    coretime, disputes,
-    disputes::slashing,
-    dmp as parachains_dmp, hrmp, inclusion, initializer, on_demand, origin as parachains_origin,
-    paras, paras_inherent, reward_points as parachains_reward_points,
-    runtime_api_impl::{
-        v11 as parachains_runtime_api_impl, vstaging as parachains_staging_runtime_api_impl,
-    },
+    configuration::ActiveConfigHrmpChannelSizeAndCapacityRatio, coretime, disputes,
+    disputes::slashing, dmp as parachains_dmp, hrmp, inclusion, initializer, on_demand,
+    origin as parachains_origin, paras, paras_inherent, reward_points as parachains_reward_points,
     scheduler as parachains_scheduler, session_info as parachains_session_info,
     shared as parachains_shared,
 };
 
-pub use polkadot_runtime_common::{paras_registrar, paras_sudo_wrapper, slots, traits::Registrar};
-
-use super::{
-    currency::Balance, weights, xcm_config, AccountId, Babe, Balances, BlockNumber, BlockWeights,
-    Coretime, Historical, KeyOwnerProofSystem, KeyTypeId, MaxAuthorities, MessageQueue, Offences,
-    ParaInclusion, ParachainsAssignmentProvider, ParasDisputes, ParasSlashing, Perbill,
-    ReportLongevity, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, Session, Weight,
-};
-use sp_runtime::transaction_validity::TransactionPriority;
-
-use crate::XcmPallet;
-use crate::{Get, PalletId};
-use inclusion::AggregateMessageOrigin;
-use sp_core::parameter_types;
-use sp_runtime::traits::AccountIdConversion;
-use sp_runtime::{FixedU128, Percent};
+pub use polkadot_runtime_common::{paras_registrar, paras_sudo_wrapper, slots};
 
 #[cfg(feature = "fast-runtime")]
 pub const TIMESLICE_PERIOD: u32 = 20;
@@ -71,8 +58,8 @@ parameter_types! {
 impl on_demand::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type Currency = Balances;
-    type TrafficDefaultValue = OnDemandTrafficDefaultValue;
     type WeightInfo = weights::parachains::on_demand::ZKVWeight<Runtime>;
+    type TrafficDefaultValue = OnDemandTrafficDefaultValue;
     type MaxHistoricalRevenue = MaxHistoricalRevenue;
     type PalletId = OnDemandPalletId;
 }
@@ -82,9 +69,9 @@ impl parachains_assigner_coretime::Config for Runtime {}
 impl initializer::Config for Runtime {
     type Randomness = pallet_babe::RandomnessFromOneEpochAgo<Runtime>;
     type ForceOrigin = EnsureRoot<AccountId>;
-    type WeightInfo = weights::parachains::initializer::ZKVWeight<Runtime>;
-
     type CoretimeOnNewSession = Coretime;
+
+    type WeightInfo = weights::parachains::initializer::ZKVWeight<Runtime>;
 }
 
 impl disputes::Config for Runtime {
@@ -95,13 +82,13 @@ impl disputes::Config for Runtime {
 }
 
 impl slashing::Config for Runtime {
-    type KeyOwnerProofSystem = Historical;
     type KeyOwnerProof =
         <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(KeyTypeId, ValidatorId)>>::Proof;
     type KeyOwnerIdentification = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(
         KeyTypeId,
         ValidatorId,
     )>>::IdentificationTuple;
+    type KeyOwnerProofSystem = Historical;
     type HandleReports =
         slashing::SlashingReportHandler<Self::KeyOwnerIdentification, Offences, ReportLongevity>;
     type WeightInfo = weights::parachains::slashing::ZKVWeight<Runtime>;
@@ -115,11 +102,10 @@ parameter_types! {
 }
 
 impl hrmp::Config for Runtime {
-    type RuntimeOrigin = RuntimeOrigin;
     type RuntimeEvent = RuntimeEvent;
+    type RuntimeOrigin = RuntimeOrigin;
     type ChannelManager = EnsureRoot<AccountId>;
     type Currency = Balances;
-    type WeightInfo = weights::parachains::hrmp::ZKVWeight<Runtime>;
     // Use the `HrmpChannelSizeAndCapacityWithSystemRatio` ratio from the actual active
     // `HostConfiguration` configuration for `hrmp_channel_max_message_size` and
     // `hrmp_channel_max_capacity`.
@@ -128,6 +114,7 @@ impl hrmp::Config for Runtime {
         HrmpChannelSizeAndCapacityWithSystemRatio,
     >;
     type VersionWrapper = XcmPallet;
+    type WeightInfo = weights::parachains::hrmp::ZKVWeight<Runtime>;
 }
 
 impl paras_inherent::Config for Runtime {
@@ -167,11 +154,11 @@ parameter_types! {
 impl paras::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type UnsignedPriority = ParasUnsignedPriority;
-    type QueueFootprinter = ParaInclusion;
     type NextSessionRotation = Babe;
+    type QueueFootprinter = ParaInclusion;
     type OnNewHead = crate::Registrar;
-    type AssignCoretime = ParachainsAssignmentProvider;
     type WeightInfo = weights::parachains::paras::ZKVWeight<Runtime>;
+    type AssignCoretime = ParachainsAssignmentProvider;
 }
 
 parameter_types! {
@@ -186,43 +173,50 @@ parameter_types! {
     pub const MessageQueueMaxStale: u32 = 8;
 }
 
-/// Message processor to handle any messages that were enqueued into the `MessageQueue` pallet.
-pub struct MessageProcessor;
+#[cfg(not(feature = "runtime-benchmarks"))]
+mod message_processor {
+    use super::*;
+    use crate::RuntimeCall;
+    use frame_support::traits::{ProcessMessage, ProcessMessageError};
+    use sp_weights::WeightMeter;
 
-impl ProcessMessage for MessageProcessor {
-    type Origin = AggregateMessageOrigin;
+    /// Message processor to handle any messages that were enqueued into the `MessageQueue` pallet.
+    pub struct MessageProcessor;
 
-    fn process_message(
-        message: &[u8],
-        origin: Self::Origin,
-        meter: &mut WeightMeter,
-        id: &mut [u8; 32],
-    ) -> Result<bool, ProcessMessageError> {
-        let para = match origin {
-            AggregateMessageOrigin::Ump(inclusion::UmpQueueId::Para(para)) => para,
-        };
-        xcm_builder::ProcessXcmMessage::<
-            Junction,
-            xcm_executor::XcmExecutor<xcm_config::XcmConfig>,
-            RuntimeCall,
-        >::process_message(message, Junction::Parachain(para.into()), meter, id)
+    impl ProcessMessage for MessageProcessor {
+        type Origin = AggregateMessageOrigin;
+
+        fn process_message(
+            message: &[u8],
+            origin: Self::Origin,
+            meter: &mut WeightMeter,
+            id: &mut [u8; 32],
+        ) -> Result<bool, ProcessMessageError> {
+            let para = match origin {
+                AggregateMessageOrigin::Ump(inclusion::UmpQueueId::Para(para)) => para,
+            };
+            xcm_builder::ProcessXcmMessage::<
+                Junction,
+                xcm_executor::XcmExecutor<xcm_config::XcmConfig>,
+                RuntimeCall,
+            >::process_message(message, Junction::Parachain(para.into()), meter, id)
+        }
     }
 }
-
 impl pallet_message_queue::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
-    type Size = u32;
-    type HeapSize = MessageQueueHeapSize;
-    type MaxStale = MessageQueueMaxStale;
-    type ServiceWeight = MessageQueueServiceWeight;
+    type WeightInfo = crate::weights::pallet_message_queue::ZKVWeight<Runtime>;
     #[cfg(not(feature = "runtime-benchmarks"))]
-    type MessageProcessor = MessageProcessor;
+    type MessageProcessor = message_processor::MessageProcessor;
     #[cfg(feature = "runtime-benchmarks")]
     type MessageProcessor =
         pallet_message_queue::mock_helpers::NoopMessageProcessor<AggregateMessageOrigin>;
+    type Size = u32;
     type QueueChangeHandler = ParaInclusion;
     type QueuePausedQuery = ();
-    type WeightInfo = crate::weights::pallet_message_queue::ZKVWeight<Runtime>;
+    type HeapSize = MessageQueueHeapSize;
+    type MaxStale = MessageQueueMaxStale;
+    type ServiceWeight = MessageQueueServiceWeight;
     type IdleMaxServiceWeight = MessageQueueIdleServiceWeight;
 }
 
@@ -238,8 +232,8 @@ parameter_types! {
 }
 
 impl paras_registrar::Config for Runtime {
-    type RuntimeOrigin = RuntimeOrigin;
     type RuntimeEvent = RuntimeEvent;
+    type RuntimeOrigin = RuntimeOrigin;
     type Currency = Balances;
     type OnSwap = ();
     type ParaDeposit = ParaDeposit;
@@ -283,15 +277,15 @@ impl coretime::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type Currency = Balances;
     type BrokerId = BrokerId;
+    type BrokerPotLocation = BrokerPot;
     type WeightInfo = weights::parachains::coretime::ZKVWeight<Runtime>;
     type SendXcm = crate::xcm_config::XcmRouter;
-    type MaxXcmTransactWeight = MaxXcmTransactWeight;
-    type BrokerPotLocation = BrokerPot;
     type AssetTransactor = crate::xcm_config::LocalAssetTransactor;
     type AccountToLocation = xcm_builder::AliasesIntoAccountId32<
         xcm_config::ThisNetwork,
         <Runtime as frame_system::Config>::AccountId,
     >;
+    type MaxXcmTransactWeight = MaxXcmTransactWeight;
 }
 
 /// All migrations that will run on the next runtime upgrade.

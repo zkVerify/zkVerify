@@ -13,13 +13,14 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+#![allow(dead_code)]
 //! Custom origins for governance interventions.
 
 pub use pallet_custom_origins::*;
 
 #[frame_support::pallet]
 pub mod pallet_custom_origins {
-    use crate::{Balance, THOUSANDS};
+    use crate::types::currency::{Balance, THOUSANDS};
     use frame_support::pallet_prelude::*;
 
     #[pallet::config]
@@ -69,7 +70,7 @@ pub mod pallet_custom_origins {
 		};
 		() => {}
 	}
-    decl_unit_ensures!(ReferendumCanceller, WishForChange,);
+    decl_unit_ensures!(ReferendumCanceller, MediumSpender, WishForChange,);
 
     macro_rules! decl_ensure {
 		(

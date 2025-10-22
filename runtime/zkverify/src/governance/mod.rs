@@ -15,30 +15,37 @@
 
 //! New governance configurations for the zkVerify runtime.
 
-use super::*;
-use frame_support::parameter_types;
-use frame_support::traits::EitherOf;
-use frame_system::EnsureRootWithSuccess;
+use crate::{
+    currency::{Balance, VFY},
+    governance::origins::{ReferendumCanceller, Spender},
+    prod_or_fast,
+    types::{AccountId, BlockNumber, DAYS},
+    weights, Balances, Preimage, Referenda, Runtime, RuntimeCall, RuntimeEvent, Scheduler,
+    Treasury,
+};
+use frame_support::{parameter_types, traits::EitherOf};
+use frame_system::{EnsureRoot, EnsureRootWithSuccess};
+use sp_core::ConstU32;
 
 mod origins;
-pub use origins::{pallet_custom_origins, ReferendumCanceller, Spender};
 mod tracks;
-pub use tracks::TracksInfo;
+
+pub use origins::pallet_custom_origins;
+use tracks::TracksInfo;
 
 parameter_types! {
-    // pub const VoteLockingPeriod: BlockNumber = prod_or_fast!(7 * DAYS, 1);
-    pub const VoteLockingPeriod: BlockNumber = 7 * DAYS;
+    pub const VoteLockingPeriod: BlockNumber = prod_or_fast!(7 * DAYS, 1);
 }
 
 impl pallet_conviction_voting::Config for Runtime {
-    type WeightInfo = weights::pallet_conviction_voting::ZKVWeight<Runtime>;
     type RuntimeEvent = RuntimeEvent;
+    type WeightInfo = weights::pallet_conviction_voting::ZKVWeight<Runtime>;
     type Currency = Balances;
-    type VoteLockingPeriod = VoteLockingPeriod;
-    type MaxVotes = ConstU32<512>;
+    type Polls = Referenda;
     type MaxTurnout =
         frame_support::traits::tokens::currency::ActiveIssuanceOf<Balances, Self::AccountId>;
-    type Polls = Referenda;
+    type MaxVotes = ConstU32<512>;
+    type VoteLockingPeriod = VoteLockingPeriod;
 }
 
 parameter_types! {
@@ -52,12 +59,12 @@ parameter_types! {
 }
 pub type TreasurySpender = EitherOf<EnsureRootWithSuccess<AccountId, MaxBalance>, Spender>;
 
-impl origins::pallet_custom_origins::Config for Runtime {}
+impl pallet_custom_origins::Config for Runtime {}
 
 impl pallet_referenda::Config for Runtime {
-    type WeightInfo = weights::pallet_referenda::ZKVWeight<Runtime>;
     type RuntimeCall = RuntimeCall;
     type RuntimeEvent = RuntimeEvent;
+    type WeightInfo = weights::pallet_referenda::ZKVWeight<Runtime>;
     type Scheduler = Scheduler;
     type Currency = Balances;
     type SubmitOrigin = frame_system::EnsureSigned<AccountId>;

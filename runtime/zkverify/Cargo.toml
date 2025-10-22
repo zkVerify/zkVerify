@@ -114,7 +114,6 @@ polkadot-runtime-parachains = { workspace = true }
 pallet-authority-discovery = { workspace = true }
 
 polkadot-runtime-common = { workspace = true }
-zkv-runtime-common = { workspace = true }
 
 pallet-message-queue = { workspace = true }
 pallet-xcm = { workspace = true }
@@ -122,7 +121,6 @@ pallet-xcm-benchmarks = { workspace = true, optional = true }
 xcm-builder = { workspace = true }
 xcm-executor = { workspace = true }
 xcm = { workspace = true }
-xcm-procedural = { workspace = true }
 hex-literal = { workspace = true }
 
 [dev-dependencies]
@@ -188,9 +186,8 @@ runtime-benchmarks = [
 	"sp-staking/runtime-benchmarks",
 	"xcm-builder/runtime-benchmarks",
 	"xcm-executor/runtime-benchmarks",
-	"zkv-runtime-common/runtime-benchmarks",
 ]
-fast-runtime = [ "zkv-runtime-common/fast-runtime" ]
+fast-runtime = []
 metadata-hash = [ "substrate-wasm-builder/metadata-hash" ]
 volta = []
 default = [ "std" ]
@@ -287,7 +284,6 @@ std = [
 	"xcm-builder/std",
 	"xcm-executor/std",
 	"xcm/std",
-	"zkv-runtime-common/std",
 ]
 try-runtime = [
 	"frame-election-provider-support/try-runtime",
@@ -333,6 +329,5 @@ try-runtime = [
 	"polkadot-runtime-common/try-runtime",
 	"polkadot-runtime-parachains/try-runtime",
 	"sp-runtime/try-runtime",
-	"zkv-runtime-common/try-runtime",
 ]
 extend-benchmarks = [ "pallet-risc0-verifier/extend-benchmarks" ]

@@ -3,8 +3,7 @@
 
 use alloc::vec::Vec;
 use codec::MaxEncodedLen;
-use core::fmt::Debug;
-use core::marker::PhantomData;
+use core::{fmt::Debug, marker::PhantomData};
 use frame_support::{
     dispatch::DispatchResult,
     pallet_prelude::*,
