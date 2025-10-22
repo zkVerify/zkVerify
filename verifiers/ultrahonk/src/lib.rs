@@ -81,6 +81,32 @@ impl From<RawProofWithType> for RawProof {
     }
 }
 
+impl ProofType {
+    fn proof_size(self) -> usize {
+        match self {
+            ProofType::ZK => ZK_PROOF_SIZE,
+            ProofType::Plain => PLAIN_PROOF_SIZE,
+        }
+    }
+}
+
+impl From<&RawProofWithType> for UltraHonkProofType {
+    fn from(proof: &RawProofWithType) -> Self {
+        match proof.proof_type {
+            ProofType::ZK => {
+                let mut proof_bytes = [0u8; ZK_PROOF_SIZE];
+                proof_bytes.copy_from_slice(&proof.proof_bytes);
+                UltraHonkProofType::ZK(Box::new(proof_bytes))
+            }
+            ProofType::Plain => {
+                let mut proof_bytes = [0u8; PLAIN_PROOF_SIZE];
+                proof_bytes.copy_from_slice(&proof.proof_bytes);
+                UltraHonkProofType::Plain(Box::new(proof_bytes))
+            }
+        }
+    }
+}
+
 pub mod benchmarking;
 mod verifier_should;
 pub mod weight;
@@ -105,31 +131,15 @@ impl<T: Config> Verifier for Ultrahonk<T> {
         pubs: &Self::Pubs,
     ) -> Result<Option<Weight>, VerifyError> {
         // Transform input proof into an UltraHonk verifier-compatible proof
-        let prepared_proof: UltraHonkProofType = match proof.proof_type {
-            ProofType::ZK => {
-                ensure!(
-                    proof.proof_bytes.len() == ZK_PROOF_SIZE,
-                    hp_verifiers::VerifyError::InvalidProofData
-                );
-                let mut proof_bytes = [0u8; ZK_PROOF_SIZE];
-                proof_bytes.copy_from_slice(&proof.proof_bytes);
-                UltraHonkProofType::ZK(Box::new(proof_bytes))
-            }
-            ProofType::Plain => {
-                ensure!(
-                    proof.proof_bytes.len() == PLAIN_PROOF_SIZE,
-                    hp_verifiers::VerifyError::InvalidProofData
-                );
-                let mut proof_bytes = [0u8; PLAIN_PROOF_SIZE];
-                proof_bytes.copy_from_slice(&proof.proof_bytes);
-                UltraHonkProofType::Plain(Box::new(proof_bytes))
-            }
-        };
-
+        ensure!(
+            proof.proof_bytes.len() == proof.proof_type.proof_size(),
+            VerifyError::InvalidProofData
+        );
         ensure!(
             pubs.len() <= T::MaxPubs::get() as usize,
             hp_verifiers::VerifyError::InvalidInput
         );
+        let prepared_proof: UltraHonkProofType = proof.into();
 
         log::trace!("Verifying (no-std)");
         ultrahonk_no_std::verify::<CurveHooksImpl>(vk, &prepared_proof, pubs)
