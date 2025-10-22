@@ -83,7 +83,7 @@ fn pallet_settlement_ultrahonk() {
         <<Runtime as pallet_verifiers::Config<Ultrahonk<Runtime>>>::WeightInfo as
             pallet_verifiers::WeightInfo<Ultrahonk<Runtime>>>
             ::verify_proof(
-            &pallet_ultrahonk_verifier::RawProofWithType::default(),
+            &pallet_ultrahonk_verifier::Proof::default(),
             &Vec::new()
         ),
         crate::weights::pallet_ultrahonk_verifier::ZKVWeight::<Runtime>::verify_proof_plain_32()

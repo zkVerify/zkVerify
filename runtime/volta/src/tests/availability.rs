@@ -273,7 +273,7 @@ fn pallet_ultrahonk() {
         let dummy_origin = AccountId32::new([0; 32]);
 
         let dummy_vk = [0; pallet_ultrahonk_verifier::VK_SIZE];
-        let dummy_proof = Box::new(pallet_ultrahonk_verifier::RawProofWithType::new(
+        let dummy_proof = Box::new(pallet_ultrahonk_verifier::Proof::new(
             pallet_ultrahonk_verifier::ProofType::ZK,
             vec![0; pallet_ultrahonk_verifier::ZK_PROOF_SIZE],
         ));

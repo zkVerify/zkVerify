@@ -250,7 +250,7 @@ fn pallet_ultrahonk() {
         let dummy_origin = AccountId32::new([0; 32]);
 
         let dummy_vk = [0; pallet_ultrahonk_verifier::VK_SIZE];
-        let dummy_proof = pallet_ultrahonk_verifier::RawProofWithType::default();
+        let dummy_proof = pallet_ultrahonk_verifier::Proof::default();
         let dummy_pubs = Vec::new();
 
         assert!(SettlementUltrahonkPallet::submit_proof(
