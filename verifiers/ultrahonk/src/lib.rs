@@ -51,29 +51,6 @@ pub enum ProofType {
     Plain,
 }
 
-impl Default for Proof {
-    fn default() -> Self {
-        Self::Plain(Vec::new()) // mirror Noir's default
-    }
-}
-
-impl Proof {
-    pub fn new(proof_type: ProofType, proof_bytes: RawProof) -> Self {
-        match proof_type {
-            ProofType::ZK => Self::ZK(proof_bytes),
-            ProofType::Plain => Self::Plain(proof_bytes),
-        }
-    }
-}
-
-impl From<Proof> for RawProof {
-    fn from(proof: Proof) -> Self {
-        match proof {
-            Proof::ZK(proof_bytes) | Proof::Plain(proof_bytes) => proof_bytes,
-        }
-    }
-}
-
 #[derive(Clone, Debug, PartialEq, Encode, Decode, TypeInfo)]
 pub enum Proof {
     ZK(RawProof),
@@ -93,6 +70,27 @@ impl Proof {
     fn len(&self) -> usize {
         match self {
             Proof::ZK(proof_bytes) | Proof::Plain(proof_bytes) => proof_bytes.len(),
+        }
+    }
+
+    pub fn new(proof_type: ProofType, proof_bytes: RawProof) -> Self {
+        match proof_type {
+            ProofType::ZK => Self::ZK(proof_bytes),
+            ProofType::Plain => Self::Plain(proof_bytes),
+        }
+    }
+}
+
+impl Default for Proof {
+    fn default() -> Self {
+        Self::Plain(Vec::new()) // mirror Noir's default
+    }
+}
+
+impl From<Proof> for RawProof {
+    fn from(proof: Proof) -> Self {
+        match proof {
+            Proof::ZK(proof_bytes) | Proof::Plain(proof_bytes) => proof_bytes,
         }
     }
 }
