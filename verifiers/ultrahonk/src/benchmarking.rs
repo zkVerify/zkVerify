@@ -15,7 +15,7 @@
 
 #![cfg(feature = "runtime-benchmarks")]
 
-use crate::{ProofType, RawProofWithType, Ultrahonk as Verifier};
+use crate::{Proof, ProofType, Ultrahonk as Verifier};
 use alloc::vec::Vec;
 use frame_benchmarking::v2::*;
 use frame_system::RawOrigin;
@@ -38,7 +38,7 @@ pub mod benchmarks {
 
     #[benchmark]
     fn verify_proof_zk_32() {
-        let proof = RawProofWithType::new(
+        let proof = Proof::new(
             ProofType::ZK,
             include_bytes!("resources/32/zk/zk_proof").to_vec(),
         );
@@ -59,7 +59,7 @@ pub mod benchmarks {
 
     #[benchmark]
     fn verify_proof_plain_32() {
-        let proof = RawProofWithType::new(
+        let proof = Proof::new(
             ProofType::Plain,
             include_bytes!("resources/32/plain/plain_proof").to_vec(),
         );
@@ -107,7 +107,7 @@ pub mod benchmarks {
 
     #[benchmark]
     fn compute_statement_hash() {
-        let proof = RawProofWithType::new(
+        let proof = Proof::new(
             ProofType::ZK,
             include_bytes!("resources/32/zk/zk_proof").to_vec(),
         );

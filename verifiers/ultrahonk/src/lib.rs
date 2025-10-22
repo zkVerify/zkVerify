@@ -108,12 +108,12 @@ impl TryFrom<&Proof> for UltraHonkProofType {
         match proof {
             Proof::ZK(proof_bytes) => {
                 let mut bytes = [0u8; ZK_PROOF_SIZE];
-                bytes.copy_from_slice(&proof_bytes);
+                bytes.copy_from_slice(proof_bytes);
                 Ok(UltraHonkProofType::ZK(Box::new(bytes)))
             }
             Proof::Plain(proof_bytes) => {
                 let mut bytes = [0u8; PLAIN_PROOF_SIZE];
-                bytes.copy_from_slice(&proof_bytes);
+                bytes.copy_from_slice(proof_bytes);
                 Ok(UltraHonkProofType::Plain(Box::new(bytes)))
             }
         }
