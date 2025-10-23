@@ -34,7 +34,11 @@ dependencies = ["build-dev-relay", "build-dev-paratest"]
 
 [tasks.unit-test-runtime-no-feature]
 command = "cargo"
-args = ["test", "--release", "--lib", "-p", "zkv-runtime", "-p", "volta-runtime"]
+args = ["test", "--release", "--lib", "-p", "zkv-runtime"]
+
+[tasks.unit-test-runtime-volta]
+command = "cargo"
+args = ["test", "--release", "--lib", "-p", "zkv-runtime", "--features", "volta"]
 
 [tasks.unit-test]
 command = "cargo"
@@ -42,10 +46,10 @@ args = ["test", "--lib", "--bins", "--release", "--all-features"]
 
 [tasks.integration-test]
 command = "cargo"
-args = ["test", "--test", "'*'", "--all-features"]
+args = ["test", "--test", "*", "--release", "--all-features"]
 
 [tasks.test]
-dependencies = ["unit-test-runtime-no-feature", "unit-test", "integration-test"]
+dependencies = ["unit-test-runtime-no-feature", "unit-test-runtime-volta", "unit-test", "integration-test"]
 
 [tasks.zombienet-tests]
 dependencies = ["build-dev"]
@@ -60,18 +64,11 @@ script = [
 command = "cargo"
 args = ["build", "-p", "zkv-relay", "--release", "--features", "runtime-benchmarks"]
 
-[tasks.test-bench-volta]
-dependencies = ["build-bench"]
-command = "./target/release/zkv-relay"
-args = ["benchmark", "pallet", "--runtime", "./target/release/wbuild/volta-runtime/volta_runtime.compact.compressed.wasm", "--genesis-builder=runtime", "--pallet", "*", "--extrinsic", "*", "-s", "2", "-r", "1"]
-
-[tasks.test-bench-zkv]
-dependencies = ["build-bench"]
-command = "./target/release/zkv-relay"
-args = ["benchmark", "pallet", "--runtime", "./target/release/wbuild/zkv-runtime/zkv_runtime.compact.compressed.wasm", "--genesis-builder=runtime", "--pallet", "*", "--extrinsic", "*", "-s", "2", "-r", "1"]
-
 [tasks.test-bench]
-dependencies = ["test-bench-volta", "test-bench-zkv"]
+dependencies = ["build-bench"]
+command = "./target/release/zkv-relay"
+args = ["benchmark", "pallet", "--runtime", "./target/release/wbuild/zkv-runtime/zkv_runtime.compact.compressed.wasm",
+ "--genesis-builder=runtime", "--pallet", "*", "--extrinsic", "*", "-s", "2", "-r", "1"]
 
 [tasks.format_inst]
 [tasks.format-inst]

@@ -31,6 +31,29 @@ use sp_runtime::{AccountId32, MultiAddress};
 use std::collections::BTreeMap;
 
 #[test]
+fn pallet_ezkl() {
+    test().execute_with(|| {
+        let dummy_origin = AccountId32::new([0; 32]);
+
+        let dummy_vk = pallet_ezkl_verifier::EzklVk::new(
+            [0u8; pallet_ezkl_verifier::MAX_VK_LENGTH as usize].to_vec(),
+        );
+        let dummy_proof = Vec::new();
+        let dummy_pubs = Vec::new();
+
+        assert!(SettlementEzklPallet::submit_proof(
+            RuntimeOrigin::signed(dummy_origin),
+            VkOrHash::Vk(dummy_vk.into()),
+            dummy_proof.into(),
+            dummy_pubs.into(),
+            None,
+        )
+        .is_err());
+        // just checking code builds, hence the pallet is available to the runtime
+    });
+}
+
+#[test]
 fn pallet_fflonk() {
     test().execute_with(|| {
         let dummy_origin = AccountId32::new([0; 32]);
@@ -250,13 +273,16 @@ fn pallet_ultrahonk() {
         let dummy_origin = AccountId32::new([0; 32]);
 
         let dummy_vk = [0; pallet_ultrahonk_verifier::VK_SIZE];
-        let dummy_proof = pallet_ultrahonk_verifier::Proof::default();
+        let dummy_proof = Box::new(pallet_ultrahonk_verifier::Proof::new(
+            pallet_ultrahonk_verifier::ProofType::ZK,
+            vec![0; pallet_ultrahonk_verifier::ZK_PROOF_SIZE],
+        ));
         let dummy_pubs = Vec::new();
 
         assert!(SettlementUltrahonkPallet::submit_proof(
             RuntimeOrigin::signed(dummy_origin),
             VkOrHash::Vk(dummy_vk.into()),
-            dummy_proof.into(),
+            dummy_proof,
             dummy_pubs.into(),
             None,
         )
