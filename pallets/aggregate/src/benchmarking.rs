@@ -256,6 +256,21 @@ mod benchmarks {
         assert_eq!(domain.delivery.fee(), &12345_u32.into());
     }
 
+    #[benchmark]
+    fn whitelist_proof_submitters() {
+        let caller: T::AccountId = funded_account::<T>();
+        let domain_id = 1;
+        insert_domain::<T>(domain_id, caller.clone(), None);
+
+        #[extrinsic_call]
+        whitelist_proof_submitters(RawOrigin::Signed(caller), domain_id, vec![]);
+
+        // Sanity check: we consumed the aggregation
+        let domain = Domains::<T>::get(domain_id).unwrap();
+
+        assert_eq!(domain.delivery.fee(), &12345_u32.into());
+    }
+
     use crate::data::AggregateSecurityRules;
     #[cfg(test)]
     use crate::Pallet as Aggregate;

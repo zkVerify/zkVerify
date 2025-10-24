@@ -61,6 +61,8 @@ pub trait WeightInfo {
     fn hold_domain() -> Weight;
     fn unregister_domain() -> Weight;
     fn set_total_delivery_fee() -> Weight;
+    fn whitelist_proof_submitters() -> Weight;
+    fn remove_proof_submitters() -> Weight;
 }
 
 // For backwards compatibility and tests.
@@ -159,6 +161,24 @@ impl WeightInfo for () {
     /// Storage: `Aggregate::Domains` (r:1 w:1)
     /// Proof: `Aggregate::Domains` (`max_values`: None, `max_size`: Some(209429), added: 211904, mode: `MaxEncodedLen`)
     fn set_total_delivery_fee() -> Weight {
+        // Proof Size summary in bytes:
+        //  Measured:  `268`
+        //  Estimated: `212894`
+        // Minimum execution time: 9_111_000 picoseconds.
+        Weight::from_parts(9_482_000, 212894)
+            .saturating_add(RocksDbWeight::get().reads(1_u64))
+            .saturating_add(RocksDbWeight::get().writes(1_u64))
+    }
+    fn whitelist_proof_submitters() -> Weight {
+        // Proof Size summary in bytes:
+        //  Measured:  `268`
+        //  Estimated: `212894`
+        // Minimum execution time: 9_111_000 picoseconds.
+        Weight::from_parts(9_482_000, 212894)
+            .saturating_add(RocksDbWeight::get().reads(1_u64))
+            .saturating_add(RocksDbWeight::get().writes(1_u64))
+    }
+    fn remove_proof_submitters() -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `268`
         //  Estimated: `212894`

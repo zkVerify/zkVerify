@@ -76,8 +76,8 @@ pub mod pallet {
 
     pub use crate::data::AggregationSize;
     use crate::data::{
-        AggregateSecurityRules, Delivery, DeliveryParams, DomainState, Reserve, StatementEntry,
-        User,
+        AggregateSecurityRules, Delivery, DeliveryParams, DomainState, ProofSecurityRules, Reserve,
+        StatementEntry, User,
     };
 
     use super::WeightInfo;
@@ -233,6 +233,15 @@ pub mod pallet {
 
                     return;
                 }
+                if !domain.can_add_proof(&account) {
+                    log::warn!("Invalid proof submitter, skip");
+                    Self::deposit_event(Event::<T>::CannotAggregate {
+                        statement,
+                        cause: CannotAggregateCause::DomainStorageFull { domain_id },
+                    });
+
+                    return;
+                }
 
                 // Reserve balance for publication: if not raise a fail event
                 let Ok(reserve) = domain.reserve_currency(&account).inspect_err(|err| {
@@ -283,6 +292,10 @@ pub mod pallet {
         MissedDeliveryOwnership,
         /// Cannot create a new, unique, aggregation id anymore
         NextAggregationIdUnavailable,
+        /// Try to whitelist an account for proof submission more than once
+        DuplicateSubmitter,
+        /// Try to whitelist too many accounts
+        TooManySubmitters,
     }
 
     #[derive(Debug, Clone, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
@@ -290,6 +303,8 @@ pub mod pallet {
     pub enum CannotAggregateCause {
         /// No account
         NoAccount,
+        /// The account cannot add proofs to this domain
+        AccountNotAllowed,
         /// The requested domain doesn't exist.
         DomainNotRegistered {
             /// The domain identifier.
@@ -405,8 +420,10 @@ pub mod pallet {
             max_aggregation_size: AggregationSize,
             publish_queue_size: u32,
             aggregate_rules: AggregateSecurityRules,
+            proof_rules: ProofSecurityRules,
             ticket: Option<TicketOf<T>>,
             delivery: DeliveryParams<AccountOf<T>, BalanceOf<T>>,
+            submitters: BoundedBTreeSet<AccountOf<T>, T::AggregationSize>,
         ) -> Result<Self, Error<T>> {
             if max_aggregation_size == 0
                 || publish_queue_size == 0
@@ -422,8 +439,10 @@ pub mod pallet {
                     max_aggregation_size,
                     publish_queue_size,
                     aggregate_rules,
+                    proof_rules,
                     ticket,
                     delivery,
+                    submitters,
                 )))
             }
         }
@@ -789,8 +808,10 @@ pub mod pallet {
             aggregation_size: AggregationSize,
             queue_size: Option<u32>,
             aggregate_rules: AggregateSecurityRules,
+            proof_rules: ProofSecurityRules,
             delivery: Delivery<BalanceOf<T>>,
             delivery_owner: Option<AccountOf<T>>,
+            submitters: Option<BoundedBTreeSet<AccountOf<T>, T::AggregationSize>>,
         ) -> DispatchResultWithPostInfo {
             let caller = User::<T::AccountId>::from_origin::<T>(origin)?;
             let destination = delivery.destination.clone();
@@ -833,8 +854,10 @@ pub mod pallet {
                 aggregation_size,
                 queue_size,
                 aggregate_rules,
+                proof_rules,
                 ticket,
                 delivery,
+                submitters.unwrap_or(Default::default()),
             )?;
             Domains::<T>::insert(id, domain);
             let next_id = id.checked_add(1).expect("Cannot overflow. QED");
@@ -964,6 +987,64 @@ pub mod pallet {
             })?;
             Ok(())
         }
+
+        /// Errors:
+        /// - `BadOrigin`: If the origin is not authorized.
+        /// - `UnknownDomainId`: If the domain doesn't exists.
+        ///
+        #[pallet::call_index(5)]
+        pub fn whitelist_proof_submitters(
+            origin: OriginFor<T>,
+            domain_id: u32,
+            submitters: BoundedVec<AccountOf<T>, T::AggregationSize>,
+        ) -> DispatchResult {
+            let owner = User::<T::AccountId>::from_origin::<T>(origin)?;
+            Domains::<T>::try_mutate_exists(domain_id, |domain| {
+                match domain {
+                    Some(domain) if owner.can_handle_domain::<T>(domain) => {
+                        for s in submitters {
+                            match domain.submitters.try_insert(s) {
+                                Ok(true) => (),
+                                Ok(false) => Err(Error::<T>::DuplicateSubmitter)?,
+                                Err(_) => Err(Error::<T>::TooManySubmitters)?,
+                            }
+                        }
+                    },
+                    Some(_) => Err(BadOrigin)?,
+                    None => Err(Error::<T>::UnknownDomainId)?,
+                };
+                Ok::<_, DispatchError>(())
+            })?;
+            Ok(())
+        }
+
+        /// Errors:
+        /// - `BadOrigin`: If the origin is not authorized.
+        /// - `UnknownDomainId`: If the domain doesn't exists.
+        ///
+        #[pallet::call_index(6)]
+        pub fn remove_proof_submitters(
+            origin: OriginFor<T>,
+            domain_id: u32,
+            submitters: BoundedVec<AccountOf<T>, T::AggregationSize>,
+        ) -> DispatchResult {
+            let owner = User::<T::AccountId>::from_origin::<T>(origin)?;
+            Domains::<T>::try_mutate_exists(domain_id, |domain| {
+                match domain {
+                    Some(domain) if owner.can_handle_domain::<T>(domain) => {
+                        for s in &submitters {
+                            if !domain.submitters.remove(s) {
+                                return Err(Error::<T>::DuplicateSubmitter)?;
+                            }
+                        }
+                    },
+                    Some(_) => Err(BadOrigin)?,
+                    None => Err(Error::<T>::UnknownDomainId)?,
+                };
+                Ok::<_, DispatchError>(())
+            })?;
+            Ok(())
+        }
     }
 
     fn handle_held_funds<T: Config>(
@@ -1030,7 +1111,7 @@ pub mod pallet {
 
         pub fn can_handle_domain<T: Config<AccountId = A>>(&self, domain: &Domain<T>) -> bool
         where
-            A: PartialEq + Debug,
+            A: PartialEq + Debug + Ord + Clone,
         {
             match self {
                 User::Account(_) => &domain.owner == self,
@@ -1043,7 +1124,7 @@ pub mod pallet {
             domain: &Domain<T>,
         ) -> bool
         where
-            A: PartialEq + Debug,
+            A: PartialEq + Debug + Ord + Clone,
         {
             match self {
                 User::Account(account) => {

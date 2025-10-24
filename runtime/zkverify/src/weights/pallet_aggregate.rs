@@ -158,4 +158,22 @@ impl<T: frame_system::Config> pallet_aggregate::WeightInfo for ZKVWeight<T> {
             .saturating_add(T::DbWeight::get().reads(1_u64))
             .saturating_add(T::DbWeight::get().writes(1_u64))
     }
+    fn whitelist_proof_submitters() -> Weight {
+        // Proof Size summary in bytes:
+        //  Measured:  `268`
+        //  Estimated: `212894`
+        // Minimum execution time: 9_111_000 picoseconds.
+        Weight::from_parts(9_482_000, 212894)
+            .saturating_add(RocksDbWeight::get().reads(1_u64))
+            .saturating_add(RocksDbWeight::get().writes(1_u64))
+    }
+    fn remove_proof_submitters() -> Weight {
+        // Proof Size summary in bytes:
+        //  Measured:  `268`
+        //  Estimated: `212894`
+        // Minimum execution time: 9_111_000 picoseconds.
+        Weight::from_parts(9_482_000, 212894)
+            .saturating_add(RocksDbWeight::get().reads(1_u64))
+            .saturating_add(RocksDbWeight::get().writes(1_u64))
+    }
 }

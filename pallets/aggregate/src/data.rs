@@ -21,7 +21,7 @@ use frame_support::{PartialEqNoBound, RuntimeDebugNoBound};
 use hp_dispatch::Destination;
 use scale_info::TypeInfo;
 use sp_core::{Get, H256};
-use sp_runtime::{traits::Keccak256, BoundedBTreeMap, BoundedVec};
+use sp_runtime::{traits::Keccak256, BoundedBTreeMap, BoundedBTreeSet, BoundedVec};
 
 /// Type used for the size of the aggregation.
 pub type AggregationSize = u32;
@@ -184,7 +184,7 @@ impl<A: Debug + PartialEq, B: Debug + PartialEq, S: Get<AggregationSize>> Defaul
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
-/// The rules that describe the when accept or reject the aggregate extrinsic call.
+/// The rules that describe the origins allowed to execute the aggregate extrinsic call.
 pub enum AggregateSecurityRules {
     /// Accept any aggregate extrinsic call from any user.
     Untrusted,
@@ -192,6 +192,17 @@ pub enum AggregateSecurityRules {
     OnlyOwner,
     /// Only owner and manager can call aggregate on this domain for uncompleted aggregations.
     OnlyOwnerUncompleted,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
+/// The rules that describe the origins that can add proofs to the domain.
+pub enum ProofSecurityRules {
+    /// Accept proofs from any user.
+    Untrusted,
+    /// Accept proofs only from the owner of the domain.
+    OnlyOwner,
+    /// Accept proofs only from the accounts in the  of the domain.
+    OnlyWhitelisted,
 }
 
 /// Delivering aggregations data
@@ -284,7 +295,7 @@ impl<A, B: Debug + PartialEq> DeliveryParams<A, B> {
 /// - `T`: The type of consideration ticket used to hold the balance for the space used
 ///   by domain storage.
 pub struct DomainEntry<
-    A: Debug + PartialEq,
+    A: Debug + PartialEq + Ord + Clone,
     B: Debug + PartialEq,
     S: Get<AggregationSize>,
     M: Get<u32>,
@@ -307,14 +318,18 @@ pub struct DomainEntry<
     /// The consideration ticket used to hold the balance for the space used by domain storage. The manager will
     /// not hold any balance.
     pub ticket: Option<T>,
-    /// Configure the rules that describe the when accept or reject the aggregate extrinsic call.
+    /// Configure the rules that describe when to accept or reject the aggregate extrinsic call.
     pub aggregate_rules: AggregateSecurityRules,
+    /// Configure the rules that describe which origins can add proofs to this domain.
+    pub proof_rules: ProofSecurityRules,
+    /// The list of submitters allowed to add proofs to this domain
+    pub submitters: BoundedBTreeSet<A, S>,
     /// Configuration params for destination chain to delivery aggregations
     pub delivery: DeliveryParams<A, B>,
 }
 
 impl<
-        A: Debug + PartialEq,
+        A: Debug + PartialEq + Ord + Clone,
         B: Debug + PartialEq,
         S: Get<AggregationSize>,
         M: Get<u32>,
@@ -331,8 +346,10 @@ impl<
         max_aggregation_size: AggregationSize,
         publish_queue_size: u32,
         aggregate_rules: AggregateSecurityRules,
+        proof_rules: ProofSecurityRules,
         ticket: Option<Ticket>,
         delivery: DeliveryParams<A, B>,
+        submitters: BoundedBTreeSet<A, S>,
     ) -> Self {
         assert!(
             max_aggregation_size <= S::get(),
@@ -351,6 +368,8 @@ impl<
             should_publish: Default::default(),
             publish_queue_size,
             aggregate_rules,
+            proof_rules,
+            submitters,
             ticket,
             delivery,
         }
@@ -362,6 +381,24 @@ impl<
     pub fn can_add_statement(&self) -> bool {
         (self.publish_queue_size as usize).saturating_sub(self.should_publish.len()) > 0
             || self.next.space_left() > 1
+    }
+
+    /// Return true iff the submitting account is allowed to add proofs to this domain, according
+    /// to the configured ProofSecurityRules.
+    pub fn can_add_proof(&self, account: &A) -> bool {
+        match self.proof_rules {
+            ProofSecurityRules::Untrusted => true,
+            ProofSecurityRules::OnlyOwner => {
+                account
+                    == self
+                        .owner
+                        .account()
+                        .expect("The domain does not have an owner; qed")
+            }
+            ProofSecurityRules::OnlyWhitelisted => {
+                self.submitters.clone().into_inner().contains(account)
+            }
+        }
     }
 
     /// Update the hold state according to the domain state.
