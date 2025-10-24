@@ -22,7 +22,7 @@ use sc_cli::SubstrateCli;
 use service::{
     self,
     benchmarking::{benchmark_inherent_data, RemarkBuilder, TransferKeepAliveBuilder},
-    HeaderBackend, IdentifyVariant,
+    HeaderBackend,
 };
 use sp_keyring::Sr25519Keyring;
 use zkv_benchmarks::hardware::zkv_reference_hardware;
@@ -327,15 +327,13 @@ pub fn run() -> Result<()> {
                         let header = client.header(client.info().genesis_hash).unwrap().unwrap();
                         let inherent_data = benchmark_inherent_data(header)
                             .map_err(|e| format!("generating inherent data: {e:?}"))?;
-                        let remark_builder =
-                            RemarkBuilder::new(client.clone(), config.chain_spec.identify_chain());
+                        let remark_builder = RemarkBuilder::new(client.clone());
 
                         match cmd {
                             BenchmarkCmd::Extrinsic(cmd) => {
                                 let tka_builder = TransferKeepAliveBuilder::new(
                                     client.clone(),
                                     Sr25519Keyring::Alice.to_account_id(),
-                                    config.chain_spec.identify_chain(),
                                 );
 
                                 let ext_factory = ExtrinsicFactory(vec![

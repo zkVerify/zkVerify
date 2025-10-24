@@ -16,61 +16,24 @@
 
 //! Code related to benchmarking a node.
 
+use crate::FullClient;
 use polkadot_primitives::AccountId;
 use sc_client_api::UsageProvider;
 use sp_keyring::Sr25519Keyring;
 use sp_runtime::OpaqueExtrinsic;
-
-use crate::*;
-
-macro_rules! identify_chain {
-    (
-		$chain:expr,
-		$nonce:ident,
-		$current_block:ident,
-		$period:ident,
-		$genesis:ident,
-		$signer:ident,
-		$generic_code:expr $(,)*
-	) => {
-        match $chain {
-            Chain::ZkVerify | Chain::Volta => {
-                let call = $generic_code;
-
-                Ok(sign_call(
-                    call,
-                    $nonce,
-                    $current_block,
-                    $period,
-                    $genesis,
-                    $signer,
-                ))
-            }
-            Chain::Unknown => {
-                let _ = $nonce;
-                let _ = $current_block;
-                let _ = $period;
-                let _ = $genesis;
-                let _ = $signer;
-
-                Err("Unknown chain")
-            }
-        }
-    };
-}
+use std::sync::Arc;
 
 /// Generates `System::Remark` extrinsics for the benchmarks.
 ///
 /// Note: Should only be used for benchmarking.
 pub struct RemarkBuilder {
     client: Arc<FullClient>,
-    chain: Chain,
 }
 
 impl RemarkBuilder {
     /// Creates a new [`Self`] from the given client.
-    pub fn new(client: Arc<FullClient>, chain: Chain) -> Self {
-        Self { client, chain }
+    pub fn new(client: Arc<FullClient>) -> Self {
+        Self { client }
     }
 }
 
@@ -90,19 +53,17 @@ impl frame_benchmarking_cli::ExtrinsicBuilder for RemarkBuilder {
         let signer = Sr25519Keyring::Bob.pair();
         let current_block = 0;
 
-        identify_chain! {
-            self.chain,
+        let call = {
+            zkv_runtime::RuntimeCall::System(zkv_runtime::SystemCall::remark { remark: vec![] })
+        };
+        Ok(sign_call(
+            call,
             nonce,
             current_block,
             period,
             genesis,
             signer,
-            {
-                zkv_runtime::RuntimeCall::System(
-                    zkv_runtime::SystemCall::remark { remark: vec![] }
-                )
-            },
-        }
+        ))
     }
 }
 
@@ -112,17 +73,12 @@ impl frame_benchmarking_cli::ExtrinsicBuilder for RemarkBuilder {
 pub struct TransferKeepAliveBuilder {
     client: Arc<FullClient>,
     dest: AccountId,
-    chain: Chain,
 }
 
 impl TransferKeepAliveBuilder {
     /// Creates a new [`Self`] from the given client and the arguments for the extrinsics.
-    pub fn new(client: Arc<FullClient>, dest: AccountId, chain: Chain) -> Self {
-        Self {
-            client,
-            dest,
-            chain,
-        }
+    pub fn new(client: Arc<FullClient>, dest: AccountId) -> Self {
+        Self { client, dest }
     }
 }
 
@@ -143,20 +99,21 @@ impl frame_benchmarking_cli::ExtrinsicBuilder for TransferKeepAliveBuilder {
         let current_block = 0;
         let _dest = self.dest.clone();
 
-        identify_chain! {
-            self.chain,
+        let call = {
+            zkv_runtime::RuntimeCall::Balances(zkv_runtime::BalancesCall::transfer_keep_alive {
+                dest: _dest.into(),
+                value: zkv_runtime::currency::EXISTENTIAL_DEPOSIT,
+            })
+        };
+
+        Ok(sign_call(
+            call,
             nonce,
             current_block,
             period,
             genesis,
             signer,
-            {
-                zkv_runtime::RuntimeCall::Balances(zkv_runtime::BalancesCall::transfer_keep_alive {
-                    dest: _dest.into(),
-                    value: zkv_runtime::currency::EXISTENTIAL_DEPOSIT,
-                })
-            },
-        }
+        ))
     }
 }
 
