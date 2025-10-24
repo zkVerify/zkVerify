@@ -18,7 +18,6 @@ wasm-opt = false
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-cfg-if = "1.0"
 clap = { workspace = true, features = ["derive"], optional = true }
 log = { workspace = true }
 thiserror = "1.0.48"
@@ -46,7 +45,7 @@ sc-storage-monitor = { workspace = true }
 zkv-benchmarks = { workspace = true }
 native = { workspace = true, features = ["std"] }
 
-volta-runtime = { workspace = true, features = ["std"] }
+zkv-runtime = { workspace = true, features = ["std", "volta"] }
 
 [build-dependencies]
 substrate-build-script-utils = { workspace = true }
@@ -69,18 +68,18 @@ runtime-benchmarks = [
 	"sc-service?/runtime-benchmarks",
 	"service/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
-	"volta-runtime/runtime-benchmarks",
+	"zkv-runtime/runtime-benchmarks",
 ]
 full-node = [ "service/full-node" ]
 try-runtime = [
 	"service/try-runtime",
 	"sp-runtime/try-runtime",
-	"volta-runtime/try-runtime",
+	"zkv-runtime/try-runtime",
 ]
-fast-runtime = [ "service/fast-runtime", "volta-runtime/fast-runtime" ]
+fast-runtime = ["service/fast-runtime", "zkv-runtime/fast-runtime"]
 pyroscope = [ "pyro", "pyroscope_pprofrs" ]
-metadata-hash = [ "service/metadata-hash", "volta-runtime/metadata-hash" ]
-extend-benchmarks = [ "volta-runtime/extend-benchmarks" ]
+metadata-hash = ["service/metadata-hash", "zkv-runtime/metadata-hash"]
+extend-benchmarks = ["zkv-runtime/extend-benchmarks"]
 runtime-metrics = [
 	"polkadot-node-metrics/runtime-metrics",
 	"service/runtime-metrics",

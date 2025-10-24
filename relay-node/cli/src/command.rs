@@ -22,7 +22,7 @@ use sc_cli::SubstrateCli;
 use service::{
     self,
     benchmarking::{benchmark_inherent_data, RemarkBuilder, TransferKeepAliveBuilder},
-    HeaderBackend, IdentifyVariant,
+    HeaderBackend,
 };
 use sp_keyring::Sr25519Keyring;
 use zkv_benchmarks::hardware::zkv_reference_hardware;
@@ -34,6 +34,7 @@ use pyroscope_pprofrs::{pprof_backend, PprofConfig};
 use std::net::ToSocketAddrs;
 
 type Result<T> = std::result::Result<T, Error>;
+type ChainSpecResult = std::result::Result<Box<dyn sc_service::ChainSpec + 'static>, String>;
 
 impl SubstrateCli for Cli {
     fn impl_name() -> String {
@@ -65,10 +66,7 @@ impl SubstrateCli for Cli {
         "zkv-relay".into()
     }
 
-    fn load_spec(
-        &self,
-        id: &str,
-    ) -> std::result::Result<Box<dyn sc_service::ChainSpec + 'static>, String> {
+    fn load_spec(&self, id: &str) -> ChainSpecResult {
         Ok(match id {
             "" | "main" | "mainnet" | "zkverify" => {
                 Box::new(service::chain_spec::ZkvChainSpec::from_json_bytes(
@@ -76,21 +74,13 @@ impl SubstrateCli for Cli {
                 )?)
             }
             "dev" | "development" | "volta-dev" => {
-                Box::new(service::chain_spec::volta_development_config()?)
+                Box::new(service::chain_spec::development_config()?)
             }
-            "local" | "volta-local" => Box::new(service::chain_spec::volta_local_config()?),
-            "testnet_build" | "volta-staging" => {
-                Box::new(service::chain_spec::volta_staging_config()?)
-            }
+            "local" | "volta-local" => Box::new(service::chain_spec::local_config()?),
             "test" | "testnet" | "volta" => {
                 Box::new(service::chain_spec::VoltaChainSpec::from_json_bytes(
                     &include_bytes!("../chain-specs/zkverify_volta.json")[..],
                 )?)
-            }
-            "zkverify-dev" => Box::new(service::chain_spec::zkverify_development_config()?),
-            "zkverify-local" => Box::new(service::chain_spec::zkverify_local_config()?),
-            "mainnet_build" | "zkverify-staging" => {
-                Box::new(service::chain_spec::zkverify_staging_config()?)
             }
             path => Box::new(service::chain_spec::GenericChainSpec::from_json_file(
                 std::path::PathBuf::from(path),
@@ -337,15 +327,13 @@ pub fn run() -> Result<()> {
                         let header = client.header(client.info().genesis_hash).unwrap().unwrap();
                         let inherent_data = benchmark_inherent_data(header)
                             .map_err(|e| format!("generating inherent data: {e:?}"))?;
-                        let remark_builder =
-                            RemarkBuilder::new(client.clone(), config.chain_spec.identify_chain());
+                        let remark_builder = RemarkBuilder::new(client.clone());
 
                         match cmd {
                             BenchmarkCmd::Extrinsic(cmd) => {
                                 let tka_builder = TransferKeepAliveBuilder::new(
                                     client.clone(),
                                     Sr25519Keyring::Alice.to_account_id(),
-                                    config.chain_spec.identify_chain(),
                                 );
 
                                 let ext_factory = ExtrinsicFactory(vec![

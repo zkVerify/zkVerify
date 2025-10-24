@@ -1,7 +1,7 @@
 [relaychain]
 default_command = "zkv-relay"
 default_args = []
-chain = "{{CHAIN_NETWORK}}"
+chain = "volta-local"
 
 [[relaychain.nodes]]
 name = "alice"
@@ -13,7 +13,7 @@ validator = true
 
 [[parachains]]
 id = 1599
-chain = "{{CHAIN_NETWORK}}"
+chain = "volta-local"
 add_to_genesis = true
 cumulus_based = true
 

@@ -4437,7 +4437,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cea14ef9355e3beab063703aa9dab15afd25f0667c341310c1e5274bb1d0da18"
 dependencies = [
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -6538,7 +6538,7 @@ checksum = "e04d7f318608d35d4b61ddd75cbdaee86b023ebe2bd5a66ee0915f0bf93095a9"
 dependencies = [
  "hermit-abi 0.5.1",
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -13901,7 +13901,7 @@ version = "0.13.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "be769465445e8c1474e9c5dac2018218498557af32d9ed057325ec9a41ae81bf"
 dependencies = [
- "heck 0.4.1",
+ "heck 0.5.0",
  "itertools 0.14.0",
  "log",
  "multimap",
@@ -14144,7 +14144,7 @@ dependencies = [
  "once_cell",
  "socket2 0.5.9",
  "tracing",
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -15193,7 +15193,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys 0.4.15",
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -15206,7 +15206,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys 0.9.4",
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -15354,7 +15354,7 @@ dependencies = [
  "security-framework 3.2.0",
  "security-framework-sys",
  "webpki-root-certs 0.26.11",
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -17694,7 +17694,7 @@ version = "0.8.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "03c3c6b7927ffe7ecaa769ee0e3994da3b8cafc8f444578982c83ecb161af917"
 dependencies = [
- "heck 0.4.1",
+ "heck 0.5.0",
  "proc-macro2",
  "quote",
  "syn 2.0.101",
@@ -19851,7 +19851,7 @@ dependencies = [
  "getrandom 0.3.3",
  "once_cell",
  "rustix 1.0.7",
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -19906,7 +19906,7 @@ dependencies = [
  "substrate-test-client",
  "test-runtime",
  "test-service",
- "volta-runtime",
+ "zkv-runtime",
 ]
 
 [[package]]
@@ -20957,7 +20957,7 @@ dependencies = [
  "parity-scale-codec",
  "serde",
  "sp-core",
- "volta-runtime",
+ "zkv-runtime",
 ]
 
 [[package]]
@@ -20965,109 +20965,6 @@ name = "void"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6a02e4885ed3bc0f2de90ea6dd45ebcbb66dacffe03547fadbb0eeae2770887d"
-
-[[package]]
-name = "volta-runtime"
-version = "1.2.1"
-dependencies = [
- "aggregate-rpc-runtime-api",
- "anyhow",
- "finality-grandpa",
- "frame-benchmarking",
- "frame-election-provider-support",
- "frame-executive",
- "frame-metadata-hash-extension",
- "frame-support",
- "frame-system",
- "frame-system-benchmarking",
- "frame-system-rpc-runtime-api",
- "frame-try-runtime",
- "hex-literal",
- "hp-dispatch",
- "hp-verifiers",
- "ismp",
- "ismp-grandpa",
- "log",
- "pallet-aggregate",
- "pallet-authority-discovery",
- "pallet-authorship",
- "pallet-babe",
- "pallet-bags-list",
- "pallet-balances",
- "pallet-bounties",
- "pallet-child-bounties",
- "pallet-claim",
- "pallet-conviction-voting",
- "pallet-election-provider-support-benchmarking",
- "pallet-ezkl-verifier",
- "pallet-fflonk-verifier",
- "pallet-grandpa",
- "pallet-groth16-verifier",
- "pallet-hyperbridge",
- "pallet-hyperbridge-aggregations",
- "pallet-ismp",
- "pallet-ismp-runtime-api",
- "pallet-message-queue",
- "pallet-multisig",
- "pallet-offences",
- "pallet-plonky2-verifier",
- "pallet-preimage",
- "pallet-proxy",
- "pallet-referenda",
- "pallet-risc0-verifier",
- "pallet-scheduler",
- "pallet-session",
- "pallet-session-benchmarking",
- "pallet-sp1-verifier",
- "pallet-staking",
- "pallet-sudo",
- "pallet-timestamp",
- "pallet-token-claim",
- "pallet-token-gateway",
- "pallet-transaction-payment",
- "pallet-transaction-payment-rpc-runtime-api",
- "pallet-treasury",
- "pallet-ultrahonk-verifier",
- "pallet-ultraplonk-verifier",
- "pallet-utility",
- "pallet-verifiers",
- "pallet-vesting",
- "pallet-xcm",
- "pallet-xcm-benchmarks",
- "parity-scale-codec",
- "polkadot-primitives",
- "polkadot-runtime-common",
- "polkadot-runtime-parachains",
- "rstest",
- "scale-info",
- "serde_json",
- "sp-api",
- "sp-authority-discovery",
- "sp-block-builder",
- "sp-consensus-babe",
- "sp-consensus-grandpa",
- "sp-core",
- "sp-genesis-builder",
- "sp-inherents",
- "sp-io",
- "sp-mmr-primitives",
- "sp-npos-elections",
- "sp-offchain",
- "sp-runtime",
- "sp-session",
- "sp-staking",
- "sp-storage",
- "sp-transaction-pool",
- "sp-version",
- "sp-weights",
- "staging-xcm",
- "staging-xcm-builder",
- "staging-xcm-executor",
- "static_assertions",
- "substrate-wasm-builder",
- "xcm-procedural",
- "zkv-runtime-common",
-]
 
 [[package]]
 name = "w3f-bls"
@@ -21797,7 +21694,7 @@ version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf221c93e13a30d793f7645a0e7762c55d169dbb0a49671918a2319d289b10bb"
 dependencies = [
- "windows-sys 0.48.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -22580,7 +22477,6 @@ dependencies = [
 name = "zkv-cli"
 version = "11.0.0"
 dependencies = [
- "cfg-if",
  "clap",
  "frame-benchmarking-cli",
  "futures",
@@ -22603,8 +22499,8 @@ dependencies = [
  "sp-runtime",
  "substrate-build-script-utils",
  "thiserror 1.0.69",
- "volta-runtime",
  "zkv-benchmarks",
+ "zkv-runtime",
  "zkv-service",
 ]
 
@@ -22613,6 +22509,7 @@ name = "zkv-relay"
 version = "1.0.0"
 dependencies = [
  "assert_cmd",
+ "cfg-if",
  "color-eyre",
  "native-cache",
  "nix 0.27.1",
@@ -22633,10 +22530,11 @@ dependencies = [
 
 [[package]]
 name = "zkv-runtime"
-version = "1.1.0"
+version = "1.2.1"
 dependencies = [
  "aggregate-rpc-runtime-api",
  "anyhow",
+ "cfg-if",
  "finality-grandpa",
  "frame-benchmarking",
  "frame-election-provider-support",
@@ -22664,6 +22562,7 @@ dependencies = [
  "pallet-claim",
  "pallet-conviction-voting",
  "pallet-election-provider-support-benchmarking",
+ "pallet-ezkl-verifier",
  "pallet-fflonk-verifier",
  "pallet-grandpa",
  "pallet-groth16-verifier",
@@ -22729,38 +22628,6 @@ dependencies = [
  "staging-xcm-executor",
  "static_assertions",
  "substrate-wasm-builder",
- "xcm-procedural",
- "zkv-runtime-common",
-]
-
-[[package]]
-name = "zkv-runtime-common"
-version = "1.0.0"
-dependencies = [
- "anyhow",
- "finality-grandpa",
- "frame-support",
- "frame-system",
- "log",
- "pallet-authorship",
- "pallet-balances",
- "pallet-staking",
- "parity-scale-codec",
- "polkadot-primitives",
- "rstest",
- "scale-info",
- "sp-api",
- "sp-authority-discovery",
- "sp-consensus-babe",
- "sp-consensus-grandpa",
- "sp-core",
- "sp-inherents",
- "sp-io",
- "sp-runtime",
- "sp-staking",
- "sp-storage",
- "sp-version",
- "sp-weights",
 ]
 
 [[package]]
@@ -22893,7 +22760,6 @@ dependencies = [
  "thiserror 1.0.69",
  "tracing-gum",
  "vk-hash",
- "volta-runtime",
  "zkv-benchmarks",
  "zkv-runtime",
 ]

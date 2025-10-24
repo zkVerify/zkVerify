@@ -21,30 +21,28 @@ on:
 jobs:
   try-runtime:
     runs-on: warp-ubuntu-latest-x64-8x
-    name: Try runtime
+    strategy:
+      matrix:
+        include:
+          - runtime: 'zkverify'
+            features: ''
+            rpc: 'zkverify-rpc.zkverify.io'
+          - runtime: 'volta'
+            features: 'volta'
+            rpc: 'zkverify-volta-rpc.zkverify.io'
+    name: Try runtime ${{ matrix.runtime }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Runtimes build
+      - name: Runtime ${{ matrix.runtime }} build
         uses: ./.github/actions/cmd-in-docker
         with:
-          command: "cargo build -p zkv-runtime -p volta-runtime --release --features try-runtime"
+          command: "cargo build -p zkv-runtime --release --features try-runtime,${{ matrix.features }}"
           use_cache: 'yes'
-          cache_key: 'build-try-runtime'
+          cache_key: 'build-try-runtime-${{ matrix.runtime }}'
           lld_install: 'yes'
 
-      - name: Execute try-runtime volta
-        if: ${{ inputs.execute-try-runtime == 'yes' }}
-        uses: ./.github/actions/cmd-in-docker
-        with:
-          command: >-
-            try-runtime --runtime /build/target/release/wbuild/volta-runtime/volta_runtime.compact.compressed.wasm \
-              on-runtime-upgrade \
-              --blocktime 6 --disable-mbm-checks --disable-spec-version-check live \
-              --uri wss://zkverify-volta-rpc.zkverify.io/
-          try_runtime: 'v0.8.0'
-          use_cache: 'no'
       - name: Execute try-runtime zkverify
         if: ${{ inputs.execute-try-runtime == 'yes' }}
         uses: ./.github/actions/cmd-in-docker
@@ -53,6 +51,6 @@ jobs:
             try-runtime --runtime /build/target/release/wbuild/zkv-runtime/zkv_runtime.compact.compressed.wasm \
               on-runtime-upgrade \
               --blocktime 6 --disable-mbm-checks --disable-spec-version-check live \
-              --uri wss://zkverify-rpc.zkverify.io/
+              --uri wss://${{ matrix.rpc }}/
           try_runtime: 'v0.8.0'
           use_cache: 'no'

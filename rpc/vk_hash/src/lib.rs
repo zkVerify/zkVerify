@@ -27,16 +27,6 @@ use pallet_ultrahonk_verifier::{Ultrahonk, VK_SIZE as ULTRAHONK_VK_SIZE};
 use pallet_ultraplonk_verifier::{Ultraplonk, VK_SIZE};
 use sp_core::{serde::Deserialize, serde::Serialize, Bytes, H256, U256};
 
-// In order to implement the vk-hash Rpc we need to use the Runtime definition of the Verifier.
-// The testnet verifier should be at least a superset of mainnet ones and the vk hash never really
-// depends on from the verifier configuration.
-// Anyway, a no-trivial refactoring is needed to remove the configuration dependency so we decided
-// to use the volta runtime as reference.
-// The case when a verifier was removed from testnet runtime but is still present in mainnet should
-// never happen, at least is wired because we should remove it from mainnet before. But, if that's
-// the case a use can run an older node and use it to compute the hash.
-use volta_runtime as runtime;
-
 type VkOf<V> = <V as Verifier>::Vk;
 
 #[derive(Debug, Encode, Decode, Serialize, Deserialize)]
@@ -174,8 +164,8 @@ impl VKHashApiServer<H256> for VKHash {
                 Some("Incorrect Slice Length".to_string()),
             ));
         }
-        let vk: VkOf<Ezkl<runtime::Runtime>> = pallet_ezkl_verifier::Vk::new(vk_bytes.to_vec());
-        Ok(Ezkl::<runtime::Runtime>::vk_hash(&vk))
+        let vk: VkOf<Ezkl<zkv_runtime::Runtime>> = pallet_ezkl_verifier::Vk::new(vk_bytes.to_vec());
+        Ok(Ezkl::<zkv_runtime::Runtime>::vk_hash(&vk))
     }
 
     fn fflonk(&self, vk: FflonkVk) -> RpcResult<H256> {
@@ -183,15 +173,15 @@ impl VKHashApiServer<H256> for VKHash {
     }
 
     fn groth16(&self, vk: Groth16Vk) -> RpcResult<H256> {
-        Ok(Groth16::<runtime::Runtime>::vk_hash(&vk.into()))
+        Ok(Groth16::<zkv_runtime::Runtime>::vk_hash(&vk.into()))
     }
 
     fn plonky2(&self, vk: Plonky2Vk) -> RpcResult<H256> {
         let config = vk.config;
         let bytes = vk.bytes.0;
-        let vk_with_config: VkOf<Plonky2<runtime::Runtime>> =
+        let vk_with_config: VkOf<Plonky2<zkv_runtime::Runtime>> =
             pallet_plonky2_verifier::Vk::new(config, bytes);
-        Ok(Plonky2::<runtime::Runtime>::vk_hash(&vk_with_config))
+        Ok(Plonky2::<zkv_runtime::Runtime>::vk_hash(&vk_with_config))
     }
 
     fn risc0(&self, vk: H256) -> RpcResult<H256> {
@@ -206,14 +196,14 @@ impl VKHashApiServer<H256> for VKHash {
                 Some("Incorrect Slice Length".to_string()),
             ));
         }
-        let vk: VkOf<Ultrahonk<runtime::Runtime>> = vk.0.try_into().map_err(|_| {
+        let vk: VkOf<Ultrahonk<zkv_runtime::Runtime>> = vk.0.try_into().map_err(|_| {
             ErrorObject::owned(
                 2,
                 "Deserialize error",
                 Some("Deserialize error".to_string()),
             )
         })?;
-        Ok(Ultrahonk::<runtime::Runtime>::vk_hash(&vk))
+        Ok(Ultrahonk::<zkv_runtime::Runtime>::vk_hash(&vk))
     }
 
     fn ultraplonk(&self, vk: Bytes) -> RpcResult<H256> {
@@ -224,14 +214,14 @@ impl VKHashApiServer<H256> for VKHash {
                 Some("Incorrect Slice Length".to_string()),
             ));
         }
-        let vk: VkOf<Ultraplonk<runtime::Runtime>> = vk.0.try_into().map_err(|_| {
+        let vk: VkOf<Ultraplonk<zkv_runtime::Runtime>> = vk.0.try_into().map_err(|_| {
             ErrorObject::owned(
                 2,
                 "Deserialize error",
                 Some("Deserialize error".to_string()),
             )
         })?;
-        Ok(Ultraplonk::<runtime::Runtime>::vk_hash(&vk))
+        Ok(Ultraplonk::<zkv_runtime::Runtime>::vk_hash(&vk))
     }
 
     fn sp1(&self, vk: H256) -> RpcResult<H256> {

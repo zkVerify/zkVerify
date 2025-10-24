@@ -34,11 +34,9 @@ use tempfile::tempdir;
 
 pub mod common;
 
-/// `benchmark block` works for all dev runtimes using the wasm executor.
 #[rstest]
 #[case::dev("dev")]
 #[case::volta("volta-dev")]
-#[case::zkverify("zkverify-dev")]
 #[tokio::test]
 async fn benchmark_block_works(#[case] chain: &str) {
     run_with_timeout(Duration::from_secs(10 * 60), async move {

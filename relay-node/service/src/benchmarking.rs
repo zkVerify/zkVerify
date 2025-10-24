@@ -16,77 +16,24 @@
 
 //! Code related to benchmarking a node.
 
+use crate::FullClient;
 use polkadot_primitives::AccountId;
 use sc_client_api::UsageProvider;
 use sp_keyring::Sr25519Keyring;
 use sp_runtime::OpaqueExtrinsic;
-
-use crate::*;
-
-macro_rules! identify_chain {
-    (
-		$chain:expr,
-		$nonce:ident,
-		$current_block:ident,
-		$period:ident,
-		$genesis:ident,
-		$signer:ident,
-		$generic_code:expr $(,)*
-	) => {
-        match $chain {
-            Chain::ZkVerify => {
-                use zkv_runtime as runtime;
-
-                let call = $generic_code;
-
-                Ok(zkv_sign_call(
-                    call,
-                    $nonce,
-                    $current_block,
-                    $period,
-                    $genesis,
-                    $signer,
-                ))
-            }
-            Chain::Volta => {
-                use volta_runtime as runtime;
-
-                let call = $generic_code;
-
-                Ok(volta_sign_call(
-                    call,
-                    $nonce,
-                    $current_block,
-                    $period,
-                    $genesis,
-                    $signer,
-                ))
-            }
-            Chain::Unknown => {
-                let _ = $nonce;
-                let _ = $current_block;
-                let _ = $period;
-                let _ = $genesis;
-                let _ = $signer;
-
-                Err("Unknown chain")
-            }
-        }
-    };
-}
+use std::sync::Arc;
 
 /// Generates `System::Remark` extrinsics for the benchmarks.
 ///
 /// Note: Should only be used for benchmarking.
 pub struct RemarkBuilder {
     client: Arc<FullClient>,
-    chain: Chain,
 }
 
 impl RemarkBuilder {
     /// Creates a new [`Self`] from the given client.
-    pub fn new(client: Arc<FullClient>, chain: Chain) -> Self {
-        Self { client, chain }
+    pub fn new(client: Arc<FullClient>) -> Self {
+        Self { client }
     }
 }
 
@@ -106,19 +53,17 @@ impl frame_benchmarking_cli::ExtrinsicBuilder for RemarkBuilder {
         let signer = Sr25519Keyring::Bob.pair();
         let current_block = 0;
 
-        identify_chain! {
-            self.chain,
+        let call = {
+            zkv_runtime::RuntimeCall::System(zkv_runtime::SystemCall::remark { remark: vec![] })
+        };
+        Ok(sign_call(
+            call,
             nonce,
             current_block,
             period,
             genesis,
             signer,
-            {
-                runtime::RuntimeCall::System(
-                    runtime::SystemCall::remark { remark: vec![] }
-                )
-            },
-        }
+        ))
     }
 }
 
@@ -128,17 +73,12 @@ impl frame_benchmarking_cli::ExtrinsicBuilder for RemarkBuilder {
 pub struct TransferKeepAliveBuilder {
     client: Arc<FullClient>,
     dest: AccountId,
-    chain: Chain,
 }
 
 impl TransferKeepAliveBuilder {
     /// Creates a new [`Self`] from the given client and the arguments for the extrinsics.
-    pub fn new(client: Arc<FullClient>, dest: AccountId, chain: Chain) -> Self {
-        Self {
-            client,
-            dest,
-            chain,
-        }
+    pub fn new(client: Arc<FullClient>, dest: AccountId) -> Self {
+        Self { client, dest }
     }
 }
 
@@ -159,78 +99,25 @@ impl frame_benchmarking_cli::ExtrinsicBuilder for TransferKeepAliveBuilder {
         let current_block = 0;
         let _dest = self.dest.clone();
 
-        identify_chain! {
-            self.chain,
+        let call = {
+            zkv_runtime::RuntimeCall::Balances(zkv_runtime::BalancesCall::transfer_keep_alive {
+                dest: _dest.into(),
+                value: zkv_runtime::currency::EXISTENTIAL_DEPOSIT,
+            })
+        };
+
+        Ok(sign_call(
+            call,
             nonce,
             current_block,
             period,
             genesis,
             signer,
-            {
-                runtime::RuntimeCall::Balances(runtime::BalancesCall::transfer_keep_alive {
-                    dest: _dest.into(),
-                    value: runtime::currency::EXISTENTIAL_DEPOSIT,
-                })
-            },
-        }
+        ))
     }
 }
 
-fn volta_sign_call(
-    call: volta_runtime::RuntimeCall,
-    nonce: u32,
-    current_block: u64,
-    period: u64,
-    genesis: sp_core::H256,
-    acc: sp_core::sr25519::Pair,
-) -> OpaqueExtrinsic {
-    use codec::Encode;
-    use sp_core::Pair;
-    use volta_runtime as runtime;
-
-    let tx_ext: runtime::TxExtension = (
-        frame_system::CheckNonZeroSender::<runtime::Runtime>::new(),
-        frame_system::CheckSpecVersion::<runtime::Runtime>::new(),
-        frame_system::CheckTxVersion::<runtime::Runtime>::new(),
-        frame_system::CheckGenesis::<runtime::Runtime>::new(),
-        frame_system::CheckMortality::<runtime::Runtime>::from(sp_runtime::generic::Era::mortal(
-            period,
-            current_block,
-        )),
-        frame_system::CheckNonce::<runtime::Runtime>::from(nonce),
-        frame_system::CheckWeight::<runtime::Runtime>::new(),
-        pallet_transaction_payment::ChargeTransactionPayment::<runtime::Runtime>::from(0),
-        frame_metadata_hash_extension::CheckMetadataHash::<runtime::Runtime>::new(false),
-    )
-        .into();
-
-    let payload = runtime::SignedPayload::from_raw(
-        call.clone(),
-        tx_ext.clone(),
-        (
-            (),
-            runtime::VERSION.spec_version,
-            runtime::VERSION.transaction_version,
-            genesis,
-            genesis,
-            (),
-            (),
-            (),
-            None,
-        ),
-    );
-
-    let signature = payload.using_encoded(|p| acc.sign(p));
-    runtime::UncheckedExtrinsic::new_signed(
-        call,
-        sp_runtime::AccountId32::from(acc.public()).into(),
-        polkadot_core_primitives::Signature::Sr25519(signature),
-        tx_ext,
-    )
-    .into()
-}
-
-fn zkv_sign_call(
+fn sign_call(
     call: zkv_runtime::RuntimeCall,
     nonce: u32,
     current_block: u64,

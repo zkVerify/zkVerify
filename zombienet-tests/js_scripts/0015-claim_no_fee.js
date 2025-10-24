@@ -20,21 +20,9 @@ async function run(nodeName, networkInfo, _args) {
   const api = await init_api(zombie, nodeName, networkInfo);
   
   // Signature generated with https://etherscan.io/verifiedSignatures#
-  let eth_signature;
-  let ss58Prefix;
-  const chain = await api.rpc.system.chain();
-  if (chain.toString().startsWith("Volta ")) {
-      ss58Prefix = 251;
-      // Dest address: xpkQVjJtgK2jwbAkNLEPnWxxuxmBkaLtie7oug3WuRBSZXHz8
-      eth_signature = '0x3485f6726eb2efee5356f3b5bdd4df6287c70a73e2b3b9b82e54d8df5395421543456d948bff2109db8fc2342bf4cdc424f70c0161091ff83cb68227a32713e81c';
-  } else if (chain.toString().startsWith("zkVerify ")) {
-      ss58Prefix = 8741;
-      // Dest address: ZKZCeKKpTeBwyoDngETfHfdbSFdWSkWRjZqE8N3BTf5ppbBHY
-      eth_signature = '0x79bd9a9c63bbbd918b4a125854a449cdde8bb1fb20df372b15fe74319a1b545324fc75981fea5a401fddcfd65bcaad50710c40e191185364ee1baea3dda286321c';
-  } else {
-      console.log(`Unsupported chain ${chain}, only Volta and zkVerify are supported`);
-      return ReturnCode.ErrUnsupportedNetwork;
-  }
+    const ss58Prefix = 251;
+    // Dest address: xpkQVjJtgK2jwbAkNLEPnWxxuxmBkaLtie7oug3WuRBSZXHz8
+    const eth_signature = '0x3485f6726eb2efee5356f3b5bdd4df6287c70a73e2b3b9b82e54d8df5395421543456d948bff2109db8fc2342bf4cdc424f70c0161091ff83cb68227a32713e81c';
 
   // Check token claim pallet account exists
   const palletAddressOption = await api.query.tokenClaim.palletAccountId();

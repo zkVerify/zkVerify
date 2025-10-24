@@ -19,7 +19,8 @@ jobs:
           - build-runtime-benchmarks
           - lint-format
           - udeps
-          - build-try-runtime
+          - build-try-runtime-volta
+          - build-try-runtime-zkverify
           - rustdoc
     steps:
       - name: "Deleting '${{ matrix.cache_key }}' cache key"

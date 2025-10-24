@@ -33,18 +33,9 @@ async function run(nodeName, networkInfo, args) {
     const bob = keyring.addFromUri('//Bob');
     const charlie = keyring.addFromUri('//Charlie');
 
-    let wasm;
-    let ss58Prefix;
-    if (chain.toString().startsWith("Volta ")) {
-        wasm = fs.readFileSync('./new-runtime/volta_runtime.wasm');
-        ss58Prefix = 251;
-    } else if (chain.toString().startsWith("zkVerify ")) {
-        wasm = fs.readFileSync('./new-runtime/zkv_runtime.wasm');
-        ss58Prefix = 8741;
-    } else {
-        console.log(`Unsupported chain ${chain}, only Volta and zkVerify are supported`);
-        return ReturnCode.ErrUnsupportedNetwork;
-    }
+    let wasm = fs.readFileSync('./new-runtime/volta_runtime.wasm');
+    let ss58Prefix = 251;
+
 
     /*****************************************************************************************************
      *************************************** CREATE MULTISIG ACCOUNT *************************************

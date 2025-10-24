@@ -1,7 +1,7 @@
 [package]
 name = "zkv-runtime"
-version = "1.1.0"
-description = "zkVerify Mainnet Runtime."
+version = "1.2.1"
+description = "zkVerify Runtime."
 authors.workspace = true
 homepage = "https://github.com/zkVerify/zkVerify"
 edition.workspace = true
@@ -19,6 +19,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 anyhow = { workspace = true }
 codec = { workspace = true, features = ["derive"] }
 scale-info = { workspace = true, features = ["derive", "serde"] }
+cfg-if = "1.0"
 
 pallet-offences = { workspace = true }
 pallet-authorship = { workspace = true }
@@ -96,6 +97,7 @@ aggregate-rpc-runtime-api = { workspace = true }
 
 pallet-verifiers = { workspace = true }
 hp-verifiers = { workspace = true }
+pallet-ezkl-verifier = { workspace = true }
 pallet-fflonk-verifier = { workspace = true }
 pallet-groth16-verifier = { workspace = true }
 pallet-risc0-verifier = { workspace = true, features = ["inject-native-poseidon2"] }
@@ -112,7 +114,6 @@ polkadot-runtime-parachains = { workspace = true }
 pallet-authority-discovery = { workspace = true }
 
 polkadot-runtime-common = { workspace = true }
-zkv-runtime-common = { workspace = true }
 
 pallet-message-queue = { workspace = true }
 pallet-xcm = { workspace = true }
@@ -120,7 +121,6 @@ pallet-xcm-benchmarks = { workspace = true, optional = true }
 xcm-builder = { workspace = true }
 xcm-executor = { workspace = true }
 xcm = { workspace = true }
-xcm-procedural = { workspace = true }
 hex-literal = { workspace = true }
 
 [dev-dependencies]
@@ -128,6 +128,7 @@ rstest = { workspace = true }
 
 [build-dependencies]
 substrate-wasm-builder = { workspace = true, optional = true }
+cfg-if = "1.0.0"
 
 [features]
 runtime-benchmarks = [
@@ -145,9 +146,9 @@ runtime-benchmarks = [
 	"pallet-bounties/runtime-benchmarks",
 	"pallet-child-bounties/runtime-benchmarks",
 	"pallet-claim/runtime-benchmarks",
-	"pallet-token-claim/runtime-benchmarks",
 	"pallet-conviction-voting/runtime-benchmarks",
 	"pallet-election-provider-support-benchmarking/runtime-benchmarks",
+ "pallet-ezkl-verifier/runtime-benchmarks",
 	"pallet-fflonk-verifier/runtime-benchmarks",
 	"pallet-grandpa/runtime-benchmarks",
 	"pallet-groth16-verifier/runtime-benchmarks",
@@ -167,6 +168,7 @@ runtime-benchmarks = [
 	"pallet-staking/runtime-benchmarks",
 	"pallet-sudo/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
+ "pallet-token-claim/runtime-benchmarks",
 	"pallet-token-gateway/runtime-benchmarks",
 	"pallet-transaction-payment/runtime-benchmarks",
 	"pallet-treasury/runtime-benchmarks",
@@ -184,10 +186,10 @@ runtime-benchmarks = [
 	"sp-staking/runtime-benchmarks",
 	"xcm-builder/runtime-benchmarks",
 	"xcm-executor/runtime-benchmarks",
-	"zkv-runtime-common/runtime-benchmarks",
 ]
-fast-runtime = [ "zkv-runtime-common/fast-runtime" ]
+fast-runtime = []
 metadata-hash = [ "substrate-wasm-builder/metadata-hash" ]
+volta = []
 default = [ "std" ]
 std = [
 	"aggregate-rpc-runtime-api/std",
@@ -218,9 +220,9 @@ std = [
 	"pallet-bounties/std",
 	"pallet-child-bounties/std",
 	"pallet-claim/std",
-	"pallet-token-claim/std",
 	"pallet-conviction-voting/std",
 	"pallet-election-provider-support-benchmarking?/std",
+ "pallet-ezkl-verifier/std",
 	"pallet-fflonk-verifier/std",
 	"pallet-grandpa/std",
 	"pallet-groth16-verifier/std",
@@ -243,6 +245,7 @@ std = [
 	"pallet-staking/std",
 	"pallet-sudo/std",
 	"pallet-timestamp/std",
+ "pallet-token-claim/std",
 	"pallet-token-gateway/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
 	"pallet-transaction-payment/std",
@@ -281,7 +284,6 @@ std = [
 	"xcm-builder/std",
 	"xcm-executor/std",
 	"xcm/std",
-	"zkv-runtime-common/std",
 ]
 try-runtime = [
 	"frame-election-provider-support/try-runtime",
@@ -300,7 +302,6 @@ try-runtime = [
 	"pallet-bounties/try-runtime",
 	"pallet-child-bounties/try-runtime",
 	"pallet-claim/try-runtime",
-	"pallet-token-claim/try-runtime",
 	"pallet-conviction-voting/try-runtime",
 	"pallet-grandpa/try-runtime",
 	"pallet-hyperbridge-aggregations/try-runtime",
@@ -317,6 +318,7 @@ try-runtime = [
 	"pallet-staking/try-runtime",
 	"pallet-sudo/try-runtime",
 	"pallet-timestamp/try-runtime",
+ "pallet-token-claim/try-runtime",
 	"pallet-token-gateway/try-runtime",
 	"pallet-transaction-payment/try-runtime",
 	"pallet-treasury/try-runtime",
@@ -327,6 +329,5 @@ try-runtime = [
 	"polkadot-runtime-common/try-runtime",
 	"polkadot-runtime-parachains/try-runtime",
 	"sp-runtime/try-runtime",
-	"zkv-runtime-common/try-runtime",
 ]
 extend-benchmarks = [ "pallet-risc0-verifier/extend-benchmarks" ]

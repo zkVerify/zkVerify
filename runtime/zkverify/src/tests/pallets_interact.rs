@@ -77,10 +77,10 @@ mod authorship {
     fn notifies_staking() {
         test().execute_with(|| {
             // Before authoring a block, no points have been given in the active era
-            assert!(
+            assert_eq!(
                 Staking::eras_reward_points(Staking::active_era().expect("No active era").index)
-                    .total
-                    == 0
+                    .total,
+                0
             );
 
             // Pretend we author a block
@@ -135,13 +135,13 @@ mod offences {
 
             vec![(self.offender_account.clone(), exposure)]
         }
+        fn session_index(&self) -> SessionIndex {
+            0
+        }
         fn validator_set_count(&self) -> u32 {
             testsfixtures::NUM_VALIDATORS
         }
         fn time_slot(&self) -> Self::TimeSlot {
-            0
-        }
-        fn session_index(&self) -> SessionIndex {
             0
         }
         fn slash_fraction(&self, _offenders_count: u32) -> Perbill {

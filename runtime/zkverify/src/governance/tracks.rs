@@ -15,13 +15,19 @@
 
 //! Track configurations for governance.
 
-use super::*;
 use frame_election_provider_support::private::sp_arithmetic;
 
 const fn percent(x: i32) -> sp_arithmetic::FixedI64 {
     sp_arithmetic::FixedI64::from_rational(x as u128, 100)
 }
+use super::origins;
+use crate::{
+    currency::{Balance, HUNDREDS, THOUSANDS},
+    types::{BlockNumber, DAYS, HOURS, MINUTES},
+    RuntimeOrigin,
+};
 use pallet_referenda::Curve;
+
 const APP_ROOT: Curve = Curve::make_reciprocal(4, 28, percent(80), percent(50), percent(100));
 const SUP_ROOT: Curve = Curve::make_linear(28, 28, percent(0), percent(50));
 const APP_REFERENDUM_CANCELLER: Curve = Curve::make_linear(17, 28, percent(50), percent(100));

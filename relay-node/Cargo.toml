@@ -53,6 +53,7 @@ tokio = { workspace = true }
 substrate-rpc-client = { workspace = true }
 polkadot-core-primitives = { workspace = true }
 rstest = { workspace = true }
+cfg-if = "1.0"
 
 [build-dependencies]
 substrate-build-script-utils = { version = "11.0.0" }

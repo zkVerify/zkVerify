@@ -16,17 +16,20 @@
 
 #![allow(clippy::type_complexity)]
 
-use crate::*;
+use crate::{currency::Balance, types::AccountId, SessionKeys, BABE_GENESIS_EPOCH_CONFIG};
 use alloc::{boxed::Box, vec, vec::Vec};
+use helper::*;
 use polkadot_primitives::{
-    AssignmentId, AsyncBackingParams, BlockNumber, SchedulerParams, ValidatorId,
+    ApprovalVotingParams, AssignmentId, AsyncBackingParams, AuthorityDiscoveryId, BlockNumber,
+    NodeFeatures, SchedulerParams, ValidatorId,
 };
 use polkadot_runtime_parachains::configuration::HostConfiguration;
 use sp_consensus_babe::AuthorityId as BabeId;
 use sp_consensus_grandpa::AuthorityId as GrandpaId;
-use sp_core::crypto::Ss58Codec;
-use sp_core::sr25519;
+use sp_core::{crypto::Ss58Codec, sr25519};
 use sp_genesis_builder::PresetId;
+
+mod helper;
 
 fn session_keys(
     babe: BabeId,
@@ -44,7 +47,7 @@ fn session_keys(
     }
 }
 
-fn main_parachains_host_configuration() -> HostConfiguration<BlockNumber> {
+fn parachains_host_configuration() -> HostConfiguration<BlockNumber> {
     use polkadot_primitives::{MAX_CODE_SIZE, MAX_POV_SIZE};
 
     HostConfiguration {
@@ -93,168 +96,6 @@ fn main_parachains_host_configuration() -> HostConfiguration<BlockNumber> {
             max_approval_coalesce_count: 1,
         },
     }
-}
-
-pub fn staging_config_genesis() -> Result<serde_json::Value, sp_core::crypto::PublicError> {
-    const EDS_LOCKED_BALANCE: Balance = 271 * MILLIONS + 300 * THOUSANDS + VFY;
-    const ZKV_FOUNDATION_LOCKED_BALANCE: Balance = 133 * MILLIONS + 162 * THOUSANDS + 741 * VFY;
-    const ZKV_FOUNDATION_LIQUID_BALANCE: Balance = 116 * MILLIONS + 592 * THOUSANDS + 379 * VFY;
-    const ZKV_COMMUNITY_LOCKED_BALANCE: Balance = 264 * MILLIONS + 343 * THOUSANDS + 112 * VFY;
-    const ZKV_COMMUNITY_LIQUID_BALANCE: Balance = 108 * MILLIONS + 721 * THOUSANDS + 765 * VFY;
-    const TOKEN_LAUNCH_LOCKED_BALANCE: Balance = 79 * MILLIONS + 950 * THOUSANDS + VFY;
-    const HORIZEN_LABS_LOCKED_BALANCE: Balance = 25 * MILLIONS + VFY;
-    const VALIDATOR_BALANCE: Balance = 100 * THOUSANDS;
-    const VALIDATOR_BOND: Balance = VALIDATOR_BALANCE;
-    const SUDO_BALANCE: Balance = 10 * THOUSANDS;
-    const DEV_WALLET_BALANCE: Balance = 10 * THOUSANDS;
-
-    let institutional = [
-        //EDS Locked
-        FundedAccount::from_id(
-            "5E2bar9bJQfCm7bdBFbTD6j5AGfuEPbWohCQL8cNgvRppBxN",
-            EDS_LOCKED_BALANCE,
-        )?,
-        //ZKV Foundation Locked
-        FundedAccount::from_id(
-            "5H4GcaHqZN8t2sg25dx71BZUQyp5bkNeAECtTv2hbQMZL2d9",
-            ZKV_FOUNDATION_LOCKED_BALANCE,
-        )?,
-        //ZKV Foundation Liquid
-        FundedAccount::from_id(
-            "5H7BYine8UZrd8aWfhGr3ANYHtrqZpo47WBuAjrvArWzs6TU",
-            ZKV_FOUNDATION_LIQUID_BALANCE,
-        )?,
-        //ZKV Community Locked
-        FundedAccount::from_id(
-            "5HnS3BKnDXSgpoyYdtSJTuKuiU3mqnhzWeez4WSTpjYsPgvD",
-            ZKV_COMMUNITY_LOCKED_BALANCE,
-        )?,
-        //ZKV Community Liquid
-        FundedAccount::from_id(
-            "5EtxUrj7UrXJWSGxaSyBz1dGLRXP5t1Q1rDq2t7Uw8PWrpwE",
-            ZKV_COMMUNITY_LIQUID_BALANCE,
-        )?,
-        //Token Launch Locked
-        FundedAccount::from_id(
-            "5EaXuxjzL29Hx4oUauScAUCeAX9Nhy7Gq82FesrSfiADrK9N",
-            TOKEN_LAUNCH_LOCKED_BALANCE,
-        )?,
-        //Horizen Labs Locked
-        FundedAccount::from_id(
-            "5CKQcFAbn2MGaV8D6XhBt84JkPRGWBD1jhbvkhbQcLWp2R32",
-            HORIZEN_LABS_LOCKED_BALANCE,
-        )?,
-    ];
-
-    const VALIDATORS_ADDRESS: &[(&str, &str)] = &[
-        (
-            "5HinfZ1FcDLWp5hpMWQyuuTHPmrp2oSaivpZdhbL33kt8dXh",
-            "5E1891vFuA2DhdzRk5LCQenReaMtsQPUiQ2BAwGrh7oD93vv",
-        ),
-        (
-            "5EAS2dekMepc8T5DUQ9MSWSegzymQLee7NeMV59pYbjYEbmQ",
-            "5F2saXmrUVN9CfXLese8iGKAuVwEyJ8K3Q2NFrhgzsmwVnpn",
-        ),
-        (
-            "5Hozb8oD4gfhYwwcxFM2RZv81mbtEtqUetkjbJNoLCmFiHPa",
-            "5C8FxmWrrCG5FnSjch56cGEY7ktypi7vzg8SSXD3xWvECu6n",
-        ),
-        (
-            "5F2DhCx7XM3c3PbzeiTT9oqpRBPmj64EHGqy6epSDnLNWPSB",
-            "5DZweKpPQtVEbw4uof2cEDoZXGRz8rdFNwKGqhvnFfACrMJw",
-        ),
-        (
-            "5FhkW4X1KYU1fRStCTL4VoG4oMarB9ZM6gUS56Hf8XdyFF3K",
-            "5Gj3xgnHKh6CuCwhqsrVUZZezX6aEKyQPAvLq1SsjDq86GyX",
-        ),
-        (
-            "5GQxAhBih3uPtXnqnshrPSgWa3QvaDZbrUJ9wZCwTfydhWhU",
-            "5GRCL51gzF94gyGFsTSmeUqWH3fu69Jdka9bJSVtJrLFGzSr",
-        ),
-        (
-            "5CiAdXr8gnCi3VnxcyRftVBBH82TDXEnNSBxdBdAfBBRpPKs",
-            "5CBRYsmfLC49DSnavggu7wd94ukjsADzv2Vd5FYutCguTuqa",
-        ),
-        (
-            "5Escp7EXeZj9E9pKDhQDYTkFc7RGxJhNKXFS6noeWJmNWouC",
-            "5Gs2QGQAXYvRyNUmgViDJFdaYyxhWfRxrF6ymHEXsfBygwDD",
-        ),
-        (
-            "5FHqXrqQ9fVRHVspNuEM2qELssszUntppAo4sn12D3UW9dYY",
-            "5ESGmfG7NHsbcF7JaXFe9kns1LxqsmXEQUaYwoMb65o4WQXE",
-        ),
-    ];
-
-    let initial_authorities = VALIDATORS_ADDRESS
-        .iter()
-        .map(|(sr25519, ed25519)| {
-            ValidatorData::from_ids(sr25519, sr25519, ed25519, VALIDATOR_BALANCE, VALIDATOR_BOND)
-        })
-        .collect::<Result<Vec<_>, _>>()?;
-
-    let nominators: &[NominatorData] = &[];
-
-    let sudo_account = FundedAccount::from_id(
-        "5HbqGciWqzKymMVFfDYjgeM3irRHuzV49oeqqSbMYBguc67Q",
-        SUDO_BALANCE,
-    )?;
-
-    let administrative_account = [
-        FundedAccount::from_id(
-            "5F6U2FsQQndhFnszdmA5ibHGiHatQ9MRxy3PtxK8arSkXJJf",
-            DEV_WALLET_BALANCE,
-        )?,
-        // Dev Wallet 2 HL
-        FundedAccount::from_id(
-            "5DnhJzvueoHbpYe5LLaLKeEZBEjHMs6wba7JCgd8iTDLpc1w",
-            DEV_WALLET_BALANCE,
-        )?,
-    ];
-
-    let balances = initial_authorities
-        .iter()
-        .map(|a| &a.account)
-        .chain(nominators.iter().map(|n| &n.account))
-        .chain(institutional.iter())
-        .chain(administrative_account.iter())
-        .chain(core::iter::once(&sudo_account))
-        .map(FundedAccount::json_data)
-        .collect::<Vec<_>>();
-    let staker = initial_authorities
-        .iter()
-        .cloned()
-        .map(|v| Box::new(v) as Box<dyn StakerData>)
-        .chain(
-            nominators
-                .iter()
-                .cloned()
-                .map(|v| Box::new(v) as Box<dyn StakerData>),
-        )
-        .collect();
-
-    Ok(genesis(
-        // Initial PoA authorities
-        initial_authorities
-            .iter()
-            .map(ValidatorData::ids)
-            .collect::<Vec<_>>(),
-        // Sudo account [nh-sudo-t1]
-        sudo_account.account_id.clone(),
-        // Initial balances
-        balances,
-        staker,
-        // min validator count
-        5,
-        // ideal validator count
-        15,
-        // max validator count
-        Some(200),
-        // min validator bond
-        10 * THOUSANDS,
-        // min nominator bond
-        10 * VFY,
-        main_parachains_host_configuration(),
-    ))
 }
 
 pub fn local_config_genesis() -> serde_json::Value {
@@ -316,7 +157,7 @@ pub fn local_config_genesis() -> serde_json::Value {
         0,
         // min nominator bond
         0,
-        main_parachains_host_configuration(),
+        parachains_host_configuration(),
     )
 }
 
@@ -389,23 +230,18 @@ pub fn development_config_genesis() -> serde_json::Value {
         0,
         // min nominator bond
         0,
-        main_parachains_host_configuration(),
+        parachains_host_configuration(),
     )
 }
 
 pub fn preset_names() -> Vec<PresetId> {
-    vec![
-        PresetId::from("development"),
-        PresetId::from("local"),
-        PresetId::from("staging"),
-    ]
+    vec![PresetId::from("development"), PresetId::from("local")]
 }
 
 pub fn get_preset(id: &sp_genesis_builder::PresetId) -> Option<Vec<u8>> {
     let cfg = match id.as_ref() {
         "development" => development_config_genesis(),
         "local" => local_config_genesis(),
-        "staging" => staging_config_genesis().unwrap(),
         _ => return None,
     };
     Some(

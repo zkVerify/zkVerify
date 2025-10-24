@@ -14,14 +14,13 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use super::*;
-/// Reexport `test` runner
-pub use testsfixtures::{test, BABE_AUTHOR_ID, BLOCK_NUMBER, SLOT_ID};
+#[test]
+fn version_fields_correct() {
+    let expected = if cfg!(feature = "volta") {
+        "tzkv-runtime"
+    } else {
+        "zkv-runtime"
+    };
 
-mod availability;
-mod misc;
-mod pallets_interact;
-mod payout;
-mod proxy;
-mod specs;
-mod testsfixtures;
-mod use_correct_weights;
+    assert_eq!(expected, VERSION.spec_name)
+}

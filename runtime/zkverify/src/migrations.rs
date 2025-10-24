@@ -15,7 +15,4 @@
 
 //! This module contains the code for all the current and past runtime migrations.
 
-#[allow(unused_imports)]
-use super::*;
-
 pub type Unreleased = ();

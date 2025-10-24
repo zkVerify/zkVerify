@@ -20,26 +20,21 @@ use std::{process::Command, result::Result};
 
 mod common;
 
-static EXTRINSICS: [(&str, &str); 2] = [("system", "remark"), ("balances", "transfer_keep_alive")];
-
-/// `benchmark extrinsic` works for all dev runtimes and some extrinsics.
 #[rstest]
 #[case::dev("dev")]
 #[case::volta("volta-dev")]
-#[case::zkverify("zkverify-dev")]
+/// `benchmark extrinsic` works for all dev runtimes and some extrinsics.
 fn benchmark_extrinsic_works(#[case] chain: &str) {
-    for (pallet, extrinsic) in EXTRINSICS {
+    for (pallet, extrinsic) in [("system", "remark"), ("balances", "transfer_keep_alive")] {
         assert!(benchmark_extrinsic(chain, pallet, extrinsic).is_ok());
     }
 }
 
-/// `benchmark extrinsic` rejects all non-dev runtimes.
 #[rstest]
 #[case::default("")]
-#[case::volta_staging("volta-staging")]
 #[case::volta("volta")]
-#[case::zkverify_staging("zkverify-staging")]
 #[case::zkverify("zkverify")]
+/// `benchmark extrinsic` should not work for all not dev runtimes.
 fn benchmark_extrinsic_rejects_non_dev_runtimes(#[case] runtime: &str) {
     assert!(benchmark_extrinsic(runtime, "system", "remark").is_err());
 }

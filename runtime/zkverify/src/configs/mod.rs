@@ -13,15 +13,16 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-use super::*;
-/// Reexport `test` runner
-pub use testsfixtures::{test, BABE_AUTHOR_ID, BLOCK_NUMBER, SLOT_ID};
+pub use commons::*;
+pub use runtime::*;
+mod commons;
 
-mod availability;
-mod misc;
-mod pallets_interact;
-mod payout;
-mod proxy;
-mod specs;
-mod testsfixtures;
-mod use_correct_weights;
+cfg_if::cfg_if! {
+    if #[cfg(feature = "volta")] {
+        #[path="volta.rs"]
+        mod runtime;
+    } else {
+        #[path="zkverify.rs"]
+        mod runtime;
+    }
+}
