@@ -55,7 +55,7 @@ runs:
       run: |
         echo "Building relay chain Docker image"
         runtime_build_arg=""
-        features=${{ inputs.features }}
+        features="${{ inputs.features }}"
         if [ "${{ inputs.type }}" = "node" ]; then
           dockerfile="zkv-relay.Dockerfile"
           runtime_build_arg=""

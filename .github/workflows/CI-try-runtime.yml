@@ -23,7 +23,6 @@ jobs:
     runs-on: warp-ubuntu-latest-x64-8x
     strategy:
       matrix:
-        runtime: [ 'zkverify', 'volta' ]
         include:
           - runtime: 'zkverify'
             features: ''

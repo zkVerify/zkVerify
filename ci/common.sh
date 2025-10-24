@@ -147,3 +147,8 @@ check_signed_tag() {
     IS_A_RELEASE="false"
   fi
 }
+
+function git_tag_ref {
+  local tag="$1"
+  git show-ref -s "${tag}"
+}
