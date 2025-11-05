@@ -22,5 +22,4 @@ jobs:
           use_cache: "yes"
           cache_key: "udeps"
           cargo_binaries_install: "cargo-udeps"
-          lld_install: "yes"
           skip_wasm_build: "yes"

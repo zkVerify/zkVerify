@@ -25,16 +25,6 @@ inputs:
     required: false
     type: string
     default: 'noble_rust-stable_latest'
-  cmake_install:
-    description: 'Whether to install CMake'
-    required: false
-    type: string
-    default: ''
-  lld_install:
-    description: 'Whether to install LLD'
-    required: false
-    type: string
-    default: ''
   cargo_binaries_install:
     description: 'Whether to install extra cargo binaries. Multiple binaries must be comma separated (e.g., "cargo-llvm-cov,cargo-clippy")'
     required: false
@@ -89,8 +79,6 @@ runs:
       env:
         IMAGE_NAME: ${{ inputs.image_name }}
         IMAGE_TAG: ${{ inputs.image_tag }}
-        LLD_INSTALL: ${{ inputs.lld_install }}
-        CMAKE_INSTALL: ${{ inputs.cmake_install }}
         CARGO_BINARIES_INSTALL: ${{ inputs.cargo_binaries_install }}
         NODEJS_VERSION_INSTALL: ${{ inputs.nodejs_version_install }}
         SKIP_WASM_BUILD: ${{ inputs.skip_wasm_build }}
