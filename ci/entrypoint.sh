@@ -9,8 +9,6 @@ DOCKER_BUILD_DIR="${DOCKER_BUILD_DIR:-/build}"
 DOCKER_CARGO_HOME="${DOCKER_CARGO_HOME:-/tmp/.cargo}"
 CARGO_BINARIES_INSTALL="${CARGO_BINARIES_INSTALL:-}"
 NODEJS_VERSION_INSTALL="${NODEJS_VERSION_INSTALL:-}"
-CMAKE_INSTALL="${CMAKE_INSTALL:-}"
-LLD_INSTALL="${LLD_INSTALL:-}"
 SKIP_WASM_BUILD="${SKIP_WASM_BUILD:-}"
 TRY_RUNTIME="${TRY_RUNTIME:-}"
 TARGET_DIR="${DOCKER_BUILD_DIR}/target"
@@ -66,24 +64,6 @@ if [ -n "${NODEJS_VERSION_INSTALL}" ]; then
   echo -e "\n=== Nodejs environment was successfully deployed. Node.js version: $(node -v) | npm version: $(npm -v) | yarn version: $(yarn -v)\n"
 fi
 
-# cmake install if required
-if [ -n "${CMAKE_INSTALL}" ]; then
-  echo -e "\n=== Installing cmake ===\n"
-  export DEBIAN_FRONTEND=noninteractive
-  apt update -qq
-  apt --no-install-recommends install -yqq cmake
-  echo -e "\n=== cmake package was successfully installed. cmake version: $(cmake --version | grep -P -o -e '\d+\.\d+\.\d+')\n"
-fi
-
-# lld install if required
-if [ -n "${LLD_INSTALL}" ]; then
-  echo -e "\n=== Installing lld ===\n"
-  export DEBIAN_FRONTEND=noninteractive
-  apt update -qq
-  apt --no-install-recommends install -yqq lld
-  echo -e "\n=== lld package was successfully installed. lld version: $(ldd --version | awk '/ldd/{print $NF}')\n"
-fi
-
 # System info
 rustup show
 num_cpus="$(lscpu | grep '^CPU(s):' | awk '{print $2}')"
@@ -92,6 +72,8 @@ disk_space_usage="$(df -Th)"
 echo -e "\nCPU count: ${num_cpus}\nTotal RAM: ${total_ram}\nDisk space usage:\n${disk_space_usage}"
 echo -e "\nUsername: $USERNAME, HOME: $HOME, UID: $CURRENT_UID, GID: $CURRENT_GID"
 echo "CARGOARGS: ${CARGOARGS:-unset} | RUSTFLAGS: ${RUSTFLAGS:-unset} | RUST_CROSS_TARGETS: ${RUST_CROSS_TARGETS:-unset} | RUST_COMPONENTS: ${RUST_COMPONENTS:-unset} | RUSTUP_TOOLCHAIN: ${RUSTUP_TOOLCHAIN:-unset}"
+echo "cmake version: $(cmake --version | grep -P -o -e '\d+\.\d+\.\d+')"
+echo "lld version:   $(ldd --version | awk '/ldd/{print $NF}')"
 
 # Adding safe.directory since 'act' runs as root user
 git config --global --add safe.directory "${DOCKER_BUILD_DIR}"
@@ -122,7 +104,7 @@ if [ -n "${TRY_RUNTIME}" ]; then
   TRY_RUNTIME_BIN="/usr/local/bin/try-runtime"
   echo -e "\n=== TRY RUNTIME: version ${TRY_RUNTIME} to ${TRY_RUNTIME_BIN} ===\n"
 
-  curl -sL https://github.com/paritytech/try-runtime-cli/releases/download/${TRY_RUNTIME}/try-runtime-x86_64-unknown-linux-musl \
+  curl -sL "https://github.com/paritytech/try-runtime-cli/releases/download/${TRY_RUNTIME}/try-runtime-x86_64-unknown-linux-musl" \
     -o ${TRY_RUNTIME_BIN} && \
     chmod +x ${TRY_RUNTIME_BIN}
 fi
