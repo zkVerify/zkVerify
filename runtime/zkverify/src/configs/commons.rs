@@ -23,7 +23,7 @@ macro_rules! runtime_version {
             spec_name: Cow::Borrowed($spec_name),
             impl_name: Cow::Borrowed("zkv-node"),
             authoring_version: 1,
-            spec_version: 1_002_001,
+            spec_version: 1_003_000,
             impl_version: 1,
             apis: RUNTIME_API_VERSIONS,
             transaction_version: 1,
