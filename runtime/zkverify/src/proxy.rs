@@ -22,6 +22,7 @@ use sp_runtime::RuntimeDebug;
 #[derive(
     Copy,
     Clone,
+    Default,
     Eq,
     PartialEq,
     Ord,
@@ -33,6 +34,7 @@ use sp_runtime::RuntimeDebug;
     scale_info::TypeInfo,
 )]
 pub enum ProxyType {
+    #[default]
     Any = 0,
     // Don't add any new proxy types here. Anyway don't add a new type that isn't a
     // a `NonTransfer` subset without reconsider carefully the `is_superset()`
@@ -41,12 +43,6 @@ pub enum ProxyType {
     Governance = 2,
     Staking = 3,
     CancelProxy = 4,
-}
-
-impl Default for ProxyType {
-    fn default() -> Self {
-        Self::Any
-    }
 }
 
 impl ProxyType {

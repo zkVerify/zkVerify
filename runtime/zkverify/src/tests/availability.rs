@@ -74,7 +74,7 @@ fn pallet_fflonk() {
 #[test]
 fn pallet_multisig() {
     test().execute_with(|| {
-        let issuer: AccountId32 = testsfixtures::SAMPLE_USERS[0].raw_account.into();
+        let issuer = sample_user_account(0);
         let account_ids: Vec<_> = testsfixtures::SAMPLE_USERS
             .iter()
             .skip(1)
@@ -98,8 +98,8 @@ fn pallet_multisig() {
 #[test]
 fn pallet_utility() {
     test().execute_with(|| {
-        let dest_1: AccountId32 = testsfixtures::SAMPLE_USERS[0].raw_account.into();
-        let dest_2: AccountId32 = testsfixtures::SAMPLE_USERS[1].raw_account.into();
+        let dest_1 = sample_user_account(0);
+        let dest_2 = sample_user_account(1);
 
         let call_1 = RuntimeCall::Balances(BalancesCall::transfer_allow_death {
             dest: MultiAddress::Id(dest_1.clone()),
@@ -116,9 +116,7 @@ fn pallet_utility() {
 #[test]
 fn pallet_vesting() {
     test().execute_with(|| {
-        assert!(
-            Vesting::vesting_balance(&testsfixtures::SAMPLE_USERS[0].raw_account.into()).is_none()
-        );
+        assert!(Vesting::vesting_balance(&sample_user_account(0)).is_none());
     });
 }
 
@@ -136,7 +134,7 @@ fn pallet_preimage() {
 fn pallet_scheduler() {
     test().execute_with(|| {
         let call = Box::new(RuntimeCall::Balances(BalancesCall::transfer_allow_death {
-            dest: MultiAddress::Id(testsfixtures::SAMPLE_USERS[2].raw_account.into()),
+            dest: MultiAddress::Id(sample_user_account(1)),
             value: 5000 * currency::VFY,
         }));
 
@@ -164,12 +162,12 @@ fn aye(amount: Balance, conviction: u8) -> AccountVote<Balance> {
 fn pallet_referenda_and_conviction_voting() {
     test().execute_with(|| {
         let call = RuntimeCall::Balances(BalancesCall::transfer_allow_death {
-            dest: MultiAddress::Id(testsfixtures::SAMPLE_USERS[1].raw_account.into()),
+            dest: MultiAddress::Id(sample_user_account(1)),
             value: 5000 * currency::VFY,
         });
         let proposal = <Preimage as StorePreimage>::bound(call).unwrap();
 
-        let origin = RuntimeOrigin::signed(testsfixtures::SAMPLE_USERS[1].raw_account.into());
+        let origin = RuntimeOrigin::signed(sample_user_account(1));
         let proposal_origin = Box::new(frame_system::RawOrigin::Root.into());
         let enactment_moment = DispatchTime::At(10);
 
@@ -180,7 +178,7 @@ fn pallet_referenda_and_conviction_voting() {
             enactment_moment
         ));
 
-        let origin = RuntimeOrigin::signed(testsfixtures::SAMPLE_USERS[1].raw_account.into());
+        let origin = RuntimeOrigin::signed(sample_user_account(1));
         assert_ok!(ConvictionVoting::vote(origin, 0, aye(10_u128, 0)));
     });
 }
@@ -190,7 +188,7 @@ fn pallet_treasury() {
     test().execute_with(|| {
         let asset_kind = Box::new(());
         let amount = 1000 * VFY;
-        let beneficiary = Box::new(testsfixtures::SAMPLE_USERS[2].raw_account.into());
+        let beneficiary = Box::new(sample_user_account(2));
         let valid_from = None;
 
         let treasury_account = Treasury::account_id();
@@ -209,7 +207,7 @@ fn pallet_treasury() {
 #[test]
 fn pallet_proxy() {
     test().execute_with(|| {
-        let sender = testsfixtures::SAMPLE_USERS[0].raw_account.into();
+        let sender = sample_user_account(0);
         let origin = RuntimeOrigin::signed(sender);
         let proxy_type = crate::proxy::ProxyType::Any;
 
@@ -220,7 +218,7 @@ fn pallet_proxy() {
 #[test]
 fn pallet_bounties() {
     test().execute_with(|| {
-        let proposer = testsfixtures::SAMPLE_USERS[2].raw_account.into();
+        let proposer = sample_user_account(2);
         let origin = RuntimeOrigin::signed(proposer);
 
         let value = 1000 * VFY;

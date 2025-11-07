@@ -184,7 +184,7 @@ impl<A: Debug + PartialEq, B: Debug + PartialEq, S: Get<AggregationSize>> Defaul
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
-/// The rules that describe the when accept or reject the aggregate extrinsic call.
+/// The rules that describe the origins allowed executing the aggregate extrinsic call.
 pub enum AggregateSecurityRules {
     /// Accept any aggregate extrinsic call from any user.
     Untrusted,
@@ -194,8 +194,19 @@ pub enum AggregateSecurityRules {
     OnlyOwnerUncompleted,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
+/// The rules that describe the origins that can add proofs to the domain.
+pub enum ProofSecurityRules {
+    /// Accept proofs from any user.
+    Untrusted,
+    /// Accept proofs only from the owner of the domain.
+    OnlyOwner,
+    /// Accept proofs only from the accounts in the domain.
+    OnlyAllowlisted,
+}
+
 /// Delivering aggregations data
-#[derive(Clone, PartialEq, Eq, Encode, Decode, TypeInfo, MaxEncodedLen, Debug)]
+#[derive(Clone, PartialEq, Eq, Encode, Decode, TypeInfo, MaxEncodedLen, Debug, Default)]
 pub struct Delivery<B: Debug + PartialEq> {
     /// Destination
     pub destination: Destination,
@@ -272,6 +283,12 @@ impl<A, B: Debug + PartialEq> DeliveryParams<A, B> {
     }
 }
 
+#[derive(Encode, Decode, TypeInfo, MaxEncodedLen, PartialEq, Eq, Debug)]
+pub struct CountableTicket<Ticket: Encode + Decode + TypeInfo + MaxEncodedLen> {
+    pub ticket: Ticket,
+    pub count: u32,
+}
+
 #[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
 #[scale_info(skip_type_params(S, M))]
 /// The data stored for a domain.
@@ -281,14 +298,17 @@ impl<A, B: Debug + PartialEq> DeliveryParams<A, B> {
 /// - `B`: The type of the balance.
 /// - `S`: The type of the maximum aggregation size.
 /// - `M`: The type of the maximum number of entries in the `should_publish` map.
-/// - `T`: The type of consideration ticket used to hold the balance for the space used
+/// - `T1`: The type of consideration ticket used to hold the balance for the space used
 ///   by domain storage.
+/// - `T2`: The type of consideration ticket used to hold the balance for the space used
+///   by allowlisted accounts.
 pub struct DomainEntry<
-    A: Debug + PartialEq,
+    A: Debug + PartialEq + Ord + Clone + Encode,
     B: Debug + PartialEq,
     S: Get<AggregationSize>,
     M: Get<u32>,
-    T: Encode + Decode + TypeInfo + MaxEncodedLen,
+    T1: Encode + Decode + TypeInfo + MaxEncodedLen,
+    T2: Encode + Decode + TypeInfo + MaxEncodedLen,
 > {
     /// The unique identifier of the domain.
     pub id: u32,
@@ -306,20 +326,26 @@ pub struct DomainEntry<
     pub publish_queue_size: u32,
     /// The consideration ticket used to hold the balance for the space used by domain storage. The manager will
     /// not hold any balance.
-    pub ticket: Option<T>,
-    /// Configure the rules that describe the when accept or reject the aggregate extrinsic call.
+    pub ticket_domain: Option<T1>,
+    /// The consideration ticket used to hold the balance for the space used by allowlist. The manager will
+    /// not hold any balance.
+    pub ticket_allowlist: Option<CountableTicket<T2>>,
+    /// Configure the rules that describe when to accept or reject the aggregate extrinsic call.
     pub aggregate_rules: AggregateSecurityRules,
+    /// Configure the rules that describe which origins can add proofs to this domain.
+    pub proof_rules: ProofSecurityRules,
     /// Configuration params for destination chain to delivery aggregations
     pub delivery: DeliveryParams<A, B>,
 }
 
 impl<
-        A: Debug + PartialEq,
+        A: Debug + PartialEq + Ord + Clone + Encode,
         B: Debug + PartialEq,
         S: Get<AggregationSize>,
         M: Get<u32>,
-        Ticket: Encode + Decode + TypeInfo + MaxEncodedLen,
-    > DomainEntry<A, B, S, M, Ticket>
+        TicketDomain: Encode + Decode + TypeInfo + MaxEncodedLen,
+        TicketAllowList: Encode + Decode + TypeInfo + MaxEncodedLen,
+    > DomainEntry<A, B, S, M, TicketDomain, TicketAllowList>
 {
     /// Create a new domain.
     ///
@@ -331,7 +357,9 @@ impl<
         max_aggregation_size: AggregationSize,
         publish_queue_size: u32,
         aggregate_rules: AggregateSecurityRules,
-        ticket: Option<Ticket>,
+        proof_rules: ProofSecurityRules,
+        ticket_domain: Option<TicketDomain>,
+        ticket_allowlist: Option<CountableTicket<TicketAllowList>>,
         delivery: DeliveryParams<A, B>,
     ) -> Self {
         assert!(
@@ -351,26 +379,19 @@ impl<
             should_publish: Default::default(),
             publish_queue_size,
             aggregate_rules,
-            ticket,
+            proof_rules,
+            ticket_domain,
+            ticket_allowlist,
             delivery,
         }
     }
 
-    /// Return true iff it's possible to add a new statement. In other words if there is some room in the
-    /// should publish queue for new aggregation or in the next aggregation there is space
+    /// Return true iff it's possible to add a new statement. In other words, if there is some room in the
+    /// should publishing queue for a new aggregation or in the next aggregation, there is space
     /// for more than one statement.
     pub fn can_add_statement(&self) -> bool {
         (self.publish_queue_size as usize).saturating_sub(self.should_publish.len()) > 0
             || self.next.space_left() > 1
-    }
-
-    /// Update the hold state according to the domain state.
-    pub fn update_hold_state(&mut self) {
-        self.state = if self.should_publish.is_empty() && self.next.statements.is_empty() {
-            DomainState::Removable
-        } else {
-            DomainState::Hold
-        };
     }
 
     /// Return the size in bytes for this domain that should be reserved in the storage.

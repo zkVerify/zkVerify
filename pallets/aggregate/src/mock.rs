@@ -14,14 +14,14 @@
 // limitations under the License.
 #![cfg(test)]
 
-use core::cell::RefCell;
-use std::collections::VecDeque;
-
+use crate::data::CountableTicket;
+use crate::pallet::SubmittersAllowlist;
 use crate::{
     data::{Delivery, Reserve},
     AggregationSize, BalanceOf, CallOf, ComputePublisherTip, Domains,
 };
 use codec::{Decode, Encode, MaxEncodedLen};
+use core::cell::RefCell;
 use frame_support::{
     derive_impl,
     dispatch::PostDispatchInfo,
@@ -34,8 +34,11 @@ use hp_dispatch::{
     BoundedStateMachine, Destination, DispatchAggregation, HyperbridgeDispatchParameters,
 };
 use scale_info::TypeInfo;
-use sp_core::{ConstU128, ConstU32, H160, H256};
+use sp_core::{ConstU128, ConstU32, Get, H160, H256};
+use sp_runtime::traits::Member;
 use sp_runtime::{traits::IdentityLookup, BuildStorage, DispatchResult, Perbill};
+use std::collections::{HashMap, VecDeque};
+use std::marker::PhantomData;
 
 parameter_types! {
     pub const MaxAggregationSize: AggregationSize = 64;
@@ -54,6 +57,10 @@ pub const DOMAIN_ID: u32 = 51;
 pub const DOMAIN: Option<u32> = Some(DOMAIN_ID);
 pub const DOMAIN_ID_NONE: u32 = 666;
 pub const DOMAIN_NONE: Option<u32> = Some(DOMAIN_ID_NONE);
+pub const DOMAIN_ID_ONLY_OWNER: u32 = 111;
+pub const DOMAIN_ONLY_OWNER: Option<u32> = Some(DOMAIN_ID_ONLY_OWNER);
+pub const DOMAIN_ID_ALLOWLISTED: u32 = 222;
+pub const DOMAIN_ALLOWLISTED: Option<u32> = Some(DOMAIN_ID_ALLOWLISTED);
 pub const DOMAIN_SIZE: AggregationSize = 32;
 pub const DOMAIN_QUEUE_SIZE: u32 = 16;
 pub const DOMAIN_FEE: Balance = (ESTIMATED_FEE_CORRECTED / DOMAIN_SIZE as u32) as Balance;
@@ -65,8 +72,12 @@ pub const NO_FUND_USER: AccountId = 777;
 pub const PUBLISHER_USER: AccountId = 100;
 pub const USER_1: AccountId = 42;
 pub const USER_2: AccountId = 24;
+pub const USER_ALLOWLISTED_1: AccountId = 66;
+pub const USER_ALLOWLISTED_2: AccountId = 77;
+pub const USER_ALLOWLISTED_3: AccountId = 88;
 pub const USER_DOMAIN_1: AccountId = 42_000;
 pub const USER_DOMAIN_2: AccountId = 24_000;
+pub const USER_DOMAIN_SUBMIT_RULE: AccountId = 66_000;
 pub const USER_DOMAIN_ERROR_NEW: AccountId = 99_000;
 pub const USER_DOMAIN_ERROR_DROP: AccountId = 100_000;
 pub const USER_DELIVERY_OWNER: AccountId = 33_333;
@@ -75,6 +86,10 @@ pub const ROOT_USER: AccountId = 666;
 pub static USERS: &[(AccountId, Balance)] = &[
     (USER_1, 42_000_000_000),
     (USER_2, 24_000_000_000),
+    (USER_ALLOWLISTED_1, 10_000_000_000),
+    (USER_ALLOWLISTED_2, 20_000_000_000),
+    (USER_ALLOWLISTED_3, 30_000_000_000),
+    (USER_DOMAIN_SUBMIT_RULE, 5_000_000_000),
     (USER_DOMAIN_1, 100_000_000_000),
     (USER_DOMAIN_2, 200_000_000_000),
     (PUBLISHER_USER, 1_000_000_000),
@@ -102,6 +117,12 @@ impl MockWeightInfo {
     pub const AGG_NO_DOMAIN_PROOF_SIZE: u64 = 1_000_024;
     pub const AGG_NO_ID_REF_TIME: u64 = 1_001_042;
     pub const AGG_NO_ID_PROOF_SIZE: u64 = 1_001_024;
+    pub const ADD_SUB_REF_BASE: u64 = 1_000;
+    pub const ADD_SUB_REF_MUL: u64 = 100;
+    pub const ADD_SUB_SIZE: u64 = 1_234;
+    pub const REM_SUB_REF_BASE: u64 = 10_000;
+    pub const REM_SUB_REF_MUL: u64 = 10;
+    pub const REM_SUB_SIZE: u64 = 4_321;
 }
 
 impl crate::WeightInfo for MockWeightInfo {
@@ -129,16 +150,30 @@ impl crate::WeightInfo for MockWeightInfo {
         Weight::from_parts(Self::REG_REF_TIME, Self::REG_PROOF_SIZE)
     }
 
-    fn unregister_domain() -> Weight {
-        Weight::from_parts(Self::UNR_REF_TIME, Self::UNR_PROOF_SIZE)
-    }
-
     fn hold_domain() -> Weight {
         Weight::from_parts(Self::HOLD_REF_TIME, Self::HOLD_PROOF_SIZE)
     }
 
+    fn unregister_domain() -> Weight {
+        Weight::from_parts(Self::UNR_REF_TIME, Self::UNR_PROOF_SIZE)
+    }
+
     fn set_total_delivery_fee() -> Weight {
         Weight::from_parts(Self::SET_PRICE_REF_TIME, Self::SET_PRICE_PROOF_SIZE)
+    }
+
+    fn allowlist_proof_submitters(len: u32) -> Weight {
+        Weight::from_parts(
+            Self::ADD_SUB_REF_BASE + Self::ADD_SUB_REF_MUL.saturating_mul(len as u64),
+            Self::ADD_SUB_SIZE,
+        )
+    }
+
+    fn remove_proof_submitters(len: u32) -> Weight {
+        Weight::from_parts(
+            Self::REM_SUB_REF_BASE + Self::REM_SUB_REF_MUL.saturating_mul(len as u64),
+            Self::REM_SUB_SIZE,
+        )
     }
 }
 
@@ -262,6 +297,25 @@ impl DispatchAggregation<Balance, AccountId> for MockDispatchAggregation {
     }
 }
 
+#[derive(Debug, PartialEq, Eq, Clone, Encode, Decode, MaxEncodedLen, TypeInfo, Default)]
+pub struct MockHoldDomain;
+
+impl Get<u32> for MockHoldDomain {
+    fn get() -> u32 {
+        CONSIDERATION_DOMAIN
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Encode, Decode, MaxEncodedLen, TypeInfo, Default)]
+pub struct MockHoldAllowlist;
+
+impl Get<u32> for MockHoldAllowlist {
+    fn get() -> u32 {
+        CONSIDERATION_ALLOWLIST
+    }
+}
+const CONSIDERATION_DOMAIN: u32 = 1;
+const CONSIDERATION_ALLOWLIST: u32 = 2;
 #[derive(Debug, PartialEq, Eq, Clone, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub struct MockConsideration {
     pub who: AccountId,
@@ -271,40 +325,77 @@ pub struct MockConsideration {
 
 impl MockConsideration {
     thread_local! {
-        pub static QUEUE: RefCell<VecDeque<(AccountId, MockConsideration)>> = RefCell::new(Default::default());
+        pub static QUEUE: RefCell<HashMap<u32, VecDeque<(AccountId, MockConsideration)>>> = RefCell::new(Default::default());
     }
 
-    fn push(self, id: AccountId) {
-        Self::QUEUE.with_borrow_mut(|q| q.push_back((id, self)));
+    fn push(self, id: AccountId, ticket_id: u32) {
+        Self::QUEUE.with_borrow_mut(|q| q.entry(ticket_id).or_default().push_back((id, self)));
     }
 
-    pub fn pop() -> Option<(AccountId, Self)> {
-        Self::QUEUE.with_borrow_mut(|q| q.pop_front())
+    pub fn pop(ticket_id: u32) -> Option<(AccountId, Self)> {
+        Self::QUEUE.with_borrow_mut(|q| q.entry(ticket_id).or_default().pop_front())
     }
 }
 
-impl Consideration<AccountId, Footprint> for MockConsideration {
+pub fn countable_mock_consideration<T: Get<u32> + Default + Member + TypeInfo>(
+    who: AccountId,
+    count: u32,
+    size: u64,
+) -> CountableTicket<MockConsiderationWrapper<T>> {
+    CountableTicket {
+        count,
+        ticket: MockConsideration {
+            who,
+            count: count as u64,
+            size,
+        }
+        .into(),
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Encode, Decode, MaxEncodedLen, TypeInfo)]
+pub struct MockConsiderationWrapper<T: Get<u32> + Default + Member + TypeInfo>(
+    pub MockConsideration,
+    PhantomData<T>,
+);
+
+impl<T: Get<u32> + Default + Member + TypeInfo> From<MockConsideration>
+    for MockConsiderationWrapper<T>
+{
+    fn from(value: MockConsideration) -> Self {
+        Self(value, Default::default())
+    }
+}
+
+impl<T: Get<u32> + Default + Member + TypeInfo> Consideration<AccountId, Footprint>
+    for MockConsiderationWrapper<T>
+{
     fn new(who: &AccountId, new: Footprint) -> Result<Self, sp_runtime::DispatchError> {
         if who == &USER_DOMAIN_ERROR_NEW {
             Err(sp_runtime::DispatchError::from("User Domain Error New"))?
         }
-        Ok(Self {
+        Ok(MockConsideration {
             who: *who,
             count: new.count,
             size: new.size,
-        })
+        }
+        .into())
     }
 
-    fn update(
-        self,
-        _who: &AccountId,
-        _new: frame_support::traits::Footprint,
-    ) -> Result<Self, sp_runtime::DispatchError> {
-        unimplemented!("We don't support it by now")
+    fn update(self, who: &AccountId, new: Footprint) -> Result<Self, sp_runtime::DispatchError> {
+        if who != &self.0.who {
+            unimplemented!("Only same who updates are supported in the mock");
+        }
+        Ok(MockConsideration {
+            count: new.count,
+            size: new.size,
+            ..self.0
+        }
+        .into())
     }
 
     fn drop(self, who: &AccountId) -> Result<(), sp_runtime::DispatchError> {
-        Self::push(self, *who);
+        MockConsideration::push(self.0, *who, T::get());
         if who == &USER_DOMAIN_ERROR_DROP {
             Err(sp_runtime::DispatchError::from("User Domain Error Drop"))?
         }
@@ -367,7 +458,9 @@ impl crate::Config for Test {
 
     type Hold = Balances;
 
-    type Consideration = MockConsideration;
+    type ConsiderationDomain = MockConsiderationWrapper<MockHoldDomain>;
+
+    type ConsiderationAllowList = MockConsiderationWrapper<MockHoldAllowlist>;
 
     type EstimateCallFee = MockEstimateCallFee;
 
@@ -380,6 +473,8 @@ impl crate::Config for Test {
     #[cfg(feature = "runtime-benchmarks")]
     type Currency = Balances;
     type DispatchAggregation = MockDispatchAggregation;
+    #[cfg(feature = "runtime-benchmarks")]
+    const SUBMITTER_LIST_MAX_SIZE: u32 = 1_000;
 }
 
 // Configure a mock runtime to test the pallet.
@@ -449,8 +544,10 @@ impl crate::Domain<Test> {
         max_aggregation_size: AggregationSize,
         publish_queue_size: u32,
         aggregate_rules: crate::data::AggregateSecurityRules,
-        ticket: Option<crate::TicketOf<Test>>,
-        delivery: crate::data::DeliveryParams<crate::AccountOf<Test>, crate::BalanceOf<Test>>,
+        proof_rules: crate::data::ProofSecurityRules,
+        ticket_domain: Option<crate::TicketDomainOf<Test>>,
+        ticket_allowlist: Option<CountableTicket<crate::TicketAllowListOf<Test>>>,
+        delivery: crate::data::DeliveryParams<crate::AccountOf<Test>, BalanceOf<Test>>,
     ) -> Self {
         Self::try_create(
             id,
@@ -459,7 +556,9 @@ impl crate::Domain<Test> {
             max_aggregation_size,
             publish_queue_size,
             aggregate_rules,
-            ticket,
+            proof_rules,
+            ticket_domain,
+            ticket_allowlist,
             delivery,
         )
         .unwrap()
@@ -490,7 +589,39 @@ pub fn test() -> sp_io::TestExternalities {
                 DOMAIN_SIZE,
                 DOMAIN_QUEUE_SIZE,
                 crate::data::AggregateSecurityRules::Untrusted,
+                crate::data::ProofSecurityRules::Untrusted,
                 None,
+                None,
+                hyperbridge_destination().into(),
+            ),
+        );
+        Domains::<Test>::insert(
+            DOMAIN_ID_ONLY_OWNER,
+            crate::Domain::<Test>::create(
+                DOMAIN_ID_ONLY_OWNER,
+                USER_DOMAIN_SUBMIT_RULE.into(),
+                1,
+                DOMAIN_SIZE,
+                DOMAIN_QUEUE_SIZE,
+                crate::data::AggregateSecurityRules::Untrusted,
+                crate::data::ProofSecurityRules::OnlyOwner,
+                None,
+                None,
+                hyperbridge_destination().into(),
+            ),
+        );
+        Domains::<Test>::insert(
+            DOMAIN_ID_ALLOWLISTED,
+            crate::Domain::<Test>::create(
+                DOMAIN_ID_ALLOWLISTED,
+                USER_DOMAIN_SUBMIT_RULE.into(),
+                1,
+                DOMAIN_SIZE,
+                DOMAIN_QUEUE_SIZE,
+                crate::data::AggregateSecurityRules::Untrusted,
+                crate::data::ProofSecurityRules::OnlyAllowlisted,
+                None,
+                Some(countable_mock_consideration(USER_DOMAIN_SUBMIT_RULE, 3, 0)),
                 hyperbridge_destination().into(),
             ),
         );
@@ -503,10 +634,15 @@ pub fn test() -> sp_io::TestExternalities {
                 DOMAIN_SIZE,
                 DOMAIN_QUEUE_SIZE,
                 crate::data::AggregateSecurityRules::Untrusted,
+                crate::data::ProofSecurityRules::Untrusted,
+                None,
                 None,
                 none_delivering().into(),
             ),
         );
+        SubmittersAllowlist::<Test>::insert(DOMAIN_ID_ALLOWLISTED, USER_ALLOWLISTED_1, ());
+        SubmittersAllowlist::<Test>::insert(DOMAIN_ID_ALLOWLISTED, USER_ALLOWLISTED_2, ());
+        SubmittersAllowlist::<Test>::insert(DOMAIN_ID_ALLOWLISTED, USER_ALLOWLISTED_3, ());
     });
     ext
 }

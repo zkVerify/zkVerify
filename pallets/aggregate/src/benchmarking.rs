@@ -17,6 +17,7 @@
 
 use super::*;
 
+use alloc::vec::Vec;
 use frame_benchmarking::v2::*;
 use frame_support::traits::fungible::{Inspect, Mutate};
 use frame_system::RawOrigin;
@@ -27,12 +28,15 @@ use sp_runtime::traits::Bounded;
 type BalanceOf<T> =
     <<T as Config>::Currency as Inspect<<T as frame_system::Config>::AccountId>>::Balance;
 
+const SEED: u32 = 0;
+
 pub mod utils {
     use super::*;
+    use crate::data;
     use crate::data::{Delivery, DeliveryParams};
     use hp_dispatch::Destination;
 
-    /// Return a whitelisted account with enough funds to do anything.
+    /// Return a allowlisted account with enough funds to do anything.
     pub fn funded_account<T: Config>() -> T::AccountId {
         let caller: T::AccountId = whitelisted_caller();
         T::Currency::set_balance(&caller, BalanceOf::<T>::max_value() / 2u32.into());
@@ -63,6 +67,8 @@ pub mod utils {
             aggregation_size,
             <T as Config>::MaxPendingPublishQueueSize::get(),
             data::AggregateSecurityRules::Untrusted,
+            data::ProofSecurityRules::OnlyAllowlisted, //Always the worst case
+            None,
             None,
             delivery,
         )
@@ -88,6 +94,7 @@ fn fill_aggregation<T: Config>(caller: AccountOf<T>, domain_id: u32) {
 #[benchmarks]
 mod benchmarks {
     use super::{utils::*, *};
+    use crate::data::{AggregateSecurityRules, ProofSecurityRules};
     use __private::traits::UnfilteredDispatchable;
     use codec::{Decode, Encode};
     use data::DomainState;
@@ -99,6 +106,12 @@ mod benchmarks {
         let domain_id = 1;
         let size = 16;
         insert_domain::<T>(domain_id, caller.clone(), Some(size));
+        Pallet::<T>::allowlist_proof_submitters(
+            RawOrigin::Signed(caller.clone()).into(),
+            domain_id,
+            alloc::vec![caller.clone()],
+        )
+        .unwrap();
         insert_statements::<T>(caller.clone(), domain_id, Some(size - 1));
 
         #[block]
@@ -110,7 +123,7 @@ mod benchmarks {
             );
         }
 
-        // Sanity check: we putted the aggregation in should be published
+        // Sanity check: we put the aggregation in should be published
         let domain = Domains::<T>::get(domain_id).unwrap();
         assert!(domain.next.statements.is_empty());
         assert_eq!(domain.should_publish.len(), 1);
@@ -121,6 +134,12 @@ mod benchmarks {
         let caller: T::AccountId = funded_account::<T>();
         let domain_id = 1;
         insert_domain::<T>(domain_id, caller.clone(), Some(n));
+        Pallet::<T>::allowlist_proof_submitters(
+            RawOrigin::Signed(caller.clone()).into(),
+            domain_id,
+            alloc::vec![caller.clone()],
+        )
+        .unwrap();
         fill_aggregation::<T>(caller.clone(), domain_id);
 
         #[extrinsic_call]
@@ -190,6 +209,7 @@ mod benchmarks {
             <T as Config>::AggregationSize::get(),
             Some(<T as Config>::MaxPendingPublishQueueSize::get()),
             AggregateSecurityRules::Untrusted,
+            ProofSecurityRules::OnlyAllowlisted,
             delivery,
             Some(caller.clone()),
         );
@@ -256,7 +276,56 @@ mod benchmarks {
         assert_eq!(domain.delivery.fee(), &12345_u32.into());
     }
 
-    use crate::data::AggregateSecurityRules;
+    #[benchmark]
+    fn allowlist_proof_submitters(n: Linear<0, <T as Config>::SUBMITTER_LIST_MAX_SIZE>) {
+        let caller: T::AccountId = funded_account::<T>();
+        let domain_id = 1;
+        insert_domain::<T>(domain_id, caller.clone(), None);
+
+        let submitters = (0..n)
+            .map(|i| account("submitter", i, SEED))
+            .collect::<Vec<_>>();
+
+        #[extrinsic_call]
+        allowlist_proof_submitters(RawOrigin::Signed(caller), domain_id, submitters);
+
+        assert_eq!(
+            n,
+            SubmittersAllowlist::<T>::iter_key_prefix(domain_id).count() as u32,
+            "Not all submitter add"
+        );
+    }
+
+    #[benchmark]
+    fn remove_proof_submitters(n: Linear<0, <T as Config>::SUBMITTER_LIST_MAX_SIZE>) {
+        let caller: T::AccountId = funded_account::<T>();
+        let domain_id = 1;
+        insert_domain::<T>(domain_id, caller.clone(), None);
+
+        let submitters = (0..n)
+            .map(|i| account("submitter", i, SEED))
+            .collect::<Vec<_>>();
+        Pallet::<T>::allowlist_proof_submitters(
+            RawOrigin::Signed(caller.clone()).into(),
+            domain_id,
+            submitters.clone(),
+        )
+        .unwrap();
+        assert_eq!(
+            n,
+            SubmittersAllowlist::<T>::iter_key_prefix(domain_id).count() as u32,
+        );
+
+        #[extrinsic_call]
+        remove_proof_submitters(RawOrigin::Signed(caller), domain_id, submitters);
+
+        assert_eq!(
+            0,
+            SubmittersAllowlist::<T>::iter_key_prefix(domain_id).count() as u32,
+            "Not all submitter removed"
+        );
+    }
+
     #[cfg(test)]
     use crate::Pallet as Aggregate;
     impl_benchmark_test_suite!(Aggregate, crate::mock::test(), crate::mock::Test,);

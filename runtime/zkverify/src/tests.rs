@@ -15,7 +15,10 @@
 
 use super::*;
 /// Reexport `test` runner
-pub use testsfixtures::{test, BABE_AUTHOR_ID, BLOCK_NUMBER, SLOT_ID};
+pub use testsfixtures::{
+    sample_user_account, sample_user_seed, sample_user_start_balance, test, BABE_AUTHOR_ID,
+    BLOCK_NUMBER, SLOT_ID,
+};
 
 mod availability;
 mod misc;

@@ -16,32 +16,34 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![deny(missing_docs)]
 
-//! This pallet provides a mechanism for tracking, aggregating statements (i.e. proof
+//! This pallet provides a mechanism for tracking, aggregating statements (i.e., proof
 //! verification submissions) from users and dispatch them to another chain. It is possible
 //! to define different aggregation
-//! sizes and thresholds for different domains, moreover for every domain it's  possible to
+//! sizes and thresholds for different domains, moreover, for every domain it's possible to
 //! define a _channel_: and endpoint for dispatching the aggregations to other chains.
 //!
-//! Every proof should indicate in which domain should be aggregated and then dispatched. The
-//! publish extrinsic `aggregate` a semi-permission-less call and there is a tip for the user
-//! calling it: this tip (should) cover all costs about executing aggregate and a configurable
-//! optional extra. If a domain also define a destination chain for dispatching the aggregations, the
-//! aggregations will be delivered to this chain and every submitter should pay for this job.
+//! Every proof should indicate in which domain should be aggregated and then dispatched.
+//! It provides `aggregate` extrinsic, a semi-permission-less that aggregates the proofs and provides
+//! a little tip to the one who calls it: this tip (should) cover all costs about executing
+//! aggregate and a configurable optional extra. If a domain also defines a destination chain for
+//! dispatching the aggregations, the aggregations will be delivered to this chain and every
+//! submitter should pay for this job.
 //!
 //! Register a new domain with `register_domain` needs to hold some balance to cover the cost
 //! of storage space used by all proofs hash that living in this domain while waiting for the
-//! `aggregate` call. All hold balance will be freed after the `unregister_domain` call (if any):
-//! the `unregister_domain` can be done only after call `hold_domain` extrinsic and there are no
-//! pending aggregations. When you put a domain in `Hold` state it cannot even receive no more
-//! statements and it's just possible to aggregate all pending aggregations. The domain state become
-//! `Removable` when there are no more pending aggregation and only now is to possible call
-//! `unregister_domain` and free the held balance.
+//! `aggregate` call. All hold balances will be freed after the `unregister_domain` call (if any):
+//! the `unregister_domain` can be done only after call `hold_domain` extrinsic, and there are no
+//! pending aggregations. When you put a domain in the `Hold ` state, it cannot receive anymore
+//! statements, and it's just possible to aggregate all pending aggregations. The domain state
+//! becomes `Removable` when there are no more pending aggregations and allowlist submitter is
+//! empty: only now is it possible to
+//! call `unregister_domain` and free the held balance.
 //!
 //! The domain owner can change the total delivery fee for dispatching the aggregations by invoking
-//! `set_total_delivery_fee` extrinsic. All the statements add to the domain compute their total delivery fee
+//! `set_total_delivery_fee` extrinsic. All the statements added to the domain compute their total delivery fee
 //! according to this fee divided by the aggregation size declared in the domain.
 //!
-//! The `aggregate` extrinsic is a semi-permission-less call because domain owner could decide
+//! The `aggregate` extrinsic is a semi-permission-less call because a domain owner could decide
 //! if:
 //!
 //! - Everyone can call it
@@ -74,10 +76,9 @@ pub mod pallet {
         ops::{Deref, DerefMut},
     };
 
-    pub use crate::data::AggregationSize;
+    pub use crate::data::{AggregateSecurityRules, AggregationSize, ProofSecurityRules};
     use crate::data::{
-        AggregateSecurityRules, Delivery, DeliveryParams, DomainState, Reserve, StatementEntry,
-        User,
+        CountableTicket, Delivery, DeliveryParams, DomainState, Reserve, StatementEntry, User,
     };
 
     use super::WeightInfo;
@@ -99,7 +100,10 @@ pub mod pallet {
     use hp_dispatch::{Destination, DispatchAggregation};
     use hp_on_proof_verified::OnProofVerified;
     use sp_core::H256;
-    use sp_runtime::traits::{BadOrigin, Keccak256};
+    use sp_runtime::{
+        traits::{BadOrigin, Keccak256},
+        SaturatedConversion,
+    };
 
     /// Given a `Configuration` return the Account type.
     pub type AccountOf<T> = <T as frame_system::Config>::AccountId;
@@ -108,22 +112,23 @@ pub mod pallet {
         <<T as Config>::Hold as Inspect<<T as frame_system::Config>::AccountId>>::Balance;
     /// Return the call (extrinsic) type for that pallet.
     pub type CallOf<T> = Call<T>;
-    /// Given a `Configuration` return the Consideration type.
-    pub(crate) type TicketOf<T> = <T as Config>::Consideration;
+    /// Given a `Configuration` return the ConsiderationDomain type.
+    pub(crate) type TicketDomainOf<T> = <T as Config>::ConsiderationDomain;
+    /// Given a `Configuration` return the ConsiderationAllowList type.
+    pub(crate) type TicketAllowListOf<T> = <T as Config>::ConsiderationAllowList;
 
     /// The in-code storage version.
-    const STORAGE_VERSION: StorageVersion = StorageVersion::new(2);
+    const STORAGE_VERSION: StorageVersion = StorageVersion::new(3);
 
     #[pallet::pallet]
     #[pallet::storage_version(STORAGE_VERSION)]
-
     /// The pallet component.
     pub struct Pallet<T>(_);
 
     /// This trait defines how the pallet should compute the tip for the publisher.
-    /// This tip will be added to the estimation of the total cost of the transaction.
+    /// This tip will be added to the cost amount estimation of the transaction.
     pub trait ComputePublisherTip<B> {
-        /// Given an estimated cost of a transaction, return an optional tip for the publisher.
+        /// Given an estimated cost of a transaction, return an optional tip to the publisher.
         fn compute_tip(estimated: B) -> Option<B>;
     }
 
@@ -158,8 +163,10 @@ pub mod pallet {
         type Hold: MutateHold<Self::AccountId>
             + InspectHold<Self::AccountId, Reason = Self::RuntimeHoldReason>;
         /// A means of providing some cost while data is stored on-chain.
-        type Consideration: Consideration<Self::AccountId, Footprint>;
-        /// What should we use to estimate aggregate cost (pallet-transaction-payment implement it)
+        type ConsiderationDomain: Consideration<Self::AccountId, Footprint>;
+        /// A means of providing some cost while allowlisted is stored on-chain.
+        type ConsiderationAllowList: Consideration<Self::AccountId, Footprint>;
+        /// What should we use to estimate aggregate cost, pallet-transaction-payment implements it.
         type EstimateCallFee: EstimateCallFee<Call<Self>, BalanceOf<Self>>;
         /// How to compute the fee for publishing an aggregation.
         type ComputePublisherTip: ComputePublisherTip<BalanceOf<Self>>;
@@ -174,6 +181,9 @@ pub mod pallet {
         type Currency: frame_support::traits::fungible::Mutate<AccountOf<Self>>;
         /// Handler for when an aggregation is completed
         type DispatchAggregation: DispatchAggregation<BalanceOf<Self>, AccountOf<Self>>;
+        /// The (max) size of the submitter list used in benchmarks.
+        #[cfg(feature = "runtime-benchmarks")]
+        const SUBMITTER_LIST_MAX_SIZE: u32;
     }
 
     impl<T: Config> OnProofVerified<<T as frame_system::Config>::AccountId> for Pallet<T> {
@@ -233,6 +243,15 @@ pub mod pallet {
 
                     return;
                 }
+                if !domain.is_authorized_to_add_proof(&account) {
+                    log::warn!("Invalid proof submitter, skip");
+                    Self::deposit_event(Event::<T>::CannotAggregate {
+                        statement,
+                        cause: CannotAggregateCause::UnauthorizedUser,
+                    });
+
+                    return;
+                }
 
                 // Reserve balance for publication: if not raise a fail event
                 let Ok(reserve) = domain.reserve_currency(&account).inspect_err(|err| {
@@ -273,11 +292,11 @@ pub mod pallet {
     pub enum Error<T> {
         /// This domain id is unknown.
         UnknownDomainId,
-        /// This aggregation cannot be published or it's already published.
+        /// This aggregation cannot be published, or it's already published.
         InvalidAggregationId,
-        /// The domain params are invalid.
+        /// The domain params are invalid or overflow in allowlist consideration.
         InvalidDomainParams,
-        /// Try to remove or hold a domain in a invalid state.
+        /// Try to remove or hold a domain in an invalid state.
         InvalidDomainState,
         /// Try to register a domain without any defined ownership (maybe a manager that didn't provide the delivery owner).
         MissedDeliveryOwnership,
@@ -295,7 +314,7 @@ pub mod pallet {
             /// The domain identifier.
             domain_id: u32,
         },
-        /// The domain's should publish queue is full.
+        /// The domain's should-publish-queue is full.
         DomainStorageFull {
             /// The domain identifier.
             domain_id: u32,
@@ -309,11 +328,13 @@ pub mod pallet {
             /// The domain state.
             state: DomainState,
         },
+        /// The user that submitted proof is not authorized on this domain.
+        UnauthorizedUser,
     }
 
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
-    /// The emitted events.
+    /// Emitted events.
     pub enum Event<T: Config> {
         /// A new domain has been registered.
         NewDomain {
@@ -333,21 +354,21 @@ pub mod pallet {
             statement: H256,
             /// The domain identifier.
             domain_id: u32,
-            /// The identifier of the aggregation .
+            /// The identifier of the aggregation.
             aggregation_id: u64,
         },
         /// The aggregation is complete.
         AggregationComplete {
             /// The domain identifier.
             domain_id: u32,
-            /// The identifier of the aggregation .
+            /// The identifier of the aggregation.
             aggregation_id: u64,
         },
         /// A new aggregation receipt has been emitted.
         NewAggregationReceipt {
             /// The domain identifier.
             domain_id: u32,
-            /// The identifier of the aggregation .
+            /// The identifier of the aggregation.
             aggregation_id: u64,
             /// The aggregation receipt hash.
             receipt: H256,
@@ -378,7 +399,8 @@ pub mod pallet {
         BalanceOf<T>,
         <T as Config>::AggregationSize,
         <T as Config>::MaxPendingPublishQueueSize,
-        TicketOf<T>,
+        TicketDomainOf<T>,
+        TicketAllowListOf<T>,
     >;
 
     /// Shortcut to get the Domain type from config.
@@ -405,7 +427,9 @@ pub mod pallet {
             max_aggregation_size: AggregationSize,
             publish_queue_size: u32,
             aggregate_rules: AggregateSecurityRules,
-            ticket: Option<TicketOf<T>>,
+            proof_rules: ProofSecurityRules,
+            ticket_domain: Option<TicketDomainOf<T>>,
+            ticket_allowlist: Option<CountableTicket<TicketAllowListOf<T>>>,
             delivery: DeliveryParams<AccountOf<T>, BalanceOf<T>>,
         ) -> Result<Self, Error<T>> {
             if max_aggregation_size == 0
@@ -422,7 +446,9 @@ pub mod pallet {
                     max_aggregation_size,
                     publish_queue_size,
                     aggregate_rules,
-                    ticket,
+                    proof_rules,
+                    ticket_domain,
+                    ticket_allowlist,
                     delivery,
                 )))
             }
@@ -466,7 +492,7 @@ pub mod pallet {
         /// Return the size in bytes for this domain that should be reserved in the storage.
         ///
         /// - `max_aggregation_size`: The maximum size of the aggregations for this domain.
-        /// - `publish_queue_size`: The publish queue size for this domain.
+        /// - `publish_queue_size`: The should-publish-queue size for this domain.
         /// - `destination`: The destination chain to delivery aggregations.
         pub fn compute_encoded_size(
             max_aggregation_size: AggregationSize,
@@ -480,8 +506,42 @@ pub mod pallet {
             )
         }
 
+        /// Add a list of submitter to a given domain iff the domain is configured with the right rules
+        pub fn try_add_submitters(
+            &mut self,
+            submitters: &[AccountOf<T>],
+        ) -> Result<(), DispatchError> {
+            if self.proof_rules != ProofSecurityRules::OnlyAllowlisted {
+                Err(Error::<T>::InvalidDomainParams)?
+            };
+            self.add_submitters(submitters)
+        }
+
+        /// Remove a list of submitter to a given domain iff the domain is configured with the right rules
+        pub fn try_remove_submitters(
+            &mut self,
+            submitters: &[AccountOf<T>],
+        ) -> Result<(), DispatchError> {
+            if self.proof_rules != ProofSecurityRules::OnlyAllowlisted {
+                Err(Error::<T>::InvalidDomainParams)?
+            };
+            self.remove_submitters(submitters)
+        }
+
+        /// Update the hold state according to the domain state and the allowlist status.
+        pub fn update_hold_state(&mut self) {
+            self.state = if self.should_publish.is_empty()
+                && self.next.statements.is_empty()
+                && self.is_allowlist_empty()
+            {
+                DomainState::Removable
+            } else {
+                DomainState::Hold
+            };
+        }
+
         /// Return the next non-empty aggregation to be published, or none if the aggregation is empty.
-        /// If successful, a new aggregation is created as next to be published.
+        /// If successful, a new aggregation is created as the next to be published.
         fn pop_next_aggregation(&mut self) -> Option<Aggregation<T>> {
             if self.next.statements.is_empty() {
                 None
@@ -491,8 +551,8 @@ pub mod pallet {
                     self.state = DomainState::Hold;
                     self.emit_state_changed_event();
                     // Return a dummy aggregation with which replacing the old one.
-                    // Domain is in Hold state so no-one can submit proofs or call aggregate on top
-                    // of this new one.
+                    // Domain is in the Hold state; so no-one can submit proofs or call aggregate
+                    // on top of this new one.
                     crate::data::AggregationEntry::create(0, self.next.size)
                 });
 
@@ -532,13 +592,13 @@ pub mod pallet {
             self.should_publish
                 .try_insert(aggregation.id, aggregation)
                 .expect("Should not publish aggregation if it's not possible; qed");
-            // If it is full send an alert event
+            // If it is full, send an alert event
             if self.should_publish.len() >= self.publish_queue_size as usize {
                 Pallet::<T>::deposit_event(Event::<T>::DomainFull { domain_id: self.id });
             }
         }
 
-        /// Implement the hold state machine and emits the state if change.
+        /// Implement the hold state machine and emits the state if changed.
         fn handle_hold_state(&mut self) {
             if self.state == DomainState::Ready {
                 return;
@@ -556,6 +616,106 @@ pub mod pallet {
                 id: self.id,
                 state: self.state,
             });
+        }
+
+        /// Return true iff the submitting account is allowed to add proofs to this domain, according
+        /// to the configured ProofSecurityRules.
+        fn is_authorized_to_add_proof(&self, account: &T::AccountId) -> bool {
+            match self.proof_rules {
+                ProofSecurityRules::Untrusted => true,
+                ProofSecurityRules::OnlyOwner => {
+                    account
+                        == self
+                            .owner
+                            .account()
+                            .expect("The domain does not have an owner; qed")
+                }
+                ProofSecurityRules::OnlyAllowlisted => {
+                    SubmittersAllowlist::<T>::get(self.id, account).is_some()
+                }
+            }
+        }
+
+        fn add_submitters(&mut self, submitters: &[AccountOf<T>]) -> Result<(), DispatchError> {
+            let count = submitters
+                .iter()
+                .filter(|s| !SubmittersAllowlist::<T>::contains_key(self.id, s))
+                .cloned()
+                .map(|s| SubmittersAllowlist::<T>::insert(self.id, s, ()))
+                .count();
+            self.increase_footprint_count(count.saturated_into())
+        }
+
+        fn remove_submitters(&mut self, submitters: &[AccountOf<T>]) -> Result<(), DispatchError> {
+            let count = submitters
+                .iter()
+                .filter(|s| SubmittersAllowlist::<T>::contains_key(self.id, s))
+                .cloned()
+                .map(|s| SubmittersAllowlist::<T>::remove(self.id, s))
+                .count();
+            self.decrease_footprint_count(count.saturated_into())
+        }
+
+        fn is_allowlist_empty(&self) -> bool {
+            use frame_support::StorageDoubleMap;
+            self.proof_rules != ProofSecurityRules::OnlyAllowlisted
+                || !SubmittersAllowlist::<T>::contains_prefix(self.id)
+        }
+
+        /// Increase the footprint count of the domain.
+        ///
+        /// We need to take track of the count elements because the size is `0` and we would bound
+        /// some amount for each entry, and the `LinearStoragePrice` cannot be used in this case
+        /// (`0` size means `0` amount).
+        ///
+        /// On the other side, the consideration ticket doesn't save the footprint itself, so we
+        /// need to introduce a `CountableTicket` that just holds the count and the ticket.
+        ///
+        /// The `update` ticket call will update the bound on the owner according to the new
+        /// amount computation.
+        /// The amount computation is delegated to the consideration implementation.
+        ///
+        fn increase_footprint_count(&mut self, amount: u64) -> Result<(), DispatchError> {
+            // If the owner is _not an account_ cannot own any ticket.
+            let owner = match self.owner.account() {
+                Some(owner) => owner.clone(),
+                None => return Ok(()),
+            };
+            self.ticket_allowlist = match self.ticket_allowlist.take() {
+                Some(CountableTicket { count, ticket }) => {
+                    // Here we update the ticket that bounds the amount of the owner accordingly to
+                    // the consideration implementation and return the new ticket.
+                    let count = count
+                        .checked_add(amount.saturated_into())
+                        .ok_or(Error::<T>::InvalidDomainParams)?;
+                    let ticket = ticket.update(&owner, Footprint::from_parts(count as usize, 0))?;
+                    Some(CountableTicket { count, ticket })
+                }
+                None => return Ok(()),
+            };
+            Ok(())
+        }
+
+        /// Decrease the footprint count of the domain.
+        ///
+        /// See [`increase_footprint_count`] for more details about implentation.
+        ///
+        fn decrease_footprint_count(&mut self, amount: u64) -> Result<(), DispatchError> {
+            let owner = match self.owner.account() {
+                Some(owner) => owner.clone(),
+                None => return Ok(()),
+            };
+            self.ticket_allowlist = match self.ticket_allowlist.take() {
+                Some(CountableTicket { count, ticket }) => {
+                    let count = count
+                        .checked_sub(amount.saturated_into())
+                        .ok_or(Error::<T>::InvalidDomainParams)?;
+                    let ticket = ticket.update(&owner, Footprint::from_parts(count as usize, 0))?;
+                    Some(CountableTicket { count, ticket })
+                }
+                None => return Ok(()),
+            };
+            Ok(())
         }
     }
 
@@ -575,12 +735,14 @@ pub mod pallet {
     /// A reason for this pallet placing a hold on funds.
     #[pallet::composite_enum]
     pub enum HoldReason {
-        /// The funds are held for a aggregation pay.
+        /// The funds are held for aggregation pay.
         Aggregation,
         /// The funds are held as storage deposit for anything related to a domain.
         Domain,
         /// The funds are held for delivery.
         Delivery,
+        /// Allowlisted Elements
+        Allowlist,
     }
 
     /// Domains storage
@@ -593,19 +755,30 @@ pub mod pallet {
     pub(crate) type Domains<T: Config> =
         StorageMap<Hasher = Blake2_128Concat, Key = u32, Value = Domain<T>>;
 
+    /// Allowed Submitters
+    #[pallet::storage]
+    #[pallet::unbounded]
+    pub(crate) type SubmittersAllowlist<T: Config> = StorageDoubleMap<
+        Hasher1 = Blake2_128Concat,
+        Key1 = u32,
+        Hasher2 = Blake2_128Concat,
+        Key2 = T::AccountId,
+        Value = (),
+    >;
+
     #[pallet::storage]
     #[pallet::getter(fn published)]
     #[pallet::unbounded]
     /// Vector of published aggregations. This will stay just in one block because we remove
     /// this vector at the start of every block (on_initialize hook).
-    /// It is implicitly limited by the number of aggregate extrinsics that can fit in block.
+    /// It is implicitly limited by the number of aggregate extrinsics that can fit in the block.
     pub type Published<T: Config> = StorageValue<_, Vec<(u32, Aggregation<T>)>, ValueQuery>;
 
     #[derive(Debug, Clone, PartialEq, Eq, Encode, Decode, TypeInfo)]
     /// Cannot generate the proof of the aggregated statement.
     pub enum PathRequestError {
         /// The statement is not found in the aggregation.
-        NotFound(u32, u64, sp_core::H256),
+        NotFound(u32, u64, H256),
         /// The receipt is not published for the given domain and aggregation.
         ReceiptNotPublished(u32, u64),
         /// The index of the statement exceeds the maximum that can be handled
@@ -616,7 +789,8 @@ pub mod pallet {
         /// Compute the statement Merkle path giving a proof of the aggregated statement.
         /// - domain_id: The domain identifier.
         /// - aggregation_id: The identifier of the aggregation.
-        /// - statement: The statement hash that describe the proof for which we would provide a proof.
+        /// - statement: The statement hashes that describe the proof for which we would provide a
+        ///   proof.
         pub fn get_statement_path(
             domain_id: u32,
             aggregation_id: u64,
@@ -661,7 +835,7 @@ pub mod pallet {
 
     #[pallet::call(weight(<T as Config>::WeightInfo))]
     impl<T: Config> Pallet<T> {
-        /// Publish the aggregation. This call is used to publish a new aggregation that is in
+        /// Publish the aggregation. This call is used to publish a new aggregation in
         /// the domain to be published queue or is still not completed. Can be called according to the
         /// [`AggregateSecurityRules`] configured for the domain and, if conditions are met
         ///
@@ -670,21 +844,22 @@ pub mod pallet {
         /// - move the funds held for delivery to the delivery owner.
         ///
         /// If the aggregation id is not valid (in _to be published_ queue or in filling stage), the call will
-        /// fail but the weight cost will be still the one needed to do the check.
+        /// fail, but the weight cost will be still the one needed to do the check.
         ///
-        /// If conditions are met a `Event::NewAggregationReceipt` is emitted.
+        /// If conditions are met, an `Event::NewAggregationReceipt` is emitted.
         ///
         /// Arguments:
         /// - `domain_id`: The domain identifier.
         /// - `aggregation_id`: The identifier of the aggregation.
         ///
         /// Errors:
-        /// - `BadOrigin`: If the origin is not valid or it's not authorized to do it according to
+        /// - `BadOrigin`: If the origin is not valid, or it's not authorized to do it according to
         ///   the domain's [`AggregateSecurityRules`].
-        /// - `UnknownDomainId`: If the domain id doesn't exists.
-        /// - `InvalidAggregationId`: If the aggregation id doesn't exists.
+        /// - `UnknownDomainId`: If the domain id doesn't exist.
+        /// - `InvalidAggregationId`: If the aggregation id doesn't exist.
         /// - Any error related to the delivery channel.
-        #[pallet::weight(T::WeightInfo::aggregate(T::AggregationSize::get()) + T::DispatchAggregation::max_weight())]
+        #[pallet::weight(T::WeightInfo::aggregate(T::AggregationSize::get()) + T::DispatchAggregation::max_weight()
+        )]
         #[pallet::call_index(0)]
         pub fn aggregate(
             origin: OriginFor<T>,
@@ -766,16 +941,21 @@ pub mod pallet {
 
         #[pallet::call_index(1)]
         #[allow(clippy::too_many_arguments)]
-        /// Register a new domain. It holds a deposit for all the storage that the domain need. The account that
-        /// requested this domain will be the owner and is the only one that can unregister it. Unregister the domain
-        /// will unlock the deposit and remove the domain from the system.
+        /// Register a new domain. It holds a deposit for all the storage that the domain needs.
+        /// The account that requested this domain will be the owner and is the only one that can
+        /// unregister it. Unregister the domain will unlock the deposit and remove the domain
+        /// from the system.
         ///
-        /// Just manager can register a domain that uses bridge delivery.
+        /// Just a manager can register a domain that uses bridge delivery.
         ///
         /// Arguments
         /// - aggregation_size: The size of the aggregation, in other words how many statements any aggregation have.
         /// - queue_size: The maximum number of aggregations that can be in the queue for this domain.
         /// - aggregate_rules: The rules permission to call `aggregate` on this domain (see [`AggregateSecurityRules`])
+        /// - proof_rules: The rules permission to call `on_proof_verified` callback on this domain (see [`ProofSecurityRules`]);
+        ///   if `OnlyAllowlisted` is selected, the domain will be created with an empty allowlist, use
+        ///   [`allowlist_proof_submitters`] and [`remove_proof_submitters`] extrinsics can be used to
+        ///   define the allowed submitters.
         /// - delivery: Params defining aggregation delivery (fee, destination ... [`Delivery`])
         /// - delivery_owner: An optional account that will receive the total delivery fee when the aggregations are delivered.
         ///   If not provided, the delivery owner will be the caller.
@@ -789,6 +969,7 @@ pub mod pallet {
             aggregation_size: AggregationSize,
             queue_size: Option<u32>,
             aggregate_rules: AggregateSecurityRules,
+            proof_rules: ProofSecurityRules,
             delivery: Delivery<BalanceOf<T>>,
             delivery_owner: Option<AccountOf<T>>,
         ) -> DispatchResultWithPostInfo {
@@ -808,11 +989,11 @@ pub mod pallet {
             let queue_size = queue_size.unwrap_or(T::MaxPendingPublishQueueSize::get());
             let delivery = DeliveryParams::new(delivery_owner, delivery);
 
-            let ticket = caller
+            let ticket_domain = caller
                 .clone()
                 .account()
                 .map(|a| {
-                    T::Consideration::new(
+                    T::ConsiderationDomain::new(
                         a,
                         Footprint::from_parts(
                             1,
@@ -825,6 +1006,17 @@ pub mod pallet {
                     )
                 })
                 .transpose()?;
+            let ticket_allowlist = if proof_rules == ProofSecurityRules::OnlyAllowlisted {
+                caller
+                    .account()
+                    .map(|a| T::ConsiderationAllowList::new(a, Footprint::from_parts(0, 0)))
+                    .transpose()?
+            } else {
+                None
+            };
+
+            let ticket_allowlist =
+                ticket_allowlist.map(|ticket| CountableTicket { count: 0, ticket });
 
             let domain = Domain::<T>::try_create(
                 id,
@@ -833,7 +1025,9 @@ pub mod pallet {
                 aggregation_size,
                 queue_size,
                 aggregate_rules,
-                ticket,
+                proof_rules,
+                ticket_domain,
+                ticket_allowlist,
                 delivery,
             )?;
             Domains::<T>::insert(id, domain);
@@ -847,20 +1041,24 @@ pub mod pallet {
         /// Hold a domain. Put the domain in `Hold` or `Removable` state. Only the domain owner
         /// and the manager can do it.
         ///
-        /// Once you call this function the domain state could be:
-        /// - `Hold`: There are some aggregations that should be aggregated
+        /// Once you call this function, the domain state could be:
+        /// - `Hold`: There are some aggregations that should be aggregated or the allowlist submitters
+        ///   set is not empty.
         /// - `Removable`: the domain is ready to be removed because there are no more aggregations to be
-        /// aggregated.
+        /// aggregated and no allowed address in the allowlist set.
         ///
-        /// Once the domain go in hold state cannot receive new proofs at all and cannot become in the `Ready`
+        /// The allowlist set could be populated iff the domain is configured with [`ProofSecurityRules::OnlyAllowlisted`]
+        /// rule.
+        ///
+        /// Once the domain goes on hold, the state cannot receive new proofs at all and cannot become in the `Ready`
         /// state again.
         ///
         /// **Only when the domain is in `Removable` state** you can call `unregister_domain` extrinsic to
         /// actually remove it.
         ///
-        /// The `DomainStateChanged` event is emitted when the domain change its state.
+        /// The `DomainStateChanged` event is emitted when the domain changes its state.
         ///
-        /// This call fails if the domain is not in `Ready` state or if the user cannot manage this domain.
+        /// This call fails if the domain is not in the `Ready` state or if the user cannot manage this domain.
         ///
         /// Arguments
         /// - domain_id: The domain identifier.
@@ -888,12 +1086,14 @@ pub mod pallet {
 
         /// Unregister an empty domain that was put on hold previously and is in `Removable` state. Only
         /// the domain owner and the manager can do it. This will remove the domain from the system and
-        /// unhold all the funds that the owner had bond.
+        /// unhold all the funds that the owner had bonded.
         ///
-        /// If you want to remove a domain you should put call `hold_domain` before and waiting that become
-        /// `Removable`.
+        /// If you want to remove a domain, you should put the call `hold_domain` before and waiting that become
+        /// `Removable`. If the domain is configured to accept proof with
+        /// [`ProofSecurityRules::OnlyAllowlisted`], you should take care to remove all allowed addresses
+        /// from the set before removing the domain.
         ///
-        /// If the domain can be removed a `DomainStateChanged` event with the `Removed` state is emitted.
+        /// If the domain can be removed, a `DomainStateChanged` event with the `Removed` state is emitted.
         ///
         /// Arguments
         /// - domain_id: The domain identifier.
@@ -910,7 +1110,16 @@ pub mod pallet {
                         if domain.state != DomainState::Removable {
                             Err(Error::<T>::InvalidDomainState)?
                         } else {
-                            if let (Some(o), Some(t)) = (owner.account(), domain.ticket.take()) {
+                            if let (Some(o), Some(t)) =
+                                (owner.account(), domain.ticket_domain.take())
+                            {
+                                let _ =
+                                    t.drop(o).defensive_proof("Drop should always succeed: qed");
+                            }
+                            if let (Some(o), Some(t)) = (
+                                owner.account(),
+                                domain.ticket_allowlist.take().map(|t| t.ticket),
+                            ) {
                                 let _ =
                                     t.drop(o).defensive_proof("Drop should always succeed: qed");
                             }
@@ -929,10 +1138,10 @@ pub mod pallet {
         }
 
         /// Set the total delivery aggregation fee. Every submitter will hold this fee (at the time of proof submission)
-        /// divided by the aggregation size. When the aggregation is dispatched all this held funds will be
+        /// divided by the aggregation size. When the aggregation is dispatched, all these held funds will be
         /// transferred to the delivery owner.
         ///
-        /// Only domain owner, delivery owner or manager can set the total fee.
+        /// Only a domain owner, delivery owner or manager can set the total fee.
         ///
         /// Arguments
         /// - domain_id: The domain identifier.
@@ -941,7 +1150,7 @@ pub mod pallet {
         ///
         /// Errors:
         /// - `BadOrigin`: If the origin is not authorized.
-        /// - `UnknownDomainId`: If the domain doesn't exists.
+        /// - `UnknownDomainId`: If the domain doesn't exist.
         ///
         #[pallet::call_index(4)]
         pub fn set_total_delivery_fee(
@@ -962,6 +1171,68 @@ pub mod pallet {
                 };
                 Ok::<_, DispatchError>(())
             })?;
+            Ok(())
+        }
+
+        /// Add `submitters` to the set of allowlist submitters.
+        /// The domain should be configured with the `ProofSecurityRules::OnlyAllowlisted` rules to
+        /// handle it.
+        ///
+        /// Errors:
+        /// - `BadOrigin`: If the origin is not authorized.
+        /// - `UnknownDomainId`: If the domain doesn't exist.
+        /// - `InvalidDomainParams`: If the domain is not configured with
+        ///   `ProofSecurityRules::OnlyAllowlisted`.
+        ///
+        #[pallet::weight(T::WeightInfo::allowlist_proof_submitters(submitters.len().saturated_into()
+        ))]
+        #[pallet::call_index(5)]
+        pub fn allowlist_proof_submitters(
+            origin: OriginFor<T>,
+            domain_id: u32,
+            submitters: Vec<AccountOf<T>>,
+        ) -> DispatchResult {
+            let owner = User::<T::AccountId>::from_origin::<T>(origin)?;
+            Domains::<T>::try_mutate_exists(domain_id, |maybe_domain| match maybe_domain {
+                None => Err(Error::<T>::UnknownDomainId)?,
+                Some(domain) if !owner.can_handle_domain::<T>(domain) => Err(BadOrigin)?,
+                Some(domain) => domain
+                    .try_add_submitters(submitters.as_slice())
+                    .map_err(Into::<DispatchError>::into),
+            })?;
+            Ok(())
+        }
+
+        /// Remove `submitters` from the set of allowlist submitters.
+        /// The domain should be configured with the `ProofSecurityRules::OnlyAllowlisted` rules to
+        /// handle it.
+        ///
+        /// Errors:
+        /// - `BadOrigin`: If the origin is not authorized.
+        /// - `UnknownDomainId`: If the domain doesn't exist.
+        /// - `InvalidDomainParams`: If the domain is not configured with
+        ///   `ProofSecurityRules::OnlyAllowlisted`.
+        ///
+        #[pallet::weight(T::WeightInfo::remove_proof_submitters(submitters.len().saturated_into()))]
+        #[pallet::call_index(6)]
+        pub fn remove_proof_submitters(
+            origin: OriginFor<T>,
+            domain_id: u32,
+            submitters: Vec<AccountOf<T>>,
+        ) -> DispatchResult {
+            let owner = User::<T::AccountId>::from_origin::<T>(origin)?;
+            Domains::<T>::try_mutate_exists(domain_id, |maybe_domain| match maybe_domain {
+                None => Err(Error::<T>::UnknownDomainId)?,
+                Some(domain) if !owner.can_handle_domain::<T>(domain) => Err(BadOrigin)?,
+                Some(domain) => domain
+                    .try_remove_submitters(submitters.as_slice())
+                    .map(|_| {
+                        domain.update_hold_state();
+                        domain.emit_state_changed_event();
+                    })
+                    .map_err(Into::<DispatchError>::into),
+            })?;
+
             Ok(())
         }
     }
@@ -1030,7 +1301,7 @@ pub mod pallet {
 
         pub fn can_handle_domain<T: Config<AccountId = A>>(&self, domain: &Domain<T>) -> bool
         where
-            A: PartialEq + Debug,
+            A: PartialEq + Debug + Ord + Clone + Encode,
         {
             match self {
                 User::Account(_) => &domain.owner == self,
@@ -1043,7 +1314,7 @@ pub mod pallet {
             domain: &Domain<T>,
         ) -> bool
         where
-            A: PartialEq + Debug,
+            A: PartialEq + Debug + Ord + Clone + Encode,
         {
             match self {
                 User::Account(account) => {

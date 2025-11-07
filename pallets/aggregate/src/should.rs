@@ -28,7 +28,9 @@ use sp_runtime::{
 };
 
 use super::*;
-use data::{AggregateSecurityRules, Delivery, DeliveryParams, DomainState, Reserve};
+use data::{
+    AggregateSecurityRules, Delivery, DeliveryParams, DomainState, ProofSecurityRules, Reserve,
+};
 use mock::*;
 
 use hp_dispatch::{Destination, DispatchAggregation};
@@ -76,78 +78,155 @@ fn emit_domain_full_event_when_publish_queue_is_full() {
     })
 }
 
-mod not_add_the_statement_to_any_domain_if {
+mod not_add_the_statement_to {
     use super::*;
 
-    #[test]
-    fn no_domain_provided() {
+    mod any_domain_if {
+        use super::*;
+
+        #[test]
+        fn no_domain_provided() {
+            test().execute_with(|| {
+                let statement = H256::from_low_u64_be(123);
+
+                Aggregate::on_proof_verified(Some(USER_1), None, statement);
+
+                assert_no_cannot_aggregate_evt();
+
+                assert_eq!(0, count_all_statements());
+            })
+        }
+
+        #[test]
+        fn no_account_provided() {
+            test().execute_with(|| {
+                let statement = H256::from_low_u64_be(123);
+
+                Aggregate::on_proof_verified(None, DOMAIN, statement);
+
+                assert_cannot_aggregate_evt(statement, CannotAggregateCause::NoAccount);
+
+                assert_eq!(0, count_all_statements());
+            })
+        }
+    }
+
+    mod provided_domain_if {
+        use super::*;
+
+        #[test]
+        fn is_not_registered() {
+            test().execute_with(|| {
+                let statement = H256::from_low_u64_be(123);
+
+                Aggregate::on_proof_verified(Some(USER_1), NOT_REGISTERED_DOMAIN, statement);
+
+                assert_cannot_aggregate_evt(
+                    statement,
+                    CannotAggregateCause::DomainNotRegistered {
+                        domain_id: NOT_REGISTERED_DOMAIN_ID,
+                    },
+                );
+
+                assert_eq!(0, count_all_statements());
+            })
+        }
+
+        #[rstest]
+        fn is_on_hold_or_removable_state(
+            #[values(DomainState::Hold, DomainState::Removable, DomainState::Removed)]
+            state: DomainState,
+        ) {
+            test().execute_with(|| {
+                Domains::<Test>::mutate_extant(DOMAIN_ID, |d| {
+                    d.state = state;
+                });
+
+                let statement = H256::from_low_u64_be(123);
+                Aggregate::on_proof_verified(Some(USER_1), DOMAIN, statement);
+
+                assert_cannot_aggregate_evt(
+                    statement,
+                    CannotAggregateCause::InvalidDomainState {
+                        domain_id: DOMAIN_ID,
+                        state,
+                    },
+                );
+                assert_eq!(0, count_all_statements());
+            })
+        }
+    }
+}
+
+mod add_statement_accordingly_to_proof_submitting_rule {
+    use super::*;
+
+    #[rstest]
+    fn untrusted_accept_any_user(
+        #[values(USER_1, USER_2, USER_ALLOWLISTED_1, USER_DOMAIN_SUBMIT_RULE)] user: AccountId,
+    ) {
         test().execute_with(|| {
             let statement = H256::from_low_u64_be(123);
 
-            Aggregate::on_proof_verified(Some(USER_1), None, statement);
+            Aggregate::on_proof_verified(Some(user), DOMAIN, statement);
+            assert_proof_evt(DOMAIN_ID, 1, statement);
+        })
+    }
 
-            assert_no_cannot_aggregate_evt();
+    #[rstest]
+    fn only_owner_reject_no_owner(#[values(USER_1, USER_2, USER_ALLOWLISTED_1)] user: AccountId) {
+        test().execute_with(|| {
+            let statement = H256::from_low_u64_be(123);
+
+            Aggregate::on_proof_verified(Some(user), DOMAIN_ONLY_OWNER, statement);
+
+            assert_cannot_aggregate_evt(statement, CannotAggregateCause::UnauthorizedUser);
 
             assert_eq!(0, count_all_statements());
         })
     }
 
     #[test]
-    fn provided_domain_is_not_registered() {
+    fn only_owner_accept_owner() {
         test().execute_with(|| {
             let statement = H256::from_low_u64_be(123);
 
-            Aggregate::on_proof_verified(Some(USER_1), NOT_REGISTERED_DOMAIN, statement);
-
-            assert_cannot_aggregate_evt(
+            Aggregate::on_proof_verified(
+                Some(USER_DOMAIN_SUBMIT_RULE),
+                DOMAIN_ONLY_OWNER,
                 statement,
-                CannotAggregateCause::DomainNotRegistered {
-                    domain_id: NOT_REGISTERED_DOMAIN_ID,
-                },
             );
-
-            assert_eq!(0, count_all_statements());
+            assert_proof_evt(DOMAIN_ID_ONLY_OWNER, 1, statement);
         })
     }
 
-    #[test]
-    fn no_account_provided() {
+    #[rstest]
+    fn whitlisted_reject_no_allowlisted(
+        #[values(USER_1, USER_2, USER_DOMAIN_SUBMIT_RULE)] user: AccountId,
+    ) {
         test().execute_with(|| {
             let statement = H256::from_low_u64_be(123);
 
-            Aggregate::on_proof_verified(None, DOMAIN, statement);
+            Aggregate::on_proof_verified(Some(user), DOMAIN_ALLOWLISTED, statement);
 
-            assert_cannot_aggregate_evt(statement, CannotAggregateCause::NoAccount);
+            assert_cannot_aggregate_evt(statement, CannotAggregateCause::UnauthorizedUser);
 
             assert_eq!(0, count_all_statements());
         })
     }
 
     #[rstest]
-    fn the_domain_is_not_is_in_hold_or_removable_state(
-        #[values(DomainState::Hold, DomainState::Removable, DomainState::Removed)]
-        state: DomainState,
+    fn whitlisted_accept_whitlisted(
+        #[values(USER_ALLOWLISTED_1, USER_ALLOWLISTED_2)] user: AccountId,
     ) {
         test().execute_with(|| {
-            Domains::<Test>::mutate_extant(DOMAIN_ID, |d| {
-                d.state = state;
-            });
-
             let statement = H256::from_low_u64_be(123);
-            Aggregate::on_proof_verified(Some(USER_1), DOMAIN, statement);
 
-            assert_cannot_aggregate_evt(
-                statement,
-                CannotAggregateCause::InvalidDomainState {
-                    domain_id: DOMAIN_ID,
-                    state,
-                },
-            );
-            assert_eq!(0, count_all_statements());
+            Aggregate::on_proof_verified(Some(user), DOMAIN_ALLOWLISTED, statement);
+            assert_proof_evt(DOMAIN_ID_ALLOWLISTED, 1, statement);
         })
     }
 }
-
 mod check_if_no_room_for_new_statements_in_should_published_set_and {
     use super::*;
 
@@ -714,6 +793,7 @@ mod aggregate {
                     size,
                     None,
                     rules,
+                    ProofSecurityRules::Untrusted,
                     none_delivering(),
                     owner_delivery
                 ));
@@ -975,6 +1055,7 @@ mod register_domain {
                 16,
                 Some(8),
                 AggregateSecurityRules::OnlyOwnerUncompleted,
+                ProofSecurityRules::OnlyAllowlisted,
                 priced_none_delivering(1234, 12),
                 Some(USER_DOMAIN_2)
             ));
@@ -989,6 +1070,7 @@ mod register_domain {
                 AggregateSecurityRules::OnlyOwnerUncompleted,
                 domain.aggregate_rules
             );
+            assert_eq!(ProofSecurityRules::OnlyAllowlisted, domain.proof_rules);
             assert_eq!(
                 DeliveryParams::<AccountId, Balance>::new(
                     USER_DOMAIN_2,
@@ -1010,6 +1092,7 @@ mod register_domain {
                 16,
                 Some(8),
                 AggregateSecurityRules::OnlyOwnerUncompleted,
+                ProofSecurityRules::Untrusted,
                 priced_none_delivering(1234, 12),
                 None
             ));
@@ -1029,6 +1112,7 @@ mod register_domain {
                 16,
                 Some(8),
                 AggregateSecurityRules::Untrusted,
+                ProofSecurityRules::Untrusted,
                 hyperbridge_destination().into(),
                 Some(USER_DOMAIN_2)
             ));
@@ -1050,6 +1134,7 @@ mod register_domain {
                     16,
                     Some(8),
                     AggregateSecurityRules::OnlyOwner,
+                    ProofSecurityRules::Untrusted,
                     hyperbridge_destination().into(),
                     None,
                 ),
@@ -1068,6 +1153,7 @@ mod register_domain {
                 values[0].0,
                 values[0].1,
                 AggregateSecurityRules::Untrusted,
+                ProofSecurityRules::Untrusted,
                 priced_none_delivering(4321, 43),
                 None
             ));
@@ -1076,6 +1162,7 @@ mod register_domain {
                 values[1].0,
                 values[1].1,
                 AggregateSecurityRules::Untrusted,
+                ProofSecurityRules::Untrusted,
                 priced_none_delivering(4331, 43),
                 Some(delivery_users[1])
             ));
@@ -1084,6 +1171,7 @@ mod register_domain {
                 values[2].0,
                 values[2].1,
                 AggregateSecurityRules::Untrusted,
+                ProofSecurityRules::Untrusted,
                 priced_none_delivering(4341, 43),
                 Some(delivery_users[2])
             ));
@@ -1126,6 +1214,7 @@ mod register_domain {
                 MaxAggregationSize::get(),
                 Some(MaxPendingPublishQueueSize::get()),
                 AggregateSecurityRules::Untrusted,
+                ProofSecurityRules::Untrusted,
                 none_delivering(),
                 None
             ));
@@ -1136,6 +1225,7 @@ mod register_domain {
                     0,
                     Some(MaxPendingPublishQueueSize::get()),
                     AggregateSecurityRules::Untrusted,
+                    ProofSecurityRules::Untrusted,
                     none_delivering(),
                     None
                 ),
@@ -1147,6 +1237,7 @@ mod register_domain {
                     MaxAggregationSize::get() + 1,
                     Some(MaxPendingPublishQueueSize::get()),
                     AggregateSecurityRules::Untrusted,
+                    ProofSecurityRules::Untrusted,
                     none_delivering(),
                     None
                 ),
@@ -1158,6 +1249,7 @@ mod register_domain {
                     MaxAggregationSize::get(),
                     Some(MaxPendingPublishQueueSize::get() + 1),
                     AggregateSecurityRules::Untrusted,
+                    ProofSecurityRules::Untrusted,
                     none_delivering(),
                     None
                 ),
@@ -1175,6 +1267,7 @@ mod register_domain {
                     0,
                     Some(MaxPendingPublishQueueSize::get()),
                     AggregateSecurityRules::Untrusted,
+                    ProofSecurityRules::Untrusted,
                     none_delivering(),
                     None
                 ),
@@ -1184,13 +1277,14 @@ mod register_domain {
     }
 
     #[test]
-    fn save_consideration_ticket_if_user_register_a_domain() {
+    fn save_consideration_tickets_if_user_register_a_domain() {
         test().execute_with(|| {
             assert_ok!(Aggregate::register_domain(
                 Origin::Signed(USER_DOMAIN_1).into(),
                 16,
                 None,
                 AggregateSecurityRules::Untrusted,
+                ProofSecurityRules::OnlyAllowlisted,
                 none_delivering(),
                 None
             ));
@@ -1198,47 +1292,79 @@ mod register_domain {
             let domain = Domains::<Test>::get(registered_ids()[0]).unwrap();
 
             assert_eq!(
-                Some(MockConsideration {
-                    who: USER_DOMAIN_1,
-                    count: 1,
-                    size: Domain::<Test>::compute_encoded_size(
-                        16,
-                        MaxPendingPublishQueueSize::get(),
-                        &none_destination(),
-                    ) as u64,
-                }),
-                domain.ticket,
+                domain.ticket_domain,
+                Some(
+                    MockConsideration {
+                        who: USER_DOMAIN_1,
+                        count: 1,
+                        size: Domain::<Test>::compute_encoded_size(
+                            16,
+                            MaxPendingPublishQueueSize::get(),
+                            &none_destination(),
+                        ) as u64,
+                    }
+                    .into()
+                ),
+            );
+
+            assert_eq!(
+                domain.ticket_allowlist,
+                Some(countable_mock_consideration(USER_DOMAIN_1, 0, 0)),
             );
         });
     }
 
     #[test]
-    fn donst_store_consideration_ticket_if_manager_register_domain() {
+    fn donst_store_consideration_tickets_if_manager_register_domain() {
         test().execute_with(|| {
             assert_ok!(Aggregate::register_domain(
                 Origin::Signed(ROOT_USER).into(),
                 16,
                 None,
                 AggregateSecurityRules::Untrusted,
+                ProofSecurityRules::OnlyAllowlisted,
                 none_delivering(),
                 Some(USER_DOMAIN_1)
             ));
 
             let domain = Domains::<Test>::get(registered_ids()[0]).unwrap();
 
-            assert_eq!(None, domain.ticket);
+            assert_eq!(None, domain.ticket_domain);
+            assert_eq!(None, domain.ticket_allowlist);
         });
     }
 
     #[rstest]
-    #[case(hyperbridge_destination(), (78825, 1713, 9375, 21049))]
-    #[case(Destination::None, (78792, 1680, 9342, 21016))]
+    fn donst_store_allowlist_consideration_ticket_if_doesnt_set_allowlist_for_domain(
+        #[values(ProofSecurityRules::Untrusted, ProofSecurityRules::OnlyOwner)]
+        proof_rules: ProofSecurityRules,
+    ) {
+        test().execute_with(|| {
+            assert_ok!(Aggregate::register_domain(
+                Origin::Signed(USER_DOMAIN_1).into(),
+                16,
+                None,
+                AggregateSecurityRules::Untrusted,
+                proof_rules,
+                none_delivering(),
+                Some(USER_DOMAIN_1)
+            ));
+
+            let domain = Domains::<Test>::get(registered_ids()[0]).unwrap();
+
+            assert_eq!(None, domain.ticket_allowlist);
+        });
+    }
+
+    #[rstest]
+    #[case(hyperbridge_destination(), (78855, 1743, 9405, 21079))]
+    #[case(Destination::None, (78822, 1710, 9372, 21046))]
     fn not_change_domain_encoded_size(
         #[case] destination: Destination,
         #[case] variables: (usize, usize, usize, usize),
     ) {
         let (bigger, min_agg_max_queue, max_agg_min_queue, middle) = variables;
-        // This test is here to check the you don't changed the domain struct without change `compute_encoded_size`
+        // This test is here to check that you don't change the domain struct without change `compute_encoded_size`
         // accordantly
         use codec::MaxEncodedLen;
         // Check base: always TRUE
@@ -1252,7 +1378,7 @@ mod register_domain {
         );
 
         // Fixture max
-        assert_eq!(Domain::<Test>::max_encoded_len(), 78825);
+        assert_eq!(Domain::<Test>::max_encoded_len(), 78855);
 
         // Max configurations
         assert_eq!(
@@ -1296,6 +1422,7 @@ mod register_domain {
                     16,
                     None,
                     AggregateSecurityRules::Untrusted,
+                    ProofSecurityRules::Untrusted,
                     none_delivering(),
                     None
                 ),
@@ -1313,6 +1440,7 @@ mod register_domain {
                     16,
                     None,
                     AggregateSecurityRules::Untrusted,
+                    ProofSecurityRules::Untrusted,
                     none_delivering(),
                     None
                 )
@@ -1332,6 +1460,7 @@ mod register_domain {
                     16,
                     None,
                     AggregateSecurityRules::Untrusted,
+                    ProofSecurityRules::Untrusted,
                     hyperbridge_destination().into(),
                     Some(USER_DOMAIN_2)
                 )
@@ -1348,6 +1477,7 @@ mod register_domain {
             aggregation_size: 16,
             queue_size: Some(8),
             aggregate_rules: AggregateSecurityRules::Untrusted,
+            proof_rules: ProofSecurityRules::Untrusted,
             delivery: hyperbridge_destination().into(),
             delivery_owner: None,
         }
@@ -1367,6 +1497,7 @@ mod register_domain {
                     16,
                     None,
                     AggregateSecurityRules::Untrusted,
+                    ProofSecurityRules::Untrusted,
                     none_delivering(),
                     None
                 ),
@@ -1399,6 +1530,44 @@ mod hold_domain {
 
                     assert_eq!(DomainState::Hold, domain.state);
                     assert_state_changed_evt(DOMAIN_ID, DomainState::Hold);
+                })
+            }
+
+            #[test]
+            fn if_there_are_submitter_in_the_allowlist() {
+                test().execute_with(|| {
+                    assert_ok!(Aggregate::hold_domain(
+                        Origin::Signed(USER_DOMAIN_SUBMIT_RULE).into(),
+                        DOMAIN_ID_ALLOWLISTED
+                    ));
+
+                    let domain = Domains::<Test>::get(DOMAIN_ID_ALLOWLISTED).unwrap();
+                    // Sanity check
+                    assert!(domain.next.statements.is_empty());
+
+                    assert_eq!(DomainState::Hold, domain.state);
+                    assert_state_changed_evt(DOMAIN_ID_ALLOWLISTED, DomainState::Hold);
+                })
+            }
+
+            #[test]
+            fn if_is_configured_for_allowlisted_only_but_there_aren_t_any() {
+                test().execute_with(|| {
+                    let _ = SubmittersAllowlist::<Test>::clear_prefix(
+                        DOMAIN_ID_ALLOWLISTED,
+                        1_000,
+                        None,
+                    );
+
+                    assert_ok!(Aggregate::hold_domain(
+                        Origin::Signed(USER_DOMAIN_SUBMIT_RULE).into(),
+                        DOMAIN_ID_ALLOWLISTED
+                    ));
+
+                    let domain = Domains::<Test>::get(DOMAIN_ID_ALLOWLISTED).unwrap();
+
+                    assert_eq!(DomainState::Removable, domain.state);
+                    assert_state_changed_evt(DOMAIN_ID_ALLOWLISTED, DomainState::Removable);
                 })
             }
 
@@ -1476,7 +1645,8 @@ mod hold_domain {
                     USER_DOMAIN_2,
                     16,
                     None,
-                    data::AggregateSecurityRules::Untrusted,
+                    AggregateSecurityRules::Untrusted,
+                    ProofSecurityRules::Untrusted,
                     none_delivering(),
                     None,
                 );
@@ -1512,46 +1682,66 @@ mod handle_the_hold_state_transactions {
 
     use super::*;
 
-    mod when_aggregate_all_aggregation_in_should_publish_queue {
+    #[test]
+    fn when_aggregate_all_aggregation_in_should_publish_queue_move_to_removable_state() {
+        test().execute_with(|| {
+            let aggregates = DOMAIN_QUEUE_SIZE / 2;
+            for _ in 0..(DOMAIN_SIZE * aggregates) {
+                Aggregate::on_proof_verified(Some(USER_1), DOMAIN, Default::default());
+            }
 
-        use super::*;
+            assert_ok!(Aggregate::hold_domain(
+                Origin::Signed(USER_DOMAIN_1).into(),
+                DOMAIN_ID
+            ));
+            // Sanity Check
+            assert_state_changed_evt(DOMAIN_ID, DomainState::Hold);
+            System::reset_events();
 
-        #[test]
-        fn move_to_removable_state() {
-            test().execute_with(|| {
-                let aggregates = DOMAIN_QUEUE_SIZE / 2;
-                for _ in 0..(DOMAIN_SIZE * aggregates) {
-                    Aggregate::on_proof_verified(Some(USER_1), DOMAIN, Default::default());
-                }
-
-                assert_ok!(Aggregate::hold_domain(
-                    Origin::Signed(USER_DOMAIN_1).into(),
-                    DOMAIN_ID
-                ));
-                // Sanity Check
-                assert_state_changed_evt(DOMAIN_ID, DomainState::Hold);
-                System::reset_events();
-
-                for id in 0..(aggregates - 1) {
-                    Aggregate::aggregate(Origin::Signed(USER_1).into(), DOMAIN_ID, id as u64 + 1)
-                        .unwrap();
-                    assert_no_state_changed_evt();
-                }
-
-                Aggregate::aggregate(Origin::Signed(USER_1).into(), DOMAIN_ID, aggregates as u64)
+            for id in 0..(aggregates - 1) {
+                Aggregate::aggregate(Origin::Signed(USER_1).into(), DOMAIN_ID, id as u64 + 1)
                     .unwrap();
+                assert_no_state_changed_evt();
+            }
 
-                let domain = Domains::<Test>::get(DOMAIN_ID).unwrap();
+            Aggregate::aggregate(Origin::Signed(USER_1).into(), DOMAIN_ID, aggregates as u64)
+                .unwrap();
 
-                assert_eq!(DomainState::Removable, domain.state);
-                assert_state_changed_evt(DOMAIN_ID, DomainState::Removable);
-            })
-        }
+            let domain = Domains::<Test>::get(DOMAIN_ID).unwrap();
+
+            assert_eq!(DomainState::Removable, domain.state);
+            assert_state_changed_evt(DOMAIN_ID, DomainState::Removable);
+        })
+    }
+
+    #[test]
+    fn when_remove_all_elements_in_submitter_list_with_remove_proof_submitters() {
+        test().execute_with(|| {
+            let submitters = SubmittersAllowlist::<Test>::iter_key_prefix(DOMAIN_ID_ALLOWLISTED)
+                .collect::<Vec<_>>();
+
+            assert_ok!(Aggregate::hold_domain(
+                Origin::Signed(USER_DOMAIN_SUBMIT_RULE).into(),
+                DOMAIN_ID_ALLOWLISTED
+            ));
+            let domain = Domains::<Test>::get(DOMAIN_ID_ALLOWLISTED).unwrap();
+            // Sanity check
+            assert_eq!(DomainState::Hold, domain.state);
+
+            assert_ok!(Aggregate::remove_proof_submitters(
+                Origin::Signed(USER_DOMAIN_SUBMIT_RULE).into(),
+                DOMAIN_ID_ALLOWLISTED,
+                submitters,
+            ));
+
+            assert_state_changed_evt(DOMAIN_ID_ALLOWLISTED, DomainState::Removable);
+        })
     }
 }
 
 mod unregister_domain {
     use super::*;
+    use sp_core::Get;
 
     fn test() -> sp_io::TestExternalities {
         let mut ext = super::test();
@@ -1563,12 +1753,13 @@ mod unregister_domain {
         ext
     }
 
-    fn register_removable_domain(user: AccountId) -> u32 {
+    fn register_removable_domain(user: AccountId, proof_rules: Option<ProofSecurityRules>) -> u32 {
         let id = register_domain(
             user,
             16,
             None,
             AggregateSecurityRules::Untrusted,
+            proof_rules.unwrap_or(ProofSecurityRules::Untrusted),
             none_delivering(),
             None,
         );
@@ -1616,7 +1807,7 @@ mod unregister_domain {
                     BadOrigin
                 );
 
-                let id = register_removable_domain(USER_DOMAIN_2);
+                let id = register_removable_domain(USER_DOMAIN_2, None);
 
                 assert_err!(
                     Aggregate::unregister_domain(Origin::Signed(USER_DOMAIN_1).into(), id),
@@ -1645,14 +1836,22 @@ mod unregister_domain {
     }
 
     #[test]
-    fn unregister_domain_drop_consideration_ticket() {
+    fn unregister_domain_drop_consideration_tickets() {
         let origin = Origin::Signed(USER_DOMAIN_1);
         test().execute_with(|| {
-            let id = register_removable_domain(USER_DOMAIN_1);
+            let id =
+                register_removable_domain(USER_DOMAIN_1, Some(ProofSecurityRules::OnlyAllowlisted));
 
             assert_ok!(Aggregate::unregister_domain(origin.into(), id));
 
-            let (id, dropped_consideration) = MockConsideration::pop().unwrap();
+            let (id, dropped_consideration) =
+                MockConsideration::pop(MockHoldDomain::get()).unwrap();
+
+            assert_eq!(USER_DOMAIN_1, id);
+            assert_eq!(USER_DOMAIN_1, dropped_consideration.who);
+
+            let (id, dropped_consideration) =
+                MockConsideration::pop(MockHoldAllowlist::get()).unwrap();
 
             assert_eq!(USER_DOMAIN_1, id);
             assert_eq!(USER_DOMAIN_1, dropped_consideration.who);
@@ -1669,6 +1868,7 @@ mod unregister_domain {
                 16,
                 None,
                 AggregateSecurityRules::Untrusted,
+                ProofSecurityRules::Untrusted,
                 none_delivering(),
                 None
             ));
@@ -1713,6 +1913,291 @@ mod unregister_domain {
 
         assert_eq!(info.pays_fee, Pays::Yes);
         assert_eq!(info.call_weight, MockWeightInfo::unregister_domain());
+    }
+}
+
+mod allowlist_proof_submitters {
+    use super::*;
+
+    #[test]
+    fn add_a_list_of_users() {
+        test().execute_with(|| {
+            let allowlisted = SubmittersAllowlist::<Test>::iter().count();
+            let to_allowlist = vec![USER_1, USER_2, USER_DELIVERY_OWNER];
+
+            assert_ok!(Aggregate::allowlist_proof_submitters(
+                Origin::Signed(USER_DOMAIN_SUBMIT_RULE).into(),
+                DOMAIN_ID_ALLOWLISTED,
+                to_allowlist.clone()
+            ));
+            assert!(SubmittersAllowlist::<Test>::contains_key(
+                DOMAIN_ID_ALLOWLISTED,
+                USER_1
+            ));
+            assert!(SubmittersAllowlist::<Test>::contains_key(
+                DOMAIN_ID_ALLOWLISTED,
+                USER_2
+            ));
+            assert!(SubmittersAllowlist::<Test>::contains_key(
+                DOMAIN_ID_ALLOWLISTED,
+                USER_DELIVERY_OWNER
+            ));
+            assert_eq!(
+                SubmittersAllowlist::<Test>::iter().count(),
+                allowlisted + to_allowlist.len()
+            );
+        })
+    }
+
+    #[test]
+    fn not_add_duplicate() {
+        test().execute_with(|| {
+            let allowlisted = SubmittersAllowlist::<Test>::iter().count();
+            let to_allowlist = vec![USER_1, USER_1, USER_1];
+
+            assert_ok!(Aggregate::allowlist_proof_submitters(
+                Origin::Signed(USER_DOMAIN_SUBMIT_RULE).into(),
+                DOMAIN_ID_ALLOWLISTED,
+                to_allowlist.clone()
+            ));
+            assert!(SubmittersAllowlist::<Test>::contains_key(
+                DOMAIN_ID_ALLOWLISTED,
+                USER_1
+            ));
+            assert_eq!(SubmittersAllowlist::<Test>::iter().count(), allowlisted + 1);
+        })
+    }
+
+    #[test]
+    fn fail_if_domain_is_not_configured_for_submitters_allowlist() {
+        test().execute_with(|| {
+            assert_noop!(
+                Aggregate::allowlist_proof_submitters(
+                    Origin::Signed(USER_DOMAIN_1).into(),
+                    DOMAIN_ID,
+                    vec![USER_1]
+                ),
+                Error::<Test>::InvalidDomainParams
+            );
+
+            assert_noop!(
+                Aggregate::allowlist_proof_submitters(
+                    Origin::Signed(USER_DOMAIN_SUBMIT_RULE).into(),
+                    DOMAIN_ID_ONLY_OWNER,
+                    vec![USER_1]
+                ),
+                Error::<Test>::InvalidDomainParams
+            );
+        })
+    }
+
+    #[test]
+    fn bound_amount_for_each_allowlisted_user() {
+        // Here we check that the count provided to the consideration increases accordingly to the
+        // number of added users.
+        test().execute_with(|| {
+            let to_allowlist = vec![USER_1, USER_2, USER_1];
+            let base = consideration(DOMAIN_ID_ALLOWLISTED).unwrap();
+
+            assert_ok!(Aggregate::allowlist_proof_submitters(
+                Origin::Signed(USER_DOMAIN_SUBMIT_RULE).into(),
+                DOMAIN_ID_ALLOWLISTED,
+                to_allowlist.clone()
+            ));
+
+            let updated = consideration(DOMAIN_ID_ALLOWLISTED).unwrap();
+
+            assert_eq!(base.count + 2, updated.count);
+            assert_eq!(base.size, updated.size);
+            assert_eq!(base.who, updated.who);
+        })
+    }
+
+    #[test]
+    fn raise_error_if_saturated() {
+        test().execute_with(|| {
+            let to_allowlist = vec![USER_1];
+            Domains::<Test>::mutate(DOMAIN_ID_ALLOWLISTED, |d| match d {
+                Some(domain) => {
+                    domain.ticket_allowlist =
+                        Some(countable_mock_consideration(USER_1, u32::MAX, 1));
+                }
+                None => {
+                    panic!("Domain not found");
+                }
+            });
+            assert_noop!(
+                Aggregate::allowlist_proof_submitters(
+                    Origin::Signed(USER_DOMAIN_SUBMIT_RULE).into(),
+                    DOMAIN_ID_ALLOWLISTED,
+                    to_allowlist.clone()
+                ),
+                Error::<Test>::InvalidDomainParams
+            );
+        })
+    }
+
+    #[rstest]
+    fn use_correct_weight(#[values(0, 3, 10)] len: u32) {
+        let info = Call::<Test>::allowlist_proof_submitters {
+            domain_id: 22,
+            submitters: (0..len).map(|i| 1_000_000 + i).map(Into::into).collect(),
+        }
+        .get_dispatch_info();
+
+        assert_eq!(info.pays_fee, Pays::Yes);
+        assert_eq!(
+            info.call_weight,
+            MockWeightInfo::allowlist_proof_submitters(len)
+        );
+    }
+}
+
+mod remove_proof_submitters {
+    use super::*;
+
+    #[test]
+    fn remove_a_list_of_users() {
+        test().execute_with(|| {
+            let allowlisted = SubmittersAllowlist::<Test>::iter().count();
+            let to_remove = vec![USER_ALLOWLISTED_1, USER_ALLOWLISTED_3];
+
+            assert_ok!(Aggregate::remove_proof_submitters(
+                Origin::Signed(USER_DOMAIN_SUBMIT_RULE).into(),
+                DOMAIN_ID_ALLOWLISTED,
+                to_remove.clone()
+            ));
+            assert!(!SubmittersAllowlist::<Test>::contains_key(
+                DOMAIN_ID_ALLOWLISTED,
+                USER_ALLOWLISTED_1
+            ));
+            assert!(!SubmittersAllowlist::<Test>::contains_key(
+                DOMAIN_ID_ALLOWLISTED,
+                USER_ALLOWLISTED_3
+            ));
+            // Check: Not removed
+            assert!(SubmittersAllowlist::<Test>::contains_key(
+                DOMAIN_ID_ALLOWLISTED,
+                USER_ALLOWLISTED_2
+            ));
+            assert_eq!(
+                SubmittersAllowlist::<Test>::iter().count(),
+                allowlisted - to_remove.len()
+            );
+        })
+    }
+
+    #[test]
+    fn not_add_remove_duplicates_or_not_present() {
+        test().execute_with(|| {
+            let allowlisted = SubmittersAllowlist::<Test>::iter().count();
+            let to_remove = vec![
+                USER_ALLOWLISTED_1,
+                USER_1,
+                USER_ALLOWLISTED_1,
+                USER_ALLOWLISTED_2,
+            ];
+
+            assert_ok!(Aggregate::remove_proof_submitters(
+                Origin::Signed(USER_DOMAIN_SUBMIT_RULE).into(),
+                DOMAIN_ID_ALLOWLISTED,
+                to_remove.clone()
+            ));
+            assert!(!SubmittersAllowlist::<Test>::contains_key(
+                DOMAIN_ID_ALLOWLISTED,
+                USER_ALLOWLISTED_1
+            ));
+            assert!(!SubmittersAllowlist::<Test>::contains_key(
+                DOMAIN_ID_ALLOWLISTED,
+                USER_ALLOWLISTED_2
+            ));
+
+            assert_eq!(SubmittersAllowlist::<Test>::iter().count(), allowlisted - 2);
+        })
+    }
+
+    #[test]
+    fn fail_if_domain_is_not_configured_for_submitters_allowlist() {
+        test().execute_with(|| {
+            assert_noop!(
+                Aggregate::remove_proof_submitters(
+                    Origin::Signed(USER_DOMAIN_1).into(),
+                    DOMAIN_ID,
+                    vec![USER_1]
+                ),
+                Error::<Test>::InvalidDomainParams
+            );
+
+            assert_noop!(
+                Aggregate::remove_proof_submitters(
+                    Origin::Signed(USER_DOMAIN_SUBMIT_RULE).into(),
+                    DOMAIN_ID_ONLY_OWNER,
+                    vec![USER_1]
+                ),
+                Error::<Test>::InvalidDomainParams
+            );
+        })
+    }
+
+    #[test]
+    fn unbound_amount_for_each_removed_user() {
+        // Here we check that the count provided to the consideration decreases accordingly to the
+        // number of removed users.
+        test().execute_with(|| {
+            let to_remove = vec![USER_ALLOWLISTED_1, USER_ALLOWLISTED_2];
+            let base = consideration(DOMAIN_ID_ALLOWLISTED).unwrap();
+
+            assert_ok!(Aggregate::remove_proof_submitters(
+                Origin::Signed(USER_DOMAIN_SUBMIT_RULE).into(),
+                DOMAIN_ID_ALLOWLISTED,
+                to_remove.clone()
+            ));
+
+            let updated = consideration(DOMAIN_ID_ALLOWLISTED).unwrap();
+
+            assert_eq!(base.count - 2, updated.count);
+            assert_eq!(base.size, updated.size);
+            assert_eq!(base.who, updated.who);
+        })
+    }
+
+    #[test]
+    fn raise_error_if_removed_more() {
+        // That should never happen in real cases: it's just a bug
+        test().execute_with(|| {
+            let to_remove = vec![USER_ALLOWLISTED_1, USER_ALLOWLISTED_2];
+            Domains::<Test>::mutate(DOMAIN_ID_ALLOWLISTED, |d| match d {
+                Some(domain) => {
+                    domain.ticket_allowlist = Some(countable_mock_consideration(USER_1, 1, 1));
+                }
+                None => {
+                    panic!("Domain not found");
+                }
+            });
+            assert_noop!(
+                Aggregate::remove_proof_submitters(
+                    Origin::Signed(USER_DOMAIN_SUBMIT_RULE).into(),
+                    DOMAIN_ID_ALLOWLISTED,
+                    to_remove.clone()
+                ),
+                Error::<Test>::InvalidDomainParams
+            );
+        })
+    }
+
+    #[rstest]
+    fn use_correct_weight(#[values(0, 3, 10)] len: u32) {
+        let info = Call::<Test>::remove_proof_submitters {
+            domain_id: 22,
+            submitters: (0..len).map(|i| 1_000_000 + i).map(Into::into).collect(),
+        }
+        .get_dispatch_info();
+
+        assert_eq!(info.pays_fee, Pays::Yes);
+        assert_eq!(
+            info.call_weight,
+            MockWeightInfo::remove_proof_submitters(len)
+        );
     }
 }
 
@@ -1871,6 +2356,8 @@ mod aggregation_id_max {
                 2,
                 1,
                 AggregateSecurityRules::OnlyOwnerUncompleted,
+                ProofSecurityRules::Untrusted,
+                None,
                 None,
                 DeliveryParams::<AccountId, Balance>::new(
                     USER_DOMAIN_1,
@@ -1921,6 +2408,8 @@ mod aggregation_id_max {
                 1,
                 1,
                 AggregateSecurityRules::OnlyOwnerUncompleted,
+                ProofSecurityRules::Untrusted,
+                None,
                 None,
                 DeliveryParams::<AccountId, Balance>::new(
                     USER_DOMAIN_1,

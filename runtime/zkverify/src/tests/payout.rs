@@ -167,10 +167,8 @@ fn deal_with_fees() {
         let fee = Balances::issue(fee_amount);
         let tip = Balances::issue(tip_amount);
 
-        let author_account: AccountId = testsfixtures::SAMPLE_USERS[BABE_AUTHOR_ID as usize]
-            .raw_account
-            .into();
-        let author_balance = testsfixtures::SAMPLE_USERS[BABE_AUTHOR_ID as usize].starting_balance;
+        let author_account: AccountId = sample_user_account(BABE_AUTHOR_ID);
+        let author_balance = sample_user_start_balance(BABE_AUTHOR_ID);
         let initial_treasury_balance = Balances::free_balance(Treasury::account_id());
         let total_issuance = Balances::total_issuance();
 
