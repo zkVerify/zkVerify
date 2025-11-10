@@ -15,6 +15,7 @@ jobs:
     outputs:
       runtime: ${{ steps.data.outputs.RUNTIME }}
       runtime-name: ${{ steps.data.outputs.RUNTIME_NAME }}
+      version-str: ${{ steps.data.outputs.VERSION_STR }}
 
     steps:
       - name: Write release version
@@ -31,8 +32,11 @@ jobs:
             echo "ERROR: Unknown runtime ${runtime}"
             exit 1
           fi
+          version="$(cut -d '-' -f 3- <<< "${tag}")"
+          
           echo "RUNTIME=${runtime}" >> "${GITHUB_OUTPUT}"
           echo "RUNTIME_NAME=${runtime_name}" >> "${GITHUB_OUTPUT}"
+          echo "VERSION_STR=${version}" >> "${GITHUB_OUTPUT}"
 
   release:
     needs: [ release-version ]
