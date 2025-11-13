@@ -2186,6 +2186,21 @@ mod remove_proof_submitters {
     }
 
     #[rstest]
+    #[case::one(vec![USER_ALLOWLISTED_1])]
+    #[case::all(vec![USER_ALLOWLISTED_1, USER_ALLOWLISTED_2, USER_ALLOWLISTED_3])]
+    fn not_change_the_domain_ready_state(#[case] to_remove: Vec<AccountId>) {
+        test().execute_with(|| {
+            assert_ok!(Aggregate::remove_proof_submitters(
+                Origin::Signed(USER_DOMAIN_SUBMIT_RULE).into(),
+                DOMAIN_ID_ALLOWLISTED,
+                to_remove.clone()
+            ));
+
+            assert_no_state_changed_evt();
+        })
+    }
+
+    #[rstest]
     fn use_correct_weight(#[values(0, 3, 10)] len: u32) {
         let info = Call::<Test>::remove_proof_submitters {
             domain_id: 22,

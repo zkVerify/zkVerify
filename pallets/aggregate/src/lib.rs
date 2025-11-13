@@ -1226,10 +1226,7 @@ pub mod pallet {
                 Some(domain) if !owner.can_handle_domain::<T>(domain) => Err(BadOrigin)?,
                 Some(domain) => domain
                     .try_remove_submitters(submitters.as_slice())
-                    .map(|_| {
-                        domain.update_hold_state();
-                        domain.emit_state_changed_event();
-                    })
+                    .map(|_| domain.handle_hold_state())
                     .map_err(Into::<DispatchError>::into),
             })?;
 
