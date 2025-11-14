@@ -2037,6 +2037,50 @@ mod allowlist_proof_submitters {
         })
     }
 
+    #[test]
+    fn not_add_submitters_if_the_domain_is_in_hold_or_removable_state() {
+        test().execute_with(|| {
+            Aggregate::hold_domain(
+                Origin::Signed(USER_DOMAIN_SUBMIT_RULE).into(),
+                DOMAIN_ID_ALLOWLISTED,
+            )
+            .unwrap();
+
+            // Sanity check
+            assert_eq!(DomainState::Hold, state(DOMAIN_ID_ALLOWLISTED));
+
+            // Check the Hold state should not accept new submitters
+            assert_noop!(
+                Aggregate::allowlist_proof_submitters(
+                    Origin::Signed(USER_DOMAIN_SUBMIT_RULE).into(),
+                    DOMAIN_ID_ALLOWLISTED,
+                    vec![USER_1]
+                ),
+                Error::<Test>::InvalidDomainParams
+            );
+
+            Aggregate::remove_proof_submitters(
+                Origin::Signed(USER_DOMAIN_SUBMIT_RULE).into(),
+                DOMAIN_ID_ALLOWLISTED,
+                vec![USER_ALLOWLISTED_1, USER_ALLOWLISTED_2, USER_ALLOWLISTED_3],
+            )
+            .unwrap();
+
+            // Sanity check
+            assert_eq!(DomainState::Removable, state(DOMAIN_ID_ALLOWLISTED));
+
+            // Check the Removable state should not accept new submitters
+            assert_noop!(
+                Aggregate::allowlist_proof_submitters(
+                    Origin::Signed(USER_DOMAIN_SUBMIT_RULE).into(),
+                    DOMAIN_ID_ALLOWLISTED,
+                    vec![USER_ALLOWLISTED_1]
+                ),
+                Error::<Test>::InvalidDomainParams
+            );
+        })
+    }
+
     #[rstest]
     fn use_correct_weight(#[values(0, 3, 10)] len: u32) {
         let info = Call::<Test>::allowlist_proof_submitters {
@@ -2182,6 +2226,21 @@ mod remove_proof_submitters {
                 ),
                 Error::<Test>::InvalidDomainParams
             );
+        })
+    }
+
+    #[rstest]
+    #[case::one(vec![USER_ALLOWLISTED_1])]
+    #[case::all(vec![USER_ALLOWLISTED_1, USER_ALLOWLISTED_2, USER_ALLOWLISTED_3])]
+    fn not_change_the_domain_ready_state(#[case] to_remove: Vec<AccountId>) {
+        test().execute_with(|| {
+            assert_ok!(Aggregate::remove_proof_submitters(
+                Origin::Signed(USER_DOMAIN_SUBMIT_RULE).into(),
+                DOMAIN_ID_ALLOWLISTED,
+                to_remove.clone()
+            ));
+
+            assert_no_state_changed_evt();
         })
     }
 

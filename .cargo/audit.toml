@@ -19,6 +19,16 @@ ignore = [
     "RUSTSEC-2025-0055", # coming from indirect dependency tracing-subscriber v0.2
     # on the other end the v0.3.20 break console log output formatting
     # how reported in https://github.com/tokio-rs/tracing/issues/3369
+    "RUSTSEC-2025-0118", # coming from indirect dependency wasmtime v0.8.1.
+    # From https://rustsec.org/advisories/RUSTSEC-2025-0118 ->
+    # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-hc7m-r6v8-hg9q
+    # "This is a bug in Wasmtime's safe Rust API. It should not be possible to cause unsoundness
+    # with Wasmtime's embedding API if unsafe is not used. Embeddings which do not use the wasm
+    # threads proposal nor created shared memories nor actually share shared memories across
+    # threads are unaffected. Only if shared memories are created across threads might an
+    # embedding be affected."
+    # We fall in the case where we don't use wasm threads at all.
+
 ]
 informational_warnings = ["unmaintained", "yanked"]
 
