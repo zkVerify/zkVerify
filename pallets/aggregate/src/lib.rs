@@ -82,6 +82,7 @@ pub mod pallet {
     };
 
     use super::WeightInfo;
+    use crate::Error::InvalidDomainParams;
     use alloc::vec::Vec;
     use frame_support::{
         dispatch::{DispatchErrorWithPostInfo, PostDispatchInfo},
@@ -1182,7 +1183,7 @@ pub mod pallet {
         /// - `BadOrigin`: If the origin is not authorized.
         /// - `UnknownDomainId`: If the domain doesn't exist.
         /// - `InvalidDomainParams`: If the domain is not configured with
-        ///   `ProofSecurityRules::OnlyAllowlisted`.
+        ///   `ProofSecurityRules::OnlyAllowlisted` or is not in the `DomainState::Ready` state.
         ///
         #[pallet::weight(T::WeightInfo::allowlist_proof_submitters(submitters.len().saturated_into()
         ))]
@@ -1196,6 +1197,9 @@ pub mod pallet {
             Domains::<T>::try_mutate_exists(domain_id, |maybe_domain| match maybe_domain {
                 None => Err(Error::<T>::UnknownDomainId)?,
                 Some(domain) if !owner.can_handle_domain::<T>(domain) => Err(BadOrigin)?,
+                Some(domain) if domain.state != DomainState::Ready => {
+                    Err(InvalidDomainParams::<T>)?
+                }
                 Some(domain) => domain
                     .try_add_submitters(submitters.as_slice())
                     .map_err(Into::<DispatchError>::into),

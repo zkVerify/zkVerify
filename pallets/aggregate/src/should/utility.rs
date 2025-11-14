@@ -188,6 +188,10 @@ pub fn consideration(domain_id: u32) -> Option<MockConsideration> {
         .map(|c| c.ticket.0.clone())
 }
 
+pub fn state(domain_id: u32) -> DomainState {
+    Domains::<Test>::get(domain_id).unwrap().state
+}
+
 fn assert_evt_gen(contains: bool, event: Event<Test>, context: &str) {
     let message = match contains {
         true => format!("{context} - CANNOT FIND {event:?}"),
