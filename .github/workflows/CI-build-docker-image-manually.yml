@@ -19,6 +19,10 @@ on:
         description: "Build profile"
         type: string
         default: 'production'
+      type:
+        description: "Build type (node|zkverify|volta)"
+        type: string
+        default: 'node'
       features:
         description: "Build features"
         type: string
@@ -45,5 +49,6 @@ jobs:
           docker_image_suffix: ${{ inputs.docker_image_suffix }}
           docker_hub_org: ${{ inputs.docker_hub_org }}
           profile: ${{ inputs.profile }}
+          type: ${{ inputs.type }}
           features: ${{ inputs.features }}
           dry_run: ${{ inputs.dry_run }}
