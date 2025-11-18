@@ -4,11 +4,6 @@ Implementation of a node for the **zkVerify Proof Verification Layer**.
 
 It is based on the [Substrate](https://substrate.io/) framework.
 
-> [!IMPORTANT]
-> ***zkVerify*** is currently in an early **testnet** stage.
-> The plan for going live on Mainnet will be communicated later.
-> For more information see [zkVerify.io](https://zkverify.io/).
-
 ## What is zkVerify
 zkVerify is a **L1** blockchain designed to provide verification for zero knowledge proofs.
 As a high performance, public, decentralized, reliable, and secure blockchain, zkVerify has dedicated proof verification methods written in Rust, and available to be used in a modular and composable way.
@@ -138,7 +133,7 @@ We recommend adopting at least an equivalent machine, with at least 50GB of stor
 zkVerify includes some Docker files for building the client and running one or more nodes locally.
 For more information, see [docker/README.md](docker/README.md).
 
-We also provide Docker images to run a validator, boot or RPC node directly in the public testnet, via a user-friendly installation and deployment process. Please take a look at [How to run a node](https://docs.zkverify.io/tutorials/how_to_run_a_node/getting_started) section of the official documentation. 
+We also provide Docker images to run a validator, boot or RPC node directly in the public testnet, via a user-friendly installation and deployment process. Please take a look at [How to run a node](https://docs.zkverify.io/node-operators/getting_started) section of the official documentation. 
 
 ## Documentation
 
