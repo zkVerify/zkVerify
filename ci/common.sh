@@ -148,7 +148,7 @@ check_signed_tag() {
   fi
 }
 
-function git_tag_ref {
+function git_tag_commit {
   local tag="$1"
-  git show-ref -s "${tag}"
+  git rev-list -n 1 "${tag}"
 }
