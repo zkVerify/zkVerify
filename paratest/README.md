@@ -3,7 +3,7 @@
 A new [Cumulus](https://github.com/paritytech/polkadot-sdk/tree/master/cumulus)-based Substrate node, ready for hacking ☁️..
 
 This project is originally a fork of the
-[Substrate Node Template](https://github.com/substrate-developer-hub/substrate-node-template)
+[Substrate Node Template](https://github.com/paritytech/polkadot-sdk-parachain-template)
 modified to include dependencies required for registering this node as a **parathread** or
 **parachain** to a **relay chain**.
 
