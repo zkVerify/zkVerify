@@ -22,7 +22,7 @@ const fn percent(x: i32) -> sp_arithmetic::FixedI64 {
 }
 use super::origins;
 use crate::{
-    currency::{Balance, HUNDREDS, THOUSANDS},
+    currency::{Balance, THOUSANDS},
     types::{BlockNumber, DAYS, HOURS, MINUTES},
     RuntimeOrigin,
 };
@@ -58,7 +58,7 @@ const TRACKS_DATA: &[(u16, pallet_referenda::TrackInfo<Balance, BlockNumber>)] =
         pallet_referenda::TrackInfo {
             name: "wish_for_change",
             max_deciding: 10,
-            decision_deposit: THOUSANDS,
+            decision_deposit: 20 * THOUSANDS,
             prepare_period: 2 * HOURS,
             decision_period: 28 * DAYS,
             confirm_period: 24 * HOURS,
@@ -72,7 +72,7 @@ const TRACKS_DATA: &[(u16, pallet_referenda::TrackInfo<Balance, BlockNumber>)] =
         pallet_referenda::TrackInfo {
             name: "referendum_canceller",
             max_deciding: 1_000,
-            decision_deposit: 5 * HUNDREDS,
+            decision_deposit: 10 * THOUSANDS,
             prepare_period: 2 * HOURS,
             decision_period: 7 * DAYS,
             confirm_period: 3 * HOURS,
