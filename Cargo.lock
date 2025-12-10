@@ -22628,6 +22628,7 @@ dependencies = [
  "staging-xcm-executor",
  "static_assertions",
  "substrate-wasm-builder",
+ "xcm-runtime-apis",
 ]
 
 [[package]]
