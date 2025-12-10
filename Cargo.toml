@@ -72,7 +72,6 @@ tempfile = "3.2.0"
 rand = "0.8.5"
 parking_lot = "0.12.1"
 
-
 sc-cli = { version = "0.50.2" }
 sc-executor = { version = "0.41.0" }
 sc-network = { version = "0.48.5" }
@@ -347,6 +346,7 @@ substrate-rpc-client = { version = "0.47.0" }
 [patch.crates-io]
 cumulus-relay-chain-inprocess-interface = { path = "patches/cumulus/client/relay-chain-inprocess-interface" }
 cumulus-relay-chain-minimal-node = { path = "patches/cumulus/client/relay-chain-minimal-node" }
+polkadot-node-core-pvf-common = { path = "patches/polkadot/node/core/pvf/common" }
 polkadot-omni-node-lib = { path = "patches/cumulus/polkadot-omni-node/lib" }
 
 [profile.release]
