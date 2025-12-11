@@ -28,3 +28,4 @@ mod proxy;
 mod specs;
 mod testsfixtures;
 mod use_correct_weights;
+mod xcm_runtime_apis_impl;
