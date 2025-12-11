@@ -12483,13 +12483,12 @@ dependencies = [
 [[package]]
 name = "polkadot-node-core-pvf-common"
 version = "17.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "978a352f539712048a84afae05cf4f9132614edfd4081dfcf9f7cd64896f4b2a"
 dependencies = [
  "cpu-time",
  "futures",
  "landlock",
  "libc",
+ "native",
  "nix 0.28.0",
  "parity-scale-codec",
  "polkadot-parachain-primitives",
