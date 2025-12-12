@@ -468,3 +468,14 @@ fn pallet_token_claim() {
         // just checking code builds, hence the pallet is available to the runtime
     });
 }
+
+#[test]
+fn pallet_identity() {
+    test().execute_with(|| {
+        let dummy_identity = pallet_identity::legacy::IdentityInfo::default();
+        assert_ok!(Identity::set_identity(
+            RuntimeOrigin::signed(sample_user_account(0)),
+            Box::new(dummy_identity),
+        ));
+    });
+}
