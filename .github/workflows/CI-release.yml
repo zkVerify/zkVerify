@@ -223,11 +223,20 @@ jobs:
                   "fields": [
                     {
                       "type": "mrkdwn",
-                      "text": "*Docker Image Tag:*  <https://hub.docker.com/r/${{ env.DOCKER_HUB_ORG }}/${{ env.DOCKER_IMAGE_BUILD_NAME }}/tags?page=1&name=${{ github.ref_name }}-relay| ${{ github.ref_name }}-relay>\n"
+                      "text": "*Release:*  <${{ steps.create-release.outputs.url }}| ${{ inputs.release_name }}>\n"
                     },
                     {
                       "type": "mrkdwn",
                       "text": "*Build URL:*  <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Build>"
+                    }
+                  ]
+                }
+                {
+                  "type": "section",
+                  "text": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Docker Image Tag:*  <https://hub.docker.com/r/${{ env.DOCKER_HUB_ORG }}/${{ env.DOCKER_IMAGE_BUILD_NAME }}/tags?page=1&name=${{ needs.check-requirements.outputs.version-str }}| ${{ needs.check-requirements.outputs.version-str }}>\n"
                     }
                   ]
                 },
@@ -235,7 +244,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "```docker pull ${{ env.DOCKER_HUB_ORG }}/${{ env.DOCKER_IMAGE_BUILD_NAME }}:${{ github.ref_name }}-relay```"
+                    "text": "```docker pull ${{ env.DOCKER_HUB_ORG }}/${{ env.DOCKER_IMAGE_BUILD_NAME }}:${{ needs.check-requirements.outputs.version-str }}```"
                   }
                 }
               ]
