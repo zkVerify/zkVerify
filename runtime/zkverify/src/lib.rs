@@ -80,7 +80,7 @@ use frame_support::{
         Time, WithdrawReasons,
     },
     weights::{constants::WEIGHT_REF_TIME_PER_SECOND, ConstantMultiplier, Weight},
-    Blake2_128Concat, Identity, PalletId, StorageHasher,
+    Blake2_128Concat, Identity as IdentityT, PalletId, StorageHasher,
 };
 use frame_system::EnsureRoot;
 use governance::{pallet_custom_origins, TreasurySpender};
@@ -888,11 +888,52 @@ impl pallet_proxy::Config for Runtime {
     type AnnouncementDepositFactor = AnnouncementDepositFactor;
 }
 
+parameter_types! {
+    //   27 | Min encoded size of `Registration`
+    // - 10 | Min encoded size of `IdentityInfo`
+    // -----|
+    //   17 | Min size without `IdentityInfo` (accounted for in byte deposit)
+    pub const BasicDeposit: Balance = currency::deposit(1, 17);
+    pub const ByteDeposit: Balance = currency::deposit(0, 1);
+    pub const UsernameDeposit: Balance = currency::deposit(0, 32);
+    pub const SubAccountDeposit: Balance = currency::deposit(1, 53);
+    pub const MaxAdditionalFields: u32 = 100;
+    pub const MaxSubAccounts: u32 = 100;
+    pub const MaxRegistrars: u32 = 20;
+    pub const PendingUsernameExpiration: u32 = 7 * DAYS;
+    pub const UsernameGracePeriod: u32 = 3 * DAYS;
+    pub const MaxSuffixLength: u32 = 7;
+    pub const MaxUsernameLength: u32 = 32;
+}
+
+impl pallet_identity::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type Currency = Balances;
+    type BasicDeposit = BasicDeposit;
+    type ByteDeposit = ByteDeposit;
+    type UsernameDeposit = UsernameDeposit;
+    type SubAccountDeposit = SubAccountDeposit;
+    type MaxSubAccounts = MaxSubAccounts;
+    type IdentityInformation = pallet_identity::legacy::IdentityInfo<MaxAdditionalFields>;
+    type MaxRegistrars = MaxRegistrars;
+    type Slashed = Treasury;
+    type ForceOrigin = EnsureRoot<Self::AccountId>;
+    type RegistrarOrigin = EnsureRoot<Self::AccountId>;
+    type OffchainSignature = Signature;
+    type SigningPublicKey = <Signature as sp_runtime::traits::Verify>::Signer;
+    type UsernameAuthorityOrigin = EnsureRoot<Self::AccountId>;
+    type PendingUsernameExpiration = PendingUsernameExpiration;
+    type UsernameGracePeriod = UsernameGracePeriod;
+    type MaxSuffixLength = MaxSuffixLength;
+    type MaxUsernameLength = MaxUsernameLength;
+    type WeightInfo = weights::pallet_identity::ZKVWeight<Runtime>;
+}
+
 mod vk_registration_parameters {
     use super::*;
 
     fn vks_key_size() -> u32 {
-        Identity::max_len::<sp_core::H256>() as u32
+        IdentityT::max_len::<sp_core::H256>() as u32
     }
     fn tickets_key_size() -> u32 {
         Blake2_128Concat::max_len::<(AccountId, sp_core::H256)>() as u32
@@ -1214,7 +1255,7 @@ construct_runtime!(
         Utility: pallet_utility = 30,
         Multisig: pallet_multisig = 31,
         Proxy: pallet_proxy = 32,
-
+        Identity: pallet_identity = 33,
 
         // Pallets that we know are to remove in a future. Start indices at 50 to leave room.
         Sudo: pallet_sudo = 50,
@@ -1353,6 +1394,7 @@ mod benches {
         [pallet_utility, Utility]
         [pallet_vesting, Vesting]
         [pallet_proxy, Proxy]
+        [pallet_identity, Identity]
         [pallet_transaction_payment, TransactionPayment]
         // hyperbridge
         [ismp_grandpa, IsmpGrandpa]

@@ -71,6 +71,7 @@ log = { version = "0.4.26", default-features = false }
 tempfile = "3.2.0"
 rand = "0.8.5"
 parking_lot = "0.12.1"
+enumflags2 = "0.7.7"
 
 sc-cli = { version = "0.50.2" }
 sc-executor = { version = "0.41.0" }
@@ -165,6 +166,7 @@ pallet-treasury = { version = "38.1.0", default-features = false }
 pallet-bounties = { version = "38.1.0", default-features = false }
 pallet-child-bounties = { version = "38.1.0", default-features = false }
 pallet-proxy = { version = "39.1.0", default-features = false }
+pallet-identity = { version = "39.1.0", default-features = false }
 frame-system = { version = "39.1.0", default-features = false }
 frame-try-runtime = { version = "0.45.0", default-features = false }
 pallet-timestamp = { version = "38.0.0", default-features = false }

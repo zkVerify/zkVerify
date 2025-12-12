@@ -318,6 +318,16 @@ fn pallet_transaction_payment() {
         )
 }
 
+#[test]
+fn pallet_identity() {
+    use pallet_identity::WeightInfo;
+
+    assert_eq!(
+        <Runtime as pallet_identity::Config>::WeightInfo::set_identity(42),
+        crate::weights::pallet_identity::ZKVWeight::<Runtime>::set_identity(42)
+    );
+}
+
 mod parachains {
     use super::*;
     use polkadot_runtime_parachains::{

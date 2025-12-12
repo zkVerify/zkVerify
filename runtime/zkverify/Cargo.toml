@@ -20,6 +20,7 @@ anyhow = { workspace = true }
 codec = { workspace = true, features = ["derive"] }
 scale-info = { workspace = true, features = ["derive", "serde"] }
 cfg-if = "1.0"
+enumflags2 = { workspace = true }
 
 pallet-offences = { workspace = true }
 pallet-authorship = { workspace = true }
@@ -30,7 +31,7 @@ pallet-bags-list = { workspace = true }
 pallet-bounties = { workspace = true }
 pallet-child-bounties = { workspace = true }
 pallet-balances = { workspace = true }
-frame-support = { workspace = true }
+frame-support = { workspace = true, features = ["tuples-96"] }
 pallet-grandpa = { workspace = true }
 pallet-sudo = { workspace = true }
 pallet-multisig = { workspace = true }
@@ -49,6 +50,7 @@ frame-metadata-hash-extension = { workspace = true }
 pallet-conviction-voting = { workspace = true }
 pallet-treasury = { workspace = true }
 pallet-proxy = { workspace = true }
+pallet-identity = { workspace = true }
 frame-system = { workspace = true }
 frame-try-runtime = { workspace = true, optional = true }
 pallet-timestamp = { workspace = true }
@@ -100,11 +102,13 @@ hp-verifiers = { workspace = true }
 pallet-ezkl-verifier = { workspace = true }
 pallet-fflonk-verifier = { workspace = true }
 pallet-groth16-verifier = { workspace = true }
-pallet-risc0-verifier = { workspace = true, features = ["inject-native-poseidon2"] }
+pallet-risc0-verifier = { workspace = true, features = [
+	"inject-native-poseidon2",
+] }
 pallet-ultrahonk-verifier = { workspace = true }
 pallet-ultraplonk-verifier = { workspace = true }
 pallet-sp1-verifier = { workspace = true }
-hp-dispatch = {workspace = true}
+hp-dispatch = { workspace = true }
 pallet-plonky2-verifier = { workspace = true }
 
 authority-discovery-primitives = { workspace = true }
@@ -154,6 +158,7 @@ runtime-benchmarks = [
 	"pallet-grandpa/runtime-benchmarks",
 	"pallet-groth16-verifier/runtime-benchmarks",
 	"pallet-hyperbridge-aggregations/runtime-benchmarks",
+	"pallet-identity/runtime-benchmarks",
 	"pallet-ismp/runtime-benchmarks",
 	"pallet-message-queue/runtime-benchmarks",
 	"pallet-multisig/runtime-benchmarks",
@@ -190,14 +195,15 @@ runtime-benchmarks = [
 	"xcm-runtime-apis/runtime-benchmarks",
 ]
 fast-runtime = []
-metadata-hash = [ "substrate-wasm-builder/metadata-hash" ]
+metadata-hash = ["substrate-wasm-builder/metadata-hash"]
 volta = []
-default = [ "std" ]
+default = ["std"]
 std = [
 	"aggregate-rpc-runtime-api/std",
 	"anyhow/std",
 	"authority-discovery-primitives/std",
 	"codec/std",
+	"enumflags2/std",
 	"finality-grandpa/std",
 	"frame-benchmarking?/std",
 	"frame-election-provider-support/std",
@@ -230,6 +236,7 @@ std = [
 	"pallet-groth16-verifier/std",
 	"pallet-hyperbridge-aggregations/std",
 	"pallet-hyperbridge/std",
+	"pallet-identity/std",
 	"pallet-ismp-runtime-api/std",
 	"pallet-ismp/std",
 	"pallet-message-queue/std",
@@ -309,6 +316,7 @@ try-runtime = [
 	"pallet-grandpa/try-runtime",
 	"pallet-hyperbridge-aggregations/try-runtime",
 	"pallet-hyperbridge/try-runtime",
+	"pallet-identity/try-runtime",
 	"pallet-ismp/try-runtime",
 	"pallet-message-queue/try-runtime",
 	"pallet-multisig/try-runtime",
@@ -333,4 +341,4 @@ try-runtime = [
 	"polkadot-runtime-parachains/try-runtime",
 	"sp-runtime/try-runtime",
 ]
-extend-benchmarks = [ "pallet-risc0-verifier/extend-benchmarks" ]
+extend-benchmarks = ["pallet-risc0-verifier/extend-benchmarks"]

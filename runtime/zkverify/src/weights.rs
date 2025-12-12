@@ -32,6 +32,7 @@ pub mod pallet_ezkl_verifier;
 pub mod pallet_fflonk_verifier;
 pub mod pallet_grandpa;
 pub mod pallet_groth16_verifier;
+pub mod pallet_identity;
 pub mod pallet_message_queue;
 pub mod pallet_multisig;
 pub mod pallet_plonky2_verifier;
