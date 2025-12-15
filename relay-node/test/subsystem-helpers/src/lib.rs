@@ -563,7 +563,6 @@ impl Future for Yield {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     #[test]
     fn macro_arbitrary_order() {
