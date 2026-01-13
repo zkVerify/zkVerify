@@ -829,7 +829,7 @@ pub mod pallet {
     #[pallet::hooks]
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
         fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
-            Published::<T>::take();
+            Published::<T>::kill();
             T::DbWeight::get().writes(1_u64)
         }
     }
