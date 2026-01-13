@@ -151,6 +151,297 @@ mod benchmarks {
         assert_eq!(domain.next.id, 2);
     }
 
+    #[benchmark(extra)]
+    fn aggregate_1() {
+        let caller: T::AccountId = funded_account::<T>();
+        let domain_id = 1;
+        const N: u32 = 1;
+        insert_domain::<T>(domain_id, caller.clone(), Some(N));
+        Pallet::<T>::allowlist_proof_submitters(
+            RawOrigin::Signed(caller.clone()).into(),
+            domain_id,
+            alloc::vec![caller.clone()],
+        )
+        .unwrap();
+        fill_aggregation::<T>(caller.clone(), domain_id);
+        let aggregator = crate::data::User::Account(caller);
+
+        #[block]
+        {
+            Pallet::<T>::do_aggregate(&aggregator, domain_id, 1).unwrap();
+        }
+        // Sanity check: we consumed the aggregation
+        let domain = Domains::<T>::get(domain_id).unwrap();
+        assert!(domain.next.statements.is_empty());
+        assert_eq!(domain.next.id, 2);
+    }
+
+    #[benchmark(extra)]
+    fn aggregate_10() {
+        let caller: T::AccountId = funded_account::<T>();
+        let domain_id = 1;
+        const N: u32 = 1;
+        insert_domain::<T>(domain_id, caller.clone(), Some(N));
+        Pallet::<T>::allowlist_proof_submitters(
+            RawOrigin::Signed(caller.clone()).into(),
+            domain_id,
+            alloc::vec![caller.clone()],
+        )
+        .unwrap();
+        for _ in 1..=10 {
+            fill_aggregation::<T>(caller.clone(), domain_id);
+        }
+        let aggregator = crate::data::User::Account(caller);
+
+        #[block]
+        {
+            for id in 1..=10 {
+                Pallet::<T>::do_aggregate(&aggregator, domain_id, id).unwrap();
+            }
+        }
+        // Sanity check: we consumed the aggregation
+        let domain = Domains::<T>::get(domain_id).unwrap();
+        assert!(domain.next.statements.is_empty());
+        assert_eq!(domain.next.id, 11);
+    }
+
+    #[benchmark(extra)]
+    fn aggregate_100() {
+        let caller: T::AccountId = funded_account::<T>();
+        let domains_id: Vec<_> = (1..=10).collect();
+        const N: u32 = 1;
+        for domain_id in domains_id.iter().cloned() {
+            insert_domain::<T>(domain_id, caller.clone(), Some(N));
+            Pallet::<T>::allowlist_proof_submitters(
+                RawOrigin::Signed(caller.clone()).into(),
+                domain_id,
+                alloc::vec![caller.clone()],
+            )
+            .unwrap();
+            for _ in 1..=10 {
+                fill_aggregation::<T>(caller.clone(), domain_id);
+            }
+        }
+        let aggregator = crate::data::User::Account(caller);
+
+        #[block]
+        {
+            for domain_id in domains_id.iter().cloned() {
+                for id in 1..=10 {
+                    Pallet::<T>::do_aggregate(&aggregator, domain_id, id).unwrap();
+                }
+            }
+        }
+        // Sanity check: we consumed the aggregation
+        for domain_id in domains_id {
+            let domain = Domains::<T>::get(domain_id).unwrap();
+            assert!(domain.next.statements.is_empty());
+            assert_eq!(domain.next.id, 11);
+        }
+    }
+
+    #[benchmark(extra)]
+    fn aggregate_1000() {
+        let caller: T::AccountId = funded_account::<T>();
+        let domains_id: Vec<_> = (1..=100).collect();
+        const N: u32 = 1;
+        for domain_id in domains_id.iter().cloned() {
+            insert_domain::<T>(domain_id, caller.clone(), Some(N));
+            Pallet::<T>::allowlist_proof_submitters(
+                RawOrigin::Signed(caller.clone()).into(),
+                domain_id,
+                alloc::vec![caller.clone()],
+            )
+            .unwrap();
+            for _ in 1..=10 {
+                fill_aggregation::<T>(caller.clone(), domain_id);
+            }
+        }
+        let aggregator = crate::data::User::Account(caller);
+
+        #[block]
+        {
+            for domain_id in domains_id.iter().cloned() {
+                for id in 1..=10 {
+                    Pallet::<T>::do_aggregate(&aggregator, domain_id, id).unwrap();
+                }
+            }
+        }
+        // Sanity check: we consumed the aggregation
+        for domain_id in domains_id {
+            let domain = Domains::<T>::get(domain_id).unwrap();
+            assert!(domain.next.statements.is_empty());
+            assert_eq!(domain.next.id, 11);
+        }
+    }
+
+    #[benchmark(extra)]
+    fn aggregate_4800() {
+        let caller: T::AccountId = funded_account::<T>();
+        let domains_id: Vec<_> = (1..=480).collect();
+        const N: u32 = 1;
+        for domain_id in domains_id.iter().cloned() {
+            insert_domain::<T>(domain_id, caller.clone(), Some(N));
+            Pallet::<T>::allowlist_proof_submitters(
+                RawOrigin::Signed(caller.clone()).into(),
+                domain_id,
+                alloc::vec![caller.clone()],
+            )
+            .unwrap();
+            for _ in 1..=10 {
+                fill_aggregation::<T>(caller.clone(), domain_id);
+            }
+        }
+        let aggregator = crate::data::User::Account(caller);
+
+        #[block]
+        {
+            for domain_id in domains_id.iter().cloned() {
+                for id in 1..=10 {
+                    Pallet::<T>::do_aggregate(&aggregator, domain_id, id).unwrap();
+                }
+            }
+        }
+        // Sanity check: we consumed the aggregation
+        for domain_id in domains_id {
+            let domain = Domains::<T>::get(domain_id).unwrap();
+            assert!(domain.next.statements.is_empty());
+            assert_eq!(domain.next.id, 11);
+        }
+    }
+
+    #[benchmark(extra)]
+    fn aggregate_400_var(n: Linear<1, <T as Config>::AGGREGATION_SIZE>) {
+        let caller: T::AccountId = funded_account::<T>();
+        let domains_id: Vec<_> = (1..=40).collect();
+        for domain_id in domains_id.iter().cloned() {
+            insert_domain::<T>(domain_id, caller.clone(), Some(n));
+            Pallet::<T>::allowlist_proof_submitters(
+                RawOrigin::Signed(caller.clone()).into(),
+                domain_id,
+                alloc::vec![caller.clone()],
+            )
+            .unwrap();
+            for _ in 1..=10 {
+                fill_aggregation::<T>(caller.clone(), domain_id);
+            }
+        }
+        let aggregator = crate::data::User::Account(caller);
+
+        #[block]
+        {
+            for domain_id in domains_id.iter().cloned() {
+                for id in 1..=10 {
+                    Pallet::<T>::do_aggregate(&aggregator, domain_id, id).unwrap();
+                }
+            }
+        }
+        // Sanity check: we consumed the aggregation
+        for domain_id in domains_id {
+            let domain = Domains::<T>::get(domain_id).unwrap();
+            assert!(domain.next.statements.is_empty());
+            assert_eq!(domain.next.id, 11);
+        }
+    }
+
+    #[benchmark(extra)]
+    fn clean_submitted_storage_0() {
+        #[block]
+        {
+            use frame_support::traits::OnInitialize;
+            Pallet::<T>::on_initialize(0_u32.into());
+        }
+        assert!(Published::<T>::get().is_empty());
+    }
+
+    #[benchmark(extra)]
+    fn clean_submitted_storage_1() {
+        let caller: T::AccountId = funded_account::<T>();
+        let domain_id = 1;
+        insert_domain::<T>(
+            domain_id,
+            caller.clone(),
+            Some(<T as Config>::AGGREGATION_SIZE),
+        );
+        Pallet::<T>::allowlist_proof_submitters(
+            RawOrigin::Signed(caller.clone()).into(),
+            domain_id,
+            alloc::vec![caller.clone()],
+        )
+        .unwrap();
+        fill_aggregation::<T>(caller.clone(), domain_id);
+        let aggregator = crate::data::User::Account(caller);
+        Pallet::<T>::do_aggregate(&aggregator, domain_id, 1).unwrap();
+
+        assert!(!Published::<T>::get().is_empty());
+        #[block]
+        {
+            use frame_support::traits::OnInitialize;
+            Pallet::<T>::on_initialize(0_u32.into());
+        }
+        assert!(Published::<T>::get().is_empty());
+    }
+
+    #[benchmark(extra)]
+    fn clean_submitted_storage_4800_1() {
+        let caller: T::AccountId = funded_account::<T>();
+        let aggregator = crate::data::User::Account(caller.clone());
+        const NEED_AGGREGATIONS: u32 = 4800;
+        const AGGREGATION_SIZE: u32 = 1;
+        let domains_id: Vec<_> = (1..=NEED_AGGREGATIONS / 10).collect();
+        for domain_id in domains_id.iter().cloned() {
+            insert_domain::<T>(domain_id, caller.clone(), Some(AGGREGATION_SIZE));
+            Pallet::<T>::allowlist_proof_submitters(
+                RawOrigin::Signed(caller.clone()).into(),
+                domain_id,
+                alloc::vec![caller.clone()],
+            )
+            .unwrap();
+            for a_id in 1..=10 {
+                fill_aggregation::<T>(caller.clone(), domain_id);
+                Pallet::<T>::do_aggregate(&aggregator, domain_id, a_id).unwrap();
+            }
+        }
+
+        assert_eq!(Published::<T>::get().len(), NEED_AGGREGATIONS as usize);
+        #[block]
+        {
+            use frame_support::traits::OnInitialize;
+            Pallet::<T>::on_initialize(0_u32.into());
+        }
+        assert!(Published::<T>::get().is_empty());
+    }
+
+    #[benchmark(extra)]
+    fn clean_submitted_storage_1400_16() {
+        let caller: T::AccountId = funded_account::<T>();
+        let aggregator = crate::data::User::Account(caller.clone());
+        const NEED_AGGREGATIONS: u32 = 1400;
+        const AGGREGATION_SIZE: u32 = 16;
+        let domains_id: Vec<_> = (1..=NEED_AGGREGATIONS / 10).collect();
+        for domain_id in domains_id.iter().cloned() {
+            insert_domain::<T>(domain_id, caller.clone(), Some(AGGREGATION_SIZE));
+            Pallet::<T>::allowlist_proof_submitters(
+                RawOrigin::Signed(caller.clone()).into(),
+                domain_id,
+                alloc::vec![caller.clone()],
+            )
+            .unwrap();
+            for a_id in 1..=10 {
+                fill_aggregation::<T>(caller.clone(), domain_id);
+                Pallet::<T>::do_aggregate(&aggregator, domain_id, a_id).unwrap();
+            }
+        }
+
+        assert_eq!(Published::<T>::get().len(), NEED_AGGREGATIONS as usize);
+        #[block]
+        {
+            use frame_support::traits::OnInitialize;
+            Pallet::<T>::on_initialize(0_u32.into());
+        }
+        assert!(Published::<T>::get().is_empty());
+    }
+
     #[benchmark]
     fn aggregate_on_invalid_domain() {
         let caller: T::AccountId = funded_account::<T>();

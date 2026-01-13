@@ -786,6 +786,14 @@ pub mod pallet {
         IndexOutOfBounds,
     }
 
+    pub(crate) struct AggregationData<T: Config> {
+        root: H256,
+        size: u32,
+        destination: Destination,
+        delivery_owner: T::AccountId,
+        delivery_fee: BalanceOf<T>,
+    }
+
     impl<T: Config> Pallet<T> {
         /// Compute the statement Merkle path giving a proof of the aggregated statement.
         /// - domain_id: The domain identifier.
@@ -824,12 +832,71 @@ pub mod pallet {
                     .map_err(|_| PathRequestError::IndexOutOfBounds)?,
             ))
         }
+
+        /// Do the aggregation logic.
+        pub(crate) fn do_aggregate(
+            aggregator: &User<T::AccountId>,
+            domain_id: u32,
+            aggregation_id: u64,
+        ) -> Result<AggregationData<T>, DispatchErrorWithPostInfo> {
+            Domains::<T>::try_mutate(domain_id, |domain| {
+                let domain = domain.as_mut().ok_or_else(|| {
+                    dispatch_post_error(
+                        T::WeightInfo::aggregate_on_invalid_domain(),
+                        Error::<T>::UnknownDomainId,
+                    )
+                })?;
+                let aggregation = domain.take_aggregation(aggregation_id).ok_or_else(|| {
+                    dispatch_post_error(
+                        T::WeightInfo::aggregate_on_invalid_id(),
+                        Error::<T>::InvalidAggregationId,
+                    )
+                })?;
+                if !domain.aggregate_rules.can_user_aggregate_it::<T>(
+                    &aggregator,
+                    &domain.owner,
+                    &domain.delivery.owner,
+                    &aggregation,
+                ) {
+                    Err(BadOrigin)?
+                }
+                let root = aggregation.compute_receipt();
+                let size = aggregation.statements.len() as u32;
+                for s in aggregation.statements.iter() {
+                    handle_held_funds::<T>(
+                        HoldReason::Aggregation,
+                        &s.account,
+                        aggregator.account(),
+                        s.reserve.aggregate,
+                    );
+                    handle_held_funds::<T>(
+                        HoldReason::Delivery,
+                        &s.account,
+                        Some(&domain.delivery.owner),
+                        s.reserve.delivery,
+                    );
+                }
+                Published::<T>::mutate(|published: &mut _| {
+                    published.push((domain_id, aggregation))
+                });
+
+                domain.handle_hold_state();
+
+                Result::<_, DispatchErrorWithPostInfo>::Ok(AggregationData {
+                    root,
+                    size,
+                    destination: domain.delivery.destination().clone(),
+                    delivery_owner: domain.delivery.owner.clone(),
+                    delivery_fee: *domain.delivery.fee(),
+                })
+            })
+        }
     }
 
     #[pallet::hooks]
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
         fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
-            Published::<T>::take();
+            Published::<T>::kill();
             T::DbWeight::get().writes(1_u64)
         }
     }
@@ -868,58 +935,13 @@ pub mod pallet {
             aggregation_id: u64,
         ) -> DispatchResultWithPostInfo {
             let aggregator = User::<T::AccountId>::from_origin::<T>(origin)?;
-            let (root, size, destination, delivery_owner, delivery_fee) =
-                Domains::<T>::try_mutate(domain_id, |domain| {
-                    let domain = domain.as_mut().ok_or_else(|| {
-                        dispatch_post_error(
-                            T::WeightInfo::aggregate_on_invalid_domain(),
-                            Error::<T>::UnknownDomainId,
-                        )
-                    })?;
-                    let aggregation = domain.take_aggregation(aggregation_id).ok_or_else(|| {
-                        dispatch_post_error(
-                            T::WeightInfo::aggregate_on_invalid_id(),
-                            Error::<T>::InvalidAggregationId,
-                        )
-                    })?;
-                    if !domain.aggregate_rules.can_user_aggregate_it::<T>(
-                        &aggregator,
-                        &domain.owner,
-                        &domain.delivery.owner,
-                        &aggregation,
-                    ) {
-                        Err(BadOrigin)?
-                    }
-                    let root = aggregation.compute_receipt();
-                    let size = aggregation.statements.len() as u32;
-                    for s in aggregation.statements.iter() {
-                        handle_held_funds::<T>(
-                            HoldReason::Aggregation,
-                            &s.account,
-                            aggregator.account(),
-                            s.reserve.aggregate,
-                        );
-                        handle_held_funds::<T>(
-                            HoldReason::Delivery,
-                            &s.account,
-                            Some(&domain.delivery.owner),
-                            s.reserve.delivery,
-                        );
-                    }
-                    Published::<T>::mutate(|published: &mut _| {
-                        published.push((domain_id, aggregation))
-                    });
-
-                    domain.handle_hold_state();
-
-                    Result::<_, DispatchErrorWithPostInfo>::Ok((
-                        root,
-                        size,
-                        domain.delivery.destination().clone(),
-                        domain.delivery.owner.clone(),
-                        *domain.delivery.fee(),
-                    ))
-                })?;
+            let AggregationData {
+                root,
+                size,
+                destination,
+                delivery_owner,
+                delivery_fee,
+            } = Self::do_aggregate(&aggregator, domain_id, aggregation_id)?;
             Self::deposit_event(Event::NewAggregationReceipt {
                 domain_id,
                 aggregation_id,

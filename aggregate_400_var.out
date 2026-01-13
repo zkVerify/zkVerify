@@ -1,0 +1,149 @@
+2026-01-08 16:10:42 Using the chain spec instead of the runtime to generate the genesis state is deprecated. Please remove the `--chain`/`--dev`/`--local` argument, point `--runtime` to your runtime blob and set `--genesis-builder=runtime`. This warning may become a hard error any time after December 2024.
+2026-01-08 16:10:48 [0] 💸 generated 1 npos voters, 1 from validators and 0 nominators
+2026-01-08 16:10:48 [0] 💸 generated 1 npos targets
+2026-01-08 16:10:48 Took active validators from set with wrong size
+2026-01-08 16:10:48 Took active validators from set with wrong size
+2026-01-08 16:10:48 Took active validators from set with wrong size.
+2026-01-08 16:10:48 Took active validators from set with wrong size
+2026-01-08 16:10:48 Loading WASM from state
+2026-01-08 16:10:51 [  0 % ] Starting benchmark: pallet_aggregate::aggregate_400_var
+2026-01-08 16:11:02 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 2/50 1/1
+2026-01-08 16:11:17 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 3/50 1/1
+2026-01-08 16:11:39 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 4/50 1/1
+2026-01-08 16:12:09 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 5/50 1/1
+2026-01-08 16:12:46 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 6/50 1/1
+52026-01-08 16:13:30 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 7/50 1/1
+2026-01-08 16:14:26 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 8/50 1/1
+2026-01-08 16:15:27 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 9/50 1/1
+2026-01-08 16:16:58 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 10/50 1/1
+2026-01-08 16:18:17 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 11/50 1/1
+2026-01-08 16:19:44 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 12/50 1/1
+2026-01-08 16:21:19 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 13/50 1/1
+2026-01-08 16:23:00 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 14/50 1/1
+2026-01-08 16:24:58 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 15/50 1/1
+2026-01-08 16:27:03 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 16/50 1/1
+2026-01-08 16:29:12 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 17/50 1/1
+2026-01-08 16:31:40 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 18/50 1/1
+2026-01-08 16:34:13 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 19/50 1/1
+2026-01-08 16:36:58 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 20/50 1/1
+2026-01-08 16:39:54 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 21/50 1/1
+2026-01-08 16:43:04 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 22/50 1/1
+2026-01-08 16:46:23 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 23/50 1/1
+2026-01-08 16:49:52 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 24/50 1/1
+2026-01-08 16:53:32 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 25/50 1/1
+2026-01-08 16:57:31 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 26/50 1/1
+2026-01-08 17:01:45 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 27/50 1/1
+2026-01-08 17:06:02 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 28/50 1/1
+2026-01-08 17:10:37 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 29/50 1/1
+2026-01-08 17:15:24 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 30/50 1/1
+2026-01-08 17:20:26 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 31/50 1/1
+2026-01-08 17:25:44 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 32/50 1/1
+2026-01-08 17:31:07 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 33/50 1/1
+2026-01-08 17:37:42 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 34/50 1/1
+2026-01-08 17:44:15 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 35/50 1/1
+2026-01-08 17:50:28 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 36/50 1/1
+2026-01-08 17:57:23 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 37/50 1/1
+2026-01-08 18:04:19 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 38/50 1/1
+2026-01-08 18:11:19 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 39/50 1/1
+2026-01-08 18:18:32 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 40/50 1/1
+2026-01-08 18:26:00 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 41/50 1/1
+2026-01-08 18:33:37 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 42/50 1/1
+2026-01-08 18:41:30 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 43/50 1/1
+2026-01-08 18:49:43 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 44/50 1/1
+2026-01-08 18:58:04 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 45/50 1/1
+2026-01-08 19:06:49 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 46/50 1/1
+2026-01-08 19:15:51 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 47/50 1/1
+2026-01-08 19:25:08 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 48/50 1/1
+2026-01-08 19:34:46 [  0 % ] Running  benchmark: pallet_aggregate::aggregate_400_var(1 args) 49/50 1/1
+Pallet: "pallet_aggregate", Extrinsic: "aggregate_400_var", Lowest values: [], Highest values: [], Steps: 50, Repeat: 20
+Raw Storage Info
+========
+Storage: `Aggregate::Domains` (r:40 w:40)
+Proof: `Aggregate::Domains` (`max_values`: None, `max_size`: Some(209467), added: 211942, mode: `MaxEncodedLen`)
+Storage: `Balances::Holds` (r:1 w:1)
+Proof: `Balances::Holds` (`max_values`: None, `max_size`: Some(157), added: 2632, mode: `MaxEncodedLen`)
+Storage: `Aggregate::Published` (r:1 w:1)
+Proof: `Aggregate::Published` (`max_values`: Some(1), `max_size`: None, mode: `Measured`)
+
+Median Slopes Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=     7786
+    + n    34990
+              µs
+
+Reads = 42 + (0 * n)
+Writes = 42 + (0 * n)
+Recorded proof Size = 14790 + (38404 * n)
+
+Min Squares Analysis
+========
+-- Extrinsic Time --
+
+Data points distribution:
+    n   mean µs  sigma µs       %
+    1     44280     65.52    0.1%
+    3    112500     133.2    0.1%
+    6    213900       317    0.1%
+    8    282900      4016    1.4%
+   11    404000      1212    0.3%
+   13    471800      2277    0.4%
+   16    565700     855.7    0.1%
+   19    717800     12870    1.7%
+   21    751900      2513    0.3%
+   24   1046700    138300   13.2%
+   26    950100      3547    0.3%
+   29   1007500      1425    0.1%
+   32   1092200      1683    0.1%
+   34   1189600      3972    0.3%
+   37   1335500      4493    0.3%
+   39   1370200     15170    1.1%
+   42   1436500      5413    0.3%
+   45   1569400      7066    0.4%
+   47   1625900      3935    0.2%
+   50   1727900      3994    0.2%
+   52   1846800     23070    1.2%
+   55   1922900      2908    0.1%
+   58   2009900      7687    0.3%
+   60   2066500      5109    0.2%
+   63   2164500      3744    0.1%
+   65   2344000      6245    0.2%
+   68   2376700     11760    0.4%
+   70   2424200      4534    0.1%
+   73   2544100     25420    0.9%
+   76   2639900      5047    0.1%
+   78   2768400     60560    2.1%
+   81   2851600     10190    0.3%
+   83   2889600     17340    0.6%
+   86   3175200     52550    1.6%
+   89   3248300     18950    0.5%
+   91   3200600     44320    1.3%
+   94   3601200     48530    1.3%
+   96   3659300     92440    2.5%
+   99   3512000     10110    0.2%
+  102   3701800     88180    2.3%
+  104   3790300     28180    0.7%
+  107   3686100     10990    0.2%
+  109   3812700      8331    0.2%
+  112   3917100    121300    3.0%
+  115   3937000      8223    0.2%
+  117   4249600     16760    0.3%
+  120   4312400     35220    0.8%
+  122   4372300     25220    0.5%
+  125   4290300     11370    0.2%
+  128   4410000     40200    0.9%
+
+Quality and confidence:
+param     error
+n         109.1
+
+Model:
+Time ~=     7029
+    + n    35390
+              µs
+
+Reads = 42 + (0 * n)
+Writes = 42 + (0 * n)
+Recorded proof Size = 14747 + (38405 * n)

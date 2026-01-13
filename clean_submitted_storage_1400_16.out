@@ -1,0 +1,41 @@
+mdamico@miklap:~/devel/zkVerify$ ./target/release/zkv-relay benchmark pallet -p pallet_aggregate --json-file bench_clean.json --extra  --extrinsic 'clean_submitted_storage_1400_16'
+2026-01-09 12:00:05 Using the chain spec instead of the runtime to generate the genesis state is deprecated. Please remove the `--chain`/`--dev`/`--local` argument, point `--runtime` to your runtime blob and set `--genesis-builder=runtime`. This warning may become a hard error any time after December 2024.
+2026-01-09 12:00:11 [0] 💸 generated 1 npos voters, 1 from validators and 0 nominators
+2026-01-09 12:00:11 [0] 💸 generated 1 npos targets
+2026-01-09 12:00:11 Took active validators from set with wrong size
+2026-01-09 12:00:11 Took active validators from set with wrong size
+2026-01-09 12:00:11 Took active validators from set with wrong size.
+2026-01-09 12:00:11 Took active validators from set with wrong size
+2026-01-09 12:00:11 Loading WASM from state
+2026-01-09 12:00:14 [  0 % ] Starting benchmark: pallet_aggregate::clean_submitted_storage_1400_16
+Pallet: "pallet_aggregate", Extrinsic: "clean_submitted_storage_1400_16", Lowest values: [], Highest values: [], Steps: 50, Repeat: 20
+Raw Storage Info
+========
+Storage: `Aggregate::Published` (r:0 w:1)
+Proof: `Aggregate::Published` (`max_values`: Some(1), `max_size`: None, mode: `Measured`)
+
+Median Slopes Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=    2.263
+              µs
+
+Reads = 0
+Writes = 1
+Recorded proof Size = 0
+
+Min Squares Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=    2.263
+              µs
+
+Reads = 0
+Writes = 1
+Recorded proof Size = 0
+
+2026-01-09 12:03:47 [  0 % ] Running  benchmark: pallet_aggregate::clean_submitted_storage_1400_16(0 args) 1/1 1/1
