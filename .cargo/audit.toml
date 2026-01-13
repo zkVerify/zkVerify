@@ -28,6 +28,11 @@ ignore = [
     # threads are unaffected. Only if shared memories are created across threads might an
     # embedding be affected."
     # We fall in the case where we don't use wasm threads at all.
+    "RUSTSEC-2026-0002", # coming from indirect dependency in smoldot-light and libp2p-identif@0.43.1.
+    # the first is just used in parazkvtest so we can ignore it.
+    # For the second one, we looked into the code at https://github.com/libp2p/rust-libp2p.git@libp2p-identify-v0.43.1
+    # and in protocols/identify/src/behaviour.rs we can see that there isn't any mutable iterator used for
+    # `lru::LruCache`: so the unsound code is never exercised.
 
 ]
 informational_warnings = ["unmaintained", "yanked"]
