@@ -15,7 +15,7 @@ date_regex='20[2-4][0-9]((0[1-9])|(1[0-2]))((0[1-9])|([1-2][0-9])|(3[0-1]))'
 rc_regex='rc[0-9]+'
 test_regex='[a-zA-Z][a-zA-Z0-9_]*'
 
-prod_release_regex="^${version_regex}(-${date_regex})?$"
+prod_release_regex="^${version_regex}-${date_regex}?$"
 rc_release_regex="^${version_regex}-${rc_regex}$"
 test_release_regex="^${version_regex}-${test_regex}$"
 
