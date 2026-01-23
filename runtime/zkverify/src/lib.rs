@@ -261,6 +261,7 @@ impl pallet_bags_list::Config<VoterBagsListInstance> for Runtime {
 }
 
 parameter_types! {
+
     pub MaxSetIdSessionEntries: u32 = BondingDuration::get() * SessionsPerEra::get();
 }
 
@@ -962,6 +963,26 @@ impl pallet_verifiers::common::Config for Runtime {
 }
 
 parameter_types! {
+    pub const TeeMaxPubs: u32 = 32;
+}
+
+impl pallet_tee_verifier::Config for Runtime {
+    type UnixTime = Timestamp;
+}
+
+pub type TeeVerifier = pallet_tee_verifier::Tee<Runtime>;
+
+impl pallet_verifiers::Config<TeeVerifier> for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type OnProofVerified = Aggregate;
+    type WeightInfo =
+        pallet_tee_verifier::TeeWeight<weights::pallet_tee_verifier::ZKVWeight<Runtime>>;
+    type Ticket = VkRegistrationHoldConsideration;
+    #[cfg(feature = "runtime-benchmarks")]
+    type Currency = Balances;
+}
+
+parameter_types! {
     pub const EzklMaxPubs: u32 = 32;
 }
 
@@ -1314,6 +1335,7 @@ construct_runtime!(
         SettlementSp1Pallet: pallet_sp1_verifier = 167,
         SettlementUltrahonkPallet: pallet_ultrahonk_verifier = 168,
         SettlementEzklPallet: pallet_ezkl_verifier = 169,
+        SettlementTeePallet: pallet_tee_verifier = 170,
     }
 );
 
@@ -1416,6 +1438,7 @@ mod benches {
         [pallet_plonky2_verifier, Plonky2VerifierBench::<Runtime>]
         [pallet_plonky2_verifier_verify_proof, Plonky2VerifierVerifyProofBench::<Runtime>]
         [pallet_sp1_verifier, Sp1VerifierBench::<Runtime>]
+        [pallet_tee_verifier, TeeVerifierBench::<Runtime>]
         // parachains
         [parachains::configuration, Configuration]
         [parachains::disputes, ParasDisputes]
@@ -2005,6 +2028,7 @@ impl_runtime_apis! {
             use pallet_plonky2_verifier::benchmarking::Pallet as Plonky2VerifierBench;
             use pallet_sp1_verifier::benchmarking::Pallet as Sp1VerifierBench;
             use pallet_ezkl_verifier::benchmarking::Pallet as EzklVerifierBench;
+            use pallet_tee_verifier::benchmarking::Pallet as TeeVerifierBench;
 
             pub mod xcm {
                 pub use pallet_xcm::benchmarking::Pallet as XcmPalletBench;
@@ -2041,6 +2065,7 @@ impl_runtime_apis! {
             use pallet_plonky2_verifier::benchmarking_verify_proof::Pallet as Plonky2VerifierVerifyProofBench;
             use pallet_plonky2_verifier::benchmarking::Pallet as Plonky2VerifierBench;
             use pallet_sp1_verifier::benchmarking::Pallet as Sp1VerifierBench;
+            use pallet_tee_verifier::benchmarking::Pallet as TeeVerifierBench;
 
             pub mod xcm {
                 use super::*;
