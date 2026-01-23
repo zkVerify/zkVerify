@@ -101,6 +101,7 @@ pallet-risc0-verifier = { workspace = true, features = [
 pallet-ultrahonk-verifier = { workspace = true }
 pallet-ultraplonk-verifier = { workspace = true }
 pallet-sp1-verifier = { workspace = true }
+pallet-tee-verifier = { workspace = true }
 hp-dispatch = { workspace = true }
 pallet-plonky2-verifier = { workspace = true }
 
@@ -146,6 +147,7 @@ runtime-benchmarks = [
 	"pallet-conviction-voting/runtime-benchmarks",
 	"pallet-election-provider-support-benchmarking/runtime-benchmarks",
 	"pallet-ezkl-verifier/runtime-benchmarks",
+	"pallet-tee-verifier/runtime-benchmarks",
 	"pallet-fflonk-verifier/runtime-benchmarks",
 	"pallet-grandpa/runtime-benchmarks",
 	"pallet-groth16-verifier/runtime-benchmarks",
@@ -218,6 +220,7 @@ std = [
 	"pallet-conviction-voting/std",
 	"pallet-election-provider-support-benchmarking?/std",
 	"pallet-ezkl-verifier/std",
+ 	"pallet-tee-verifier/std",
 	"pallet-fflonk-verifier/std",
 	"pallet-grandpa/std",
 	"pallet-groth16-verifier/std",
