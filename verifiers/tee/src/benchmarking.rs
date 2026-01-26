@@ -29,13 +29,13 @@ pub struct Pallet<T: Config>(crate::Pallet<T>);
 impl<T: crate::Config> Config for T {}
 pub type Call<T> = pallet_verifiers::Call<T, Verifier<T>>;
 
+const PRESENT: u64 = 1769092187000; // Thu, 22 Jan 2026 14:29:47 GMT, in ms
+
 #[allow(clippy::multiple_bound_locations)]
 #[benchmarks(where T: pallet_verifiers::Config<Verifier<T>>, T: pallet_timestamp::Config, T: pallet_babe::Config)]
 mod benchmarks {
 
     use super::*;
-
-    const PRESENT: u64 = 1769092187000; // Thu, 22 Jan 2026 14:29:47 GMT, in ms
 
     benchmarking_utils!(Verifier<T>, crate::Config);
 
@@ -46,7 +46,6 @@ mod benchmarks {
         // We only actually need the timestamp to be in the valid time frame for the TcbInfo.
         // BABE must be aligned to prevent assertion failures.
         pallet_babe::CurrentSlot::<T>::put(sp_consensus_babe::Slot::from(ts / 6000)); // slot time
-                                                                                      // in ms
         let timestamp: T::Moment = ts.unique_saturated_into();
         Timestamp::<T>::set_timestamp(timestamp);
     }
@@ -214,6 +213,7 @@ mod mock {
         pub enum Test
         {
             System: frame_system,
+            Babe: pallet_babe,
             Timestamp: pallet_timestamp,
             Balances: pallet_balances,
             CommonVerifiersPallet: pallet_verifiers::common,
@@ -250,6 +250,19 @@ mod mock {
             LinearStoragePrice<BaseDeposit, PerByteDeposit, Balance>,
         >;
         type Currency = Balances;
+    }
+
+    impl pallet_babe::Config for Test {
+        type EpochDuration = ConstU64<10>;
+        type ExpectedBlockTime = ConstU64<6000>;
+        // session module is the trigger
+        type EpochChangeTrigger = pallet_babe::SameAuthoritiesForever;
+        type DisabledValidators = ();
+        type WeightInfo = ();
+        type MaxAuthorities = ConstU32<10>;
+        type MaxNominators = ConstU32<100>;
+        type KeyOwnerProof = sp_core::Void;
+        type EquivocationReportSystem = ();
     }
 
     impl pallet_timestamp::Config for Test {
@@ -290,7 +303,7 @@ mod mock {
         );
         ext.execute_with(|| {
             System::set_block_number(1);
-            Timestamp::set_timestamp(1769092187000); // Thu, 22 Jan 2026 14:29:47 GMT
+            Timestamp::set_timestamp(crate::benchmarking::PRESENT); // Thu, 22 Jan 2026 14:29:47 GMT
         });
         ext
     }
