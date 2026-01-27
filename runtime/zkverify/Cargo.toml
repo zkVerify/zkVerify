@@ -155,7 +155,6 @@ runtime-benchmarks = [
 	"pallet-conviction-voting/runtime-benchmarks",
 	"pallet-election-provider-support-benchmarking/runtime-benchmarks",
 	"pallet-ezkl-verifier/runtime-benchmarks",
-	"pallet-tee-verifier/runtime-benchmarks",
 	"pallet-fflonk-verifier/runtime-benchmarks",
 	"pallet-grandpa/runtime-benchmarks",
 	"pallet-groth16-verifier/runtime-benchmarks",
@@ -175,8 +174,9 @@ runtime-benchmarks = [
 	"pallet-sp1-verifier/runtime-benchmarks",
 	"pallet-staking/runtime-benchmarks",
 	"pallet-sudo/runtime-benchmarks",
+	"pallet-tee-verifier/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
- 	"pallet-token-claim/runtime-benchmarks",
+	"pallet-token-claim/runtime-benchmarks",
 	"pallet-token-gateway/runtime-benchmarks",
 	"pallet-transaction-payment/runtime-benchmarks",
 	"pallet-treasury/runtime-benchmarks",
@@ -197,9 +197,9 @@ runtime-benchmarks = [
 	"xcm-runtime-apis/runtime-benchmarks",
 ]
 fast-runtime = []
-metadata-hash = ["substrate-wasm-builder/metadata-hash"]
+metadata-hash = [ "substrate-wasm-builder/metadata-hash" ]
 volta = []
-default = ["std"]
+default = [ "std" ]
 std = [
 	"aggregate-rpc-runtime-api/std",
 	"anyhow/std",
@@ -232,8 +232,7 @@ std = [
 	"pallet-claim/std",
 	"pallet-conviction-voting/std",
 	"pallet-election-provider-support-benchmarking?/std",
- 	"pallet-ezkl-verifier/std",
- 	"pallet-tee-verifier/std",
+	"pallet-ezkl-verifier/std",
 	"pallet-fflonk-verifier/std",
 	"pallet-grandpa/std",
 	"pallet-groth16-verifier/std",
@@ -256,8 +255,9 @@ std = [
 	"pallet-sp1-verifier/std",
 	"pallet-staking/std",
 	"pallet-sudo/std",
+	"pallet-tee-verifier/std",
 	"pallet-timestamp/std",
- 	"pallet-token-claim/std",
+	"pallet-token-claim/std",
 	"pallet-token-gateway/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
 	"pallet-transaction-payment/std",
@@ -344,4 +344,4 @@ try-runtime = [
 	"polkadot-runtime-parachains/try-runtime",
 	"sp-runtime/try-runtime",
 ]
-extend-benchmarks = ["pallet-risc0-verifier/extend-benchmarks"]
+extend-benchmarks = [ "pallet-risc0-verifier/extend-benchmarks" ]

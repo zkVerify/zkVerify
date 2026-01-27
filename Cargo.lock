@@ -11034,7 +11034,6 @@ dependencies = [
 name = "pallet-tee-verifier"
 version = "0.1.0"
 dependencies = [
- "bincode 2.0.1",
  "chrono",
  "frame-benchmarking",
  "frame-support",
@@ -19997,7 +19996,6 @@ dependencies = [
  "serde",
  "serde-json-core",
  "sha2 0.10.9",
- "snafu 0.8.5",
  "spki",
  "x509-verify",
 ]
