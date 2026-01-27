@@ -103,7 +103,7 @@ impl<T: Config> Verifier for Tee<T> {
                 .map_err(|_| VerifyError::InvalidInput)?;
 
         // Check that the tcbInfo is still valid at the verification timestamp
-        let _ = tcb_response
+        tcb_response
             .tcb_info
             .verify(
                 DateTime::from_timestamp_secs(T::UnixTime::now().as_secs().try_into().unwrap())
