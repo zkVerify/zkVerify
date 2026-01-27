@@ -44,13 +44,9 @@ fn verify_valid_proof() {
     let pubs = vec![];
     let vk = Vk {
         tcb_response: include_bytes!("resources/intel/valid_tcbinfo.json")
-            .to_vec()
-            .try_into()
-            .unwrap(),
+            .to_vec(),
         certificates: include_bytes!("resources/intel/valid_tcbinfo_certs.pem")
             .to_vec()
-            .try_into()
-            .unwrap(),
     };
 
     assert!(Tee::<Mock<MockTime<ConstU64<PRESENT>>>>::verify_proof(&vk, &proof, &pubs).is_ok());
@@ -62,13 +58,9 @@ fn reject_invalid_proof() {
     let pubs = vec![];
     let vk = Vk {
         tcb_response: include_bytes!("resources/intel/valid_tcbinfo.json")
-            .to_vec()
-            .try_into()
-            .unwrap(),
+            .to_vec(),
         certificates: include_bytes!("resources/intel/valid_tcbinfo_certs.pem")
             .to_vec()
-            .try_into()
-            .unwrap(),
     };
 
     assert_eq!(
@@ -81,13 +73,9 @@ fn reject_invalid_proof() {
 fn reject_invalid_vk_signature() {
     let vk = Vk {
         tcb_response: include_bytes!("resources/intel/invalid_tcbinfo.json")
-            .to_vec()
-            .try_into()
-            .unwrap(),
+            .to_vec(),
         certificates: include_bytes!("resources/intel/valid_tcbinfo_certs.pem")
             .to_vec()
-            .try_into()
-            .unwrap(),
     };
 
     assert_eq!(
@@ -102,13 +90,9 @@ fn reject_invalid_time() {
     let pubs = vec![];
     let vk = Vk {
         tcb_response: include_bytes!("resources/intel/valid_tcbinfo.json")
-            .to_vec()
-            .try_into()
-            .unwrap(),
+            .to_vec(),
         certificates: include_bytes!("resources/intel/valid_tcbinfo_certs.pem")
             .to_vec()
-            .try_into()
-            .unwrap(),
     };
 
     assert_eq!(
@@ -152,8 +136,8 @@ fn reject_too_long_vk() {
     let proof = vec![];
     let pubs = vec![];
     let vk = Vk {
-        tcb_response: vec![0u8; MAX_VK_LENGTH as usize + 1].try_into().unwrap(),
-        certificates: vec![0u8; MAX_VK_LENGTH as usize + 1].try_into().unwrap(),
+        tcb_response: vec![0u8; MAX_VK_LENGTH as usize + 1],
+        certificates: vec![0u8; MAX_VK_LENGTH as usize + 1],
     };
 
     assert_eq!(
