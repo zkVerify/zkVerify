@@ -47,6 +47,7 @@ pub mod pallet_session;
 pub mod pallet_sp1_verifier;
 pub mod pallet_staking;
 pub mod pallet_sudo;
+pub mod pallet_tee_verifier;
 pub mod pallet_timestamp;
 pub mod pallet_token_gateway;
 pub mod pallet_transaction_payment;

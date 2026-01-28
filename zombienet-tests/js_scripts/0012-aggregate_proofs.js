@@ -33,6 +33,7 @@ const { ZK_PROOF: ULTRAHONK_ZK_PROOF, PLAIN_PROOF: ULTRAHONK_PLAIN_PROOF, PUBS: 
 const { PROOF: ULTRAPLONK_PROOF, PUBS: ULTRAPLONK_PUBS, VK: ULTRAPLONK_VK } = require('./ultraplonk_data.js');
 const { PROOF: PLONKY2_PROOF, PUBS: PLONKY2_PUBS, VK: PLONKY2_VK } = require('./plonky2_data.js');
 const { PROOF: SP1_PROOF, PUBS: SP1_PUBS, VK: SP1_VK } = require('./sp1_data.js');
+const { PROOF: TEE_PROOF, PUBS: TEE_PUBS, VK_TCB_RESP: TEE_VK_TCB_RESP , VK_TCB_CERT: TEE_VK_TCB_CERT } = require('./tee_intel_data.js');
 
 async function run(nodeName, networkInfo, _args) {
     const api = await init_api(zombie, nodeName, networkInfo);
@@ -91,6 +92,11 @@ async function run(nodeName, networkInfo, _args) {
             name: "Sp1",
             pallet: api.tx.settlementSp1Pallet,
             args: [{ 'Vk': SP1_VK }, SP1_PROOF, SP1_PUBS],
+        },
+        {
+            name: "Tee",
+            pallet: api.tx.settlementTeePallet,
+            args: [{ 'Vk': [ TEE_VK_TCB_RESP, TEE_VK_TCB_CERT ] }, TEE_PROOF, TEE_PUBS],
         }
     ];
 
