@@ -129,7 +129,7 @@ impl<T: Config> Verifier for Tee<T> {
 
         let (tcb_response, _used): (TcbResponse, usize) =
             serde_json_core::from_slice(&vk.tcb_response[..])
-                .map_err(|_| VerifyError::InvalidInput)?;
+                .map_err(|_| VerifyError::InvalidVerificationKey)?;
 
         // Check that the tcbInfo is still valid at the verification timestamp and that the
         // signature is valid
