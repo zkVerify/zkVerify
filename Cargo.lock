@@ -19865,7 +19865,3 @@ dependencies = [
  "cc",
  "pkg-config",
 ]
-
-[[patch.unused]]
-name = "polkadot-omni-node-lib"
-version = "0.4.2"

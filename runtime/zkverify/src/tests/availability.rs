@@ -23,7 +23,6 @@ use frame_support::{
 use pallet_conviction_voting::{AccountVote, Vote};
 use pallet_verifiers::VkOrHash;
 use sp_core::H256;
-use sp_runtime::traits::Zero;
 use sp_runtime::{AccountId32, MultiAddress};
 
 #[test]
