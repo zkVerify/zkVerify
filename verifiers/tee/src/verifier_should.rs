@@ -43,10 +43,8 @@ fn verify_valid_proof() {
     let proof = include_bytes!("resources/intel/valid_quote.dat").to_vec();
     let pubs = vec![];
     let vk = Vk {
-        tcb_response: include_bytes!("resources/intel/valid_tcbinfo.json")
-            .to_vec(),
-        certificates: include_bytes!("resources/intel/valid_tcbinfo_certs.pem")
-            .to_vec()
+        tcb_response: include_bytes!("resources/intel/valid_tcbinfo.json").to_vec(),
+        certificates: include_bytes!("resources/intel/valid_tcbinfo_certs.pem").to_vec(),
     };
 
     assert!(Tee::<Mock<MockTime<ConstU64<PRESENT>>>>::verify_proof(&vk, &proof, &pubs).is_ok());
@@ -57,10 +55,8 @@ fn reject_invalid_proof() {
     let proof = include_bytes!("resources/intel/invalid_quote.dat").to_vec();
     let pubs = vec![];
     let vk = Vk {
-        tcb_response: include_bytes!("resources/intel/valid_tcbinfo.json")
-            .to_vec(),
-        certificates: include_bytes!("resources/intel/valid_tcbinfo_certs.pem")
-            .to_vec()
+        tcb_response: include_bytes!("resources/intel/valid_tcbinfo.json").to_vec(),
+        certificates: include_bytes!("resources/intel/valid_tcbinfo_certs.pem").to_vec(),
     };
 
     assert_eq!(
@@ -72,10 +68,8 @@ fn reject_invalid_proof() {
 #[test]
 fn reject_invalid_vk_signature() {
     let vk = Vk {
-        tcb_response: include_bytes!("resources/intel/invalid_tcbinfo.json")
-            .to_vec(),
-        certificates: include_bytes!("resources/intel/valid_tcbinfo_certs.pem")
-            .to_vec()
+        tcb_response: include_bytes!("resources/intel/invalid_tcbinfo.json").to_vec(),
+        certificates: include_bytes!("resources/intel/valid_tcbinfo_certs.pem").to_vec(),
     };
 
     assert_eq!(
@@ -89,10 +83,8 @@ fn reject_invalid_time() {
     let proof = include_bytes!("resources/intel/valid_quote.dat").to_vec();
     let pubs = vec![];
     let vk = Vk {
-        tcb_response: include_bytes!("resources/intel/valid_tcbinfo.json")
-            .to_vec(),
-        certificates: include_bytes!("resources/intel/valid_tcbinfo_certs.pem")
-            .to_vec()
+        tcb_response: include_bytes!("resources/intel/valid_tcbinfo.json").to_vec(),
+        certificates: include_bytes!("resources/intel/valid_tcbinfo_certs.pem").to_vec(),
     };
 
     assert_eq!(
