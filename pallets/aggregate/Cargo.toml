@@ -14,7 +14,6 @@ workspace = true
 [dependencies]
 log = { workspace = true }
 binary-merkle-tree = { workspace = true }
-ismp = { workspace = true }
 
 codec = { workspace = true }
 scale-info = { workspace = true, features = ["derive"] }
@@ -56,7 +55,6 @@ std = [
 	"frame-system/std",
 	"hp-dispatch/std",
 	"hp-on-proof-verified/std",
-	"ismp/std",
 	"log/std",
 	"pallet-balances/std",
 	"scale-info/std",

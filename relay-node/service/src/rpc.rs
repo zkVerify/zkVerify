@@ -15,7 +15,6 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use jsonrpsee::RpcModule;
-use pallet_ismp_rpc::{IsmpApiServer, IsmpRpcHandler};
 use polkadot_primitives::{AccountId, Balance, Block, BlockNumber, Hash, Nonce};
 use sc_client_api::AuxStore;
 use sc_consensus_grandpa::FinalityProofProvider;
@@ -100,8 +99,7 @@ where
         + pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
         + aggregate_rpc::AggregateRuntimeApi<Block>
         + BabeApi<Block>
-        + BlockBuilder<Block>
-        + pallet_ismp_runtime_api::IsmpRuntimeApi<Block, Hash>,
+        + BlockBuilder<Block>,
     P: sc_transaction_pool_api::TransactionPool + Sync + Send + 'static,
     SC: SelectChain<Block> + 'static,
     B: sc_client_api::Backend<Block> + Send + Sync + 'static,
@@ -127,10 +125,9 @@ where
         finality_provider,
     } = grandpa;
 
-    io.merge(StateMigration::new(client.clone(), backend.clone()).into_rpc())?;
+    io.merge(StateMigration::new(client.clone(), backend).into_rpc())?;
     io.merge(System::new(client.clone(), pool.clone()).into_rpc())?;
     io.merge(TransactionPayment::new(client.clone()).into_rpc())?;
-    io.merge(IsmpRpcHandler::new(client.clone(), backend)?.into_rpc())?;
 
     io.merge(
         Babe::new(

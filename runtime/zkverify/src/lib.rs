@@ -25,7 +25,6 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 extern crate alloc;
 
 use alloc::{
-    boxed::Box,
     collections::{btree_map::BTreeMap, vec_deque::VecDeque},
     vec,
     vec::Vec,
@@ -84,14 +83,6 @@ use frame_support::{
 };
 use frame_system::EnsureRoot;
 use governance::{pallet_custom_origins, TreasurySpender};
-use ismp::{
-    consensus::{ConsensusClientId, StateMachineHeight, StateMachineId},
-    host::StateMachine,
-    module::IsmpModule,
-    router::{IsmpRouter, Request, Response},
-    Error,
-};
-use pallet_hyperbridge::PALLET_HYPERBRIDGE_ID;
 use pallet_session::historical as pallet_session_historical;
 use pallet_transaction_payment::{FungibleAdapter, Multiplier, TargetedFeeAdjustment};
 use pallet_treasury::TreasuryAccountId;
@@ -105,7 +96,6 @@ pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
 mod governance;
-mod pallet_assets_mock;
 
 mod parachains;
 mod xcm_config;
@@ -550,45 +540,22 @@ where
 
 impl DispatchAggregation<Balance, AccountId> for Runtime {
     fn dispatch_aggregation(
-        domain_id: u32,
-        aggregation_id: u64,
-        aggregation: H256,
-        destination_params: Destination,
-        fee: Balance,
-        delivery_owner: AccountId,
+        _domain_id: u32,
+        _aggregation_id: u64,
+        _aggregation: H256,
+        _destination_params: Destination,
+        _fee: Balance,
+        _delivery_owner: AccountId,
     ) -> DispatchResult {
-        match destination_params {
-            Destination::None => Ok(()),
-            Destination::Hyperbridge(params) => {
-                pallet_hyperbridge_aggregations::Pallet::<Runtime>::dispatch_aggregation(
-                    delivery_owner,
-                    Params {
-                        domain_id,
-                        aggregation_id,
-                        aggregation,
-                        module: params.destination_module,
-                        destination: StateMachine::from(params.destination_chain),
-                        timeout: params.timeout,
-                        fee,
-                    },
-                )
-            }
-        }
+        Ok(())
     }
 
     fn max_weight() -> Weight {
-        use pallet_hyperbridge_aggregations::WeightInfo;
-        <Runtime as pallet_hyperbridge_aggregations::Config>::WeightInfo::dispatch_aggregation()
+        Default::default()
     }
 
-    fn dispatch_weight(destination: &Destination) -> Weight {
-        match destination {
-            Destination::None => Default::default(),
-            Destination::Hyperbridge(_) => {
-                use pallet_hyperbridge_aggregations::WeightInfo;
-                <Runtime as pallet_hyperbridge_aggregations::Config>::WeightInfo::dispatch_aggregation()
-            }
-        }
+    fn dispatch_weight(_destination: &Destination) -> Weight {
+        Default::default()
     }
 }
 
@@ -1104,93 +1071,6 @@ impl pallet_verifiers::Config<UltraplonkVerifier> for Runtime {
 }
 
 parameter_types! {
-    pub const Coprocessor: Option<StateMachine> = HYPERBRIDGE_DEST_STATE_MACHINE;
-    pub const HostStateMachine: StateMachine = StateMachine::Substrate(*b"zkv_");
-}
-
-impl pallet_ismp::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type AdminOrigin = EnsureRoot<AccountId>;
-    type TimestampProvider = Timestamp;
-    type Balance = Balance;
-    // TODO: Set to zk-verify token (+ need to allowlist module in relayer).
-    // Potentially in the future could be a stable coin
-    type Currency = Balances;
-    type HostStateMachine = HostStateMachine;
-    type Coprocessor = Coprocessor;
-    type Router = ModuleRouter;
-    type ConsensusClients = (ismp_grandpa::consensus::GrandpaConsensusClient<Runtime>,);
-    type FeeHandler = pallet_ismp::fee_handler::WeightFeeHandler<()>;
-    type OffchainDB = ();
-}
-
-impl pallet_hyperbridge_aggregations::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type IsmpDispatcher = pallet_hyperbridge::Pallet<Runtime>;
-    type WeightInfo = weights::pallet_hyperbridge_aggregations::ZKVWeight<Runtime>;
-}
-
-impl ismp_grandpa::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type IsmpHost = Ismp;
-    type WeightInfo = weights::ismp_grandpa::ZKVWeight<Runtime>;
-}
-
-impl pallet_hyperbridge::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type IsmpHost = Ismp;
-}
-
-impl pallet_assets_mock::Config for Runtime {
-    type Currency = Balances;
-    type AssetId = u32;
-    type Balance = Balance;
-}
-
-parameter_types! {
-    pub const Decimals: u8 = 18;
-    pub const NativeAssetId: u32 = 0;
-}
-
-parameter_types! {
-    /// Account of the treasury pallet.
-    pub AssetAdmin: AccountId = Treasury::account_id();
-}
-
-impl pallet_token_gateway::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type Dispatcher = Ismp;
-    type NativeCurrency = Balances;
-    type AssetAdmin = AssetAdmin;
-    #[cfg(not(feature = "runtime-benchmarks"))]
-    type CreateOrigin = EnsureRoot<AccountId>;
-    #[cfg(feature = "runtime-benchmarks")]
-    type CreateOrigin = frame_system::EnsureSigned<AccountId>;
-    type Assets = pallet_assets_mock::Pallet<Runtime>;
-    type NativeAssetId = NativeAssetId;
-    type Decimals = Decimals;
-    type EvmToSubstrate = ();
-    type WeightInfo = weights::pallet_token_gateway::ZKVWeight<Runtime>;
-}
-
-#[derive(Default)]
-pub struct ModuleRouter;
-impl IsmpRouter for ModuleRouter {
-    fn module_for_id(&self, id: Vec<u8>) -> Result<Box<dyn IsmpModule>, anyhow::Error> {
-        match id.as_slice() {
-            id if id == ZKV_MODULE_ID.to_bytes().as_slice() => Ok(Box::new(
-                pallet_hyperbridge_aggregations::Pallet::<Runtime>::default(),
-            )),
-            id if TokenGateway::is_token_gateway(id) => Ok(Box::new(TokenGateway::default())),
-            id if id == PALLET_HYPERBRIDGE_ID => {
-                Ok(Box::new(pallet_hyperbridge::Pallet::<Runtime>::default()))
-            }
-            _ => Err(Error::ModuleNotFound(id))?,
-        }
-    }
-}
-
-parameter_types! {
     pub const Plonky2MaxPubsSize: u32 = 512; // eq of 64 public inputs
     pub const Plonky2MaxProofSize: u32 = 262_144;
     pub const Plonky2MaxVkSize: u32 = 50_000;
@@ -1266,13 +1146,6 @@ construct_runtime!(
         Aggregate: pallet_aggregate = 81,
         Claim: pallet_claim = 82,
         TokenClaim: pallet_token_claim = 83,
-
-        // ISMP
-        Ismp: pallet_ismp = 90,
-        IsmpGrandpa: ismp_grandpa = 91,
-        HyperbridgeAggregations: pallet_hyperbridge_aggregations = 92,
-        TokenGateway: pallet_token_gateway = 93,
-        Hyperbridge: pallet_hyperbridge = 94,
 
         // Parachain pallets. Start indices at 100 to leave room.
         ParachainsOrigin: parachains::parachains_origin = 101,
@@ -1396,14 +1269,10 @@ mod benches {
         [pallet_proxy, Proxy]
         [pallet_identity, Identity]
         [pallet_transaction_payment, TransactionPayment]
-        // hyperbridge
-        [ismp_grandpa, IsmpGrandpa]
-        [pallet_token_gateway, TokenGateway]
         // our pallets
         [pallet_aggregate, Aggregate]
         [pallet_claim, Claim]
         [pallet_token_claim, TokenClaim]
-        [pallet_hyperbridge_aggregations, HyperbridgeAggregations]
         // verifiers
         [pallet_ezkl_verifier, EzklVerifierBench::<Runtime>]
         [pallet_fflonk_verifier, FflonkVerifierBench::<Runtime>]
@@ -1455,7 +1324,6 @@ use polkadot_primitives::{
 };
 
 use hp_dispatch::{Destination, DispatchAggregation};
-use pallet_hyperbridge_aggregations::{Params, ZKV_MODULE_ID};
 
 use crate::payout::ZKVPayout;
 use crate::types::{
@@ -1648,44 +1516,6 @@ impl_runtime_apis! {
     impl frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Nonce> for Runtime {
         fn account_nonce(account: AccountId) -> Nonce {
             System::account_nonce(account)
-        }
-    }
-
-    impl pallet_ismp_runtime_api::IsmpRuntimeApi<Block, <Block as BlockT>::Hash> for Runtime {
-        fn host_state_machine() -> StateMachine {
-            <Runtime as pallet_ismp::Config>::HostStateMachine::get()
-        }
-
-        fn challenge_period(id: StateMachineId) -> Option<u64> {
-            pallet_ismp::Pallet::<Runtime>::challenge_period(id)
-        }
-
-        fn block_events() -> Vec<ismp::events::Event> {
-            pallet_ismp::Pallet::<Runtime>::block_events()
-        }
-
-        fn block_events_with_metadata() -> Vec<(ismp::events::Event, Option<u32>)> {
-            pallet_ismp::Pallet::<Runtime>::block_events_with_metadata()
-        }
-
-        fn consensus_state(id: ConsensusClientId) -> Option<Vec<u8>> {
-            pallet_ismp::Pallet::<Runtime>::consensus_states(id)
-        }
-
-        fn state_machine_update_time(height: StateMachineHeight) -> Option<u64> {
-            pallet_ismp::Pallet::<Runtime>::state_machine_update_time(height)
-        }
-
-        fn latest_state_machine_height(id: StateMachineId) -> Option<u64> {
-            pallet_ismp::Pallet::<Runtime>::latest_state_machine_height(id)
-        }
-
-        fn requests(commitments: Vec<H256>) -> Vec<Request> {
-            pallet_ismp::Pallet::<Runtime>::requests(commitments)
-        }
-
-        fn responses(commitments: Vec<H256>) -> Vec<Response> {
-            pallet_ismp::Pallet::<Runtime>::responses(commitments)
         }
     }
 

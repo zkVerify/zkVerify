@@ -20,8 +20,5 @@ runtime_version!("zkv-runtime");
 
 pub const SS58_PREFIX: u16 = super::SS58_ZKV_PREFIX;
 
-pub const HYPERBRIDGE_DEST_STATE_MACHINE: Option<ismp::host::StateMachine> =
-    Some(ismp::host::StateMachine::Polkadot(3367));
-
 pub const ZKV_GENESIS_HASH: [u8; 32] =
     hex_literal::hex!("060e3dd3fa2904d031206bb913c954687a2bcc350e5a83d33d9e273ad21460f1");

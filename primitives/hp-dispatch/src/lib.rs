@@ -16,14 +16,13 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![deny(missing_docs)]
 
-//! Traits for hyperbridge
+//! Traits for aggregation dispatch
 
 use codec::{Decode, Encode, MaxEncodedLen};
 use core::fmt::Debug;
 use frame_support::{dispatch::DispatchResult, weights::Weight};
-use ismp::host::StateMachine;
 use scale_info::TypeInfo;
-use sp_core::{H160, H256};
+use sp_core::H256;
 
 /// Trait to dispatch aggregations
 pub trait DispatchAggregation<Balance, AccountId> {
@@ -67,55 +66,10 @@ impl<Balance, AccountId> DispatchAggregation<Balance, AccountId> for () {
     }
 }
 
-/// Configuration for Hyperbridge Dispatch params
-#[derive(Clone, PartialEq, Eq, Encode, Decode, TypeInfo, MaxEncodedLen, Debug)]
-pub struct HyperbridgeDispatchParameters {
-    /// The destination state machine
-    pub destination_chain: BoundedStateMachine,
-    /// Module identifier of the receiving module
-    pub destination_module: H160,
-    /// Relative from the current timestamp at which this request expires in seconds.
-    pub timeout: u64,
-}
-
 /// Configuration for Destination
 #[derive(Clone, PartialEq, Eq, Encode, Decode, TypeInfo, MaxEncodedLen, Debug, Default)]
 pub enum Destination {
     /// No Destination
     #[default]
     None,
-    /// Hyperbridge Destination
-    Hyperbridge(HyperbridgeDispatchParameters),
-}
-
-/// Bounded version for State Machine
-#[derive(Debug, Clone, PartialEq, Eq, Encode, Decode, TypeInfo, MaxEncodedLen)]
-pub enum BoundedStateMachine {
-    /// Evm state machines
-    #[codec(index = 0)]
-    Evm(u32),
-    /// Polkadot parachains
-    #[codec(index = 1)]
-    Polkadot(u32),
-    /// Kusama parachains
-    #[codec(index = 2)]
-    Kusama(u32),
-    /// Substrate-based standalone chain
-    #[codec(index = 3)]
-    Substrate([u8; 4]),
-    /// Tendermint chains
-    #[codec(index = 4)]
-    Tendermint([u8; 4]),
-}
-
-impl From<BoundedStateMachine> for StateMachine {
-    fn from(bsm: BoundedStateMachine) -> Self {
-        match bsm {
-            BoundedStateMachine::Evm(id) => StateMachine::Evm(id),
-            BoundedStateMachine::Polkadot(id) => StateMachine::Polkadot(id),
-            BoundedStateMachine::Kusama(id) => StateMachine::Kusama(id),
-            BoundedStateMachine::Substrate(id) => StateMachine::Substrate(id),
-            BoundedStateMachine::Tendermint(id) => StateMachine::Tendermint(id),
-        }
-    }
 }

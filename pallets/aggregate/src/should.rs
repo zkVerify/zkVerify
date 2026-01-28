@@ -585,7 +585,7 @@ mod aggregate {
             } = MockDispatchAggregation::pop().expect("No call received");
 
             assert_new_receipt(domain_id, aggregation_id, Some(aggregation));
-            assert_eq!(hyperbridge_destination(), destination);
+            assert_eq!(none_destination(), destination);
             assert_eq!(USER_DELIVERY_OWNER, delivery_owner);
 
             // Get the domain to access delivery fee and tip
@@ -1018,7 +1018,7 @@ mod aggregate {
     fn should_pay_just_for_the_real_used_weight(
         #[case] proofs: u32,
         #[values(
-            (DOMAIN_ID, hyperbridge_destination()),
+            (DOMAIN_ID, none_destination()),
             (DOMAIN_ID_NONE, none_destination())
         )]
         (domain_id, destination): (u32, Destination),
@@ -1113,33 +1113,31 @@ mod register_domain {
                 Some(8),
                 AggregateSecurityRules::Untrusted,
                 ProofSecurityRules::Untrusted,
-                hyperbridge_destination().into(),
+                none_destination().into(),
                 Some(USER_DOMAIN_2)
             ));
             let registered_id = registered_ids()[0];
 
             let domain = Domains::<Test>::get(registered_id).unwrap();
 
-            assert_eq!(&hyperbridge_destination(), domain.delivery.destination());
+            assert_eq!(&none_destination(), domain.delivery.destination());
             assert_eq!(USER_DOMAIN_2, domain.delivery.owner);
         })
     }
 
     #[test]
-    fn normal_users_cannot_add_a_domain_with_a_bridge_domain() {
+    fn normal_users_can_add_a_domain() {
+        // With only Destination::None available, any user can create a domain
         test().execute_with(|| {
-            assert_noop!(
-                Aggregate::register_domain(
-                    Origin::Signed(USER_DOMAIN_1).into(),
-                    16,
-                    Some(8),
-                    AggregateSecurityRules::OnlyOwner,
-                    ProofSecurityRules::Untrusted,
-                    hyperbridge_destination().into(),
-                    None,
-                ),
-                BadOrigin
-            );
+            assert_ok!(Aggregate::register_domain(
+                Origin::Signed(USER_DOMAIN_1).into(),
+                16,
+                Some(8),
+                AggregateSecurityRules::OnlyOwner,
+                ProofSecurityRules::Untrusted,
+                none_destination().into(),
+                None,
+            ));
         })
     }
 
@@ -1356,14 +1354,10 @@ mod register_domain {
         });
     }
 
-    #[rstest]
-    #[case(hyperbridge_destination(), (78855, 1743, 9405, 21079))]
-    #[case(Destination::None, (78822, 1710, 9372, 21046))]
-    fn not_change_domain_encoded_size(
-        #[case] destination: Destination,
-        #[case] variables: (usize, usize, usize, usize),
-    ) {
-        let (bigger, min_agg_max_queue, max_agg_min_queue, middle) = variables;
+    #[test]
+    fn not_change_domain_encoded_size() {
+        let destination = Destination::None;
+        let (bigger, min_agg_max_queue, max_agg_min_queue, middle) = (78822, 1710, 9372, 21046);
         // This test is here to check that you don't change the domain struct without change `compute_encoded_size`
         // accordantly
         use codec::MaxEncodedLen;
@@ -1373,12 +1367,12 @@ mod register_domain {
             Domain::<Test>::compute_encoded_size(
                 MaxAggregationSize::get(),
                 MaxPendingPublishQueueSize::get(),
-                &hyperbridge_destination()
+                &destination
             )
         );
 
         // Fixture max
-        assert_eq!(Domain::<Test>::max_encoded_len(), 78855);
+        assert_eq!(Domain::<Test>::max_encoded_len(), 78822);
 
         // Max configurations
         assert_eq!(
@@ -1461,7 +1455,7 @@ mod register_domain {
                     None,
                     AggregateSecurityRules::Untrusted,
                     ProofSecurityRules::Untrusted,
-                    hyperbridge_destination().into(),
+                    none_destination().into(),
                     Some(USER_DOMAIN_2)
                 )
                 .unwrap()
@@ -1478,7 +1472,7 @@ mod register_domain {
             queue_size: Some(8),
             aggregate_rules: AggregateSecurityRules::Untrusted,
             proof_rules: ProofSecurityRules::Untrusted,
-            delivery: hyperbridge_destination().into(),
+            delivery: none_destination().into(),
             delivery_owner: None,
         }
         .get_dispatch_info();

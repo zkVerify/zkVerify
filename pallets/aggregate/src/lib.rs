@@ -1325,11 +1325,9 @@ pub mod pallet {
             }
         }
 
-        pub fn can_create_domain(&self, destination: &Destination) -> bool {
-            matches!(
-                (self, destination),
-                (_, Destination::None) | (User::Manager, _)
-            )
+        pub fn can_create_domain(&self, _destination: &Destination) -> bool {
+            // With only Destination::None available, any user can create a domain
+            true
         }
 
         pub fn post_info(&self, actual_weight: Option<Weight>) -> PostDispatchInfo {

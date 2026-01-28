@@ -40,12 +40,6 @@ pallet-preimage = { workspace = true }
 pallet-referenda = { workspace = true }
 pallet-utility = { workspace = true }
 pallet-vesting = { workspace = true }
-ismp = { workspace = true }
-pallet-ismp = { workspace = true, features = ["unsigned"] }
-pallet-ismp-runtime-api = { workspace = true }
-ismp-grandpa = { workspace = true }
-pallet-token-gateway = { workspace = true }
-pallet-hyperbridge = { workspace = true }
 frame-metadata-hash-extension = { workspace = true }
 pallet-conviction-voting = { workspace = true }
 pallet-treasury = { workspace = true }
@@ -93,7 +87,6 @@ frame-system-benchmarking = { workspace = true, optional = true }
 pallet-aggregate = { workspace = true }
 pallet-claim = { workspace = true }
 pallet-token-claim = { workspace = true }
-pallet-hyperbridge-aggregations = { workspace = true }
 static_assertions = "1.1.0"
 aggregate-rpc-runtime-api = { workspace = true }
 
@@ -143,7 +136,6 @@ runtime-benchmarks = [
 	"frame-system-benchmarking/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
 	"hp-dispatch/runtime-benchmarks",
-	"ismp-grandpa/runtime-benchmarks",
 	"pallet-aggregate/runtime-benchmarks",
 	"pallet-babe/runtime-benchmarks",
 	"pallet-bags-list/runtime-benchmarks",
@@ -157,9 +149,7 @@ runtime-benchmarks = [
 	"pallet-fflonk-verifier/runtime-benchmarks",
 	"pallet-grandpa/runtime-benchmarks",
 	"pallet-groth16-verifier/runtime-benchmarks",
-	"pallet-hyperbridge-aggregations/runtime-benchmarks",
 	"pallet-identity/runtime-benchmarks",
-	"pallet-ismp/runtime-benchmarks",
 	"pallet-message-queue/runtime-benchmarks",
 	"pallet-multisig/runtime-benchmarks",
 	"pallet-offences/runtime-benchmarks",
@@ -175,7 +165,6 @@ runtime-benchmarks = [
 	"pallet-sudo/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
  	"pallet-token-claim/runtime-benchmarks",
-	"pallet-token-gateway/runtime-benchmarks",
 	"pallet-transaction-payment/runtime-benchmarks",
 	"pallet-treasury/runtime-benchmarks",
 	"pallet-ultrahonk-verifier/runtime-benchmarks",
@@ -216,8 +205,6 @@ std = [
 	"frame-try-runtime?/std",
 	"hp-dispatch/std",
 	"hp-verifiers/std",
-	"ismp-grandpa/std",
-	"ismp/std",
 	"log/std",
 	"pallet-aggregate/std",
 	"pallet-authority-discovery/std",
@@ -234,11 +221,7 @@ std = [
 	"pallet-fflonk-verifier/std",
 	"pallet-grandpa/std",
 	"pallet-groth16-verifier/std",
-	"pallet-hyperbridge-aggregations/std",
-	"pallet-hyperbridge/std",
 	"pallet-identity/std",
-	"pallet-ismp-runtime-api/std",
-	"pallet-ismp/std",
 	"pallet-message-queue/std",
 	"pallet-multisig/std",
 	"pallet-offences/std",
@@ -255,7 +238,6 @@ std = [
 	"pallet-sudo/std",
 	"pallet-timestamp/std",
  	"pallet-token-claim/std",
-	"pallet-token-gateway/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
 	"pallet-transaction-payment/std",
 	"pallet-treasury/std",
@@ -302,7 +284,6 @@ try-runtime = [
 	"frame-system/try-runtime",
 	"frame-try-runtime/try-runtime",
 	"hp-dispatch/try-runtime",
-	"ismp-grandpa/try-runtime",
 	"pallet-aggregate/try-runtime",
 	"pallet-authority-discovery/try-runtime",
 	"pallet-authorship/try-runtime",
@@ -314,10 +295,7 @@ try-runtime = [
 	"pallet-claim/try-runtime",
 	"pallet-conviction-voting/try-runtime",
 	"pallet-grandpa/try-runtime",
-	"pallet-hyperbridge-aggregations/try-runtime",
-	"pallet-hyperbridge/try-runtime",
 	"pallet-identity/try-runtime",
-	"pallet-ismp/try-runtime",
 	"pallet-message-queue/try-runtime",
 	"pallet-multisig/try-runtime",
 	"pallet-offences/try-runtime",
@@ -330,7 +308,6 @@ try-runtime = [
 	"pallet-sudo/try-runtime",
 	"pallet-timestamp/try-runtime",
 	"pallet-token-claim/try-runtime",
-	"pallet-token-gateway/try-runtime",
 	"pallet-transaction-payment/try-runtime",
 	"pallet-treasury/try-runtime",
 	"pallet-utility/try-runtime",

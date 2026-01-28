@@ -20,15 +20,11 @@ use frame_support::{
     assert_ok,
     traits::{schedule::DispatchTime, Currency, StorePreimage, VestingSchedule},
 };
-use hex_literal::hex;
-use ismp::dispatcher::{DispatchPost, DispatchRequest, FeeMetadata, IsmpDispatcher};
 use pallet_conviction_voting::{AccountVote, Vote};
-use pallet_hyperbridge_aggregations::Params;
 use pallet_verifiers::VkOrHash;
 use sp_core::H256;
 use sp_runtime::traits::Zero;
 use sp_runtime::{AccountId32, MultiAddress};
-use std::collections::BTreeMap;
 
 #[test]
 fn pallet_ezkl() {
@@ -365,90 +361,6 @@ fn pallet_bags_list() {
 fn pallet_aggregate() {
     test().execute_with(|| {
         assert!(Aggregate::aggregate(RuntimeOrigin::root(), 42, 24).is_err());
-        // just checking code builds, hence the pallet is available to the runtime
-    });
-}
-
-#[test]
-fn pallet_ismp() {
-    test().execute_with(|| {
-        assert!(Ismp::handle_unsigned(RuntimeOrigin::root(), Vec::new()).is_err());
-        // just checking code builds, hence the pallet is available to the runtime
-    });
-}
-
-#[test]
-fn pallet_ismp_grandpa() {
-    test().execute_with(|| {
-        assert_ok!(IsmpGrandpa::remove_state_machines(
-            RuntimeOrigin::root(),
-            Vec::new()
-        ));
-        // just checking code builds, hence the pallet is available to the runtime
-    });
-}
-
-#[test]
-fn pallet_hyperbridge() {
-    test().execute_with(|| {
-        let dummy_origin = AccountId32::new([0; 32]);
-        let post = DispatchPost {
-            dest: StateMachine::Kusama(4009),
-            from: vec![1, 2, 3],
-            to: vec![4, 5, 6],
-            timeout: 0,
-            body: vec![7, 8, 9],
-        };
-        let request = DispatchRequest::Post(post);
-        let fee = FeeMetadata {
-            payer: dummy_origin.clone(),
-            fee: Zero::zero(),
-        };
-        assert_ok!(Hyperbridge::dispatch_request(
-            &Hyperbridge::default(),
-            request,
-            fee
-        ));
-    });
-}
-
-#[test]
-fn pallet_token_gateway() {
-    let mut addresses = BTreeMap::new();
-    addresses.insert(StateMachine::Evm(1), vec![0x01, 0x02, 0x03, 0x04]);
-    addresses.insert(StateMachine::Polkadot(1), vec![0x05, 0x06, 0x07, 0x08]);
-    #[cfg(not(feature = "runtime-benchmarks"))]
-    let origin = RuntimeOrigin::root();
-    #[cfg(feature = "runtime-benchmarks")]
-    let origin = RuntimeOrigin::signed(AccountId32::new([0; 32]));
-
-    test().execute_with(|| {
-        assert_ok!(TokenGateway::set_token_gateway_addresses(origin, addresses));
-    });
-}
-
-#[test]
-fn pallet_hyperbridge_aggregations() {
-    test().execute_with(|| {
-        let default_empty_aggr: [u8; 32] =
-            hex!("290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563");
-        let test_contract: [u8; 20] = hex!("d9145CCE52D386f254917e481eB44e9943F39138");
-        let dummy_origin = AccountId32::new([0; 32]);
-
-        let params = Params {
-            domain_id: 1u32,
-            aggregation_id: 1u64,
-            aggregation: sp_core::H256(default_empty_aggr),
-            module: sp_core::H160(test_contract),
-            destination: StateMachine::Kusama(4009),
-            timeout: 0,
-            fee: Zero::zero(),
-        };
-
-        assert_ok!(HyperbridgeAggregations::dispatch_aggregation(
-            dummy_origin,
-            params
-        ));
         // just checking code builds, hence the pallet is available to the runtime
     });
 }
