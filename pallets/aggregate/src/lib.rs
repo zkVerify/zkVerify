@@ -119,7 +119,7 @@ pub mod pallet {
     pub(crate) type TicketAllowListOf<T> = <T as Config>::ConsiderationAllowList;
 
     /// The in-code storage version.
-    const STORAGE_VERSION: StorageVersion = StorageVersion::new(3);
+    const STORAGE_VERSION: StorageVersion = StorageVersion::new(4);
 
     #[pallet::pallet]
     #[pallet::storage_version(STORAGE_VERSION)]
