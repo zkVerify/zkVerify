@@ -8012,7 +8012,6 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "hex-literal",
  "hp-dispatch",
  "hp-on-proof-verified",
  "log",
