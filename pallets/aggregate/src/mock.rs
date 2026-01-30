@@ -30,11 +30,9 @@ use frame_support::{
     weights::{RuntimeDbWeight, Weight},
 };
 use frame_system::RawOrigin;
-use hp_dispatch::{
-    BoundedStateMachine, Destination, DispatchAggregation, HyperbridgeDispatchParameters,
-};
+use hp_dispatch::{Destination, DispatchAggregation};
 use scale_info::TypeInfo;
-use sp_core::{ConstU128, ConstU32, Get, H160, H256};
+use sp_core::{ConstU128, ConstU32, Get, H256};
 use sp_runtime::traits::Member;
 use sp_runtime::{traits::IdentityLookup, BuildStorage, DispatchResult, Perbill};
 use std::collections::{HashMap, VecDeque};
@@ -224,8 +222,6 @@ pub struct MockDispatchAggregation {
 impl MockDispatchAggregation {
     pub const NONE_REF_TIME: u64 = 42;
     pub const NONE_PROOF_SIZE: u64 = 24;
-    pub const HB_REF_TIME: u64 = 4242;
-    pub const HB_PROOF_SIZE: u64 = 2424;
 
     thread_local! {
         pub static CALLS: RefCell<VecDeque<MockDispatchAggregation>> = RefCell::new(Default::default());
@@ -255,12 +251,8 @@ impl MockDispatchAggregation {
         Weight::from_parts(Self::NONE_REF_TIME, Self::NONE_PROOF_SIZE)
     }
 
-    pub fn hyperbridge_weight() -> Weight {
-        Weight::from_parts(Self::HB_REF_TIME, Self::HB_PROOF_SIZE)
-    }
-
     pub fn max_weight() -> Weight {
-        Self::hyperbridge_weight()
+        Self::none_weight()
     }
 }
 
@@ -292,7 +284,6 @@ impl DispatchAggregation<Balance, AccountId> for MockDispatchAggregation {
     fn dispatch_weight(destination: &Destination) -> Weight {
         match destination {
             Destination::None => Self::none_weight(),
-            Destination::Hyperbridge(_) => Self::hyperbridge_weight(),
         }
     }
 }
@@ -487,14 +478,6 @@ frame_support::construct_runtime!(
     }
 );
 
-pub fn hyperbridge_destination() -> Destination {
-    Destination::Hyperbridge(HyperbridgeDispatchParameters {
-        destination_chain: BoundedStateMachine::Evm(11155111),
-        destination_module: H160::default(),
-        timeout: 100,
-    })
-}
-
 pub fn none_destination() -> Destination {
     Destination::None
 }
@@ -592,7 +575,7 @@ pub fn test() -> sp_io::TestExternalities {
                 crate::data::ProofSecurityRules::Untrusted,
                 None,
                 None,
-                hyperbridge_destination().into(),
+                none_destination().into(),
             ),
         );
         Domains::<Test>::insert(
@@ -607,7 +590,7 @@ pub fn test() -> sp_io::TestExternalities {
                 crate::data::ProofSecurityRules::OnlyOwner,
                 None,
                 None,
-                hyperbridge_destination().into(),
+                none_destination().into(),
             ),
         );
         Domains::<Test>::insert(
@@ -622,7 +605,7 @@ pub fn test() -> sp_io::TestExternalities {
                 crate::data::ProofSecurityRules::OnlyAllowlisted,
                 None,
                 Some(countable_mock_consideration(USER_DOMAIN_SUBMIT_RULE, 3, 0)),
-                hyperbridge_destination().into(),
+                none_destination().into(),
             ),
         );
         Domains::<Test>::insert(

@@ -1,3 +1,3 @@
 //! This module contains the migration scripts for the pallet.
 
-pub mod v3;
+pub mod v4;

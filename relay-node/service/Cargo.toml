@@ -138,9 +138,6 @@ polkadot-statement-distribution = { workspace = true, optional = true }
 sc-rpc = { workspace = true }
 sc-rpc-spec-v2 = { workspace = true }
 
-pallet-ismp-rpc = { workspace = true }
-pallet-ismp-runtime-api  = { workspace = true }
-
 [dev-dependencies]
 test-client = { path = "../test/client" }
 node-subsystem-test-helpers = { path = "../test/subsystem-helpers" }

@@ -21,8 +21,5 @@ runtime_version!("tzkv-runtime");
 // ASCII for 'Z'+'K'+'V'
 pub const SS58_PREFIX: u16 = super::SS58_VOLTA_PREFIX;
 
-pub const HYPERBRIDGE_DEST_STATE_MACHINE: Option<ismp::host::StateMachine> =
-    Some(ismp::host::StateMachine::Kusama(4009));
-
 pub const ZKV_GENESIS_HASH: [u8; 32] =
     hex_literal::hex!("ff7fe5a610f15fe7a0c52f94f86313fb7db7d3786e7f8acf2b66c11d5be7c242");

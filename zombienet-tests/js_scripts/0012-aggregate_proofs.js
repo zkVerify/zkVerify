@@ -14,11 +14,9 @@ const ReturnCode = {
     ErrProofOnUnregisteredDomain: 9,
     ErrWrongDomainId: 10,
     ErrPublishShouldNotPay: 11,
-    ErrDomainHyperbridgeRegistrationOk: 12,
-    ErrDomainHyperbridgeRegistrationErr: 13,
-    ErrProofFromInvalidSubmitter: 14,
-    ErrProofFromValidSubmitter: 15,
-    ErrAllowlist: 16,
+    ErrProofFromInvalidSubmitter: 12,
+    ErrProofFromValidSubmitter: 13,
+    ErrAllowlist: 14,
 };
 
 const { init_api, submitProof, receivedEvents, registerDomain, sudoRegisterDomain,
@@ -102,32 +100,6 @@ async function run(nodeName, networkInfo, _args) {
             args: [{ 'Vk': EZKL_VK }, EZKL_PROOF, EZKL_PUBS],
         });
     }
-
-    // Only manager can register a Hyperbridge delivery domain.
-    let hyperbridge = {
-        destination: {
-            Hyperbridge: {
-                destinationChain: { Evm: 11155111 },
-                destination_module: "0x1234567890123456789012345678901234567890",
-                timeout: 3600
-            },
-        },
-        price: 1_000_000_000
-
-    };
-
-    let events = await registerDomain(bob, 4, 8, "OnlyOwnerUncompleted", "Untrusted", hyperbridge, null);
-    if (receivedEvents(events)) {
-        console.log(`Normal user should not register a Hyperbridge delivery domain`);
-        return ReturnCode.ErrDomainHyperbridgeRegistrationOk;
-    }
-
-    events = await sudoRegisterDomain(alice, 4, 8, "OnlyOwnerUncompleted", "Untrusted", hyperbridge, bob.address);
-    if (!receivedEvents(events)) {
-        console.log(`Manager cannot register a Hyperbridge delivery domain`);
-        return ReturnCode.ErrDomainHyperbridgeRegistrationErr;
-    }
-    console.log(`Domain SUDO registered successfully: ${events.events}`);
 
     events = await registerDomain(bob, verifiers.length, null, "Untrusted", "Untrusted", destination, null);
     if (!receivedEvents(events)) {
