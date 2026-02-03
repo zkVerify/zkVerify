@@ -71,8 +71,8 @@ impl<T: crate::Config> UncheckedOnRuntimeUpgrade for InnerMigrateV2ToV3<T> {
 /// - The on-chain storage version is updated to `3` after the migration executes
 /// - Reads/Writes from checking/settings the on-chain storage version is accounted for
 pub type MigrateV2ToV3<T> = VersionedMigration<
-    2, // The migration will only execute when the on-chain storage version is 3
-    3, // The on-chain storage version will be set to 4 after the migration is complete
+    2, // The migration will only execute when the on-chain storage version is 2
+    3, // The on-chain storage version will be set to 3 after the migration is complete
     InnerMigrateV2ToV3<T>,
     crate::Pallet<T>,
     <T as frame_system::Config>::DbWeight,
