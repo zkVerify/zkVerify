@@ -16,6 +16,7 @@ members = [
     "pallets/verifiers",
     "pallets/verifiers/macros",
     "pallets/claim",
+    "pallets/crl",
     "pallets/token-claim",
     "primitives/hp-verifiers",
     "primitives/hp-groth16",
@@ -121,7 +122,8 @@ pallet-plonky2-verifier = { path = "verifiers/plonky2", default-features = false
 ezkl-no-std = { git = "https://github.com/zkVerify/ezkl_verifier.git", default-features = false, tag = "v0.1.0" }
 ultrahonk-no-std = { git = "https://github.com/zkVerify/ultrahonk_verifier.git", default-features = false, tag = "v0.2.1" }
 ultraplonk-no-std = { git = "https://github.com/zkVerify/ultraplonk_verifier.git", default-features = false, tag = "v0.4.0" }
-tee-verifier = { git = "https://github.com/zkVerify/tee-verifier.git", default-features = false, branch = "dr/first_merge" } # TODO: add tag
+tee-verifier = { path = "/home/daniele/horizen/git/tee-verifier", default-features = false } # TODO: add tag
+#tee-verifier = { git = "https://github.com/zkVerify/tee-verifier.git", default-features = false, branch = "dr/first_merge" } # TODO: add tag
 serde-json-core = { version = "0.6.0", default-features = false }
 
 zkv-benchmarks = { path = "relay-node/benchmarks" }

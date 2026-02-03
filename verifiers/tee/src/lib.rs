@@ -21,7 +21,7 @@ pub mod benchmarking;
 mod verifier_should;
 mod weight;
 
-use alloc::{borrow::Cow, vec::Vec};
+use alloc::{borrow::Cow, vec::Vec, vec};
 use core::marker::PhantomData;
 
 use frame_support::{ensure, traits::UnixTime, weights::Weight};
@@ -29,7 +29,7 @@ use hp_verifiers::Verifier;
 pub use weight::WeightInfo;
 
 use hp_verifiers::VerifyError;
-use tee_verifier::intel::{collaterals::TcbResponse, quote::QuoteV4};
+use tee_verifier::{cert::RevokedCertId, intel::{collaterals::TcbResponse, quote::QuoteV4}};
 
 use chrono::DateTime;
 use codec::{Decode, Encode, MaxEncodedLen};
@@ -111,9 +111,10 @@ impl<T: Config> Verifier for Tee<T> {
             )
             .map_err(|_| VerifyError::VerifyError)?;
 
+        let crl: Vec<RevokedCertId> = vec![];
         // Verify the attestation
         quote
-            .verify(Some(tcb_response.tcb_info))
+            .verify(Some(tcb_response.tcb_info), &crl)
             .map_err(|_| VerifyError::VerifyError)
             .map(|_| None)
     }
@@ -131,6 +132,7 @@ impl<T: Config> Verifier for Tee<T> {
             serde_json_core::from_slice(&vk.tcb_response[..])
                 .map_err(|_| VerifyError::InvalidVerificationKey)?;
 
+        let crl: Vec<RevokedCertId> = vec![];
         // Check that the tcbInfo is still valid at the verification timestamp and that the
         // signature is valid
         tcb_response
@@ -138,6 +140,7 @@ impl<T: Config> Verifier for Tee<T> {
                 vk.certificates.to_vec(),
                 DateTime::from_timestamp_secs(T::UnixTime::now().as_secs().try_into().unwrap())
                     .unwrap(),
+                &crl
             )
             .map_err(|_| VerifyError::VerifyError)
     }

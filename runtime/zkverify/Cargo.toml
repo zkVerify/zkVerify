@@ -167,10 +167,6 @@ runtime-benchmarks = [
 	"pallet-tee-verifier/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
 	"pallet-token-claim/runtime-benchmarks",
-<<<<<<< HEAD
-=======
-	"pallet-token-gateway/runtime-benchmarks",
->>>>>>> affaba9 (zepter format)
 	"pallet-transaction-payment/runtime-benchmarks",
 	"pallet-treasury/runtime-benchmarks",
 	"pallet-ultrahonk-verifier/runtime-benchmarks",
