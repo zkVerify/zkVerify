@@ -31,7 +31,7 @@ use sp_core::Get;
 pub struct InnerMigrateV2ToV3<T>(core::marker::PhantomData<T>);
 
 impl<T: crate::Config> UncheckedOnRuntimeUpgrade for InnerMigrateV2ToV3<T> {
-    /// Migrate the storage from V1 to v2.
+    /// Migrate the storage from V2 to v3.
     fn on_runtime_upgrade() -> frame_support::weights::Weight {
         let old_storage = v2::Domains::<T>::drain().collect::<Vec<_>>();
         let (reads, mut writes) = (old_storage.len() as u64, old_storage.len() as u64);
@@ -71,8 +71,8 @@ impl<T: crate::Config> UncheckedOnRuntimeUpgrade for InnerMigrateV2ToV3<T> {
 /// - The on-chain storage version is updated to `3` after the migration executes
 /// - Reads/Writes from checking/settings the on-chain storage version is accounted for
 pub type MigrateV2ToV3<T> = VersionedMigration<
-    2, // The migration will only execute when the on-chain storage version is 1
-    3, // The on-chain storage version will be set to 2 after the migration is complete
+    2, // The migration will only execute when the on-chain storage version is 2
+    3, // The on-chain storage version will be set to 3 after the migration is complete
     InnerMigrateV2ToV3<T>,
     crate::Pallet<T>,
     <T as frame_system::Config>::DbWeight,

@@ -204,18 +204,7 @@ sp-npos-elections = { version = "35.1.0", default-features = false }
 aggregate-rpc = { default-features = false, path = "rpc/aggregate" }
 aggregate-rpc-runtime-api = { default-features = false, path = "rpc/aggregate/runtime-api" }
 
-# Hyperbridge dependencies
-ismp = { default-features = false, version = "1.0.0" }
-pallet-ismp = { default-features = false, version = "2412.0.0" }
-pallet-ismp-runtime-api = { default-features = false, version = "2412.0.0" }
-pallet-ismp-rpc = { default-features = false, version = "2412.0.0" }
-ismp-grandpa = { default-features = false, version = "2412.0.0" }
-pallet-token-gateway = { default-features = false, version = "2412.0.0" }
-pallet-hyperbridge = { default-features = false, version = "2412.0.0" }
 frame-metadata-hash-extension = { version = "0.7.0", default-features = false }
-pallet-hyperbridge-aggregations = { path = "pallets/hyperbridge_aggregations", default-features = false }
-alloy-dyn-abi = { default-features = false, version = "0.8.26" }
-alloy-primitives = { default-features = false, version = "0.8.26" }
 
 # Used for the node template's RPCs
 frame-system-rpc-runtime-api = { version = "35.0.0", default-features = false }
@@ -349,7 +338,6 @@ substrate-rpc-client = { version = "0.47.0" }
 cumulus-relay-chain-inprocess-interface = { path = "patches/cumulus/client/relay-chain-inprocess-interface" }
 cumulus-relay-chain-minimal-node = { path = "patches/cumulus/client/relay-chain-minimal-node" }
 polkadot-node-core-pvf-common = { path = "patches/polkadot/node/core/pvf/common" }
-polkadot-omni-node-lib = { path = "patches/cumulus/polkadot-omni-node/lib" }
 
 [profile.release]
 # Polkadot runtime requires unwinding.

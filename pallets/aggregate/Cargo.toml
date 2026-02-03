@@ -14,7 +14,6 @@ workspace = true
 [dependencies]
 log = { workspace = true }
 binary-merkle-tree = { workspace = true }
-ismp = { workspace = true }
 
 codec = { workspace = true }
 scale-info = { workspace = true, features = ["derive"] }
@@ -27,7 +26,6 @@ sp-runtime = { workspace = true }
 
 hp-on-proof-verified = { workspace = true }
 hp-dispatch = { workspace = true }
-hex-literal = { workspace = true }
 
 educe = { version = "0.6.0", default-features = false, features = [
     "Clone",
@@ -56,7 +54,6 @@ std = [
 	"frame-system/std",
 	"hp-dispatch/std",
 	"hp-on-proof-verified/std",
-	"ismp/std",
 	"log/std",
 	"pallet-balances/std",
 	"scale-info/std",
