@@ -133,7 +133,7 @@ pub fn check_can_fully_enable() -> Result<()> {
 /// The status of the restriction (whether it was fully, partially, or not-at-all enforced).
 fn try_restrict<I, P, A>(fs_exceptions: I) -> Result<()>
 where
-	I: IntoIterator<Item=(P, A)>,
+	I: IntoIterator<Item = (P, A)>,
 	P: AsRef<Path>,
 	A: Into<BitFlags<AccessFs>>,
 {

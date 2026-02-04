@@ -30,12 +30,14 @@ use async_trait::async_trait;
 use cumulus_primitives_core::{
     relay_chain::{
         runtime_api::ParachainHost,
-        vstaging::{CommittedCandidateReceiptV2 as CommittedCandidateReceipt, CoreState},
-        Block as PBlock, BlockId, BlockNumber, CoreIndex, Hash as PHash, Header as PHeader,
+        Block as PBlock, BlockId, BlockNumber,
+        CommittedCandidateReceiptV2 as CommittedCandidateReceipt, CoreIndex, CoreState,
+        Hash as PHash, Header as PHeader,
         InboundHrmpMessage, OccupiedCoreAssumption, SessionIndex, ValidationCodeHash, ValidatorId,
     },
     InboundDownwardMessage, ParaId, PersistedValidationData,
 };
+use polkadot_primitives::CandidateEvent;
 use cumulus_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayChainResult};
 use futures::{FutureExt, Stream, StreamExt};
 use service::{
@@ -320,6 +322,14 @@ impl RelayChainInterface for RelayChainInProcessInterface {
         hash: PHash,
     ) -> RelayChainResult<BTreeMap<CoreIndex, VecDeque<ParaId>>> {
         Ok(self.full_client.runtime_api().claim_queue(hash)?)
+    }
+
+    async fn scheduling_lookahead(&self, hash: PHash) -> RelayChainResult<u32> {
+        Ok(self.full_client.runtime_api().scheduling_lookahead(hash)?)
+    }
+
+    async fn candidate_events(&self, hash: PHash) -> RelayChainResult<Vec<CandidateEvent>> {
+        Ok(self.full_client.runtime_api().candidate_events(hash)?)
     }
 }
 
