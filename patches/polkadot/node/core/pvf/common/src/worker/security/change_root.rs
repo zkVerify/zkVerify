@@ -146,10 +146,10 @@ fn try_restrict(worker_info: &WorkerInfo) -> Result<()> {
 
 		Ok(())
 	}()
-		.map_err(|err_ctx| {
-			let err = io::Error::last_os_error();
-			Error::OsErrWithContext(format!("{}: {}", err_ctx, err))
-		})?;
+	.map_err(|err_ctx| {
+		let err = io::Error::last_os_error();
+		Error::OsErrWithContext(format!("{}: {}", err_ctx, err))
+	})?;
 
 	// Do some assertions.
 	if env::current_dir()? != Path::new("/") {

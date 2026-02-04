@@ -22,9 +22,9 @@ const WORKER_EXECUTE_ARTIFACT_NAME: &str = "artifact";
 const WORKER_PREPARE_TMP_ARTIFACT_NAME: &str = "tmp-artifact";
 
 pub fn execute_artifact(worker_dir_path: &Path) -> PathBuf {
-    worker_dir_path.join(WORKER_EXECUTE_ARTIFACT_NAME)
+	worker_dir_path.join(WORKER_EXECUTE_ARTIFACT_NAME)
 }
 
 pub fn prepare_tmp_artifact(worker_dir_path: &Path) -> PathBuf {
-    worker_dir_path.join(WORKER_PREPARE_TMP_ARTIFACT_NAME)
+	worker_dir_path.join(WORKER_PREPARE_TMP_ARTIFACT_NAME)
 }
