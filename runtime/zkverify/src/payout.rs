@@ -527,6 +527,7 @@ mod tests {
                 .iter()
                 .map(|(a, b)| (AccountId::from(*a), *b))
                 .collect(),
+            dev_accounts: None,
         }
         .assimilate_storage(&mut t)
         .unwrap();

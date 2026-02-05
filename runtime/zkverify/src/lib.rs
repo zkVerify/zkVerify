@@ -970,7 +970,6 @@ impl pallet_tee_verifier::Config for Runtime {
 pub type TeeVerifier = pallet_tee_verifier::Tee<Runtime>;
 
 impl pallet_verifiers::Config<TeeVerifier> for Runtime {
-    type RuntimeEvent = RuntimeEvent;
     type OnProofVerified = Aggregate;
     type WeightInfo =
         pallet_tee_verifier::TeeWeight<weights::pallet_tee_verifier::ZKVWeight<Runtime>>;
@@ -990,7 +989,6 @@ impl pallet_ezkl_verifier::Config for Runtime {
 pub type EzklVerifier = pallet_ezkl_verifier::Ezkl<Runtime>;
 
 impl pallet_verifiers::Config<EzklVerifier> for Runtime {
-    type RuntimeEvent = RuntimeEvent;
     type OnProofVerified = Aggregate;
     type WeightInfo =
         pallet_ezkl_verifier::EzklWeight<weights::pallet_ezkl_verifier::ZKVWeight<Runtime>>;
@@ -1000,7 +998,6 @@ impl pallet_verifiers::Config<EzklVerifier> for Runtime {
 }
 
 impl pallet_verifiers::Config<pallet_fflonk_verifier::Fflonk> for Runtime {
-    type RuntimeEvent = RuntimeEvent;
     type OnProofVerified = Aggregate;
     type Ticket = VkRegistrationHoldConsideration;
     type WeightInfo =
@@ -1025,7 +1022,6 @@ const_assert!(
 );
 
 impl pallet_verifiers::Config<pallet_groth16_verifier::Groth16<Runtime>> for Runtime {
-    type RuntimeEvent = RuntimeEvent;
     type OnProofVerified = Aggregate;
     type Ticket = VkRegistrationHoldConsideration;
     type WeightInfo = pallet_groth16_verifier::Groth16Weight<
@@ -1045,7 +1041,6 @@ impl pallet_sp1_verifier::Config for Runtime {
 }
 
 impl pallet_verifiers::Config<pallet_sp1_verifier::Sp1<Runtime>> for Runtime {
-    type RuntimeEvent = RuntimeEvent;
     type OnProofVerified = Aggregate;
     type Ticket = VkRegistrationHoldConsideration;
     type WeightInfo =
@@ -1070,7 +1065,6 @@ impl pallet_risc0_verifier::Config for Runtime {
 }
 
 impl pallet_verifiers::Config<pallet_risc0_verifier::Risc0<Runtime>> for Runtime {
-    type RuntimeEvent = RuntimeEvent;
     type OnProofVerified = Aggregate;
     type Ticket = VkRegistrationHoldConsideration;
     type WeightInfo =
@@ -1091,7 +1085,6 @@ impl pallet_ultrahonk_verifier::Config for Runtime {
 pub type UltrahonkVerifier = pallet_ultrahonk_verifier::Ultrahonk<Runtime>;
 
 impl pallet_verifiers::Config<UltrahonkVerifier> for Runtime {
-    type RuntimeEvent = RuntimeEvent;
     type OnProofVerified = Aggregate;
     type Ticket = VkRegistrationHoldConsideration;
     type WeightInfo = pallet_ultrahonk_verifier::UltrahonkWeight<
@@ -1112,7 +1105,6 @@ impl pallet_ultraplonk_verifier::Config for Runtime {
 pub type UltraplonkVerifier = pallet_ultraplonk_verifier::Ultraplonk<Runtime>;
 
 impl pallet_verifiers::Config<UltraplonkVerifier> for Runtime {
-    type RuntimeEvent = RuntimeEvent;
     type OnProofVerified = Aggregate;
     type Ticket = VkRegistrationHoldConsideration;
     type WeightInfo = pallet_ultraplonk_verifier::UltraplonkWeight<
@@ -1136,7 +1128,6 @@ impl pallet_plonky2_verifier::Config for Runtime {
 }
 
 impl pallet_verifiers::Config<pallet_plonky2_verifier::Plonky2<Runtime>> for Runtime {
-    type RuntimeEvent = RuntimeEvent;
     type OnProofVerified = Aggregate;
     type Ticket = VkRegistrationHoldConsideration;
     type WeightInfo = pallet_plonky2_verifier::Plonky2Weight<
@@ -1888,7 +1879,7 @@ impl_runtime_apis! {
             Vec<frame_benchmarking::BenchmarkList>,
             Vec<frame_support::traits::StorageInfo>,
         ) {
-            use frame_benchmarking::{baseline, Benchmarking, BenchmarkList};
+            use frame_benchmarking::{baseline, BenchmarkList};
             use frame_support::traits::StorageInfoTrait;
             use frame_system_benchmarking::Pallet as SystemBench;
             use frame_system_benchmarking::extensions::Pallet as SystemExtensionsBench;
