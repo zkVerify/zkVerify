@@ -18,7 +18,7 @@
 extern crate alloc;
 
 use alloc::{borrow::Cow, vec::Vec};
-use codec::{Decode, Encode, MaxEncodedLen};
+use codec::{Decode, DecodeWithMemTracking, Encode, MaxEncodedLen};
 use core::marker::PhantomData;
 use frame_support::{ensure, weights::Weight};
 use hp_verifiers::{Verifier, VerifyError};
@@ -41,7 +41,7 @@ impl frame_support::traits::Get<u32> for EzklVkMaxByteLen {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Encode, Decode, TypeInfo)]
+#[derive(Clone, Debug, PartialEq, Encode, Decode, DecodeWithMemTracking, TypeInfo)]
 pub struct EzklVk {
     pub vk_bytes: Vec<u8>,
 }

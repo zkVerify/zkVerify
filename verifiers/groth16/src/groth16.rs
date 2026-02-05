@@ -14,20 +14,20 @@
 // limitations under the License.
 
 use alloc::vec::Vec;
-use codec::{Decode, Encode, MaxEncodedLen};
+use codec::{Decode, DecodeWithMemTracking, Encode, MaxEncodedLen};
 use core::fmt::Debug;
 use hp_verifiers::VerifyError;
 use scale_info::TypeInfo;
 
 pub use hp_groth16::{vec_max_encoded_len, Proof, Scalar, VerificationKey, G1, G2};
 
-#[derive(Copy, Clone, Debug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
+#[derive(Copy, Clone, Debug, PartialEq, Encode, Decode, DecodeWithMemTracking, MaxEncodedLen, TypeInfo)]
 pub enum Curve {
     Bn254,
     Bls12_381,
 }
 
-#[derive(Clone, Debug, PartialEq, Encode, Decode, TypeInfo)]
+#[derive(Clone, Debug, PartialEq, Encode, Decode, DecodeWithMemTracking, TypeInfo)]
 pub struct VerificationKeyWithCurve {
     pub curve: Curve,
     pub alpha_g1: G1,
@@ -69,7 +69,7 @@ impl VerificationKeyWithCurve {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Encode, Decode, TypeInfo)]
+#[derive(Clone, Debug, PartialEq, Encode, Decode, DecodeWithMemTracking, TypeInfo)]
 pub struct ProofWithCurve {
     pub curve: Curve,
     pub proof: Proof,

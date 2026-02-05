@@ -21,7 +21,7 @@ use crate::{
     prod_or_fast,
     types::{AccountId, BlockNumber, DAYS},
     weights, Balances, Preimage, Referenda, Runtime, RuntimeCall, RuntimeEvent, Scheduler,
-    Treasury,
+    System, Treasury,
 };
 use frame_support::{parameter_types, traits::EitherOf};
 use frame_system::{EnsureRoot, EnsureRootWithSuccess};
@@ -46,6 +46,8 @@ impl pallet_conviction_voting::Config for Runtime {
         frame_support::traits::tokens::currency::ActiveIssuanceOf<Balances, Self::AccountId>;
     type MaxVotes = ConstU32<512>;
     type VoteLockingPeriod = VoteLockingPeriod;
+    type BlockNumberProvider = System;
+    type VotingHooks = ();
 }
 
 parameter_types! {
@@ -79,4 +81,5 @@ impl pallet_referenda::Config for Runtime {
     type AlarmInterval = AlarmInterval;
     type Tracks = TracksInfo;
     type Preimages = Preimage;
+    type BlockNumberProvider = System;
 }

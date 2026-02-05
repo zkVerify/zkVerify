@@ -820,4 +820,16 @@ impl<T: frame_system::Config> pallet_staking::WeightInfo for ZKVWeight<T> {
             .saturating_add(T::DbWeight::get().reads(6_u64))
             .saturating_add(T::DbWeight::get().writes(4_u64))
     }
+    fn migrate_currency() -> Weight {
+        // Placeholder weight for migrate_currency
+        Weight::from_parts(50_000_000, 4764)
+            .saturating_add(T::DbWeight::get().reads(5_u64))
+            .saturating_add(T::DbWeight::get().writes(4_u64))
+    }
+    fn manual_slash() -> Weight {
+        // Placeholder weight for manual_slash
+        Weight::from_parts(50_000_000, 6248)
+            .saturating_add(T::DbWeight::get().reads(10_u64))
+            .saturating_add(T::DbWeight::get().writes(8_u64))
+    }
 }

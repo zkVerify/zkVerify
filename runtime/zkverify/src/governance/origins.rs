@@ -21,6 +21,7 @@ pub use pallet_custom_origins::*;
 #[frame_support::pallet]
 pub mod pallet_custom_origins {
     use crate::types::currency::{Balance, THOUSANDS};
+    use codec::DecodeWithMemTracking;
     use frame_support::pallet_prelude::*;
 
     #[pallet::config]
@@ -29,7 +30,7 @@ pub mod pallet_custom_origins {
     #[pallet::pallet]
     pub struct Pallet<T>(_);
 
-    #[derive(PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo, RuntimeDebug)]
+    #[derive(PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, DecodeWithMemTracking, TypeInfo, RuntimeDebug)]
     #[pallet::origin]
     pub enum Origin {
         /// Origin able to cancel referenda.

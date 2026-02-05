@@ -288,4 +288,22 @@ impl<T: frame_system::Config> parachains :: paras::WeightInfo for ZKVWeight<T> {
             .saturating_add(T::DbWeight::get().reads(3_u64))
             .saturating_add(T::DbWeight::get().writes(1_u64))
     }
+    fn remove_upgrade_cooldown() -> Weight {
+        // Placeholder weight for remove_upgrade_cooldown
+        Weight::from_parts(10_000_000, 3493)
+            .saturating_add(T::DbWeight::get().reads(1_u64))
+            .saturating_add(T::DbWeight::get().writes(1_u64))
+    }
+    fn authorize_force_set_current_code_hash() -> Weight {
+        // Placeholder weight for authorize_force_set_current_code_hash
+        Weight::from_parts(10_000_000, 3493)
+            .saturating_add(T::DbWeight::get().reads(1_u64))
+            .saturating_add(T::DbWeight::get().writes(1_u64))
+    }
+    fn apply_authorized_force_set_current_code(_c: u32) -> Weight {
+        // Placeholder weight for apply_authorized_force_set_current_code
+        Weight::from_parts(50_000_000, 11774)
+            .saturating_add(T::DbWeight::get().reads(4_u64))
+            .saturating_add(T::DbWeight::get().writes(6_u64))
+    }
 }

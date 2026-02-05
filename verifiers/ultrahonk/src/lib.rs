@@ -19,6 +19,7 @@ extern crate alloc;
 
 use alloc::{borrow::Cow, boxed::Box, vec::Vec};
 use codec::Decode;
+use codec::DecodeWithMemTracking;
 use codec::Encode;
 use codec::MaxEncodedLen;
 use core::marker::PhantomData;
@@ -45,13 +46,13 @@ pub trait Config {
     type MaxPubs: Get<u32>;
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
+#[derive(Copy, Clone, Debug, PartialEq, Encode, Decode, DecodeWithMemTracking, MaxEncodedLen, TypeInfo)]
 pub enum ProofType {
     ZK,
     Plain,
 }
 
-#[derive(Clone, Debug, PartialEq, Encode, Decode, TypeInfo)]
+#[derive(Clone, Debug, PartialEq, Encode, Decode, DecodeWithMemTracking, TypeInfo)]
 pub enum Proof {
     ZK(RawProof),
     Plain(RawProof),

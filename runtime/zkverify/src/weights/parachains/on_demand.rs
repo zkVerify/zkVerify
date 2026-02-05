@@ -104,4 +104,10 @@ impl<T: frame_system::Config> parachains :: on_demand::WeightInfo for ZKVWeight<
             .saturating_add(T::DbWeight::get().writes(4_u64))
             .saturating_add(Weight::from_parts(0, 8).saturating_mul(s.into()))
     }
+    fn place_order_with_credits(_s: u32) -> Weight {
+        // Placeholder weight for place_order_with_credits
+        Weight::from_parts(30_000_000, 3648)
+            .saturating_add(T::DbWeight::get().reads(5_u64))
+            .saturating_add(T::DbWeight::get().writes(4_u64))
+    }
 }

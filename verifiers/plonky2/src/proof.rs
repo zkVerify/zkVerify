@@ -19,13 +19,13 @@ use alloc::vec::Vec;
 
 use core::marker::PhantomData;
 
-use codec::{Decode, Encode, MaxEncodedLen};
+use codec::{Decode, DecodeWithMemTracking, Encode, MaxEncodedLen};
 use educe::Educe;
 use frame_support::pallet_prelude::TypeInfo;
 
 // Here educe is used for Clone, Debug, and PartialEq to work around
 // a long-standing compiler bug https://github.com/rust-lang/rust/issues/26925
-#[derive(Educe, Encode, Decode, TypeInfo)]
+#[derive(Educe, Encode, Decode, DecodeWithMemTracking, TypeInfo)]
 #[educe(Clone, Debug, PartialEq)]
 #[scale_info(skip_type_params(T))]
 pub struct Proof<T> {

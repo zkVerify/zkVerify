@@ -58,49 +58,10 @@ use crate::parachains;
 pub struct ZKVWeight<T>(PhantomData<T>);
 
 impl<T: frame_system::Config> parachains :: slashing::WeightInfo for ZKVWeight<T> {
-    /// Storage: `Session::CurrentIndex` (r:1 w:0)
-    /// Proof: `Session::CurrentIndex` (`max_values`: Some(1), `max_size`: None, mode: `Measured`)
-    /// Storage: `Historical::HistoricalSessions` (r:1 w:0)
-    /// Proof: `Historical::HistoricalSessions` (`max_values`: None, `max_size`: Some(48), added: 2523, mode: `MaxEncodedLen`)
-    /// Storage: `ParasSlashing::UnappliedSlashes` (r:1 w:1)
-    /// Proof: `ParasSlashing::UnappliedSlashes` (`max_values`: None, `max_size`: None, mode: `Measured`)
-    /// Storage: `Offences::ConcurrentReportsIndex` (r:1 w:1)
-    /// Proof: `Offences::ConcurrentReportsIndex` (`max_values`: None, `max_size`: None, mode: `Measured`)
-    /// Storage: `Offences::Reports` (r:1 w:1)
-    /// Proof: `Offences::Reports` (`max_values`: None, `max_size`: None, mode: `Measured`)
-    /// Storage: `Staking::SlashRewardFraction` (r:1 w:0)
-    /// Proof: `Staking::SlashRewardFraction` (`max_values`: Some(1), `max_size`: Some(4), added: 499, mode: `MaxEncodedLen`)
-    /// Storage: `Staking::ActiveEra` (r:1 w:0)
-    /// Proof: `Staking::ActiveEra` (`max_values`: Some(1), `max_size`: Some(13), added: 508, mode: `MaxEncodedLen`)
-    /// Storage: `Staking::ErasStartSessionIndex` (r:1 w:0)
-    /// Proof: `Staking::ErasStartSessionIndex` (`max_values`: None, `max_size`: Some(16), added: 2491, mode: `MaxEncodedLen`)
-    /// Storage: `Staking::Invulnerables` (r:1 w:0)
-    /// Proof: `Staking::Invulnerables` (`max_values`: Some(1), `max_size`: None, mode: `Measured`)
-    /// Storage: `Staking::ValidatorSlashInEra` (r:1 w:1)
-    /// Proof: `Staking::ValidatorSlashInEra` (`max_values`: None, `max_size`: Some(72), added: 2547, mode: `MaxEncodedLen`)
-    /// Storage: `Staking::SlashingSpans` (r:1 w:1)
-    /// Proof: `Staking::SlashingSpans` (`max_values`: None, `max_size`: None, mode: `Measured`)
-    /// Storage: `Staking::SpanSlash` (r:1 w:1)
-    /// Proof: `Staking::SpanSlash` (`max_values`: None, `max_size`: Some(76), added: 2551, mode: `MaxEncodedLen`)
-    /// Storage: `Staking::DisabledValidators` (r:1 w:1)
-    /// Proof: `Staking::DisabledValidators` (`max_values`: Some(1), `max_size`: None, mode: `Measured`)
-    /// Storage: `Session::Validators` (r:1 w:0)
-    /// Proof: `Session::Validators` (`max_values`: Some(1), `max_size`: None, mode: `Measured`)
-    /// Storage: `Session::DisabledValidators` (r:1 w:1)
-    /// Proof: `Session::DisabledValidators` (`max_values`: Some(1), `max_size`: None, mode: `Measured`)
-    /// Storage: `Staking::UnappliedSlashes` (r:1 w:1)
-    /// Proof: `Staking::UnappliedSlashes` (`max_values`: None, `max_size`: None, mode: `Measured`)
-    /// The range of component `n` is `[4, 20]`.
-    fn report_dispute_lost(n: u32, ) -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `1424 + n * (32 ±0)`
-        //  Estimated: `4889 + n * (32 ±0)`
-        // Minimum execution time: 98_313_000 picoseconds.
-        Weight::from_parts(98_840_744, 4889)
-            // Standard Error: 7_403
-            .saturating_add(Weight::from_parts(322_420, 0).saturating_mul(n.into()))
-            .saturating_add(T::DbWeight::get().reads(16_u64))
-            .saturating_add(T::DbWeight::get().writes(9_u64))
-            .saturating_add(Weight::from_parts(0, 32).saturating_mul(n.into()))
+    fn report_dispute_lost_unsigned(_n: u32) -> Weight {
+        // Placeholder weight for report_dispute_lost_unsigned
+        Weight::from_parts(50_000_000, 4000)
+            .saturating_add(T::DbWeight::get().reads(4_u64))
+            .saturating_add(T::DbWeight::get().writes(2_u64))
     }
 }

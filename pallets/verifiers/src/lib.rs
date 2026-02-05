@@ -87,7 +87,7 @@ pub mod pallet {
 
     use alloc::borrow::Cow;
     use alloc::boxed::Box;
-    use codec::Encode;
+    use codec::{DecodeWithMemTracking, Encode};
     use core::default::Default;
     use core::fmt::Debug;
     #[cfg(feature = "runtime-benchmarks")]
@@ -118,10 +118,10 @@ pub mod pallet {
     pub struct Pallet<T, I = ()>(_);
 
     /// A complete Verification Key or its hash.
-    #[derive(Debug, Clone, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
+    #[derive(Debug, Clone, PartialEq, Encode, Decode, DecodeWithMemTracking, TypeInfo, MaxEncodedLen)]
     pub enum VkOrHash<K>
     where
-        K: Debug + Clone + PartialEq + Encode + Decode + TypeInfo + MaxEncodedLen,
+        K: Debug + Clone + PartialEq + Encode + Decode + DecodeWithMemTracking + TypeInfo + MaxEncodedLen,
     {
         /// The Vk hash
         Hash(H256),
@@ -131,7 +131,7 @@ pub mod pallet {
 
     impl<K> Default for VkOrHash<K>
     where
-        K: Debug + Clone + PartialEq + Encode + Decode + TypeInfo + MaxEncodedLen,
+        K: Debug + Clone + PartialEq + Encode + Decode + DecodeWithMemTracking + TypeInfo + MaxEncodedLen,
     {
         fn default() -> Self {
             VkOrHash::Hash(H256::default())
@@ -140,7 +140,7 @@ pub mod pallet {
 
     impl<K> VkOrHash<K>
     where
-        K: Debug + Clone + PartialEq + Encode + Decode + TypeInfo + MaxEncodedLen,
+        K: Debug + Clone + PartialEq + Encode + Decode + DecodeWithMemTracking + TypeInfo + MaxEncodedLen,
     {
         /// Take a verification key and return a `VkOrHash`
         pub fn from_vk(vk: K) -> Self {

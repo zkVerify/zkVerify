@@ -119,4 +119,11 @@ impl<T: frame_system::Config> frame_system_extensions::WeightInfo for ZKVWeight<
         // Minimum execution time: 2_244_000 picoseconds.
         Weight::from_parts(2_405_000, 0)
     }
+    fn weight_reclaim() -> Weight {
+        // Proof Size summary in bytes:
+        //  Measured:  `0`
+        //  Estimated: `0`
+        // Minimum execution time: 2_000_000 picoseconds.
+        Weight::from_parts(2_000_000, 0)
+    }
 }

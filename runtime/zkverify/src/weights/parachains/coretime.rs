@@ -110,4 +110,10 @@ impl<T: frame_system::Config> parachains :: coretime::WeightInfo for ZKVWeight<T
             .saturating_add(T::DbWeight::get().reads(1_u64))
             .saturating_add(T::DbWeight::get().writes(2_u64))
     }
+    fn credit_account() -> Weight {
+        // Placeholder weight for credit_account
+        Weight::from_parts(10_000_000, 2603)
+            .saturating_add(T::DbWeight::get().reads(1_u64))
+            .saturating_add(T::DbWeight::get().writes(1_u64))
+    }
 }

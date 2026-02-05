@@ -111,4 +111,8 @@ impl<T: frame_system::Config> pallet_bags_list::WeightInfo for ZKVWeight<T> {
             .saturating_add(T::DbWeight::get().reads(10_u64))
             .saturating_add(T::DbWeight::get().writes(6_u64))
     }
+    fn on_idle() -> Weight {
+        // Placeholder weight for on_idle
+        Weight::from_parts(1_000_000, 0)
+    }
 }

@@ -15,6 +15,7 @@
 
 //! Track configurations for governance.
 
+use alloc::borrow::Cow;
 use frame_election_provider_support::private::sp_arithmetic;
 
 const fn percent(x: i32) -> sp_arithmetic::FixedI64 {
@@ -26,7 +27,19 @@ use crate::{
     types::{BlockNumber, DAYS, HOURS, MINUTES},
     RuntimeOrigin,
 };
-use pallet_referenda::Curve;
+use pallet_referenda::{Curve, Track, TrackInfo};
+
+/// Helper to convert a string literal to a fixed-size byte array for track names
+const fn str_to_track_name<const N: usize>(s: &str) -> [u8; N] {
+    let bytes = s.as_bytes();
+    let mut result = [0u8; N];
+    let mut i = 0;
+    while i < bytes.len() && i < N {
+        result[i] = bytes[i];
+        i += 1;
+    }
+    result
+}
 
 const APP_ROOT: Curve = Curve::make_reciprocal(4, 28, percent(80), percent(50), percent(100));
 const SUP_ROOT: Curve = Curve::make_linear(28, 28, percent(0), percent(50));
@@ -37,12 +50,12 @@ const APP_MEDIUM_SPENDER: Curve = Curve::make_linear(23, 28, percent(50), percen
 const SUP_MEDIUM_SPENDER: Curve =
     Curve::make_reciprocal(16, 28, percent(1), percent(0), percent(50));
 
-const TRACKS_DATA: &[(u16, pallet_referenda::TrackInfo<Balance, BlockNumber>)] = &[
+const TRACKS_DATA: &[Track<u16, Balance, BlockNumber>] = &[
     #[cfg(any(feature = "runtime-benchmarks", test))]
-    (
-        0,
-        pallet_referenda::TrackInfo {
-            name: "root",
+    Track {
+        id: 0,
+        info: TrackInfo {
+            name: str_to_track_name::<25>("root"),
             max_deciding: 1,
             decision_deposit: 100 * THOUSANDS,
             prepare_period: 2 * HOURS,
@@ -52,11 +65,11 @@ const TRACKS_DATA: &[(u16, pallet_referenda::TrackInfo<Balance, BlockNumber>)] =
             min_approval: APP_ROOT,
             min_support: SUP_ROOT,
         },
-    ),
-    (
-        2,
-        pallet_referenda::TrackInfo {
-            name: "wish_for_change",
+    },
+    Track {
+        id: 2,
+        info: TrackInfo {
+            name: str_to_track_name::<25>("wish_for_change"),
             max_deciding: 10,
             decision_deposit: 20 * THOUSANDS,
             prepare_period: 2 * HOURS,
@@ -66,11 +79,11 @@ const TRACKS_DATA: &[(u16, pallet_referenda::TrackInfo<Balance, BlockNumber>)] =
             min_approval: APP_ROOT,
             min_support: SUP_ROOT,
         },
-    ),
-    (
-        20,
-        pallet_referenda::TrackInfo {
-            name: "referendum_canceller",
+    },
+    Track {
+        id: 20,
+        info: TrackInfo {
+            name: str_to_track_name::<25>("referendum_canceller"),
             max_deciding: 1_000,
             decision_deposit: 10 * THOUSANDS,
             prepare_period: 2 * HOURS,
@@ -80,11 +93,11 @@ const TRACKS_DATA: &[(u16, pallet_referenda::TrackInfo<Balance, BlockNumber>)] =
             min_approval: APP_REFERENDUM_CANCELLER,
             min_support: SUP_REFERENDUM_CANCELLER,
         },
-    ),
-    (
-        33,
-        pallet_referenda::TrackInfo {
-            name: "medium_spender",
+    },
+    Track {
+        id: 33,
+        info: TrackInfo {
+            name: str_to_track_name::<25>("medium_spender"),
             max_deciding: 50,
             decision_deposit: THOUSANDS,
             prepare_period: 4 * HOURS,
@@ -94,16 +107,18 @@ const TRACKS_DATA: &[(u16, pallet_referenda::TrackInfo<Balance, BlockNumber>)] =
             min_approval: APP_MEDIUM_SPENDER,
             min_support: SUP_MEDIUM_SPENDER,
         },
-    ),
+    },
 ];
 
 pub struct TracksInfo;
 impl pallet_referenda::TracksInfo<Balance, BlockNumber> for TracksInfo {
     type Id = u16;
     type RuntimeOrigin = <RuntimeOrigin as frame_support::traits::OriginTrait>::PalletsOrigin;
-    fn tracks() -> &'static [(Self::Id, pallet_referenda::TrackInfo<Balance, BlockNumber>)] {
-        TRACKS_DATA
+
+    fn tracks() -> impl Iterator<Item = Cow<'static, Track<Self::Id, Balance, BlockNumber>>> {
+        TRACKS_DATA.iter().map(Cow::Borrowed)
     }
+
     fn track_for(id: &Self::RuntimeOrigin) -> Result<Self::Id, ()> {
         if cfg!(any(feature = "runtime-benchmarks", test)) {
             match frame_system::RawOrigin::try_from(id.clone()) {
@@ -123,5 +138,26 @@ impl pallet_referenda::TracksInfo<Balance, BlockNumber> for TracksInfo {
             Err(())
         }
     }
+
+    fn track_ids() -> impl Iterator<Item = Self::Id> {
+        TRACKS_DATA.iter().map(|t| t.id)
+    }
+
+    fn info(id: Self::Id) -> Option<Cow<'static, TrackInfo<Balance, BlockNumber>>> {
+        TRACKS_DATA.iter().find(|t| t.id == id).map(|t| Cow::Borrowed(&t.info))
+    }
+
+    fn check_integrity() -> Result<(), &'static str> {
+        // Verify tracks are sorted by id
+        let mut last_id = None;
+        for track in TRACKS_DATA {
+            if let Some(prev) = last_id {
+                if track.id <= prev {
+                    return Err("Tracks must be sorted by id");
+                }
+            }
+            last_id = Some(track.id);
+        }
+        Ok(())
+    }
 }
-pallet_referenda::impl_tracksinfo_get!(TracksInfo, Balance, BlockNumber);

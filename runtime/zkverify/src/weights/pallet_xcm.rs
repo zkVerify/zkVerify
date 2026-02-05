@@ -323,4 +323,20 @@ impl<T: frame_system::Config> pallet_xcm::WeightInfo for ZKVWeight<T> {
             .saturating_add(T::DbWeight::get().reads(2_u64))
             .saturating_add(T::DbWeight::get().writes(1_u64))
     }
+    fn add_authorized_alias() -> Weight {
+        // Placeholder weight for add_authorized_alias
+        Weight::from_parts(10_000_000, 3507)
+            .saturating_add(T::DbWeight::get().reads(1_u64))
+            .saturating_add(T::DbWeight::get().writes(1_u64))
+    }
+    fn remove_authorized_alias() -> Weight {
+        // Placeholder weight for remove_authorized_alias
+        Weight::from_parts(10_000_000, 3507)
+            .saturating_add(T::DbWeight::get().reads(1_u64))
+            .saturating_add(T::DbWeight::get().writes(1_u64))
+    }
+    fn weigh_message() -> Weight {
+        // Placeholder weight for weigh_message
+        Weight::from_parts(1_000_000, 0)
+    }
 }

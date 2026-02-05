@@ -13,12 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use sp_runtime_interface::pass_by::PassFatPointerAndReadWrite;
 use sp_runtime_interface::runtime_interface;
 
 use risc0_verifier::poseidon2_injection::{BabyBearElem, POSEIDON2_CELLS};
 
 /// Define the byte slice for poseidon2 mix call argument type.
 pub type Poseidon2ArgBytes = [u8; (u32::BITS as usize / u8::BITS as usize) * POSEIDON2_CELLS];
+/// The expected size of the Poseidon2ArgBytes array.
+pub const POSEIDON2_ARG_BYTES_SIZE: usize =
+    (u32::BITS as usize / u8::BITS as usize) * POSEIDON2_CELLS;
 /// Define the `BabyBearElem` slice for poseidon2 mix call argument type.
 type Poseidon2Slice = [BabyBearElem; POSEIDON2_CELLS];
 
@@ -50,9 +54,10 @@ impl<'a> Poseidon2Mix<'a> {
     /// that can be just called from a `Poseidon2Mix` struct.
     /// The `Poseidon2Mix` struct can be built just from a mutable slice of `BabyBearElem`
     /// with the correct size.
-    fn from_mut_bytes(bytes: &mut Poseidon2ArgBytes) -> Self {
+    fn from_mut_bytes(bytes: &mut [u8]) -> Self {
+        assert_eq!(bytes.len(), POSEIDON2_ARG_BYTES_SIZE);
         Self::new(unsafe {
-            core::mem::transmute::<&mut Poseidon2ArgBytes, &mut Poseidon2Slice>(bytes)
+            &mut *(bytes.as_mut_ptr() as *mut Poseidon2Slice)
         })
     }
 
@@ -69,7 +74,7 @@ impl<'a> Poseidon2Mix<'a> {
 
 #[runtime_interface]
 pub trait Risc0Accelerate {
-    fn poseidon2_mix(bytes: &mut Poseidon2ArgBytes) {
+    fn poseidon2_mix(bytes: PassFatPointerAndReadWrite<&mut [u8]>) {
         let cells = Poseidon2Mix::from_mut_bytes(bytes);
         risc0_verifier::poseidon2_injection::poseidon2_mix(cells.inner);
     }
