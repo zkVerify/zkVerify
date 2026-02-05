@@ -383,8 +383,8 @@ mod parachains {
         use disputes::{slashing, slashing::WeightInfo};
 
         assert_eq!(
-            <<Runtime as slashing::Config>::WeightInfo as WeightInfo>::report_dispute_lost(12),
-            crate::weights::parachains::slashing::ZKVWeight::<Runtime>::report_dispute_lost(12)
+            <<Runtime as slashing::Config>::WeightInfo as WeightInfo>::report_dispute_lost_unsigned(12),
+            crate::weights::parachains::slashing::ZKVWeight::<Runtime>::report_dispute_lost_unsigned(12)
         )
     }
 

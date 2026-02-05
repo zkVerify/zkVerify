@@ -581,7 +581,6 @@ where
 }
 
 impl pallet_aggregate::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
     type RuntimeHoldReason = RuntimeHoldReason;
     type AggregationSize = AggregateMaxSize;
     type MaxPendingPublishQueueSize = AggregateQueueSize;
@@ -629,7 +628,6 @@ parameter_types! {
 }
 
 impl pallet_claim::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
     type PalletId = ClaimPalletId;
     type ManagerOrigin = EnsureRoot<AccountId>;
     type Currency = Balances;
@@ -646,7 +644,6 @@ parameter_types! {
 }
 
 impl pallet_token_claim::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
     type PalletId = TokenClaimPalletId;
     type ManagerOrigin = EnsureRoot<AccountId>;
     type Currency = Balances;
@@ -911,6 +908,8 @@ impl pallet_identity::Config for Runtime {
     type MaxSuffixLength = MaxSuffixLength;
     type MaxUsernameLength = MaxUsernameLength;
     type WeightInfo = weights::pallet_identity::ZKVWeight<Runtime>;
+    #[cfg(feature = "runtime-benchmarks")]
+    type BenchmarkHelper = ();
 }
 
 mod vk_registration_parameters {
@@ -956,7 +955,6 @@ impl pallet_ezkl_verifier::Config for Runtime {
 pub type EzklVerifier = pallet_ezkl_verifier::Ezkl<Runtime>;
 
 impl pallet_verifiers::Config<EzklVerifier> for Runtime {
-    type RuntimeEvent = RuntimeEvent;
     type OnProofVerified = Aggregate;
     type WeightInfo =
         pallet_ezkl_verifier::EzklWeight<weights::pallet_ezkl_verifier::ZKVWeight<Runtime>>;
@@ -966,7 +964,6 @@ impl pallet_verifiers::Config<EzklVerifier> for Runtime {
 }
 
 impl pallet_verifiers::Config<pallet_fflonk_verifier::Fflonk> for Runtime {
-    type RuntimeEvent = RuntimeEvent;
     type OnProofVerified = Aggregate;
     type Ticket = VkRegistrationHoldConsideration;
     type WeightInfo =
@@ -991,7 +988,6 @@ const_assert!(
 );
 
 impl pallet_verifiers::Config<pallet_groth16_verifier::Groth16<Runtime>> for Runtime {
-    type RuntimeEvent = RuntimeEvent;
     type OnProofVerified = Aggregate;
     type Ticket = VkRegistrationHoldConsideration;
     type WeightInfo = pallet_groth16_verifier::Groth16Weight<
@@ -1011,7 +1007,6 @@ impl pallet_sp1_verifier::Config for Runtime {
 }
 
 impl pallet_verifiers::Config<pallet_sp1_verifier::Sp1<Runtime>> for Runtime {
-    type RuntimeEvent = RuntimeEvent;
     type OnProofVerified = Aggregate;
     type Ticket = VkRegistrationHoldConsideration;
     type WeightInfo =
@@ -1036,7 +1031,6 @@ impl pallet_risc0_verifier::Config for Runtime {
 }
 
 impl pallet_verifiers::Config<pallet_risc0_verifier::Risc0<Runtime>> for Runtime {
-    type RuntimeEvent = RuntimeEvent;
     type OnProofVerified = Aggregate;
     type Ticket = VkRegistrationHoldConsideration;
     type WeightInfo =
@@ -1056,7 +1050,6 @@ impl pallet_ultrahonk_verifier::Config for Runtime {
 pub type UltrahonkVerifier = pallet_ultrahonk_verifier::Ultrahonk<Runtime>;
 
 impl pallet_verifiers::Config<UltrahonkVerifier> for Runtime {
-    type RuntimeEvent = RuntimeEvent;
     type OnProofVerified = Aggregate;
     type Ticket = VkRegistrationHoldConsideration;
     type WeightInfo = pallet_ultrahonk_verifier::UltrahonkWeight<
@@ -1077,7 +1070,6 @@ impl pallet_ultraplonk_verifier::Config for Runtime {
 pub type UltraplonkVerifier = pallet_ultraplonk_verifier::Ultraplonk<Runtime>;
 
 impl pallet_verifiers::Config<UltraplonkVerifier> for Runtime {
-    type RuntimeEvent = RuntimeEvent;
     type OnProofVerified = Aggregate;
     type Ticket = VkRegistrationHoldConsideration;
     type WeightInfo = pallet_ultraplonk_verifier::UltraplonkWeight<
@@ -1101,7 +1093,6 @@ impl pallet_plonky2_verifier::Config for Runtime {
 }
 
 impl pallet_verifiers::Config<pallet_plonky2_verifier::Plonky2<Runtime>> for Runtime {
-    type RuntimeEvent = RuntimeEvent;
     type OnProofVerified = Aggregate;
     type Ticket = VkRegistrationHoldConsideration;
     type WeightInfo = pallet_plonky2_verifier::Plonky2Weight<
@@ -1849,7 +1840,7 @@ impl_runtime_apis! {
             Vec<frame_benchmarking::BenchmarkList>,
             Vec<frame_support::traits::StorageInfo>,
         ) {
-            use frame_benchmarking::{baseline, Benchmarking, BenchmarkList};
+            use frame_benchmarking::{baseline, BenchmarkList};
             use frame_support::traits::StorageInfoTrait;
             use frame_system_benchmarking::Pallet as SystemBench;
             use frame_system_benchmarking::extensions::Pallet as SystemExtensionsBench;
@@ -1885,7 +1876,7 @@ impl_runtime_apis! {
         fn dispatch_benchmark(
             config: frame_benchmarking::BenchmarkConfig
         ) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, alloc::string::String> {
-            use frame_benchmarking::{baseline, Benchmarking, BenchmarkBatch};
+            use frame_benchmarking::{baseline, BenchmarkBatch};
             use sp_storage::TrackedStorageKey;
             use frame_system_benchmarking::Pallet as SystemBench;
             use frame_system_benchmarking::extensions::Pallet as SystemExtensionsBench;
@@ -2044,11 +2035,12 @@ impl_runtime_apis! {
                         Ok((origin, ticket, assets))
                     }
 
-                    fn fee_asset() -> Result<Asset, BenchmarkError> {
-                        Ok(Asset {
+                    fn worst_case_for_trader() -> Result<(Asset, xcm::v3::WeightLimit), BenchmarkError> {
+                        let fee_asset = Asset {
                             id: xcm_config::FeeAssetId::get(),
                             fun: Fungible(currency::MILLIONS),
-                        })
+                        };
+                        Ok((fee_asset, xcm::v3::WeightLimit::Unlimited))
                     }
 
                     fn unlockable_asset() -> Result<(Location, Location, Asset), BenchmarkError> {
@@ -2091,7 +2083,7 @@ impl_runtime_apis! {
         }
 
         fn execute_block(
-            block: Block,
+            block: LazyBlock,
             state_root_check: bool,
             signature_check: bool,
             select: frame_try_runtime::TryStateSelect,

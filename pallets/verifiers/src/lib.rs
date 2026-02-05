@@ -155,13 +155,11 @@ pub mod pallet {
 
     /// Configure the pallet by specifying the parameters and types on which it depends.
     #[pallet::config]
-    pub trait Config<I: 'static = ()>: frame_system::Config + crate::common::Config
+    pub trait Config<I: 'static = ()>:
+        frame_system::Config<RuntimeEvent: From<Event<Self, I>>> + crate::common::Config
     where
         I: Verifier,
     {
-        /// Because this pallet emits events, it depends on the runtime's definition of an event.
-        type RuntimeEvent: From<Event<Self, I>>
-            + IsType<<Self as frame_system::Config>::RuntimeEvent>;
         /// Proof verified call back
         type OnProofVerified: OnProofVerified<Self::AccountId>;
         /// A means of providing some cost while data is stored on-chain.
