@@ -23,7 +23,7 @@ use sp_core::traits::SpawnNamed;
 use std::time::Duration;
 
 use polkadot_availability_distribution::IncomingRequestReceivers;
-use polkadot_node_core_approval_voting::{Config as ApprovalVotingConfig, RealAssignmentCriteria};
+use polkadot_node_core_approval_voting::Config as ApprovalVotingConfig;
 use polkadot_node_core_av_store::Config as AvailabilityConfig;
 use polkadot_node_core_candidate_validation::Config as CandidateValidationConfig;
 use polkadot_node_core_chain_selection::Config as ChainSelectionConfig;
@@ -209,9 +209,9 @@ pub fn validator_overseer_builder<Spawner, RuntimeClient>(
         ChainApiSubsystem<RuntimeClient>,
         CollationGenerationSubsystem,
         CollatorProtocolSubsystem,
-        ApprovalDistributionSubsystem,
-        ApprovalVotingSubsystem,
         DummySubsystem,
+        DummySubsystem,
+        ApprovalVotingParallelSubsystem,
         GossipSupportSubsystem<AuthorityDiscoveryService>,
         DisputeCoordinatorSubsystem,
         DisputeDistributionSubsystem<AuthorityDiscoveryService>,
@@ -331,20 +331,17 @@ where
             candidate_req_v2_receiver,
             Metrics::register(registry)?,
         ))
-        .approval_distribution(ApprovalDistributionSubsystem::new(
-            approval_voting_parallel_metrics.approval_distribution_metrics(),
-            approval_voting_config.slot_duration_millis,
-            Arc::new(RealAssignmentCriteria {}),
-        ))
-        .approval_voting(ApprovalVotingSubsystem::with_config(
+        .approval_distribution(DummySubsystem)
+        .approval_voting(DummySubsystem)
+        .approval_voting_parallel(ApprovalVotingParallelSubsystem::with_config(
             approval_voting_config,
             parachains_db.clone(),
             keystore.clone(),
             Box::new(sync_service.clone()),
-            approval_voting_parallel_metrics.approval_voting_metrics(),
-            Arc::new(spawner.clone()),
+            approval_voting_parallel_metrics,
+            spawner.clone(),
+            overseer_message_channel_capacity_override,
         ))
-        .approval_voting_parallel(DummySubsystem)
         .gossip_support(GossipSupportSubsystem::new(
             keystore.clone(),
             authority_discovery_service.clone(),
