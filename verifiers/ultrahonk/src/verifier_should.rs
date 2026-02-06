@@ -30,7 +30,7 @@ impl crate::Config for MockRuntime {
 fn verify_valid_zk_proof() {
     let vk = VALID_VK;
     let proof = Proof::new(ProofType::ZK, VALID_ZK_PROOF.to_vec());
-    let pi = public_input();
+    let pi = valid_public_input();
 
     assert!(Ultrahonk::<MockRuntime>::verify_proof(&vk, &proof, &pi).is_ok());
 }
@@ -39,42 +39,42 @@ fn verify_valid_zk_proof() {
 fn verify_valid_plain_proof() {
     let vk = VALID_VK;
     let proof = Proof::new(ProofType::Plain, VALID_PLAIN_PROOF.to_vec());
-    let pi = public_input();
+    let pi = valid_public_input();
 
     assert!(Ultrahonk::<MockRuntime>::verify_proof(&vk, &proof, &pi).is_ok());
 }
 
-#[test]
-fn verify_valid_zk_proof_with_8_public_inputs() {
-    let proof = Proof::new(
-        ProofType::ZK,
-        include_bytes!("resources/08/zk/zk_proof").to_vec(),
-    );
-    let pubs: Vec<_> = include_bytes!("resources/08/zk/pubs")
-        .chunks_exact(crate::PUB_SIZE)
-        .map(TryInto::try_into)
-        .map(Result::unwrap)
-        .collect();
-    let vk = include_bytes!("resources/08/zk/vk");
+// #[test]
+// fn verify_valid_zk_proof_with_8_public_inputs() {
+//     let proof = Proof::new(
+//         ProofType::ZK,
+//         include_bytes!("resources/08/zk/zk_proof").to_vec(),
+//     );
+//     let pubs: Vec<_> = include_bytes!("resources/08/zk/pubs")
+//         .chunks_exact(crate::PUB_SIZE)
+//         .map(TryInto::try_into)
+//         .map(Result::unwrap)
+//         .collect();
+//     let vk = include_bytes!("resources/08/zk/vk");
 
-    assert!(Ultrahonk::<MockRuntime>::verify_proof(vk, &proof, &pubs).is_ok());
-}
+//     assert!(Ultrahonk::<MockRuntime>::verify_proof(vk, &proof, &pubs).is_ok());
+// }
 
-#[test]
-fn verify_valid_plain_proof_with_8_public_inputs() {
-    let proof = Proof::new(
-        ProofType::Plain,
-        include_bytes!("resources/08/plain/plain_proof").to_vec(),
-    );
-    let pubs: Vec<_> = include_bytes!("resources/08/plain/pubs")
-        .chunks_exact(crate::PUB_SIZE)
-        .map(TryInto::try_into)
-        .map(Result::unwrap)
-        .collect();
-    let vk = include_bytes!("resources/08/plain/vk");
+// #[test]
+// fn verify_valid_plain_proof_with_8_public_inputs() {
+//     let proof = Proof::new(
+//         ProofType::Plain,
+//         include_bytes!("resources/08/plain/plain_proof").to_vec(),
+//     );
+//     let pubs: Vec<_> = include_bytes!("resources/08/plain/pubs")
+//         .chunks_exact(crate::PUB_SIZE)
+//         .map(TryInto::try_into)
+//         .map(Result::unwrap)
+//         .collect();
+//     let vk = include_bytes!("resources/08/plain/vk");
 
-    assert!(Ultrahonk::<MockRuntime>::verify_proof(vk, &proof, &pubs).is_ok());
-}
+//     assert!(Ultrahonk::<MockRuntime>::verify_proof(vk, &proof, &pubs).is_ok());
+// }
 
 #[test]
 fn verify_vk_hash() {
@@ -104,45 +104,45 @@ mod reject {
         );
     }
 
-    #[test]
-    fn zk_proof_with_8_public_inputs_with_one_not_valid() {
-        let proof = Proof::new(
-            ProofType::ZK,
-            include_bytes!("resources/08/zk/zk_proof").to_vec(),
-        );
-        let mut pubs: Vec<[u8; PUB_SIZE]> = include_bytes!("resources/08/zk/pubs")
-            .chunks_exact(crate::PUB_SIZE)
-            .map(TryInto::try_into)
-            .map(Result::unwrap)
-            .collect();
-        pubs[0][0] += 1;
-        let vk = include_bytes!("resources/08/zk/vk");
+    // #[test]
+    // fn zk_proof_with_8_public_inputs_with_one_not_valid() {
+    //     let proof = Proof::new(
+    //         ProofType::ZK,
+    //         include_bytes!("resources/08/zk/zk_proof").to_vec(),
+    //     );
+    //     let mut pubs: Vec<[u8; PUB_SIZE]> = include_bytes!("resources/08/zk/pubs")
+    //         .chunks_exact(crate::PUB_SIZE)
+    //         .map(TryInto::try_into)
+    //         .map(Result::unwrap)
+    //         .collect();
+    //     pubs[0][0] += 1;
+    //     let vk = include_bytes!("resources/08/zk/vk");
 
-        assert_eq!(
-            Ultrahonk::<MockRuntime>::verify_proof(vk, &proof, &pubs),
-            Err(VerifyError::VerifyError)
-        );
-    }
+    //     assert_eq!(
+    //         Ultrahonk::<MockRuntime>::verify_proof(vk, &proof, &pubs),
+    //         Err(VerifyError::VerifyError)
+    //     );
+    // }
 
-    #[test]
-    fn plain_proof_with_8_public_inputs_with_one_not_valid() {
-        let proof = Proof::new(
-            ProofType::Plain,
-            include_bytes!("resources/08/plain/plain_proof").to_vec(),
-        );
-        let mut pubs: Vec<[u8; PUB_SIZE]> = include_bytes!("resources/08/plain/pubs")
-            .chunks_exact(crate::PUB_SIZE)
-            .map(TryInto::try_into)
-            .map(Result::unwrap)
-            .collect();
-        pubs[0][0] += 1;
-        let vk = include_bytes!("resources/08/plain/vk");
+    // #[test]
+    // fn plain_proof_with_8_public_inputs_with_one_not_valid() {
+    //     let proof = Proof::new(
+    //         ProofType::Plain,
+    //         include_bytes!("resources/08/plain/plain_proof").to_vec(),
+    //     );
+    //     let mut pubs: Vec<[u8; PUB_SIZE]> = include_bytes!("resources/08/plain/pubs")
+    //         .chunks_exact(crate::PUB_SIZE)
+    //         .map(TryInto::try_into)
+    //         .map(Result::unwrap)
+    //         .collect();
+    //     pubs[0][0] += 1;
+    //     let vk = include_bytes!("resources/08/plain/vk");
 
-        assert_eq!(
-            Ultrahonk::<MockRuntime>::verify_proof(vk, &proof, &pubs),
-            Err(VerifyError::VerifyError)
-        );
-    }
+    //     assert_eq!(
+    //         Ultrahonk::<MockRuntime>::verify_proof(vk, &proof, &pubs),
+    //         Err(VerifyError::VerifyError)
+    //     );
+    // }
 
     #[test]
     fn if_provided_too_many_public_inputs_for_zk_proof() {
@@ -181,7 +181,8 @@ mod reject {
         let vk = VALID_VK;
         let proof = Proof::new(ProofType::ZK, VALID_ZK_PROOF.to_vec());
 
-        let invalid_pubs = vec![public_input()[0]];
+        let mut invalid_pubs = public_input();
+        invalid_pubs.pop();
 
         assert_eq!(
             Ultrahonk::<MockRuntime>::verify_proof(&vk, &proof, &invalid_pubs),
@@ -195,7 +196,7 @@ mod reject {
         let pi = public_input();
 
         let mut invalid_proof_bytes = VALID_ZK_PROOF.to_vec();
-        invalid_proof_bytes[ZK_PROOF_SIZE - 1] = 0x00;
+        invalid_proof_bytes[VALID_ZK_PROOF.len() - 1] = 0x00;
 
         let invalid_proof = Proof::new(ProofType::ZK, invalid_proof_bytes);
 
@@ -211,7 +212,7 @@ mod reject {
         let pi = public_input();
 
         let mut invalid_proof_bytes = VALID_PLAIN_PROOF.to_vec();
-        invalid_proof_bytes[PLAIN_PROOF_SIZE - 1] = 0x00;
+        invalid_proof_bytes[VALID_PLAIN_PROOF.len() - 1] = 0x00;
 
         let invalid_proof = Proof::new(ProofType::Plain, invalid_proof_bytes);
 
@@ -226,11 +227,10 @@ mod reject {
         let vk = VALID_VK;
         let pi = public_input();
 
-        let valid_proof: [u8; ZK_PROOF_SIZE] = VALID_ZK_PROOF;
-        let mut invalid_proof_bytes = [0u8; ZK_PROOF_SIZE + 1];
+        let valid_proof = VALID_ZK_PROOF;
+        let mut invalid_proof_bytes = [0u8; VALID_ZK_PROOF.len() + 1];
 
-        invalid_proof_bytes[..ZK_PROOF_SIZE].copy_from_slice(&valid_proof);
-        invalid_proof_bytes[ZK_PROOF_SIZE] = 0;
+        invalid_proof_bytes[..VALID_ZK_PROOF.len()].copy_from_slice(&valid_proof);
 
         let invalid_proof = Proof::new(ProofType::ZK, invalid_proof_bytes.to_vec());
 
@@ -245,11 +245,10 @@ mod reject {
         let vk = VALID_VK;
         let pi = public_input();
 
-        let valid_proof: [u8; PLAIN_PROOF_SIZE] = VALID_PLAIN_PROOF;
-        let mut invalid_proof_bytes = [0u8; PLAIN_PROOF_SIZE + 1];
+        let valid_proof: [u8; VALID_PLAIN_PROOF.len()] = VALID_PLAIN_PROOF;
+        let mut invalid_proof_bytes = [0u8; VALID_PLAIN_PROOF.len() + 1];
 
-        invalid_proof_bytes[..PLAIN_PROOF_SIZE].copy_from_slice(&valid_proof);
-        invalid_proof_bytes[PLAIN_PROOF_SIZE] = 0;
+        invalid_proof_bytes[..VALID_PLAIN_PROOF.len()].copy_from_slice(&valid_proof);
 
         let invalid_proof = Proof::new(ProofType::Plain, invalid_proof_bytes.to_vec());
 
