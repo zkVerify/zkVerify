@@ -5,6 +5,8 @@ version = "24.0.0"
 authors.workspace = true
 edition.workspace = true
 license = "GPL-3.0-only"
+homepage.workspace = true
+repository.workspace = true
 
 [lints]
 workspace = true
@@ -15,12 +17,13 @@ native = { workspace = true, default-features = true }
 
 cpu-time = { workspace = true }
 futures = { workspace = true }
-tracing-gum = { version = "23.0.0" }
+gum.default-features = true
+gum.workspace = true
 libc = { workspace = true }
 nix = { features = ["resource", "sched"], workspace = true }
 thiserror = { workspace = true }
 
-parity-scale-codec = { version = "3.6.1", default-features = false, features = ["derive"] }
+codec = { features = ["derive"], workspace = true }
 polkadot-node-primitives.default-features = true
 polkadot-node-primitives.workspace = true
 polkadot-parachain-primitives.default-features = true

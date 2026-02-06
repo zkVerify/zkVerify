@@ -1,0 +1,33 @@
+diff -ruN '--exclude=*.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' /tmp/polkadot-sdk-upstream/polkadot/node/core/pvf/common/Cargo.toml common/Cargo.toml
+--- /tmp/polkadot-sdk-upstream/polkadot/node/core/pvf/common/Cargo.toml	2026-02-06 19:59:33.422369123 +0100
++++ common/Cargo.toml	2026-02-06 21:06:22.211591583 +0100
+@@ -4,7 +4,7 @@
+ version = "24.0.0"
+ authors.workspace = true
+ edition.workspace = true
+-license.workspace = true
++license = "GPL-3.0-only"
+ homepage.workspace = true
+ repository.workspace = true
+ 
+@@ -12,6 +12,9 @@
+ workspace = true
+ 
+ [dependencies]
++# zkVerify customization: native host functions for proof verification
++native = { workspace = true, default-features = true }
++
+ cpu-time = { workspace = true }
+ futures = { workspace = true }
+ gum.default-features = true
+diff -ruN '--exclude=*.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' /tmp/polkadot-sdk-upstream/polkadot/node/core/pvf/common/src/executor_interface.rs common/src/executor_interface.rs
+--- /tmp/polkadot-sdk-upstream/polkadot/node/core/pvf/common/src/executor_interface.rs	2026-02-06 19:59:33.422476600 +0100
++++ common/src/executor_interface.rs	2026-02-06 20:20:20.695736008 +0100
+@@ -208,6 +208,7 @@
+ 	sp_io::allocator::HostFunctions,
+ 	sp_io::logging::HostFunctions,
+ 	sp_io::trie::HostFunctions,
++	native::HLNativeHostFunctions, // zkVerify customization: native host functions for proof verification
+ );
+ 
+ /// The validation externalities that will panic on any storage related access. (PVFs should not

@@ -32,7 +32,7 @@ pub use sp_tracing;
 
 const LOG_TARGET: &str = "parachain::pvf-common";
 
-use parity_scale_codec::{Decode, Encode};
+use codec::{Decode, Encode};
 use sp_core::H256;
 use std::{
 	io::{self, Read, Write},

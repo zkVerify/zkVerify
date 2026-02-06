@@ -15,7 +15,7 @@
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
 use crate::ArtifactChecksum;
-use parity_scale_codec::{Decode, Encode};
+use codec::{Decode, Encode};
 use std::path::PathBuf;
 
 /// Result from prepare worker if successful.

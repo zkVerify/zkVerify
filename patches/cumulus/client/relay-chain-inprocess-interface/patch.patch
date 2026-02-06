@@ -1,0 +1,231 @@
+diff -ruN '--exclude=*.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' /tmp/polkadot-sdk-upstream/cumulus/client/relay-chain-inprocess-interface/Cargo.toml relay-chain-inprocess-interface/Cargo.toml
+--- /tmp/polkadot-sdk-upstream/cumulus/client/relay-chain-inprocess-interface/Cargo.toml	2026-02-06 19:59:33.421610081 +0100
++++ relay-chain-inprocess-interface/Cargo.toml	2026-02-06 21:36:30.422271508 +0100
+@@ -14,19 +14,18 @@
+ [dependencies]
+ async-channel = { workspace = true }
+ async-trait = { workspace = true }
+-cumulus-client-bootnodes.default-features = true
+-cumulus-client-bootnodes.workspace = true
+ cumulus-primitives-core.default-features = true
+ cumulus-primitives-core.workspace = true
+ cumulus-relay-chain-interface.default-features = true
+ cumulus-relay-chain-interface.workspace = true
+ futures = { workspace = true }
+ futures-timer = { workspace = true }
+-polkadot-cli = { features = ["cli"], workspace = true }
+ polkadot-primitives.default-features = true
+ polkadot-primitives.workspace = true
+-polkadot-service.default-features = true
+-polkadot-service.workspace = true
++# zkVerify customization: use zkv-cli and zkv-service instead of polkadot-cli and polkadot-service
++zkv-cli = { workspace = true, features = ["cli"] }
++service.default-features = true
++service.workspace = true
+ sc-cli.default-features = false
+ sc-cli.workspace = true
+ sc-client-api.default-features = true
+@@ -51,9 +50,8 @@
+ sp-state-machine.workspace = true
+ 
+ [dev-dependencies]
+-# Substrate
+ sp-keyring = { default-features = true, workspace = true }
+-
+-# Polkadot
++polkadot-primitives = { workspace = true, default-features = true }
+ metered = { features = ["futures_channel"], workspace = true }
+-polkadot-test-client = { workspace = true }
++# zkVerify customization: use zkv test-client instead of polkadot-test-client
++test-client = { path = "../../../../relay-node/test/client" }
+diff -ruN '--exclude=*.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' /tmp/polkadot-sdk-upstream/cumulus/client/relay-chain-inprocess-interface/src/lib.rs relay-chain-inprocess-interface/src/lib.rs
+--- /tmp/polkadot-sdk-upstream/cumulus/client/relay-chain-inprocess-interface/src/lib.rs	2026-02-06 19:59:33.421676961 +0100
++++ relay-chain-inprocess-interface/src/lib.rs	2026-02-06 21:37:32.508792638 +0100
+@@ -15,15 +15,19 @@
+ // You should have received a copy of the GNU General Public License
+ // along with Cumulus. If not, see <https://www.gnu.org/licenses/>.
+ 
++// From rust 1.90.0 `RelayChainResult<(Arc<(dyn RelayChainInterface + 'static)>, Option<CollatorPair>)>`
++// become a lint warning due the `unused_parens`. That is the less invasive way to avoid it without
++// putting it in the middle of the code.
++#![allow(unused_parens)]
++
+ use std::{
+-	collections::{BTreeMap, HashSet, VecDeque},
++	collections::{BTreeMap, VecDeque},
+ 	pin::Pin,
+ 	sync::Arc,
+ 	time::Duration,
+ };
+ 
+ use async_trait::async_trait;
+-use cumulus_client_bootnodes::bootnode_request_response_config;
+ use cumulus_primitives_core::{
+ 	relay_chain::{
+ 		runtime_api::ParachainHost, Block as PBlock, BlockId, BlockNumber,
+@@ -36,9 +40,9 @@
+ use cumulus_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayChainResult};
+ use futures::{FutureExt, Stream, StreamExt};
+ use polkadot_primitives::CandidateEvent;
+-use polkadot_service::{
+-	builder::PolkadotServiceBuilder, CollatorOverseerGen, CollatorPair, Configuration, FullBackend,
+-	FullClient, Handle, NewFull, NewFullParams, TaskManager,
++// zkVerify customization: use zkv-service instead of polkadot-service
++use service::{
++	CollatorPair, Configuration, FullBackend, FullClient, Handle, NewFull, TaskManager,
+ };
+ use sc_cli::{RuntimeVersion, SubstrateCli};
+ use sc_client_api::{
+@@ -46,9 +50,8 @@
+ 	StorageProof, TrieCacheContext,
+ };
+ use sc_network::{
+-	config::NetworkBackendType,
+ 	request_responses::IncomingRequest,
+-	service::traits::{NetworkBackend, NetworkService},
++	service::traits::NetworkService,
+ };
+ use sc_telemetry::TelemetryWorkerHandle;
+ use sp_api::{CallApiAt, CallApiAtParams, CallContext, ProvideRuntimeApi};
+@@ -359,24 +362,8 @@
+ 	Ok(BlockCheckStatus::Unknown(listener))
+ }
+ 
+-/// Build Polkadot full node with parachain bootnode request-response protocol.
+-fn build_polkadot_with_paranode_protocol<Network>(
+-	config: Configuration,
+-	params: NewFullParams<CollatorOverseerGen>,
+-) -> Result<(NewFull, async_channel::Receiver<IncomingRequest>), polkadot_service::Error>
+-where
+-	Network: NetworkBackend<PBlock, PHash>,
+-{
+-	let fork_id = config.chain_spec.fork_id().map(ToString::to_string);
+-	let mut polkadot_builder = PolkadotServiceBuilder::<_, Network>::new(config, params)?;
+-	let (config, request_receiver) = bootnode_request_response_config::<_, _, Network>(
+-		polkadot_builder.genesis_hash(),
+-		fork_id.as_deref(),
+-	);
+-	polkadot_builder.add_extra_request_response_protocol(config);
+-
+-	Ok((polkadot_builder.build()?, request_receiver))
+-}
++// zkVerify customization: simplified build_polkadot_full_node that uses service::build_full
++// directly instead of PolkadotServiceBuilder (which is not available in zkv-service).
+ 
+ /// Build the Polkadot full node using the given `config`.
+ #[sc_tracing::logging::prefix_logs_with("Relaychain")]
+@@ -385,52 +372,38 @@
+ 	parachain_config: &Configuration,
+ 	telemetry_worker_handle: Option<TelemetryWorkerHandle>,
+ 	hwbench: Option<sc_sysinfo::HwBench>,
+-) -> Result<
+-	(NewFull, Option<CollatorPair>, async_channel::Receiver<IncomingRequest>),
+-	polkadot_service::Error,
+-> {
++) -> Result<(NewFull, Option<CollatorPair>), service::Error> {
+ 	let (is_parachain_node, maybe_collator_key) = if parachain_config.role.is_authority() {
+ 		let collator_key = CollatorPair::generate().0;
+-		(polkadot_service::IsParachainNode::Collator(collator_key.clone()), Some(collator_key))
++		(service::IsParachainNode::Collator(Box::new(collator_key.clone())), Some(collator_key))
+ 	} else {
+-		(polkadot_service::IsParachainNode::FullNode, None)
++		(service::IsParachainNode::FullNode, None)
+ 	};
+ 
+-	let new_full_params = polkadot_service::NewFullParams {
+-		is_parachain_node,
+-		// Disable BEEFY. It should not be required by the internal relay chain node.
+-		enable_beefy: false,
+-		force_authoring_backoff: false,
+-		telemetry_worker_handle,
++	let relay_chain_full_node = service::build_full(
++		config,
++		service::NewFullParams {
++			is_parachain_node,
++			force_authoring_backoff: false,
++			telemetry_worker_handle,
++
++			// Cumulus doesn't spawn PVF workers, so we can disable version checks.
++			node_version: None,
++			secure_validator_mode: false,
++			workers_path: None,
++			workers_names: None,
++
++			overseer_gen: service::CollatorOverseerGen,
++			overseer_message_channel_capacity_override: None,
++			malus_finality_delay: None,
++			hwbench,
++			execute_workers_max_num: None,
++			prepare_workers_hard_max_num: None,
++			prepare_workers_soft_max_num: None,
++		},
++	)?;
+ 
+-		// Cumulus doesn't spawn PVF workers, so we can disable version checks.
+-		node_version: None,
+-		secure_validator_mode: false,
+-		workers_path: None,
+-		workers_names: None,
+-
+-		overseer_gen: CollatorOverseerGen,
+-		overseer_message_channel_capacity_override: None,
+-		malus_finality_delay: None,
+-		hwbench,
+-		execute_workers_max_num: None,
+-		prepare_workers_hard_max_num: None,
+-		prepare_workers_soft_max_num: None,
+-		keep_finalized_for: None,
+-		invulnerable_ah_collators: HashSet::new(),
+-		collator_protocol_hold_off: None,
+-	};
+-
+-	let (relay_chain_full_node, paranode_req_receiver) = match config.network.network_backend {
+-		NetworkBackendType::Libp2p => build_polkadot_with_paranode_protocol::<
+-			sc_network::NetworkWorker<_, _>,
+-		>(config, new_full_params)?,
+-		NetworkBackendType::Litep2p => build_polkadot_with_paranode_protocol::<
+-			sc_network::Litep2pNetworkBackend,
+-		>(config, new_full_params)?,
+-	};
+-
+-	Ok((relay_chain_full_node, maybe_collator_key, paranode_req_receiver))
++	Ok((relay_chain_full_node, maybe_collator_key))
+ }
+ 
+ /// Builds a relay chain interface by constructing a full relay chain node
+@@ -448,10 +421,11 @@
+ )> {
+ 	// This is essentially a hack, but we want to ensure that we send the correct node version
+ 	// to the telemetry.
+-	polkadot_config.impl_version = polkadot_cli::Cli::impl_version();
+-	polkadot_config.impl_name = polkadot_cli::Cli::impl_name();
++	// zkVerify customization: use zkv-cli instead of polkadot-cli
++	polkadot_config.impl_version = zkv_cli::Cli::impl_version();
++	polkadot_config.impl_name = zkv_cli::Cli::impl_name();
+ 
+-	let (full_node, collator_key, paranode_req_receiver) = build_polkadot_full_node(
++	let (full_node, collator_key) = build_polkadot_full_node(
+ 		polkadot_config,
+ 		parachain_config,
+ 		telemetry_worker_handle,
+@@ -470,7 +444,10 @@
+ 
+ 	task_manager.add_child(full_node.task_manager);
+ 
+-	Ok((relay_chain_interface, collator_key, full_node.network, paranode_req_receiver))
++	// Create a dummy channel for paranode requests - not used in inprocess mode
++	let (_sender, receiver) = async_channel::bounded(1);
++
++	Ok((relay_chain_interface, collator_key, full_node.network, receiver))
+ }
+ 
+ #[cfg(test)]
+@@ -478,7 +455,7 @@
+ 	use super::*;
+ 
+ 	use polkadot_primitives::Block as PBlock;
+-	use polkadot_test_client::{
++	use test_client::{
+ 		construct_transfer_extrinsic, BlockBuilderExt, Client, ClientBlockImportExt,
+ 		DefaultTestClientBuilderExt, InitPolkadotBlockBuilder, TestClientBuilder,
+ 		TestClientBuilderExt,
