@@ -47,6 +47,7 @@ members = [
     "paratest/pallets/template",
     "patches/cumulus/client/relay-chain-inprocess-interface",
     "patches/cumulus/client/relay-chain-minimal-node",
+    "patches/polkadot/node/core/pvf/common",
 ]
 
 exclude = ["utils/generate-bags/node-runtime"]

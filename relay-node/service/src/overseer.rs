@@ -20,6 +20,7 @@ use super::{Error, IsParachainNode, Registry};
 use polkadot_node_subsystem_types::{ChainApiBackend, RuntimeApiSubsystemClient};
 use polkadot_overseer::{DummySubsystem, InitializedOverseerBuilder, SubsystemError};
 use sp_core::traits::SpawnNamed;
+use std::time::Duration;
 
 use polkadot_availability_distribution::IncomingRequestReceivers;
 use polkadot_node_core_approval_voting::{Config as ApprovalVotingConfig, RealAssignmentCriteria};
@@ -74,7 +75,6 @@ pub use polkadot_node_core_prospective_parachains::ProspectiveParachainsSubsyste
 pub use polkadot_node_core_provisioner::ProvisionerSubsystem;
 pub use polkadot_node_core_pvf_checker::PvfCheckerSubsystem;
 pub use polkadot_node_core_runtime_api::RuntimeApiSubsystem;
-use polkadot_node_subsystem_util::rand::{self, SeedableRng};
 pub use polkadot_statement_distribution::StatementDistributionSubsystem;
 
 /// Arguments passed for overseer construction.
@@ -128,8 +128,6 @@ pub struct ExtendedOverseerGenArgs {
     pub chunk_req_v1_receiver: IncomingRequestReceiver<request_v1::ChunkFetchingRequest>,
     /// Erasure chunks request v2 receiver.
     pub chunk_req_v2_receiver: IncomingRequestReceiver<request_v2::ChunkFetchingRequest>,
-    /// Receiver for incoming large statement requests.
-    pub statement_req_receiver: IncomingRequestReceiver<request_v1::StatementFetchingRequest>,
     /// Receiver for incoming candidate requests.
     pub candidate_req_v2_receiver: IncomingRequestReceiver<request_v2::AttestedCandidateRequest>,
     /// Configuration for the approval voting subsystem.
@@ -144,9 +142,10 @@ pub struct ExtendedOverseerGenArgs {
     /// than the value put in here we always try to recovery availability from backers.
     /// The presence of this parameter here is needed to have different values per chain.
     pub fetch_chunks_threshold: Option<usize>,
-    /// Enable approval-voting-parallel subsystem and disable the standalone approval-voting and
-    /// approval-distribution subsystems.
-    pub enable_approval_voting_parallel: bool,
+    /// Set of invulnerable AH collator `PeerId`s
+    pub invulnerable_ah_collators: std::collections::HashSet<polkadot_node_network_protocol::PeerId>,
+    /// Override for `HOLD_OFF_DURATION` constant.
+    pub collator_protocol_hold_off: Option<Duration>,
 }
 
 /// Obtain a prepared validator `Overseer`, that is initialized with all default values.
@@ -175,14 +174,14 @@ pub fn validator_overseer_builder<Spawner, RuntimeClient>(
         pov_req_receiver,
         chunk_req_v1_receiver,
         chunk_req_v2_receiver,
-        statement_req_receiver,
         candidate_req_v2_receiver,
         approval_voting_config,
         dispute_req_receiver,
         dispute_coordinator_config,
         chain_selection_config,
         fetch_chunks_threshold,
-        enable_approval_voting_parallel,
+        invulnerable_ah_collators,
+        collator_protocol_hold_off,
     }: ExtendedOverseerGenArgs,
 ) -> Result<
     InitializedOverseerBuilder<
@@ -191,7 +190,7 @@ pub fn validator_overseer_builder<Spawner, RuntimeClient>(
         CandidateValidationSubsystem,
         PvfCheckerSubsystem,
         CandidateBackingSubsystem,
-        StatementDistributionSubsystem<rand::rngs::StdRng>,
+        StatementDistributionSubsystem,
         AvailabilityDistributionSubsystem,
         AvailabilityRecoverySubsystem,
         BitfieldSigningSubsystem,
@@ -253,7 +252,6 @@ where
             peerset_protocol_names,
             notification_services,
             notification_sinks,
-            enable_approval_voting_parallel,
         ))
         .availability_distribution(AvailabilityDistributionSubsystem::new(
             keystore.clone(),
@@ -316,6 +314,8 @@ where
                     keystore: keystore.clone(),
                     eviction_policy: Default::default(),
                     metrics: Metrics::register(registry)?,
+                    invulnerables: invulnerable_ah_collators,
+                    collator_protocol_hold_off,
                 },
             };
             CollatorProtocolSubsystem::new(side)
@@ -328,10 +328,8 @@ where
         ))
         .statement_distribution(StatementDistributionSubsystem::new(
             keystore.clone(),
-            statement_req_receiver,
             candidate_req_v2_receiver,
             Metrics::register(registry)?,
-            rand::rngs::StdRng::from_entropy(),
         ))
         .approval_distribution(ApprovalDistributionSubsystem::new(
             approval_voting_parallel_metrics.approval_distribution_metrics(),
@@ -357,7 +355,6 @@ where
             dispute_coordinator_config,
             keystore.clone(),
             Metrics::register(registry)?,
-            enable_approval_voting_parallel,
         ))
         .dispute_distribution(DisputeDistributionSubsystem::new(
             keystore.clone(),
@@ -393,7 +390,7 @@ pub fn collator_overseer_builder<Spawner, RuntimeClient>(
         network_service,
         sync_service,
         authority_discovery_service,
-        collation_req_v1_receiver,
+        collation_req_v1_receiver: _,
         collation_req_v2_receiver,
         available_data_req_receiver,
         registry,
@@ -470,7 +467,6 @@ where
             peerset_protocol_names,
             notification_services,
             notification_sinks,
-            false,
         ))
         .availability_distribution(DummySubsystem)
         .availability_recovery(AvailabilityRecoverySubsystem::for_collator(
@@ -502,7 +498,6 @@ where
                 IsParachainNode::Collator(collator_pair) => ProtocolSide::Collator {
                     peer_id: network_service.local_peer_id(),
                     collator_pair: *collator_pair,
-                    request_receiver_v1: collation_req_v1_receiver,
                     request_receiver_v2: collation_req_v2_receiver,
                     metrics: Metrics::register(registry)?,
                 },

@@ -98,7 +98,6 @@ pub fn new_full(
             execute_workers_max_num: None,
             prepare_workers_hard_max_num: None,
             prepare_workers_soft_max_num: None,
-            enable_approval_voting_parallel: false,
         },
     )
 }
@@ -208,6 +207,7 @@ pub fn node_config(
             rate_limit: None,
             rate_limit_whitelisted_ips: Default::default(),
             rate_limit_trust_proxy_headers: Default::default(),
+            request_logger_limit: 0,
         },
         prometheus_config: None,
         telemetry_endpoints: None,
@@ -220,6 +220,7 @@ pub fn node_config(
         announce_block: true,
         data_path: root,
         base_path,
+        warm_up_trie_cache: None,
     }
 }
 
@@ -465,8 +466,8 @@ pub fn construct_extrinsic(
 /// Construct a transfer extrinsic.
 pub fn construct_transfer_extrinsic(
     client: &Client,
-    origin: sp_keyring::AccountKeyring,
-    dest: sp_keyring::AccountKeyring,
+    origin: sp_keyring::sr25519::Keyring,
+    dest: sp_keyring::sr25519::Keyring,
     value: Balance,
 ) -> UncheckedExtrinsic {
     let function =

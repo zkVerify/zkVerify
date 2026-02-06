@@ -159,6 +159,7 @@ impl xcm_executor::Config for XcmConfig {
     type HrmpNewChannelOpenRequestHandler = ();
     type HrmpChannelAcceptedHandler = ();
     type HrmpChannelClosingHandler = ();
+    type XcmEventEmitter = super::Xcm;
 }
 
 impl pallet_xcm::Config for crate::Runtime {
@@ -187,4 +188,5 @@ impl pallet_xcm::Config for crate::Runtime {
     type RemoteLockConsumerIdentifier = ();
     type WeightInfo = pallet_xcm::TestWeightInfo;
     type AdminOrigin = EnsureRoot<crate::AccountId>;
+    type AuthorizedAliasConsideration = ();
 }

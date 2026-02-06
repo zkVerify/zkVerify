@@ -28,8 +28,10 @@ pub use sc_executor::{self, WasmExecutionMethod, WasmExecutor};
 pub use sc_service::{client, RpcHandlers};
 pub use sp_consensus;
 pub use sp_keyring::{
-    ed25519::Keyring as Ed25519Keyring, sr25519::Keyring as Sr25519Keyring, AccountKeyring,
+    ed25519::Keyring as Ed25519Keyring, sr25519::Keyring as Sr25519Keyring,
 };
+/// AccountKeyring is an alias for Sr25519Keyring for backwards compatibility
+pub use sp_keyring::sr25519::Keyring as AccountKeyring;
 pub use sp_keystore::{Keystore, KeystorePtr};
 pub use sp_runtime::{Storage, StorageChild};
 

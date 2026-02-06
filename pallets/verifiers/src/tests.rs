@@ -41,6 +41,7 @@ pub fn test_ext() -> sp_io::TestExternalities {
         .unwrap();
     pallet_balances::GenesisConfig::<Test> {
         balances: USERS.to_vec(),
+        dev_accounts: None,
     }
     .assimilate_storage(&mut t)
     .unwrap();
