@@ -1,5 +1,6 @@
 // Copyright (C) Parity Technologies (UK) Ltd.
 // This file is part of Cumulus.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // Cumulus is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -8,11 +9,11 @@
 
 // Cumulus is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
+// along with Cumulus. If not, see <https://www.gnu.org/licenses/>.
 
 use std::{
 	collections::{BTreeMap, VecDeque},
@@ -216,10 +217,7 @@ impl RuntimeApiSubsystemClient for BlockChainRpcClient {
 		&self,
 		at: Hash,
 		para_id: cumulus_primitives_core::ParaId,
-	) -> Result<
-		Option<polkadot_primitives::CommittedCandidateReceiptV2<Hash>>,
-		sp_api::ApiError,
-	> {
+	) -> Result<Option<polkadot_primitives::CommittedCandidateReceiptV2<Hash>>, sp_api::ApiError> {
 		Ok(self
 			.rpc_client
 			.parachain_host_candidate_pending_availability(at, para_id)
@@ -272,8 +270,7 @@ impl RuntimeApiSubsystemClient for BlockChainRpcClient {
 	async fn on_chain_votes(
 		&self,
 		at: Hash,
-	) -> Result<Option<polkadot_primitives::ScrapedOnChainVotes<Hash>>, sp_api::ApiError>
-	{
+	) -> Result<Option<polkadot_primitives::ScrapedOnChainVotes<Hash>>, sp_api::ApiError> {
 		Ok(self.rpc_client.parachain_host_on_chain_votes(at).await?)
 	}
 
@@ -371,6 +368,20 @@ impl RuntimeApiSubsystemClient for BlockChainRpcClient {
 		Ok(self.rpc_client.parachain_host_unapplied_slashes(at).await?)
 	}
 
+	async fn unapplied_slashes_v2(
+		&self,
+		at: Hash,
+	) -> Result<
+		Vec<(
+			polkadot_primitives::SessionIndex,
+			polkadot_primitives::CandidateHash,
+			slashing::PendingSlashes,
+		)>,
+		ApiError,
+	> {
+		Ok(self.rpc_client.parachain_host_unapplied_slashes_v2(at).await?)
+	}
+
 	async fn key_ownership_proof(
 		&self,
 		at: Hash,
@@ -445,17 +456,11 @@ impl RuntimeApiSubsystemClient for BlockChainRpcClient {
 		&self,
 		at: Hash,
 		para_id: cumulus_primitives_core::ParaId,
-	) -> Result<
-		Vec<polkadot_primitives::CommittedCandidateReceiptV2<Hash>>,
-		sp_api::ApiError,
-	> {
+	) -> Result<Vec<polkadot_primitives::CommittedCandidateReceiptV2<Hash>>, sp_api::ApiError> {
 		Ok(self
 			.rpc_client
 			.parachain_host_candidates_pending_availability(at, para_id)
 			.await?)
-	}
-	async fn validation_code_bomb_limit(&self, at: Hash) -> Result<u32, sp_api::ApiError> {
-		Ok(self.rpc_client.parachain_host_validation_code_bomb_limit(at).await?)
 	}
 
 	async fn backing_constraints(
@@ -470,22 +475,12 @@ impl RuntimeApiSubsystemClient for BlockChainRpcClient {
 		Ok(self.rpc_client.parachain_host_scheduling_lookahead(at).await?)
 	}
 
-	async fn para_ids(&self, at: Hash) -> Result<Vec<ParaId>, sp_api::ApiError> {
-		Ok(self.rpc_client.parachain_host_para_ids(at).await?)
+	async fn validation_code_bomb_limit(&self, at: Hash) -> Result<u32, sp_api::ApiError> {
+		Ok(self.rpc_client.parachain_host_validation_code_bomb_limit(at).await?)
 	}
 
-	async fn unapplied_slashes_v2(
-		&self,
-		at: Hash,
-	) -> Result<
-		Vec<(
-			polkadot_primitives::SessionIndex,
-			polkadot_primitives::CandidateHash,
-			slashing::PendingSlashes,
-		)>,
-		ApiError,
-	> {
-		Ok(self.rpc_client.parachain_host_unapplied_slashes_v2(at).await?)
+	async fn para_ids(&self, at: Hash) -> Result<Vec<ParaId>, sp_api::ApiError> {
+		Ok(self.rpc_client.parachain_host_para_ids(at).await?)
 	}
 }
 

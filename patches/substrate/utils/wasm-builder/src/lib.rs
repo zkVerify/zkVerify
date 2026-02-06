@@ -179,12 +179,12 @@ const WASM_BUILD_STD: &str = "WASM_BUILD_STD";
 /// during the build phase.
 const WASM_BUILD_CARGO_ARGS: &str = "WASM_BUILD_CARGO_ARGS";
 
-/// The target to use for the runtime. Valid values are `wasm` (default) or `riscv`.
-const RUNTIME_TARGET: &str = "SUBSTRATE_RUNTIME_TARGET";
-
 /// Environment variable to force the use of `wasm32-unknown-unknown` target instead of
 /// `wasm32v1-none` even on Rust >= 1.84.
 const WASM_BUILD_LEGACY_TARGET: &str = "WASM_BUILD_LEGACY_TARGET";
+
+/// The target to use for the runtime. Valid values are `wasm` (default) or `riscv`.
+const RUNTIME_TARGET: &str = "SUBSTRATE_RUNTIME_TARGET";
 
 /// Write to the given `file` if the `content` is different.
 fn write_file_if_changed(file: impl AsRef<Path>, content: impl AsRef<str>) {

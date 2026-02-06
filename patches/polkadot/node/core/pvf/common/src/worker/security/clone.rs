@@ -43,7 +43,7 @@ pub unsafe fn clone_on_worker(
 ) -> Result<Pid> {
 	let flags = clone_flags(have_unshare_newuser);
 
-	tracing_gum::trace!(
+	gum::trace!(
 		target: LOG_TARGET,
 		?worker_info,
 		"calling clone with flags: {:?}",
