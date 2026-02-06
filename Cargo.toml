@@ -102,6 +102,7 @@ sp-keystore = { version = "0.41.0" }
 native = { default-features = false, path = "native" }
 pallet-aggregate = { path = "pallets/aggregate", default-features = false }
 pallet-claim = { path = "pallets/claim", default-features = false }
+pallet-crl = { path = "pallets/crl", default-features = false }
 pallet-token-claim = { path = "pallets/token-claim", default-features = false }
 pallet-verifiers = { path = "pallets/verifiers", default-features = false }
 pallet-verifiers-macros = { path = "pallets/verifiers/macros" }

@@ -24,6 +24,7 @@ pallet-verifiers = { workspace = true }
 sp-core = { workspace = true }
 sp-io = { workspace = true, optional = true }
 tee-verifier = { workspace = true }
+pallet-crl = { workspace = true }
 serde-json-core = { workspace = true }
 chrono = { workspace = true }
 pallet-timestamp = { workspace = true }
@@ -46,6 +47,7 @@ std = [
 	"log/std",
 	"pallet-babe/std",
 	"pallet-balances/std",
+	"pallet-crl/std",
 	"pallet-timestamp/std",
 	"pallet-verifiers/std",
 	"scale-info/std",

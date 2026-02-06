@@ -638,6 +638,19 @@ impl pallet_claim::Config for Runtime {
 }
 
 parameter_types! {
+    /// Maximum length of a CA name in bytes.
+    pub const MaxCaNameLength: u32 = 64;
+}
+
+impl pallet_crl::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type ManagerOrigin = EnsureRoot<AccountId>;
+    type WeightInfo = ();
+    type MaxCaNameLength = MaxCaNameLength;
+    type UnixTime = Timestamp;
+}
+
+parameter_types! {
     pub const TokenClaimPalletId: PalletId = PalletId(*b"zkv/ptkc");
     pub const MaxClaimMessageLength: u32 = 500;
     pub const EthMsgSeparator: &'static [u8] = b"@";
@@ -931,10 +944,13 @@ impl pallet_verifiers::common::Config for Runtime {
 
 parameter_types! {
     pub const TeeMaxPubs: u32 = 32;
+    pub const IntelCaName: &'static str = "Intel_SGX_Processor";
 }
 
 impl pallet_tee_verifier::Config for Runtime {
     type UnixTime = Timestamp;
+    type Crl = pallet_crl::Pallet<Runtime>;
+    type CaName = IntelCaName;
 }
 
 pub type TeeVerifier = pallet_tee_verifier::Tee<Runtime>;
@@ -1167,6 +1183,7 @@ construct_runtime!(
         Aggregate: pallet_aggregate = 81,
         Claim: pallet_claim = 82,
         TokenClaim: pallet_token_claim = 83,
+        Crl: pallet_crl = 84,
 
         // Parachain pallets. Start indices at 100 to leave room.
         ParachainsOrigin: parachains::parachains_origin = 101,

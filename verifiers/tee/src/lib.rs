@@ -21,7 +21,7 @@ pub mod benchmarking;
 mod verifier_should;
 mod weight;
 
-use alloc::{borrow::Cow, vec::Vec, vec};
+use alloc::{borrow::Cow, vec::Vec};
 use core::marker::PhantomData;
 
 use frame_support::{ensure, traits::UnixTime, weights::Weight};
@@ -29,11 +29,12 @@ use hp_verifiers::Verifier;
 pub use weight::WeightInfo;
 
 use hp_verifiers::VerifyError;
-use tee_verifier::{cert::RevokedCertId, intel::{collaterals::TcbResponse, quote::QuoteV4}};
+use pallet_crl::CrlProvider;
+use tee_verifier::{parse_quote, parse_tcb_response, TcbResponse};
 
-use chrono::DateTime;
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
+use sp_core::Get;
 
 #[pallet_verifiers::verifier]
 pub struct Tee<T>;
@@ -63,6 +64,13 @@ impl MaxEncodedLen for Vk {
 
 pub trait Config {
     type UnixTime: UnixTime;
+    type Crl: CrlProvider;
+    type CaName: Get<&'static str>;
+    /// The CA name to use for CRL lookups.
+    /// Defaults to INTEL_SGX_PROCESSOR_CA if not overridden.
+    fn ca_name() -> &'static str {
+        Self::CaName::get()
+    }
 }
 
 impl<T: Config> Verifier for Tee<T> {
@@ -97,24 +105,24 @@ impl<T: Config> Verifier for Tee<T> {
             VerifyError::InvalidVerificationKey
         );
 
-        let quote = QuoteV4::from_bytes(&proof[..]).map_err(|_| VerifyError::InvalidProofData)?;
-        let (tcb_response, _used): (TcbResponse, usize) =
-            serde_json_core::from_slice(&vk.tcb_response[..])
+        let quote = parse_quote(&proof).map_err(|_| VerifyError::InvalidProofData)?;
+        let tcb_response = parse_tcb_response(&vk.tcb_response[..])
                 .map_err(|_| VerifyError::InvalidInput)?;
 
+        let now = T::UnixTime::now()
+            .as_secs()
+            .try_into()
+            .expect("Cannot get current timestamp; qed");
         // Check that the tcbInfo is still valid at the verification timestamp
         tcb_response
             .tcb_info
-            .verify(
-                DateTime::from_timestamp_secs(T::UnixTime::now().as_secs().try_into().unwrap())
-                    .unwrap(),
-            )
+            .verify(now)
             .map_err(|_| VerifyError::VerifyError)?;
 
-        let crl: Vec<RevokedCertId> = vec![];
+        let crl = T::Crl::get_crl(T::ca_name()).map_err(|_| VerifyError::MissingCrl)?;
         // Verify the attestation
         quote
-            .verify(Some(tcb_response.tcb_info), &crl)
+            .verify(&tcb_response.tcb_info, &crl, now)
             .map_err(|_| VerifyError::VerifyError)
             .map(|_| None)
     }
@@ -132,16 +140,15 @@ impl<T: Config> Verifier for Tee<T> {
             serde_json_core::from_slice(&vk.tcb_response[..])
                 .map_err(|_| VerifyError::InvalidVerificationKey)?;
 
-        let crl: Vec<RevokedCertId> = vec![];
+        let now = T::UnixTime::now()
+            .as_secs()
+            .try_into()
+            .expect("Cannot get current timestamp; qed");
+        let crl = T::Crl::get_crl(T::ca_name()).map_err(|_| VerifyError::MissingCrl)?;
         // Check that the tcbInfo is still valid at the verification timestamp and that the
         // signature is valid
         tcb_response
-            .verify(
-                vk.certificates.to_vec(),
-                DateTime::from_timestamp_secs(T::UnixTime::now().as_secs().try_into().unwrap())
-                    .unwrap(),
-                &crl
-            )
+            .verify(vk.certificates.to_vec(), &crl, now)
             .map_err(|_| VerifyError::VerifyError)
     }
 

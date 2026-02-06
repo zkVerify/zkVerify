@@ -16,9 +16,12 @@
 #![cfg(test)]
 
 use core::time::Duration;
+use frame_support::parameter_types;
+use hex_literal::hex;
 use sp_core::{ConstU64, Get};
 
 use super::*;
+use pallet_crl::{CaNotFoundError, Crl, CrlProvider, RevokedCertId};
 
 // Mock timestamps used to test the validity period of the tcb info
 const PAST: u64 = 1737556187; // Thu, 22 Jan 2025 14:29:47 GMT
@@ -33,9 +36,37 @@ impl<T: Get<u64>> UnixTime for MockTime<T> {
     }
 }
 
-struct Mock<T: UnixTime>(PhantomData<T>);
-impl<T: UnixTime> Config for Mock<T> {
+/// Empty CRL for tests that don't need revoked certificates.
+struct EmptyCrl;
+impl CrlProvider for EmptyCrl {
+    fn get_crl(_ca_name: &str) -> Result<Crl, CaNotFoundError> {
+        Ok(vec![])
+    }
+}
+
+/// CRL containing a revoked certificate matching the test quote.
+struct RevokedCrl;
+impl CrlProvider for RevokedCrl {
+    fn get_crl(_ca_name: &str) -> Result<Crl, CaNotFoundError> {
+        Ok(vec![RevokedCertId {
+            issuer: hex!(
+                "3068311a301806035504030c11496e74656c2053475820526f6f74204341311a3018060355040a0c11496e74656c20436f72706f726174696f6e3114301206035504070c0b53616e746120436c617261310b300906035504080c024341310b3009060355040613025553"
+            )
+            .to_vec(),
+            serial_number: hex!("00956f5dcdbd1be1e94049c9d4f433ce01570bde54").to_vec(),
+        }])
+    }
+}
+
+parameter_types! {
+    pub const CaName: &'static str = "foo";
+}
+
+struct Mock<T: UnixTime, C: CrlProvider = EmptyCrl>(PhantomData<(T, C)>);
+impl<T: UnixTime, C: CrlProvider> Config for Mock<T, C> {
     type UnixTime = T;
+    type Crl = C;
+    type CaName = CaName;
 }
 
 #[test]
@@ -48,6 +79,21 @@ fn verify_valid_proof() {
     };
 
     assert!(Tee::<Mock<MockTime<ConstU64<PRESENT>>>>::verify_proof(&vk, &proof, &pubs).is_ok());
+}
+
+#[test]
+fn reject_valid_proof_with_revoked_cert() {
+    let proof = include_bytes!("resources/intel/valid_quote.dat").to_vec();
+    let pubs = vec![];
+    let vk = Vk {
+        tcb_response: include_bytes!("resources/intel/valid_tcbinfo.json").to_vec(),
+        certificates: include_bytes!("resources/intel/valid_tcbinfo_certs.pem").to_vec(),
+    };
+
+    assert_eq!(
+        Tee::<Mock<MockTime<ConstU64<PRESENT>>, RevokedCrl>>::verify_proof(&vk, &proof, &pubs),
+        Err(hp_verifiers::VerifyError::VerifyError)
+    );
 }
 
 #[test]

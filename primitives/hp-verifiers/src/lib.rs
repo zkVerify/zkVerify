@@ -54,6 +54,8 @@ pub enum VerifyError {
     InvalidVerificationKey,
     /// Unsupported Version.
     UnsupportedVersion,
+    /// No Certificate Revocation List available
+    MissingCrl,
 }
 
 /// The trait that characterizes a verifier.
