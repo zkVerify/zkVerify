@@ -119,7 +119,7 @@ pallet-tee-verifier = { path = "verifiers/tee", default-features = false }
 risc0-verifier = { git = "https://github.com/zkVerify/risc0-verifier.git", tag = "v0.11.0", default-features = false }
 pallet-plonky2-verifier = { path = "verifiers/plonky2", default-features = false }
 ezkl-no-std = { git = "https://github.com/zkVerify/ezkl_verifier.git", default-features = false, tag = "v0.1.0" }
-ultrahonk-no-std = { git = "https://github.com/zkVerify/ultrahonk_verifier.git", default-features = false, branch = "dimitris/upgrade-ultrahonk" }
+ultrahonk-no-std = { git = "https://github.com/zkVerify/ultrahonk_verifier.git", default-features = false, tag = "v0.3.0" }
 ultraplonk-no-std = { git = "https://github.com/zkVerify/ultraplonk_verifier.git", default-features = false, tag = "v0.4.0" }
 tee-verifier = { git = "https://github.com/zkVerify/tee-verifier.git", default-features = false, tag = "v0.1.0" }
 serde-json-core = { version = "0.6.0", default-features = false }
