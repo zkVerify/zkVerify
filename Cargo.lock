@@ -3112,7 +3112,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7ab67060fc6b8ef687992d439ca0fa36e7ed17e9a0b16b25b601e8757df720de"
 dependencies = [
  "data-encoding",
- "syn 1.0.109",
+ "syn 2.0.114",
 ]
 
 [[package]]
@@ -4025,9 +4025,9 @@ checksum = "28dd6caf6059519a65843af8fe2a3ae298b14b80179855aeb4adc2c1934ee619"
 
 [[package]]
 name = "frame-benchmarking"
-version = "45.0.1"
+version = "45.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "91cacca9a79583c3191dd2aae668f04b066b4fc05ceb4a6a88b70ef0fd8ee851"
+checksum = "def1ba1f83653ee4adae42cc98a6042b54d85a58f0188dcaf0883563762ecf71"
 dependencies = [
  "frame-support",
  "frame-support-procedural",
@@ -7962,9 +7962,9 @@ dependencies = [
 
 [[package]]
 name = "pallet-bags-list"
-version = "44.0.0"
+version = "44.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f6cba65df908a1e90175e38e49902c3f81df80f086d0f792c1fe0bcce26ab32e"
+checksum = "fc37f29bec2f5542ee709b9eca37aaf85641c1473288ceb4e0b4a66eb80defe5"
 dependencies = [
  "aquamarine",
  "docify",
@@ -8811,9 +8811,9 @@ dependencies = [
 
 [[package]]
 name = "pallet-session"
-version = "45.0.0"
+version = "45.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c3154ebc0ace4afa806b82df253ad6a3850ffe7897ff416b316c00bddc48f759"
+checksum = "28917666a918e39caf8d5bcc52150f4efdd4966243f6a02c5b70e6ae90bf3311"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -16790,9 +16790,9 @@ dependencies = [
 
 [[package]]
 name = "time"
-version = "0.3.46"
+version = "0.3.47"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9da98b7d9b7dad93488a84b8248efc35352b0b2657397d4167e7ad67e5d535e5"
+checksum = "743bd48c283afc0388f9b8827b976905fb217ad9e647fae3a379a9283c4def2c"
 dependencies = [
  "deranged",
  "itoa",
@@ -16811,9 +16811,9 @@ checksum = "7694e1cfe791f8d31026952abf09c69ca6f6fa4e1a1229e18988f06a04a12dca"
 
 [[package]]
 name = "time-macros"
-version = "0.2.26"
+version = "0.2.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "78cc610bac2dcee56805c99642447d4c5dbde4d01f752ffea0199aee1f601dc4"
+checksum = "2e70e4c5a0e0a8a4823ad65dfe1a6930e4f4d756dcd9dd7939022b5e8c501215"
 dependencies = [
  "num-conv",
  "time-core",
@@ -19247,7 +19247,6 @@ dependencies = [
  "hex-literal",
  "is_executable",
  "jsonrpsee",
- "kvdb",
  "kvdb-rocksdb",
  "log",
  "native",
@@ -19322,7 +19321,6 @@ dependencies = [
  "sc-telemetry",
  "sc-transaction-pool",
  "sc-transaction-pool-api",
- "schnellru",
  "serde",
  "serde_json",
  "sp-api",

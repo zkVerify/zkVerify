@@ -101,10 +101,10 @@ sc-cli = { version = "0.57.0" }
 sc-executor = { version = "0.47.0" }
 sc-executor-common = { version = "0.43.0", default-features = false }
 sc-executor-wasmtime = { version = "0.43.0", default-features = false }
-sc-network = { version = "0.55.0" }
+sc-network = { version = "0.55.1" }
 sc-service = { version = "0.56.0" }
 sc-telemetry = { version = "30.0.0" }
-sc-transaction-pool = { version = "44.0.0" }
+sc-transaction-pool = { version = "44.1.0" }
 sc-transaction-pool-api = { version = "43.0.0" }
 sc-offchain = { version = "50.0.0" }
 sc-consensus-babe = { version = "0.55.0" }
@@ -171,13 +171,13 @@ scale-info = { version = "2.10.0", default-features = false, features = [
 
 pallet-offences = { version = "44.0.0", default-features = false }
 pallet-authorship = { version = "45.0.0", default-features = false }
-pallet-bags-list = { version = "44.0.0", default-features = false }
-pallet-session = { version = "45.0.0", default-features = false }
+pallet-bags-list = { version = "44.0.1", default-features = false }
+pallet-session = { version = "45.1.0", default-features = false }
 pallet-staking = { version = "45.0.0", default-features = false }
 pallet-staking-reward-curve = { version = "12.0.0", default-features = false }
 pallet-babe = { version = "45.0.0", default-features = false }
 pallet-balances = { version = "46.0.0", default-features = false }
-frame-support = { version = "45.0.0", default-features = false }
+frame-support = { version = "45.1.0", default-features = false }
 pallet-grandpa = { version = "45.0.0", default-features = false }
 pallet-sudo = { version = "45.0.0", default-features = false }
 pallet-multisig = { version = "45.0.0", default-features = false }
@@ -196,7 +196,7 @@ pallet-identity = { version = "45.0.0", default-features = false }
 frame-system = { version = "45.0.0", default-features = false }
 frame-try-runtime = { version = "0.51.0", default-features = false }
 pallet-timestamp = { version = "44.0.0", default-features = false }
-frame-executive = { version = "45.0.0", default-features = false }
+frame-executive = { version = "45.0.1", default-features = false }
 sp-api = { version = "40.0.0", default-features = false }
 sp-block-builder = { version = "40.0.0", default-features = false }
 sp-consensus = { version = "0.46.0", default-features = false }
@@ -215,7 +215,7 @@ sp-runtime = { version = "45.0.0", default-features = false, features = [
 ] }
 sp-runtime-interface = { version = "33.0.0", default-features = false }
 sp-session = { version = "42.0.0", default-features = false }
-sp-staking = { version = "42.0.0", default-features = false }
+sp-staking = { version = "42.1.0", default-features = false }
 sp-storage = { version = "22.0.0", default-features = false }
 sp-externalities = { version = "0.31.0", default-features = false }
 sp-tracing = { version = "19.0.0", default-features = false }
@@ -240,7 +240,7 @@ frame-system-rpc-runtime-api = { version = "40.0.0", default-features = false }
 pallet-transaction-payment-rpc-runtime-api = { version = "45.0.0", default-features = false }
 
 # Used for runtime benchmarking
-frame-benchmarking = { version = "45.0.0", default-features = false }
+frame-benchmarking = { version = "45.0.2", default-features = false }
 frame-system-benchmarking = { version = "45.0.0", default-features = false }
 
 substrate-wasm-builder = { version = "31.1.0" }
@@ -359,7 +359,7 @@ cumulus-primitives-core = { version = "0.23.0", default-features = false }
 cumulus-primitives-utility = { version = "0.25.0", default-features = false }
 pallet-message-queue = { version = "48.0.0", default-features = false }
 pallet-collator-selection = { version = "26.0.0", default-features = false }
-parachains-common = { version = "27.0.0", default-features = false }
+parachains-common = { version = "27.1.0", default-features = false }
 parachain-info = { version = "0.25.0", package = "staging-parachain-info", default-features = false }
 cumulus-relay-chain-rpc-interface = { version = "0.28.0" }
 substrate-rpc-client = { version = "0.54.0" }
