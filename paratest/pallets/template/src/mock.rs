@@ -56,9 +56,7 @@ impl system::Config for Test {
     type ExtensionsWeightInfo = ();
 }
 
-impl crate::Config for Test {
-    type RuntimeEvent = RuntimeEvent;
-}
+impl crate::Config for Test {}
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
