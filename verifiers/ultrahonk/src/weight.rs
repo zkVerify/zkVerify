@@ -55,8 +55,8 @@ use core::marker::PhantomData;
 
 /// Weight functions needed for `pallet_ultrahonk_verifier`.
 pub trait WeightInfo {
-    fn verify_proof_zk_32() -> Weight;
-    fn verify_proof_plain_32() -> Weight;
+    // fn verify_proof_zk_32() -> Weight;
+    // fn verify_proof_plain_32() -> Weight;
     fn get_vk() -> Weight;
     fn validate_vk() -> Weight;
     fn compute_statement_hash() -> Weight;
@@ -66,20 +66,20 @@ pub trait WeightInfo {
 
 // For backwards compatibility and tests.
 impl WeightInfo for () {
-    fn verify_proof_zk_32() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 12_438_014_000 picoseconds.
-        Weight::from_parts(14_808_597_000, 0)
-    }
-    fn verify_proof_plain_32() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 11_675_181_000 picoseconds.
-        Weight::from_parts(13_282_949_000, 0)
-    }
+    // fn verify_proof_zk_32() -> Weight {
+    //     // Proof Size summary in bytes:
+    //     //  Measured:  `0`
+    //     //  Estimated: `0`
+    //     // Minimum execution time: 12_438_014_000 picoseconds.
+    //     Weight::from_parts(14_808_597_000, 0)
+    // }
+    // fn verify_proof_plain_32() -> Weight {
+    //     // Proof Size summary in bytes:
+    //     //  Measured:  `0`
+    //     //  Estimated: `0`
+    //     // Minimum execution time: 11_675_181_000 picoseconds.
+    //     Weight::from_parts(13_282_949_000, 0)
+    // }
     /// Storage: `SettlementUltrahonkPallet::Vks` (r:1 w:0)
     /// Proof: `SettlementUltrahonkPallet::Vks` (`max_values`: None, `max_size`: Some(1800), added: 4275, mode: `MaxEncodedLen`)
     fn get_vk() -> Weight {

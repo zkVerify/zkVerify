@@ -36,48 +36,6 @@ pub mod benchmarks {
 
     benchmarking_utils!(Verifier<T>, crate::Config);
 
-    // #[benchmark]
-    // fn verify_proof_zk_32() {
-    //     let proof = Proof::new(
-    //         ProofType::ZK,
-    //         include_bytes!("resources/32/zk/zk_proof").to_vec(),
-    //     );
-    //     let pubs: Vec<_> = include_bytes!("resources/32/zk/pubs")
-    //         .chunks_exact(crate::PUB_SIZE)
-    //         .map(TryInto::try_into)
-    //         .map(Result::unwrap)
-    //         .collect();
-    //     let vk = *include_bytes!("resources/32/zk/vk");
-
-    //     let r;
-    //     #[block]
-    //     {
-    //         r = do_verify_proof::<T>(&vk, &proof, &pubs)
-    //     };
-    //     assert!(r.is_ok());
-    // }
-
-    // #[benchmark]
-    // fn verify_proof_plain_32() {
-    //     let proof = Proof::new(
-    //         ProofType::Plain,
-    //         include_bytes!("resources/32/plain/plain_proof").to_vec(),
-    //     );
-    //     let pubs: Vec<_> = include_bytes!("resources/32/plain/pubs")
-    //         .chunks_exact(crate::PUB_SIZE)
-    //         .map(TryInto::try_into)
-    //         .map(Result::unwrap)
-    //         .collect();
-    //     let vk = *include_bytes!("resources/32/plain/vk");
-
-    //     let r;
-    //     #[block]
-    //     {
-    //         r = do_verify_proof::<T>(&vk, &proof, &pubs)
-    //     };
-    //     assert!(r.is_ok());
-    // }
-
     #[benchmark]
     fn get_vk() {
         let vk = *include_bytes!("resources/zk/log_26/vk");
