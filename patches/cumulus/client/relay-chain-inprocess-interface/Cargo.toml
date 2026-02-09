@@ -14,6 +14,8 @@ workspace = true
 [dependencies]
 async-channel = { workspace = true }
 async-trait = { workspace = true }
+cumulus-client-bootnodes.default-features = true
+cumulus-client-bootnodes.workspace = true
 cumulus-primitives-core.default-features = true
 cumulus-primitives-core.workspace = true
 cumulus-relay-chain-interface.default-features = true
@@ -50,8 +52,10 @@ sp-state-machine.default-features = true
 sp-state-machine.workspace = true
 
 [dev-dependencies]
+# Substrate
 sp-keyring = { default-features = true, workspace = true }
-polkadot-primitives = { workspace = true, default-features = true }
+
+# Polkadot
 metered = { features = ["futures_channel"], workspace = true }
 # zkVerify customization: use zkv test-client instead of polkadot-test-client
 test-client = { path = "../../../../relay-node/test/client" }

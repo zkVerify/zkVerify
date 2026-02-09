@@ -2772,6 +2772,7 @@ version = "0.31.0"
 dependencies = [
  "async-channel 1.9.0",
  "async-trait",
+ "cumulus-client-bootnodes",
  "cumulus-primitives-core",
  "cumulus-relay-chain-interface",
  "futures",

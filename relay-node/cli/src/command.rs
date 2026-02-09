@@ -146,6 +146,9 @@ where
                 execute_workers_max_num: None,
                 prepare_workers_hard_max_num: None,
                 prepare_workers_soft_max_num: None,
+                keep_finalized_for: None,
+                invulnerable_ah_collators: std::collections::HashSet::new(),
+                collator_protocol_hold_off: None,
             },
         )
         .map(|full| full.task_manager)?;
