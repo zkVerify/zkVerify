@@ -513,9 +513,7 @@ impl pallet_collator_selection::Config for Runtime {
 }
 
 /// Configure the pallet template in pallets/template.
-impl pallet_parachain_template::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-}
+impl pallet_parachain_template::Config for Runtime {}
 
 impl pallet_xcm_notifications::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
