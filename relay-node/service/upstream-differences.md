@@ -228,7 +228,7 @@ Not present in zkv-service.
 | Backoff authoring | Chain-specific: disabled on Polkadot/Kusama, `max_interval=10` on Rococo/Versi/dev | Parameter-based: `force_authoring_backoff.then(default)` |
 | Fetch chunks threshold | `None` on Polkadot (conservative) | `None` on Volta (testnet), threshold on mainnet |
 | GRANDPA hard forks | Kusama-specific hard forks | Always empty |
-| Genesis hash | `client.chain_info().genesis_hash` | `client.block_hash(0)` with explicit unwrap |
+| Genesis hash | `client.chain_info().genesis_hash` | Same (aligned with upstream) |
 | Hardware benchmark | Detailed CPU core metric checks with differentiated warnings | Simplified: single warning for authority failures |
 
 ---
@@ -247,9 +247,7 @@ This enables validators in zkv-service to participate in collation generation.
 
 ### Cosmetic differences
 
-- Return type formatting (single-line vs multi-line)
-- `HashSet` imported directly in upstream vs `std::collections::HashSet` qualified in zkv-service
-- `Duration` imported separately in zkv-service
+- Minor formatting differences in subsystem builder chains (single-line vs multi-line)
 
 ---
 
@@ -301,13 +299,8 @@ This enables validators in zkv-service to participate in collation generation.
 | Aspect | Upstream | zkv-service |
 |--------|----------|-------------|
 | Worker binary names | `polkadot-prepare-worker`, `polkadot-execute-worker` | `zkv-relay-prepare-worker`, `zkv-relay-execute-worker` |
-| Test temp dir storage | `thread_local! { RefCell<Option<TempDir>> }` (per-thread) | `OnceLock<Mutex<Option<PathBuf>>>` (global shared) |
-| Test concurrency | No `#[serial]` (parallel-safe via thread-local isolation) | `#[serial]` on all tests (sequential execution) |
+| Test temp dir storage | `thread_local! { RefCell<Option<TempDir>> }` | Same (aligned with upstream) |
 | Test initialization | `sp_tracing::init_for_tests()` | `env_logger::builder().is_test(true)...try_init()` |
-
-Both approaches are thread-safe. Upstream uses per-thread isolation via `thread_local!` allowing
-parallel test execution. zkv-service uses a global mutex with forced sequential execution via
-`#[serial]`. The upstream approach is arguably more parallel-friendly.
 
 ---
 
@@ -377,27 +370,21 @@ Differences that could potentially be aligned with upstream to reduce maintenanc
 
 1. **Format string modernization** in `relay_chain_selection.rs`: upstream may adopt `{e:?}`
    style in future versions, making this a temporary diff.
-2. **Genesis hash retrieval**: Could switch to `client.chain_info().genesis_hash` to match
-   upstream pattern.
-3. **`HashSet` import style** in `overseer.rs`: cosmetic, could match upstream.
-4. **Return type formatting** in `overseer.rs`: cosmetic, could match upstream.
-5. **Test temp dir approach** in `workers.rs`: could adopt upstream's `thread_local!` pattern
-   to allow parallel test execution and reduce diff.
 
 ### Could consider adding (medium effort)
 
-6. **Litep2p network backend support**: Re-add network backend dispatch in `build_full()` if
+2. **Litep2p network backend support**: Re-add network backend dispatch in `build_full()` if
    Litep2p is desired in the future.
-7. **Priority-based message dispatch** in `relay_chain_selection.rs`: Re-add if dispute
+3. **Priority-based message dispatch** in `relay_chain_selection.rs`: Re-add if dispute
    prioritization is needed.
 
 ### Intentional and should keep
 
-8. **BEEFY removal**: Intentional design decision.
-9. **MMR gadget removal**: Intentional, not needed.
-10. **Single-runtime architecture**: Fundamental design choice.
-11. **Custom host functions** (`native::HLNativeHostFunctions`): Essential for proof verification.
-12. **Custom RPC** (`rpc.rs`): Needed for aggregate-rpc and vk-hash endpoints.
-13. **CollationGeneration in validator overseer**: Intentional for zkVerify validators.
-14. **Worker binary names**: Must match zkVerify binaries.
-15. **Fetch chunks threshold logic** (inverted for zkVerify networks): Intentional tuning.
+4. **BEEFY removal**: Intentional design decision.
+5. **MMR gadget removal**: Intentional, not needed.
+6. **Single-runtime architecture**: Fundamental design choice.
+7. **Custom host functions** (`native::HLNativeHostFunctions`): Essential for proof verification.
+8. **Custom RPC** (`rpc.rs`): Needed for aggregate-rpc and vk-hash endpoints.
+9. **CollationGeneration in validator overseer**: Intentional for zkVerify validators.
+10. **Worker binary names**: Must match zkVerify binaries.
+11. **Fetch chunks threshold logic** (inverted for zkVerify networks): Intentional tuning.
