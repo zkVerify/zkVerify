@@ -20,7 +20,6 @@ use super::{Error, IsParachainNode, Registry};
 use polkadot_node_subsystem_types::{ChainApiBackend, RuntimeApiSubsystemClient};
 use polkadot_overseer::{DummySubsystem, InitializedOverseerBuilder, SubsystemError};
 use sp_core::traits::SpawnNamed;
-use std::time::Duration;
 
 use polkadot_availability_distribution::IncomingRequestReceivers;
 use polkadot_node_core_approval_voting::Config as ApprovalVotingConfig;
@@ -46,7 +45,11 @@ use sc_authority_discovery::Service as AuthorityDiscoveryService;
 use sc_client_api::AuxStore;
 use sc_keystore::LocalKeystore;
 use sc_network::{NetworkStateInfo, NotificationService};
-use std::{collections::HashMap, sync::Arc};
+use std::{
+	collections::{HashMap, HashSet},
+	sync::Arc,
+	time::Duration,
+};
 
 pub use polkadot_approval_distribution::ApprovalDistribution as ApprovalDistributionSubsystem;
 pub use polkadot_availability_bitfield_distribution::BitfieldDistribution as BitfieldDistributionSubsystem;
@@ -143,7 +146,7 @@ pub struct ExtendedOverseerGenArgs {
     /// The presence of this parameter here is needed to have different values per chain.
     pub fetch_chunks_threshold: Option<usize>,
     /// Set of invulnerable AH collator `PeerId`s
-    pub invulnerable_ah_collators: std::collections::HashSet<polkadot_node_network_protocol::PeerId>,
+    pub invulnerable_ah_collators: HashSet<polkadot_node_network_protocol::PeerId>,
     /// Override for `HOLD_OFF_DURATION` constant.
     pub collator_protocol_hold_off: Option<Duration>,
 }
@@ -539,13 +542,7 @@ pub trait OverseerGen {
         connector: OverseerConnector,
         args: OverseerGenArgs<Spawner, RuntimeClient>,
         ext_args: Option<ExtendedOverseerGenArgs>,
-    ) -> Result<
-        (
-            Overseer<SpawnGlue<Spawner>, Arc<RuntimeClient>>,
-            OverseerHandle,
-        ),
-        Error,
-    >
+    ) -> Result<(Overseer<SpawnGlue<Spawner>, Arc<RuntimeClient>>, OverseerHandle), Error>
     where
         RuntimeClient: RuntimeApiSubsystemClient + ChainApiBackend + AuxStore + 'static,
         Spawner: 'static + SpawnNamed + Clone + Unpin;
@@ -564,13 +561,7 @@ impl OverseerGen for ValidatorOverseerGen {
         connector: OverseerConnector,
         args: OverseerGenArgs<Spawner, RuntimeClient>,
         ext_args: Option<ExtendedOverseerGenArgs>,
-    ) -> Result<
-        (
-            Overseer<SpawnGlue<Spawner>, Arc<RuntimeClient>>,
-            OverseerHandle,
-        ),
-        Error,
-    >
+    ) -> Result<(Overseer<SpawnGlue<Spawner>, Arc<RuntimeClient>>, OverseerHandle), Error>
     where
         RuntimeClient: RuntimeApiSubsystemClient + ChainApiBackend + AuxStore + 'static,
         Spawner: 'static + SpawnNamed + Clone + Unpin,
@@ -594,13 +585,7 @@ impl OverseerGen for CollatorOverseerGen {
         connector: OverseerConnector,
         args: OverseerGenArgs<Spawner, RuntimeClient>,
         _ext_args: Option<ExtendedOverseerGenArgs>,
-    ) -> Result<
-        (
-            Overseer<SpawnGlue<Spawner>, Arc<RuntimeClient>>,
-            OverseerHandle,
-        ),
-        Error,
-    >
+    ) -> Result<(Overseer<SpawnGlue<Spawner>, Arc<RuntimeClient>>, OverseerHandle), Error>
     where
         RuntimeClient: RuntimeApiSubsystemClient + ChainApiBackend + AuxStore + 'static,
         Spawner: 'static + SpawnNamed + Clone + Unpin,

@@ -40,7 +40,7 @@ use polkadot_overseer::{Handle, OverseerConnector};
 use sc_network::config::FullNetworkConfiguration;
 use sc_service::Configuration;
 use sc_transaction_pool_api::OffchainTransactionPoolFactory;
-use sc_client_api::{Backend as BackendT, BlockBackend};
+use sc_client_api::Backend as BackendT;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block as BlockT;
 use std::{collections::HashMap, sync::Arc, time::Duration};
@@ -181,11 +181,7 @@ where
         let auth_disc_publish_non_global_ips = config.network.allow_non_globals_in_dht;
         let auth_disc_public_addresses = config.network.public_addresses.clone();
 
-        let genesis_hash = client
-            .block_hash(0)
-            .ok()
-            .flatten()
-            .expect("Genesis block exists; qed");
+        let genesis_hash = client.chain_info().genesis_hash;
         let peer_store_handle = net_config.peer_store_handle();
 
         // Note: GrandPa is pushed before the Polkadot-specific protocols. This doesn't change
