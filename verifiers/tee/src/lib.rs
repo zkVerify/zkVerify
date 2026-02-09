@@ -106,8 +106,8 @@ impl<T: Config> Verifier for Tee<T> {
         );
 
         let quote = parse_quote(&proof).map_err(|_| VerifyError::InvalidProofData)?;
-        let tcb_response = parse_tcb_response(&vk.tcb_response[..])
-                .map_err(|_| VerifyError::InvalidInput)?;
+        let tcb_response =
+            parse_tcb_response(&vk.tcb_response[..]).map_err(|_| VerifyError::InvalidInput)?;
 
         let now = T::UnixTime::now()
             .as_secs()

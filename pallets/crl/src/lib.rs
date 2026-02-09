@@ -26,12 +26,15 @@
 
 mod weight;
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+
 extern crate alloc;
 
 use alloc::vec::Vec;
 
 use frame_support::pallet_prelude::*;
-use frame_support::{ensure, traits::UnixTime, weights::Weight};
+use frame_support::{dispatch::PostDispatchInfo, traits::UnixTime};
 pub use pallet::*;
 pub use tee_verifier::{Crl, RevokedCertId};
 pub use weight::WeightInfo;
@@ -107,17 +110,6 @@ pub mod pallet {
         issuer: BoundedVec<u8, ConstU32<256>>,
         serial: BoundedVec<u8, ConstU32<64>>,
     }
-
-    /*
-    impl From<RevokedInfo> for RevokedCertId {
-        fn from(info: RevokedInfo) -> Self {
-            RevokedCertId {
-                issuer: info.issuer.into(),
-                serial_number: info.serial.into(),
-            }
-        }
-    }
-    */
 
     /// Storage for registered CAs and their metadata.
     #[pallet::storage]
@@ -307,7 +299,10 @@ pub mod pallet {
             log::info!("Registered CA: {:?}", bounded_name);
             Self::deposit_event(Event::CaRegistered { name: bounded_name });
 
-            Ok(Pays::No.into())
+            Ok(PostDispatchInfo {
+                actual_weight: Some(T::WeightInfo::register_ca()),
+                pays_fee: Pays::Yes,
+            })
         }
 
         /// Unregister a Certificate Authority and remove all its CRL data.
@@ -334,7 +329,10 @@ pub mod pallet {
             log::info!("Unregistered CA: {:?}", bounded_name);
             Self::deposit_event(Event::CaUnregistered { name: bounded_name });
 
-            Ok(Pays::No.into())
+            Ok(PostDispatchInfo {
+                actual_weight: Some(T::WeightInfo::unregister_ca()),
+                pays_fee: Pays::Yes,
+            })
         }
 
         /// Update the Certificate Revocation List for a specific CA.
@@ -352,7 +350,7 @@ pub mod pallet {
         /// * `CrlValidationError` - Failed to parse or verify the CRL.
         /// * `TooManyRevokedCerts` - The CRL contains more than MAX_REVOKED_CERTS_PER_CA entries.
         #[pallet::call_index(2)]
-        #[pallet::weight(T::WeightInfo::update_crl(crl_pem.len() as u32))]
+        #[pallet::weight(T::WeightInfo::update_crl(MAX_REVOKED_CERTS_PER_CA))]
         pub fn update_crl(
             origin: OriginFor<T>,
             ca_name: Vec<u8>,
@@ -415,7 +413,10 @@ pub mod pallet {
                 revoked_count,
             });
 
-            Ok(Pays::No.into())
+            Ok(PostDispatchInfo {
+                actual_weight: Some(T::WeightInfo::update_crl(revoked_count)),
+                pays_fee: Pays::Yes,
+            })
         }
     }
 }

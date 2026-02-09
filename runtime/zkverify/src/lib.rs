@@ -645,6 +645,7 @@ parameter_types! {
 impl pallet_crl::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type ManagerOrigin = EnsureRoot<AccountId>;
+    //type WeightInfo = weights::pallet_crl::ZKVWeight<Runtime>;
     type WeightInfo = ();
     type MaxCaNameLength = MaxCaNameLength;
     type UnixTime = Timestamp;
@@ -1311,6 +1312,7 @@ mod benches {
         // our pallets
         [pallet_aggregate, Aggregate]
         [pallet_claim, Claim]
+        [pallet_crl, Crl]
         [pallet_token_claim, TokenClaim]
         // verifiers
         [pallet_ezkl_verifier, EzklVerifierBench::<Runtime>]
