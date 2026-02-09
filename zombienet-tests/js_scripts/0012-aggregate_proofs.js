@@ -31,7 +31,8 @@ const { ZK_PROOF: ULTRAHONK_ZK_PROOF, PLAIN_PROOF: ULTRAHONK_PLAIN_PROOF, PUBS: 
 const { PROOF: ULTRAPLONK_PROOF, PUBS: ULTRAPLONK_PUBS, VK: ULTRAPLONK_VK } = require('./ultraplonk_data.js');
 const { PROOF: PLONKY2_PROOF, PUBS: PLONKY2_PUBS, VK: PLONKY2_VK } = require('./plonky2_data.js');
 const { PROOF: SP1_PROOF, PUBS: SP1_PUBS, VK: SP1_VK } = require('./sp1_data.js');
-const { PROOF: TEE_PROOF, PUBS: TEE_PUBS, VK_TCB_RESP: TEE_VK_TCB_RESP , VK_TCB_CERT: TEE_VK_TCB_CERT } = require('./tee_intel_data.js');
+const { PROOF: TEE_PROOF, PUBS: TEE_PUBS, fetchTdxTcbInfo,
+    CRL_PEM: TEE_CRL_PEM, CRL_CHAIN_PEM: TEE_CRL_CHAIN_PEM, ROOT_CERT_DER: TEE_ROOT_CERT_DER } = require('./tee_intel_data.js');
 
 async function run(nodeName, networkInfo, _args) {
     const api = await init_api(zombie, nodeName, networkInfo);
@@ -40,6 +41,10 @@ async function run(nodeName, networkInfo, _args) {
     const keyring = new zombie.Keyring({ type: 'sr25519' });
     const alice = keyring.addFromUri('//Alice');
     const bob = keyring.addFromUri('//Bob');
+
+    // Fetch fresh TDX TCB info from Intel API (the embedded data expires periodically)
+    const { vkTcbResp: TEE_VK_TCB_RESP, vkTcbCert: TEE_VK_TCB_CERT } = await fetchTdxTcbInfo();
+    console.log('Fetched fresh TDX TCB info from Intel API');
 
     // Create the proof submission extrinsics...
     let proofHashesArray = [];
@@ -106,6 +111,28 @@ async function run(nodeName, networkInfo, _args) {
             args: [{ 'Vk': EZKL_VK }, EZKL_PROOF, EZKL_PUBS],
         });
     }
+
+    // Prepare some CRL to make the TEE verification succeed
+    const caName = '0x' + Buffer.from('Intel_SGX_Processor').toString('hex');
+
+    // Register the CA via sudo (alice has sudo)
+    await new Promise((resolve) => {
+        api.tx.sudo.sudo(
+            api.tx.crl.registerCa(caName, TEE_ROOT_CERT_DER)
+        ).signAndSend(alice, ({ status }) => {
+            if (status.isInBlock) resolve();
+        });
+    });
+    console.log('CA registered: Intel_SGX_Processor');
+
+    // Update the CRL
+    await new Promise((resolve) => {
+        api.tx.crl.updateCrl(caName, TEE_CRL_PEM, TEE_CRL_CHAIN_PEM)
+            .signAndSend(alice, ({ status }) => {
+                if (status.isInBlock) resolve();
+            });
+    });
+    console.log('CRL updated for Intel_SGX_Processor');
 
     events = await registerDomain(bob, verifiers.length, null, "Untrusted", "Untrusted", destination, null);
     if (!receivedEvents(events)) {

@@ -645,8 +645,7 @@ parameter_types! {
 impl pallet_crl::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type ManagerOrigin = EnsureRoot<AccountId>;
-    //type WeightInfo = weights::pallet_crl::ZKVWeight<Runtime>;
-    type WeightInfo = ();
+    type WeightInfo = weights::pallet_crl::ZKVWeight<Runtime>;
     type MaxCaNameLength = MaxCaNameLength;
     type UnixTime = Timestamp;
 }
