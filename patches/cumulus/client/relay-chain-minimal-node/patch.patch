@@ -1,6 +1,6 @@
 diff -ruN '--exclude=*.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' /tmp/polkadot-sdk-upstream/cumulus/client/relay-chain-minimal-node/Cargo.toml relay-chain-minimal-node/Cargo.toml
---- /tmp/polkadot-sdk-upstream/cumulus/client/relay-chain-minimal-node/Cargo.toml	2026-02-06 19:59:33.421676961 +0100
-+++ relay-chain-minimal-node/Cargo.toml	2026-02-06 21:30:57.840379303 +0100
+--- /tmp/polkadot-sdk-upstream/cumulus/client/relay-chain-minimal-node/Cargo.toml	2026-02-09 10:32:54.250959136 +0100
++++ relay-chain-minimal-node/Cargo.toml	2026-02-06 22:01:49.773990168 +0100
 @@ -32,8 +32,9 @@
  polkadot-overseer.workspace = true
  polkadot-primitives.default-features = true
@@ -14,8 +14,8 @@ diff -ruN '--exclude=*.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' /tmp
  prometheus-endpoint.workspace = true
  sc-authority-discovery.default-features = true
 diff -ruN '--exclude=*.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' /tmp/polkadot-sdk-upstream/cumulus/client/relay-chain-minimal-node/src/collator_overseer.rs relay-chain-minimal-node/src/collator_overseer.rs
---- /tmp/polkadot-sdk-upstream/cumulus/client/relay-chain-minimal-node/src/collator_overseer.rs	2026-02-06 19:59:33.421847551 +0100
-+++ relay-chain-minimal-node/src/collator_overseer.rs	2026-02-06 21:31:29.776666313 +0100
+--- /tmp/polkadot-sdk-upstream/cumulus/client/relay-chain-minimal-node/src/collator_overseer.rs	2026-02-09 10:32:54.251147229 +0100
++++ relay-chain-minimal-node/src/collator_overseer.rs	2026-02-06 22:01:49.773990168 +0100
 @@ -21,7 +21,8 @@
  use polkadot_overseer::{
  	BlockInfo, Handle, Overseer, OverseerConnector, OverseerHandle, SpawnGlue, UnpinHandle,
@@ -27,8 +27,8 @@ diff -ruN '--exclude=*.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' /tmp
  use sc_network::{request_responses::IncomingRequest, service::traits::NetworkService};
  use sc_service::TaskManager;
 diff -ruN '--exclude=*.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' /tmp/polkadot-sdk-upstream/cumulus/client/relay-chain-minimal-node/src/lib.rs relay-chain-minimal-node/src/lib.rs
---- /tmp/polkadot-sdk-upstream/cumulus/client/relay-chain-minimal-node/src/lib.rs	2026-02-06 19:59:33.421847551 +0100
-+++ relay-chain-minimal-node/src/lib.rs	2026-02-06 21:31:22.479600945 +0100
+--- /tmp/polkadot-sdk-upstream/cumulus/client/relay-chain-minimal-node/src/lib.rs	2026-02-09 10:32:54.251147229 +0100
++++ relay-chain-minimal-node/src/lib.rs	2026-02-09 10:54:22.839775963 +0100
 @@ -32,7 +32,8 @@
  use polkadot_core_primitives::{Block as RelayBlock, Hash as RelayHash};
  use polkadot_node_subsystem_util::metrics::prometheus::Registry;
@@ -39,12 +39,3 @@ diff -ruN '--exclude=*.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' /tmp
  
  use sc_authority_discovery::Service as AuthorityDiscoveryService;
  use sc_network::{
-@@ -250,7 +251,7 @@
- 		available_data_req_receiver,
- 		registry: prometheus_registry,
- 		spawner: task_manager.spawn_handle(),
--		is_parachain_node: IsParachainNode::Collator(collator_pair),
-+		is_parachain_node: IsParachainNode::Collator(Box::new(collator_pair)),
- 		overseer_message_channel_capacity_override: None,
- 		req_protocol_names: request_protocol_names,
- 		peerset_protocol_names,

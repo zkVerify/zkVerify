@@ -24,7 +24,6 @@ and `polkadot-service`, since zkVerify has its own service layer and CLI.
 - Restructured `build_polkadot_full_node` to call `service::build_full` directly
 - Adjusted `NewFullParams` fields for zkv-service API (no `enable_beefy`, `keep_finalized_for`,
   `invulnerable_ah_collators`, `collator_protocol_hold_off`)
-- Changed `IsParachainNode::Collator(key)` to `IsParachainNode::Collator(Box::new(key))`
 - Replaced `polkadot_cli::Cli` with `zkv_cli::Cli`
 - Created dummy channel for paranode requests (not used in inprocess mode)
 - Replaced `polkadot_test_client` with `test_client` in tests

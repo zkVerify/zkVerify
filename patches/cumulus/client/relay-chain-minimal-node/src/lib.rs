@@ -251,7 +251,7 @@ async fn new_minimal_relay_chain<Block: BlockT, Network: NetworkBackend<RelayBlo
 		available_data_req_receiver,
 		registry: prometheus_registry,
 		spawner: task_manager.spawn_handle(),
-		is_parachain_node: IsParachainNode::Collator(Box::new(collator_pair)),
+		is_parachain_node: IsParachainNode::Collator(collator_pair),
 		overseer_message_channel_capacity_override: None,
 		req_protocol_names: request_protocol_names,
 		peerset_protocol_names,

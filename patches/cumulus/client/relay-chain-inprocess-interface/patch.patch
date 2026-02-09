@@ -1,6 +1,6 @@
 diff -ruN '--exclude=*.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' /tmp/polkadot-sdk-upstream/cumulus/client/relay-chain-inprocess-interface/Cargo.toml relay-chain-inprocess-interface/Cargo.toml
---- /tmp/polkadot-sdk-upstream/cumulus/client/relay-chain-inprocess-interface/Cargo.toml	2026-02-06 19:59:33.421610081 +0100
-+++ relay-chain-inprocess-interface/Cargo.toml	2026-02-06 21:36:30.422271508 +0100
+--- /tmp/polkadot-sdk-upstream/cumulus/client/relay-chain-inprocess-interface/Cargo.toml	2026-02-09 10:32:54.250880175 +0100
++++ relay-chain-inprocess-interface/Cargo.toml	2026-02-06 22:01:49.773990168 +0100
 @@ -14,19 +14,18 @@
  [dependencies]
  async-channel = { workspace = true }
@@ -39,8 +39,8 @@ diff -ruN '--exclude=*.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' /tmp
 +# zkVerify customization: use zkv test-client instead of polkadot-test-client
 +test-client = { path = "../../../../relay-node/test/client" }
 diff -ruN '--exclude=*.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' /tmp/polkadot-sdk-upstream/cumulus/client/relay-chain-inprocess-interface/src/lib.rs relay-chain-inprocess-interface/src/lib.rs
---- /tmp/polkadot-sdk-upstream/cumulus/client/relay-chain-inprocess-interface/src/lib.rs	2026-02-06 19:59:33.421676961 +0100
-+++ relay-chain-inprocess-interface/src/lib.rs	2026-02-06 21:37:32.508792638 +0100
+--- /tmp/polkadot-sdk-upstream/cumulus/client/relay-chain-inprocess-interface/src/lib.rs	2026-02-09 10:32:54.250959136 +0100
++++ relay-chain-inprocess-interface/src/lib.rs	2026-02-09 10:54:27.721804240 +0100
 @@ -15,15 +15,19 @@
  // You should have received a copy of the GNU General Public License
  // along with Cumulus. If not, see <https://www.gnu.org/licenses/>.
@@ -126,7 +126,7 @@ diff -ruN '--exclude=*.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' /tmp
  	let (is_parachain_node, maybe_collator_key) = if parachain_config.role.is_authority() {
  		let collator_key = CollatorPair::generate().0;
 -		(polkadot_service::IsParachainNode::Collator(collator_key.clone()), Some(collator_key))
-+		(service::IsParachainNode::Collator(Box::new(collator_key.clone())), Some(collator_key))
++		(service::IsParachainNode::Collator(collator_key.clone()), Some(collator_key))
  	} else {
 -		(polkadot_service::IsParachainNode::FullNode, None)
 +		(service::IsParachainNode::FullNode, None)
