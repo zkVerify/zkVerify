@@ -644,7 +644,7 @@ pub struct NewFull {
 #[derive(Clone)]
 pub enum IsParachainNode {
     /// This node is running as in-process node for a parachain collator.
-    Collator(Box<CollatorPair>),
+    Collator(CollatorPair),
     /// This node is running as in-process node for a parachain full node.
     FullNode,
     /// This node is not running as in-process node for a parachain node, aka a normal relay chain

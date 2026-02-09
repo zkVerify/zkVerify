@@ -375,7 +375,7 @@ fn build_polkadot_full_node(
 ) -> Result<(NewFull, Option<CollatorPair>), service::Error> {
 	let (is_parachain_node, maybe_collator_key) = if parachain_config.role.is_authority() {
 		let collator_key = CollatorPair::generate().0;
-		(service::IsParachainNode::Collator(Box::new(collator_key.clone())), Some(collator_key))
+		(service::IsParachainNode::Collator(collator_key.clone()), Some(collator_key))
 	} else {
 		(service::IsParachainNode::FullNode, None)
 	};

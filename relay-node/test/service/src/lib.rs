@@ -283,7 +283,7 @@ pub fn run_collator_node(
         ..
     } = new_full(
         config,
-        IsParachainNode::Collator(Box::new(collator_pair)),
+        IsParachainNode::Collator(collator_pair),
         None,
     )
     .expect("could not create zkVerify test service");

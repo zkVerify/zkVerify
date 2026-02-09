@@ -14,7 +14,6 @@ generation, since zkVerify has its own service layer.
 
 ### src/lib.rs
 - Changed `polkadot_service::{overseer::OverseerGenArgs, IsParachainNode}` to `service::{..}`
-- Changed `IsParachainNode::Collator(collator_pair)` to `IsParachainNode::Collator(Box::new(collator_pair))`
 
 ### src/collator_overseer.rs
 - Changed `polkadot_service::overseer::{collator_overseer_builder, OverseerGenArgs}` to `service::overseer::{..}`
