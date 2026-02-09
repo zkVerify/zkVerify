@@ -38,8 +38,9 @@ where
     T: crate::Config + pallet_crl::Config,
 {
     let ca_name_bytes: alloc::vec::Vec<u8> = T::ca_name().as_bytes().to_vec();
-    let bounded_ca_name: pallet_crl::CaName<T> =
-        ca_name_bytes.try_into().expect("CA name fits within MaxCaNameLength");
+    let bounded_ca_name: pallet_crl::CaName<T> = ca_name_bytes
+        .try_into()
+        .expect("CA name fits within MaxCaNameLength");
     pallet_crl::Revoked::<T>::insert(
         &bounded_ca_name,
         BoundedVec::<
@@ -341,7 +342,7 @@ mod mock {
         ext.execute_with(|| {
             System::set_block_number(1);
             Timestamp::set_timestamp(crate::benchmarking::PRESENT); // Thu, 22 Jan 2026 14:29:47 GMT
-            // Set up an empty CRL for the Intel SGX CA so benchmark tests can look up CRL data.
+                                                                    // Set up an empty CRL for the Intel SGX CA so benchmark tests can look up CRL data.
             crate::benchmarking::setup_empty_crl::<Test>();
         });
         ext

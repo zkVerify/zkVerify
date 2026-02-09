@@ -105,14 +105,11 @@ impl<T: Config> Verifier for Tee<T> {
             VerifyError::InvalidVerificationKey
         );
 
-        let quote = parse_quote(&proof).map_err(|_| VerifyError::InvalidProofData)?;
+        let quote = parse_quote(proof).map_err(|_| VerifyError::InvalidProofData)?;
         let tcb_response =
             parse_tcb_response(&vk.tcb_response[..]).map_err(|_| VerifyError::InvalidInput)?;
 
-        let now = T::UnixTime::now()
-            .as_secs()
-            .try_into()
-            .expect("Cannot get current timestamp; qed");
+        let now = T::UnixTime::now().as_secs();
         // Check that the tcbInfo is still valid at the verification timestamp
         tcb_response
             .tcb_info
@@ -140,10 +137,7 @@ impl<T: Config> Verifier for Tee<T> {
             serde_json_core::from_slice(&vk.tcb_response[..])
                 .map_err(|_| VerifyError::InvalidVerificationKey)?;
 
-        let now = T::UnixTime::now()
-            .as_secs()
-            .try_into()
-            .expect("Cannot get current timestamp; qed");
+        let now = T::UnixTime::now().as_secs();
         let crl = T::Crl::get_crl(T::ca_name()).map_err(|_| VerifyError::MissingCrl)?;
         // Check that the tcbInfo is still valid at the verification timestamp and that the
         // signature is valid
