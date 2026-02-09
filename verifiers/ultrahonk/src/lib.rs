@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-#![cfg_attr(not(feature = "std"), no_std)]
+// #![cfg_attr(not(feature = "std"), no_std)]
 
 extern crate alloc;
 
@@ -22,11 +22,12 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use core::marker::PhantomData;
 use frame_support::{ensure, weights::Weight};
 use hp_verifiers::{Verifier, VerifyError};
+use native::bn254::HostHooks as CurveHooksImpl;
 use scale_info::TypeInfo;
 use sp_core::{Get, H256};
 use ultrahonk_no_std::ProofType as UltraHonkProofType;
-use native::bn254::HostHooks as CurveHooksImpl;
 
+pub use crate::weight_verify_proof::WeightInfo as WeightInfoVerifyProof;
 use ultrahonk_no_std::key::VerificationKey;
 pub use ultrahonk_no_std::{PUB_SIZE, VK_SIZE};
 pub use weight::WeightInfo;
@@ -35,14 +36,14 @@ pub type RawProof = Vec<u8>;
 pub type Pubs = Vec<[u8; PUB_SIZE]>;
 pub type Vk = [u8; VK_SIZE];
 
-// Minimum allowed value for the logarithm of the polynomial evaluation domain size.
-const MIN_BENCHMARKED_LOG_CIRCUIT_SIZE: u64 = 7;
 // Maximum allowed value for the logarithm of the polynomial evaluation domain size.
 const MAX_BENCHMARKED_LOG_CIRCUIT_SIZE: u64 = 26;
 
 pub trait Config {
     /// Maximum supported number of public inputs.
     type MaxPubs: Get<u32>;
+    /// Weight info used to compute the verify proof weight
+    type WeightInfo: WeightInfoVerifyProof;
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
@@ -59,7 +60,6 @@ pub enum Proof {
 
 #[derive(Clone, Debug, PartialEq, Encode, Decode, TypeInfo)]
 pub enum VersionedProof {
-    // Q: How should we handle the corner case of v2.1.10?
     V3_0(Proof),
 }
 
@@ -77,7 +77,6 @@ impl Default for Proof {
         Self::ZK(Vec::new()) // mirrors Noir's default
     }
 }
-
 
 impl From<&Proof> for ProofType {
     fn from(proof: &Proof) -> Self {
@@ -132,8 +131,11 @@ impl From<&Proof> for UltraHonkProofType {
 }
 
 pub mod benchmarking;
+pub mod benchmarking_verify_proof;
+mod resources;
 mod verifier_should;
-pub mod weight;
+mod weight;
+mod weight_verify_proof;
 
 #[pallet_verifiers::verifier]
 pub struct Ultrahonk<T>;
@@ -170,10 +172,9 @@ impl<T: Config> Verifier for Ultrahonk<T> {
                 log_circuit_size <= MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
                 hp_verifiers::VerifyError::InvalidVerificationKey
             );
-            compute_weight::<T>(
-                log_circuit_size,
-                ProofType::from(&prepared_proof),
-            )
+
+            // let test_params = TestParams::new(log_circuit_size, ProofType::from(&prepared_proof));
+            compute_weight::<T>(log_circuit_size, ProofType::from(&prepared_proof))
         };
 
         log::trace!("Verifying (no-std)");
@@ -181,6 +182,7 @@ impl<T: Config> Verifier for Ultrahonk<T> {
             .inspect_err(|e| log::debug!("Cannot verify proof: {e:?}"))
             .map_err(|e| match e {
                 ultrahonk_no_std::errors::VerifyError::VerificationError { message: _ } => {
+                    println!("HERE!");
                     hp_verifiers::VerifyError::VerifyError
                 }
                 ultrahonk_no_std::errors::VerifyError::PublicInputError { message: _ } => {
@@ -209,6 +211,7 @@ impl<T: Config> Verifier for Ultrahonk<T> {
     }
 
     fn vk_hash(vk: &Self::Vk) -> H256 {
+        // Q: Change to match the vk_hash output by Noir?
         sp_io::hashing::sha2_256(&Self::vk_bytes(vk)).into()
     }
 
@@ -225,169 +228,62 @@ impl<T: Config> Verifier for Ultrahonk<T> {
     }
 }
 
-fn compute_weight<T: Config>(
-    log_circuit_size: u64,
-    proof_type: ProofType,
-) -> Weight {
+fn compute_weight<T: Config>(log_circuit_size: u64, proof_type: ProofType) -> Weight {
     // Note that for very small circuits (i.e., log_circuit_size < MIN_BENCHMARKED_LOG_CIRCUIT_SIZE),
     // we compute weights using log_circuit_size = MIN_BENCHMARKED_LOG_CIRCUIT_SIZE
     match (log_circuit_size, proof_type) {
-        (1, ProofType::ZK) => {
-            T::WeightInfo::verify_zk_proof_log_7()
-        }
-        (1, ProofType::Plain) => {
-            T::WeightInfo::verify_plain_proof_log_7()
-        }
-        (2, ProofType::ZK) => {
-            T::WeightInfo::verify_zk_proof_log_7()
-        }
-        (2, ProofType::Plain) => {
-            T::WeightInfo::verify_plain_proof_log_7()
-        }
-        (3, ProofType::ZK) => {
-            T::WeightInfo::verify_zk_proof_log_7()
-        }
-        (3, ProofType::Plain) => {
-            T::WeightInfo::verify_plain_proof_log_7()
-        }
-        (4, ProofType::ZK) => {
-            T::WeightInfo::verify_zk_proof_log_7()
-        }
-        (4, ProofType::Plain) => {
-            T::WeightInfo::verify_plain_proof_log_7()
-        }
-        (5, ProofType::ZK) => {
-            T::WeightInfo::verify_zk_proof_log_7()
-        }
-        (5, ProofType::Plain) => {
-            T::WeightInfo::verify_plain_proof_log_7()
-        }
-        (6, ProofType::ZK) => {
-            T::WeightInfo::verify_zk_proof_log_7()
-        }
-        (6, ProofType::Plain) => {
-            T::WeightInfo::verify_plain_proof_log_7()
-        }
-        (7, ProofType::ZK) => {
-            T::WeightInfo::verify_zk_proof_log_7()
-        }
-        (7, ProofType::Plain) => {
-            T::WeightInfo::verify_plain_proof_log_7()
-        }
-        (8, ProofType::ZK) => {
-            T::WeightInfo::verify_zk_proof_log_8()
-        }
-        (8, ProofType::Plain) => {
-            T::WeightInfo::verify_plain_proof_log_8()
-        }
-        (9, ProofType::ZK) => {
-            T::WeightInfo::verify_zk_proof_log_9()
-        }
-        (9, ProofType::Plain) => {
-            T::WeightInfo::verify_plain_proof_log_9()
-        }
-        (10, ProofType::ZK) => {
-            T::WeightInfo::verify_zk_proof_log_10()
-        }
-        (10, ProofType::Plain) => {
-            T::WeightInfo::verify_plain_proof_log_10()
-        }
-        (11, ProofType::ZK) => {
-            T::WeightInfo::verify_zk_proof_log_11()
-        }
-        (11, ProofType::Plain) => {
-            T::WeightInfo::verify_plain_proof_log_11()
-        }
-        (12, ProofType::ZK) => {
-            T::WeightInfo::verify_zk_proof_log_12()
-        }
-        (12, ProofType::Plain) => {
-            T::WeightInfo::verify_plain_proof_log_12()
-        }
-        (13, ProofType::ZK) => {
-            T::WeightInfo::verify_zk_proof_log_13()
-        }
-        (13, ProofType::Plain) => {
-            T::WeightInfo::verify_plain_proof_log_13()
-        }
-        (14, ProofType::ZK) => {
-            T::WeightInfo::verify_zk_proof_log_14()
-        }
-        (14, ProofType::Plain) => {
-            T::WeightInfo::verify_plain_proof_log_14()
-        }
-        (15, ProofType::ZK) => {
-            T::WeightInfo::verify_zk_proof_log_15()
-        }
-        (15, ProofType::Plain) => {
-            T::WeightInfo::verify_plain_proof_log_15()
-        }
-        (16, ProofType::ZK) => {
-            T::WeightInfo::verify_zk_proof_log_16()
-        }
-        (16, ProofType::Plain) => {
-            T::WeightInfo::verify_plain_proof_log_16()
-        }
-        (17, ProofType::ZK) => {
-            T::WeightInfo::verify_zk_proof_log_17()
-        }
-        (17, ProofType::Plain) => {
-            T::WeightInfo::verify_plain_proof_log_17()
-        }
-        (18, ProofType::ZK) => {
-            T::WeightInfo::verify_zk_proof_log_18()
-        }
-        (18, ProofType::Plain) => {
-            T::WeightInfo::verify_plain_proof_log_18()
-        }
-        (19, ProofType::ZK) => {
-            T::WeightInfo::verify_zk_proof_log_19()
-        }
-        (19, ProofType::Plain) => {
-            T::WeightInfo::verify_plain_proof_log_19()
-        }
-        (20, ProofType::ZK) => {
-            T::WeightInfo::verify_zk_proof_log_20()
-        }
-        (20, ProofType::Plain) => {
-            T::WeightInfo::verify_plain_proof_log_20()
-        }
-        (21, ProofType::ZK) => {
-            T::WeightInfo::verify_zk_proof_log_21()
-        }
-        (21, ProofType::Plain) => {
-            T::WeightInfo::verify_plain_proof_log_21()
-        }
-        (22, ProofType::ZK) => {
-            T::WeightInfo::verify_zk_proof_log_22()
-        }
-        (22, ProofType::Plain) => {
-            T::WeightInfo::verify_plain_proof_log_22()
-        }
-        (23, ProofType::ZK) => {
-            T::WeightInfo::verify_zk_proof_log_23()
-        }
-        (23, ProofType::Plain) => {
-            T::WeightInfo::verify_plain_proof_log_23()
-        }
-        (24, ProofType::ZK) => {
-            T::WeightInfo::verify_zk_proof_log_24()
-        }
-        (24, ProofType::Plain) => {
-            T::WeightInfo::verify_plain_proof_log_24()
-        }
-        (25, ProofType::ZK) => {
-            T::WeightInfo::verify_zk_proof_log_25()
-        }
-        (25, ProofType::Plain) => {
-            T::WeightInfo::verify_plain_proof_log_25()
-        }
-        (26, ProofType::ZK) => {
-            T::WeightInfo::verify_zk_proof_log_26()
-        }
-        (26, ProofType::Plain) => {
-            T::WeightInfo::verify_plain_proof_log_26()
-        }
+        (1, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_7(),
+        (1, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_7(),
+        (2, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_7(),
+        (2, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_7(),
+        (3, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_7(),
+        (3, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_7(),
+        (4, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_7(),
+        (4, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_7(),
+        (5, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_7(),
+        (5, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_7(),
+        (6, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_7(),
+        (6, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_7(),
+        (7, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_7(),
+        (7, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_7(),
+        (8, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_8(),
+        (8, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_8(),
+        (9, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_9(),
+        (9, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_9(),
+        (10, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_10(),
+        (10, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_10(),
+        (11, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_11(),
+        (11, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_11(),
+        (12, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_12(),
+        (12, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_12(),
+        (13, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_13(),
+        (13, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_13(),
+        (14, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_14(),
+        (14, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_14(),
+        (15, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_15(),
+        (15, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_15(),
+        (16, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_16(),
+        (16, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_16(),
+        (17, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_17(),
+        (17, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_17(),
+        (18, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_18(),
+        (18, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_18(),
+        (19, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_19(),
+        (19, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_19(),
+        (20, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_20(),
+        (20, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_20(),
+        (21, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_21(),
+        (21, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_21(),
+        (22, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_22(),
+        (22, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_22(),
+        (23, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_23(),
+        (23, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_23(),
+        (24, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_24(),
+        (24, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_24(),
+        (25, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_25(),
+        (25, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_25(),
+        (26, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_26(),
+        (26, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_26(),
         _ => panic!("Invalid value given for log_circuit_size."),
     }
 }
@@ -401,18 +297,16 @@ impl<T: Config> Ultrahonk<T> {
 
 /// The struct to use in runtime pallet configuration to map the weight computed by this crate
 /// benchmarks to the weight needed by the `pallet-verifiers`.
-pub struct UltrahonkWeight<W: weight::WeightInfo>(PhantomData<W>);
+pub struct UltrahonkWeight<W: WeightInfo>(PhantomData<W>);
 
-impl<T: Config, W: weight::WeightInfo> pallet_verifiers::WeightInfo<Ultrahonk<T>>
-    for UltrahonkWeight<W>
-{
+impl<T: Config, W: WeightInfo> pallet_verifiers::WeightInfo<Ultrahonk<T>> for UltrahonkWeight<W> {
     fn verify_proof(
         proof: &<Ultrahonk<T> as hp_verifiers::Verifier>::Proof,
         _pubs: &<Ultrahonk<T> as hp_verifiers::Verifier>::Pubs,
     ) -> Weight {
         match proof {
-            Proof::ZK(_) => W::verify_zk_proof_log_26(),
-            Proof::Plain(_) => W::verify_plain_proof_log_26(),
+            Proof::ZK(_) => T::WeightInfo::verify_zk_proof_log_26(),
+            Proof::Plain(_) => T::WeightInfo::verify_plain_proof_log_26(),
         }
     }
 
