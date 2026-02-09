@@ -299,8 +299,6 @@ This enables validators in zkv-service to participate in collation generation.
 | Aspect | Upstream | zkv-service |
 |--------|----------|-------------|
 | Worker binary names | `polkadot-prepare-worker`, `polkadot-execute-worker` | `zkv-relay-prepare-worker`, `zkv-relay-execute-worker` |
-| Test temp dir storage | `thread_local! { RefCell<Option<TempDir>> }` | Same (aligned with upstream) |
-| Test initialization | `sp_tracing::init_for_tests()` | `env_logger::builder().is_test(true)...try_init()` |
 
 ---
 
@@ -346,7 +344,6 @@ Not needed in zkv-service because the single `zkv-runtime` is always available.
 | Test client | `polkadot_test_client` | `test_client` (custom) |
 | Subsystem helpers | `polkadot_node_subsystem_test_helpers` | `node_subsystem_test_helpers` (custom) |
 | Priority handling | Uses `PriorityLevel::High`/`::Normal` | Simplified, ignores priority |
-| Test init | `sp_tracing::init_for_tests()` | `env_logger::builder().is_test(true)` |
 
 ---
 
