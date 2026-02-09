@@ -18,10 +18,9 @@
 use crate::{Tee as Verifier, Vk};
 use alloc::vec;
 use frame_benchmarking::v2::*;
-use frame_support::sp_runtime::traits::UniqueSaturatedInto;
+use frame_support::{pallet_prelude::*, sp_runtime::traits::UniqueSaturatedInto};
 use frame_system::RawOrigin;
 use hp_verifiers::Verifier as _;
-use pallet_timestamp::Pallet as Timestamp;
 use pallet_verifiers::{benchmarking_utils, VkOrHash};
 
 pub trait Config: crate::Config {}
@@ -31,24 +30,43 @@ pub type Call<T> = pallet_verifiers::Call<T, Verifier<T>>;
 
 const PRESENT: u64 = 1769092187000; // Thu, 22 Jan 2026 14:29:47 GMT, in ms
 
+/// Insert an empty CRL for the TEE verifier's configured CA name into pallet_crl storage.
+/// This allows `T::Crl::get_crl()` to succeed during benchmarks without requiring a full
+/// CRL update extrinsic.
+fn setup_empty_crl<T>()
+where
+    T: crate::Config + pallet_crl::Config,
+{
+    let ca_name_bytes: alloc::vec::Vec<u8> = T::ca_name().as_bytes().to_vec();
+    let bounded_ca_name: pallet_crl::CaName<T> =
+        ca_name_bytes.try_into().expect("CA name fits within MaxCaNameLength");
+    pallet_crl::Revoked::<T>::insert(
+        &bounded_ca_name,
+        BoundedVec::<
+            pallet_crl::RevokedInfo,
+            ConstU32<{ pallet_crl::MAX_REVOKED_CERTS_PER_CA }>,
+        >::new(),
+    );
+}
+
+fn set_timestamp<T>(ts: u64)
+where
+    T: pallet_babe::Config + pallet_timestamp::Config,
+{
+    // We only actually need the timestamp to be in the valid time frame for the TcbInfo.
+    // BABE must be aligned to prevent assertion failures.
+    pallet_babe::CurrentSlot::<T>::put(sp_consensus_babe::Slot::from(ts / 6000)); // slot time
+    let timestamp: T::Moment = ts.unique_saturated_into();
+    pallet_timestamp::Pallet::<T>::set_timestamp(timestamp);
+}
+
 #[allow(clippy::multiple_bound_locations)]
-#[benchmarks(where T: pallet_verifiers::Config<Verifier<T>>, T: pallet_timestamp::Config, T: pallet_babe::Config)]
+#[benchmarks(where T: pallet_verifiers::Config<Verifier<T>>, T: pallet_timestamp::Config, T: pallet_babe::Config, T: pallet_crl::Config)]
 mod benchmarks {
 
     use super::*;
 
     benchmarking_utils!(Verifier<T>, crate::Config);
-
-    fn set_timestamp<T>(ts: u64)
-    where
-        T: pallet_babe::Config + pallet_timestamp::Config,
-    {
-        // We only actually need the timestamp to be in the valid time frame for the TcbInfo.
-        // BABE must be aligned to prevent assertion failures.
-        pallet_babe::CurrentSlot::<T>::put(sp_consensus_babe::Slot::from(ts / 6000)); // slot time
-        let timestamp: T::Moment = ts.unique_saturated_into();
-        Timestamp::<T>::set_timestamp(timestamp);
-    }
 
     #[benchmark]
     fn verify_proof() {
@@ -66,6 +84,7 @@ mod benchmarks {
         };
 
         set_timestamp::<T>(PRESENT);
+        setup_empty_crl::<T>();
 
         let r;
         #[block]
@@ -113,6 +132,7 @@ mod benchmarks {
         };
 
         set_timestamp::<T>(PRESENT);
+        setup_empty_crl::<T>();
 
         let r;
         #[block]
@@ -161,6 +181,7 @@ mod benchmarks {
         };
 
         set_timestamp::<T>(PRESENT);
+        setup_empty_crl::<T>();
 
         #[extrinsic_call]
         register_vk(RawOrigin::Signed(caller), vk.clone().into());
@@ -209,6 +230,11 @@ mod mock {
     type Balance = u128;
     type AccountId = u64;
 
+    parameter_types! {
+        pub const IntelCaName: &'static str = "Intel_SGX_Processor";
+        pub const MaxCaNameLength: u32 = 64;
+    }
+
     frame_support::construct_runtime!(
         pub enum Test
         {
@@ -216,6 +242,7 @@ mod mock {
             Babe: pallet_babe,
             Timestamp: pallet_timestamp,
             Balances: pallet_balances,
+            Crl: pallet_crl,
             CommonVerifiersPallet: pallet_verifiers::common,
             VerifierPallet: crate,
         }
@@ -223,6 +250,8 @@ mod mock {
 
     impl crate::Config for Test {
         type UnixTime = Timestamp;
+        type Crl = pallet_crl::Pallet<Test>;
+        type CaName = IntelCaName;
     }
 
     #[derive_impl(frame_system::config_preludes::SolochainDefaultConfig as frame_system::DefaultConfig)]
@@ -250,6 +279,14 @@ mod mock {
             LinearStoragePrice<BaseDeposit, PerByteDeposit, Balance>,
         >;
         type Currency = Balances;
+    }
+
+    impl pallet_crl::Config for Test {
+        type RuntimeEvent = RuntimeEvent;
+        type ManagerOrigin = frame_system::EnsureRoot<AccountId>;
+        type WeightInfo = ();
+        type MaxCaNameLength = MaxCaNameLength;
+        type UnixTime = Timestamp;
     }
 
     impl pallet_babe::Config for Test {
@@ -304,6 +341,8 @@ mod mock {
         ext.execute_with(|| {
             System::set_block_number(1);
             Timestamp::set_timestamp(crate::benchmarking::PRESENT); // Thu, 22 Jan 2026 14:29:47 GMT
+            // Set up an empty CRL for the Intel SGX CA so benchmark tests can look up CRL data.
+            crate::benchmarking::setup_empty_crl::<Test>();
         });
         ext
     }

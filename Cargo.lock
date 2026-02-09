@@ -20006,6 +20006,7 @@ checksum = "61c41af27dd6d1e27b1b16b489db798443478cef1f06a660c96db617ba5de3b1"
 [[package]]
 name = "tee-verifier"
 version = "0.1.0"
+source = "git+https://github.com/zkVerify/tee-verifier.git?branch=dr/first_merge#e4942fa5c86af882640dccceba296e5071df7e15"
 dependencies = [
  "asn1_der",
  "chrono",

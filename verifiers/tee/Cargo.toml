@@ -66,6 +66,7 @@ runtime-benchmarks = [
 	"frame-system/runtime-benchmarks",
 	"pallet-babe/runtime-benchmarks",
 	"pallet-balances/runtime-benchmarks",
+	"pallet-crl/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
 	"pallet-verifiers/runtime-benchmarks",
 ]
