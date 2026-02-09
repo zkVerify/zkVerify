@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-#![cfg_attr(not(feature = "std"), no_std)]
+// #![cfg_attr(not(feature = "std"), no_std)]
 
 extern crate alloc;
 
@@ -27,6 +27,7 @@ use scale_info::TypeInfo;
 use sp_core::{Get, H256};
 use ultrahonk_no_std::ProofType as UltraHonkProofType;
 
+pub use crate::weight_verify_proof::WeightInfo as WeightInfoVerifyProof;
 use ultrahonk_no_std::key::VerificationKey;
 pub use ultrahonk_no_std::{PUB_SIZE, VK_SIZE};
 pub use weight::WeightInfo;
@@ -35,14 +36,14 @@ pub type RawProof = Vec<u8>;
 pub type Pubs = Vec<[u8; PUB_SIZE]>;
 pub type Vk = [u8; VK_SIZE];
 
-// Minimum allowed value for the logarithm of the polynomial evaluation domain size.
-const MIN_BENCHMARKED_LOG_CIRCUIT_SIZE: u64 = 7;
 // Maximum allowed value for the logarithm of the polynomial evaluation domain size.
 const MAX_BENCHMARKED_LOG_CIRCUIT_SIZE: u64 = 26;
 
 pub trait Config {
     /// Maximum supported number of public inputs.
     type MaxPubs: Get<u32>;
+    /// Weight info used to compute the verify proof weight
+    type WeightInfo: WeightInfoVerifyProof;
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
@@ -59,7 +60,6 @@ pub enum Proof {
 
 #[derive(Clone, Debug, PartialEq, Encode, Decode, TypeInfo)]
 pub enum VersionedProof {
-    // Q: How should we handle the corner case of v2.1.10?
     V3_0(Proof),
 }
 
@@ -131,8 +131,11 @@ impl From<&Proof> for UltraHonkProofType {
 }
 
 pub mod benchmarking;
+pub mod benchmarking_verify_proof;
+mod resources;
 mod verifier_should;
-pub mod weight;
+mod weight;
+mod weight_verify_proof;
 
 #[pallet_verifiers::verifier]
 pub struct Ultrahonk<T>;
@@ -169,6 +172,11 @@ impl<T: Config> Verifier for Ultrahonk<T> {
                 log_circuit_size <= MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
                 hp_verifiers::VerifyError::InvalidVerificationKey
             );
+<<<<<<< HEAD
+=======
+
+            // let test_params = TestParams::new(log_circuit_size, ProofType::from(&prepared_proof));
+>>>>>>> fc78254 (Reworked pallet-ultrahonk-verifier)
             compute_weight::<T>(log_circuit_size, ProofType::from(&prepared_proof))
         };
 
@@ -177,7 +185,12 @@ impl<T: Config> Verifier for Ultrahonk<T> {
             .inspect_err(|e| log::debug!("Cannot verify proof: {e:?}"))
             .map_err(|e| match e {
                 ultrahonk_no_std::errors::VerifyError::VerificationError { message: _ } => {
+<<<<<<< HEAD
                     VerifyError::VerifyError
+=======
+                    println!("HERE!");
+                    hp_verifiers::VerifyError::VerifyError
+>>>>>>> fc78254 (Reworked pallet-ultrahonk-verifier)
                 }
                 ultrahonk_no_std::errors::VerifyError::PublicInputError { message: _ } => {
                     VerifyError::InvalidInput
@@ -203,6 +216,7 @@ impl<T: Config> Verifier for Ultrahonk<T> {
     }
 
     fn vk_hash(vk: &Self::Vk) -> H256 {
+        // Q: Change to match the vk_hash output by Noir?
         sp_io::hashing::sha2_256(&Self::vk_bytes(vk)).into()
     }
 
@@ -296,8 +310,8 @@ impl<T: Config, W: WeightInfo> pallet_verifiers::WeightInfo<Ultrahonk<T>> for Ul
         _pubs: &<Ultrahonk<T> as Verifier>::Pubs,
     ) -> Weight {
         match proof {
-            Proof::ZK(_) => W::verify_zk_proof_log_26(),
-            Proof::Plain(_) => W::verify_plain_proof_log_26(),
+            Proof::ZK(_) => T::WeightInfo::verify_zk_proof_log_26(),
+            Proof::Plain(_) => T::WeightInfo::verify_plain_proof_log_26(),
         }
     }
 
