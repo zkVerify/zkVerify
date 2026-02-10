@@ -1,4 +1,4 @@
-// Copyright 2024, Horizen Labs, Inc.
+// Copyright 2026, Horizen Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -378,7 +378,7 @@ pub mod pallet {
                 &crl_pem,
                 &cert_chain_pem,
                 Some(ca_info.root_cert.as_slice()),
-                <T as Config>::UnixTime::now().as_secs().try_into().unwrap(),
+                <T as Config>::UnixTime::now().as_secs(),
             )
             .map_err(|e| {
                 log::error!("Failed to parse CRL for CA {:?}: {:?}", bounded_name, e);
