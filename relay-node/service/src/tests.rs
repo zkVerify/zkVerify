@@ -43,17 +43,10 @@ use polkadot_node_subsystem::messages::{
 use polkadot_primitives::{Block, BlockNumber, Hash, Header};
 
 use node_subsystem_test_helpers::TestSubsystemSender;
-use polkadot_overseer::{SubsystemContext, SubsystemSender};
+use polkadot_overseer::{PriorityLevel, SubsystemContext, SubsystemSender};
 
 type VirtualOverseer =
     node_subsystem_test_helpers::TestSubsystemContextHandle<ApprovalVotingParallelMessage>;
-
-#[async_trait::async_trait]
-impl OverseerHandleT for TestSubsystemSender {
-    async fn send_msg<M: Send + Into<AllMessages>>(&mut self, msg: M, _origin: &'static str) {
-        TestSubsystemSender::send_message(self, msg.into()).await;
-    }
-}
 
 #[async_trait::async_trait]
 impl OverseerHandleWithPriorityT for TestSubsystemSender {
@@ -61,7 +54,7 @@ impl OverseerHandleWithPriorityT for TestSubsystemSender {
         &mut self,
         msg: M,
         _origin: &'static str,
-        _priority: polkadot_overseer::PriorityLevel,
+        _priority: PriorityLevel,
     ) {
         // For tests, ignore priority and just send the message
         TestSubsystemSender::send_message(self, msg.into()).await;

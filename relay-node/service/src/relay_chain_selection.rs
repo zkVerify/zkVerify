@@ -43,7 +43,7 @@ use polkadot_node_subsystem::messages::{
     HighestApprovedAncestorBlock,
 };
 use polkadot_node_subsystem_util::metrics::{self, prometheus};
-use polkadot_overseer::{AllMessages, Handle};
+use polkadot_overseer::{AllMessages, Handle, PriorityLevel};
 use polkadot_primitives::{Block as PolkadotBlock, BlockNumber, Hash, Header as PolkadotHeader};
 use sp_consensus::{Error as ConsensusError, SelectChain};
 use std::sync::Arc;
@@ -240,7 +240,7 @@ pub struct SelectRelayChainInner<B, OH> {
 impl<B, OH> SelectRelayChainInner<B, OH>
 where
     B: HeaderProviderProvider<PolkadotBlock>,
-    OH: OverseerHandleT + OverseerHandleWithPriorityT,
+    OH: OverseerHandleWithPriorityT,
 {
     /// Create a new [`SelectRelayChainInner`] wrapping the given chain backend
     /// and a handle to the overseer.
@@ -286,7 +286,7 @@ where
 impl<B, OH> Clone for SelectRelayChainInner<B, OH>
 where
     B: HeaderProviderProvider<PolkadotBlock> + Send + Sync,
-    OH: OverseerHandleT + OverseerHandleWithPriorityT,
+    OH: OverseerHandleWithPriorityT,
 {
     fn clone(&self) -> Self {
         SelectRelayChainInner {
@@ -320,26 +320,13 @@ enum Error {
 ///
 /// Required for testing purposes.
 #[async_trait::async_trait]
-pub trait OverseerHandleT: Clone + Send + Sync {
-    async fn send_msg<M: Send + Into<AllMessages>>(&mut self, msg: M, origin: &'static str);
-}
-
-/// Trait for the overseer handle that allows sending messages with the specified priority level.
-#[async_trait::async_trait]
 pub trait OverseerHandleWithPriorityT: Clone + Send + Sync {
     async fn send_msg_with_priority<M: Send + Into<AllMessages>>(
         &mut self,
         msg: M,
         origin: &'static str,
-        priority: polkadot_overseer::PriorityLevel,
+        priority: PriorityLevel,
     );
-}
-
-#[async_trait::async_trait]
-impl OverseerHandleT for Handle {
-    async fn send_msg<M: Send + Into<AllMessages>>(&mut self, msg: M, origin: &'static str) {
-        Handle::send_msg(self, msg, origin).await
-    }
 }
 
 #[async_trait::async_trait]
@@ -348,7 +335,7 @@ impl OverseerHandleWithPriorityT for Handle {
         &mut self,
         msg: M,
         origin: &'static str,
-        priority: polkadot_overseer::PriorityLevel,
+        priority: PriorityLevel,
     ) {
         Handle::send_msg_with_priority(self, msg, origin, priority).await
     }
@@ -357,7 +344,7 @@ impl OverseerHandleWithPriorityT for Handle {
 impl<B, OH> SelectRelayChainInner<B, OH>
 where
     B: HeaderProviderProvider<PolkadotBlock>,
-    OH: OverseerHandleT + OverseerHandleWithPriorityT + 'static,
+    OH: OverseerHandleWithPriorityT + 'static,
 {
     /// Get all leaves of the chain, i.e. block hashes that are suitable to
     /// build upon and have no suitable children.
@@ -366,9 +353,10 @@ where
 
         self.overseer
             .clone()
-            .send_msg(
+            .send_msg_with_priority(
                 ChainSelectionMessage::Leaves(tx),
                 std::any::type_name::<Self>(),
+                PriorityLevel::High,
             )
             .await;
 
@@ -417,9 +405,10 @@ where
         let subchain_head = {
             let (tx, rx) = oneshot::channel();
             overseer
-                .send_msg(
+                .send_msg_with_priority(
                     ChainSelectionMessage::BestLeafContaining(target_hash, tx),
                     std::any::type_name::<Self>(),
+                    PriorityLevel::High,
                 )
                 .await;
 
@@ -492,7 +481,7 @@ where
                         tx,
                     ),
                     std::any::type_name::<Self>(),
-                    polkadot_overseer::PriorityLevel::High,
+                    PriorityLevel::High,
                 )
                 .await;
 
@@ -525,7 +514,7 @@ where
                     .send_msg_with_priority(
                         ApprovalVotingParallelMessage::ApprovalCheckingLagUpdate(lag),
                         std::any::type_name::<Self>(),
-                        polkadot_overseer::PriorityLevel::High,
+                        PriorityLevel::High,
                     )
                     .await;
             };
@@ -554,13 +543,14 @@ where
             // 3. Constrain according to disputes:
             let (tx, rx) = oneshot::channel();
             overseer
-                .send_msg(
+                .send_msg_with_priority(
                     DisputeCoordinatorMessage::DetermineUndisputedChain {
                         base: (target_number, target_hash),
                         block_descriptions: subchain_block_descriptions,
                         tx,
                     },
                     std::any::type_name::<Self>(),
+                    PriorityLevel::High,
                 )
                 .await;
 
