@@ -157,43 +157,27 @@ trait IdentifyVariant {
 
 zkv-service removes the `NoRuntime` variant (not needed for single-runtime).
 
-### NewFullParams
-
-zkv-service omits the `enable_beefy` field. All other fields match upstream.
-
 ### Key functions
 
 | Function | Upstream | zkv-service | Difference |
 |----------|----------|-------------|------------|
-| `new_partial_basics` | In `builder/partial.rs` | In `lib.rs` | Code organization |
-| `new_partial` | In `builder/partial.rs` | In `lib.rs` | Code organization; no BEEFY block import |
 | `new_chain_ops` | Multi-chain dispatch via macro | Single call, no dispatch | Simplification |
 | `build_full` | Litep2p/Libp2p dispatch + Polkadot channel warning | Libp2p only, no warning | Simplification |
-| `availability_config` | Inline in builder | Extracted as helper function | Code organization |
 
 ---
 
 ## builder.rs
 
-### File structure
+### ServiceBuilder struct
 
-- **Upstream**: `builder/mod.rs` + `builder/partial.rs` (two files)
-- **zkv-service**: Single `builder.rs` file
+Upstream names this `PolkadotServiceBuilder`; zkv-service renames it to `ServiceBuilder`.
 
-### PolkadotServiceBuilder struct
+The struct fields and overall builder pattern (calling `new_partial()` in `new()`, storing
+`partial_components`) are aligned with upstream.
 
-| Field | Upstream | zkv-service | Notes |
-|-------|----------|-------------|-------|
-| `config` | Yes | Yes | Same |
-| `params` | Yes | Yes | Same |
-| `overseer_connector` | Yes | Yes | Same |
-| `partial_components` | Yes (stores full PartialComponents) | No | - |
-| `basics` | No | Yes (stores Basics struct) | Defers `new_partial` to `build()` |
-| `select_chain` | No | Yes (stored separately) | Extracted from partial |
-| `net_config` | Yes | Yes | Same |
+### NewFullParams
 
-The zkv-service builder defers `new_partial()` to the `build()` method instead of calling it
-in `new()`. This avoids needing to name the `impl Fn(...)` return type.
+zkv-service omits the `enable_beefy` field. All other fields match upstream.
 
 ### BEEFY (completely absent in zkv-service)
 
@@ -226,28 +210,16 @@ Not present in zkv-service.
 | Aspect | Upstream | zkv-service |
 |--------|----------|-------------|
 | Backoff authoring | Chain-specific: disabled on Polkadot/Kusama, `max_interval=10` on Rococo/Versi/dev | Parameter-based: `force_authoring_backoff.then(default)` |
-| Fetch chunks threshold | `None` on Polkadot (conservative) | `None` on Volta (testnet), threshold on mainnet |
+| Fetch chunks threshold | `None` on Polkadot/Kusama, `Some(threshold)` on others | `None` for all networks |
 | GRANDPA hard forks | Kusama-specific hard forks | Always empty |
-| Genesis hash | `client.chain_info().genesis_hash` | Same (aligned with upstream) |
 | Hardware benchmark | Detailed CPU core metric checks with differentiated warnings | Simplified: single warning for authority failures |
 
 ---
 
 ## overseer.rs
 
-Nearly identical between upstream and zkv-service.
-
-### Single critical difference
-
-In `validator_overseer_builder`:
-- **Upstream**: `.collation_generation(DummySubsystem)`
-  - **zkv-service**: `.collation_generation(CollationGenerationSubsystem::new(...))`
-
-This enables validators in zkv-service to participate in collation generation.
-
-### Cosmetic differences
-
-- Minor formatting differences in subsystem builder chains (single-line vs multi-line)
+Nearly identical between upstream and zkv-service. Only cosmetic differences remain (minor
+formatting differences in subsystem builder chains).
 
 ---
 
@@ -289,8 +261,6 @@ This enables validators in zkv-service to participate in collation generation.
 | Aspect | Upstream | zkv-service |
 |--------|----------|-------------|
 | Format strings | Old-style `format!("{:?}", e)` | New-style `format!("{e:?}")` |
-| PriorityLevel import | Direct import | Fully qualified usage |
-| Dispute message dispatch | Uses `send_msg_with_priority()` with `PriorityLevel::High` | Uses `send_msg()` without priority |
 
 ---
 
@@ -325,8 +295,6 @@ with an inline `rpc.rs` module that is a slimmed-down fork with zkVerify-specifi
 
 | Struct | Upstream | zkv-service | Notes |
 |--------|----------|-------------|-------|
-| `BabeDeps` | Yes | Yes | Identical |
-| `GrandpaDeps<B>` | Yes | Yes | Identical |
 | `BeefyDeps<AuthorityId>` | Yes | Absent | BEEFY not supported |
 | `FullDeps` | `<C, P, SC, B, AuthorityId>` (5 generics) | `<C, P, SC, B>` (4 generics) | No `AuthorityId` / `beefy` field |
 
@@ -334,12 +302,6 @@ with an inline `rpc.rs` module that is a slimmed-down fork with zkVerify-specifi
 
 | Endpoint | Upstream | zkv-service | Notes |
 |----------|----------|-------------|-------|
-| `StateMigration` | Yes | Yes | Identical |
-| `System` | Yes | Yes | Identical |
-| `TransactionPayment` | Yes | Yes | Identical |
-| `Babe` | Yes | Yes | Identical |
-| `Grandpa` | Yes | Yes | Identical |
-| `SyncState` | Yes | Yes | Identical |
 | `Mmr` (MMR RPC) | Yes | **No** | MMR gadget not used |
 | `Beefy` (BEEFY RPC) | Yes | **No** | BEEFY not supported |
 | `Aggregate` (proof aggregation) | **No** | Yes | zkVerify-specific |
@@ -349,10 +311,6 @@ with an inline `rpc.rs` module that is a slimmed-down fork with zkVerify-specifi
 
 | Bound | Upstream | zkv-service |
 |-------|----------|-------------|
-| `AccountNonceApi` | Yes | Yes |
-| `TransactionPaymentRuntimeApi` | Yes | Yes |
-| `BabeApi` | Yes | Yes |
-| `BlockBuilder` | Yes | Yes |
 | `MmrRuntimeApi` | Yes | No |
 | `AggregateRuntimeApi` | No | Yes |
 
@@ -379,7 +337,6 @@ Not needed in zkv-service because the single `zkv-runtime` is always available.
 |--------|----------|-------------|
 | Test client | `polkadot_test_client` | `test_client` (custom) |
 | Subsystem helpers | `polkadot_node_subsystem_test_helpers` | `node_subsystem_test_helpers` (custom) |
-| Priority handling | Uses `PriorityLevel::High`/`::Normal` | Simplified, ignores priority |
 
 ---
 
@@ -399,25 +356,18 @@ Upstream has these in `polkadot-primitives-test-helpers`.
 
 Differences that could potentially be aligned with upstream to reduce maintenance burden:
 
-### Could remove (low effort)
-
-1. **Format string modernization** in `relay_chain_selection.rs`: upstream may adopt `{e:?}`
-   style in future versions, making this a temporary diff.
-
 ### Could consider adding (medium effort)
 
-2. **Litep2p network backend support**: Re-add network backend dispatch in `build_full()` if
+1. **Litep2p network backend support**: Re-add network backend dispatch in `build_full()` if
    Litep2p is desired in the future.
-3. **Priority-based message dispatch** in `relay_chain_selection.rs`: Re-add if dispute
-   prioritization is needed.
+2. **Missing TxExtension entries** in `benchmarking.rs`: Add `AuthorizeCall` and `WeightReclaim`
+   to align the 9-tuple with upstream's 11-tuple (requires runtime changes first).
 
 ### Intentional and should keep
 
-4. **BEEFY removal**: Intentional design decision.
-5. **MMR gadget removal**: Intentional, not needed.
-6. **Single-runtime architecture**: Fundamental design choice.
-7. **Custom host functions** (`native::HLNativeHostFunctions`): Essential for proof verification.
-8. **Custom RPC** (`rpc.rs`): Needed for aggregate-rpc and vk-hash endpoints.
-9. **CollationGeneration in validator overseer**: Intentional for zkVerify validators.
-10. **Worker binary names**: Must match zkVerify binaries.
-11. **Fetch chunks threshold logic** (inverted for zkVerify networks): Intentional tuning.
+3. **BEEFY removal**: Intentional design decision.
+4. **MMR gadget removal**: Intentional, not needed.
+5. **Single-runtime architecture**: Fundamental design choice.
+6. **Custom host functions** (`native::HLNativeHostFunctions`): Essential for proof verification.
+7. **Custom RPC** (`rpc.rs`): Needed for aggregate-rpc and vk-hash endpoints.
+8. **Worker binary names**: Must match zkVerify binaries.
