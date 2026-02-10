@@ -16,6 +16,7 @@ and `polkadot-service`, since zkVerify has its own service layer and CLI.
 
 ### src/lib.rs
 - Replaced `polkadot_service::*` with `service::*`
+- Replaced `polkadot_service::builder::PolkadotServiceBuilder` with `service::builder::ServiceBuilder`
 - Replaced `polkadot_cli::Cli` with `zkv_cli::Cli`
 - Replaced `polkadot_test_client` with `test_client` in tests
 - Removed `enable_beefy` field from `NewFullParams` (not supported in zkv-service)

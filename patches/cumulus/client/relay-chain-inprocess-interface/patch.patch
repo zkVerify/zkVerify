@@ -18,7 +18,7 @@ diff -ruN '--exclude=patch.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' 
  sc-cli.workspace = true
  sc-client-api.default-features = true
 @@ -56,4 +57,5 @@
- 
+
  # Polkadot
  metered = { features = ["futures_channel"], workspace = true }
 -polkadot-test-client = { workspace = true }
@@ -26,15 +26,16 @@ diff -ruN '--exclude=patch.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' 
 +test-client = { path = "../../../../relay-node/test/client" }
 diff -ruN '--exclude=patch.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' '--exclude=README.md' '--exclude=*.orig' /tmp/polkadot-sdk-upstream/cumulus/client/relay-chain-inprocess-interface/src/lib.rs /home/mdamico/devel/zkVerify/patches/cumulus/client/relay-chain-inprocess-interface/src/lib.rs
 --- /tmp/polkadot-sdk-upstream/cumulus/client/relay-chain-inprocess-interface/src/lib.rs	2026-02-09 10:32:54.250959136 +0100
-+++ /home/mdamico/devel/zkVerify/patches/cumulus/client/relay-chain-inprocess-interface/src/lib.rs	2026-02-09 12:11:23.168658594 +0100
-@@ -36,7 +36,8 @@
++++ /home/mdamico/devel/zkVerify/patches/cumulus/client/relay-chain-inprocess-interface/src/lib.rs	2026-02-10 12:00:00.000000000 +0100
+@@ -36,8 +36,9 @@
  use cumulus_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayChainResult};
  use futures::{FutureExt, Stream, StreamExt};
  use polkadot_primitives::CandidateEvent;
 -use polkadot_service::{
+-	builder::PolkadotServiceBuilder, CollatorOverseerGen, CollatorPair, Configuration, FullBackend,
 +// zkVerify customization: use zkv-service instead of polkadot-service
 +use service::{
- 	builder::PolkadotServiceBuilder, CollatorOverseerGen, CollatorPair, Configuration, FullBackend,
++	builder::ServiceBuilder, CollatorOverseerGen, CollatorPair, Configuration, FullBackend,
  	FullClient, Handle, NewFull, NewFullParams, TaskManager,
  };
 @@ -363,7 +364,7 @@
@@ -46,6 +47,13 @@ diff -ruN '--exclude=patch.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' 
  where
  	Network: NetworkBackend<PBlock, PHash>,
  {
+@@ -371,7 +372,7 @@
+ 	let fork_id = config.chain_spec.fork_id().map(ToString::to_string);
+-	let mut polkadot_builder = PolkadotServiceBuilder::<_, Network>::new(config, params)?;
++	let mut polkadot_builder = ServiceBuilder::<_, Network>::new(config, params)?;
+ 	let (config, request_receiver) = bootnode_request_response_config::<_, _, Network>(
+ 		polkadot_builder.genesis_hash(),
+ 		fork_id.as_deref(),
 @@ -387,19 +388,18 @@
  	hwbench: Option<sc_sysinfo::HwBench>,
  ) -> Result<
@@ -61,7 +69,7 @@ diff -ruN '--exclude=patch.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' 
 -		(polkadot_service::IsParachainNode::FullNode, None)
 +		(service::IsParachainNode::FullNode, None)
  	};
- 
+
 -	let new_full_params = polkadot_service::NewFullParams {
 +	let new_full_params = service::NewFullParams {
  		is_parachain_node,
@@ -70,7 +78,7 @@ diff -ruN '--exclude=patch.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' 
 +		// zkVerify customization: enable_beefy not supported in zkv-service
  		force_authoring_backoff: false,
  		telemetry_worker_handle,
- 
+
 @@ -448,8 +448,9 @@
  )> {
  	// This is essentially a hack, but we want to ensure that we send the correct node version
@@ -80,12 +88,12 @@ diff -ruN '--exclude=patch.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' 
 +	// zkVerify customization: use zkv-cli instead of polkadot-cli
 +	polkadot_config.impl_version = zkv_cli::Cli::impl_version();
 +	polkadot_config.impl_name = zkv_cli::Cli::impl_name();
- 
+
  	let (full_node, collator_key, paranode_req_receiver) = build_polkadot_full_node(
  		polkadot_config,
 @@ -478,7 +479,8 @@
  	use super::*;
- 
+
  	use polkadot_primitives::Block as PBlock;
 -	use polkadot_test_client::{
 +	// zkVerify customization: use zkv test-client instead of polkadot-test-client

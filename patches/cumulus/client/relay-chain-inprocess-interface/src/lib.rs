@@ -38,7 +38,7 @@ use futures::{FutureExt, Stream, StreamExt};
 use polkadot_primitives::CandidateEvent;
 // zkVerify customization: use zkv-service instead of polkadot-service
 use service::{
-	builder::PolkadotServiceBuilder, CollatorOverseerGen, CollatorPair, Configuration, FullBackend,
+	builder::ServiceBuilder, CollatorOverseerGen, CollatorPair, Configuration, FullBackend,
 	FullClient, Handle, NewFull, NewFullParams, TaskManager,
 };
 use sc_cli::{RuntimeVersion, SubstrateCli};
@@ -369,7 +369,7 @@ where
 	Network: NetworkBackend<PBlock, PHash>,
 {
 	let fork_id = config.chain_spec.fork_id().map(ToString::to_string);
-	let mut polkadot_builder = PolkadotServiceBuilder::<_, Network>::new(config, params)?;
+	let mut polkadot_builder = ServiceBuilder::<_, Network>::new(config, params)?;
 	let (config, request_receiver) = bootnode_request_response_config::<_, _, Network>(
 		polkadot_builder.genesis_hash(),
 		fork_id.as_deref(),
