@@ -33,8 +33,8 @@ sp-keyring = { workspace = true }
 sp-runtime = { workspace = true }
 sp-maybe-compressed-blob = { workspace = true }
 frame-benchmarking-cli = { workspace = true, optional = true }
-sc-cli = { workspace = true, optional = true }
-sc-service = { workspace = true, optional = true }
+sc-cli = { workspace = true, optional = true, default-features = true }
+sc-service = { workspace = true, optional = true, default-features = true }
 polkadot-node-metrics = { workspace = true }
 polkadot-node-primitives = { workspace = true }
 sc-tracing = { workspace = true, optional = true }

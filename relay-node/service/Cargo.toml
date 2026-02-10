@@ -37,7 +37,7 @@ sc-keystore = { workspace = true }
 sc-basic-authorship = { workspace = true }
 sc-offchain = { workspace = true }
 sc-sysinfo = { workspace = true }
-sc-service = { workspace = true }
+sc-service = { workspace = true, default-features = true }
 telemetry = { workspace = true }
 sp-authority-discovery = { workspace = true }
 sp-inherents = { workspace = true }

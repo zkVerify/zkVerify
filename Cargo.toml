@@ -97,12 +97,12 @@ merkleized-metadata = { version = "0.5.0" }
 strum = { version = "0.26.3", default-features = false }
 toml = { version = "0.8.12" }
 
-sc-cli = { version = "0.57.0" }
+sc-cli = { version = "0.57.0", default-features = false }
 sc-executor = { version = "0.47.0" }
 sc-executor-common = { version = "0.43.0", default-features = false }
 sc-executor-wasmtime = { version = "0.43.0", default-features = false }
 sc-network = { version = "0.55.1" }
-sc-service = { version = "0.56.0" }
+sc-service = { version = "0.56.0", default-features = false }
 sc-telemetry = { version = "30.0.0" }
 sc-transaction-pool = { version = "44.1.0" }
 sc-transaction-pool-api = { version = "43.0.0" }
