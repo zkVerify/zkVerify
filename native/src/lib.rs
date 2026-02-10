@@ -18,6 +18,7 @@
 use codec::{Decode, Encode};
 
 mod accelerated_bn;
+mod compat;
 mod groth16;
 mod risc0;
 
