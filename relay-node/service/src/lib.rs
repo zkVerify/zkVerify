@@ -39,6 +39,11 @@ pub use self::overseer::{
     ValidatorOverseerGen,
 };
 
+#[cfg(feature = "full-node")]
+pub use crate::builder::{new_full, IsParachainNode, NewFull, NewFullParams};
+#[cfg(feature = "full-node")]
+use crate::builder::{new_partial, new_partial_basics};
+
 pub use sc_consensus_babe as babe;
 
 #[cfg(test)]
@@ -47,10 +52,8 @@ mod tests;
 #[cfg(feature = "full-node")]
 use {
     polkadot_node_core_approval_voting::self as approval_voting_subsystem,
-    polkadot_node_core_av_store::Config as AvailabilityConfig,
     polkadot_node_core_chain_selection::self as chain_selection_subsystem,
-    sc_consensus_grandpa::{self, FinalityProofProvider as GrandpaFinalityProofProvider},
-    sc_transaction_pool_api::OffchainTransactionPoolFactory,
+    sc_consensus_grandpa,
 };
 
 use polkadot_node_subsystem_util::database::Database;
@@ -68,23 +71,18 @@ pub use {
     sp_consensus_babe::inherents::BabeCreateInherentDataProviders,
 };
 
-use std::{path::PathBuf, sync::Arc, time::Duration};
+use std::{path::PathBuf, sync::Arc};
 
 use prometheus_endpoint::Registry;
 pub use sc_service as service;
-#[cfg(feature = "full-node")]
-use sc_service::KeystoreContainer;
-use sc_service::{RpcHandlers, SpawnTaskHandle};
-use sc_telemetry::TelemetryWorker;
-#[cfg(feature = "full-node")]
-use sc_telemetry::{Telemetry, TelemetryWorkerHandle};
+use sc_service::SpawnTaskHandle;
 use telemetry as sc_telemetry;
 
 pub use polkadot_primitives::{BlockId, BlockNumber, CollatorPair, Hash, Id as ParaId};
 pub use sc_client_api::{Backend, CallExecutor};
 pub use sc_consensus::{BlockImport, LongestChain};
 pub use sc_executor::NativeExecutionDispatch;
-use sc_executor::{HeapAllocStrategy, WasmExecutor, DEFAULT_HEAP_ALLOC_STRATEGY};
+use sc_executor::WasmExecutor;
 pub use sc_service::{
     config::{DatabaseSource, PrometheusConfig},
     ChainSpec, Configuration, Error as SubstrateServiceError, PruningMode, Role, TFullBackend,
@@ -349,362 +347,6 @@ pub fn open_database(db_source: &DatabaseSource) -> Result<Arc<dyn Database>, Er
         }
     };
     Ok(parachains_db)
-}
-
-#[cfg(feature = "full-node")]
-type FullSelectChain = relay_chain_selection::SelectRelayChain<FullBackend>;
-#[cfg(feature = "full-node")]
-type FullGrandpaBlockImport<ChainSelection = FullSelectChain> =
-    sc_consensus_grandpa::GrandpaBlockImport<FullBackend, Block, FullClient, ChainSelection>;
-#[cfg(feature = "full-node")]
-struct Basics {
-    task_manager: TaskManager,
-    client: Arc<FullClient>,
-    backend: Arc<FullBackend>,
-    keystore_container: KeystoreContainer,
-    telemetry: Option<Telemetry>,
-}
-
-#[cfg(feature = "full-node")]
-fn new_partial_basics(
-    config: &mut Configuration,
-    telemetry_worker_handle: Option<TelemetryWorkerHandle>,
-) -> Result<Basics, Error> {
-    let telemetry = config
-        .telemetry_endpoints
-        .clone()
-        .filter(|x| !x.is_empty())
-        .map(move |endpoints| -> Result<_, sc_telemetry::Error> {
-            let (worker, mut worker_handle) = if let Some(worker_handle) = telemetry_worker_handle {
-                (None, worker_handle)
-            } else {
-                let worker = TelemetryWorker::new(16)?;
-                let worker_handle = worker.handle();
-                (Some(worker), worker_handle)
-            };
-            let telemetry = worker_handle.new_telemetry(endpoints);
-            Ok((worker, telemetry))
-        })
-        .transpose()?;
-
-    let heap_pages = config
-        .executor
-        .default_heap_pages
-        .map_or(DEFAULT_HEAP_ALLOC_STRATEGY, |h| HeapAllocStrategy::Static {
-            extra_pages: h as _,
-        });
-
-    let executor = WasmExecutor::builder()
-        .with_execution_method(config.executor.wasm_method)
-        .with_onchain_heap_alloc_strategy(heap_pages)
-        .with_offchain_heap_alloc_strategy(heap_pages)
-        .with_max_runtime_instances(config.executor.max_runtime_instances)
-        .with_runtime_cache_size(config.executor.runtime_cache_size)
-        .build();
-
-    let (client, backend, keystore_container, task_manager) =
-        sc_service::new_full_parts::<Block, RuntimeApi, _>(
-            config,
-            telemetry.as_ref().map(|(_, telemetry)| telemetry.handle()),
-            executor,
-        )?;
-    let client = Arc::new(client);
-
-    let telemetry = telemetry.map(|(worker, telemetry)| {
-        if let Some(worker) = worker {
-            task_manager.spawn_handle().spawn(
-                "telemetry",
-                Some("telemetry"),
-                Box::pin(worker.run()),
-            );
-        }
-        telemetry
-    });
-
-    Ok(Basics {
-        task_manager,
-        client,
-        backend,
-        keystore_container,
-        telemetry,
-    })
-}
-
-#[cfg(feature = "full-node")]
-fn new_partial<ChainSelection>(
-    config: &mut Configuration,
-    Basics {
-        task_manager,
-        backend,
-        client,
-        keystore_container,
-        telemetry,
-    }: Basics,
-    select_chain: ChainSelection,
-) -> Result<
-    sc_service::PartialComponents<
-        FullClient,
-        FullBackend,
-        ChainSelection,
-        sc_consensus::DefaultImportQueue<Block>,
-        sc_transaction_pool::TransactionPoolHandle<Block, FullClient>,
-        (
-            impl Fn(rpc::SubscriptionTaskExecutor) -> Result<rpc::RpcExtension, SubstrateServiceError>,
-            (
-                babe::BabeBlockImport<Block, FullClient, FullGrandpaBlockImport<ChainSelection>, BabeCreateInherentDataProviders<Block>, ChainSelection>,
-                sc_consensus_grandpa::LinkHalf<Block, FullClient, ChainSelection>,
-                babe::BabeLink<Block>,
-            ),
-            sc_consensus_grandpa::SharedVoterState,
-            sp_consensus_babe::SlotDuration,
-            Option<Telemetry>,
-        ),
-    >,
-    Error,
->
-where
-    ChainSelection: 'static + SelectChain<Block>,
-{
-    let transaction_pool = Arc::from(
-        sc_transaction_pool::Builder::new(
-            task_manager.spawn_essential_handle(),
-            client.clone(),
-            config.role.is_authority().into(),
-        )
-        .with_options(config.transaction_pool.clone())
-        .with_prometheus(config.prometheus_registry())
-        .build(),
-    );
-
-    let grandpa_hard_forks = Vec::new();
-
-    let (grandpa_block_import, grandpa_link) =
-        sc_consensus_grandpa::block_import_with_authority_set_hard_forks(
-            client.clone(),
-            GRANDPA_JUSTIFICATION_PERIOD,
-            &(client.clone() as Arc<_>),
-            select_chain.clone(),
-            grandpa_hard_forks,
-            telemetry.as_ref().map(|x| x.handle()),
-        )?;
-    let justification_import = grandpa_block_import.clone();
-
-    let babe_config = babe::configuration(&*client)?;
-    let slot_duration = babe_config.slot_duration();
-    let create_inherent_data_providers: BabeCreateInherentDataProviders<Block> =
-        Arc::new(move |_, ()| async move {
-            let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
-            let slot =
-                sp_consensus_babe::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
-                    *timestamp,
-                    slot_duration,
-                );
-            Ok((slot, timestamp))
-        });
-    let (block_import, babe_link) = sc_consensus_babe::block_import(
-        babe_config.clone(),
-        grandpa_block_import,
-        client.clone(),
-        create_inherent_data_providers,
-        select_chain.clone(),
-        OffchainTransactionPoolFactory::new(transaction_pool.clone()),
-    )?;
-
-    let (import_queue, babe_worker_handle) = sc_consensus_babe::import_queue(
-        sc_consensus_babe::ImportQueueParams {
-            link: babe_link.clone(),
-            block_import: block_import.clone(),
-            justification_import: Some(Box::new(justification_import)),
-            client: client.clone(),
-            slot_duration: babe_link.config().slot_duration(),
-            spawner: &task_manager.spawn_essential_handle(),
-            registry: config.prometheus_registry(),
-            telemetry: telemetry.as_ref().map(|x| x.handle()),
-        },
-    )?;
-
-    let justification_stream = grandpa_link.justification_stream();
-    let shared_authority_set = grandpa_link.shared_authority_set().clone();
-    let shared_voter_state = sc_consensus_grandpa::SharedVoterState::empty();
-    let finality_proof_provider = GrandpaFinalityProofProvider::new_for_service(
-        backend.clone(),
-        Some(shared_authority_set.clone()),
-    );
-
-    let import_setup = (block_import, grandpa_link, babe_link);
-    let rpc_setup = shared_voter_state.clone();
-
-    let rpc_extensions_builder = {
-        let client = client.clone();
-        let keystore = keystore_container.keystore();
-        let transaction_pool = transaction_pool.clone();
-        let select_chain = select_chain.clone();
-        let chain_spec = config.chain_spec.cloned_box();
-        let backend = backend.clone();
-
-        move |
-              subscription_executor: rpc::SubscriptionTaskExecutor|
-              -> Result<rpc::RpcExtension, sc_service::Error> {
-            let deps = rpc::FullDeps {
-                client: client.clone(),
-                pool: transaction_pool.clone(),
-                select_chain: select_chain.clone(),
-                chain_spec: chain_spec.cloned_box(),
-                babe: rpc::BabeDeps {
-                    babe_worker_handle: babe_worker_handle.clone(),
-                    keystore: keystore.clone(),
-                },
-                grandpa: rpc::GrandpaDeps {
-                    shared_voter_state: shared_voter_state.clone(),
-                    shared_authority_set: shared_authority_set.clone(),
-                    justification_stream: justification_stream.clone(),
-                    subscription_executor: subscription_executor.clone(),
-                    finality_provider: finality_proof_provider.clone(),
-                },
-                backend: backend.clone(),
-            };
-
-            crate::rpc::create_full(deps).map_err(Into::into)
-        }
-    };
-
-    Ok(sc_service::PartialComponents {
-        client,
-        backend,
-        task_manager,
-        keystore_container,
-        select_chain,
-        import_queue,
-        transaction_pool,
-        other: (
-            rpc_extensions_builder,
-            import_setup,
-            rpc_setup,
-            slot_duration,
-            telemetry,
-        ),
-    })
-}
-
-#[cfg(feature = "full-node")]
-pub struct NewFullParams<OverseerGenerator: OverseerGen> {
-    pub is_parachain_node: IsParachainNode,
-    /// Whether to enable the block authoring backoff on production networks
-    /// where it isn't enabled by default.
-    pub force_authoring_backoff: bool,
-    pub telemetry_worker_handle: Option<TelemetryWorkerHandle>,
-    /// The version of the node. TESTING ONLY: `None` can be passed to skip the node/worker version
-    /// check, both on startup and in the workers.
-    pub node_version: Option<String>,
-    /// Whether the node is attempting to run as a secure validator.
-    pub secure_validator_mode: bool,
-    /// An optional path to a directory containing the workers.
-    pub workers_path: Option<std::path::PathBuf>,
-    /// Optional custom names for the prepare and execute workers.
-    pub workers_names: Option<(String, String)>,
-    /// An optional number of the maximum number of pvf execute workers.
-    pub execute_workers_max_num: Option<usize>,
-    /// An optional maximum number of pvf workers that can be spawned in the pvf prepare pool for
-    /// tasks with the priority below critical.
-    pub prepare_workers_soft_max_num: Option<usize>,
-    /// An optional absolute number of pvf workers that can be spawned in the pvf prepare pool.
-    pub prepare_workers_hard_max_num: Option<usize>,
-    /// How long finalized data should be kept in the availability store (in hours).
-    pub keep_finalized_for: Option<u32>,
-    pub overseer_gen: OverseerGenerator,
-    pub overseer_message_channel_capacity_override: Option<usize>,
-    #[allow(dead_code)]
-    pub malus_finality_delay: Option<u32>,
-    pub hwbench: Option<sc_sysinfo::HwBench>,
-    /// Set of invulnerable AH collator `PeerId`s.
-    pub invulnerable_ah_collators: std::collections::HashSet<polkadot_node_network_protocol::PeerId>,
-    /// Override for `HOLD_OFF_DURATION` constant.
-    pub collator_protocol_hold_off: Option<Duration>,
-}
-
-#[cfg(feature = "full-node")]
-pub struct NewFull {
-    pub task_manager: TaskManager,
-    pub client: Arc<FullClient>,
-    pub overseer_handle: Option<Handle>,
-    pub network: Arc<dyn sc_network::service::traits::NetworkService>,
-    pub sync_service: Arc<sc_network_sync::SyncingService<Block>>,
-    pub rpc_handlers: RpcHandlers,
-    pub backend: Arc<FullBackend>,
-}
-
-/// Is this node running as in-process node for a parachain node?
-#[cfg(feature = "full-node")]
-#[derive(Clone)]
-pub enum IsParachainNode {
-    /// This node is running as in-process node for a parachain collator.
-    Collator(CollatorPair),
-    /// This node is running as in-process node for a parachain full node.
-    FullNode,
-    /// This node is not running as in-process node for a parachain node, aka a normal relay chain
-    /// node.
-    No,
-}
-
-#[cfg(feature = "full-node")]
-impl std::fmt::Debug for IsParachainNode {
-    fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
-        use sp_core::Pair;
-        match self {
-            IsParachainNode::Collator(pair) => write!(fmt, "Collator({})", pair.public()),
-            IsParachainNode::FullNode => write!(fmt, "FullNode"),
-            IsParachainNode::No => write!(fmt, "No"),
-        }
-    }
-}
-
-#[cfg(feature = "full-node")]
-impl IsParachainNode {
-    /// Is this running alongside a collator?
-    fn is_collator(&self) -> bool {
-        matches!(self, Self::Collator(_))
-    }
-
-    /// Is this running alongside a full node?
-    fn is_full_node(&self) -> bool {
-        matches!(self, Self::FullNode)
-    }
-
-    /// Is this node running alongside a relay chain node?
-    fn is_running_alongside_parachain_node(&self) -> bool {
-        self.is_collator() || self.is_full_node()
-    }
-}
-
-/// The number of hours to keep finalized data in the availability store for live networks.
-const KEEP_FINALIZED_FOR_LIVE_NETWORKS: u32 = 25;
-
-pub fn availability_config(keep_finalized_for: Option<u32>) -> AvailabilityConfig {
-    AvailabilityConfig {
-        col_data: parachains_db::REAL_COLUMNS.col_availability_data,
-        col_meta: parachains_db::REAL_COLUMNS.col_availability_meta,
-        keep_finalized_for: keep_finalized_for.unwrap_or(KEEP_FINALIZED_FOR_LIVE_NETWORKS),
-    }
-}
-
-/// Create a new full node of arbitrary runtime and executor.
-///
-/// This is an advanced feature and not recommended for general use. Generally, `build_full` is
-/// a better choice.
-///
-/// `workers_path` is used to get the path to the directory where auxiliary worker binaries reside.
-/// If not specified, the main binary's directory is searched first, then `/usr/lib/polkadot` is
-/// searched. If the path points to an executable rather then directory, that executable is used
-/// both as preparation and execution worker (supposed to be used for tests only).
-#[cfg(feature = "full-node")]
-pub fn new_full<
-    OverseerGenerator: OverseerGen,
-    Network: sc_network::NetworkBackend<Block, <Block as BlockT>::Hash>,
->(
-    config: Configuration,
-    params: NewFullParams<OverseerGenerator>,
-) -> Result<NewFull, Error> {
-    builder::PolkadotServiceBuilder::<OverseerGenerator, Network>::new(config, params)?.build()
 }
 
 #[cfg(feature = "full-node")]

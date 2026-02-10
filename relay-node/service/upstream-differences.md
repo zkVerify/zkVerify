@@ -241,7 +241,7 @@ Nearly identical between upstream and zkv-service.
 
 In `validator_overseer_builder`:
 - **Upstream**: `.collation_generation(DummySubsystem)`
-- **zkv-service**: `.collation_generation(CollationGenerationSubsystem::new(...))`
+  - **zkv-service**: `.collation_generation(CollationGenerationSubsystem::new(...))`
 
 This enables validators in zkv-service to participate in collation generation.
 
@@ -316,14 +316,50 @@ This enables validators in zkv-service to participate in collation generation.
 
 ---
 
-## rpc.rs (zkv-only)
+## rpc.rs (zkv-only) vs upstream `polkadot-rpc` crate
 
-Custom RPC module providing:
-- `BabeDeps`, `GrandpaDeps`, `FullDeps` structures
-- `create_full()` function instantiating all RPC extensions
-- Integrates: system RPC, transaction payment, BABE, GRANDPA, aggregate proof, VK hash endpoints
+Upstream handles RPC via the separate `polkadot-rpc` crate (v29.0.0). zkv-service replaces it
+with an inline `rpc.rs` module that is a slimmed-down fork with zkVerify-specific additions.
 
-Upstream handles RPC via the separate `polkadot-rpc` crate.
+### Structs
+
+| Struct | Upstream | zkv-service | Notes |
+|--------|----------|-------------|-------|
+| `BabeDeps` | Yes | Yes | Identical |
+| `GrandpaDeps<B>` | Yes | Yes | Identical |
+| `BeefyDeps<AuthorityId>` | Yes | Absent | BEEFY not supported |
+| `FullDeps` | `<C, P, SC, B, AuthorityId>` (5 generics) | `<C, P, SC, B>` (4 generics) | No `AuthorityId` / `beefy` field |
+
+### RPC endpoints registered in `create_full()`
+
+| Endpoint | Upstream | zkv-service | Notes |
+|----------|----------|-------------|-------|
+| `StateMigration` | Yes | Yes | Identical |
+| `System` | Yes | Yes | Identical |
+| `TransactionPayment` | Yes | Yes | Identical |
+| `Babe` | Yes | Yes | Identical |
+| `Grandpa` | Yes | Yes | Identical |
+| `SyncState` | Yes | Yes | Identical |
+| `Mmr` (MMR RPC) | Yes | **No** | MMR gadget not used |
+| `Beefy` (BEEFY RPC) | Yes | **No** | BEEFY not supported |
+| `Aggregate` (proof aggregation) | **No** | Yes | zkVerify-specific |
+| `VKHash` (verification key hash) | **No** | Yes | zkVerify-specific |
+
+### Trait bounds on `C::Api`
+
+| Bound | Upstream | zkv-service |
+|-------|----------|-------------|
+| `AccountNonceApi` | Yes | Yes |
+| `TransactionPaymentRuntimeApi` | Yes | Yes |
+| `BabeApi` | Yes | Yes |
+| `BlockBuilder` | Yes | Yes |
+| `MmrRuntimeApi` | Yes | No |
+| `AggregateRuntimeApi` | No | Yes |
+
+### Additional trait bounds on `C`
+
+zkv-service requires `BlockBackend<Block>` and `ProofProvider<Block>` on the client (upstream
+does not).
 
 ---
 
