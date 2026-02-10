@@ -1,39 +1,33 @@
 [advisories]
 ignore = [
-    # Coming from outdated libp2p and litep2p dependencies from which
-    # some Polkadot libraries are dependent on. They will be updated
-    # once we update Polkadot packages to latest version
-    "RUSTSEC-2024-0421",
-    "RUSTSEC-2024-0336",
-    "RUSTSEC-2025-0009",
-    # The next two coming from outdated wasmtime dependency from wich polkadot
-    # and substrate crates are dependent on. Unfortunally seams that also the
-    # newver versions still depend from the same wasmtime version.
-    "RUSTSEC-2023-0091", # LOW severity
-    "RUSTSEC-2024-0438", # Just affect Windows where devices are not fully sandboxed.
-    "RUSTSEC-2024-0442", # FROM THE VUNERABILITY DESCRIPTION
-    # Note: this is an internal-only crate in the Wasmtime project not intended for external
-    # use and is more strongly signaled nowadays as of bytecodealliance/wasmtime#10963.
-    # Please open an issue in Wasmtime if you're using this crate directly.
-    # ** We don't use this crate directly, so we can ignore it. **
-    "RUSTSEC-2025-0055", # coming from indirect dependency tracing-subscriber v0.2
-    # on the other end the v0.3.20 break console log output formatting
-    # how reported in https://github.com/tokio-rs/tracing/issues/3369
-    "RUSTSEC-2025-0118", # coming from indirect dependency wasmtime v0.8.1.
+    "RUSTSEC-2025-0009", # ring 0.16.20 — stale lockfile entry (libp2p-quic -> libp2p-tls -> rcgen -> ring 0.16).
+    # Nothing in the workspace actually depends on this chain (`cargo tree` confirms it).
+    # It remains in Cargo.lock because Cargo always resolves optional dependencies in the
+    # lockfile (libp2p's optional `quic` feature pulls it in). Cannot be removed.
+    "RUSTSEC-2025-0055", # coming from indirect dependency tracing-subscriber v0.2.25
+    # via ark-relations v0.4.0 (and even v0.5.1 still depends on it).
+    # The std feature of ark-relations unconditionally enables tracing-subscriber 0.2.x.
+    # This is an upstream arkworks issue; no patched version of ark-relations avoids it.
+    # On the other end the tracing-subscriber v0.3.20 breaks console log output formatting
+    # as reported in https://github.com/tokio-rs/tracing/issues/3369
+    "RUSTSEC-2025-0118", # coming from indirect dependency wasmtime v35.0.0 via sc-executor-wasmtime v0.43.0.
     # From https://rustsec.org/advisories/RUSTSEC-2025-0118 ->
     # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-hc7m-r6v8-hg9q
-    # "This is a bug in Wasmtime's safe Rust API. It should not be possible to cause unsoundness
-    # with Wasmtime's embedding API if unsafe is not used. Embeddings which do not use the wasm
-    # threads proposal nor created shared memories nor actually share shared memories across
-    # threads are unaffected. Only if shared memories are created across threads might an
-    # embedding be affected."
-    # We fall in the case where we don't use wasm threads at all.
-    "RUSTSEC-2026-0002", # coming from indirect dependency in smoldot-light and libp2p-identif@0.43.1.
-    # the first is just used in parazkvtest so we can ignore it.
-    # For the second one, we looked into the code at https://github.com/libp2p/rust-libp2p.git@libp2p-identify-v0.43.1
-    # and in protocols/identify/src/behaviour.rs we can see that there isn't any mutable iterator used for
-    # `lru::LruCache`: so the unsound code is never exercised.
-
+    # "Embeddings which do not use the wasm threads proposal nor created shared memories
+    # nor actually share shared memories across threads are unaffected."
+    # Substrate explicitly sets config.wasm_threads(false) in sc-executor-wasmtime.
+    "RUSTSEC-2026-0002", # lru v0.12.5 unsound IterMut — used by libp2p-identify v0.45.0 and libp2p-swarm v0.45.1
+    # (polkadot-sdk transitive dependency via libp2p v0.54.1).
+    # We checked the libp2p-identify code at v0.45.0 and libp2p-swarm at v0.45.1:
+    # no mutable iterator (IterMut) is used on lru::LruCache, so the unsound code path
+    # is never exercised.
+    "RUSTSEC-2026-0006", # coming from indirect dependency wasmtime v35.0.0 via sc-executor-wasmtime v0.43.0.
+    # From https://rustsec.org/advisories/RUSTSEC-2026-0006 ->
+    # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-vc8c-j3xm-xj73
+    # The vulnerability (segfault or out-of-sandbox load with f64.copysign on x86-64) only triggers
+    # when signals-based-traps is DISABLED in the wasmtime Config.
+    # Substrate's sc-executor-wasmtime uses wasmtime::Config::new() which has signals_based_traps
+    # enabled by default, and never disables it. Therefore this code path is never exercised.
 ]
 informational_warnings = ["unmaintained", "yanked"]
 
