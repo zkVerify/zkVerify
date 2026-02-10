@@ -943,7 +943,6 @@ impl pallet_verifiers::common::Config for Runtime {
 }
 
 parameter_types! {
-    pub const TeeMaxPubs: u32 = 32;
     pub const IntelCaName: &'static str = "Intel_SGX_Processor";
 }
 

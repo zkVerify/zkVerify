@@ -26,6 +26,8 @@ sp-runtime = { workspace = true }
 
 tee-verifier = { workspace = true }
 pallet-timestamp = { workspace = true, optional = true }
+pallet-babe = { workspace = true }
+sp-consensus-babe = { workspace = true }
 
 [dev-dependencies]
 sp-io = { workspace = true, features = ["std"] }
@@ -35,6 +37,7 @@ runtime-benchmarks = [
 	"frame-benchmarking/runtime-benchmarks",
 	"frame-support/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
+	"pallet-babe/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
 ]
@@ -46,16 +49,19 @@ std = [
 	"frame-support/std",
 	"frame-system/std",
 	"log/std",
+	"pallet-babe/std",
 	"pallet-timestamp?/std",
 	"scale-info/std",
 	"sp-core/std",
 	"sp-io/std",
 	"sp-runtime/std",
 	"tee-verifier/std",
+	"sp-consensus-babe/std",
 ]
 try-runtime = [
 	"frame-support/try-runtime",
 	"frame-system/try-runtime",
+	"pallet-babe/try-runtime",
 	"pallet-timestamp?/try-runtime",
 	"sp-runtime/try-runtime",
 ]

@@ -238,38 +238,6 @@ fn pallet_crl() {
 }
 
 #[test]
-fn pallet_token_gateway() {
-    use pallet_token_gateway::WeightInfo;
-
-    assert_eq!(
-        <Runtime as pallet_token_gateway::Config>::WeightInfo::set_token_gateway_addresses(42),
-        crate::weights::pallet_token_gateway::ZKVWeight::<Runtime>::set_token_gateway_addresses(42)
-    );
-}
-
-#[test]
-fn pallet_hyperbridge_aggregations() {
-    use pallet_hyperbridge_aggregations::WeightInfo;
-
-    assert_eq!(
-        <Runtime as pallet_hyperbridge_aggregations::Config>::WeightInfo::dispatch_aggregation(),
-        crate::weights::pallet_hyperbridge_aggregations::ZKVWeight::<Runtime>::dispatch_aggregation(
-        )
-    );
-}
-
-#[test]
-fn ismp_grandpa() {
-    use ismp_grandpa::WeightInfo;
-
-    assert_eq!(
-        <Runtime as ismp_grandpa::Config>::WeightInfo::add_state_machines(42),
-        crate::weights::ismp_grandpa::ZKVWeight::<Runtime>::add_state_machines(42)
-    );
-}
-
-#[test]
->>>>>>> 29bdd46 (Cosmetics)
 fn pallet_staking() {
     use pallet_staking::WeightInfo;
 

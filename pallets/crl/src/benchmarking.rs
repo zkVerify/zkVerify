@@ -26,13 +26,15 @@ use pallet::*;
 /// (valid from Feb 9 2026 to Feb 4 2046).
 const PRESENT_MS: u64 = 1_772_323_200_000;
 
-fn set_timestamp<T>(ts_ms: u64)
+fn set_timestamp<T>(ts: u64)
 where
-    T: pallet_timestamp::Config,
+    T: pallet_babe::Config + pallet_timestamp::Config,
 {
-    let timestamp: T::Moment = ts_ms.unique_saturated_into();
-    // Write directly to storage to avoid triggering OnTimestampSet hooks (e.g. BABE).
-    pallet_timestamp::Now::<T>::put(timestamp);
+    // We only actually need the timestamp to be in the valid time frame for the TcbInfo.
+    // BABE must be aligned to prevent assertion failures.
+    pallet_babe::CurrentSlot::<T>::put(sp_consensus_babe::Slot::from(ts / 6000)); // slot time
+    let timestamp: T::Moment = ts.unique_saturated_into();
+    pallet_timestamp::Pallet::<T>::set_timestamp(timestamp);
 }
 
 fn register_test_ca<T: Config>() -> CaName<T> {
@@ -73,7 +75,7 @@ fn select_crl(n: u32) -> alloc::vec::Vec<u8> {
 }
 
 #[allow(clippy::multiple_bound_locations)]
-#[benchmarks(where T: pallet_timestamp::Config)]
+#[benchmarks(where T: pallet_timestamp::Config + pallet_babe::Config)]
 mod benchmarks {
     use super::*;
 
@@ -147,6 +149,7 @@ mod mock {
         derive_impl, parameter_types,
         sp_runtime::{traits::IdentityLookup, BuildStorage},
     };
+    use sp_core::{ConstU32, ConstU64};
 
     type AccountId = u64;
 
@@ -154,6 +157,7 @@ mod mock {
         pub enum Test
         {
             System: frame_system,
+            Babe: pallet_babe,
             Timestamp: pallet_timestamp,
             CrlPallet: crate,
         }
@@ -183,6 +187,19 @@ mod mock {
         type OnTimestampSet = ();
         type MinimumPeriod = sp_core::ConstU64<5>;
         type WeightInfo = ();
+    }
+
+    impl pallet_babe::Config for Test {
+        type EpochDuration = ConstU64<10>;
+        type ExpectedBlockTime = ConstU64<6000>;
+        // session module is the trigger
+        type EpochChangeTrigger = pallet_babe::SameAuthoritiesForever;
+        type DisabledValidators = ();
+        type WeightInfo = ();
+        type MaxAuthorities = ConstU32<10>;
+        type MaxNominators = ConstU32<100>;
+        type KeyOwnerProof = sp_core::Void;
+        type EquivocationReportSystem = ();
     }
 
     pub fn test_ext() -> sp_io::TestExternalities {
