@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::compat::PassPointerAndReadWrite;
 use sp_runtime_interface::pass_by::PassFatPointerAndReadWrite;
 use sp_runtime_interface::runtime_interface;
 
@@ -74,6 +75,17 @@ impl<'a> Poseidon2Mix<'a> {
 
 #[runtime_interface]
 pub trait Risc0Accelerate {
+    /// Version 1: old ABI (thin pointer, i32). Registered for old on-chain runtimes.
+    #[version(1, register_only)]
+    fn poseidon2_mix(
+        bytes: PassPointerAndReadWrite<&mut Poseidon2ArgBytes, POSEIDON2_ARG_BYTES_SIZE>,
+    ) {
+        let cells = Poseidon2Mix::from_mut_bytes(bytes);
+        risc0_verifier::poseidon2_injection::poseidon2_mix(cells.inner);
+    }
+
+    /// Version 2: new ABI (fat pointer, i64). Used by the current runtime.
+    #[version(2)]
     fn poseidon2_mix(bytes: PassFatPointerAndReadWrite<&mut [u8]>) {
         let cells = Poseidon2Mix::from_mut_bytes(bytes);
         risc0_verifier::poseidon2_injection::poseidon2_mix(cells.inner);
