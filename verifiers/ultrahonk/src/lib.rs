@@ -210,6 +210,15 @@ impl<T: Config> Verifier for Ultrahonk<T> {
             .collect::<Vec<_>>();
         Cow::Owned(data)
     }
+
+    fn verifier_version_hash(proof: &Self::Proof) -> H256 {
+        let h = match proof {
+            VersionedProof::V3_0(_) => hex_literal::hex!(
+                "aa24368f9ce9025f58596d966209fc3f322c8cac37dae753bb9b0367d273700d" // copy-pasted from Risc0
+            ),
+        };
+        H256(h)
+    }
 }
 
 fn compute_weight<T: Config>(log_circuit_size: u64, proof_type: ProofType) -> Weight {

@@ -39,10 +39,11 @@ pub mod benchmarks {
     fn verify_zk_proof_log_7() {
         let test_params = TestParams::new(7, ProofType::ZK);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }
@@ -51,10 +52,11 @@ pub mod benchmarks {
     fn verify_plain_proof_log_7() {
         let test_params = TestParams::new(7, ProofType::Plain);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }
@@ -63,10 +65,11 @@ pub mod benchmarks {
     fn verify_zk_proof_log_8() {
         let test_params = TestParams::new(8, ProofType::ZK);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }
@@ -75,10 +78,11 @@ pub mod benchmarks {
     fn verify_plain_proof_log_8() {
         let test_params = TestParams::new(8, ProofType::Plain);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }
@@ -87,10 +91,11 @@ pub mod benchmarks {
     fn verify_zk_proof_log_9() {
         let test_params = TestParams::new(9, ProofType::ZK);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }
@@ -99,10 +104,11 @@ pub mod benchmarks {
     fn verify_plain_proof_log_9() {
         let test_params = TestParams::new(9, ProofType::Plain);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }
@@ -111,10 +117,11 @@ pub mod benchmarks {
     fn verify_zk_proof_log_10() {
         let test_params = TestParams::new(10, ProofType::ZK);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }
@@ -123,10 +130,11 @@ pub mod benchmarks {
     fn verify_plain_proof_log_10() {
         let test_params = TestParams::new(10, ProofType::Plain);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }
@@ -135,10 +143,11 @@ pub mod benchmarks {
     fn verify_zk_proof_log_11() {
         let test_params = TestParams::new(11, ProofType::ZK);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }
@@ -147,10 +156,11 @@ pub mod benchmarks {
     fn verify_plain_proof_log_11() {
         let test_params = TestParams::new(11, ProofType::Plain);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }
@@ -159,10 +169,11 @@ pub mod benchmarks {
     fn verify_zk_proof_log_12() {
         let test_params = TestParams::new(12, ProofType::ZK);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }
@@ -171,10 +182,11 @@ pub mod benchmarks {
     fn verify_plain_proof_log_12() {
         let test_params = TestParams::new(12, ProofType::Plain);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }
@@ -183,10 +195,11 @@ pub mod benchmarks {
     fn verify_zk_proof_log_13() {
         let test_params = TestParams::new(13, ProofType::ZK);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }
@@ -195,10 +208,11 @@ pub mod benchmarks {
     fn verify_plain_proof_log_13() {
         let test_params = TestParams::new(13, ProofType::Plain);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }
@@ -207,10 +221,11 @@ pub mod benchmarks {
     fn verify_zk_proof_log_14() {
         let test_params = TestParams::new(14, ProofType::ZK);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }
@@ -219,10 +234,11 @@ pub mod benchmarks {
     fn verify_plain_proof_log_14() {
         let test_params = TestParams::new(14, ProofType::Plain);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }
@@ -231,10 +247,11 @@ pub mod benchmarks {
     fn verify_zk_proof_log_15() {
         let test_params = TestParams::new(15, ProofType::ZK);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }
@@ -243,10 +260,11 @@ pub mod benchmarks {
     fn verify_plain_proof_log_15() {
         let test_params = TestParams::new(14, ProofType::Plain);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }
@@ -255,10 +273,11 @@ pub mod benchmarks {
     fn verify_zk_proof_log_16() {
         let test_params = TestParams::new(16, ProofType::ZK);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }
@@ -267,10 +286,11 @@ pub mod benchmarks {
     fn verify_plain_proof_log_16() {
         let test_params = TestParams::new(15, ProofType::Plain);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }
@@ -279,10 +299,11 @@ pub mod benchmarks {
     fn verify_zk_proof_log_17() {
         let test_params = TestParams::new(17, ProofType::ZK);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }
@@ -291,10 +312,11 @@ pub mod benchmarks {
     fn verify_plain_proof_log_17() {
         let test_params = TestParams::new(17, ProofType::Plain);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }
@@ -303,10 +325,11 @@ pub mod benchmarks {
     fn verify_zk_proof_log_18() {
         let test_params = TestParams::new(18, ProofType::ZK);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }
@@ -315,10 +338,11 @@ pub mod benchmarks {
     fn verify_plain_proof_log_18() {
         let test_params = TestParams::new(18, ProofType::Plain);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }
@@ -327,10 +351,11 @@ pub mod benchmarks {
     fn verify_zk_proof_log_19() {
         let test_params = TestParams::new(19, ProofType::ZK);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }
@@ -339,10 +364,11 @@ pub mod benchmarks {
     fn verify_plain_proof_log_19() {
         let test_params = TestParams::new(19, ProofType::Plain);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }
@@ -351,10 +377,11 @@ pub mod benchmarks {
     fn verify_zk_proof_log_20() {
         let test_params = TestParams::new(20, ProofType::ZK);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }
@@ -363,10 +390,11 @@ pub mod benchmarks {
     fn verify_plain_proof_log_20() {
         let test_params = TestParams::new(20, ProofType::Plain);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }
@@ -375,10 +403,11 @@ pub mod benchmarks {
     fn verify_zk_proof_log_21() {
         let test_params = TestParams::new(21, ProofType::ZK);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }
@@ -387,10 +416,11 @@ pub mod benchmarks {
     fn verify_plain_proof_log_21() {
         let test_params = TestParams::new(21, ProofType::Plain);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }
@@ -399,10 +429,11 @@ pub mod benchmarks {
     fn verify_zk_proof_log_22() {
         let test_params = TestParams::new(22, ProofType::ZK);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }
@@ -411,10 +442,11 @@ pub mod benchmarks {
     fn verify_plain_proof_log_22() {
         let test_params = TestParams::new(22, ProofType::Plain);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }
@@ -423,10 +455,11 @@ pub mod benchmarks {
     fn verify_zk_proof_log_23() {
         let test_params = TestParams::new(23, ProofType::ZK);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }
@@ -435,10 +468,11 @@ pub mod benchmarks {
     fn verify_plain_proof_log_23() {
         let test_params = TestParams::new(23, ProofType::Plain);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }
@@ -447,10 +481,11 @@ pub mod benchmarks {
     fn verify_zk_proof_log_24() {
         let test_params = TestParams::new(24, ProofType::ZK);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }
@@ -459,10 +494,11 @@ pub mod benchmarks {
     fn verify_plain_proof_log_24() {
         let test_params = TestParams::new(24, ProofType::Plain);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }
@@ -471,10 +507,11 @@ pub mod benchmarks {
     fn verify_zk_proof_log_25() {
         let test_params = TestParams::new(25, ProofType::ZK);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }
@@ -483,10 +520,11 @@ pub mod benchmarks {
     fn verify_plain_proof_log_25() {
         let test_params = TestParams::new(25, ProofType::Plain);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
         };
         assert!(r.is_ok());
     }

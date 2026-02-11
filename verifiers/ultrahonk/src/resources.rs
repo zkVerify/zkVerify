@@ -38,7 +38,7 @@ impl TestParams {
 
 pub struct TestData {
     pub vk: crate::Vk,
-    pub proof: crate::VersionedProof,
+    pub proof: crate::Proof,
     pub pubs: crate::Pubs,
 }
 
@@ -55,10 +55,7 @@ pub fn get_parameterized_test_data(test_params: TestParams) -> TestData {
         .vk
         .try_into()
         .expect("Benchmark file should always have the correct vk size");
-    let proof = crate::VersionedProof::V3_0(crate::Proof::new(
-        test_params.proof_type,
-        raw_test_data.proof.to_vec(),
-    ));
+    let proof = crate::Proof::new(test_params.proof_type, raw_test_data.proof.to_vec());
     let pubs = raw_test_data
         .pubs
         .chunks_exact(crate::PUB_SIZE)
