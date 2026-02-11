@@ -63,22 +63,26 @@ pub mod benchmarks {
 
     #[benchmark]
     fn compute_statement_hash() {
-        let proof = Proof::new(
-            ProofType::ZK,
-            include_bytes!("resources/zk/log_25/proof").to_vec(),
-        );
-        let pubs: Vec<_> = include_bytes!("resources/zk/log_25/pubs")
-            .chunks_exact(crate::PUB_SIZE)
-            .map(TryInto::try_into)
-            .map(Result::unwrap)
-            .collect();
-        let vk = *include_bytes!("resources/zk/log_25/vk");
+        // let proof = Proof::new(
+        //     ProofType::ZK,
+        //     include_bytes!("resources/zk/log_25/proof").to_vec(),
+        // );
+        // let pubs: Vec<_> = include_bytes!("resources/zk/log_25/pubs")
+        //     .chunks_exact(crate::PUB_SIZE)
+        //     .map(TryInto::try_into)
+        //     .map(Result::unwrap)
+        //     .collect();
+        // let vk = *include_bytes!("resources/zk/log_25/vk");
+
+        let test_params = TestParams::new(25, ProofType::ZK);
+        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
+        let vproof = VersionedProof::V3_0(proof);
 
         let vk = VkOrHash::Vk(vk.into());
 
         #[block]
         {
-            do_compute_statement_hash::<T>(&vk, &proof, &pubs);
+            do_compute_statement_hash::<T>(&vk, &vproof, &pubs);
         }
     }
 
