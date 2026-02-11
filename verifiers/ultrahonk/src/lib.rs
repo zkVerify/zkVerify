@@ -158,11 +158,7 @@ impl<T: Config> Verifier for Ultrahonk<T> {
                 log_circuit_size <= MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
                 hp_verifiers::VerifyError::InvalidVerificationKey
             );
-<<<<<<< HEAD
-=======
 
-            // let test_params = TestParams::new(log_circuit_size, ProofType::from(&prepared_proof));
->>>>>>> fc78254 (Reworked pallet-ultrahonk-verifier)
             compute_weight::<T>(log_circuit_size, ProofType::from(&prepared_proof))
         };
 
@@ -171,12 +167,7 @@ impl<T: Config> Verifier for Ultrahonk<T> {
             .inspect_err(|e| log::debug!("Cannot verify proof: {e:?}"))
             .map_err(|e| match e {
                 ultrahonk_no_std::errors::VerifyError::VerificationError { message: _ } => {
-<<<<<<< HEAD
                     VerifyError::VerifyError
-=======
-                    println!("HERE!");
-                    hp_verifiers::VerifyError::VerifyError
->>>>>>> fc78254 (Reworked pallet-ultrahonk-verifier)
                 }
                 ultrahonk_no_std::errors::VerifyError::PublicInputError { message: _ } => {
                     VerifyError::InvalidInput
