@@ -48,10 +48,7 @@ pub mod on_proof_verified {
         pub struct Pallet<T>(_);
 
         #[pallet::config]
-        pub trait Config: frame_system::Config {
-            type RuntimeEvent: From<Event<Self>>
-                + IsType<<Self as frame_system::Config>::RuntimeEvent>;
-        }
+        pub trait Config: frame_system::Config<RuntimeEvent: From<Event<Self>>> {}
 
         type AccountOf<T> = <T as frame_system::Config>::AccountId;
 
@@ -308,6 +305,4 @@ impl crate::common::Config for Test {
     type CommonWeightInfo = MockCommonWeightInfo;
 }
 
-impl on_proof_verified::Config for Test {
-    type RuntimeEvent = RuntimeEvent;
-}
+impl on_proof_verified::Config for Test {}
