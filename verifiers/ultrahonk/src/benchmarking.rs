@@ -38,7 +38,7 @@ pub mod benchmarks {
 
     #[benchmark]
     fn get_vk() {
-        let vk = *include_bytes!("resources/zk/log_26/vk");
+        let vk = *include_bytes!("resources/zk/log_25/vk");
         let hash = sp_core::H256::repeat_byte(2);
 
         insert_vk_anonymous::<T>(vk, hash);
@@ -53,7 +53,7 @@ pub mod benchmarks {
 
     #[benchmark]
     fn validate_vk() {
-        let vk = *include_bytes!("resources/zk/log_26/vk");
+        let vk = *include_bytes!("resources/zk/log_25/vk");
 
         let r;
         #[block]
@@ -67,14 +67,14 @@ pub mod benchmarks {
     fn compute_statement_hash() {
         let proof = Proof::new(
             ProofType::ZK,
-            include_bytes!("resources/zk/log_26/proof").to_vec(),
+            include_bytes!("resources/zk/log_25/proof").to_vec(),
         );
-        let pubs: Vec<_> = include_bytes!("resources/zk/log_26/pubs")
+        let pubs: Vec<_> = include_bytes!("resources/zk/log_25/pubs")
             .chunks_exact(crate::PUB_SIZE)
             .map(TryInto::try_into)
             .map(Result::unwrap)
             .collect();
-        let vk = *include_bytes!("resources/zk/log_26/vk");
+        let vk = *include_bytes!("resources/zk/log_25/vk");
 
         let vk = VkOrHash::Vk(vk.into());
 
@@ -88,7 +88,7 @@ pub mod benchmarks {
     fn register_vk() {
         // setup code
         let caller = funded_account::<T>();
-        let vk = *include_bytes!("resources/zk/log_26/vk");
+        let vk = *include_bytes!("resources/zk/log_25/vk");
 
         #[extrinsic_call]
         register_vk(RawOrigin::Signed(caller), vk.into());
@@ -102,7 +102,7 @@ pub mod benchmarks {
         // setup code
         let caller = funded_account::<T>();
         let hash = sp_core::H256::repeat_byte(2);
-        let vk = *include_bytes!("resources/zk/log_26/vk");
+        let vk = *include_bytes!("resources/zk/log_25/vk");
 
         insert_vk::<T>(caller.clone(), vk, hash);
 

@@ -37,7 +37,7 @@ pub type Pubs = Vec<[u8; PUB_SIZE]>;
 pub type Vk = [u8; VK_SIZE];
 
 // Maximum allowed value for the logarithm of the polynomial evaluation domain size.
-const MAX_BENCHMARKED_LOG_CIRCUIT_SIZE: u64 = 26;
+const MAX_BENCHMARKED_LOG_CIRCUIT_SIZE: u64 = 25;
 
 pub trait Config {
     /// Maximum supported number of public inputs.
@@ -211,7 +211,6 @@ impl<T: Config> Verifier for Ultrahonk<T> {
     }
 
     fn vk_hash(vk: &Self::Vk) -> H256 {
-        // Q: Change to match the vk_hash output by Noir?
         sp_io::hashing::sha2_256(&Self::vk_bytes(vk)).into()
     }
 
@@ -282,8 +281,6 @@ fn compute_weight<T: Config>(log_circuit_size: u64, proof_type: ProofType) -> We
         (24, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_24(),
         (25, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_25(),
         (25, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_25(),
-        (26, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_26(),
-        (26, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_26(),
         _ => panic!("Invalid value given for log_circuit_size."),
     }
 }
@@ -305,8 +302,8 @@ impl<T: Config, W: WeightInfo> pallet_verifiers::WeightInfo<Ultrahonk<T>> for Ul
         _pubs: &<Ultrahonk<T> as hp_verifiers::Verifier>::Pubs,
     ) -> Weight {
         match proof {
-            Proof::ZK(_) => T::WeightInfo::verify_zk_proof_log_26(),
-            Proof::Plain(_) => T::WeightInfo::verify_plain_proof_log_26(),
+            Proof::ZK(_) => T::WeightInfo::verify_zk_proof_log_25(),
+            Proof::Plain(_) => T::WeightInfo::verify_plain_proof_log_25(),
         }
     }
 

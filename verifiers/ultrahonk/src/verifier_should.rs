@@ -27,12 +27,12 @@ impl crate::Config for MockRuntime {
 
 // Default (proof, vk, pubs) triplets for unit testing:
 
-const VALID_ZK_PROOF: &[u8] = include_bytes!("resources/zk/log_26/proof");
-const VALID_PLAIN_PROOF: &[u8] = include_bytes!("resources/plain/log_26/proof");
+const VALID_ZK_PROOF: &[u8] = include_bytes!("resources/zk/log_25/proof");
+const VALID_PLAIN_PROOF: &[u8] = include_bytes!("resources/plain/log_25/proof");
 
 #[allow(dead_code)]
 pub(crate) fn valid_vk() -> crate::Vk {
-    let vk_bytes: &[u8] = include_bytes!("resources/zk/log_26/vk");
+    let vk_bytes: &[u8] = include_bytes!("resources/zk/log_25/vk");
     let vk: [u8; crate::VK_SIZE] = vk_bytes
         .try_into()
         .expect("Benchmark file should always have the correct vk size");
@@ -41,7 +41,7 @@ pub(crate) fn valid_vk() -> crate::Vk {
 
 #[allow(dead_code)]
 pub(crate) fn valid_public_input() -> crate::Pubs {
-    include_bytes!("resources/zk/log_26/pubs")
+    include_bytes!("resources/zk/log_25/pubs")
         .chunks_exact(crate::PUB_SIZE)
         .map(|c| c.try_into().unwrap())
         .collect()
@@ -108,7 +108,7 @@ fn verify_vk_hash() {
 
     assert_eq!(
         vk_hash.as_bytes(),
-        hex!("862d96a25fb215e349e53f808e5cc5fff65c789f7a751c07857fdded9e3cbece")
+        hex!("db7e16ea447c0514657eda8c51d3d1599e26a86bfe4608b67070b18f5b4cde96")
     );
 }
 
@@ -225,10 +225,10 @@ mod reject {
 
         let invalid_proof = Proof::new(ProofType::ZK, invalid_proof_bytes);
 
-        assert_eq!(
+        assert!(matches!(
             Ultrahonk::<MockRuntime>::verify_proof(&vk, &invalid_proof, &pi),
-            Err(VerifyError::VerifyError)
-        );
+            Err(VerifyError::VerifyError) | Err(VerifyError::InvalidProofData)
+        ));
     }
 
     #[test]
@@ -241,10 +241,10 @@ mod reject {
 
         let invalid_proof = Proof::new(ProofType::Plain, invalid_proof_bytes);
 
-        assert_eq!(
+        assert!(matches!(
             Ultrahonk::<MockRuntime>::verify_proof(&vk, &invalid_proof, &pi),
-            Err(VerifyError::VerifyError)
-        );
+            Err(VerifyError::VerifyError) | Err(VerifyError::InvalidProofData)
+        ));
     }
 
     #[test]

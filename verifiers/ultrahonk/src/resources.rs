@@ -166,11 +166,6 @@ static DATA_PLAIN: &[Data] = &[
         proof: include_bytes!("resources/plain/log_25/proof"),
         pubs: include_bytes!("resources/plain/log_25/pubs"),
     },
-    Data {
-        vk: include_bytes!("resources/plain/log_26/vk"),
-        proof: include_bytes!("resources/plain/log_26/proof"),
-        pubs: include_bytes!("resources/plain/log_26/pubs"),
-    },
 ];
 
 static DATA_ZK: &[Data] = &[
@@ -268,10 +263,5 @@ static DATA_ZK: &[Data] = &[
         vk: include_bytes!("resources/zk/log_25/vk"),
         proof: include_bytes!("resources/zk/log_25/proof"),
         pubs: include_bytes!("resources/zk/log_25/pubs"),
-    },
-    Data {
-        vk: include_bytes!("resources/zk/log_26/vk"),
-        proof: include_bytes!("resources/zk/log_26/proof"),
-        pubs: include_bytes!("resources/zk/log_26/pubs"),
     },
 ];
