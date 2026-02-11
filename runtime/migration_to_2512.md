@@ -253,6 +253,45 @@ The simplified `dry_run_xcm` generic signature is a polkadot-stable2512 change â
 | `AggregateApi` | zkVerify-specific proof aggregation RPC |
 | `GetLastTimestamp` | Test-only helper API |
 
+### Transaction Extensions Comparison
+
+zkVerify's `TxExtension` tuple currently matches Kusama exactly (9 extensions). The Westend runtime (polkadot-stable2512 SDK testbed) includes two additional extensions not yet adopted by the Polkadot/Kusama fellowship runtimes.
+
+**zkVerify `TxExtension` (`lib.rs`)**
+
+```rust
+pub type TxExtension = (
+    frame_system::CheckNonZeroSender<Runtime>,
+    frame_system::CheckSpecVersion<Runtime>,
+    frame_system::CheckTxVersion<Runtime>,
+    frame_system::CheckGenesis<Runtime>,
+    frame_system::CheckEra<Runtime>,
+    frame_system::CheckNonce<Runtime>,
+    frame_system::CheckWeight<Runtime>,
+    pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
+    frame_metadata_hash_extension::CheckMetadataHash<Runtime>,
+);
+```
+
+**Comparison**
+
+| Extension | Polkadot | Kusama | Westend | zkVerify | Notes |
+|---|---|---|---|---|---|
+| `AuthorizeCall` | no | no | yes | no | Enables meta-transactions / unsigned calls with `#[pallet::authorize]`. No zkVerify pallets use this attribute, so adding it would be a no-op. Low priority |
+| `CheckNonZeroSender` | yes | yes | yes | yes | |
+| `CheckSpecVersion` | yes | yes | yes | yes | |
+| `CheckTxVersion` | yes | yes | yes | yes | |
+| `CheckGenesis` | yes | yes | yes | yes | |
+| `CheckEra`/`CheckMortality` | yes | yes | yes | yes | `CheckEra` is an alias for `CheckMortality` |
+| `CheckNonce` | yes | yes | yes | yes | |
+| `CheckWeight` | yes | yes | yes | yes | |
+| `ChargeTransactionPayment` | yes | yes | yes | yes | |
+| `PrevalidateAttests` | yes | no | no | no | Polkadot-specific DOT claims process â€” not applicable |
+| `CheckMetadataHash` | yes | yes | yes | yes | |
+| `WeightReclaim` | no | no | yes | no | Reclaims unused weight after dispatch back to the block budget. Could improve block utilization for variable-weight calls (e.g. proof verification). Moderate priority |
+
+Both `AuthorizeCall` and `WeightReclaim` are available in `frame-system` v45.0.0 (our dependency) but not yet used. They can be added independently when needed.
+
 ### Placeholder Weight Functions Added
 
 New weight functions added with placeholder values (to be benchmarked):
