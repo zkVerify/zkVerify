@@ -29,12 +29,15 @@ use crate::{
 };
 use pallet_referenda::{Curve, Track, TrackInfo};
 
+/// Maximum byte length of a track name.
+const MAX_TRACK_NAME_LEN: usize = 25;
+
 /// Helper to convert a string literal to a fixed-size byte array for track names
-const fn str_to_track_name<const N: usize>(s: &str) -> [u8; N] {
+const fn str_to_track_name(s: &str) -> [u8; MAX_TRACK_NAME_LEN] {
     let bytes = s.as_bytes();
-    let mut result = [0u8; N];
+    let mut result = [0u8; MAX_TRACK_NAME_LEN];
     let mut i = 0;
-    while i < bytes.len() && i < N {
+    while i < bytes.len() && i < MAX_TRACK_NAME_LEN {
         result[i] = bytes[i];
         i += 1;
     }
@@ -55,7 +58,7 @@ const TRACKS_DATA: &[Track<u16, Balance, BlockNumber>] = &[
     Track {
         id: 0,
         info: TrackInfo {
-            name: str_to_track_name::<25>("root"),
+            name: str_to_track_name("root"),
             max_deciding: 1,
             decision_deposit: 100 * THOUSANDS,
             prepare_period: 2 * HOURS,
@@ -69,7 +72,7 @@ const TRACKS_DATA: &[Track<u16, Balance, BlockNumber>] = &[
     Track {
         id: 2,
         info: TrackInfo {
-            name: str_to_track_name::<25>("wish_for_change"),
+            name: str_to_track_name("wish_for_change"),
             max_deciding: 10,
             decision_deposit: 20 * THOUSANDS,
             prepare_period: 2 * HOURS,
@@ -83,7 +86,7 @@ const TRACKS_DATA: &[Track<u16, Balance, BlockNumber>] = &[
     Track {
         id: 20,
         info: TrackInfo {
-            name: str_to_track_name::<25>("referendum_canceller"),
+            name: str_to_track_name("referendum_canceller"),
             max_deciding: 1_000,
             decision_deposit: 10 * THOUSANDS,
             prepare_period: 2 * HOURS,
@@ -97,7 +100,7 @@ const TRACKS_DATA: &[Track<u16, Balance, BlockNumber>] = &[
     Track {
         id: 33,
         info: TrackInfo {
-            name: str_to_track_name::<25>("medium_spender"),
+            name: str_to_track_name("medium_spender"),
             max_deciding: 50,
             decision_deposit: THOUSANDS,
             prepare_period: 4 * HOURS,
