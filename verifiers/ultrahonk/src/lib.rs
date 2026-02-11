@@ -104,26 +104,13 @@ impl From<Proof> for RawProof {
     }
 }
 
-// impl From<&VersionedProof> for UltraHonkProofType {
-//     fn from(proof: &VersionedProof) -> Self {
-//         match proof {
-//             VersionedProof::V3_0(Proof::ZK(proof_bytes)) => {
-//                 UltraHonkProofType::ZK(proof_bytes.clone().into_boxed_slice())
-//             }
-//             VersionedProof::V3_0(Proof::Plain(proof_bytes)) => {
-//                 UltraHonkProofType::Plain(proof_bytes.clone().into_boxed_slice())
-//             }
-//         }
-//     }
-// }
-
-impl From<&Proof> for UltraHonkProofType {
-    fn from(proof: &Proof) -> Self {
+impl From<&VersionedProof> for UltraHonkProofType {
+    fn from(proof: &VersionedProof) -> Self {
         match proof {
-            Proof::ZK(proof_bytes) => {
+            VersionedProof::V3_0(Proof::ZK(proof_bytes)) => {
                 UltraHonkProofType::ZK(proof_bytes.clone().into_boxed_slice())
             }
-            Proof::Plain(proof_bytes) => {
+            VersionedProof::V3_0(Proof::Plain(proof_bytes)) => {
                 UltraHonkProofType::Plain(proof_bytes.clone().into_boxed_slice())
             }
         }
@@ -141,8 +128,7 @@ mod weight_verify_proof;
 pub struct Ultrahonk<T>;
 
 impl<T: Config> Verifier for Ultrahonk<T> {
-    // type Proof = VersionedProof;
-    type Proof = Proof;
+    type Proof = VersionedProof;
 
     type Pubs = Pubs;
 
@@ -301,9 +287,11 @@ impl<T: Config, W: WeightInfo> pallet_verifiers::WeightInfo<Ultrahonk<T>> for Ul
         proof: &<Ultrahonk<T> as hp_verifiers::Verifier>::Proof,
         _pubs: &<Ultrahonk<T> as hp_verifiers::Verifier>::Pubs,
     ) -> Weight {
-        match proof {
-            Proof::ZK(_) => T::WeightInfo::verify_zk_proof_log_25(),
-            Proof::Plain(_) => T::WeightInfo::verify_plain_proof_log_25(),
+        let prepared_proof: UltraHonkProofType = proof.into();
+        let proof_type = ProofType::from(&prepared_proof);
+        match proof_type {
+            ProofType::ZK => T::WeightInfo::verify_zk_proof_log_25(),
+            ProofType::Plain => T::WeightInfo::verify_plain_proof_log_25(),
         }
     }
 
