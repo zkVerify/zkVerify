@@ -94,8 +94,6 @@ pub trait WeightInfo {
     fn verify_plain_proof_log_24() -> Weight;
     fn verify_zk_proof_log_25() -> Weight;
     fn verify_plain_proof_log_25() -> Weight;
-    fn verify_zk_proof_log_26() -> Weight;
-    fn verify_plain_proof_log_26() -> Weight;
 }
 
 // For backwards compatibility and tests.
@@ -360,20 +358,6 @@ impl WeightInfo for () {
         Weight::from_parts(14_808_597_000, 0)
     }
     fn verify_plain_proof_log_25() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 12_438_014_000 picoseconds.
-        Weight::from_parts(14_808_597_000, 0)
-    }
-    fn verify_zk_proof_log_26() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 12_438_014_000 picoseconds.
-        Weight::from_parts(14_808_597_000, 0)
-    }
-    fn verify_plain_proof_log_26() -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `0`
         //  Estimated: `0`

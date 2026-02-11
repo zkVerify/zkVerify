@@ -490,30 +490,6 @@ pub mod benchmarks {
         };
         assert!(r.is_ok());
     }
-
-    #[benchmark]
-    fn verify_zk_proof_log_26() {
-        let test_params = TestParams::new(26, ProofType::ZK);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let r;
-        #[block]
-        {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
-        };
-        assert!(r.is_ok());
-    }
-
-    #[benchmark]
-    fn verify_plain_proof_log_26() {
-        let test_params = TestParams::new(26, ProofType::Plain);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let r;
-        #[block]
-        {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
-        };
-        assert!(r.is_ok());
-    }
 }
 
 #[cfg(test)]
