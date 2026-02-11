@@ -243,6 +243,16 @@ exports.claimEthereum = async (signer, signature, dest) => {
   return await submitExtrinsicUnsigned(api, extrinsic, BlockUntil.InBlock, (event) => event.section == "tokenClaim");
 }
 
+exports.sudoRegisterCA = async (signer, ca_name, root_cert_der) => {
+  let extrinsic = api.tx.sudo.sudo(api.tx.crl.registerCa(ca_name, root_cert_der));
+  return await submitExtrinsic(api, extrinsic, signer, BlockUntil.InBlock, (event) => event.section == "crl");
+}
+
+exports.updateCrl = async (signer, ca_name, crl_pem, crl_chain_pem) => {
+  let extrinsic = api.tx.crl.updateCrl(ca_name, crl_pem, crl_chain_pem);
+  return await submitExtrinsic(api, extrinsic, signer, BlockUntil.InBlock, (event) => event.section == "crl");
+}
+
 exports.waitForEvent = async (api, timeout, pallet, name) => {
   return await waitForEvent(api, timeout, pallet, name);
 }

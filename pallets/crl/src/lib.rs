@@ -29,6 +29,9 @@ mod weight;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
+mod mock;
+mod should;
+
 extern crate alloc;
 
 use alloc::vec::Vec;
@@ -50,6 +53,9 @@ pub const MAX_ROOT_CERT_LENGTH: u32 = 2048;
 
 /// Maximum number of revoked certificates that can be stored per CA.
 pub const MAX_REVOKED_CERTS_PER_CA: u32 = 10000;
+
+/// Maximum number of distinct CRL issuers per CA.
+pub const MAX_ISSUERS_PER_CA: u32 = 10;
 
 /// Error returned when a CA is not found.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -93,22 +99,27 @@ pub mod pallet {
     /// Type alias for bounded CA name.
     pub type CaName<T> = BoundedVec<u8, <T as Config>::MaxCaNameLength>;
 
+    /// Blake2-256 hash of a CRL issuer's distinguished name (DER encoded).
+    pub type IssuerHash = [u8; 32];
+
     /// Information about a registered Certificate Authority.
     #[derive(Clone, Encode, Decode, TypeInfo, MaxEncodedLen, RuntimeDebug)]
     pub struct CaInfo {
         /// The root certificate (DER encoded) for CRL signature verification.
         pub root_cert: BoundedVec<u8, ConstU32<MAX_ROOT_CERT_LENGTH>>,
-        /// The number of revoked certificates currently stored for this CA.
+        /// The total number of revoked certificates currently stored for this CA (across all issuers).
         pub revoked_count: u32,
-        /// Timestamp (in secs) representing the issuing date for this CA's CRL. Incremented each time the CRL is updated.
-        pub crl_version: u64,
+        /// Per-issuer CRL version tracking. Maps issuer hash → `thisUpdate` timestamp (in secs).
+        pub crl_versions: BoundedBTreeMap<IssuerHash, u64, ConstU32<MAX_ISSUERS_PER_CA>>,
     }
 
     /// Unique identifiers for revoked certificates.
     #[derive(Clone, Encode, Decode, TypeInfo, MaxEncodedLen, RuntimeDebug)]
     pub struct RevokedInfo {
-        issuer: BoundedVec<u8, ConstU32<256>>,
-        serial: BoundedVec<u8, ConstU32<64>>,
+        /// DER-encoded issuer distinguished name.
+        pub issuer: BoundedVec<u8, ConstU32<256>>,
+        /// Certificate serial number.
+        pub serial: BoundedVec<u8, ConstU32<64>>,
     }
 
     /// Storage for registered CAs and their metadata.
@@ -143,9 +154,11 @@ pub mod pallet {
         CrlUpdated {
             /// The name of the CA whose CRL was updated.
             ca_name: CaName<T>,
-            /// The new version of the CRL.
-            version: u64,
-            /// The number of revoked certificates in the new CRL.
+            /// The DER-encoded distinguished name of the CRL issuer.
+            issuer: Vec<u8>,
+            /// The `thisUpdate` timestamp of the CRL (in secs).
+            last_update: u64,
+            /// The total number of revoked certificates stored for this CA (across all issuers).
             revoked_count: u32,
         },
     }
@@ -183,6 +196,10 @@ pub mod pallet {
         CrlTooLarge,
         /// The updated Crl is older than the one already registered
         NotNewerCrl,
+        /// Too many distinct CRL issuers for this CA.
+        TooManyIssuers,
+        /// The CRL contains no revoked certificates.
+        EmptyCrl,
     }
 
     impl<T: Config> Pallet<T> {
@@ -191,16 +208,22 @@ pub mod pallet {
             Revoked::<T>::remove(ca_name);
         }
 
-        /// Store a list of revoked certificates for a CA.
-        fn store_revoked_certs_for_ca(ca_name: &CaName<T>, crl: &Crl) -> DispatchResult {
-            let count = crl.len() as u32;
-            if count > MAX_REVOKED_CERTS_PER_CA {
-                return Err(Error::<T>::TooManyRevokedCerts.into());
-            }
+        /// Merge new CRL entries into the existing revoked set for a CA.
+        ///
+        /// Removes all existing entries whose issuer matches the new CRL's issuer,
+        /// then appends the new entries. Returns the total revoked count after merge.
+        fn merge_revoked_certs_for_ca(
+            ca_name: &CaName<T>,
+            new_entries: &Crl,
+            issuer_bytes: &[u8],
+        ) -> Result<u32, DispatchError> {
+            let mut store = Revoked::<T>::get(ca_name).unwrap_or_default();
 
-            let mut store: BoundedVec<RevokedInfo, ConstU32<MAX_REVOKED_CERTS_PER_CA>> =
-                Default::default();
-            for r in crl {
+            // Remove old entries from the same issuer
+            store.retain(|r| r.issuer.as_slice() != issuer_bytes);
+
+            // Append new entries
+            for r in new_entries {
                 store
                     .try_push(RevokedInfo {
                         issuer: r
@@ -214,11 +237,12 @@ pub mod pallet {
                             .try_into()
                             .map_err(|_| Error::<T>::SerialNumberTooLarge)?,
                     })
-                    .map_err(|_| Error::<T>::CrlTooLarge)?;
+                    .map_err(|_| Error::<T>::TooManyRevokedCerts)?;
             }
 
+            let count = store.len() as u32;
             Revoked::<T>::insert(ca_name, store);
-            Ok(())
+            Ok(count)
         }
 
         /// Get the CRL for a specific CA.
@@ -292,9 +316,12 @@ pub mod pallet {
             let ca_info = CaInfo {
                 root_cert: bounded_root_cert,
                 revoked_count: 0,
-                crl_version: 0,
+                crl_versions: Default::default(),
             };
             CertificateAuthorities::<T>::insert(&bounded_name, ca_info);
+            let empty_vec: BoundedVec<RevokedInfo, ConstU32<MAX_REVOKED_CERTS_PER_CA>> =
+                Default::default();
+            Revoked::<T>::insert(&bounded_name, empty_vec);
 
             log::info!("Registered CA: {:?}", bounded_name);
             Self::deposit_event(Event::CaRegistered { name: bounded_name });
@@ -337,8 +364,12 @@ pub mod pallet {
 
         /// Update the Certificate Revocation List for a specific CA.
         ///
+        /// Merges the new CRL entries with existing ones: entries from the same issuer
+        /// are replaced entirely, while entries from other issuers are preserved.
+        /// Per-issuer version tracking ensures only newer CRLs are accepted.
+        ///
         /// # Arguments
-        /// * `origin` - Must be the ManagerOrigin.
+        /// * `origin` - Must be signed.
         /// * `ca_name` - Name of the CA whose CRL to update.
         /// * `crl_pem` - PEM-encoded CRL data.
         /// * `cert_chain_pem` - PEM-encoded certificate chain for CRL signature verification.
@@ -348,7 +379,10 @@ pub mod pallet {
         /// * `CrlPemTooLarge` - The CRL PEM data exceeds MAX_CRL_PEM_LENGTH.
         /// * `CertChainPemTooLarge` - The certificate chain exceeds MAX_CERT_CHAIN_PEM_LENGTH.
         /// * `CrlValidationError` - Failed to parse or verify the CRL.
-        /// * `TooManyRevokedCerts` - The CRL contains more than MAX_REVOKED_CERTS_PER_CA entries.
+        /// * `TooManyRevokedCerts` - Total revoked certs across all issuers exceeds MAX_REVOKED_CERTS_PER_CA.
+        /// * `EmptyCrl` - The CRL contains no revoked certificates.
+        /// * `TooManyIssuers` - Too many distinct CRL issuers for this CA.
+        /// * `NotNewerCrl` - The CRL is not newer than the one already stored for this issuer.
         #[pallet::call_index(2)]
         #[pallet::weight(T::WeightInfo::update_crl(MAX_REVOKED_CERTS_PER_CA))]
         pub fn update_crl(
@@ -374,7 +408,7 @@ pub mod pallet {
                 return Err(Error::<T>::CertChainPemTooLarge.into());
             }
 
-            let (updated, parsed_crl) = parse_crl(
+            let (this_update, parsed_crl) = parse_crl(
                 &crl_pem,
                 &cert_chain_pem,
                 Some(ca_info.root_cert.as_slice()),
@@ -385,31 +419,44 @@ pub mod pallet {
                 Error::<T>::CrlValidationError
             })?;
 
-            if updated <= ca_info.crl_version {
-                return Err(Error::<T>::NotNewerCrl.into());
+            // Extract the issuer from the CRL entries (all entries in a single CRL share the same issuer)
+            let issuer_bytes = parsed_crl
+                .first()
+                .ok_or(Error::<T>::EmptyCrl)?
+                .issuer
+                .clone();
+            let issuer_hash: IssuerHash = sp_core::hashing::blake2_256(&issuer_bytes);
+
+            // Check per-issuer version
+            if let Some(&existing_version) = ca_info.crl_versions.get(&issuer_hash) {
+                if this_update <= existing_version {
+                    return Err(Error::<T>::NotNewerCrl.into());
+                }
             }
 
-            let revoked_count = parsed_crl.len() as u32;
+            // Merge: remove old entries from same issuer, add new ones
+            let revoked_count =
+                Self::merge_revoked_certs_for_ca(&bounded_name, &parsed_crl, &issuer_bytes)?;
 
-            // Store new CRL
-            Self::store_revoked_certs_for_ca(&bounded_name, &parsed_crl)?;
-
-            // Update CA info
+            // Update per-issuer version
+            ca_info
+                .crl_versions
+                .try_insert(issuer_hash, this_update)
+                .map_err(|_| Error::<T>::TooManyIssuers)?;
             ca_info.revoked_count = revoked_count;
-            ca_info.crl_version = updated;
-            let version = ca_info.crl_version;
             CertificateAuthorities::<T>::insert(&bounded_name, ca_info);
 
             log::info!(
-                "CRL updated for CA {:?} to version {} with {} revoked certificates",
+                "CRL updated for CA {:?} (issuer {:?}) with {} total revoked certificates",
                 bounded_name,
-                version,
+                issuer_hash,
                 revoked_count
             );
 
             Self::deposit_event(Event::CrlUpdated {
                 ca_name: bounded_name,
-                version,
+                issuer: issuer_bytes,
+                last_update: this_update,
                 revoked_count,
             });
 

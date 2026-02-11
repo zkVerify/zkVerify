@@ -31,6 +31,7 @@ sp-consensus-babe = { workspace = true }
 
 [dev-dependencies]
 sp-io = { workspace = true, features = ["std"] }
+pallet-timestamp = { workspace = true, features = ["std"] }
 
 [features]
 runtime-benchmarks = [
@@ -52,11 +53,11 @@ std = [
 	"pallet-babe/std",
 	"pallet-timestamp?/std",
 	"scale-info/std",
+	"sp-consensus-babe/std",
 	"sp-core/std",
 	"sp-io/std",
 	"sp-runtime/std",
 	"tee-verifier/std",
-	"sp-consensus-babe/std",
 ]
 try-runtime = [
 	"frame-support/try-runtime",

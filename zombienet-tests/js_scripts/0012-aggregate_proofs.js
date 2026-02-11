@@ -17,10 +17,12 @@ const ReturnCode = {
     ErrProofFromInvalidSubmitter: 12,
     ErrProofFromValidSubmitter: 13,
     ErrAllowlist: 14,
+    ErrRegisterCA: 15,
+    ErrUpdateCrl: 16,
 };
 
 const { init_api, submitProof, receivedEvents, registerDomain, sudoRegisterDomain,
-    holdDomain, unregisterDomain, allowlistProofSubmitters, removeProofSubmitters, aggregate, getBalance, isVolta
+    holdDomain, unregisterDomain, allowlistProofSubmitters, removeProofSubmitters, sudoRegisterCA, updateCrl, aggregate, getBalance, isVolta
 } = require('zkv-lib');
 const { PROOF: EZKL_PROOF, PUBS: EZKL_PUBS, VK: EZKL_VK } = require('./ezkl_data.js');
 const { PROOF: FFLONK_PROOF, PUBS: FFLONK_PUBS, VK: FFLONK_VK } = require('./fflonk_data.js');
@@ -115,23 +117,20 @@ async function run(nodeName, networkInfo, _args) {
     // Prepare some CRL to make the TEE verification succeed
     const caName = '0x' + Buffer.from('Intel_SGX_Processor').toString('hex');
 
-    // Register the CA via sudo (alice has sudo)
-    await new Promise((resolve) => {
-        api.tx.sudo.sudo(
-            api.tx.crl.registerCa(caName, TEE_ROOT_CERT_DER)
-        ).signAndSend(alice, ({ status }) => {
-            if (status.isInBlock) resolve();
-        });
-    });
+    // Register the CA via sudo
+    events = await sudoRegisterCA(alice, caName, TEE_ROOT_CERT_DER);
+    if (!receivedEvents(events)) {
+        console.log(`Register CA Error`);
+        return ReturnCode.ErrRegisterCA;
+    }
     console.log('CA registered: Intel_SGX_Processor');
 
     // Update the CRL
-    await new Promise((resolve) => {
-        api.tx.crl.updateCrl(caName, TEE_CRL_PEM, TEE_CRL_CHAIN_PEM)
-            .signAndSend(alice, ({ status }) => {
-                if (status.isInBlock) resolve();
-            });
-    });
+    events = await updateCrl(bob, caName, TEE_CRL_PEM, TEE_CRL_CHAIN_PEM);
+    if (!receivedEvents(events)) {
+        console.log(`Update CRL Error`);
+        return ReturnCode.ErrUpdateCrl;
+    }
     console.log('CRL updated for Intel_SGX_Processor');
 
     events = await registerDomain(bob, verifiers.length, null, "Untrusted", "Untrusted", destination, null);

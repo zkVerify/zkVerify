@@ -52,7 +52,7 @@ fn register_test_ca<T: Config>() -> CaName<T> {
         CaInfo {
             root_cert: bounded_root_cert,
             revoked_count: 0,
-            crl_version: 0,
+            crl_versions: Default::default(),
         },
     );
     bounded_name
@@ -123,7 +123,7 @@ mod benchmarks {
 
         // Verify the CRL was stored.
         let ca_info = CertificateAuthorities::<T>::get(&ca_name).unwrap();
-        assert!(ca_info.crl_version > 0);
+        assert!(!ca_info.crl_versions.is_empty());
     }
 
     #[benchmark]
