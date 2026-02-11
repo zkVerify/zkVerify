@@ -159,7 +159,6 @@ impl<T: Config> Verifier for Ultrahonk<T> {
                 hp_verifiers::VerifyError::InvalidVerificationKey
             );
 
-            // let test_params = TestParams::new(log_circuit_size, ProofType::from(&prepared_proof));
             compute_weight::<T>(log_circuit_size, ProofType::from(&prepared_proof))
         };
 
