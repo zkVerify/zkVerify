@@ -27,8 +27,8 @@ impl crate::Config for MockRuntime {
 
 // Default (proof, vk, pubs) triplets for unit testing:
 
-const VALID_ZK_PROOF: &[u8] = include_bytes!("resources/zk/log_25/proof");
-const VALID_PLAIN_PROOF: &[u8] = include_bytes!("resources/plain/log_25/proof");
+const VALID_ZK_PROOF_BYTES: &[u8] = include_bytes!("resources/zk/log_25/proof");
+const VALID_PLAIN_PROOF_BYTES: &[u8] = include_bytes!("resources/plain/log_25/proof");
 
 #[allow(dead_code)]
 pub(crate) fn valid_vk() -> crate::Vk {
@@ -50,20 +50,19 @@ pub(crate) fn valid_public_input() -> crate::Pubs {
 #[test]
 fn verify_valid_zk_proof() {
     let vk = valid_vk();
-    let proof = Proof::new(ProofType::ZK, VALID_ZK_PROOF.to_vec());
+    let proof = VersionedProof::V3_0(Proof::new(ProofType::ZK, VALID_ZK_PROOF_BYTES.to_vec()));
     let pi = valid_public_input();
 
-    let res = Ultrahonk::<MockRuntime>::verify_proof(&vk, &proof, &pi);
-
-    println!("{:?}", res);
-
-    assert!(res.is_ok());
+    assert!(Ultrahonk::<MockRuntime>::verify_proof(&vk, &proof, &pi).is_ok());
 }
 
 #[test]
 fn verify_valid_plain_proof() {
     let vk = valid_vk();
-    let proof = Proof::new(ProofType::Plain, VALID_PLAIN_PROOF.to_vec());
+    let proof = VersionedProof::V3_0(Proof::new(
+        ProofType::Plain,
+        VALID_PLAIN_PROOF_BYTES.to_vec(),
+    ));
     let pi = valid_public_input();
 
     assert!(Ultrahonk::<MockRuntime>::verify_proof(&vk, &proof, &pi).is_ok());
@@ -86,7 +85,7 @@ mod reject {
     #[test]
     fn invalid_public_values() {
         let vk = valid_vk();
-        let proof = Proof::new(ProofType::ZK, VALID_ZK_PROOF.to_vec());
+        let proof = VersionedProof::V3_0(Proof::new(ProofType::ZK, VALID_ZK_PROOF_BYTES.to_vec()));
 
         let mut invalid_pubs = valid_public_input();
         invalid_pubs[0][0] = 0x10;
@@ -99,7 +98,7 @@ mod reject {
 
     #[test]
     fn zk_proof_with_32_public_inputs_where_one_is_invalid() {
-        let proof = Proof::new(ProofType::ZK, VALID_ZK_PROOF.to_vec());
+        let proof = VersionedProof::V3_0(Proof::new(ProofType::ZK, VALID_ZK_PROOF_BYTES.to_vec()));
         let mut pubs: Vec<[u8; PUB_SIZE]> = valid_public_input();
         let vk = valid_vk();
 
@@ -114,7 +113,10 @@ mod reject {
 
     #[test]
     fn plain_proof_with_32_public_inputs_where_one_is_invalid() {
-        let proof = Proof::new(ProofType::Plain, VALID_PLAIN_PROOF.to_vec());
+        let proof = VersionedProof::V3_0(Proof::new(
+            ProofType::Plain,
+            VALID_PLAIN_PROOF_BYTES.to_vec(),
+        ));
         let mut pubs: Vec<[u8; PUB_SIZE]> = valid_public_input();
         let vk = valid_vk();
 
@@ -130,7 +132,7 @@ mod reject {
     #[test]
     fn if_provided_too_many_public_inputs_for_zk_proof() {
         let vk = valid_vk();
-        let proof = Proof::new(ProofType::ZK, VALID_ZK_PROOF.to_vec());
+        let proof = VersionedProof::V3_0(Proof::new(ProofType::ZK, VALID_ZK_PROOF_BYTES.to_vec()));
 
         let mut invalid_pubs = valid_public_input();
         while (invalid_pubs.len() as u32) <= <MockRuntime as Config>::MaxPubs::get() {
@@ -146,7 +148,10 @@ mod reject {
     #[test]
     fn if_provided_too_many_public_inputs_for_plain_proof() {
         let vk = valid_vk();
-        let proof = Proof::new(ProofType::Plain, VALID_PLAIN_PROOF.to_vec());
+        let proof = VersionedProof::V3_0(Proof::new(
+            ProofType::Plain,
+            VALID_PLAIN_PROOF_BYTES.to_vec(),
+        ));
 
         let mut invalid_pubs = valid_public_input();
         while (invalid_pubs.len() as u32) <= <MockRuntime as Config>::MaxPubs::get() {
@@ -162,7 +167,7 @@ mod reject {
     #[test]
     fn invalid_number_of_public_inputs() {
         let vk = valid_vk();
-        let proof = Proof::new(ProofType::ZK, VALID_ZK_PROOF.to_vec());
+        let proof = VersionedProof::V3_0(Proof::new(ProofType::ZK, VALID_ZK_PROOF_BYTES.to_vec()));
 
         let mut invalid_pubs = valid_public_input();
         invalid_pubs.pop();
@@ -178,10 +183,10 @@ mod reject {
         let vk = valid_vk();
         let pi = valid_public_input();
 
-        let mut invalid_proof_bytes = VALID_ZK_PROOF.to_vec();
-        invalid_proof_bytes[VALID_ZK_PROOF.len() - 1] = 0x00;
+        let mut invalid_proof_bytes = VALID_ZK_PROOF_BYTES.to_vec();
+        invalid_proof_bytes[VALID_ZK_PROOF_BYTES.len() - 1] = 0x00;
 
-        let invalid_proof = Proof::new(ProofType::ZK, invalid_proof_bytes);
+        let invalid_proof = VersionedProof::V3_0(Proof::new(ProofType::ZK, invalid_proof_bytes));
 
         assert!(matches!(
             Ultrahonk::<MockRuntime>::verify_proof(&vk, &invalid_proof, &pi),
@@ -194,10 +199,10 @@ mod reject {
         let vk = valid_vk();
         let pi = valid_public_input();
 
-        let mut invalid_proof_bytes = VALID_PLAIN_PROOF.to_vec();
-        invalid_proof_bytes[VALID_PLAIN_PROOF.len() - 1] = 0x00;
+        let mut invalid_proof_bytes = VALID_PLAIN_PROOF_BYTES.to_vec();
+        invalid_proof_bytes[VALID_PLAIN_PROOF_BYTES.len() - 1] = 0x00;
 
-        let invalid_proof = Proof::new(ProofType::Plain, invalid_proof_bytes);
+        let invalid_proof = VersionedProof::V3_0(Proof::new(ProofType::Plain, invalid_proof_bytes));
 
         assert!(matches!(
             Ultrahonk::<MockRuntime>::verify_proof(&vk, &invalid_proof, &pi),
@@ -210,12 +215,13 @@ mod reject {
         let vk = valid_vk();
         let pi = valid_public_input();
 
-        let valid_proof = VALID_ZK_PROOF;
-        let mut invalid_proof_bytes = [0u8; VALID_ZK_PROOF.len() + 1];
+        let valid_proof = VALID_ZK_PROOF_BYTES;
+        let mut invalid_proof_bytes = [0u8; VALID_ZK_PROOF_BYTES.len() + 1];
 
-        invalid_proof_bytes[..VALID_ZK_PROOF.len()].copy_from_slice(&valid_proof);
+        invalid_proof_bytes[..VALID_ZK_PROOF_BYTES.len()].copy_from_slice(&valid_proof);
 
-        let invalid_proof = Proof::new(ProofType::ZK, invalid_proof_bytes.to_vec());
+        let invalid_proof =
+            VersionedProof::V3_0(Proof::new(ProofType::ZK, invalid_proof_bytes.to_vec()));
 
         assert_eq!(
             Ultrahonk::<MockRuntime>::verify_proof(&vk, &invalid_proof, &pi),
@@ -228,12 +234,13 @@ mod reject {
         let vk = valid_vk();
         let pi = valid_public_input();
 
-        let valid_proof = VALID_PLAIN_PROOF;
-        let mut invalid_proof_bytes = [0u8; VALID_PLAIN_PROOF.len() + 1];
+        let valid_proof = VALID_PLAIN_PROOF_BYTES;
+        let mut invalid_proof_bytes = [0u8; VALID_PLAIN_PROOF_BYTES.len() + 1];
 
-        invalid_proof_bytes[..VALID_PLAIN_PROOF.len()].copy_from_slice(&valid_proof);
+        invalid_proof_bytes[..VALID_PLAIN_PROOF_BYTES.len()].copy_from_slice(&valid_proof);
 
-        let invalid_proof = Proof::new(ProofType::Plain, invalid_proof_bytes.to_vec());
+        let invalid_proof =
+            VersionedProof::V3_0(Proof::new(ProofType::Plain, invalid_proof_bytes.to_vec()));
 
         assert_eq!(
             Ultrahonk::<MockRuntime>::verify_proof(&vk, &invalid_proof, &pi),
@@ -246,9 +253,9 @@ mod reject {
         let vk = valid_vk();
         let pi = valid_public_input();
 
-        let mut invalid_proof_bytes = VALID_ZK_PROOF.to_vec();
+        let mut invalid_proof_bytes = VALID_ZK_PROOF_BYTES.to_vec();
         invalid_proof_bytes.pop();
-        let invalid_proof = Proof::new(ProofType::ZK, invalid_proof_bytes);
+        let invalid_proof = VersionedProof::V3_0(Proof::new(ProofType::ZK, invalid_proof_bytes));
 
         assert_eq!(
             Ultrahonk::<MockRuntime>::verify_proof(&vk, &invalid_proof, &pi),
@@ -261,9 +268,9 @@ mod reject {
         let vk = valid_vk();
         let pi = valid_public_input();
 
-        let mut invalid_proof_bytes = VALID_PLAIN_PROOF.to_vec();
+        let mut invalid_proof_bytes = VALID_PLAIN_PROOF_BYTES.to_vec();
         invalid_proof_bytes.pop();
-        let invalid_proof = Proof::new(ProofType::Plain, invalid_proof_bytes);
+        let invalid_proof = VersionedProof::V3_0(Proof::new(ProofType::Plain, invalid_proof_bytes));
 
         assert_eq!(
             Ultrahonk::<MockRuntime>::verify_proof(&vk, &invalid_proof, &pi),
@@ -273,7 +280,7 @@ mod reject {
 
     #[test]
     fn invalid_vk() {
-        let proof = Proof::new(ProofType::ZK, VALID_ZK_PROOF.to_vec());
+        let proof = VersionedProof::V3_0(Proof::new(ProofType::ZK, VALID_ZK_PROOF_BYTES.to_vec()));
         let pi = valid_public_input();
 
         let mut invalid_vk = [0u8; VK_SIZE];
@@ -291,10 +298,11 @@ mod reject {
         let vk = valid_vk();
         let pi = valid_public_input();
 
-        let mut malformed_proof_bytes = VALID_ZK_PROOF.to_vec();
+        let mut malformed_proof_bytes = VALID_ZK_PROOF_BYTES.to_vec();
         malformed_proof_bytes[0] = 0x07;
 
-        let malformed_proof = Proof::new(ProofType::ZK, malformed_proof_bytes);
+        let malformed_proof =
+            VersionedProof::V3_0(Proof::new(ProofType::ZK, malformed_proof_bytes));
 
         assert_eq!(
             Ultrahonk::<MockRuntime>::verify_proof(&vk, &malformed_proof, &pi),
@@ -307,10 +315,11 @@ mod reject {
         let vk = valid_vk();
         let pi = valid_public_input();
 
-        let mut malformed_proof_bytes = VALID_PLAIN_PROOF.to_vec();
+        let mut malformed_proof_bytes = VALID_PLAIN_PROOF_BYTES.to_vec();
         malformed_proof_bytes[0] = 0x07;
 
-        let malformed_proof = Proof::new(ProofType::Plain, malformed_proof_bytes);
+        let malformed_proof =
+            VersionedProof::V3_0(Proof::new(ProofType::Plain, malformed_proof_bytes));
 
         assert_eq!(
             Ultrahonk::<MockRuntime>::verify_proof(&vk, &malformed_proof, &pi),
