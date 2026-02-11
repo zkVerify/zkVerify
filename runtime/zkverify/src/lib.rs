@@ -237,8 +237,17 @@ impl pallet_babe::Config for Runtime {
         pallet_babe::EquivocationReportSystem<Self, Offences, Historical, ReportLongevity>;
 }
 
+// Maximum number of accounts that may be auto-rebagged per block during on_idle.
+// A value of 0 disables auto-rebagging entirely.
+// Set to 5 under runtime-benchmarks so on_idle benchmarking can exercise the code path.
+#[cfg(not(feature = "runtime-benchmarks"))]
+pub const MAX_AUTO_REBAG_PER_BLOCK: u32 = 0;
+#[cfg(feature = "runtime-benchmarks")]
+pub const MAX_AUTO_REBAG_PER_BLOCK: u32 = 5;
+
 parameter_types! {
     pub const BagThresholds: &'static [u64] = &bag_thresholds::THRESHOLDS;
+    pub const MaxAutoRebagPerBlock: u32 = MAX_AUTO_REBAG_PER_BLOCK;
 }
 
 type VoterBagsListInstance = pallet_bags_list::Instance1;
@@ -248,7 +257,7 @@ impl pallet_bags_list::Config<VoterBagsListInstance> for Runtime {
     type ScoreProvider = Staking;
     type BagThresholds = BagThresholds;
     type Score = sp_npos_elections::VoteWeight;
-    type MaxAutoRebagPerBlock = ConstU32<0>;
+    type MaxAutoRebagPerBlock = MaxAutoRebagPerBlock;
 }
 
 parameter_types! {
@@ -709,6 +718,8 @@ pub const MAX_VOTERS: u32 = 5_000;
 // The maximum number of number of active validators that we want to handle.
 // This *must always be greater or equal* to staking.validatorCount storage value.
 pub const MAX_ACTIVE_VALIDATORS: u32 = 200;
+// Maximum number of nominators/backers that can support a single election winner.
+pub const MAX_BACKERS_PER_WINNER: u32 = 512;
 
 parameter_types! {
     // Maximum number of election voters and targets that can be handled by OnChainSeqPhragmen
@@ -718,6 +729,7 @@ parameter_types! {
     // era.
     pub const MaxActiveValidators: u32 = MAX_ACTIVE_VALIDATORS;
     pub const MaxWinners: u32 = MAX_TARGETS;
+    pub const MaxBackersPerWinner: u32 = MAX_BACKERS_PER_WINNER;
 }
 
 pub struct OnChainSeqPhragmen;
@@ -727,7 +739,7 @@ impl onchain::Config for OnChainSeqPhragmen {
     type DataProvider = Staking;
     type WeightInfo = weights::frame_election_provider_support::ZKVWeight<Runtime>;
     type MaxWinnersPerPage = MaxWinners; // must be >= MAX_TARGETS because of the staking benchmark
-    type MaxBackersPerWinner = ConstU32<512>;
+    type MaxBackersPerWinner = MaxBackersPerWinner;
     type Bounds = ElectionBoundsOnChain;
     type Sort = ();
 }
@@ -1568,6 +1580,29 @@ impl_runtime_apis! {
         }
         fn query_length_to_fee(length: u32) -> Balance {
             TransactionPayment::length_to_fee(length)
+        }
+    }
+
+    impl pallet_staking_runtime_api::StakingApi<Block, Balance, AccountId> for Runtime {
+        fn nominations_quota(balance: Balance) -> u32 {
+            Staking::api_nominations_quota(balance)
+        }
+
+        fn eras_stakers_page_count(era: sp_staking::EraIndex, account: AccountId) -> sp_staking::Page {
+            Staking::api_eras_stakers_page_count(era, account)
+        }
+
+        fn pending_rewards(era: sp_staking::EraIndex, account: AccountId) -> bool {
+            Staking::api_pending_rewards(era, account)
+        }
+    }
+
+    impl frame_support::view_functions::runtime_api::RuntimeViewFunction<Block> for Runtime {
+        fn execute_view_function(
+            id: frame_support::view_functions::ViewFunctionId,
+            input: Vec<u8>,
+        ) -> Result<Vec<u8>, frame_support::view_functions::ViewFunctionDispatchError> {
+            Runtime::execute_view_function(id, input)
         }
     }
 

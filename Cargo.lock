@@ -19205,6 +19205,7 @@ dependencies = [
  "pallet-session-benchmarking",
  "pallet-sp1-verifier",
  "pallet-staking",
+ "pallet-staking-runtime-api",
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-token-claim",

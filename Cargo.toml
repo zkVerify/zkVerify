@@ -237,6 +237,7 @@ frame-metadata-hash-extension = { version = "0.13.0", default-features = false }
 
 # Used for the node template's RPCs
 frame-system-rpc-runtime-api = { version = "40.0.0", default-features = false }
+pallet-staking-runtime-api = { version = "30.0.0", default-features = false }
 pallet-transaction-payment-rpc-runtime-api = { version = "45.0.0", default-features = false }
 
 # Used for runtime benchmarking
