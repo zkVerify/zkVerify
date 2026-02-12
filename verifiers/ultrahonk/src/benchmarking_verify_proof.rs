@@ -526,6 +526,8 @@ pub mod benchmarks {
         };
         assert!(r.is_ok());
     }
+
+    impl_benchmark_test_suite!(Pallet, super::mock::test_ext(), super::mock::Test);
 }
 
 #[cfg(test)]
