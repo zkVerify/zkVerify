@@ -412,6 +412,11 @@ fn get_bool_environment_variable(name: &str) -> Option<bool> {
 	}
 }
 
+/// Return if the legacy target is forced via the environment variable
+fn is_forced_wasm_build_legacy_target() -> bool {
+	get_bool_environment_variable(crate::WASM_BUILD_LEGACY_TARGET).unwrap_or(false)
+}
+
 #[derive(Copy, Clone, PartialEq, Eq)]
 enum RuntimeTarget {
 	Wasm,
@@ -439,8 +444,7 @@ impl RuntimeTarget {
 
 	/// Returns true if we should use wasm32v1-none target for WASM builds.
 	fn should_use_wasm32v1_none(cargo_command: &CargoCommand) -> bool {
-		// Check if legacy target is forced via environment variable
-		if crate::get_bool_environment_variable(crate::WASM_BUILD_LEGACY_TARGET).unwrap_or(false) {
+		if is_forced_wasm_build_legacy_target() {
 			return false;
 		}
 		cargo_command.is_wasm32v1_none_target_available()

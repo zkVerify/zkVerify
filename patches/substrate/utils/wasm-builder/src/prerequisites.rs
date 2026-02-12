@@ -15,7 +15,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::{write_file_if_changed, CargoCommand, CargoCommandVersioned, RuntimeTarget};
+use crate::{is_forced_wasm_build_legacy_target, write_file_if_changed, CargoCommand, CargoCommandVersioned, RuntimeTarget};
 
 use console::style;
 use std::{
@@ -268,8 +268,9 @@ fn check_wasm_toolchain_installed(
 	}
 
 	if cargo_command.supports_wasm32v1_none_target() &&
-		!cargo_command.is_wasm32v1_none_target_installed()
-	{
+			!cargo_command.is_wasm32v1_none_target_installed() &&
+			!is_forced_wasm_build_legacy_target()
+		{
 		build_helper::warning!("You are building WASM runtime using `wasm32-unknown-unknown` target, although Rust >= 1.84 supports `wasm32v1-none` target!");
 		build_helper::warning!("You can install it with `rustup target add wasm32v1-none --toolchain {toolchain}` if you're using `rustup`.");
 		build_helper::warning!("After installing `wasm32v1-none` target, you must rebuild WASM runtime from scratch, use `cargo clean` before building.");
