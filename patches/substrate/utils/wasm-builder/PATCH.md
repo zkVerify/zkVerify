@@ -11,8 +11,13 @@ dependencies don't support the stricter `wasm32v1-none` target.
 
 ### src/lib.rs
 - Added `WASM_BUILD_LEGACY_TARGET` constant and doc entry
+- Added `is_forced_wasm_build_legacy_target()` top-level helper function
 - Added `RuntimeTarget::should_use_wasm32v1_none()` helper method
 - Modified `rustc_target()`, `rustc_target_dir()`, `rustc_target_build_std()` to use it
+
+### src/prerequisites.rs
+- Suppress "missing wasm32v1-none" warning when `WASM_BUILD_LEGACY_TARGET` is set
+- Import and use `is_forced_wasm_build_legacy_target()` in the toolchain check
 
 ### src/wasm_project.rs
 - Changed target-cpu=mvp condition to use `target.rustc_target()` instead of

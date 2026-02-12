@@ -1,6 +1,6 @@
-diff -ruN '--exclude=*.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' /tmp/polkadot-sdk-upstream/substrate/utils/wasm-builder/src/lib.rs wasm-builder/src/lib.rs
---- /tmp/polkadot-sdk-upstream/substrate/utils/wasm-builder/src/lib.rs	2026-02-09 10:25:32.608577680 +0100
-+++ wasm-builder/src/lib.rs	2026-02-09 10:29:48.888884446 +0100
+diff -ruN '--exclude=*.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' '--exclude=Cargo.toml' upstream/src/lib.rs patched/src/lib.rs
+--- upstream/src/lib.rs
++++ patched/src/lib.rs
 @@ -90,6 +90,9 @@
  //!   also be built. This is necessary to make sure the standard library crates only use the exact
  //!   WASM feature set that our executor supports. Enabled by default for RISC-V target and WASM
@@ -14,22 +14,33 @@ diff -ruN '--exclude=*.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' /tmp
 @@ -176,6 +179,10 @@
  /// during the build phase.
  const WASM_BUILD_CARGO_ARGS: &str = "WASM_BUILD_CARGO_ARGS";
- 
+
 +/// Environment variable to force the use of `wasm32-unknown-unknown` target instead of
 +/// `wasm32v1-none` even on Rust >= 1.84.
 +const WASM_BUILD_LEGACY_TARGET: &str = "WASM_BUILD_LEGACY_TARGET";
 +
  /// The target to use for the runtime. Valid values are `wasm` (default) or `riscv`.
  const RUNTIME_TARGET: &str = "SUBSTRATE_RUNTIME_TARGET";
- 
-@@ -430,11 +437,20 @@
+
+@@ -405,6 +412,11 @@
+ 	}
+ }
+
++/// Return if the legacy target is forced via the environment variable
++fn is_forced_wasm_build_legacy_target() -> bool {
++	get_bool_environment_variable(crate::WASM_BUILD_LEGACY_TARGET).unwrap_or(false)
++}
++
+ #[derive(Copy, Clone, PartialEq, Eq)]
+ enum RuntimeTarget {
+ 	Wasm,
+@@ -430,11 +442,19 @@
  		}
  	}
- 
+
 +	/// Returns true if we should use wasm32v1-none target for WASM builds.
 +	fn should_use_wasm32v1_none(cargo_command: &CargoCommand) -> bool {
-+		// Check if legacy target is forced via environment variable
-+		if crate::get_bool_environment_variable(crate::WASM_BUILD_LEGACY_TARGET).unwrap_or(false) {
++		if is_forced_wasm_build_legacy_target() {
 +			return false;
 +		}
 +		cargo_command.is_wasm32v1_none_target_available()
@@ -44,7 +55,7 @@ diff -ruN '--exclude=*.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' /tmp
  					"wasm32v1-none".into()
  				} else {
  					"wasm32-unknown-unknown".into()
-@@ -452,7 +468,7 @@
+@@ -452,7 +472,7 @@
  	fn rustc_target_dir(self, cargo_command: &CargoCommand) -> &'static str {
  		match self {
  			RuntimeTarget::Wasm =>
@@ -53,8 +64,8 @@ diff -ruN '--exclude=*.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' /tmp
  					"wasm32v1-none".into()
  				} else {
  					"wasm32-unknown-unknown".into()
-@@ -463,20 +479,11 @@
- 
+@@ -463,20 +483,11 @@
+
  	/// Figures out the build-std argument.
  	fn rustc_target_build_std(self, cargo_command: &CargoCommand) -> Option<&'static str> {
 -		if !crate::get_bool_environment_variable(crate::WASM_BUILD_STD).unwrap_or_else(
@@ -79,13 +90,37 @@ diff -ruN '--exclude=*.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' /tmp
 -		Some("build-std=core,alloc")
  	}
  }
-diff -ruN '--exclude=*.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' /tmp/polkadot-sdk-upstream/substrate/utils/wasm-builder/src/wasm_project.rs wasm-builder/src/wasm_project.rs
---- /tmp/polkadot-sdk-upstream/substrate/utils/wasm-builder/src/wasm_project.rs	2026-02-09 10:25:32.608577680 +0100
-+++ wasm-builder/src/wasm_project.rs	2026-02-09 10:27:25.497521581 +0100
+diff -ruN '--exclude=*.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' '--exclude=Cargo.toml' upstream/src/prerequisites.rs patched/src/prerequisites.rs
+--- upstream/src/prerequisites.rs
++++ patched/src/prerequisites.rs
+@@ -15,7 +15,7 @@
+ // See the License for the specific language governing permissions and
+ // limitations under the License.
+
+-use crate::{write_file_if_changed, CargoCommand, CargoCommandVersioned, RuntimeTarget};
++use crate::{is_forced_wasm_build_legacy_target, write_file_if_changed, CargoCommand, CargoCommandVersioned, RuntimeTarget};
+
+ use console::style;
+ use std::{
+@@ -268,8 +268,9 @@
+ 	}
+
+ 	if cargo_command.supports_wasm32v1_none_target() &&
+-		!cargo_command.is_wasm32v1_none_target_installed()
+-	{
++			!cargo_command.is_wasm32v1_none_target_installed() &&
++			!is_forced_wasm_build_legacy_target()
++		{
+ 		build_helper::warning!("You are building WASM runtime using `wasm32-unknown-unknown` target, although Rust >= 1.84 supports `wasm32v1-none` target!");
+ 		build_helper::warning!("You can install it with `rustup target add wasm32v1-none --toolchain {toolchain}` if you're using `rustup`.");
+ 		build_helper::warning!("After installing `wasm32v1-none` target, you must rebuild WASM runtime from scratch, use `cargo clean` before building.");
+diff -ruN '--exclude=*.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' '--exclude=Cargo.toml' upstream/src/wasm_project.rs patched/src/wasm_project.rs
+--- upstream/src/wasm_project.rs
++++ patched/src/wasm_project.rs
 @@ -872,8 +872,10 @@
  			// Also see:
  			// https://blog.rust-lang.org/2024/09/24/webassembly-targets-change-in-default-target-features.html#disabling-on-by-default-webassembly-proposals
- 
+
 -			if !cargo_cmd.is_wasm32v1_none_target_available() {
 -				rustflags.push_str("-C target-cpu=mvp ");
 +			// zkVerify patch: Add -C target-cpu=mvp when using legacy wasm32-unknown-unknown target
@@ -93,5 +128,5 @@ diff -ruN '--exclude=*.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' /tmp
 +			if target.rustc_target(&cargo_cmd) == "wasm32-unknown-unknown" {
 +				rustflags.push_str("-C target-cpu=mvp -C target-feature=-sign-ext ");
  			}
- 
+
  			rustflags.push_str("-C link-arg=--export-table ");
