@@ -167,7 +167,6 @@ impl<T: Config> Verifier for Ultrahonk<T> {
             .inspect_err(|e| log::debug!("Cannot verify proof: {e:?}"))
             .map_err(|e| match e {
                 ultrahonk_no_std::errors::VerifyError::VerificationError { message: _ } => {
-                    println!("HERE!");
                     hp_verifiers::VerifyError::VerifyError
                 }
                 ultrahonk_no_std::errors::VerifyError::PublicInputError { message: _ } => {
