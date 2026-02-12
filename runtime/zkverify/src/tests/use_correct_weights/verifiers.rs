@@ -92,16 +92,24 @@ fn pallet_settlement_risc0_verify_proof() {
 
 #[test]
 fn pallet_settlement_ultrahonk() {
-    use pallet_ultrahonk_verifier::{Proof, ProofType, Ultrahonk, VersionedProof, WeightInfo};
+    use pallet_ultrahonk_verifier::{Ultrahonk, WeightInfo};
 
     assert_eq!(
         <<Runtime as pallet_verifiers::Config<Ultrahonk<Runtime>>>::WeightInfo as
-            pallet_verifiers::WeightInfo<Ultrahonk<Runtime>>>
-            ::verify_proof(
-            &VersionedProof::V3_0(Proof::new(ProofType::ZK, vec![])),
-            &Vec::new()
+        pallet_verifiers::WeightInfo<Ultrahonk<Runtime>>>
+        ::register_vk(
+            &vec![0; pallet_ultrahonk_verifier::VK_SIZE]
         ),
-        crate::weights::pallet_ultrahonk_verifier::ZKVWeight::<Runtime>::verify_zk_proof_log_25()
+        crate::weights::pallet_ultrahonk_verifier::ZKVWeight::<Runtime>::register_vk()
+    );
+}
+
+#[test]
+fn pallet_settlement_ultrahonk_verify_proof() {
+    assert_eq!(
+        <Runtime as pallet_ultrahonk_verifier::Config>::WeightInfo::verify_zk_proof_log_25()
+        ,
+        crate::weights::pallet_ultrahonk_verifier_verify_proof::ZKVWeight::<Runtime>::verify_zk_proof_log_25()
     );
 }
 
