@@ -22,13 +22,13 @@ use crate::ProofType;
 const MIN_BENCHMARKED_LOG_CIRCUIT_SIZE: u64 = 7;
 
 // Struct containing the parameters pointing to the exact benchmark data that should be used.
-struct TestParams {
+pub struct TestParams {
     log_circuit_size: u64,
     proof_type: ProofType,
 }
 
 impl TestParams {
-    fn new(log_circuit_size: u64, proof_type: ProofType) -> Self {
+    pub fn new(log_circuit_size: u64, proof_type: ProofType) -> Self {
         Self {
             log_circuit_size,
             proof_type,

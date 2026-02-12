@@ -15,8 +15,10 @@
 
 #![cfg(feature = "runtime-benchmarks")]
 
-use crate::{Proof, ProofType, Ultrahonk as Verifier};
-use alloc::vec::Vec;
+use crate::{
+    resources::{get_parameterized_test_data, TestData, TestParams},
+    ProofType, Ultrahonk as Verifier, VersionedProof,
+};
 use frame_benchmarking::v2::*;
 use frame_system::RawOrigin;
 use hp_verifiers::Verifier as _;
