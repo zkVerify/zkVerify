@@ -213,7 +213,7 @@ impl<T: Config> Verifier for Ultrahonk<T> {
     fn verifier_version_hash(proof: &Self::Proof) -> H256 {
         let h = match proof {
             VersionedProof::V3_0(_) => hex_literal::hex!(
-                "aa24368f9ce9025f58596d966209fc3f322c8cac37dae753bb9b0367d273700d" // copy-pasted from Risc0
+                "aa24368f9ce9025f58596d966209fc3f322c8cac37dae753bb9b0367d273700d"
             ),
         };
         H256(h)
