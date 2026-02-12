@@ -17,7 +17,7 @@
 
 use crate::{
     resources::{get_parameterized_test_data, TestData, TestParams},
-    ProofType, Ultrahonk as Verifier, VersionedProof,
+    ProofType, Ultrahonk as Verifier, VersionedProof, MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
 };
 use frame_benchmarking::v2::*;
 use frame_system::RawOrigin;
@@ -38,7 +38,8 @@ pub mod benchmarks {
 
     #[benchmark]
     fn get_vk() {
-        let vk = *include_bytes!("resources/zk/log_25/vk");
+        let test_params = TestParams::new(MAX_BENCHMARKED_LOG_CIRCUIT_SIZE, ProofType::ZK);
+        let TestData { vk, .. } = get_parameterized_test_data(test_params);
         let hash = sp_core::H256::repeat_byte(2);
 
         insert_vk_anonymous::<T>(vk, hash);
@@ -53,7 +54,8 @@ pub mod benchmarks {
 
     #[benchmark]
     fn validate_vk() {
-        let vk = *include_bytes!("resources/zk/log_25/vk");
+        let test_params = TestParams::new(MAX_BENCHMARKED_LOG_CIRCUIT_SIZE, ProofType::ZK);
+        let TestData { vk, .. } = get_parameterized_test_data(test_params);
 
         let r;
         #[block]
@@ -65,18 +67,7 @@ pub mod benchmarks {
 
     #[benchmark]
     fn compute_statement_hash() {
-        // let proof = Proof::new(
-        //     ProofType::ZK,
-        //     include_bytes!("resources/zk/log_25/proof").to_vec(),
-        // );
-        // let pubs: Vec<_> = include_bytes!("resources/zk/log_25/pubs")
-        //     .chunks_exact(crate::PUB_SIZE)
-        //     .map(TryInto::try_into)
-        //     .map(Result::unwrap)
-        //     .collect();
-        // let vk = *include_bytes!("resources/zk/log_25/vk");
-
-        let test_params = TestParams::new(25, ProofType::ZK);
+        let test_params = TestParams::new(MAX_BENCHMARKED_LOG_CIRCUIT_SIZE, ProofType::ZK);
         let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
         let vproof = VersionedProof::V3_0(proof);
 
@@ -92,7 +83,8 @@ pub mod benchmarks {
     fn register_vk() {
         // setup code
         let caller = funded_account::<T>();
-        let vk = *include_bytes!("resources/zk/log_25/vk");
+        let test_params = TestParams::new(MAX_BENCHMARKED_LOG_CIRCUIT_SIZE, ProofType::ZK);
+        let TestData { vk, .. } = get_parameterized_test_data(test_params);
 
         #[extrinsic_call]
         register_vk(RawOrigin::Signed(caller), vk.into());
@@ -106,7 +98,8 @@ pub mod benchmarks {
         // setup code
         let caller = funded_account::<T>();
         let hash = sp_core::H256::repeat_byte(2);
-        let vk = *include_bytes!("resources/zk/log_25/vk");
+        let test_params = TestParams::new(MAX_BENCHMARKED_LOG_CIRCUIT_SIZE, ProofType::ZK);
+        let TestData { vk, .. } = get_parameterized_test_data(test_params);
 
         insert_vk::<T>(caller.clone(), vk, hash);
 
@@ -147,6 +140,7 @@ mod mock {
 
     impl crate::Config for Test {
         type MaxPubs = ConstU32<2060>; // this is arbitrary right now
+        type WeightInfo = ();
     }
 
     #[derive_impl(frame_system::config_preludes::SolochainDefaultConfig as frame_system::DefaultConfig)]

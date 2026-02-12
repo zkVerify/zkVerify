@@ -555,6 +555,7 @@ mod mock {
 
     impl crate::Config for Test {
         type MaxPubs = ConstU32<2060>; // this is arbitrary right now
+        type WeightInfo = ();
     }
 
     #[derive_impl(frame_system::config_preludes::SolochainDefaultConfig as frame_system::DefaultConfig)]
