@@ -59,20 +59,6 @@ use crate::parachains;
 pub struct ZKVWeight<T>(PhantomData<T>);
 
 impl<T: frame_system::Config> pallet_ultrahonk_verifier::WeightInfo for ZKVWeight<T> {
-    fn verify_proof_zk_32() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 3_327_196_000 picoseconds.
-        Weight::from_parts(3_363_453_000, 0)
-    }
-    fn verify_proof_plain_32() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 3_052_494_000 picoseconds.
-        Weight::from_parts(3_080_978_000, 0)
-    }
     /// Storage: `SettlementUltrahonkPallet::Vks` (r:1 w:0)
     /// Proof: `SettlementUltrahonkPallet::Vks` (`max_values`: None, `max_size`: Some(1800), added: 4275, mode: `MaxEncodedLen`)
     fn get_vk() -> Weight {
