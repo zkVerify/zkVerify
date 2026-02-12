@@ -76,14 +76,12 @@ async function run(nodeName, networkInfo, _args) {
         {
             name: "Ultrahonk.V.3.0 (ZK)",
             pallet: api.tx.settlementUltrahonkPallet,
-            args: [{ 'Vk': ULTRAHONK_V3_0_VK }, ULTRAHONK_V3_0_ZK_PROOF['V3_0'], ULTRAHONK_V3_0_PUBS],
-            // Q: Is indexing required here?
+            args: [{ 'Vk': ULTRAHONK_V3_0_VK }, ULTRAHONK_V3_0_ZK_PROOF, ULTRAHONK_V3_0_PUBS],
         },
         {
             name: "Ultrahonk.V.3.0 (Plain)",
             pallet: api.tx.settlementUltrahonkPallet,
-            args: [{ 'Vk': ULTRAHONK_V3_0_VK }, ULTRAHONK_V3_0_PLAIN_PROOF['V3_0'], ULTRAHONK_V3_0_PUBS],
-            // Q: Same here.
+            args: [{ 'Vk': ULTRAHONK_V3_0_VK }, ULTRAHONK_V3_0_PLAIN_PROOF, ULTRAHONK_V3_0_PUBS],
         },
         {
             name: "Ultraplonk",
