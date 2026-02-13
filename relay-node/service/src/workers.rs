@@ -153,7 +153,11 @@ fn list_workers_paths(
     {
         let lib_path = PathBuf::from("/usr/lib/polkadot");
         #[cfg(test)]
-        let lib_path = if let Some(o) = workers_lib_path_override() { o } else { lib_path };
+        let lib_path = if let Some(o) = workers_lib_path_override() {
+            o
+        } else {
+            lib_path
+        };
 
         let (prep_worker, exec_worker) = build_worker_paths(lib_path, workers_names);
 

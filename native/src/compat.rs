@@ -46,10 +46,7 @@ mod host_impl {
     {
         type Owned = T;
 
-        fn from_ffi_value(
-            context: &mut dyn FunctionContext,
-            arg: u32,
-        ) -> Result<Self::Owned> {
+        fn from_ffi_value(context: &mut dyn FunctionContext, arg: u32) -> Result<Self::Owned> {
             let mut buf = [0u8; N];
             context.read_memory_into(Pointer::new(arg), &mut buf)?;
             Ok(T::from(buf))

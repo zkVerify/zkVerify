@@ -117,7 +117,6 @@ pub mod pallet {
 
     #[pallet::config]
     pub trait Config: frame_system::Config<RuntimeEvent: From<Event<Self>>> {
-
         /// The claim's pallet id, used for deriving its sovereign account ID.
         #[pallet::constant]
         type PalletId: Get<PalletId>;
