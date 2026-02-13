@@ -166,7 +166,10 @@ impl paras::Config for Runtime {
     type WeightInfo = weights::parachains::paras::ZKVWeight<Runtime>;
     type AssignCoretime = ParachainsAssignmentProvider;
     type Fungible = Balances;
+    #[cfg(not(feature = "runtime-benchmarks"))]
     type CooldownRemovalMultiplier = sp_core::ConstU128<2>;
+    #[cfg(feature = "runtime-benchmarks")]
+    type CooldownRemovalMultiplier = sp_core::ConstU128<10_000_000_000>;
     type AuthorizeCurrentCodeOrigin = EnsureRoot<AccountId>;
 }
 

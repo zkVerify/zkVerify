@@ -1957,14 +1957,14 @@ impl_runtime_apis! {
                             ExistentialDepositAsset,
                             xcm_config::PriceForChildParachainDelivery,
                             TestParaId,
-                            ()
+                            Dmp
                         >,
                         polkadot_runtime_common::xcm_sender::ToParachainDeliveryHelper<
                             xcm_config::XcmConfig,
                             ExistentialDepositAsset,
                             xcm_config::PriceForChildParachainDelivery,
                             RndParaId,
-                            ()
+                            Dmp
                         >,
                     );
 
@@ -1997,7 +1997,7 @@ impl_runtime_apis! {
                             ExistentialDepositAsset,
                             xcm_config::PriceForChildParachainDelivery,
                             TestParaId,
-                            ()
+                            Dmp
                         >,
                     );
                     fn valid_destination() -> Result<Location, BenchmarkError> {

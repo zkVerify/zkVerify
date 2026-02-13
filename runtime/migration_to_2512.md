@@ -152,7 +152,7 @@ node_features.set(
 
 #### parachains::paras (`parachains.rs`)
 - `type Fungible = Balances;` — new fungible currency for parachain operations
-- `type CooldownRemovalMultiplier = sp_core::ConstU128<2>;` — per-block cost multiplier for early removal of a parachain's upgrade cooldown via the `remove_upgrade_cooldown` extrinsic. Cost formula: `(cooldown_blocks_remaining) * multiplier`, burned from the caller. Implements `Get<BalanceOf<Self>>`. Polkadot uses `~5000 DOT/day`, Kusama uses `~1000 KSM/day`. zkVerify's value of 2 planck/block is intentionally low: zkVerify is not a permissionless relay chain — only system parachains registered by root can live on it, so a small value is acceptable
+- `type CooldownRemovalMultiplier` — per-block cost multiplier for early removal of a parachain's upgrade cooldown via the `remove_upgrade_cooldown` extrinsic. Cost formula: `(cooldown_blocks_remaining) * multiplier`, burned from the caller. Implements `Get<BalanceOf<Self>>`. Polkadot uses `~5000 DOT/day`, Kusama uses `~1000 KSM/day`. Production value of 2 planck/block is intentionally low: zkVerify is not a permissionless relay chain — only system parachains registered by root can live on it, so a small value is acceptable. Under `runtime-benchmarks` uses `ConstU128<10_000_000_000>` so the benchmark can mint above ED (see §7 below)
 - `type AuthorizeCurrentCodeOrigin = EnsureRoot<AccountId>;` — gates who can call `authorize_force_set_current_code_hash`, a two-step mechanism for force-setting a parachain's current validation code without transferring the full Wasm blob. Step 1: this privileged origin authorizes a code hash with an expiry. Step 2: anyone calls `apply_authorized_force_set_current_code` with the full code (fee-free). Implements `EnsureOriginWithArg<RuntimeOrigin, ParaId>`. Both Polkadot and Kusama (spec 2_000_006) use `EnsureRoot<AccountId>`
 
 #### parachains::disputes and parachains::inclusion (`parachains.rs`)
@@ -483,6 +483,39 @@ The `set_validator_count` benchmark (pallet-staking 45.0.0, `benchmarking.rs:571
 
 **Fix**: Changed `StakingBenchmarkConfig::MaxValidators` from `ConstU32<MAX_TARGETS>` to
 `ConstU32<MAX_ACTIVE_VALIDATORS>`. This only affects staking benchmarks (not election bounds).
+
+### 6. Benchmark: pallet_xcm (send, teleport_assets, force_subscribe/unsubscribe_version_notify)
+
+In polkadot-stable2512, `dmp::can_queue_downward_message()` now checks
+`paras::Heads::<T>::contains_key(para)` before accepting a downward message. If the target
+parachain is not registered, the message is rejected with `QueueDownwardMessageError::Unroutable`.
+This check did not exist in stable2412.
+
+The `ToParachainDeliveryHelper` generic parameter `ToParachainHelper: EnsureForParachain` is
+responsible for registering the target parachain in benchmarks via
+`dmp::Pallet::make_parachain_reachable()`. Our config passed `()` (a no-op) for this parameter,
+while Polkadot passes `Dmp` (`dmp::Pallet<Runtime>`), which implements `EnsureForParachain` and
+inserts a dummy entry in `paras::Heads` storage.
+
+**Fix**: Changed the last generic parameter of all three `ToParachainDeliveryHelper` instances
+(in `pallet_xcm::benchmarking::Config` and `pallet_xcm_benchmarks::Config`) from `()` to `Dmp`.
+
+### 7. Benchmark: parachains::paras::remove_upgrade_cooldown
+
+The `remove_upgrade_cooldown` benchmark (`polkadot-runtime-parachains/src/paras/benchmarking.rs`)
+mints tokens into the caller account using
+`T::Fungible::mint_into(&who, T::CooldownRemovalMultiplier::get() * 1_000_000)`. With
+zkVerify's production `CooldownRemovalMultiplier = 2`, this mints only `2_000_000` planck, which
+is below the benchmark-mode existential deposit (`MILLICENTS = 10^13`). The `mint_into` call
+fails with "Account cannot exist with the funds that would be given".
+
+This benchmark is new in stable2512 (the `remove_upgrade_cooldown` extrinsic didn't exist in
+stable2412). Westend doesn't hit this because their multiplier (`~7 * 10^10`) is large enough
+relative to their ED.
+
+**Fix**: Made `CooldownRemovalMultiplier` conditional — production keeps `ConstU128<2>`, while
+`runtime-benchmarks` uses `ConstU128<10_000_000_000>` (so `10^10 * 10^6 = 10^16 >> ED`). This
+follows the existing pattern for benchmark-specific values (e.g., `MaxAutoRebagPerBlock` in §4).
 
 ## Test Changes
 
