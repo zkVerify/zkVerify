@@ -305,7 +305,33 @@ pub type Migrations = migrations::Unreleased;
 pub mod migrations {
     #[allow(unused_imports)]
     use super::*;
+    use frame_support::{traits::OnRuntimeUpgrade, weights::Weight};
+    use polkadot_primitives::node_features;
+
+    /// Enable `CandidateReceiptV2` in the on-chain `HostConfiguration` for chains
+    /// upgrading from a runtime that did not have this feature flag set.
+    ///
+    /// Dispatches `configuration::Pallet::set_node_feature` to schedule the change
+    /// via the pallet's own `schedule_config_update` logic. The feature will activate
+    /// after a session delay (`cur+2`).
+    pub struct EnableCandidateReceiptV2<T>(core::marker::PhantomData<T>);
+
+    impl<T: configuration::Config> OnRuntimeUpgrade for EnableCandidateReceiptV2<T> {
+        fn on_runtime_upgrade() -> Weight {
+            let feature_index =
+                node_features::FeatureIndex::CandidateReceiptV2 as u8;
+
+            configuration::Pallet::<T>::set_node_feature(
+                frame_system::RawOrigin::Root.into(),
+                feature_index,
+                true,
+            )
+            .expect("EnableCandidateReceiptV2: failed to schedule config update");
+
+            T::DbWeight::get().reads_writes(2, 2)
+        }
+    }
 
     /// Unreleased migrations. Add new ones here:
-    pub type Unreleased = ();
+    pub type Unreleased = (EnableCandidateReceiptV2<crate::Runtime>,);
 }
