@@ -17,7 +17,7 @@ jobs:
       - name: Features
         uses: ./.github/actions/cmd-in-docker
         with:
-          command: "zepter run --config .cargo/zepter-ci.yaml | tee features_output.txt"
+          command: "zepter run --config .cargo/zepter-ci.yaml 2>&1 | tee features_output.txt"
           use_cache: 'no'
           cargo_binaries_install: zepter
 

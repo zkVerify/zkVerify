@@ -202,7 +202,6 @@ mod mock {
     }
 
     impl pallet_verifiers::Config<crate::Ultrahonk<Test>> for Test {
-        type RuntimeEvent = RuntimeEvent;
         type OnProofVerified = ();
         type WeightInfo = crate::UltrahonkWeight<()>;
         type Ticket = HoldConsideration<
