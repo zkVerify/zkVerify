@@ -284,12 +284,8 @@ pub fn run_collator_node(
         rpc_handlers,
         overseer_handle,
         ..
-    } = new_full(
-        config,
-        IsParachainNode::Collator(collator_pair),
-        None,
-    )
-    .expect("could not create zkVerify test service");
+    } = new_full(config, IsParachainNode::Collator(collator_pair), None)
+        .expect("could not create zkVerify test service");
 
     let overseer_handle = overseer_handle.expect("test node must have an overseer handle");
     let peer_id = network.local_peer_id();

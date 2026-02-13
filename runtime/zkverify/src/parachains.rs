@@ -76,7 +76,10 @@ impl initializer::Config for Runtime {
 
 impl disputes::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
-    type RewardValidators = parachains_reward_points::RewardValidatorsWithEraPoints<Runtime, pallet_staking::Pallet<Runtime>>;
+    type RewardValidators = parachains_reward_points::RewardValidatorsWithEraPoints<
+        Runtime,
+        pallet_staking::Pallet<Runtime>,
+    >;
     type SlashingHandler = slashing::SlashValidatorsForDisputes<ParasSlashing>;
     type WeightInfo = weights::parachains::disputes::ZKVWeight<Runtime>;
 }
@@ -142,7 +145,10 @@ impl parachains_session_info::Config for Runtime {
 impl inclusion::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type DisputesHandler = ParasDisputes;
-    type RewardValidators = parachains_reward_points::RewardValidatorsWithEraPoints<Runtime, pallet_staking::Pallet<Runtime>>;
+    type RewardValidators = parachains_reward_points::RewardValidatorsWithEraPoints<
+        Runtime,
+        pallet_staking::Pallet<Runtime>,
+    >;
     type MessageQueue = MessageQueue;
     type WeightInfo = weights::parachains::inclusion::ZKVWeight<Runtime>;
 }

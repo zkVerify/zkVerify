@@ -51,8 +51,8 @@ mod tests;
 
 #[cfg(feature = "full-node")]
 use {
-    polkadot_node_core_approval_voting::self as approval_voting_subsystem,
-    polkadot_node_core_chain_selection::self as chain_selection_subsystem,
+    polkadot_node_core_approval_voting as approval_voting_subsystem,
+    polkadot_node_core_chain_selection as chain_selection_subsystem,
 };
 
 use polkadot_node_subsystem_util::database::Database;
@@ -66,8 +66,8 @@ pub use {
     sc_client_api::AuxStore,
     sp_authority_discovery::AuthorityDiscoveryApi,
     sp_blockchain::{HeaderBackend, HeaderMetadata},
-    sp_consensus_babe::BabeApi,
     sp_consensus_babe::inherents::BabeCreateInherentDataProviders,
+    sp_consensus_babe::BabeApi,
 };
 
 use std::{path::PathBuf, sync::Arc};

@@ -46,7 +46,9 @@ pub trait Config {
     type MaxPubs: Get<u32>;
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Encode, Decode, DecodeWithMemTracking, MaxEncodedLen, TypeInfo)]
+#[derive(
+    Copy, Clone, Debug, PartialEq, Encode, Decode, DecodeWithMemTracking, MaxEncodedLen, TypeInfo,
+)]
 pub enum ProofType {
     ZK,
     Plain,

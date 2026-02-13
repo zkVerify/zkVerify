@@ -61,13 +61,14 @@ use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId};
 use pallet_session::historical as session_historical;
 use pallet_timestamp::Now;
 use pallet_transaction_payment::{FeeDetails, RuntimeDispatchInfo};
+use polkadot_primitives::async_backing::Constraints;
 use polkadot_primitives::{
-    slashing, CandidateEvent, CommittedCandidateReceiptV2 as CommittedCandidateReceipt, CoreState,
-    ScrapedOnChainVotes, AccountId, AccountIndex, Balance, BlockNumber, CandidateHash, CoreIndex, DisputeState,
+    slashing, AccountId, AccountIndex, Balance, BlockNumber, CandidateEvent, CandidateHash,
+    CommittedCandidateReceiptV2 as CommittedCandidateReceipt, CoreIndex, CoreState, DisputeState,
     ExecutorParams, GroupRotationInfo, Hash as HashT, Id as ParaId, InboundDownwardMessage,
     InboundHrmpMessage, Moment, Nonce, OccupiedCoreAssumption, PersistedValidationData,
-    SessionInfo as SessionInfoData, Signature, ValidationCode, ValidationCodeHash, ValidatorId,
-    ValidatorIndex, PARACHAIN_KEY_TYPE_ID,
+    ScrapedOnChainVotes, SessionInfo as SessionInfoData, Signature, ValidationCode,
+    ValidationCodeHash, ValidatorId, ValidatorIndex, PARACHAIN_KEY_TYPE_ID,
 };
 use polkadot_runtime_common::{
     claims, impl_runtime_weights, paras_sudo_wrapper, BlockHashCount, BlockLength,
@@ -75,7 +76,6 @@ use polkadot_runtime_common::{
 };
 use polkadot_runtime_parachains::reward_points::RewardValidatorsWithEraPoints;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
-use polkadot_primitives::async_backing::Constraints;
 use sp_core::{ConstBool, ConstU32, OpaqueMetadata};
 use sp_runtime::{
     curve::PiecewiseLinear,

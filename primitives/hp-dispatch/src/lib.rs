@@ -67,7 +67,18 @@ impl<Balance, AccountId> DispatchAggregation<Balance, AccountId> for () {
 }
 
 /// Configuration for Destination
-#[derive(Clone, PartialEq, Eq, Encode, Decode, DecodeWithMemTracking, TypeInfo, MaxEncodedLen, Debug, Default)]
+#[derive(
+    Clone,
+    PartialEq,
+    Eq,
+    Encode,
+    Decode,
+    DecodeWithMemTracking,
+    TypeInfo,
+    MaxEncodedLen,
+    Debug,
+    Default,
+)]
 pub enum Destination {
     /// No Destination
     #[default]

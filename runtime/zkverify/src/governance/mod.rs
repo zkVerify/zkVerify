@@ -20,8 +20,8 @@ use crate::{
     governance::origins::{ReferendumCanceller, Spender},
     prod_or_fast,
     types::{AccountId, BlockNumber, DAYS},
-    weights, Balances, Preimage, Referenda, Runtime, RuntimeCall, RuntimeEvent, Scheduler,
-    System, Treasury,
+    weights, Balances, Preimage, Referenda, Runtime, RuntimeCall, RuntimeEvent, Scheduler, System,
+    Treasury,
 };
 use frame_support::{parameter_types, traits::EitherOf};
 use frame_system::{EnsureRoot, EnsureRootWithSuccess};

@@ -534,7 +534,9 @@ pub mod pallet_xcm_notifications {
     pub struct Pallet<T>(_);
 
     #[pallet::config]
-    pub trait Config: frame_system::Config<RuntimeEvent: From<Event<Self>>> + pallet_xcm::Config {
+    pub trait Config:
+        frame_system::Config<RuntimeEvent: From<Event<Self>>> + pallet_xcm::Config
+    {
         type RuntimeOrigin: IsType<<Self as frame_system::Config>::RuntimeOrigin>
             + Into<Result<pallet_xcm::Origin, <Self as Config>::RuntimeOrigin>>;
         type RuntimeCall: IsType<<Self as pallet_xcm::Config>::RuntimeCall> + From<Call<Self>>;

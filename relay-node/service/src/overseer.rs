@@ -46,9 +46,9 @@ use sc_client_api::AuxStore;
 use sc_keystore::LocalKeystore;
 use sc_network::{NetworkStateInfo, NotificationService};
 use std::{
-	collections::{HashMap, HashSet},
-	sync::Arc,
-	time::Duration,
+    collections::{HashMap, HashSet},
+    sync::Arc,
+    time::Duration,
 };
 
 pub use polkadot_approval_distribution::ApprovalDistribution as ApprovalDistributionSubsystem;
@@ -62,12 +62,12 @@ pub use polkadot_network_bridge::{
     Metrics as NetworkBridgeMetrics, NetworkBridgeRx as NetworkBridgeRxSubsystem,
     NetworkBridgeTx as NetworkBridgeTxSubsystem,
 };
+pub use polkadot_node_collation_generation::CollationGenerationSubsystem;
 pub use polkadot_node_core_approval_voting::ApprovalVotingSubsystem;
 pub use polkadot_node_core_approval_voting_parallel::{
     ApprovalVotingParallelSubsystem, Metrics as ApprovalVotingParallelMetrics,
 };
 pub use polkadot_node_core_av_store::AvailabilityStoreSubsystem;
-pub use polkadot_node_collation_generation::CollationGenerationSubsystem;
 pub use polkadot_node_core_backing::CandidateBackingSubsystem;
 pub use polkadot_node_core_bitfield_signing::BitfieldSigningSubsystem;
 pub use polkadot_node_core_candidate_validation::CandidateValidationSubsystem;
@@ -483,7 +483,9 @@ where
             runtime_client.clone(),
             Metrics::register(registry)?,
         ))
-        .collation_generation(CollationGenerationSubsystem::new(Metrics::register(registry)?))
+        .collation_generation(CollationGenerationSubsystem::new(Metrics::register(
+            registry,
+        )?))
         .collator_protocol({
             let side = match is_parachain_node {
                 IsParachainNode::No => {
@@ -538,7 +540,13 @@ pub trait OverseerGen {
         connector: OverseerConnector,
         args: OverseerGenArgs<Spawner, RuntimeClient>,
         ext_args: Option<ExtendedOverseerGenArgs>,
-    ) -> Result<(Overseer<SpawnGlue<Spawner>, Arc<RuntimeClient>>, OverseerHandle), Error>
+    ) -> Result<
+        (
+            Overseer<SpawnGlue<Spawner>, Arc<RuntimeClient>>,
+            OverseerHandle,
+        ),
+        Error,
+    >
     where
         RuntimeClient: RuntimeApiSubsystemClient + ChainApiBackend + AuxStore + 'static,
         Spawner: 'static + SpawnNamed + Clone + Unpin;
@@ -557,7 +565,13 @@ impl OverseerGen for ValidatorOverseerGen {
         connector: OverseerConnector,
         args: OverseerGenArgs<Spawner, RuntimeClient>,
         ext_args: Option<ExtendedOverseerGenArgs>,
-    ) -> Result<(Overseer<SpawnGlue<Spawner>, Arc<RuntimeClient>>, OverseerHandle), Error>
+    ) -> Result<
+        (
+            Overseer<SpawnGlue<Spawner>, Arc<RuntimeClient>>,
+            OverseerHandle,
+        ),
+        Error,
+    >
     where
         RuntimeClient: RuntimeApiSubsystemClient + ChainApiBackend + AuxStore + 'static,
         Spawner: 'static + SpawnNamed + Clone + Unpin,
@@ -581,7 +595,13 @@ impl OverseerGen for CollatorOverseerGen {
         connector: OverseerConnector,
         args: OverseerGenArgs<Spawner, RuntimeClient>,
         _ext_args: Option<ExtendedOverseerGenArgs>,
-    ) -> Result<(Overseer<SpawnGlue<Spawner>, Arc<RuntimeClient>>, OverseerHandle), Error>
+    ) -> Result<
+        (
+            Overseer<SpawnGlue<Spawner>, Arc<RuntimeClient>>,
+            OverseerHandle,
+        ),
+        Error,
+    >
     where
         RuntimeClient: RuntimeApiSubsystemClient + ChainApiBackend + AuxStore + 'static,
         Spawner: 'static + SpawnNamed + Clone + Unpin,

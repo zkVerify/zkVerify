@@ -17,8 +17,8 @@
 //! Partial service builder types and functions.
 
 use crate::{
-    relay_chain_selection::SelectRelayChain,
-    Block, Error, FullBackend, FullClient, GRANDPA_JUSTIFICATION_PERIOD,
+    relay_chain_selection::SelectRelayChain, Block, Error, FullBackend, FullClient,
+    GRANDPA_JUSTIFICATION_PERIOD,
 };
 use sc_consensus_grandpa::{self, FinalityProofProvider as GrandpaFinalityProofProvider};
 use sc_executor::{HeapAllocStrategy, WasmExecutor, DEFAULT_HEAP_ALLOC_STRATEGY};
@@ -186,8 +186,8 @@ where
 
     let babe_config = babe::configuration(&*client)?;
     let slot_duration = babe_config.slot_duration();
-    let create_inherent_data_providers: BabeCreateInherentDataProviders<Block> =
-        Arc::new(move |_, ()| async move {
+    let create_inherent_data_providers: BabeCreateInherentDataProviders<Block> = Arc::new(
+        move |_, ()| async move {
             let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
             let slot =
                 sp_consensus_babe::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
@@ -195,7 +195,8 @@ where
                     slot_duration,
                 );
             Ok((slot, timestamp))
-        });
+        },
+    );
     let (block_import, babe_link) = sc_consensus_babe::block_import(
         babe_config.clone(),
         grandpa_block_import,
@@ -205,8 +206,8 @@ where
         OffchainTransactionPoolFactory::new(transaction_pool.clone()),
     )?;
 
-    let (import_queue, babe_worker_handle) = sc_consensus_babe::import_queue(
-        sc_consensus_babe::ImportQueueParams {
+    let (import_queue, babe_worker_handle) =
+        sc_consensus_babe::import_queue(sc_consensus_babe::ImportQueueParams {
             link: babe_link.clone(),
             block_import: block_import.clone(),
             justification_import: Some(Box::new(justification_import)),
@@ -215,8 +216,7 @@ where
             spawner: &task_manager.spawn_essential_handle(),
             registry: config.prometheus_registry(),
             telemetry: telemetry.as_ref().map(|x| x.handle()),
-        },
-    )?;
+        })?;
 
     let justification_stream = grandpa_link.justification_stream();
     let shared_authority_set = grandpa_link.shared_authority_set().clone();

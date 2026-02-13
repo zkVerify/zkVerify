@@ -57,9 +57,7 @@ impl<'a> Poseidon2Mix<'a> {
     /// with the correct size.
     fn from_mut_bytes(bytes: &mut [u8]) -> Self {
         assert_eq!(bytes.len(), POSEIDON2_ARG_BYTES_SIZE);
-        Self::new(unsafe {
-            &mut *(bytes.as_mut_ptr() as *mut Poseidon2Slice)
-        })
+        Self::new(unsafe { &mut *(bytes.as_mut_ptr() as *mut Poseidon2Slice) })
     }
 
     /// SAFETY: BabyBearElem is always u32 and use `repr(transparent)`. The inner

@@ -147,7 +147,10 @@ impl pallet_referenda::TracksInfo<Balance, BlockNumber> for TracksInfo {
     }
 
     fn info(id: Self::Id) -> Option<Cow<'static, TrackInfo<Balance, BlockNumber>>> {
-        TRACKS_DATA.iter().find(|t| t.id == id).map(|t| Cow::Borrowed(&t.info))
+        TRACKS_DATA
+            .iter()
+            .find(|t| t.id == id)
+            .map(|t| Cow::Borrowed(&t.info))
     }
 
     fn check_integrity() -> Result<(), &'static str> {

@@ -125,7 +125,8 @@ pub struct NewFullParams<OverseerGenerator: OverseerGen> {
     pub malus_finality_delay: Option<u32>,
     pub hwbench: Option<sc_sysinfo::HwBench>,
     /// Set of invulnerable AH collator `PeerId`s.
-    pub invulnerable_ah_collators: std::collections::HashSet<polkadot_node_network_protocol::PeerId>,
+    pub invulnerable_ah_collators:
+        std::collections::HashSet<polkadot_node_network_protocol::PeerId>,
     /// Override for `HOLD_OFF_DURATION` constant.
     pub collator_protocol_hold_off: Option<Duration>,
 }
@@ -222,7 +223,10 @@ where
 
         let net_config = sc_network::config::FullNetworkConfiguration::<_, _, Network>::new(
             &config.network,
-            config.prometheus_config.as_ref().map(|cfg| cfg.registry.clone()),
+            config
+                .prometheus_config
+                .as_ref()
+                .map(|cfg| cfg.registry.clone()),
         );
 
         Ok(ServiceBuilder {
@@ -283,7 +287,8 @@ where
                     select_chain,
                     import_queue,
                     transaction_pool,
-                    other: (rpc_extensions_builder, import_setup, rpc_setup, slot_duration, mut telemetry),
+                    other:
+                        (rpc_extensions_builder, import_setup, rpc_setup, slot_duration, mut telemetry),
                 },
             overseer_connector,
             mut net_config,
@@ -357,8 +362,7 @@ where
                 std::collections::HashMap::new()
             };
 
-        let req_protocol_names =
-            ReqProtocolNames::new(genesis_hash, config.chain_spec.fork_id());
+        let req_protocol_names = ReqProtocolNames::new(genesis_hash, config.chain_spec.fork_id());
 
         let (collation_req_v1_receiver, cfg) =
             IncomingRequest::get_config_receiver::<_, Network>(&req_protocol_names);
@@ -631,8 +635,7 @@ where
                     Box::pin(async move {
                         use futures::{pin_mut, select, FutureExt};
 
-                        let forward =
-                            polkadot_overseer::forward_events(overseer_client, handle);
+                        let forward = polkadot_overseer::forward_events(overseer_client, handle);
 
                         let forward = forward.fuse();
                         let overseer_fut = overseer.run().fuse();

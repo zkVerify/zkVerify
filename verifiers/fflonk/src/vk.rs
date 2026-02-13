@@ -16,18 +16,30 @@
 use codec::{Decode, DecodeWithMemTracking, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_core::U256;
-#[derive(Clone, Debug, Encode, Decode, DecodeWithMemTracking, PartialEq, TypeInfo, MaxEncodedLen)]
+#[derive(
+    Clone, Debug, Encode, Decode, DecodeWithMemTracking, PartialEq, TypeInfo, MaxEncodedLen,
+)]
 pub struct Fr(pub U256);
-#[derive(Clone, Debug, Encode, Decode, DecodeWithMemTracking, PartialEq, TypeInfo, MaxEncodedLen)]
+#[derive(
+    Clone, Debug, Encode, Decode, DecodeWithMemTracking, PartialEq, TypeInfo, MaxEncodedLen,
+)]
 pub struct Fq(pub U256);
-#[derive(Clone, Debug, Encode, Decode, DecodeWithMemTracking, PartialEq, TypeInfo, MaxEncodedLen)]
+#[derive(
+    Clone, Debug, Encode, Decode, DecodeWithMemTracking, PartialEq, TypeInfo, MaxEncodedLen,
+)]
 pub struct Fq2(pub Fq, pub Fq);
-#[derive(Clone, Debug, Encode, Decode, DecodeWithMemTracking, PartialEq, TypeInfo, MaxEncodedLen)]
+#[derive(
+    Clone, Debug, Encode, Decode, DecodeWithMemTracking, PartialEq, TypeInfo, MaxEncodedLen,
+)]
 pub struct G1(pub Fq, pub Fq, pub Fq);
-#[derive(Clone, Debug, Encode, Decode, DecodeWithMemTracking, PartialEq, TypeInfo, MaxEncodedLen)]
+#[derive(
+    Clone, Debug, Encode, Decode, DecodeWithMemTracking, PartialEq, TypeInfo, MaxEncodedLen,
+)]
 pub struct G2(pub Fq2, pub Fq2, pub Fq2);
 
-#[derive(Clone, Debug, Encode, Decode, DecodeWithMemTracking, PartialEq, TypeInfo, MaxEncodedLen)]
+#[derive(
+    Clone, Debug, Encode, Decode, DecodeWithMemTracking, PartialEq, TypeInfo, MaxEncodedLen,
+)]
 pub struct Vk {
     pub power: u8,
     pub k1: Fr,

@@ -19,8 +19,8 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 use alloc::{borrow::Cow, boxed::Box};
-use core::marker::PhantomData;
 use codec::DecodeWithMemTracking;
+use core::marker::PhantomData;
 use frame_support::{ensure, fail, pallet_prelude::*, weights::Weight};
 use hp_verifiers::{Verifier, VerifyError};
 use log::debug;

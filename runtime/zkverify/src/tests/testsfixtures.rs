@@ -89,9 +89,12 @@ pub fn test() -> sp_io::TestExternalities {
         total_balances() + crate::ExistentialDeposit::get(),
     ));
 
-    pallet_balances::GenesisConfig::<super::Runtime> { balances, dev_accounts: None }
-        .assimilate_storage(&mut t)
-        .unwrap();
+    pallet_balances::GenesisConfig::<super::Runtime> {
+        balances,
+        dev_accounts: None,
+    }
+    .assimilate_storage(&mut t)
+    .unwrap();
 
     pallet_babe::GenesisConfig::<super::Runtime> {
         authorities: vec![],

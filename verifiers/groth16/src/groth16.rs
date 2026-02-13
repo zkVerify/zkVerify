@@ -21,7 +21,9 @@ use scale_info::TypeInfo;
 
 pub use hp_groth16::{vec_max_encoded_len, Proof, Scalar, VerificationKey, G1, G2};
 
-#[derive(Copy, Clone, Debug, PartialEq, Encode, Decode, DecodeWithMemTracking, MaxEncodedLen, TypeInfo)]
+#[derive(
+    Copy, Clone, Debug, PartialEq, Encode, Decode, DecodeWithMemTracking, MaxEncodedLen, TypeInfo,
+)]
 pub enum Curve {
     Bn254,
     Bls12_381,

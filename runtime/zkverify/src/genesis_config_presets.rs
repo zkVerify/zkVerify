@@ -51,7 +51,10 @@ fn parachains_host_configuration() -> HostConfiguration<BlockNumber> {
     use polkadot_primitives::{MAX_CODE_SIZE, MAX_POV_SIZE};
 
     let mut node_features = NodeFeatures::new();
-    node_features.resize(node_features::FeatureIndex::FirstUnassigned as usize + 1, false);
+    node_features.resize(
+        node_features::FeatureIndex::FirstUnassigned as usize + 1,
+        false,
+    );
     node_features.set(
         node_features::FeatureIndex::CandidateReceiptV2 as u8 as usize,
         true,

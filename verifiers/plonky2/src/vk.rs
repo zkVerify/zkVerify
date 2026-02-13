@@ -23,7 +23,18 @@ use codec::{Decode, DecodeWithMemTracking, Encode, MaxEncodedLen};
 use educe::Educe;
 use frame_support::pallet_prelude::TypeInfo;
 
-#[derive(Copy, Clone, Debug, PartialEq, Encode, Decode, DecodeWithMemTracking, MaxEncodedLen, TypeInfo, Default)]
+#[derive(
+    Copy,
+    Clone,
+    Debug,
+    PartialEq,
+    Encode,
+    Decode,
+    DecodeWithMemTracking,
+    MaxEncodedLen,
+    TypeInfo,
+    Default,
+)]
 pub enum Plonky2Config {
     Keccak,
     #[default]
