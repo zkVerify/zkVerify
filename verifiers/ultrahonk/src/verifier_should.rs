@@ -218,7 +218,7 @@ mod reject {
         let valid_proof = VALID_ZK_PROOF_BYTES;
         let mut invalid_proof_bytes = [0u8; VALID_ZK_PROOF_BYTES.len() + 1];
 
-        invalid_proof_bytes[..VALID_ZK_PROOF_BYTES.len()].copy_from_slice(&valid_proof);
+        invalid_proof_bytes[..VALID_ZK_PROOF_BYTES.len()].copy_from_slice(valid_proof);
 
         let invalid_proof =
             VersionedProof::V3_0(Proof::new(ProofType::ZK, invalid_proof_bytes.to_vec()));
@@ -237,7 +237,7 @@ mod reject {
         let valid_proof = VALID_PLAIN_PROOF_BYTES;
         let mut invalid_proof_bytes = [0u8; VALID_PLAIN_PROOF_BYTES.len() + 1];
 
-        invalid_proof_bytes[..VALID_PLAIN_PROOF_BYTES.len()].copy_from_slice(&valid_proof);
+        invalid_proof_bytes[..VALID_PLAIN_PROOF_BYTES.len()].copy_from_slice(valid_proof);
 
         let invalid_proof =
             VersionedProof::V3_0(Proof::new(ProofType::Plain, invalid_proof_bytes.to_vec()));
