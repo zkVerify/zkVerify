@@ -201,7 +201,6 @@ mod mock {
     }
 
     impl pallet_verifiers::Config<crate::Groth16<Test>> for Test {
-        type RuntimeEvent = RuntimeEvent;
         type OnProofVerified = ();
         type WeightInfo = crate::Groth16Weight<()>;
         type Ticket = HoldConsideration<

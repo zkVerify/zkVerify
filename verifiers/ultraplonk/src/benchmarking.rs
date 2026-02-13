@@ -175,7 +175,6 @@ mod mock {
     }
 
     impl pallet_verifiers::Config<crate::Ultraplonk<Test>> for Test {
-        type RuntimeEvent = RuntimeEvent;
         type OnProofVerified = ();
         type WeightInfo = crate::UltraplonkWeight<()>;
         type Ticket = HoldConsideration<
