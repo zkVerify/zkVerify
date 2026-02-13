@@ -1,7 +1,27 @@
 diff -ruN '--exclude=*.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' /tmp/polkadot-sdk-upstream/cumulus/client/relay-chain-minimal-node/Cargo.toml relay-chain-minimal-node/Cargo.toml
 --- /tmp/polkadot-sdk-upstream/cumulus/client/relay-chain-minimal-node/Cargo.toml	2026-02-09 10:32:54.250959136 +0100
 +++ relay-chain-minimal-node/Cargo.toml	2026-02-06 22:01:49.773990168 +0100
-@@ -32,8 +32,9 @@
+@@ -11,4 +11,17 @@
+-[lints]
+-workspace = true
++[lints.clippy]
++# Workspace lints (copied from [workspace.lints.clippy])
++all = { level = "allow", priority = 0 }
++correctness = { level = "deny", priority = 1 }
++suspicious = { level = "deny", priority = 1 }
++complexity = { level = "deny", priority = 1 }
++style = { level = "warn", priority = 1 }
++unnecessary_cast = { level = "allow", priority = 2 }
++useless_conversion = { level = "allow", priority = 2 }
++zero-prefixed-literal = { level = "allow", priority = 2 }
++multiple_bound_locations = { level = "allow", priority = 2 }
++# Upstream code suppressions (not part of zkVerify patch changes)
++type_complexity = { level = "allow", priority = 2 }
++too_many_arguments = { level = "allow", priority = 2 }
++extra_unused_type_parameters = { level = "allow", priority = 2 }
+
+ [dependencies]
+@@ -32,8 +45,9 @@
  polkadot-overseer.workspace = true
  polkadot-primitives.default-features = true
  polkadot-primitives.workspace = true

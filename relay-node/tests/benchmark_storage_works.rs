@@ -16,7 +16,6 @@
 
 #![cfg(feature = "runtime-benchmarks")]
 
-use assert_cmd::cargo::cargo_bin;
 use std::{
     path::Path,
     process::{Command, ExitStatus},
@@ -41,7 +40,7 @@ fn benchmark_storage_works() {
 
 /// Invoke the `benchmark storage` sub-command.
 fn benchmark_storage(db: &str, base_path: &Path) -> ExitStatus {
-    Command::new(cargo_bin(common::NODE))
+    Command::new(assert_cmd::cargo::cargo_bin!("zkv-relay"))
         .args(["benchmark", "storage", "--dev"])
         .arg("--db")
         .arg(db)

@@ -8,8 +8,23 @@ license = "GPL-3.0-only"
 homepage.workspace = true
 repository.workspace = true
 
-[lints]
-workspace = true
+[lints.clippy]
+# Workspace lints (copied from [workspace.lints.clippy])
+all = { level = "allow", priority = 0 }
+correctness = { level = "deny", priority = 1 }
+suspicious = { level = "deny", priority = 1 }
+complexity = { level = "deny", priority = 1 }
+style = { level = "warn", priority = 1 }
+unnecessary_cast = { level = "allow", priority = 2 }
+useless_conversion = { level = "allow", priority = 2 }
+zero-prefixed-literal = { level = "allow", priority = 2 }
+# Upstream code suppressions (not part of zkVerify patch changes)
+doc_lazy_continuation = { level = "allow", priority = 2 }
+missing_safety_doc = { level = "allow", priority = 2 }
+redundant_closure = { level = "allow", priority = 2 }
+io_other_error = { level = "allow", priority = 2 }
+needless_return = { level = "allow", priority = 2 }
+redundant_pattern_matching = { level = "allow", priority = 2 }
 
 [dependencies]
 # zkVerify customization: native host functions for proof verification

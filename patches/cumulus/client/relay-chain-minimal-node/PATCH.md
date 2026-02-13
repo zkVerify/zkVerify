@@ -11,6 +11,7 @@ generation, since zkVerify has its own service layer.
 
 ### Cargo.toml
 - Replaced `polkadot-service` dependency with `service` (zkv-service)
+- Replaced `[lints] workspace = true` with explicit `[lints.clippy]` section containing workspace lints plus upstream code suppressions (`type_complexity`, `too_many_arguments`, `extra_unused_type_parameters`)
 
 ### src/lib.rs
 - Changed `polkadot_service::{overseer::OverseerGenArgs, IsParachainNode}` to `service::{..}`

@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-use assert_cmd::cargo::cargo_bin;
 use std::process::{self, Command};
 use tempfile::tempdir;
 
@@ -34,7 +33,7 @@ async fn running_the_node_works_and_can_be_interrupted() {
     async fn run_command_and_kill(signal: Signal) {
         let tmpdir = tempdir().expect("could not create temp dir");
 
-        let mut cmd = Command::new(cargo_bin(common::NODE))
+        let mut cmd = Command::new(assert_cmd::cargo::cargo_bin!("zkv-relay"))
             .stdout(process::Stdio::piped())
             .stderr(process::Stdio::piped())
             .args(["--dev", "-d"])
