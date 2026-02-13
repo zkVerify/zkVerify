@@ -67,6 +67,7 @@ pub use polkadot_node_core_approval_voting_parallel::{
     ApprovalVotingParallelSubsystem, Metrics as ApprovalVotingParallelMetrics,
 };
 pub use polkadot_node_core_av_store::AvailabilityStoreSubsystem;
+pub use polkadot_node_collation_generation::CollationGenerationSubsystem;
 pub use polkadot_node_core_backing::CandidateBackingSubsystem;
 pub use polkadot_node_core_bitfield_signing::BitfieldSigningSubsystem;
 pub use polkadot_node_core_candidate_validation::CandidateValidationSubsystem;
@@ -422,7 +423,7 @@ pub fn collator_overseer_builder<Spawner, RuntimeClient>(
             AuthorityDiscoveryService,
         >,
         ChainApiSubsystem<RuntimeClient>,
-        DummySubsystem,
+        CollationGenerationSubsystem,
         CollatorProtocolSubsystem,
         DummySubsystem,
         DummySubsystem,
@@ -482,7 +483,7 @@ where
             runtime_client.clone(),
             Metrics::register(registry)?,
         ))
-        .collation_generation(DummySubsystem)
+        .collation_generation(CollationGenerationSubsystem::new(Metrics::register(registry)?))
         .collator_protocol({
             let side = match is_parachain_node {
                 IsParachainNode::No => {

@@ -48,6 +48,25 @@ pub trait Config: frame_system::Config<RuntimeEvent: From<Event<Self>>> {
 }
 ```
 
+### CandidateReceiptV2 and NodeFeatures
+
+In polkadot-stable2512, the `CollationGeneration` subsystem unconditionally creates V2 candidate descriptors (`CandidateDescriptorVersion::V2`), which include `core_index` and `session_index` fields. Validators check `NodeFeatures::CandidateReceiptV2` (feature index 3) before accepting V2 receipts — if the feature is not enabled in the runtime's `HostConfiguration`, validators reject all collations with `"Invalid candidate receipt version CandidateDescriptorVersion::V2"`.
+
+- **Impact**: Parachains cannot produce backed blocks unless `CandidateReceiptV2` is enabled in genesis `NodeFeatures`
+- **Fix** (`genesis_config_presets.rs`): Changed `node_features: NodeFeatures::EMPTY` to construct a `NodeFeatures` bitvec with `CandidateReceiptV2` (feature index 3) enabled:
+
+```rust
+let mut node_features = NodeFeatures::new();
+node_features.resize(node_features::FeatureIndex::FirstUnassigned as usize + 1, false);
+node_features.set(
+    node_features::FeatureIndex::CandidateReceiptV2 as u8 as usize,
+    true,
+);
+```
+
+- **Validation flow**: `CollationGeneration` creates V2 descriptor → `CollatorProtocol` advertises collation → validator fetches collation → `descriptor_version_sanity_check()` in `polkadot-collator-protocol` checks `per_relay_parent.v2_receipts` (derived from `NodeFeatures::CandidateReceiptV2`) → rejects if not enabled
+- **Reference**: The test runtime at `relay-node/test/service/src/chain_spec.rs` also enables `CandidateReceiptV2` and `ElasticScalingMVP`
+
 ### Other Notable Changes
 
 - **LazyBlock**: `execute_block` in try-runtime APIs now uses `LazyBlock` instead of `Block`
@@ -410,6 +429,10 @@ The `slashes_go_to_treasury` test was simplified because the complex era transit
 ### 2. Balance Inspection
 
 Code that uses `Balances::balance()` expecting total balance (including staked amounts) must be updated to use `Balances::total_balance()` or `<Balances as Inspect<_>>::total_balance()`.
+
+### 3. Paratest Collator PeerId
+
+The paratest collator node (`paratest/node/src/service.rs`) was using `PeerId::random()` for the collator peer ID passed to the lookahead collator `AuraParams`. This prevented proper collator-validator communication because the advertised peer ID didn't match the actual network peer ID. Fixed by passing `network.local_peer_id()` through to `start_consensus()`.
 
 ## Test Changes
 
