@@ -139,7 +139,7 @@ node_features.set(
 - `type MaxAutoRebagPerBlock = MaxAutoRebagPerBlock;` — new configuration that controls automatic rebagging of accounts during `on_idle` (`MAX_AUTO_REBAG_PER_BLOCK = 0`). Implements `Get<u32>`:
   - When > 0, the `on_idle` hook incrementally scans the bags-list each block, rebagging up to N accounts whose score has changed. It maintains a persistent cursor (`NextNodeAutoRebagged`) across blocks and prioritizes accounts in `PendingRebag` (those that failed insertion during election snapshot locking)
   - When = 0 (or `()`), auto-rebagging is disabled; accounts must be rebagged manually via the `rebag` extrinsic
-  - Both Polkadot and Kusama (spec 2_000_006) have auto-rebagging **disabled in production** (Polkadot uses `()`, Kusama uses `ConstU32<0>`). Both enable `ConstU32<5>` under the `runtime-benchmarks` feature for `on_idle` benchmarking
+  - Both Polkadot and Kusama (spec 2_000_006) have auto-rebagging **disabled in production** (Polkadot uses `()`, Kusama uses `ConstU32<0>`). Both enable `ConstU32<5>` under the `runtime-benchmarks` feature for `on_idle` benchmarking. **zkVerify uses `ConstU32<10>` instead** — see "Benchmark: pallet_bags_list::on_idle" in Open Issues below
 
 #### xcm_executor::Config / XcmConfig (`xcm_config.rs`)
 - `type XcmEventEmitter = XcmPallet;` — new event emitter for XCM execution events
@@ -459,6 +459,30 @@ Code that uses `Balances::balance()` expecting total balance (including staked a
 ### 3. Paratest Collator PeerId
 
 The paratest collator node (`paratest/node/src/service.rs`) was using `PeerId::random()` for the collator peer ID passed to the lookahead collator `AuraParams`. This prevented proper collator-validator communication because the advertised peer ID didn't match the actual network peer ID. Fixed by passing `network.local_peer_id()` through to `start_consensus()`.
+
+### 4. Benchmark: pallet_bags_list::on_idle
+
+The `on_idle` benchmark in `pallet-bags-list` 44.0.1 (`benchmarks.rs:351-451`) sets up a mix of "pending rebag" entries and regular list nodes. For pending node i=0 it deliberately skips calling `ScoreProvider::set_score_of()` (via `i % 7 == 0`) to simulate a cleanup scenario. However, with our `ScoreProvider = Staking`, `Staking::score()` returns `None` for accounts without a ledger, causing `rebag_internal()` to return `Err(NodeNotFound)` for that node. This wastes one slot of the rebag budget.
+
+The benchmark verification asserts that exactly `MaxAutoRebagPerBlock` nodes end up in bags above the first threshold. With `MaxAutoRebagPerBlock = 5`, the arithmetic is: 4 pre-existing nodes in higher bags + 0 valid pending inserts (the only pending node errors) = 4 ≠ 5.
+
+The pallet's own mock test uses `MaxAutoRebagPerBlock = 10` (`mock.rs:58`), which creates 3 pending nodes (2 valid + 1 error). With 10: 8 pre-existing + 2 valid inserts = 10 ✓.
+
+**Fix**: Changed `MAX_AUTO_REBAG_PER_BLOCK` under `runtime-benchmarks` from 5 to 10 to match the pallet mock. This is benchmark-only; production remains 0 (disabled).
+
+### 5. Benchmark: pallet_staking::set_validator_count
+
+The `set_validator_count` benchmark (pallet-staking 45.0.0, `benchmarking.rs:571-578`) calls
+`set_validator_count(MaxValidators::<T>::get())` where `MaxValidators` comes from
+`BenchmarkingConfig::MaxValidators`. The dispatchable enforces
+`new <= T::MaxValidatorSet::get()`. With `MaxValidators = MAX_TARGETS = 1,000` and
+`MaxValidatorSet = MAX_ACTIVE_VALIDATORS = 200`, the benchmark fails with `TooManyValidators`.
+
+`MaxValidatorSet` is new in polkadot-stable2512. Polkadot/Kusama don't hit this because their
+`MaxValidatorSet` (1,200 / 2,000) exceeds `BenchmarkingConfig::MaxValidators`.
+
+**Fix**: Changed `StakingBenchmarkConfig::MaxValidators` from `ConstU32<MAX_TARGETS>` to
+`ConstU32<MAX_ACTIVE_VALIDATORS>`. This only affects staking benchmarks (not election bounds).
 
 ## Test Changes
 

@@ -239,11 +239,12 @@ impl pallet_babe::Config for Runtime {
 
 // Maximum number of accounts that may be auto-rebagged per block during on_idle.
 // A value of 0 disables auto-rebagging entirely.
-// Set to 5 under runtime-benchmarks so on_idle benchmarking can exercise the code path.
+// Set to 10 under runtime-benchmarks so on_idle benchmarking can exercise the code path.
+// Must be 10 (not 5) to match the pallet's own mock — see migration_to_2512.md Open Issues §4.
 #[cfg(not(feature = "runtime-benchmarks"))]
 pub const MAX_AUTO_REBAG_PER_BLOCK: u32 = 0;
 #[cfg(feature = "runtime-benchmarks")]
-pub const MAX_AUTO_REBAG_PER_BLOCK: u32 = 5;
+pub const MAX_AUTO_REBAG_PER_BLOCK: u32 = 10;
 
 parameter_types! {
     pub const BagThresholds: &'static [u64] = &bag_thresholds::THRESHOLDS;
@@ -744,11 +745,10 @@ impl onchain::Config for OnChainSeqPhragmen {
     type Sort = ();
 }
 
-/// The numbers configured could always be more than the the maximum limits of staking pallet
-/// to ensure election snapshot will not run out of memory.
+/// MaxValidators must not exceed MaxValidatorSet (= MAX_ACTIVE_VALIDATORS = 200).
 pub struct StakingBenchmarkConfig;
 impl pallet_staking::BenchmarkingConfig for StakingBenchmarkConfig {
-    type MaxValidators = ConstU32<MAX_TARGETS>;
+    type MaxValidators = ConstU32<MAX_ACTIVE_VALIDATORS>;
     type MaxNominators = ConstU32<MAX_VOTERS>;
 }
 
