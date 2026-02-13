@@ -78,6 +78,12 @@ impl Default for Proof {
     }
 }
 
+impl Default for VersionedProof {
+    fn default() -> Self {
+        Self::V3_0(Proof::default())
+    }
+}
+
 impl From<&Proof> for ProofType {
     fn from(proof: &Proof) -> Self {
         match proof {
