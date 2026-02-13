@@ -516,7 +516,6 @@ impl pallet_collator_selection::Config for Runtime {
 impl pallet_parachain_template::Config for Runtime {}
 
 impl pallet_xcm_notifications::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
     type RuntimeOrigin = RuntimeOrigin;
     type RuntimeCall = RuntimeCall;
 }
@@ -535,8 +534,7 @@ pub mod pallet_xcm_notifications {
     pub struct Pallet<T>(_);
 
     #[pallet::config]
-    pub trait Config: frame_system::Config + pallet_xcm::Config {
-        type RuntimeEvent: IsType<<Self as frame_system::Config>::RuntimeEvent> + From<Event<Self>>;
+    pub trait Config: frame_system::Config<RuntimeEvent: From<Event<Self>>> + pallet_xcm::Config {
         type RuntimeOrigin: IsType<<Self as frame_system::Config>::RuntimeOrigin>
             + Into<Result<pallet_xcm::Origin, <Self as Config>::RuntimeOrigin>>;
         type RuntimeCall: IsType<<Self as pallet_xcm::Config>::RuntimeCall> + From<Call<Self>>;
