@@ -207,7 +207,7 @@ pub enum ProofSecurityRules {
 
 /// Delivering aggregations data
 #[derive(Clone, PartialEq, Eq, Encode, Decode, DecodeWithMemTracking, TypeInfo, MaxEncodedLen, Debug, Default)]
-pub struct Delivery<B: Debug + PartialEq> {
+pub struct Delivery<B> {
     /// Destination
     pub destination: Destination,
     /// fee
@@ -236,7 +236,7 @@ impl<B: Debug + PartialEq> Delivery<B> {
 
 /// Configuration for delivering aggregations
 #[derive(Clone, PartialEq, Eq, Encode, Decode, TypeInfo, MaxEncodedLen, Debug)]
-pub struct DeliveryParams<A, B: Debug + PartialEq> {
+pub struct DeliveryParams<A, B> {
     /// The delivery channel owner
     pub owner: A,
     /// The delivery data

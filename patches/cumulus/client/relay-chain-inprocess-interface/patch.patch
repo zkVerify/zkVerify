@@ -1,7 +1,25 @@
 diff -ruN '--exclude=patch.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' '--exclude=README.md' '--exclude=*.orig' /tmp/polkadot-sdk-upstream/cumulus/client/relay-chain-inprocess-interface/Cargo.toml /home/mdamico/devel/zkVerify/patches/cumulus/client/relay-chain-inprocess-interface/Cargo.toml
 --- /tmp/polkadot-sdk-upstream/cumulus/client/relay-chain-inprocess-interface/Cargo.toml	2026-02-09 10:32:54.250880175 +0100
 +++ /home/mdamico/devel/zkVerify/patches/cumulus/client/relay-chain-inprocess-interface/Cargo.toml	2026-02-09 12:23:14.742957475 +0100
-@@ -22,11 +22,12 @@
+@@ -11,4 +11,15 @@
+-[lints]
+-workspace = true
++[lints.clippy]
++# Workspace lints (copied from [workspace.lints.clippy])
++all = { level = "allow", priority = 0 }
++correctness = { level = "deny", priority = 1 }
++suspicious = { level = "deny", priority = 1 }
++complexity = { level = "deny", priority = 1 }
++style = { level = "warn", priority = 1 }
++unnecessary_cast = { level = "allow", priority = 2 }
++useless_conversion = { level = "allow", priority = 2 }
++zero-prefixed-literal = { level = "allow", priority = 2 }
++multiple_bound_locations = { level = "allow", priority = 2 }
++# Upstream code suppressions (not part of zkVerify patch changes)
++type_complexity = { level = "allow", priority = 2 }
+
+ [dependencies]
+@@ -22,11 +33,12 @@
  cumulus-relay-chain-interface.workspace = true
  futures = { workspace = true }
  futures-timer = { workspace = true }
@@ -17,7 +35,7 @@ diff -ruN '--exclude=patch.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' 
  sc-cli.default-features = false
  sc-cli.workspace = true
  sc-client-api.default-features = true
-@@ -56,4 +57,5 @@
+@@ -56,4 +68,5 @@
 
  # Polkadot
  metered = { features = ["futures_channel"], workspace = true }

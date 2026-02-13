@@ -493,7 +493,7 @@ where
                 }
                 IsParachainNode::Collator(collator_pair) => ProtocolSide::Collator {
                     peer_id: network_service.local_peer_id(),
-                    collator_pair: collator_pair,
+                    collator_pair,
                     request_receiver_v2: collation_req_v2_receiver,
                     metrics: Metrics::register(registry)?,
                 },

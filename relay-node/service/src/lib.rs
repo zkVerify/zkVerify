@@ -53,7 +53,6 @@ mod tests;
 use {
     polkadot_node_core_approval_voting::self as approval_voting_subsystem,
     polkadot_node_core_chain_selection::self as chain_selection_subsystem,
-    sc_consensus_grandpa,
 };
 
 use polkadot_node_subsystem_util::database::Database;

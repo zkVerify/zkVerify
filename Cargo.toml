@@ -386,6 +386,7 @@ style = { level = "warn", priority = 1 }
 unnecessary_cast = { level = "allow", priority = 2 }      # Types may change
 useless_conversion = { level = "allow", priority = 2 }    # Types may change
 zero-prefixed-literal = { level = "allow", priority = 2 } # 00_1000_000
+multiple_bound_locations = { level = "allow", priority = 2 } # FRAME pallet macro requires `I: 'static = ()` in generics + `I: Verifier` in where clause
 
 # make sure dev builds with backtrace do
 # not slow us down

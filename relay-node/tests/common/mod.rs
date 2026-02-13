@@ -24,8 +24,6 @@ use std::{
 };
 use substrate_rpc_client::{ws_client, ChainApi};
 
-pub const NODE: &str = "zkv-relay";
-
 /// Run the given `future` and panic if the `timeout` is hit.
 pub async fn run_with_timeout(timeout: Duration, future: impl Future<Output = ()>) {
     tokio::time::timeout(timeout, future)

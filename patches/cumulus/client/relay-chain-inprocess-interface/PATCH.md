@@ -13,6 +13,7 @@ and `polkadot-service`, since zkVerify has its own service layer and CLI.
 - Replaced `polkadot-cli` with `zkv-cli`
 - Replaced `polkadot-service` with `service` (zkv-service)
 - Replaced dev-dep `polkadot-test-client` with `test-client` (local path)
+- Replaced `[lints] workspace = true` with explicit `[lints.clippy]` section containing workspace lints plus upstream code suppression (`type_complexity`)
 
 ### src/lib.rs
 - Replaced `polkadot_service::*` with `service::*`
