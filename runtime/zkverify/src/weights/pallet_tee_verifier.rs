@@ -83,6 +83,11 @@ impl<T: frame_system::Config> pallet_tee_verifier::WeightInfo for ZKVWeight<T> {
         Weight::from_parts(51_021_198_000, 2913549)
             .saturating_add(T::DbWeight::get().reads(2_u64))
     }
+    fn verify_proof_nitro() -> Weight {
+        // Placeholder — to be updated after running benchmarks
+        Weight::from_parts(7_364_282_000, 1493)
+            .saturating_add(T::DbWeight::get().reads(1_u64))
+    }
     /// Storage: `SettlementTeePallet::Vks` (r:1 w:0)
     /// Proof: `SettlementTeePallet::Vks` (`max_values`: None, `max_size`: Some(131116), added: 133591, mode: `MaxEncodedLen`)
     fn get_vk() -> Weight {
