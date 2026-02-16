@@ -298,8 +298,6 @@ pub mod pallet {
         VerificationKeyAlreadyRegistered,
         /// The submitted proof is in an unsupported version.
         UnsupportedVersion,
-        /// No Certificate Revocation List available
-        MissingCrl,
     }
 
     impl<T, I> From<VerifyError> for Error<T, I> {
@@ -310,7 +308,6 @@ pub mod pallet {
                 VerifyError::VerifyError => Error::<T, I>::VerifyError,
                 VerifyError::InvalidVerificationKey => Error::<T, I>::InvalidVerificationKey,
                 VerifyError::UnsupportedVersion => Error::<T, I>::UnsupportedVersion,
-                VerifyError::MissingCrl => Error::<T, I>::MissingCrl,
             }
         }
     }

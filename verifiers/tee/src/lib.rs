@@ -116,7 +116,7 @@ impl<T: Config> Verifier for Tee<T> {
             .verify(now)
             .map_err(|_| VerifyError::VerifyError)?;
 
-        let crl = T::Crl::get_crl(T::ca_name()).map_err(|_| VerifyError::MissingCrl)?;
+        let crl = T::Crl::get_crl(T::ca_name()).map_err(|_| VerifyError::VerifyError)?;
         // Verify the attestation
         quote
             .verify(&tcb_response.tcb_info, &crl, now)
@@ -138,7 +138,7 @@ impl<T: Config> Verifier for Tee<T> {
                 .map_err(|_| VerifyError::InvalidVerificationKey)?;
 
         let now = T::UnixTime::now().as_secs();
-        let crl = T::Crl::get_crl(T::ca_name()).map_err(|_| VerifyError::MissingCrl)?;
+        let crl = T::Crl::get_crl(T::ca_name()).map_err(|_| VerifyError::VerifyError)?;
         // Check that the tcbInfo is still valid at the verification timestamp and that the
         // signature is valid
         tcb_response

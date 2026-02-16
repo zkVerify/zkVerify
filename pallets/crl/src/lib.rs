@@ -43,19 +43,25 @@ pub use tee_verifier::{Crl, RevokedCertId};
 pub use weight::WeightInfo;
 
 /// Maximum size in bytes of the CRL PEM data.
-pub const MAX_CRL_PEM_LENGTH: u32 = 65536;
+const MAX_CRL_PEM_LENGTH: u32 = 65536;
 
 /// Maximum size in bytes of the certificate chain PEM data.
-pub const MAX_CERT_CHAIN_PEM_LENGTH: u32 = 16384;
+const MAX_CERT_CHAIN_PEM_LENGTH: u32 = 16384;
 
 /// Maximum size in bytes of the root certificate (DER encoded).
-pub const MAX_ROOT_CERT_LENGTH: u32 = 2048;
+const MAX_ROOT_CERT_LENGTH: u32 = 2048;
 
 /// Maximum number of revoked certificates that can be stored per CA.
 pub const MAX_REVOKED_CERTS_PER_CA: u32 = 10000;
 
 /// Maximum number of distinct CRL issuers per CA.
-pub const MAX_ISSUERS_PER_CA: u32 = 10;
+const MAX_ISSUERS_PER_CA: u32 = 10;
+
+/// Maximum length in bytes for a certificate issuer.
+const MAX_CERT_ISSUER_LENGTH: u32 = 256;
+
+/// Maximum length in bytes for a certificate serial number.
+const MAX_CERT_SERIAL_LENGTH: u32 = 32;
 
 /// Error returned when a CA is not found.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -117,9 +123,18 @@ pub mod pallet {
     #[derive(Clone, Encode, Decode, TypeInfo, MaxEncodedLen, RuntimeDebug)]
     pub struct RevokedInfo {
         /// DER-encoded issuer distinguished name.
-        pub issuer: BoundedVec<u8, ConstU32<256>>,
+        pub issuer: BoundedVec<u8, ConstU32<MAX_CERT_ISSUER_LENGTH>>,
         /// Certificate serial number.
-        pub serial: BoundedVec<u8, ConstU32<64>>,
+        pub serial: BoundedVec<u8, ConstU32<MAX_CERT_SERIAL_LENGTH>>,
+    }
+
+    impl From<RevokedInfo> for RevokedCertId {
+        fn from(info: RevokedInfo) -> Self {
+            RevokedCertId {
+                issuer: info.issuer.into(),
+                serial_number: info.serial.into(),
+            }
+        }
     }
 
     /// Storage for registered CAs and their metadata.
@@ -248,13 +263,7 @@ pub mod pallet {
         /// Get the CRL for a specific CA.
         fn get_crl_for_ca(ca_name: &CaName<T>) -> Result<Crl, CaNotFoundError> {
             let crl = Revoked::<T>::get(ca_name).ok_or(CaNotFoundError)?;
-            Ok(crl
-                .into_iter()
-                .map(|c| RevokedCertId {
-                    issuer: c.issuer.into(),
-                    serial_number: c.serial.into(),
-                })
-                .collect())
+            Ok(crl.into_iter().map(|c| c.into()).collect())
         }
     }
 
@@ -323,7 +332,7 @@ pub mod pallet {
                 Default::default();
             Revoked::<T>::insert(&bounded_name, empty_vec);
 
-            log::info!("Registered CA: {:?}", bounded_name);
+            log::info!("Registered CA: {bounded_name:?}");
             Self::deposit_event(Event::CaRegistered { name: bounded_name });
 
             Ok(PostDispatchInfo {
@@ -351,9 +360,12 @@ pub mod pallet {
             Self::clear_revoked_certs_for_ca(&bounded_name);
 
             // Remove CA info
-            CertificateAuthorities::<T>::remove(&bounded_name);
+            if CertificateAuthorities::<T>::take(&bounded_name).is_none() {
+                log::error!("Could not find CA {bounded_name:?}");
+                return Err(Error::<T>::CaNotFound.into());
+            }
 
-            log::info!("Unregistered CA: {:?}", bounded_name);
+            log::info!("Unregistered CA: {bounded_name:?}");
             Self::deposit_event(Event::CaUnregistered { name: bounded_name });
 
             Ok(PostDispatchInfo {
@@ -415,7 +427,7 @@ pub mod pallet {
                 <T as Config>::UnixTime::now().as_secs(),
             )
             .map_err(|e| {
-                log::error!("Failed to parse CRL for CA {:?}: {:?}", bounded_name, e);
+                log::error!("Failed to parse CRL for CA {bounded_name:?}: {e:?}");
                 Error::<T>::CrlValidationError
             })?;
 
@@ -447,10 +459,7 @@ pub mod pallet {
             CertificateAuthorities::<T>::insert(&bounded_name, ca_info);
 
             log::info!(
-                "CRL updated for CA {:?} (issuer {:?}) with {} total revoked certificates",
-                bounded_name,
-                issuer_hash,
-                revoked_count
+                "CRL updated for CA {bounded_name:?} (issuer {issuer_hash:?}) with {revoked_count} total revoked certificates",
             );
 
             Self::deposit_event(Event::CrlUpdated {
