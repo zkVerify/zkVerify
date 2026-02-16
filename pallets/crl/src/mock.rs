@@ -107,6 +107,35 @@ pub fn crl_inter2() -> Vec<u8> {
     include_bytes!("resources/test/crl_inter2.pem").to_vec()
 }
 
+/// DER-encoded CRL from Intermediate CA 1, version 1 — 3 revoked certs.
+pub fn crl_inter1_v1_der() -> Vec<u8> {
+    include_bytes!("resources/test/crl_inter1_v1.der").to_vec()
+}
+
+/// DER-encoded CRL from Intermediate CA 1, version 2 — 5 revoked certs.
+pub fn crl_inter1_v2_der() -> Vec<u8> {
+    include_bytes!("resources/test/crl_inter1_v2.der").to_vec()
+}
+
+/// DER-encoded CRL from Intermediate CA 2 — 2 revoked certs.
+pub fn crl_inter2_der() -> Vec<u8> {
+    include_bytes!("resources/test/crl_inter2.der").to_vec()
+}
+
+/// DER-encoded certificate chain for Intermediate CA 1 (intermediate + root, concatenated).
+pub fn chain1_der() -> Vec<u8> {
+    let mut chain = include_bytes!("resources/test/signing_cert1.der").to_vec();
+    chain.extend_from_slice(include_bytes!("resources/test/root_ca.der"));
+    chain
+}
+
+/// DER-encoded certificate chain for Intermediate CA 2 (intermediate + root, concatenated).
+pub fn chain2_der() -> Vec<u8> {
+    let mut chain = include_bytes!("resources/test/signing_cert2.der").to_vec();
+    chain.extend_from_slice(include_bytes!("resources/test/root_ca.der"));
+    chain
+}
+
 pub fn test() -> sp_io::TestExternalities {
     let mut ext = sp_io::TestExternalities::from(
         frame_system::GenesisConfig::<Test>::default()

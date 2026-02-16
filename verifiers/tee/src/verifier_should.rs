@@ -28,6 +28,9 @@ const PAST: u64 = 1737556187; // Thu, 22 Jan 2025 14:29:47 GMT
 const PRESENT: u64 = 1769092187; // Thu, 22 Jan 2026 14:29:47 GMT
 const FUTURE: u64 = 1800628187; // Thu, 22 Jan 2027 14:29:47 GMT
 
+// Nitro attestation doc timestamp in seconds (2022-11-09T22:52:00Z)
+const NITRO_NOW: u64 = 1668034320;
+
 struct MockTime<T: Get<u64>>(PhantomData<T>);
 
 impl<T: Get<u64>> UnixTime for MockTime<T> {
@@ -60,6 +63,7 @@ impl CrlProvider for RevokedCrl {
 
 parameter_types! {
     pub const CaName: &'static str = "foo";
+    pub const NitroCaName: &'static str = "AWS_Nitro";
 }
 
 struct Mock<T: UnixTime, C: CrlProvider = EmptyCrl>(PhantomData<(T, C)>);
@@ -67,13 +71,14 @@ impl<T: UnixTime, C: CrlProvider> Config for Mock<T, C> {
     type UnixTime = T;
     type Crl = C;
     type CaName = CaName;
+    type NitroCaName = NitroCaName;
 }
 
 #[test]
 fn verify_valid_proof() {
     let proof = include_bytes!("resources/intel/valid_quote.dat").to_vec();
     let pubs = vec![];
-    let vk = Vk {
+    let vk = Vk::Intel {
         tcb_response: include_bytes!("resources/intel/valid_tcbinfo.json").to_vec(),
         certificates: include_bytes!("resources/intel/valid_tcbinfo_certs.pem").to_vec(),
     };
@@ -85,7 +90,7 @@ fn verify_valid_proof() {
 fn reject_valid_proof_with_revoked_cert() {
     let proof = include_bytes!("resources/intel/valid_quote.dat").to_vec();
     let pubs = vec![];
-    let vk = Vk {
+    let vk = Vk::Intel {
         tcb_response: include_bytes!("resources/intel/valid_tcbinfo.json").to_vec(),
         certificates: include_bytes!("resources/intel/valid_tcbinfo_certs.pem").to_vec(),
     };
@@ -100,7 +105,7 @@ fn reject_valid_proof_with_revoked_cert() {
 fn reject_invalid_proof() {
     let proof = include_bytes!("resources/intel/invalid_quote.dat").to_vec();
     let pubs = vec![];
-    let vk = Vk {
+    let vk = Vk::Intel {
         tcb_response: include_bytes!("resources/intel/valid_tcbinfo.json").to_vec(),
         certificates: include_bytes!("resources/intel/valid_tcbinfo_certs.pem").to_vec(),
     };
@@ -113,7 +118,7 @@ fn reject_invalid_proof() {
 
 #[test]
 fn reject_invalid_vk_signature() {
-    let vk = Vk {
+    let vk = Vk::Intel {
         tcb_response: include_bytes!("resources/intel/invalid_tcbinfo.json").to_vec(),
         certificates: include_bytes!("resources/intel/valid_tcbinfo_certs.pem").to_vec(),
     };
@@ -128,7 +133,7 @@ fn reject_invalid_vk_signature() {
 fn reject_invalid_time() {
     let proof = include_bytes!("resources/intel/valid_quote.dat").to_vec();
     let pubs = vec![];
-    let vk = Vk {
+    let vk = Vk::Intel {
         tcb_response: include_bytes!("resources/intel/valid_tcbinfo.json").to_vec(),
         certificates: include_bytes!("resources/intel/valid_tcbinfo_certs.pem").to_vec(),
     };
@@ -158,7 +163,7 @@ fn reject_invalid_time() {
 fn reject_too_long_proof() {
     let proof = vec![0u8; MAX_PROOF_LENGTH as usize + 1];
     let pubs = vec![];
-    let vk = Vk {
+    let vk = Vk::Intel {
         tcb_response: vec![],
         certificates: vec![],
     };
@@ -173,7 +178,7 @@ fn reject_too_long_proof() {
 fn reject_too_long_vk() {
     let proof = vec![];
     let pubs = vec![];
-    let vk = Vk {
+    let vk = Vk::Intel {
         tcb_response: vec![0u8; MAX_VK_LENGTH as usize + 1],
         certificates: vec![0u8; MAX_VK_LENGTH as usize + 1],
     };
@@ -187,8 +192,8 @@ fn reject_too_long_vk() {
 #[test]
 fn reject_invalid_pubs() {
     let proof = vec![];
-    let pubs = vec![0u8; MAX_PUBS_LENGTH as usize + 1];
-    let vk = Vk {
+    let pubs = vec![0u8; crate::MAX_PUBS_LENGTH as usize + 1];
+    let vk = Vk::Intel {
         tcb_response: vec![],
         certificates: vec![],
     };
@@ -197,4 +202,49 @@ fn reject_invalid_pubs() {
         Tee::<Mock<MockTime<ConstU64<PRESENT>>>>::verify_proof(&vk, &proof, &pubs),
         Err(VerifyError::InvalidInput)
     )
+}
+
+// =========================================================================
+// Nitro tests
+// =========================================================================
+
+#[test]
+fn verify_valid_nitro_proof() {
+    let proof = include_bytes!("resources/nitro/valid_attestation.bin").to_vec();
+    let pubs = vec![];
+    let vk = Vk::Nitro;
+
+    assert!(Tee::<Mock<MockTime<ConstU64<NITRO_NOW>>>>::verify_proof(&vk, &proof, &pubs).is_ok());
+}
+
+#[test]
+fn reject_invalid_nitro_proof() {
+    let proof = include_bytes!("resources/nitro/invalid_attestation.bin").to_vec();
+    let pubs = vec![];
+    let vk = Vk::Nitro;
+
+    assert_eq!(
+        Tee::<Mock<MockTime<ConstU64<NITRO_NOW>>>>::verify_proof(&vk, &proof, &pubs),
+        Err(hp_verifiers::VerifyError::VerifyError)
+    );
+}
+
+#[test]
+fn reject_nitro_with_expired_timestamp() {
+    let proof = include_bytes!("resources/nitro/valid_attestation.bin").to_vec();
+    let pubs = vec![];
+    let vk = Vk::Nitro;
+
+    // One year after: certificates will have expired
+    const NITRO_FUTURE: u64 = NITRO_NOW + 365 * 24 * 3600;
+    assert_eq!(
+        Tee::<Mock<MockTime<ConstU64<NITRO_FUTURE>>>>::verify_proof(&vk, &proof, &pubs),
+        Err(hp_verifiers::VerifyError::VerifyError)
+    );
+}
+
+#[test]
+fn validate_nitro_vk_always_succeeds() {
+    let vk = Vk::Nitro;
+    assert!(Tee::<Mock<MockTime<ConstU64<NITRO_NOW>>>>::validate_vk(&vk).is_ok());
 }
