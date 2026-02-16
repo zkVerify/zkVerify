@@ -57,7 +57,8 @@ use core::marker::PhantomData;
 pub trait WeightInfo {
     fn register_ca() -> Weight;
     fn unregister_ca() -> Weight;
-    fn update_crl(n: u32, ) -> Weight;
+    fn update_pem_crl(n: u32, ) -> Weight;
+    fn update_der_crl(n: u32, ) -> Weight;
     fn clear_crl() -> Weight;
 }
 
@@ -93,13 +94,30 @@ impl WeightInfo for () {
     /// Storage: `Crl::Revoked` (r:0 w:1)
     /// Proof: `Crl::Revoked` (`max_values`: None, `max_size`: Some(3240084), added: 3242559, mode: `MaxEncodedLen`)
     /// The range of component `n` is `[1, 1000]`.
-    fn update_crl(n: u32, ) -> Weight {
+    fn update_pem_crl(n: u32, ) -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `601`
         //  Estimated: `5609`
         // Minimum execution time: 5_534_807_000 picoseconds.
         Weight::from_parts(5_503_496_899, 5609)
             // Standard Error: 34_643
+            .saturating_add(Weight::from_parts(1_891_034, 0).saturating_mul(n.into()))
+            .saturating_add(RocksDbWeight::get().reads(2_u64))
+            .saturating_add(RocksDbWeight::get().writes(2_u64))
+    }
+    /// Storage: `Crl::CertificateAuthorities` (r:1 w:1)
+    /// Proof: `Crl::CertificateAuthorities` (`max_values`: None, `max_size`: Some(2144), added: 4619, mode: `MaxEncodedLen`)
+    /// Storage: `Timestamp::Now` (r:1 w:0)
+    /// Proof: `Timestamp::Now` (`max_values`: Some(1), `max_size`: Some(8), added: 503, mode: `MaxEncodedLen`)
+    /// Storage: `Crl::Revoked` (r:0 w:1)
+    /// Proof: `Crl::Revoked` (`max_values`: None, `max_size`: Some(3240084), added: 3242559, mode: `MaxEncodedLen`)
+    /// The range of component `n` is `[1, 1000]`.
+    fn update_der_crl(n: u32, ) -> Weight {
+        // Proof Size summary in bytes:
+        //  Measured:  `601`
+        //  Estimated: `5609`
+        // Use update_pem_crl weights as conservative upper bound until proper benchmarks are run.
+        Weight::from_parts(5_503_496_899, 5609)
             .saturating_add(Weight::from_parts(1_891_034, 0).saturating_mul(n.into()))
             .saturating_add(RocksDbWeight::get().reads(2_u64))
             .saturating_add(RocksDbWeight::get().writes(2_u64))

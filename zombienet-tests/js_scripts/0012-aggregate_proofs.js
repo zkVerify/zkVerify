@@ -101,7 +101,7 @@ async function run(nodeName, networkInfo, _args) {
         {
             name: "Tee",
             pallet: api.tx.settlementTeePallet,
-            args: [{ 'Vk': [ TEE_VK_TCB_RESP, TEE_VK_TCB_CERT ] }, TEE_PROOF, TEE_PUBS],
+            args: [{ 'Vk': { 'Intel': { tcb_response: TEE_VK_TCB_RESP, certificates: TEE_VK_TCB_CERT } } }, TEE_PROOF, TEE_PUBS],
         }
     ];
 
@@ -126,7 +126,7 @@ async function run(nodeName, networkInfo, _args) {
     console.log('CA registered: Intel_SGX_Processor');
 
     // Update the CRL
-    events = await updateCrl(bob, caName, TEE_CRL_PEM, TEE_CRL_CHAIN_PEM);
+    events = await updateCrl(bob, caName, { 'Pem': { crl: TEE_CRL_PEM, cert_chain: TEE_CRL_CHAIN_PEM } });
     if (!receivedEvents(events)) {
         console.log(`Update CRL Error`);
         return ReturnCode.ErrUpdateCrl;

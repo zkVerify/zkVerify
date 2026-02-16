@@ -58,9 +58,9 @@ fn register_test_ca<T: Config>() -> CaName<T> {
     bounded_name
 }
 
-/// Select the pre-generated CRL whose revoked certificate count is closest to `n`.
+/// Select the pre-generated PEM CRL whose revoked certificate count is closest to `n`.
 /// Available test CRLs have 1, 10, 100, 500, and 1000 revoked certificates.
-fn select_crl(n: u32) -> alloc::vec::Vec<u8> {
+fn select_pem_crl(n: u32) -> alloc::vec::Vec<u8> {
     if n <= 5 {
         include_bytes!("resources/bench/crl_1.pem").to_vec()
     } else if n <= 55 {
@@ -71,6 +71,22 @@ fn select_crl(n: u32) -> alloc::vec::Vec<u8> {
         include_bytes!("resources/bench/crl_500.pem").to_vec()
     } else {
         include_bytes!("resources/bench/crl_1000.pem").to_vec()
+    }
+}
+
+/// Select the pre-generated DER CRL whose revoked certificate count is closest to `n`.
+/// Available test CRLs have 1, 10, 100, 500, and 1000 revoked certificates.
+fn select_der_crl(n: u32) -> alloc::vec::Vec<u8> {
+    if n <= 5 {
+        include_bytes!("resources/bench/crl_1.der").to_vec()
+    } else if n <= 55 {
+        include_bytes!("resources/bench/crl_10.der").to_vec()
+    } else if n <= 300 {
+        include_bytes!("resources/bench/crl_100.der").to_vec()
+    } else if n <= 750 {
+        include_bytes!("resources/bench/crl_500.der").to_vec()
+    } else {
+        include_bytes!("resources/bench/crl_1000.der").to_vec()
     }
 }
 
@@ -104,22 +120,52 @@ mod benchmarks {
         assert!(!CertificateAuthorities::<T>::contains_key(&ca_name));
     }
 
-    /// Benchmark `update_crl` parameterized by the number of revoked certificates.
+    /// Benchmark `update_crl` with PEM input, parameterized by the number of revoked certificates.
     ///
-    /// Uses pre-generated CRLs with 1, 10, 100, 500, and 1000 revoked entries.
+    /// Uses pre-generated PEM CRLs with 1, 10, 100, 500, and 1000 revoked entries.
     /// The closest matching CRL is selected for each value of `n`.
     #[benchmark]
-    fn update_crl(n: Linear<1, 1000>) {
+    fn update_pem_crl(n: Linear<1, 1000>) {
         let ca_name = register_test_ca::<T>();
         let name = ca_name.to_vec();
-        let crl_pem = select_crl(n);
+        let crl_pem = select_pem_crl(n);
         let cert_chain_pem = include_bytes!("resources/bench/chain.pem").to_vec();
+        let crl_input = CrlInput::Pem {
+            crl: crl_pem,
+            cert_chain: cert_chain_pem,
+        };
 
         let caller: T::AccountId = whitelisted_caller();
         set_timestamp::<T>(PRESENT_MS);
 
         #[extrinsic_call]
-        update_crl(RawOrigin::Signed(caller), name, crl_pem, cert_chain_pem);
+        update_crl(RawOrigin::Signed(caller), name, crl_input);
+
+        // Verify the CRL was stored.
+        let ca_info = CertificateAuthorities::<T>::get(&ca_name).unwrap();
+        assert!(!ca_info.crl_versions.is_empty());
+    }
+
+    /// Benchmark `update_crl` with DER input, parameterized by the number of revoked certificates.
+    ///
+    /// Uses pre-generated DER CRLs with 1, 10, 100, 500, and 1000 revoked entries.
+    /// The closest matching CRL is selected for each value of `n`.
+    #[benchmark]
+    fn update_der_crl(n: Linear<1, 1000>) {
+        let ca_name = register_test_ca::<T>();
+        let name = ca_name.to_vec();
+        let crl_der = select_der_crl(n);
+        let mut cert_chain_der = include_bytes!("resources/bench/signing_cert.der").to_vec();
+        cert_chain_der.extend_from_slice(include_bytes!("resources/bench/root_ca.der"));
+        let crl_input = CrlInput::Der {
+            crl: crl_der,
+            cert_chain: cert_chain_der,
+        };
+
+        let caller: T::AccountId = whitelisted_caller();
+
+        #[extrinsic_call]
+        update_crl(RawOrigin::Signed(caller), name, crl_input);
 
         // Verify the CRL was stored.
         let ca_info = CertificateAuthorities::<T>::get(&ca_name).unwrap();

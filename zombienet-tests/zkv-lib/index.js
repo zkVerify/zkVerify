@@ -248,8 +248,8 @@ exports.sudoRegisterCA = async (signer, ca_name, root_cert_der) => {
   return await submitExtrinsic(api, extrinsic, signer, BlockUntil.InBlock, (event) => event.section == "crl");
 }
 
-exports.updateCrl = async (signer, ca_name, crl_pem, crl_chain_pem) => {
-  let extrinsic = api.tx.crl.updateCrl(ca_name, crl_pem, crl_chain_pem);
+exports.updateCrl = async (signer, ca_name, crl_input) => {
+  let extrinsic = api.tx.crl.updateCrl(ca_name, crl_input);
   return await submitExtrinsic(api, extrinsic, signer, BlockUntil.InBlock, (event) => event.section == "crl");
 }
 

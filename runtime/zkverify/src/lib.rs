@@ -932,12 +932,14 @@ impl pallet_verifiers::common::Config for Runtime {
 
 parameter_types! {
     pub const IntelCaName: &'static str = "Intel_SGX_Processor";
+    pub const NitroCaName: &'static str = "AWS_Nitro";
 }
 
 impl pallet_tee_verifier::Config for Runtime {
     type UnixTime = Timestamp;
     type Crl = pallet_crl::Pallet<Runtime>;
     type CaName = IntelCaName;
+    type NitroCaName = NitroCaName;
 }
 
 pub type TeeVerifier = pallet_tee_verifier::Tee<Runtime>;

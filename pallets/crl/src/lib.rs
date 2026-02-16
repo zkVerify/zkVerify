@@ -21,8 +21,9 @@
 //! This pallet allows a manager to register Certificate Authorities (CAs) and update their
 //! CRLs independently. Each CA has its own root certificate for CRL signature verification.
 //!
-//! The CRL is parsed and validated using the `tee-verifier` crate's `parse_crl` function,
-//! which verifies the CRL signature against a certificate chain.
+//! The CRL is parsed and validated using the `tee-verifier` crate's `parse_pem_crl` or
+//! `parse_der_crl` functions, which verify the CRL signature against a certificate chain
+//! (PEM) or a single signing certificate (DER).
 
 mod weight;
 
@@ -51,6 +52,12 @@ const MAX_CERT_CHAIN_PEM_LENGTH: u32 = 16384;
 /// Maximum size in bytes of the root certificate (DER encoded).
 const MAX_ROOT_CERT_LENGTH: u32 = 2048;
 
+/// Maximum size in bytes of the CRL DER data.
+pub const MAX_CRL_DER_LENGTH: u32 = 65536;
+
+/// Maximum total size in bytes of the DER-encoded certificate chain.
+pub const MAX_CERT_CHAIN_DER_LENGTH: u32 = 16384;
+
 /// Maximum number of revoked certificates that can be stored per CA.
 pub const MAX_REVOKED_CERTS_PER_CA: u32 = 10000;
 
@@ -74,11 +81,30 @@ pub trait CrlProvider {
     fn get_crl(ca_name: &str) -> Result<Crl, CaNotFoundError>;
 }
 
+/// Input data for CRL updates, supporting both PEM and DER formats.
+#[derive(Clone, PartialEq, Eq, Encode, Decode, TypeInfo, RuntimeDebug)]
+pub enum CrlInput {
+    /// PEM-encoded CRL and certificate chain.
+    Pem {
+        /// PEM-encoded CRL data.
+        crl: Vec<u8>,
+        /// PEM-encoded certificate chain for CRL signature verification.
+        cert_chain: Vec<u8>,
+    },
+    /// DER-encoded CRL and certificate chain.
+    Der {
+        /// DER-encoded CRL data.
+        crl: Vec<u8>,
+        /// Concatenated DER-encoded certificate chain for CRL signature verification (leaf first).
+        cert_chain: Vec<u8>,
+    },
+}
+
 #[frame_support::pallet]
 pub mod pallet {
     use super::*;
     use frame_system::pallet_prelude::*;
-    use tee_verifier::parse_crl;
+    use tee_verifier::{parse_der_crl, parse_pem_crl};
 
     #[pallet::pallet]
     pub struct Pallet<T>(_);
@@ -215,6 +241,10 @@ pub mod pallet {
         TooManyIssuers,
         /// The CRL contains no revoked certificates.
         EmptyCrl,
+        /// The CRL DER data exceeds the maximum allowed length.
+        CrlDerTooLarge,
+        /// The DER certificate chain exceeds the maximum allowed length.
+        CertChainDerTooLarge,
     }
 
     impl<T: Config> Pallet<T> {
@@ -376,6 +406,7 @@ pub mod pallet {
 
         /// Update the Certificate Revocation List for a specific CA.
         ///
+        /// Accepts CRL data in either PEM or DER format via the `crl_input` enum.
         /// Merges the new CRL entries with existing ones: entries from the same issuer
         /// are replaced entirely, while entries from other issuers are preserved.
         /// Per-issuer version tracking ensures only newer CRLs are accepted.
@@ -383,25 +414,25 @@ pub mod pallet {
         /// # Arguments
         /// * `origin` - Must be signed.
         /// * `ca_name` - Name of the CA whose CRL to update.
-        /// * `crl_pem` - PEM-encoded CRL data.
-        /// * `cert_chain_pem` - PEM-encoded certificate chain for CRL signature verification.
+        /// * `crl_input` - CRL data in PEM or DER format (see [`CrlInput`]).
         ///
         /// # Errors
         /// * `CaNotFound` - No CA with this name exists.
         /// * `CrlPemTooLarge` - The CRL PEM data exceeds MAX_CRL_PEM_LENGTH.
         /// * `CertChainPemTooLarge` - The certificate chain exceeds MAX_CERT_CHAIN_PEM_LENGTH.
+        /// * `CrlDerTooLarge` - The CRL DER data exceeds MAX_CRL_DER_LENGTH.
+        /// * `CertChainDerTooLarge` - The certificate chain exceeds MAX_CERT_CHAIN_DER_LENGTH.
         /// * `CrlValidationError` - Failed to parse or verify the CRL.
         /// * `TooManyRevokedCerts` - Total revoked certs across all issuers exceeds MAX_REVOKED_CERTS_PER_CA.
         /// * `EmptyCrl` - The CRL contains no revoked certificates.
         /// * `TooManyIssuers` - Too many distinct CRL issuers for this CA.
         /// * `NotNewerCrl` - The CRL is not newer than the one already stored for this issuer.
         #[pallet::call_index(2)]
-        #[pallet::weight(T::WeightInfo::update_crl(MAX_REVOKED_CERTS_PER_CA))]
+        #[pallet::weight(T::WeightInfo::update_pem_crl(MAX_REVOKED_CERTS_PER_CA))]
         pub fn update_crl(
             origin: OriginFor<T>,
             ca_name: Vec<u8>,
-            crl_pem: Vec<u8>,
-            cert_chain_pem: Vec<u8>,
+            crl_input: CrlInput,
         ) -> DispatchResultWithPostInfo {
             let _who = ensure_signed(origin)?;
 
@@ -412,20 +443,39 @@ pub mod pallet {
             let mut ca_info =
                 CertificateAuthorities::<T>::get(&bounded_name).ok_or(Error::<T>::CaNotFound)?;
 
-            // Validate input sizes
-            if crl_pem.len() > MAX_CRL_PEM_LENGTH as usize {
-                return Err(Error::<T>::CrlPemTooLarge.into());
-            }
-            if cert_chain_pem.len() > MAX_CERT_CHAIN_PEM_LENGTH as usize {
-                return Err(Error::<T>::CertChainPemTooLarge.into());
-            }
+            let is_pem = matches!(crl_input, CrlInput::Pem { .. });
 
-            let (this_update, parsed_crl) = parse_crl(
-                &crl_pem,
-                &cert_chain_pem,
-                Some(ca_info.root_cert.as_slice()),
-                <T as Config>::UnixTime::now().as_secs(),
-            )
+            // Parse CRL based on input format
+            let (this_update, parsed_crl) = match crl_input {
+                CrlInput::Pem { crl, cert_chain } => {
+                    if crl.len() > MAX_CRL_PEM_LENGTH as usize {
+                        return Err(Error::<T>::CrlPemTooLarge.into());
+                    }
+                    if cert_chain.len() > MAX_CERT_CHAIN_PEM_LENGTH as usize {
+                        return Err(Error::<T>::CertChainPemTooLarge.into());
+                    }
+                    parse_pem_crl(
+                        &crl,
+                        &cert_chain,
+                        Some(ca_info.root_cert.as_slice()),
+                        <T as Config>::UnixTime::now().as_secs(),
+                    )
+                }
+                CrlInput::Der { crl, cert_chain } => {
+                    if crl.len() > MAX_CRL_DER_LENGTH as usize {
+                        return Err(Error::<T>::CrlDerTooLarge.into());
+                    }
+                    if cert_chain.len() > MAX_CERT_CHAIN_DER_LENGTH as usize {
+                        return Err(Error::<T>::CertChainDerTooLarge.into());
+                    }
+                    parse_der_crl(
+                        &crl,
+                        &cert_chain,
+                        Some(ca_info.root_cert.as_slice()),
+                        <T as Config>::UnixTime::now().as_secs(),
+                    )
+                }
+            }
             .map_err(|e| {
                 log::error!("Failed to parse CRL for CA {bounded_name:?}: {e:?}");
                 Error::<T>::CrlValidationError
@@ -469,8 +519,14 @@ pub mod pallet {
                 revoked_count,
             });
 
+            let actual_weight = if is_pem {
+                T::WeightInfo::update_pem_crl(revoked_count)
+            } else {
+                T::WeightInfo::update_der_crl(revoked_count)
+            };
+
             Ok(PostDispatchInfo {
-                actual_weight: Some(T::WeightInfo::update_crl(revoked_count)),
+                actual_weight: Some(actual_weight),
                 pays_fee: Pays::Yes,
             })
         }

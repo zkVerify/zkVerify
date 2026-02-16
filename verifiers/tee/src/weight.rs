@@ -56,6 +56,7 @@ use core::marker::PhantomData;
 /// Weight functions needed for `pallet_tee_verifier`.
 pub trait WeightInfo {
     fn verify_proof() -> Weight;
+    fn verify_proof_nitro() -> Weight;
     fn get_vk() -> Weight;
     fn validate_vk() -> Weight;
     fn compute_statement_hash() -> Weight;
@@ -74,6 +75,11 @@ impl WeightInfo for () {
         //  Measured:  `195`
         //  Estimated: `3243549`
         // Minimum execution time: 9_313_503_000 picoseconds.
+        Weight::from_parts(9_370_143_000, 3243549)
+            .saturating_add(RocksDbWeight::get().reads(2_u64))
+    }
+    fn verify_proof_nitro() -> Weight {
+        // Placeholder — to be updated after running benchmarks
         Weight::from_parts(9_370_143_000, 3243549)
             .saturating_add(RocksDbWeight::get().reads(2_u64))
     }
