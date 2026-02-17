@@ -140,9 +140,7 @@ pub mod pallet {
     }
 
     #[pallet::config]
-    pub trait Config: frame_system::Config {
-        /// Because this pallet emits events, it depends on the runtime's definition of an event.
-        type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+    pub trait Config: frame_system::Config<RuntimeEvent: From<Event<Self>>> {
         /// The overarching hold reason.
         type RuntimeHoldReason: From<HoldReason>
             + Parameter
@@ -305,7 +303,9 @@ pub mod pallet {
         NextAggregationIdUnavailable,
     }
 
-    #[derive(Debug, Clone, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
+    #[derive(
+        Debug, Clone, PartialEq, Encode, Decode, DecodeWithMemTracking, TypeInfo, MaxEncodedLen,
+    )]
     /// The cause of a missed aggregation.
     pub enum CannotAggregateCause {
         /// No account

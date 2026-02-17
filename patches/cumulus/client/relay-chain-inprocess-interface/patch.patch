@@ -1,0 +1,121 @@
+diff -ruN '--exclude=patch.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' '--exclude=README.md' '--exclude=*.orig' /tmp/polkadot-sdk-upstream/cumulus/client/relay-chain-inprocess-interface/Cargo.toml /home/mdamico/devel/zkVerify/patches/cumulus/client/relay-chain-inprocess-interface/Cargo.toml
+--- /tmp/polkadot-sdk-upstream/cumulus/client/relay-chain-inprocess-interface/Cargo.toml	2026-02-09 10:32:54.250880175 +0100
++++ /home/mdamico/devel/zkVerify/patches/cumulus/client/relay-chain-inprocess-interface/Cargo.toml	2026-02-09 12:23:14.742957475 +0100
+@@ -11,4 +11,15 @@
+-[lints]
+-workspace = true
++[lints.clippy]
++# Workspace lints (copied from [workspace.lints.clippy])
++all = { level = "allow", priority = 0 }
++correctness = { level = "deny", priority = 1 }
++suspicious = { level = "deny", priority = 1 }
++complexity = { level = "deny", priority = 1 }
++style = { level = "warn", priority = 1 }
++unnecessary_cast = { level = "allow", priority = 2 }
++useless_conversion = { level = "allow", priority = 2 }
++zero-prefixed-literal = { level = "allow", priority = 2 }
++multiple_bound_locations = { level = "allow", priority = 2 }
++# Upstream code suppressions (not part of zkVerify patch changes)
++type_complexity = { level = "allow", priority = 2 }
+
+ [dependencies]
+@@ -22,11 +33,12 @@
+ cumulus-relay-chain-interface.workspace = true
+ futures = { workspace = true }
+ futures-timer = { workspace = true }
+-polkadot-cli = { features = ["cli"], workspace = true }
+ polkadot-primitives.default-features = true
+ polkadot-primitives.workspace = true
+-polkadot-service.default-features = true
+-polkadot-service.workspace = true
++# zkVerify customization: use zkv-cli and zkv-service instead of polkadot-cli and polkadot-service
++zkv-cli = { workspace = true, features = ["cli"] }
++service.default-features = true
++service.workspace = true
+ sc-cli.default-features = false
+ sc-cli.workspace = true
+ sc-client-api.default-features = true
+@@ -56,4 +68,5 @@
+
+ # Polkadot
+ metered = { features = ["futures_channel"], workspace = true }
+-polkadot-test-client = { workspace = true }
++# zkVerify customization: use zkv test-client instead of polkadot-test-client
++test-client = { path = "../../../../relay-node/test/client" }
+diff -ruN '--exclude=patch.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' '--exclude=README.md' '--exclude=*.orig' /tmp/polkadot-sdk-upstream/cumulus/client/relay-chain-inprocess-interface/src/lib.rs /home/mdamico/devel/zkVerify/patches/cumulus/client/relay-chain-inprocess-interface/src/lib.rs
+--- /tmp/polkadot-sdk-upstream/cumulus/client/relay-chain-inprocess-interface/src/lib.rs	2026-02-09 10:32:54.250959136 +0100
++++ /home/mdamico/devel/zkVerify/patches/cumulus/client/relay-chain-inprocess-interface/src/lib.rs	2026-02-10 12:00:00.000000000 +0100
+@@ -36,8 +36,9 @@
+ use cumulus_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayChainResult};
+ use futures::{FutureExt, Stream, StreamExt};
+ use polkadot_primitives::CandidateEvent;
+-use polkadot_service::{
+-	builder::PolkadotServiceBuilder, CollatorOverseerGen, CollatorPair, Configuration, FullBackend,
++// zkVerify customization: use zkv-service instead of polkadot-service
++use service::{
++	builder::ServiceBuilder, CollatorOverseerGen, CollatorPair, Configuration, FullBackend,
+ 	FullClient, Handle, NewFull, NewFullParams, TaskManager,
+ };
+@@ -363,7 +364,7 @@
+ fn build_polkadot_with_paranode_protocol<Network>(
+ 	config: Configuration,
+ 	params: NewFullParams<CollatorOverseerGen>,
+-) -> Result<(NewFull, async_channel::Receiver<IncomingRequest>), polkadot_service::Error>
++) -> Result<(NewFull, async_channel::Receiver<IncomingRequest>), service::Error>
+ where
+ 	Network: NetworkBackend<PBlock, PHash>,
+ {
+@@ -371,7 +372,7 @@
+ 	let fork_id = config.chain_spec.fork_id().map(ToString::to_string);
+-	let mut polkadot_builder = PolkadotServiceBuilder::<_, Network>::new(config, params)?;
++	let mut polkadot_builder = ServiceBuilder::<_, Network>::new(config, params)?;
+ 	let (config, request_receiver) = bootnode_request_response_config::<_, _, Network>(
+ 		polkadot_builder.genesis_hash(),
+ 		fork_id.as_deref(),
+@@ -387,19 +388,18 @@
+ 	hwbench: Option<sc_sysinfo::HwBench>,
+ ) -> Result<
+ 	(NewFull, Option<CollatorPair>, async_channel::Receiver<IncomingRequest>),
+-	polkadot_service::Error,
++	service::Error,
+ > {
+ 	let (is_parachain_node, maybe_collator_key) = if parachain_config.role.is_authority() {
+ 		let collator_key = CollatorPair::generate().0;
+-		(polkadot_service::IsParachainNode::Collator(collator_key.clone()), Some(collator_key))
++		(service::IsParachainNode::Collator(collator_key.clone()), Some(collator_key))
+ 	} else {
+-		(polkadot_service::IsParachainNode::FullNode, None)
++		(service::IsParachainNode::FullNode, None)
+ 	};
+
+-	let new_full_params = polkadot_service::NewFullParams {
++	let new_full_params = service::NewFullParams {
+ 		is_parachain_node,
+-		// Disable BEEFY. It should not be required by the internal relay chain node.
+-		enable_beefy: false,
++		// zkVerify customization: enable_beefy not supported in zkv-service
+ 		force_authoring_backoff: false,
+ 		telemetry_worker_handle,
+
+@@ -448,8 +448,9 @@
+ )> {
+ 	// This is essentially a hack, but we want to ensure that we send the correct node version
+ 	// to the telemetry.
+-	polkadot_config.impl_version = polkadot_cli::Cli::impl_version();
+-	polkadot_config.impl_name = polkadot_cli::Cli::impl_name();
++	// zkVerify customization: use zkv-cli instead of polkadot-cli
++	polkadot_config.impl_version = zkv_cli::Cli::impl_version();
++	polkadot_config.impl_name = zkv_cli::Cli::impl_name();
+
+ 	let (full_node, collator_key, paranode_req_receiver) = build_polkadot_full_node(
+ 		polkadot_config,
+@@ -478,7 +479,8 @@
+ 	use super::*;
+
+ 	use polkadot_primitives::Block as PBlock;
+-	use polkadot_test_client::{
++	// zkVerify customization: use zkv test-client instead of polkadot-test-client
++	use test_client::{
+ 		construct_transfer_extrinsic, BlockBuilderExt, Client, ClientBlockImportExt,
+ 		DefaultTestClientBuilderExt, InitPolkadotBlockBuilder, TestClientBuilder,
+ 		TestClientBuilderExt,

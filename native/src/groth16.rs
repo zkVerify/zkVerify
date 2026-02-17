@@ -14,6 +14,9 @@
 // limitations under the License.
 
 use hp_groth16::{Groth16Error, Proof, Scalar, VerificationKey};
+use sp_runtime_interface::pass_by::{
+    AllocateAndReturnByCodec, PassFatPointerAndDecode, PassFatPointerAndDecodeSlice,
+};
 use sp_runtime_interface::runtime_interface;
 
 use crate::VerifyError;
@@ -31,20 +34,32 @@ impl From<Groth16Error> for VerifyError {
 
 #[runtime_interface]
 pub trait Groth16Bn254Verify {
-    fn verify(vk: VerificationKey, proof: Proof, pubs: &[Scalar]) -> Result<bool, VerifyError> {
+    fn verify(
+        vk: PassFatPointerAndDecode<VerificationKey>,
+        proof: PassFatPointerAndDecode<Proof>,
+        pubs: PassFatPointerAndDecodeSlice<&[Scalar]>,
+    ) -> AllocateAndReturnByCodec<Result<bool, VerifyError>> {
         hp_groth16::verify_proof::<hp_groth16::Bn254>(vk, proof, pubs).map_err(Into::into)
     }
-    fn validate_key(vk: VerificationKey) -> Result<(), VerifyError> {
+    fn validate_key(
+        vk: PassFatPointerAndDecode<VerificationKey>,
+    ) -> AllocateAndReturnByCodec<Result<(), VerifyError>> {
         hp_groth16::validate_key::<hp_groth16::Bn254>(vk).map_err(Into::into)
     }
 }
 
 #[runtime_interface]
 pub trait Groth16Bls12_381Verify {
-    fn verify(vk: VerificationKey, proof: Proof, pubs: &[Scalar]) -> Result<bool, VerifyError> {
+    fn verify(
+        vk: PassFatPointerAndDecode<VerificationKey>,
+        proof: PassFatPointerAndDecode<Proof>,
+        pubs: PassFatPointerAndDecodeSlice<&[Scalar]>,
+    ) -> AllocateAndReturnByCodec<Result<bool, VerifyError>> {
         hp_groth16::verify_proof::<hp_groth16::Bls12_381>(vk, proof, pubs).map_err(Into::into)
     }
-    fn validate_key(vk: VerificationKey) -> Result<(), VerifyError> {
+    fn validate_key(
+        vk: PassFatPointerAndDecode<VerificationKey>,
+    ) -> AllocateAndReturnByCodec<Result<(), VerifyError>> {
         hp_groth16::validate_key::<hp_groth16::Bls12_381>(vk).map_err(Into::into)
     }
 }

@@ -18,7 +18,7 @@
 
 //! Traits for aggregation dispatch
 
-use codec::{Decode, Encode, MaxEncodedLen};
+use codec::{Decode, DecodeWithMemTracking, Encode, MaxEncodedLen};
 use core::fmt::Debug;
 use frame_support::{dispatch::DispatchResult, weights::Weight};
 use scale_info::TypeInfo;
@@ -67,7 +67,18 @@ impl<Balance, AccountId> DispatchAggregation<Balance, AccountId> for () {
 }
 
 /// Configuration for Destination
-#[derive(Clone, PartialEq, Eq, Encode, Decode, TypeInfo, MaxEncodedLen, Debug, Default)]
+#[derive(
+    Clone,
+    PartialEq,
+    Eq,
+    Encode,
+    Decode,
+    DecodeWithMemTracking,
+    TypeInfo,
+    MaxEncodedLen,
+    Debug,
+    Default,
+)]
 pub enum Destination {
     /// No Destination
     #[default]

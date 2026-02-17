@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-use assert_cmd::cargo::cargo_bin;
 use std::process::Command;
 use tempfile::tempdir;
 
@@ -25,7 +24,7 @@ mod common;
 fn invalid_order_arguments() {
     let tmpdir = tempdir().expect("could not create temp dir");
 
-    let status = Command::new(cargo_bin(common::NODE))
+    let status = Command::new(assert_cmd::cargo::cargo_bin!("zkv-relay"))
         .args(["--dev", "invalid_order_arguments", "-d"])
         .arg(tmpdir.path())
         .arg("-y")

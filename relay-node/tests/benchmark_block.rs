@@ -17,7 +17,6 @@
 // Unix only since it uses signals.
 #![cfg(unix)]
 
-use assert_cmd::cargo::cargo_bin;
 use common::run_with_timeout;
 use nix::{
     sys::signal::{kill, Signal::SIGINT},
@@ -53,7 +52,7 @@ async fn benchmark_block_works(#[case] chain: &str) {
 
 /// Builds a chain with one block for the given runtime and base path.
 async fn build_chain(runtime: &str, base_path: &Path) {
-    let mut cmd = Command::new(cargo_bin(common::NODE))
+    let mut cmd = Command::new(assert_cmd::cargo::cargo_bin!("zkv-relay"))
         .stdout(process::Stdio::piped())
         .stderr(process::Stdio::piped())
         .args([
@@ -81,7 +80,7 @@ async fn build_chain(runtime: &str, base_path: &Path) {
 /// Benchmarks the given block with the wasm executor.
 fn benchmark_block(runtime: &str, base_path: &Path, block: u32) -> Result<(), String> {
     // Invoke `benchmark block` with all options to make sure that they are valid.
-    let status = Command::new(cargo_bin(common::NODE))
+    let status = Command::new(assert_cmd::cargo::cargo_bin!("zkv-relay"))
         .args(["benchmark", "block", "--chain", runtime])
         .arg("-d")
         .arg(base_path)

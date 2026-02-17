@@ -168,14 +168,11 @@ fn deal_with_fees() {
         let tip = Balances::issue(tip_amount);
 
         let author_account: AccountId = sample_user_account(BABE_AUTHOR_ID);
-        let author_balance = sample_user_start_balance(BABE_AUTHOR_ID);
+        // Use actual free_balance as baseline since staking holds may reduce it
+        // (SDK 2512 uses holds instead of reservations for staking bonds)
+        let initial_author_balance = Balances::free_balance(author_account.clone());
         let initial_treasury_balance = Balances::free_balance(Treasury::account_id());
         let total_issuance = Balances::total_issuance();
-
-        assert_eq!(
-            Balances::free_balance(author_account.clone()),
-            author_balance
-        );
 
         DealWithFees::on_unbalanceds([fee, tip].into_iter());
         // No Burn in this config
@@ -184,7 +181,7 @@ fn deal_with_fees() {
         // All fees and tip to author
         assert_eq!(
             Balances::free_balance(author_account),
-            author_balance + fee_amount + tip_amount
+            initial_author_balance + fee_amount + tip_amount
         );
 
         // Nothing to the treasury

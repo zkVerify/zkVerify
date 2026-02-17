@@ -155,7 +155,6 @@ pub mod mock {
     }
 
     impl pallet_verifiers::Config<crate::Risc0<Test>> for Test {
-        type RuntimeEvent = RuntimeEvent;
         type OnProofVerified = ();
         type WeightInfo = crate::Risc0Weight<()>;
         type Ticket = HoldConsideration<

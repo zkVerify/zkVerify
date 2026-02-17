@@ -19,11 +19,22 @@ use crate::Config;
 use alloc::vec::Vec;
 use core::marker::PhantomData;
 
-use codec::{Decode, Encode, MaxEncodedLen};
+use codec::{Decode, DecodeWithMemTracking, Encode, MaxEncodedLen};
 use educe::Educe;
 use frame_support::pallet_prelude::TypeInfo;
 
-#[derive(Copy, Clone, Debug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo, Default)]
+#[derive(
+    Copy,
+    Clone,
+    Debug,
+    PartialEq,
+    Encode,
+    Decode,
+    DecodeWithMemTracking,
+    MaxEncodedLen,
+    TypeInfo,
+    Default,
+)]
 pub enum Plonky2Config {
     Keccak,
     #[default]
@@ -32,7 +43,7 @@ pub enum Plonky2Config {
 
 // Here educe is used for Clone, Debug, and PartialEq to work around
 // a long-standing compiler bug https://github.com/rust-lang/rust/issues/26925
-#[derive(Educe, Encode, Decode, TypeInfo)]
+#[derive(Educe, Encode, Decode, DecodeWithMemTracking, TypeInfo)]
 #[educe(Clone, Debug, PartialEq)]
 #[scale_info(skip_type_params(T))]
 pub struct VkWithConfig<T> {

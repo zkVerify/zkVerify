@@ -98,7 +98,9 @@ pub fn new_full(
             execute_workers_max_num: None,
             prepare_workers_hard_max_num: None,
             prepare_workers_soft_max_num: None,
-            enable_approval_voting_parallel: false,
+            keep_finalized_for: None,
+            invulnerable_ah_collators: std::collections::HashSet::new(),
+            collator_protocol_hold_off: None,
         },
     )
 }
@@ -208,6 +210,7 @@ pub fn node_config(
             rate_limit: None,
             rate_limit_whitelisted_ips: Default::default(),
             rate_limit_trust_proxy_headers: Default::default(),
+            request_logger_limit: 0,
         },
         prometheus_config: None,
         telemetry_endpoints: None,
@@ -220,6 +223,7 @@ pub fn node_config(
         announce_block: true,
         data_path: root,
         base_path,
+        warm_up_trie_cache: None,
     }
 }
 
@@ -280,12 +284,8 @@ pub fn run_collator_node(
         rpc_handlers,
         overseer_handle,
         ..
-    } = new_full(
-        config,
-        IsParachainNode::Collator(Box::new(collator_pair)),
-        None,
-    )
-    .expect("could not create zkVerify test service");
+    } = new_full(config, IsParachainNode::Collator(collator_pair), None)
+        .expect("could not create zkVerify test service");
 
     let overseer_handle = overseer_handle.expect("test node must have an overseer handle");
     let peer_id = network.local_peer_id();
@@ -430,6 +430,7 @@ pub fn construct_extrinsic(
         .unwrap_or(2) as u64;
     let tip = 0;
     let tx_ext: test_runtime::TxExtension = (
+        frame_system::AuthorizeCall::<Runtime>::new(),
         frame_system::CheckNonZeroSender::<Runtime>::new(),
         frame_system::CheckSpecVersion::<Runtime>::new(),
         frame_system::CheckTxVersion::<Runtime>::new(),
@@ -438,16 +439,19 @@ pub fn construct_extrinsic(
         frame_system::CheckNonce::<Runtime>::from(nonce),
         frame_system::CheckWeight::<Runtime>::new(),
         pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
+        frame_system::WeightReclaim::<Runtime>::new(),
     );
     let raw_payload = SignedPayload::from_raw(
         function.clone(),
         tx_ext.clone(),
         (
             (),
+            (),
             VERSION.spec_version,
             VERSION.transaction_version,
             genesis_block,
             current_block_hash,
+            (),
             (),
             (),
             (),
@@ -465,8 +469,8 @@ pub fn construct_extrinsic(
 /// Construct a transfer extrinsic.
 pub fn construct_transfer_extrinsic(
     client: &Client,
-    origin: sp_keyring::AccountKeyring,
-    dest: sp_keyring::AccountKeyring,
+    origin: sp_keyring::sr25519::Keyring,
+    dest: sp_keyring::sr25519::Keyring,
     value: Balance,
 ) -> UncheckedExtrinsic {
     let function =

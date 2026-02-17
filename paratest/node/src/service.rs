@@ -13,7 +13,7 @@ use paratest_runtime::{
 // Cumulus Imports
 use cumulus_client_collator::service::CollatorService;
 use cumulus_client_consensus_common::ParachainBlockImport as TParachainBlockImport;
-use cumulus_client_consensus_proposer::Proposer;
+// Removed: cumulus_client_consensus_proposer::Proposer - ProposerFactory now directly implements ProposerInterface
 use cumulus_client_service::{
     build_network, build_relay_chain_interface, prepare_node_config, start_relay_chain_tasks,
     BuildNetworkParams, CollatorSybilResistance, DARecoveryProfile, StartRelayChainTasksParams,
@@ -29,7 +29,7 @@ use prometheus_endpoint::Registry;
 use sc_client_api::Backend;
 use sc_consensus::ImportQueue;
 use sc_executor::{HeapAllocStrategy, WasmExecutor, DEFAULT_HEAP_ALLOC_STRATEGY};
-use sc_network::NetworkBlock;
+use sc_network::{NetworkBlock, PeerId};
 use sc_service::{Configuration, PartialComponents, TFullBackend, TFullClient, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
 use sc_transaction_pool_api::OffchainTransactionPoolFactory;
@@ -166,22 +166,23 @@ async fn start_node_impl<Network: sc_network::NetworkBackend<Block, Hash>>(
     let backend = params.backend.clone();
     let mut task_manager = params.task_manager;
 
-    let (relay_chain_interface, collator_key) = build_relay_chain_interface(
-        polkadot_config,
-        &parachain_config,
-        telemetry_worker_handle,
-        &mut task_manager,
-        collator_options.clone(),
-        hwbench.clone(),
-    )
-    .await
-    .map_err(|e| sc_service::Error::Application(Box::new(e) as Box<_>))?;
+    let (relay_chain_interface, collator_key, _relay_network, _paranode_rx) =
+        build_relay_chain_interface(
+            polkadot_config,
+            &parachain_config,
+            telemetry_worker_handle,
+            &mut task_manager,
+            collator_options.clone(),
+            hwbench.clone(),
+        )
+        .await
+        .map_err(|e| sc_service::Error::Application(Box::new(e) as Box<_>))?;
 
     let validator = parachain_config.role.is_authority();
     let transaction_pool = params.transaction_pool.clone();
     let import_queue_service = params.import_queue.service();
 
-    let (network, system_rpc_tx, tx_handler_controller, start_network, sync_service) =
+    let (network, system_rpc_tx, tx_handler_controller, sync_service) =
         build_network(BuildNetworkParams {
             parachain_config: &parachain_config,
             net_config,
@@ -192,6 +193,7 @@ async fn start_node_impl<Network: sc_network::NetworkBackend<Block, Hash>>(
             relay_chain_interface: relay_chain_interface.clone(),
             import_queue: params.import_queue,
             sybil_resistance_level: CollatorSybilResistance::Resistant, // because of Aura
+            metrics: sc_network::NotificationMetrics::new(prometheus_registry.as_ref()),
         })
         .await?;
 
@@ -245,6 +247,7 @@ async fn start_node_impl<Network: sc_network::NetworkBackend<Block, Hash>>(
         system_rpc_tx,
         tx_handler_controller,
         telemetry: telemetry.as_mut(),
+        tracing_execute_block: None,
     })?;
 
     if let Some(hwbench) = hwbench {
@@ -297,6 +300,7 @@ async fn start_node_impl<Network: sc_network::NetworkBackend<Block, Hash>>(
         relay_chain_slot_duration,
         recovery_handle: Box::new(overseer_handle.clone()),
         sync_service: sync_service.clone(),
+        prometheus_registry: prometheus_registry.as_ref(),
     })?;
 
     if validator {
@@ -317,8 +321,6 @@ async fn start_node_impl<Network: sc_network::NetworkBackend<Block, Hash>>(
             announce_block,
         )?;
     }
-
-    start_network.start_network();
 
     Ok((task_manager, client))
 }
@@ -379,14 +381,15 @@ fn start_consensus(
         telemetry.clone(),
     );
 
-    let proposer = Proposer::new(proposer_factory);
-
     let collator_service = CollatorService::new(
         client.clone(),
         Arc::new(task_manager.spawn_handle()),
         announce_block,
         client.clone(),
     );
+
+    // Use a random peer ID for testing purposes
+    let collator_peer_id = PeerId::random();
 
     let params = AuraParams {
         create_inherent_data_providers: move |_, ()| async move { Ok(()) },
@@ -405,11 +408,13 @@ fn start_consensus(
         para_id,
         overseer_handle,
         relay_chain_slot_duration,
-        proposer,
+        proposer: proposer_factory,
         collator_service,
         // Very limited proposal time.
         authoring_duration: Duration::from_millis(1500),
         reinitialize: false,
+        collator_peer_id,
+        max_pov_percentage: None,
     };
 
     let fut = aura::run::<Block, sp_consensus_aura::sr25519::AuthorityPair, _, _, _, _, _, _, _, _>(

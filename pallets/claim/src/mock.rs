@@ -150,7 +150,6 @@ parameter_types! {
 }
 
 impl crate::Config for Test {
-    type RuntimeEvent = RuntimeEvent;
     type PalletId = ClaimPalletId;
     type ManagerOrigin = EitherOfDiverse<EnsureRoot<AccountId>, MockManager>;
     type Currency = Balances;
@@ -209,6 +208,7 @@ pub fn test_with_configs(
 
     pallet_balances::GenesisConfig::<Test> {
         balances: vec![(MANAGER_USER, 42_000_000_000)],
+        dev_accounts: None,
     }
     .assimilate_storage(&mut t)
     .unwrap();
@@ -242,6 +242,7 @@ pub fn test_genesis_with_beneficiaries(n: u32) -> sp_io::TestExternalities {
 
     pallet_balances::GenesisConfig::<Test> {
         balances: vec![(MANAGER_USER, 42_000_000_000)],
+        dev_accounts: None,
     }
     .assimilate_storage(&mut t)
     .unwrap();

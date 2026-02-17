@@ -37,20 +37,26 @@ use std::{sync::Arc, time::Duration};
 
 use futures::{channel::oneshot, prelude::*};
 use polkadot_node_subsystem::messages::{
-    ApprovalVotingMessage, ChainSelectionMessage, DisputeCoordinatorMessage,
+    ApprovalVotingParallelMessage, ChainSelectionMessage, DisputeCoordinatorMessage,
     HighestApprovedAncestorBlock,
 };
 use polkadot_primitives::{Block, BlockNumber, Hash, Header};
 
 use node_subsystem_test_helpers::TestSubsystemSender;
-use polkadot_overseer::{SubsystemContext, SubsystemSender};
+use polkadot_overseer::{PriorityLevel, SubsystemContext, SubsystemSender};
 
 type VirtualOverseer =
-    node_subsystem_test_helpers::TestSubsystemContextHandle<ApprovalVotingMessage>;
+    node_subsystem_test_helpers::TestSubsystemContextHandle<ApprovalVotingParallelMessage>;
 
 #[async_trait::async_trait]
-impl OverseerHandleT for TestSubsystemSender {
-    async fn send_msg<M: Send + Into<AllMessages>>(&mut self, msg: M, _origin: &'static str) {
+impl OverseerHandleWithPriorityT for TestSubsystemSender {
+    async fn send_msg_with_priority<M: Send + Into<AllMessages>>(
+        &mut self,
+        msg: M,
+        _origin: &'static str,
+        _priority: PriorityLevel,
+    ) {
+        // For tests, ignore priority and just send the message
         TestSubsystemSender::send_message(self, msg.into()).await;
     }
 }
@@ -67,10 +73,7 @@ fn test_harness<T: Future<Output = VirtualOverseer>>(
     case_vars: CaseVars,
     test: impl FnOnce(TestHarness) -> T,
 ) {
-    let _ = env_logger::builder()
-        .is_test(true)
-        .filter_level(log::LevelFilter::Trace)
-        .try_init();
+    sp_tracing::init_for_tests();
 
     let pool = TaskExecutor::new();
 
@@ -83,7 +86,6 @@ fn test_harness<T: Future<Output = VirtualOverseer>>(
         context.sender().clone(),
         Default::default(),
         None,
-        false,
     );
 
     let target_hash = case_vars.target_block;
@@ -375,7 +377,7 @@ async fn test_skeleton(
         overseer_recv(
             virtual_overseer
         ).await,
-        AllMessages::ApprovalVoting(ApprovalVotingMessage::ApprovedAncestor(_block_hash, _block_number, tx))
+        AllMessages::ApprovalVotingParallel(ApprovalVotingParallelMessage::ApprovedAncestor(_block_hash, _block_number, tx))
         => {
             tx.send(highest_approved_ancestor_block.clone()).unwrap();
         }

@@ -478,7 +478,6 @@ pub mod mock {
     }
 
     impl pallet_verifiers::Config<crate::Plonky2<Test>> for Test {
-        type RuntimeEvent = RuntimeEvent;
         type OnProofVerified = ();
         type WeightInfo = crate::Plonky2Weight<()>;
         type Ticket = HoldConsideration<

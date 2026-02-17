@@ -19,6 +19,7 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 use alloc::{borrow::Cow, boxed::Box};
+use codec::DecodeWithMemTracking;
 use core::marker::PhantomData;
 use frame_support::{ensure, fail, pallet_prelude::*, weights::Weight};
 use hp_verifiers::{Verifier, VerifyError};
@@ -73,7 +74,7 @@ pub trait Config {
 #[pallet_verifiers::verifier]
 pub struct Risc0<T>;
 
-#[derive(Clone, Debug, PartialEq, Encode, Decode, TypeInfo, R0Proof)]
+#[derive(Clone, Debug, PartialEq, Encode, Decode, DecodeWithMemTracking, TypeInfo, R0Proof)]
 pub enum Proof {
     #[unsupported]
     V1_0(Vec<u8>),

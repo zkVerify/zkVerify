@@ -89,9 +89,12 @@ pub fn test() -> sp_io::TestExternalities {
         total_balances() + crate::ExistentialDeposit::get(),
     ));
 
-    pallet_balances::GenesisConfig::<super::Runtime> { balances }
-        .assimilate_storage(&mut t)
-        .unwrap();
+    pallet_balances::GenesisConfig::<super::Runtime> {
+        balances,
+        dev_accounts: None,
+    }
+    .assimilate_storage(&mut t)
+    .unwrap();
 
     pallet_babe::GenesisConfig::<super::Runtime> {
         authorities: vec![],
@@ -258,6 +261,7 @@ pub fn sample_user_account(id: usize) -> AccountId {
     sp_runtime::AccountId32::new(SAMPLE_USERS[id].raw_account)
 }
 
+#[allow(dead_code)]
 pub fn sample_user_start_balance(id: usize) -> Balance {
     SAMPLE_USERS[id].starting_balance
 }

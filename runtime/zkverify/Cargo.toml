@@ -1,6 +1,6 @@
 [package]
 name = "zkv-runtime"
-version = "1.4.0"
+version = "2.0.0"
 description = "zkVerify Runtime."
 authors.workspace = true
 homepage = "https://github.com/zkVerify/zkVerify"
@@ -77,6 +77,7 @@ frame-system-rpc-runtime-api = { workspace = true }
 frame-election-provider-support = { workspace = true }
 pallet-election-provider-support-benchmarking = { workspace = true, optional = true }
 pallet-session-benchmarking = { workspace = true, optional = true }
+pallet-staking-runtime-api = { workspace = true }
 pallet-transaction-payment-rpc-runtime-api = { workspace = true }
 
 # Used for runtime benchmarking
@@ -182,6 +183,8 @@ runtime-benchmarks = [
 	"xcm-builder/runtime-benchmarks",
 	"xcm-executor/runtime-benchmarks",
 	"xcm-runtime-apis/runtime-benchmarks",
+	"xcm/runtime-benchmarks",
+	"pallet-session/runtime-benchmarks",
 ]
 fast-runtime = []
 metadata-hash = ["substrate-wasm-builder/metadata-hash"]
@@ -234,6 +237,7 @@ std = [
 	"pallet-session-benchmarking?/std",
 	"pallet-session/std",
 	"pallet-sp1-verifier/std",
+	"pallet-staking-runtime-api/std",
 	"pallet-staking/std",
 	"pallet-sudo/std",
 	"pallet-timestamp/std",

@@ -93,6 +93,9 @@ pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 /// Block type as expected by this runtime.
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 
+/// Lazy block type for execute_block and check_inherents.
+pub type LazyBlock = generic::LazyBlock<Header, UncheckedExtrinsic>;
+
 /// A Block signed with a Justification
 pub type SignedBlock = generic::SignedBlock<Block>;
 
@@ -399,7 +402,7 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
     type ReservedXcmpWeight = ReservedXcmpWeight;
     type CheckAssociatedRelayNumber = RelayNumberMonotonicallyIncreases;
     type ConsensusHook = ConsensusHook;
-    type SelectCore = cumulus_pallet_parachain_system::DefaultCoreSelector<Self>;
+    type RelayParentOffset = ConstU32<0>;
 }
 
 impl parachain_info::Config for Runtime {}
@@ -466,6 +469,9 @@ impl pallet_session::Config for Runtime {
     type SessionHandler = <SessionKeys as sp_runtime::traits::OpaqueKeys>::KeyTypeIdProviders;
     type Keys = SessionKeys;
     type WeightInfo = ();
+    type DisablingStrategy = pallet_session::disabling::UpToLimitDisablingStrategy;
+    type Currency = Balances;
+    type KeyDeposit = ();
 }
 
 impl pallet_aura::Config for Runtime {
@@ -507,12 +513,9 @@ impl pallet_collator_selection::Config for Runtime {
 }
 
 /// Configure the pallet template in pallets/template.
-impl pallet_parachain_template::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-}
+impl pallet_parachain_template::Config for Runtime {}
 
 impl pallet_xcm_notifications::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
     type RuntimeOrigin = RuntimeOrigin;
     type RuntimeCall = RuntimeCall;
 }
@@ -531,8 +534,9 @@ pub mod pallet_xcm_notifications {
     pub struct Pallet<T>(_);
 
     #[pallet::config]
-    pub trait Config: frame_system::Config + pallet_xcm::Config {
-        type RuntimeEvent: IsType<<Self as frame_system::Config>::RuntimeEvent> + From<Event<Self>>;
+    pub trait Config:
+        frame_system::Config<RuntimeEvent: From<Event<Self>>> + pallet_xcm::Config
+    {
         type RuntimeOrigin: IsType<<Self as frame_system::Config>::RuntimeOrigin>
             + Into<Result<pallet_xcm::Origin, <Self as Config>::RuntimeOrigin>>;
         type RuntimeCall: IsType<<Self as pallet_xcm::Config>::RuntimeCall> + From<Call<Self>>;
@@ -643,7 +647,7 @@ impl_runtime_apis! {
             VERSION
         }
 
-        fn execute_block(block: Block) {
+        fn execute_block(block: LazyBlock) {
             Executive::execute_block(block)
         }
 
@@ -680,10 +684,10 @@ impl_runtime_apis! {
         }
 
         fn check_inherents(
-            block: Block,
+            block: LazyBlock,
             data: sp_inherents::InherentData,
         ) -> sp_inherents::CheckInherentsResult {
-            data.check_extrinsics(&block)
+            data.check_extrinsics(&block.into())
         }
     }
 
@@ -779,7 +783,7 @@ impl_runtime_apis! {
         }
 
         fn execute_block(
-            block: Block,
+            block: LazyBlock,
             state_root_check: bool,
             signature_check: bool,
             select: frame_try_runtime::TryStateSelect,
@@ -796,7 +800,7 @@ impl_runtime_apis! {
             Vec<frame_benchmarking::BenchmarkList>,
             Vec<frame_support::traits::StorageInfo>,
         ) {
-            use frame_benchmarking::{Benchmarking, BenchmarkList};
+            use frame_benchmarking::BenchmarkList;
             use frame_support::traits::StorageInfoTrait;
             use frame_system_benchmarking::Pallet as SystemBench;
             use cumulus_pallet_session_benchmarking::Pallet as SessionBench;
@@ -811,7 +815,7 @@ impl_runtime_apis! {
         fn dispatch_benchmark(
             config: frame_benchmarking::BenchmarkConfig
         ) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, alloc::string::String> {
-            use frame_benchmarking::{Benchmarking, BenchmarkBatch};
+            use frame_benchmarking::BenchmarkBatch;
 
             use frame_system_benchmarking::Pallet as SystemBench;
 

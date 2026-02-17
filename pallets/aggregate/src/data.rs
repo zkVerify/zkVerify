@@ -15,7 +15,7 @@
 
 use core::{cmp::PartialEq, fmt::Debug, marker::PhantomData, ops::Add};
 
-use codec::{Decode, Encode, MaxEncodedLen};
+use codec::{Decode, DecodeWithMemTracking, Encode, MaxEncodedLen};
 use educe::Educe;
 use frame_support::{PartialEqNoBound, RuntimeDebugNoBound};
 use hp_dispatch::Destination;
@@ -160,7 +160,9 @@ impl<A: Debug + PartialEq, B: Debug + PartialEq, S: Get<AggregationSize>>
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
+#[derive(
+    Clone, Copy, Debug, PartialEq, Encode, Decode, DecodeWithMemTracking, TypeInfo, MaxEncodedLen,
+)]
 /// The state of a domain.
 pub enum DomainState {
     /// Active and can receive new statements.
@@ -183,7 +185,9 @@ impl<A: Debug + PartialEq, B: Debug + PartialEq, S: Get<AggregationSize>> Defaul
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
+#[derive(
+    Clone, Copy, Debug, PartialEq, Encode, Decode, DecodeWithMemTracking, TypeInfo, MaxEncodedLen,
+)]
 /// The rules that describe the origins allowed executing the aggregate extrinsic call.
 pub enum AggregateSecurityRules {
     /// Accept any aggregate extrinsic call from any user.
@@ -194,7 +198,9 @@ pub enum AggregateSecurityRules {
     OnlyOwnerUncompleted,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
+#[derive(
+    Clone, Copy, Debug, PartialEq, Encode, Decode, DecodeWithMemTracking, TypeInfo, MaxEncodedLen,
+)]
 /// The rules that describe the origins that can add proofs to the domain.
 pub enum ProofSecurityRules {
     /// Accept proofs from any user.
@@ -206,8 +212,19 @@ pub enum ProofSecurityRules {
 }
 
 /// Delivering aggregations data
-#[derive(Clone, PartialEq, Eq, Encode, Decode, TypeInfo, MaxEncodedLen, Debug, Default)]
-pub struct Delivery<B: Debug + PartialEq> {
+#[derive(
+    Clone,
+    PartialEq,
+    Eq,
+    Encode,
+    Decode,
+    DecodeWithMemTracking,
+    TypeInfo,
+    MaxEncodedLen,
+    Debug,
+    Default,
+)]
+pub struct Delivery<B> {
     /// Destination
     pub destination: Destination,
     /// fee
@@ -236,7 +253,7 @@ impl<B: Debug + PartialEq> Delivery<B> {
 
 /// Configuration for delivering aggregations
 #[derive(Clone, PartialEq, Eq, Encode, Decode, TypeInfo, MaxEncodedLen, Debug)]
-pub struct DeliveryParams<A, B: Debug + PartialEq> {
+pub struct DeliveryParams<A, B> {
     /// The delivery channel owner
     pub owner: A,
     /// The delivery data

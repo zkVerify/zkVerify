@@ -1,0 +1,5 @@
+{
+  "name": "cargo-audit",
+  "description": "Skill for triaging and resolving Rust cargo audit vulnerabilities",
+  "version": "0.1.0"
+}

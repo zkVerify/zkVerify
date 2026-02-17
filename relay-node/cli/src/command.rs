@@ -146,7 +146,9 @@ where
                 execute_workers_max_num: None,
                 prepare_workers_hard_max_num: None,
                 prepare_workers_soft_max_num: None,
-                enable_approval_voting_parallel: false,
+                keep_finalized_for: None,
+                invulnerable_ah_collators: std::collections::HashSet::new(),
+                collator_protocol_hold_off: None,
             },
         )
         .map(|full| full.task_manager)?;
@@ -312,7 +314,7 @@ pub fn run() -> Result<()> {
                     let db = backend.expose_db();
                     let storage = backend.expose_storage();
 
-                    cmd.run(config, client.clone(), db, storage)
+                    cmd.run(config, client.clone(), db, storage, None)
                         .map_err(Error::SubstrateCli)
                 }),
                 BenchmarkCmd::Block(cmd) => runner.sync_run(|mut config| {

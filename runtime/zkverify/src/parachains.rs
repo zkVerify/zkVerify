@@ -76,7 +76,10 @@ impl initializer::Config for Runtime {
 
 impl disputes::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
-    type RewardValidators = parachains_reward_points::RewardValidatorsWithEraPoints<Runtime>;
+    type RewardValidators = parachains_reward_points::RewardValidatorsWithEraPoints<
+        Runtime,
+        pallet_staking::Pallet<Runtime>,
+    >;
     type SlashingHandler = slashing::SlashValidatorsForDisputes<ParasSlashing>;
     type WeightInfo = weights::parachains::disputes::ZKVWeight<Runtime>;
 }
@@ -142,7 +145,10 @@ impl parachains_session_info::Config for Runtime {
 impl inclusion::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type DisputesHandler = ParasDisputes;
-    type RewardValidators = parachains_reward_points::RewardValidatorsWithEraPoints<Runtime>;
+    type RewardValidators = parachains_reward_points::RewardValidatorsWithEraPoints<
+        Runtime,
+        pallet_staking::Pallet<Runtime>,
+    >;
     type MessageQueue = MessageQueue;
     type WeightInfo = weights::parachains::inclusion::ZKVWeight<Runtime>;
 }
@@ -159,6 +165,12 @@ impl paras::Config for Runtime {
     type OnNewHead = crate::Registrar;
     type WeightInfo = weights::parachains::paras::ZKVWeight<Runtime>;
     type AssignCoretime = ParachainsAssignmentProvider;
+    type Fungible = Balances;
+    #[cfg(not(feature = "runtime-benchmarks"))]
+    type CooldownRemovalMultiplier = sp_core::ConstU128<2>;
+    #[cfg(feature = "runtime-benchmarks")]
+    type CooldownRemovalMultiplier = sp_core::ConstU128<10_000_000_000>;
+    type AuthorizeCurrentCodeOrigin = EnsureRoot<AccountId>;
 }
 
 parameter_types! {
@@ -275,7 +287,6 @@ impl Get<InteriorLocation> for BrokerPot {
 impl coretime::Config for Runtime {
     type RuntimeOrigin = RuntimeOrigin;
     type RuntimeEvent = RuntimeEvent;
-    type Currency = Balances;
     type BrokerId = BrokerId;
     type BrokerPotLocation = BrokerPot;
     type WeightInfo = weights::parachains::coretime::ZKVWeight<Runtime>;
@@ -297,7 +308,33 @@ pub type Migrations = migrations::Unreleased;
 pub mod migrations {
     #[allow(unused_imports)]
     use super::*;
+    use frame_support::{traits::OnRuntimeUpgrade, weights::Weight};
+    use polkadot_primitives::node_features;
+
+    /// Enable `CandidateReceiptV2` in the on-chain `HostConfiguration` for chains
+    /// upgrading from a runtime that did not have this feature flag set.
+    ///
+    /// Dispatches `configuration::Pallet::set_node_feature` to schedule the change
+    /// via the pallet's own `schedule_config_update` logic. The feature will activate
+    /// after a session delay (`cur+2`).
+    pub struct EnableCandidateReceiptV2<T>(core::marker::PhantomData<T>);
+
+    impl<T: configuration::Config> OnRuntimeUpgrade for EnableCandidateReceiptV2<T> {
+        fn on_runtime_upgrade() -> Weight {
+            let feature_index =
+                node_features::FeatureIndex::CandidateReceiptV2 as u8;
+
+            configuration::Pallet::<T>::set_node_feature(
+                frame_system::RawOrigin::Root.into(),
+                feature_index,
+                true,
+            )
+            .expect("EnableCandidateReceiptV2: failed to schedule config update");
+
+            T::DbWeight::get().reads_writes(2, 2)
+        }
+    }
 
     /// Unreleased migrations. Add new ones here:
-    pub type Unreleased = ();
+    pub type Unreleased = (EnableCandidateReceiptV2<crate::Runtime>,);
 }

@@ -139,6 +139,26 @@ pub fn registered_ids() -> Vec<u32> {
         .collect()
 }
 
+pub fn pallet_events() -> Vec<Event<Test>> {
+    mock::System::events()
+        .into_iter()
+        .filter_map(|record| match record.event {
+            TestEvent::Aggregate(ev) => Some(ev),
+            _ => None,
+        })
+        .collect()
+}
+
+pub fn assert_pallet_events_count(expected: usize) {
+    let events = pallet_events();
+    assert_eq!(
+        expected,
+        events.len(),
+        "Expected {expected} pallet event(s), found {}: {events:?}",
+        events.len()
+    );
+}
+
 pub fn cannot_aggregate_events() -> Vec<Event<Test>> {
     mock::System::events()
         .into_iter()

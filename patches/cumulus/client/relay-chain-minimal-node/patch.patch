@@ -1,0 +1,61 @@
+diff -ruN '--exclude=*.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' /tmp/polkadot-sdk-upstream/cumulus/client/relay-chain-minimal-node/Cargo.toml relay-chain-minimal-node/Cargo.toml
+--- /tmp/polkadot-sdk-upstream/cumulus/client/relay-chain-minimal-node/Cargo.toml	2026-02-09 10:32:54.250959136 +0100
++++ relay-chain-minimal-node/Cargo.toml	2026-02-06 22:01:49.773990168 +0100
+@@ -11,4 +11,17 @@
+-[lints]
+-workspace = true
++[lints.clippy]
++# Workspace lints (copied from [workspace.lints.clippy])
++all = { level = "allow", priority = 0 }
++correctness = { level = "deny", priority = 1 }
++suspicious = { level = "deny", priority = 1 }
++complexity = { level = "deny", priority = 1 }
++style = { level = "warn", priority = 1 }
++unnecessary_cast = { level = "allow", priority = 2 }
++useless_conversion = { level = "allow", priority = 2 }
++zero-prefixed-literal = { level = "allow", priority = 2 }
++multiple_bound_locations = { level = "allow", priority = 2 }
++# Upstream code suppressions (not part of zkVerify patch changes)
++type_complexity = { level = "allow", priority = 2 }
++too_many_arguments = { level = "allow", priority = 2 }
++extra_unused_type_parameters = { level = "allow", priority = 2 }
+
+ [dependencies]
+@@ -32,8 +45,9 @@
+ polkadot-overseer.workspace = true
+ polkadot-primitives.default-features = true
+ polkadot-primitives.workspace = true
+-polkadot-service.default-features = true
+-polkadot-service.workspace = true
++# zkVerify customization: use zkv-service instead of polkadot-service
++service.default-features = true
++service.workspace = true
+ prometheus-endpoint.default-features = true
+ prometheus-endpoint.workspace = true
+ sc-authority-discovery.default-features = true
+diff -ruN '--exclude=*.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' /tmp/polkadot-sdk-upstream/cumulus/client/relay-chain-minimal-node/src/collator_overseer.rs relay-chain-minimal-node/src/collator_overseer.rs
+--- /tmp/polkadot-sdk-upstream/cumulus/client/relay-chain-minimal-node/src/collator_overseer.rs	2026-02-09 10:32:54.251147229 +0100
++++ relay-chain-minimal-node/src/collator_overseer.rs	2026-02-06 22:01:49.773990168 +0100
+@@ -21,7 +21,8 @@
+ use polkadot_overseer::{
+ 	BlockInfo, Handle, Overseer, OverseerConnector, OverseerHandle, SpawnGlue, UnpinHandle,
+ };
+-use polkadot_service::overseer::{collator_overseer_builder, OverseerGenArgs};
++// zkVerify customization: use zkv-service instead of polkadot-service
++use service::overseer::{collator_overseer_builder, OverseerGenArgs};
+ 
+ use sc_network::{request_responses::IncomingRequest, service::traits::NetworkService};
+ use sc_service::TaskManager;
+diff -ruN '--exclude=*.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' /tmp/polkadot-sdk-upstream/cumulus/client/relay-chain-minimal-node/src/lib.rs relay-chain-minimal-node/src/lib.rs
+--- /tmp/polkadot-sdk-upstream/cumulus/client/relay-chain-minimal-node/src/lib.rs	2026-02-09 10:32:54.251147229 +0100
++++ relay-chain-minimal-node/src/lib.rs	2026-02-09 10:54:22.839775963 +0100
+@@ -32,7 +32,8 @@
+ use polkadot_core_primitives::{Block as RelayBlock, Hash as RelayHash};
+ use polkadot_node_subsystem_util::metrics::prometheus::Registry;
+ use polkadot_primitives::CollatorPair;
+-use polkadot_service::{overseer::OverseerGenArgs, IsParachainNode};
++// zkVerify customization: use zkv-service instead of polkadot-service
++use service::{overseer::OverseerGenArgs, IsParachainNode};
+ 
+ use sc_authority_discovery::Service as AuthorityDiscoveryService;
+ use sc_network::{
