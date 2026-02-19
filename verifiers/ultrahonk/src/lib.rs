@@ -29,12 +29,13 @@ use ultrahonk_no_std::ProofType as UltraHonkProofType;
 
 pub use crate::weight_verify_proof::WeightInfo as WeightInfoVerifyProof;
 use ultrahonk_no_std::key::VerificationKey;
-pub use ultrahonk_no_std::{PUB_SIZE, VK_SIZE};
+pub use ultrahonk_no_std::PUB_SIZE;
 pub use weight::WeightInfo;
 
 pub type RawProof = Vec<u8>;
 pub type Pubs = Vec<[u8; PUB_SIZE]>;
-pub type Vk = [u8; VK_SIZE];
+// pub type Vk = [u8; VK_SIZE];
+pub type Vk = VersionedVk;
 
 // Maximum allowed value for the logarithm of the polynomial evaluation domain size.
 const MAX_BENCHMARKED_LOG_CIRCUIT_SIZE: u64 = 25;
@@ -58,9 +59,35 @@ pub enum Proof {
     Plain(RawProof),
 }
 
+#[derive(PartialEq, Eq, Debug)]
+pub enum ProtocolVersion {
+    V3_0,
+}
+
 #[derive(Clone, Debug, PartialEq, Encode, Decode, TypeInfo)]
 pub enum VersionedProof {
     V3_0(Proof),
+}
+
+#[derive(Clone, Debug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
+pub enum VersionedVk {
+    V3_0([u8; ultrahonk_no_std::VK_SIZE]),
+}
+
+impl VersionedProof {
+    fn protocol_version(&self) -> ProtocolVersion {
+        match self {
+            VersionedProof::V3_0(_) => ProtocolVersion::V3_0,
+        }
+    }
+}
+
+impl VersionedVk {
+    fn protocol_version(&self) -> ProtocolVersion {
+        match self {
+            VersionedVk::V3_0(_) => ProtocolVersion::V3_0,
+        }
+    }
 }
 
 impl Proof {
@@ -154,12 +181,22 @@ impl<T: Config> Verifier for Ultrahonk<T> {
             hp_verifiers::VerifyError::InvalidInput
         );
 
+        // Proof version must match vk version
+        if proof.protocol_version() != vk.protocol_version() {
+            log::debug!("Proof version does not match Vk version!");
+            return Err(hp_verifiers::VerifyError::VerifyError);
+        }
+
         // Transform input proof into an UltraHonk verifier-compatible proof
         let prepared_proof: UltraHonkProofType = proof.into();
+        let vk_bytes = match vk {
+            VersionedVk::V3_0(vk_bytes) => vk_bytes,
+        };
 
         let w = {
-            let log_circuit_size = VerificationKey::<CurveHooksImpl>::extract_log_circuit_size(vk)
-                .map_err(|_| hp_verifiers::VerifyError::InvalidVerificationKey)?;
+            let log_circuit_size =
+                VerificationKey::<CurveHooksImpl>::extract_log_circuit_size(vk_bytes)
+                    .map_err(|_| hp_verifiers::VerifyError::InvalidVerificationKey)?;
             ensure!(
                 log_circuit_size <= MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
                 hp_verifiers::VerifyError::InvalidVerificationKey
@@ -169,7 +206,7 @@ impl<T: Config> Verifier for Ultrahonk<T> {
         };
 
         log::trace!("Verifying (no-std)");
-        ultrahonk_no_std::verify::<CurveHooksImpl>(vk, &prepared_proof, pubs)
+        ultrahonk_no_std::verify::<CurveHooksImpl>(vk_bytes, &prepared_proof, pubs)
             .inspect_err(|e| log::debug!("Cannot verify proof: {e:?}"))
             .map_err(|e| match e {
                 ultrahonk_no_std::errors::VerifyError::VerificationError { message: _ } => {
@@ -193,7 +230,10 @@ impl<T: Config> Verifier for Ultrahonk<T> {
     }
 
     fn validate_vk(vk: &Self::Vk) -> Result<(), VerifyError> {
-        let _vk = VerificationKey::<CurveHooksImpl>::try_from(&vk[..])
+        let vk_bytes = match vk {
+            VersionedVk::V3_0(vk_bytes) => vk_bytes,
+        };
+        let _vk = VerificationKey::<CurveHooksImpl>::try_from(&vk_bytes[..])
             .map_err(|e| log::debug!("Invalid Vk: {e:?}"))
             .map_err(|_| VerifyError::InvalidVerificationKey)?;
 
@@ -201,6 +241,7 @@ impl<T: Config> Verifier for Ultrahonk<T> {
     }
 
     fn vk_hash(vk: &Self::Vk) -> H256 {
+        // Q: Should we also hash the version along with the vk bytes???
         sp_io::hashing::sha2_256(&Self::vk_bytes(vk)).into()
     }
 
@@ -287,7 +328,10 @@ fn compute_weight<T: Config>(log_circuit_size: u64, proof_type: ProofType) -> We
 impl<T: Config> Ultrahonk<T> {
     // Utility function for future-proofing.
     fn encode_vk(vk: &Vk) -> Cow<'_, [u8]> {
-        Cow::Owned(vk.to_vec())
+        let vk_bytes = match vk {
+            VersionedVk::V3_0(vk_bytes) => vk_bytes,
+        };
+        Cow::Owned(vk_bytes.to_vec())
     }
 }
 
