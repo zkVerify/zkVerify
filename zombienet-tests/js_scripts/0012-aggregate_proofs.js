@@ -17,10 +17,12 @@ const ReturnCode = {
     ErrProofFromInvalidSubmitter: 12,
     ErrProofFromValidSubmitter: 13,
     ErrAllowlist: 14,
+    ErrRegisterCA: 15,
+    ErrUpdateCrl: 16,
 };
 
 const { init_api, submitProof, receivedEvents, registerDomain, sudoRegisterDomain,
-    holdDomain, unregisterDomain, allowlistProofSubmitters, removeProofSubmitters, aggregate, getBalance, isVolta
+    holdDomain, unregisterDomain, allowlistProofSubmitters, removeProofSubmitters, sudoRegisterCA, updateCrl, aggregate, getBalance, isVolta
 } = require('zkv-lib');
 const { PROOF: EZKL_PROOF, PUBS: EZKL_PUBS, VK: EZKL_VK } = require('./ezkl_data.js');
 const { PROOF: FFLONK_PROOF, PUBS: FFLONK_PUBS, VK: FFLONK_VK } = require('./fflonk_data.js');
@@ -31,6 +33,8 @@ const { ZK_PROOF: ULTRAHONK_ZK_PROOF, PLAIN_PROOF: ULTRAHONK_PLAIN_PROOF, PUBS: 
 const { PROOF: ULTRAPLONK_PROOF, PUBS: ULTRAPLONK_PUBS, VK: ULTRAPLONK_VK } = require('./ultraplonk_data.js');
 const { PROOF: PLONKY2_PROOF, PUBS: PLONKY2_PUBS, VK: PLONKY2_VK } = require('./plonky2_data.js');
 const { PROOF: SP1_PROOF, PUBS: SP1_PUBS, VK: SP1_VK } = require('./sp1_data.js');
+const { PROOF: TEE_PROOF, PUBS: TEE_PUBS, fetchTdxTcbInfo,
+    CRL_PEM: TEE_CRL_PEM, CRL_CHAIN_PEM: TEE_CRL_CHAIN_PEM, ROOT_CERT_DER: TEE_ROOT_CERT_DER } = require('./tee_intel_data.js');
 
 async function run(nodeName, networkInfo, _args) {
     const api = await init_api(zombie, nodeName, networkInfo);
@@ -39,6 +43,10 @@ async function run(nodeName, networkInfo, _args) {
     const keyring = new zombie.Keyring({ type: 'sr25519' });
     const alice = keyring.addFromUri('//Alice');
     const bob = keyring.addFromUri('//Bob');
+
+    // Fetch fresh TDX TCB info from Intel API (the embedded data expires periodically)
+    const { vkTcbResp: TEE_VK_TCB_RESP, vkTcbCert: TEE_VK_TCB_CERT } = await fetchTdxTcbInfo();
+    console.log('Fetched fresh TDX TCB info from Intel API');
 
     // Create the proof submission extrinsics...
     let proofHashesArray = [];
@@ -89,6 +97,11 @@ async function run(nodeName, networkInfo, _args) {
             name: "Sp1",
             pallet: api.tx.settlementSp1Pallet,
             args: [{ 'Vk': SP1_VK }, SP1_PROOF, SP1_PUBS],
+        },
+        {
+            name: "Tee",
+            pallet: api.tx.settlementTeePallet,
+            args: [{ 'Vk': [ TEE_VK_TCB_RESP, TEE_VK_TCB_CERT ] }, TEE_PROOF, TEE_PUBS],
         }
     ];
 
@@ -100,6 +113,25 @@ async function run(nodeName, networkInfo, _args) {
             args: [{ 'Vk': EZKL_VK }, EZKL_PROOF, EZKL_PUBS],
         });
     }
+
+    // Prepare some CRL to make the TEE verification succeed
+    const caName = '0x' + Buffer.from('Intel_SGX_Processor').toString('hex');
+
+    // Register the CA via sudo
+    events = await sudoRegisterCA(alice, caName, TEE_ROOT_CERT_DER);
+    if (!receivedEvents(events)) {
+        console.log(`Register CA Error`);
+        return ReturnCode.ErrRegisterCA;
+    }
+    console.log('CA registered: Intel_SGX_Processor');
+
+    // Update the CRL
+    events = await updateCrl(bob, caName, TEE_CRL_PEM, TEE_CRL_CHAIN_PEM);
+    if (!receivedEvents(events)) {
+        console.log(`Update CRL Error`);
+        return ReturnCode.ErrUpdateCrl;
+    }
+    console.log('CRL updated for Intel_SGX_Processor');
 
     events = await registerDomain(bob, verifiers.length, null, "Untrusted", "Untrusted", destination, null);
     if (!receivedEvents(events)) {

@@ -76,10 +76,10 @@ try-runtime = [
 	"sp-runtime/try-runtime",
 	"zkv-runtime/try-runtime",
 ]
-fast-runtime = ["service/fast-runtime", "zkv-runtime/fast-runtime"]
+fast-runtime = [ "service/fast-runtime", "zkv-runtime/fast-runtime" ]
 pyroscope = [ "pyro", "pyroscope_pprofrs" ]
-metadata-hash = ["service/metadata-hash", "zkv-runtime/metadata-hash"]
-extend-benchmarks = ["zkv-runtime/extend-benchmarks"]
+metadata-hash = [ "service/metadata-hash", "zkv-runtime/metadata-hash" ]
+extend-benchmarks = [ "zkv-runtime/extend-benchmarks" ]
 runtime-metrics = [
 	"polkadot-node-metrics/runtime-metrics",
 	"service/runtime-metrics",

@@ -228,6 +228,16 @@ fn pallet_aggregate() {
 }
 
 #[test]
+fn pallet_crl() {
+    use pallet_crl::WeightInfo;
+
+    assert_eq!(
+        <Runtime as pallet_crl::Config>::WeightInfo::register_ca(),
+        crate::weights::pallet_crl::ZKVWeight::<Runtime>::register_ca()
+    );
+}
+
+#[test]
 fn pallet_staking() {
     use pallet_staking::WeightInfo;
 

@@ -86,6 +86,7 @@ frame-system-benchmarking = { workspace = true, optional = true }
 # Custom logic
 pallet-aggregate = { workspace = true }
 pallet-claim = { workspace = true }
+pallet-crl = { workspace = true }
 pallet-token-claim = { workspace = true }
 static_assertions = "1.1.0"
 aggregate-rpc-runtime-api = { workspace = true }
@@ -101,6 +102,7 @@ pallet-risc0-verifier = { workspace = true, features = [
 pallet-ultrahonk-verifier = { workspace = true }
 pallet-ultraplonk-verifier = { workspace = true }
 pallet-sp1-verifier = { workspace = true }
+pallet-tee-verifier = { workspace = true }
 hp-dispatch = { workspace = true }
 pallet-plonky2-verifier = { workspace = true }
 
@@ -144,6 +146,7 @@ runtime-benchmarks = [
 	"pallet-child-bounties/runtime-benchmarks",
 	"pallet-claim/runtime-benchmarks",
 	"pallet-conviction-voting/runtime-benchmarks",
+	"pallet-crl/runtime-benchmarks",
 	"pallet-election-provider-support-benchmarking/runtime-benchmarks",
 	"pallet-ezkl-verifier/runtime-benchmarks",
 	"pallet-fflonk-verifier/runtime-benchmarks",
@@ -163,6 +166,7 @@ runtime-benchmarks = [
 	"pallet-sp1-verifier/runtime-benchmarks",
 	"pallet-staking/runtime-benchmarks",
 	"pallet-sudo/runtime-benchmarks",
+	"pallet-tee-verifier/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
 	"pallet-token-claim/runtime-benchmarks",
 	"pallet-transaction-payment/runtime-benchmarks",
@@ -184,9 +188,9 @@ runtime-benchmarks = [
 	"xcm-runtime-apis/runtime-benchmarks",
 ]
 fast-runtime = []
-metadata-hash = ["substrate-wasm-builder/metadata-hash"]
+metadata-hash = [ "substrate-wasm-builder/metadata-hash" ]
 volta = []
-default = ["std"]
+default = [ "std" ]
 std = [
 	"aggregate-rpc-runtime-api/std",
 	"anyhow/std",
@@ -216,6 +220,7 @@ std = [
 	"pallet-child-bounties/std",
 	"pallet-claim/std",
 	"pallet-conviction-voting/std",
+	"pallet-crl/std",
 	"pallet-election-provider-support-benchmarking?/std",
 	"pallet-ezkl-verifier/std",
 	"pallet-fflonk-verifier/std",
@@ -236,6 +241,7 @@ std = [
 	"pallet-sp1-verifier/std",
 	"pallet-staking/std",
 	"pallet-sudo/std",
+	"pallet-tee-verifier/std",
 	"pallet-timestamp/std",
 	"pallet-token-claim/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
@@ -294,6 +300,7 @@ try-runtime = [
 	"pallet-child-bounties/try-runtime",
 	"pallet-claim/try-runtime",
 	"pallet-conviction-voting/try-runtime",
+	"pallet-crl/try-runtime",
 	"pallet-grandpa/try-runtime",
 	"pallet-identity/try-runtime",
 	"pallet-message-queue/try-runtime",
@@ -318,4 +325,4 @@ try-runtime = [
 	"polkadot-runtime-parachains/try-runtime",
 	"sp-runtime/try-runtime",
 ]
-extend-benchmarks = ["pallet-risc0-verifier/extend-benchmarks"]
+extend-benchmarks = [ "pallet-risc0-verifier/extend-benchmarks" ]

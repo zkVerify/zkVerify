@@ -251,6 +251,7 @@ impl pallet_bags_list::Config<VoterBagsListInstance> for Runtime {
 }
 
 parameter_types! {
+
     pub MaxSetIdSessionEntries: u32 = BondingDuration::get() * SessionsPerEra::get();
 }
 
@@ -637,6 +638,19 @@ impl pallet_claim::Config for Runtime {
 }
 
 parameter_types! {
+    /// Maximum length of a CA name in bytes.
+    pub const MaxCaNameLength: u32 = 64;
+}
+
+impl pallet_crl::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type ManagerOrigin = EnsureRoot<AccountId>;
+    type WeightInfo = weights::pallet_crl::ZKVWeight<Runtime>;
+    type MaxCaNameLength = MaxCaNameLength;
+    type UnixTime = Timestamp;
+}
+
+parameter_types! {
     pub const TokenClaimPalletId: PalletId = PalletId(*b"zkv/ptkc");
     pub const MaxClaimMessageLength: u32 = 500;
     pub const EthMsgSeparator: &'static [u8] = b"@";
@@ -929,6 +943,28 @@ impl pallet_verifiers::common::Config for Runtime {
 }
 
 parameter_types! {
+    pub const IntelCaName: &'static str = "Intel_SGX_Processor";
+}
+
+impl pallet_tee_verifier::Config for Runtime {
+    type UnixTime = Timestamp;
+    type Crl = pallet_crl::Pallet<Runtime>;
+    type CaName = IntelCaName;
+}
+
+pub type TeeVerifier = pallet_tee_verifier::Tee<Runtime>;
+
+impl pallet_verifiers::Config<TeeVerifier> for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type OnProofVerified = Aggregate;
+    type WeightInfo =
+        pallet_tee_verifier::TeeWeight<weights::pallet_tee_verifier::ZKVWeight<Runtime>>;
+    type Ticket = VkRegistrationHoldConsideration;
+    #[cfg(feature = "runtime-benchmarks")]
+    type Currency = Balances;
+}
+
+parameter_types! {
     pub const EzklMaxPubs: u32 = 32;
 }
 
@@ -1146,6 +1182,7 @@ construct_runtime!(
         Aggregate: pallet_aggregate = 81,
         Claim: pallet_claim = 82,
         TokenClaim: pallet_token_claim = 83,
+        Crl: pallet_crl = 84,
 
         // Parachain pallets. Start indices at 100 to leave room.
         ParachainsOrigin: parachains::parachains_origin = 101,
@@ -1187,6 +1224,7 @@ construct_runtime!(
         SettlementSp1Pallet: pallet_sp1_verifier = 167,
         SettlementUltrahonkPallet: pallet_ultrahonk_verifier = 168,
         SettlementEzklPallet: pallet_ezkl_verifier = 169,
+        SettlementTeePallet: pallet_tee_verifier = 170,
     }
 );
 
@@ -1272,6 +1310,7 @@ mod benches {
         // our pallets
         [pallet_aggregate, Aggregate]
         [pallet_claim, Claim]
+        [pallet_crl, Crl]
         [pallet_token_claim, TokenClaim]
         // verifiers
         [pallet_ezkl_verifier, EzklVerifierBench::<Runtime>]
@@ -1285,6 +1324,7 @@ mod benches {
         [pallet_plonky2_verifier, Plonky2VerifierBench::<Runtime>]
         [pallet_plonky2_verifier_verify_proof, Plonky2VerifierVerifyProofBench::<Runtime>]
         [pallet_sp1_verifier, Sp1VerifierBench::<Runtime>]
+        [pallet_tee_verifier, TeeVerifierBench::<Runtime>]
         // parachains
         [parachains::configuration, Configuration]
         [parachains::disputes, ParasDisputes]
@@ -1835,6 +1875,7 @@ impl_runtime_apis! {
             use pallet_plonky2_verifier::benchmarking::Pallet as Plonky2VerifierBench;
             use pallet_sp1_verifier::benchmarking::Pallet as Sp1VerifierBench;
             use pallet_ezkl_verifier::benchmarking::Pallet as EzklVerifierBench;
+            use pallet_tee_verifier::benchmarking::Pallet as TeeVerifierBench;
 
             pub mod xcm {
                 pub use pallet_xcm::benchmarking::Pallet as XcmPalletBench;
@@ -1871,6 +1912,7 @@ impl_runtime_apis! {
             use pallet_plonky2_verifier::benchmarking_verify_proof::Pallet as Plonky2VerifierVerifyProofBench;
             use pallet_plonky2_verifier::benchmarking::Pallet as Plonky2VerifierBench;
             use pallet_sp1_verifier::benchmarking::Pallet as Sp1VerifierBench;
+            use pallet_tee_verifier::benchmarking::Pallet as TeeVerifierBench;
 
             pub mod xcm {
                 use super::*;
