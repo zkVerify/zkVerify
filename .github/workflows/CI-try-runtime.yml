@@ -41,7 +41,8 @@ jobs:
           command: "cargo build -p zkv-runtime --release --features try-runtime,${{ matrix.features }}"
           use_cache: 'yes'
           cache_key: 'build-try-runtime-${{ matrix.runtime }}'
-          lld_install: 'yes'
+          llvm: 'yes'
+          libclang-dev: 'yes'
 
       - name: Execute try-runtime zkverify
         if: ${{ inputs.execute-try-runtime == 'yes' }}

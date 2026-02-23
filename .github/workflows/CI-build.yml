@@ -20,6 +20,8 @@ jobs:
           command: "cargo build -p zkv-relay -p paratest-node --release --features fast-runtime"
           use_cache: 'yes'
           cache_key: 'build-relay-paratest'
+          llvm: 'yes'
+          libclang-dev: 'yes'
 
       - name: Upload relay and paratest build binaries
         uses: actions/upload-artifact@v4

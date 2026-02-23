@@ -27,7 +27,8 @@ jobs:
           command: "cargo test --lib -p zkv-runtime --no-fail-fast --release 2>&1 | tee -a unit_test_output.txt"
           use_cache: 'yes'
           cache_key: 'unit-test'
-          lld_install: 'yes'
+          llvm: 'yes'
+          libclang-dev: 'yes'
           skip_wasm_build: 'yes'
 
       - name: Cargo unit test runtimes with volta feature (volta flavor)
@@ -37,6 +38,8 @@ jobs:
           use_cache: 'yes'
           cache_key: 'unit-test'
           skip_wasm_build: 'yes'
+          llvm: 'yes'
+          libclang-dev: 'yes'
 
       - name: Upload unit test output
         if: ${{ !cancelled() }}
@@ -61,6 +64,8 @@ jobs:
           command: "cargo test --test '*' --all-features --no-fail-fast --release 2>&1 | tee integration_test_output.txt"
           use_cache: 'yes'
           cache_key: 'integration-test'
+          llvm: 'yes'
+          libclang-dev: 'yes'
 
       - name: Upload integration test output
         if: ${{ !cancelled() }}

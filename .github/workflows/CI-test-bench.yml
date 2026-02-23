@@ -18,6 +18,8 @@ jobs:
           command: "cargo build -p zkv-relay --release --features runtime-benchmarks"
           use_cache: 'yes'
           cache_key: 'build-runtime-benchmarks'
+          llvm: 'yes'
+          libclang-dev: 'yes'
 
       - name: Run benchmarks
         uses: ./.github/actions/cmd-in-docker
