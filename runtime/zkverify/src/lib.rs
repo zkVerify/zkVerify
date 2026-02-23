@@ -2055,8 +2055,7 @@ impl_runtime_apis! {
                     }
 
                     fn transact_origin_and_runtime_call() -> Result<(Location, RuntimeCall), BenchmarkError> {
-                        // Currently disabled
-                        Err(BenchmarkError::Skip)
+                        Ok((xcm_config::TestParaLocation::get(), frame_system::Call::remark_with_event { remark: vec![] }.into()))
                     }
 
                     fn subscribe_origin() -> Result<Location, BenchmarkError> {
