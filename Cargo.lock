@@ -1093,15 +1093,6 @@ dependencies = [
 
 [[package]]
 name = "bincode"
-version = "1.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1f45e9417d87227c7a56d22e471c6206462cba514c7590c09aff4cf6d1ddcad"
-dependencies = [
- "serde",
-]
-
-[[package]]
-name = "bincode"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "36eaf5d7b090263e8150820482d5d93cd964a81e4019913c972f4edcc6edb740"
@@ -5842,9 +5833,9 @@ dependencies = [
 
 [[package]]
 name = "keccak"
-version = "0.1.5"
+version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ecc2af9a1119c51f12a14607e783cb977bde58bc069ff0c3da1095e635d70654"
+checksum = "cb26cec98cce3a3d96cbb7bced3c4b16e3d13f27ec56dbd62cbc8f39cfb9d653"
 dependencies = [
  "cpufeatures",
 ]
@@ -7116,7 +7107,6 @@ dependencies = [
  "ark-ec 0.5.0",
  "ark-ff 0.5.0",
  "ark-scale",
- "bincode 1.3.3",
  "hp-groth16",
  "hp-verifiers",
  "log",
@@ -8878,7 +8868,7 @@ dependencies = [
 name = "pallet-sp1-verifier"
 version = "0.1.0"
 dependencies = [
- "bincode 2.0.1",
+ "bincode",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -15692,7 +15682,7 @@ name = "sp1-primitives"
 version = "5.0.5"
 source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
 dependencies = [
- "bincode 2.0.1",
+ "bincode",
  "blake3",
  "cfg-if",
  "hex",
@@ -15779,7 +15769,7 @@ name = "sp1-zkv-verifier"
 version = "0.2.0"
 source = "git+https://github.com/zkVerify/sp1-verifier.git?tag=v0.2.0#9370b2581a4fe869c6a95d959ec73548635fd4e6"
 dependencies = [
- "bincode 2.0.1",
+ "bincode",
  "blake3",
  "itertools 0.13.0",
  "p3-baby-bear",
