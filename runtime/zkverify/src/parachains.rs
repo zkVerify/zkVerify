@@ -321,8 +321,7 @@ pub mod migrations {
 
     impl<T: configuration::Config> OnRuntimeUpgrade for EnableCandidateReceiptV2<T> {
         fn on_runtime_upgrade() -> Weight {
-            let feature_index =
-                node_features::FeatureIndex::CandidateReceiptV2 as u8;
+            let feature_index = node_features::FeatureIndex::CandidateReceiptV2 as u8;
 
             configuration::Pallet::<T>::set_node_feature(
                 frame_system::RawOrigin::Root.into(),

@@ -20,6 +20,8 @@ jobs:
           command: "cargo test --lib --bins --all-features --no-fail-fast --release 2>&1 | tee unit_test_output.txt"
           use_cache: 'yes'
           cache_key: 'unit-test'
+          llvm: 'yes'
+          libclang-dev: 'yes'
 
       - name: Cargo unit test runtime without features (zkverify flavor)
         uses: ./.github/actions/cmd-in-docker
