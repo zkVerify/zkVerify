@@ -21,6 +21,8 @@ jobs:
           use_cache: "yes"
           cache_key: "lint-format"
           skip_wasm_build: "yes"
+          llvm: 'yes'
+          libclang-dev: 'yes'
 
       - name: Upload lint artifacts
         if: ${{ !cancelled() }}

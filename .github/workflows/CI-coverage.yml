@@ -24,6 +24,8 @@ jobs:
           use_cache: 'yes'
           cache_key: 'coverage'
           cargo_binaries_install: cargo-llvm-cov
+          llvm: 'yes'
+          libclang-dev: 'yes'
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
