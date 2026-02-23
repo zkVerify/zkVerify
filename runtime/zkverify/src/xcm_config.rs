@@ -224,7 +224,10 @@ impl xcm_executor::Config for XcmConfig {
     type MessageExporter = ();
     type UniversalAliases = Nothing;
     type CallDispatcher = RuntimeCall;
+    #[cfg(not(feature = "runtime-benchmarks"))]
     type SafeCallFilter = Nothing;
+    #[cfg(feature = "runtime-benchmarks")]
+    type SafeCallFilter = Everything;
     type Aliasers = Nothing;
     type TransactionalProcessor = FrameTransactionalProcessor;
     type HrmpNewChannelOpenRequestHandler = ();
