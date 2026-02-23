@@ -35,7 +35,7 @@ pub use weight::WeightInfo;
 pub type RawProof = Vec<u8>;
 pub type Pubs = Vec<[u8; PUB_SIZE]>;
 // pub type Vk = [u8; VK_SIZE];
-pub type Vk = VersionedVk;
+// pub type Vk = VersionedVk;
 
 // Maximum allowed value for the logarithm of the polynomial evaluation domain size.
 const MAX_BENCHMARKED_LOG_CIRCUIT_SIZE: u64 = 25;
@@ -61,22 +61,31 @@ pub enum Proof {
 
 #[derive(PartialEq, Eq, Debug)]
 pub enum ProtocolVersion {
+    // V0_84,
     V3_0,
 }
 
 #[derive(Clone, Debug, PartialEq, Encode, Decode, TypeInfo)]
 pub enum VersionedProof {
+    // #[codec(index = 0)]
+    // V0_84(Proof),
+    #[codec(index = 1)]
     V3_0(Proof),
 }
 
+// Note: Take the variants to be stable.
 #[derive(Clone, Debug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub enum VersionedVk {
+    // #[codec(index = 0)]
+    // V0_84([u8; ???]),
+    #[codec(index = 1)]
     V3_0([u8; ultrahonk_no_std::VK_SIZE]),
 }
 
 impl VersionedProof {
     fn protocol_version(&self) -> ProtocolVersion {
         match self {
+            // VersionedProof::V0_84(_) => ProtocolVersion::V0_84,
             VersionedProof::V3_0(_) => ProtocolVersion::V3_0,
         }
     }
@@ -85,6 +94,7 @@ impl VersionedProof {
 impl VersionedVk {
     fn protocol_version(&self) -> ProtocolVersion {
         match self {
+            // VersionedVk::V0_84(_) => ProtocolVersion::V0_84,
             VersionedVk::V3_0(_) => ProtocolVersion::V3_0,
         }
     }
@@ -165,7 +175,7 @@ impl<T: Config> Verifier for Ultrahonk<T> {
 
     type Pubs = Pubs;
 
-    type Vk = Vk;
+    type Vk = VersionedVk;
 
     fn hash_context_data() -> &'static [u8] {
         b"ultrahonk"
@@ -241,7 +251,7 @@ impl<T: Config> Verifier for Ultrahonk<T> {
     }
 
     fn vk_hash(vk: &Self::Vk) -> H256 {
-        // Q: Should we also hash the version along with the vk bytes???
+        // Note: Version encoding is included along with vk bytes
         sp_io::hashing::sha2_256(&Self::vk_bytes(vk)).into()
     }
 
@@ -327,11 +337,8 @@ fn compute_weight<T: Config>(log_circuit_size: u64, proof_type: ProofType) -> We
 
 impl<T: Config> Ultrahonk<T> {
     // Utility function for future-proofing.
-    fn encode_vk(vk: &Vk) -> Cow<'_, [u8]> {
-        let vk_bytes = match vk {
-            VersionedVk::V3_0(vk_bytes) => vk_bytes,
-        };
-        Cow::Owned(vk_bytes.to_vec())
+    fn encode_vk(vk: &<Ultrahonk<T> as Verifier>::Vk) -> Cow<'_, [u8]> {
+        Cow::Owned(vk.encode()) // also includes the encoded index for the version of the vk
     }
 }
 

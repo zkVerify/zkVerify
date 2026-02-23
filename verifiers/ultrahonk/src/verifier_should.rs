@@ -15,8 +15,11 @@
 
 #![cfg(test)]
 
+use crate::resources::{get_parameterized_test_data, TestData, TestParams};
+
 use super::*;
 use hex_literal::hex;
+// use pallet_verifiers::mock::Test;
 
 struct MockRuntime;
 
@@ -27,51 +30,45 @@ impl crate::Config for MockRuntime {
 
 // Default (proof, vk, pubs) triplets for unit testing:
 
-const VALID_ZK_PROOF_BYTES: &[u8] = include_bytes!("resources/zk/log_25/proof");
-const VALID_PLAIN_PROOF_BYTES: &[u8] = include_bytes!("resources/plain/log_25/proof");
-
 #[allow(dead_code)]
-pub(crate) fn valid_vk() -> crate::Vk {
-    let vk_bytes: &[u8] = include_bytes!("resources/zk/log_25/vk");
-    let vk: [u8; crate::VK_SIZE] = vk_bytes
-        .try_into()
-        .expect("Benchmark file should always have the correct vk size");
-    vk
+pub(crate) fn valid_zk_test_data() -> TestData {
+    let test_params = TestParams::new(25, ProofType::ZK, ProtocolVersion::V3_0);
+    get_parameterized_test_data(test_params).expect("zk test data should be present")
 }
 
 #[allow(dead_code)]
-pub(crate) fn valid_public_input() -> crate::Pubs {
-    include_bytes!("resources/zk/log_25/pubs")
-        .chunks_exact(crate::PUB_SIZE)
-        .map(|c| c.try_into().unwrap())
-        .collect()
+pub(crate) fn valid_plain_test_data() -> TestData {
+    let test_params = TestParams::new(25, ProofType::Plain, ProtocolVersion::V3_0);
+    get_parameterized_test_data(test_params).expect("zk test data should be present")
 }
 
 #[test]
 fn verify_valid_zk_proof() {
-    let vk = valid_vk();
-    let proof = VersionedProof::V3_0(Proof::new(ProofType::ZK, VALID_ZK_PROOF_BYTES.to_vec()));
-    let pi = valid_public_input();
+    let TestData {
+        versioned_vk,
+        versioned_proof,
+        pubs,
+    } = valid_zk_test_data();
 
-    assert!(Ultrahonk::<MockRuntime>::verify_proof(&vk, &proof, &pi).is_ok());
+    assert!(Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &versioned_proof, &pubs).is_ok());
 }
 
 #[test]
 fn verify_valid_plain_proof() {
-    let vk = valid_vk();
-    let proof = VersionedProof::V3_0(Proof::new(
-        ProofType::Plain,
-        VALID_PLAIN_PROOF_BYTES.to_vec(),
-    ));
-    let pi = valid_public_input();
+    let TestData {
+        versioned_vk,
+        versioned_proof,
+        pubs,
+    } = valid_plain_test_data();
 
-    assert!(Ultrahonk::<MockRuntime>::verify_proof(&vk, &proof, &pi).is_ok());
+    assert!(Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &versioned_proof, &pubs).is_ok());
 }
 
 #[test]
 fn verify_vk_hash() {
-    let vk = valid_vk();
-    let vk_hash = Ultrahonk::<MockRuntime>::vk_hash(&vk);
+    let TestData { versioned_vk, .. } = valid_plain_test_data();
+
+    let vk_hash = Ultrahonk::<MockRuntime>::vk_hash(&versioned_vk);
 
     assert_eq!(
         vk_hash.as_bytes(),
@@ -84,245 +81,315 @@ mod reject {
 
     #[test]
     fn invalid_public_values() {
-        let vk = valid_vk();
-        let proof = VersionedProof::V3_0(Proof::new(ProofType::ZK, VALID_ZK_PROOF_BYTES.to_vec()));
+        let TestData {
+            versioned_vk,
+            versioned_proof,
+            pubs,
+        } = valid_zk_test_data();
 
-        let mut invalid_pubs = valid_public_input();
+        let mut invalid_pubs = pubs;
         invalid_pubs[0][0] = 0x10;
 
         assert_eq!(
-            Ultrahonk::<MockRuntime>::verify_proof(&vk, &proof, &invalid_pubs),
+            Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &versioned_proof, &invalid_pubs),
             Err(VerifyError::VerifyError)
         );
     }
 
     #[test]
     fn zk_proof_with_32_public_inputs_where_one_is_invalid() {
-        let proof = VersionedProof::V3_0(Proof::new(ProofType::ZK, VALID_ZK_PROOF_BYTES.to_vec()));
-        let mut pubs: Vec<[u8; PUB_SIZE]> = valid_public_input();
-        let vk = valid_vk();
+        let TestData {
+            versioned_vk,
+            versioned_proof,
+            mut pubs,
+        } = valid_zk_test_data();
 
         // Render first public input invalid
         pubs[0][0] += 1;
 
         assert_eq!(
-            Ultrahonk::<MockRuntime>::verify_proof(&vk, &proof, &pubs),
+            Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &versioned_proof, &pubs),
             Err(VerifyError::VerifyError)
         );
     }
 
     #[test]
     fn plain_proof_with_32_public_inputs_where_one_is_invalid() {
-        let proof = VersionedProof::V3_0(Proof::new(
-            ProofType::Plain,
-            VALID_PLAIN_PROOF_BYTES.to_vec(),
-        ));
-        let mut pubs: Vec<[u8; PUB_SIZE]> = valid_public_input();
-        let vk = valid_vk();
+        let TestData {
+            versioned_vk,
+            versioned_proof,
+            mut pubs,
+        } = valid_plain_test_data();
 
         // Render first public input invalid
         pubs[0][0] += 1;
 
         assert_eq!(
-            Ultrahonk::<MockRuntime>::verify_proof(&vk, &proof, &pubs),
+            Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &versioned_proof, &pubs),
             Err(VerifyError::VerifyError)
         );
     }
 
     #[test]
     fn if_provided_too_many_public_inputs_for_zk_proof() {
-        let vk = valid_vk();
-        let proof = VersionedProof::V3_0(Proof::new(ProofType::ZK, VALID_ZK_PROOF_BYTES.to_vec()));
+        let TestData {
+            versioned_vk,
+            versioned_proof,
+            mut pubs,
+        } = valid_zk_test_data();
 
-        let mut invalid_pubs = valid_public_input();
-        while (invalid_pubs.len() as u32) <= <MockRuntime as Config>::MaxPubs::get() {
-            invalid_pubs.push(valid_public_input()[0]);
+        // Keep adding bogus public inputs until the limit is exceeded
+        while (pubs.len() as u32) <= <MockRuntime as Config>::MaxPubs::get() {
+            pubs.push([0u8; PUB_SIZE]);
         }
 
         assert_eq!(
-            Ultrahonk::<MockRuntime>::verify_proof(&vk, &proof, &invalid_pubs),
+            Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &versioned_proof, &pubs),
             Err(VerifyError::InvalidInput)
         );
     }
 
     #[test]
     fn if_provided_too_many_public_inputs_for_plain_proof() {
-        let vk = valid_vk();
-        let proof = VersionedProof::V3_0(Proof::new(
-            ProofType::Plain,
-            VALID_PLAIN_PROOF_BYTES.to_vec(),
-        ));
+        let TestData {
+            versioned_vk,
+            versioned_proof,
+            mut pubs,
+        } = valid_plain_test_data();
 
-        let mut invalid_pubs = valid_public_input();
-        while (invalid_pubs.len() as u32) <= <MockRuntime as Config>::MaxPubs::get() {
-            invalid_pubs.push(valid_public_input()[0]);
+        // Keep adding bogus public inputs until the limit is exceeded
+        while (pubs.len() as u32) <= <MockRuntime as Config>::MaxPubs::get() {
+            pubs.push([0u8; PUB_SIZE]);
         }
 
         assert_eq!(
-            Ultrahonk::<MockRuntime>::verify_proof(&vk, &proof, &invalid_pubs),
+            Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &versioned_proof, &pubs),
             Err(VerifyError::InvalidInput)
         );
     }
 
     #[test]
     fn invalid_number_of_public_inputs() {
-        let vk = valid_vk();
-        let proof = VersionedProof::V3_0(Proof::new(ProofType::ZK, VALID_ZK_PROOF_BYTES.to_vec()));
+        let TestData {
+            versioned_vk,
+            versioned_proof,
+            mut pubs,
+        } = valid_plain_test_data();
 
-        let mut invalid_pubs = valid_public_input();
-        invalid_pubs.pop();
+        if pubs.is_empty() {
+            // add one bogus public input
+            pubs.push([0u8; PUB_SIZE]);
+        } else {
+            // drop one public input
+            pubs.pop();
+        }
 
         assert_eq!(
-            Ultrahonk::<MockRuntime>::verify_proof(&vk, &proof, &invalid_pubs),
+            Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &versioned_proof, &pubs),
             Err(VerifyError::InvalidInput)
         );
     }
 
     #[test]
     fn invalid_zk_proof() {
-        let vk = valid_vk();
-        let pi = valid_public_input();
+        let TestData {
+            versioned_vk,
+            versioned_proof,
+            pubs,
+        } = valid_zk_test_data();
 
-        let mut invalid_proof_bytes = VALID_ZK_PROOF_BYTES.to_vec();
-        invalid_proof_bytes[VALID_ZK_PROOF_BYTES.len() - 1] = 0x00;
-
-        let invalid_proof = VersionedProof::V3_0(Proof::new(ProofType::ZK, invalid_proof_bytes));
+        let invalid_versioned_proof = match versioned_proof {
+            VersionedProof::V3_0(Proof::ZK(mut proof_bytes)) => {
+                let proof_bytes_len = proof_bytes.len();
+                proof_bytes[proof_bytes_len - 1] = 0x00;
+                VersionedProof::V3_0(Proof::new(ProofType::ZK, proof_bytes))
+            }
+            VersionedProof::V3_0(Proof::Plain(_)) => unreachable!(),
+        };
 
         assert!(matches!(
-            Ultrahonk::<MockRuntime>::verify_proof(&vk, &invalid_proof, &pi),
+            Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &invalid_versioned_proof, &pubs),
             Err(VerifyError::VerifyError) | Err(VerifyError::InvalidProofData)
         ));
     }
 
     #[test]
     fn invalid_plain_proof() {
-        let vk = valid_vk();
-        let pi = valid_public_input();
+        let TestData {
+            versioned_vk,
+            versioned_proof,
+            pubs,
+        } = valid_plain_test_data();
 
-        let mut invalid_proof_bytes = VALID_PLAIN_PROOF_BYTES.to_vec();
-        invalid_proof_bytes[VALID_PLAIN_PROOF_BYTES.len() - 1] = 0x00;
-
-        let invalid_proof = VersionedProof::V3_0(Proof::new(ProofType::Plain, invalid_proof_bytes));
+        let invalid_versioned_proof = match versioned_proof {
+            VersionedProof::V3_0(Proof::Plain(mut proof_bytes)) => {
+                let proof_bytes_len = proof_bytes.len();
+                proof_bytes[proof_bytes_len - 1] = 0x00;
+                VersionedProof::V3_0(Proof::new(ProofType::ZK, proof_bytes))
+            }
+            VersionedProof::V3_0(Proof::ZK(_)) => unreachable!(),
+        };
 
         assert!(matches!(
-            Ultrahonk::<MockRuntime>::verify_proof(&vk, &invalid_proof, &pi),
+            Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &invalid_versioned_proof, &pubs),
             Err(VerifyError::VerifyError) | Err(VerifyError::InvalidProofData)
         ));
     }
 
     #[test]
     fn big_zk_proof() {
-        let vk = valid_vk();
-        let pi = valid_public_input();
+        let TestData {
+            versioned_vk,
+            versioned_proof,
+            pubs,
+        } = valid_zk_test_data();
 
-        let valid_proof = VALID_ZK_PROOF_BYTES;
-        let mut invalid_proof_bytes = [0u8; VALID_ZK_PROOF_BYTES.len() + 1];
-
-        invalid_proof_bytes[..VALID_ZK_PROOF_BYTES.len()].copy_from_slice(valid_proof);
-
-        let invalid_proof =
-            VersionedProof::V3_0(Proof::new(ProofType::ZK, invalid_proof_bytes.to_vec()));
+        let invalid_versioned_proof = match versioned_proof {
+            VersionedProof::V3_0(Proof::ZK(mut proof_bytes)) => {
+                proof_bytes.push(0x00);
+                VersionedProof::V3_0(Proof::new(ProofType::ZK, proof_bytes))
+            }
+            VersionedProof::V3_0(Proof::Plain(_)) => unreachable!(),
+        };
 
         assert_eq!(
-            Ultrahonk::<MockRuntime>::verify_proof(&vk, &invalid_proof, &pi),
+            Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &invalid_versioned_proof, &pubs),
             Err(VerifyError::InvalidProofData)
         );
     }
 
     #[test]
     fn big_plain_proof() {
-        let vk = valid_vk();
-        let pi = valid_public_input();
+        let TestData {
+            versioned_vk,
+            versioned_proof,
+            pubs,
+        } = valid_plain_test_data();
 
-        let valid_proof = VALID_PLAIN_PROOF_BYTES;
-        let mut invalid_proof_bytes = [0u8; VALID_PLAIN_PROOF_BYTES.len() + 1];
-
-        invalid_proof_bytes[..VALID_PLAIN_PROOF_BYTES.len()].copy_from_slice(valid_proof);
-
-        let invalid_proof =
-            VersionedProof::V3_0(Proof::new(ProofType::Plain, invalid_proof_bytes.to_vec()));
+        let invalid_versioned_proof = match versioned_proof {
+            VersionedProof::V3_0(Proof::Plain(mut proof_bytes)) => {
+                proof_bytes.push(0x00);
+                VersionedProof::V3_0(Proof::new(ProofType::Plain, proof_bytes))
+            }
+            VersionedProof::V3_0(Proof::ZK(_)) => unreachable!(),
+        };
 
         assert_eq!(
-            Ultrahonk::<MockRuntime>::verify_proof(&vk, &invalid_proof, &pi),
+            Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &invalid_versioned_proof, &pubs),
             Err(VerifyError::InvalidProofData)
         );
     }
 
     #[test]
     fn small_zk_proof() {
-        let vk = valid_vk();
-        let pi = valid_public_input();
+        let TestData {
+            versioned_vk,
+            versioned_proof,
+            pubs,
+        } = valid_zk_test_data();
 
-        let mut invalid_proof_bytes = VALID_ZK_PROOF_BYTES.to_vec();
-        invalid_proof_bytes.pop();
-        let invalid_proof = VersionedProof::V3_0(Proof::new(ProofType::ZK, invalid_proof_bytes));
+        let invalid_versioned_proof = match versioned_proof {
+            VersionedProof::V3_0(Proof::ZK(mut proof_bytes)) => {
+                proof_bytes.pop();
+                VersionedProof::V3_0(Proof::new(ProofType::ZK, proof_bytes))
+            }
+            VersionedProof::V3_0(Proof::Plain(_)) => unreachable!(),
+        };
 
         assert_eq!(
-            Ultrahonk::<MockRuntime>::verify_proof(&vk, &invalid_proof, &pi),
+            Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &invalid_versioned_proof, &pubs),
             Err(VerifyError::InvalidProofData)
         );
     }
 
     #[test]
     fn small_plain_proof() {
-        let vk = valid_vk();
-        let pi = valid_public_input();
+        let TestData {
+            versioned_vk,
+            versioned_proof,
+            pubs,
+        } = valid_plain_test_data();
 
-        let mut invalid_proof_bytes = VALID_PLAIN_PROOF_BYTES.to_vec();
-        invalid_proof_bytes.pop();
-        let invalid_proof = VersionedProof::V3_0(Proof::new(ProofType::Plain, invalid_proof_bytes));
+        let invalid_versioned_proof = match versioned_proof {
+            VersionedProof::V3_0(Proof::Plain(mut proof_bytes)) => {
+                proof_bytes.pop();
+                VersionedProof::V3_0(Proof::new(ProofType::Plain, proof_bytes))
+            }
+            VersionedProof::V3_0(Proof::ZK(_)) => unreachable!(),
+        };
 
         assert_eq!(
-            Ultrahonk::<MockRuntime>::verify_proof(&vk, &invalid_proof, &pi),
+            Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &invalid_versioned_proof, &pubs),
             Err(VerifyError::InvalidProofData)
         );
     }
 
     #[test]
     fn invalid_vk() {
-        let proof = VersionedProof::V3_0(Proof::new(ProofType::ZK, VALID_ZK_PROOF_BYTES.to_vec()));
-        let pi = valid_public_input();
+        let TestData {
+            versioned_vk,
+            versioned_proof,
+            pubs,
+        } = valid_zk_test_data();
 
-        let mut invalid_vk = [0u8; VK_SIZE];
-        invalid_vk[..VK_SIZE].copy_from_slice(&valid_vk());
-        invalid_vk[0] = 0x10;
+        let invalid_versioned_vk = match versioned_vk {
+            VersionedVk::V3_0(mut vk_bytes) => {
+                vk_bytes[0] = 0x10;
+                VersionedVk::V3_0(vk_bytes)
+            }
+            _ => unreachable!(),
+        };
 
         assert_eq!(
-            Ultrahonk::<MockRuntime>::verify_proof(&invalid_vk, &proof, &pi),
+            Ultrahonk::<MockRuntime>::verify_proof(&invalid_versioned_vk, &versioned_proof, &pubs),
             Err(VerifyError::InvalidVerificationKey)
         );
     }
 
+    // TODO: Once a second version variant is introduced to the enum
+    // #[test]
+    // fn reject_proof_with_version_not_matching_the_vk_version() { }
+
     #[test]
     fn reject_malformed_zk_proof() {
-        let vk = valid_vk();
-        let pi = valid_public_input();
+        let TestData {
+            versioned_vk,
+            versioned_proof,
+            pubs,
+        } = valid_zk_test_data();
 
-        let mut malformed_proof_bytes = VALID_ZK_PROOF_BYTES.to_vec();
-        malformed_proof_bytes[0] = 0x07;
-
-        let malformed_proof =
-            VersionedProof::V3_0(Proof::new(ProofType::ZK, malformed_proof_bytes));
+        let invalid_versioned_proof = match versioned_proof {
+            VersionedProof::V3_0(Proof::ZK(mut proof_bytes)) => {
+                proof_bytes[0] = 0x07;
+                VersionedProof::V3_0(Proof::new(ProofType::ZK, proof_bytes))
+            }
+            VersionedProof::V3_0(Proof::Plain(_)) => unreachable!(),
+        };
 
         assert_eq!(
-            Ultrahonk::<MockRuntime>::verify_proof(&vk, &malformed_proof, &pi),
+            Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &invalid_versioned_proof, &pubs),
             Err(VerifyError::VerifyError)
         );
     }
 
     #[test]
     fn reject_malformed_plain_proof() {
-        let vk = valid_vk();
-        let pi = valid_public_input();
+        let TestData {
+            versioned_vk,
+            versioned_proof,
+            pubs,
+        } = valid_plain_test_data();
 
-        let mut malformed_proof_bytes = VALID_PLAIN_PROOF_BYTES.to_vec();
-        malformed_proof_bytes[0] = 0x07;
-
-        let malformed_proof =
-            VersionedProof::V3_0(Proof::new(ProofType::Plain, malformed_proof_bytes));
+        let invalid_versioned_proof = match versioned_proof {
+            VersionedProof::V3_0(Proof::Plain(mut proof_bytes)) => {
+                proof_bytes[0] = 0x07;
+                VersionedProof::V3_0(Proof::new(ProofType::Plain, proof_bytes))
+            }
+            VersionedProof::V3_0(Proof::ZK(_)) => unreachable!(),
+        };
 
         assert_eq!(
-            Ultrahonk::<MockRuntime>::verify_proof(&vk, &malformed_proof, &pi),
+            Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &invalid_versioned_proof, &pubs),
             Err(VerifyError::VerifyError)
         );
     }

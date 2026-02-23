@@ -16,53 +16,78 @@
 #![cfg(any(test, feature = "runtime-benchmarks"))]
 #![allow(unused)]
 
-use crate::ProofType;
+use crate::{ProofType, ProtocolVersion, VersionedProof, VersionedVk};
 
 // Minimum allowed value for the logarithm of the polynomial evaluation domain size.
 const MIN_BENCHMARKED_LOG_CIRCUIT_SIZE: u64 = 7;
 
 // Struct containing the parameters pointing to the exact benchmark data that should be used.
 pub struct TestParams {
-    log_circuit_size: u64,
+    log_circuit_size: Option<u64>, // optional since for 0.84.0 we do not benchmark based on log_n
     proof_type: ProofType,
+    protocol_version: ProtocolVersion,
 }
 
 impl TestParams {
-    pub fn new(log_circuit_size: u64, proof_type: ProofType) -> Self {
+    pub fn new(
+        log_circuit_size: u64,
+        proof_type: ProofType,
+        protocol_version: ProtocolVersion,
+    ) -> Self {
         Self {
-            log_circuit_size,
+            log_circuit_size: Some(log_circuit_size),
             proof_type,
+            protocol_version,
         }
     }
 }
 
 pub struct TestData {
-    pub vk: crate::Vk,
-    pub proof: crate::Proof,
+    pub versioned_vk: crate::VersionedVk,
+    pub versioned_proof: crate::VersionedProof,
     pub pubs: crate::Pubs,
 }
 
-pub fn get_parameterized_test_data(test_params: TestParams) -> TestData {
-    let data = match test_params.proof_type {
-        ProofType::ZK => DATA_ZK,
-        ProofType::Plain => DATA_PLAIN,
-    };
-    let raw_test_data_idx =
-        (test_params.log_circuit_size - MIN_BENCHMARKED_LOG_CIRCUIT_SIZE) as usize;
-    let raw_test_data = &data[raw_test_data_idx];
+pub fn get_parameterized_test_data(test_params: TestParams) -> Result<TestData, &'static str> {
+    match test_params.protocol_version {
+        ProtocolVersion::V3_0 => {
+            if test_params.log_circuit_size.is_none() {
+                return Err("log_circuit_size must be specified for ProtocolVersion::V3_0");
+            }
 
-    let vk: [u8; crate::VK_SIZE] = raw_test_data
-        .vk
-        .try_into()
-        .expect("Benchmark file should always have the correct vk size");
-    let proof = crate::Proof::new(test_params.proof_type, raw_test_data.proof.to_vec());
-    let pubs = raw_test_data
-        .pubs
-        .chunks_exact(crate::PUB_SIZE)
-        .map(|c| c.try_into().unwrap())
-        .collect();
+            let data = match test_params.proof_type {
+                ProofType::ZK => DATA_ZK,
+                ProofType::Plain => DATA_PLAIN,
+            };
+            let raw_test_data_idx = (test_params
+                .log_circuit_size
+                .expect("Should never fail at this point")
+                - MIN_BENCHMARKED_LOG_CIRCUIT_SIZE) as usize;
+            let raw_test_data = &data[raw_test_data_idx];
 
-    TestData { vk, proof, pubs }
+            let raw_vk: [u8; ultrahonk_no_std::VK_SIZE] = raw_test_data
+                .vk
+                .try_into()
+                .expect("Benchmark file should always have the correct vk size");
+            let versioned_vk = VersionedVk::V3_0(raw_vk);
+            let proof = crate::Proof::new(test_params.proof_type, raw_test_data.proof.to_vec());
+            let versioned_proof = crate::VersionedProof::V3_0(proof);
+            let pubs = raw_test_data
+                .pubs
+                .chunks_exact(crate::PUB_SIZE)
+                .map(|c| c.try_into().unwrap())
+                .collect();
+
+            Ok(TestData {
+                versioned_vk,
+                versioned_proof,
+                pubs,
+            })
+        }
+        _ => {
+            unreachable!()
+        }
+    }
 }
 
 struct Data {
