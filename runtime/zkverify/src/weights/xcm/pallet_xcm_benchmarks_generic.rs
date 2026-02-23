@@ -220,6 +220,16 @@ impl<T: frame_system::Config> WeightInfo<T> {
             .saturating_add(T::DbWeight::get().reads(6_u64))
             .saturating_add(T::DbWeight::get().writes(3_u64))
     }
+    /// Storage: `XcmPallet::VersionNotifyTargets` (r:0 w:1)
+    /// Proof: `XcmPallet::VersionNotifyTargets` (`max_values`: None, `max_size`: None, mode: `Measured`)
+    pub(crate) fn unsubscribe_version() -> Weight {
+        // Proof Size summary in bytes:
+        //  Measured:  `0`
+        //  Estimated: `0`
+        // Minimum execution time: 2_405_000 picoseconds.
+        Weight::from_parts(2_705_000, 0)
+            .saturating_add(T::DbWeight::get().writes(1_u64))
+    }
     pub(crate) fn burn_asset() -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `0`
