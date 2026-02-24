@@ -938,7 +938,7 @@ sp_api::impl_runtime_apis! {
         }
     }
 
-    #[api_version(12)]
+    #[api_version(13)]
     impl polkadot_primitives::runtime_api::ParachainHost<Block> for Runtime {
         fn validators() -> Vec<ValidatorId> {
             runtime_impl::validators::<Runtime>()
@@ -1073,11 +1073,20 @@ sp_api::impl_runtime_apis! {
         }
 
         fn para_backing_state(para_id: ParaId) -> Option<polkadot_primitives::vstaging::async_backing::BackingState> {
+            #[allow(deprecated)]
             runtime_impl::backing_state::<Runtime>(para_id)
         }
 
         fn async_backing_params() -> polkadot_primitives::AsyncBackingParams {
             runtime_impl::async_backing_params::<Runtime>()
+        }
+
+        fn backing_constraints(para_id: ParaId) -> Option<polkadot_primitives::vstaging::async_backing::Constraints> {
+            parachains_staging_runtime_api_impl::backing_constraints::<Runtime>(para_id)
+        }
+
+        fn scheduling_lookahead() -> u32 {
+            parachains_staging_runtime_api_impl::scheduling_lookahead::<Runtime>()
         }
 
         fn approval_voting_params() -> polkadot_primitives::ApprovalVotingParams {

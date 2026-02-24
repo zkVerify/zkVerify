@@ -1340,7 +1340,7 @@ pub const BABE_GENESIS_EPOCH_CONFIG: sp_consensus_babe::BabeEpochConfiguration =
 use polkadot_primitives::{
     self as primitives, slashing,
     vstaging::{
-        async_backing::BackingState, CandidateEvent,
+        async_backing::BackingState, async_backing::Constraints, CandidateEvent,
         CommittedCandidateReceiptV2 as CommittedCandidateReceipt, CoreState, ScrapedOnChainVotes,
     },
     ApprovalVotingParams, CandidateHash, CoreIndex, DisputeState, ExecutorParams,
@@ -1667,7 +1667,7 @@ impl_runtime_apis! {
         }
     }
 
-    #[api_version(12)]
+    #[api_version(13)]
     impl primitives::runtime_api::ParachainHost<Block> for Runtime {
         fn validators() -> Vec<ValidatorId> {
             parachains_runtime_api_impl::validators::<Runtime>()
@@ -1805,11 +1805,20 @@ impl_runtime_apis! {
         }
 
         fn para_backing_state(para_id: ParaId) -> Option<BackingState> {
+            #[allow(deprecated)]
             parachains_runtime_api_impl::backing_state::<Runtime>(para_id)
         }
 
         fn async_backing_params() -> primitives::AsyncBackingParams {
             parachains_runtime_api_impl::async_backing_params::<Runtime>()
+        }
+
+        fn backing_constraints(para_id: ParaId) -> Option<Constraints> {
+            parachains_staging_runtime_api_impl::backing_constraints::<Runtime>(para_id)
+        }
+
+        fn scheduling_lookahead() -> u32 {
+            parachains_staging_runtime_api_impl::scheduling_lookahead::<Runtime>()
         }
 
         fn disabled_validators() -> Vec<ValidatorIndex> {
