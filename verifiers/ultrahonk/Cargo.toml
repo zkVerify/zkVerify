@@ -24,11 +24,13 @@ log = { workspace = true }
 hex-literal = { workspace = true }
 native = { workspace = true }
 sp-io = { workspace = true }
-ultrahonk-no-std = { workspace = true }
+ultrahonk-no-std-v0_84 = { workspace = true }
+ultrahonk-no-std-v3_0 = { workspace = true }
 
 [dev-dependencies]
 hex-literal = { workspace = true }
 codec = { workspace = true, features = ["std"] }
+rstest = { workspace = true }
 sp-io = { workspace = true, features = ["std"] }
 scale-info = { workspace = true }
 sp-runtime = { workspace = true }
@@ -49,7 +51,8 @@ std = [
 	"sp-core/std",
 	"sp-io/std",
 	"sp-runtime/std",
-	"ultrahonk-no-std/std",
+	"ultrahonk-no-std-v0_84/std",
+	"ultrahonk-no-std-v3_0/std",
 ]
 default = [ "std" ]
 runtime-benchmarks = [

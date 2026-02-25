@@ -16,7 +16,7 @@
 #![cfg(feature = "runtime-benchmarks")]
 
 use crate::resources::*;
-use crate::{ProofType, Ultrahonk as Verifier, VersionedProof};
+use crate::{ProofType, Ultrahonk as Verifier};
 use frame_benchmarking::v2::*;
 use hp_verifiers::Verifier as _;
 use pallet_verifiers::benchmarking_utils;
@@ -34,495 +34,489 @@ pub mod benchmarks {
     benchmarking_utils!(Verifier<T>, crate::Config);
 
     #[benchmark]
-    fn verify_zk_proof_log_7() {
-        let test_params = TestParams::new(7, ProofType::ZK);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+    fn verify_proof_zk_32() {
+        let test_params = TestParams::new_v0_84(ProofType::ZK);
+        let TestData {
+            versioned_vk,
+            versioned_proof,
+            pubs,
+        } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_proof_plain_32() {
+        let test_params = TestParams::new_v0_84(ProofType::Plain);
+        let TestData {
+            versioned_vk,
+            versioned_proof,
+            pubs,
+        } = get_parameterized_test_data(test_params).unwrap();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_zk_proof_log_7() {
+        let test_params = TestParams::new(7, ProofType::ZK, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn verify_plain_proof_log_7() {
-        let test_params = TestParams::new(7, ProofType::Plain);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(7, ProofType::Plain, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn verify_zk_proof_log_8() {
-        let test_params = TestParams::new(8, ProofType::ZK);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(8, ProofType::ZK, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn verify_plain_proof_log_8() {
-        let test_params = TestParams::new(8, ProofType::Plain);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(8, ProofType::Plain, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn verify_zk_proof_log_9() {
-        let test_params = TestParams::new(9, ProofType::ZK);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(9, ProofType::ZK, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn verify_plain_proof_log_9() {
-        let test_params = TestParams::new(9, ProofType::Plain);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(9, ProofType::Plain, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn verify_zk_proof_log_10() {
-        let test_params = TestParams::new(10, ProofType::ZK);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(10, ProofType::ZK, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn verify_plain_proof_log_10() {
-        let test_params = TestParams::new(10, ProofType::Plain);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(10, ProofType::Plain, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn verify_zk_proof_log_11() {
-        let test_params = TestParams::new(11, ProofType::ZK);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(11, ProofType::ZK, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn verify_plain_proof_log_11() {
-        let test_params = TestParams::new(11, ProofType::Plain);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(11, ProofType::Plain, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn verify_zk_proof_log_12() {
-        let test_params = TestParams::new(12, ProofType::ZK);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(12, ProofType::ZK, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn verify_plain_proof_log_12() {
-        let test_params = TestParams::new(12, ProofType::Plain);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(12, ProofType::Plain, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn verify_zk_proof_log_13() {
-        let test_params = TestParams::new(13, ProofType::ZK);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(13, ProofType::ZK, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn verify_plain_proof_log_13() {
-        let test_params = TestParams::new(13, ProofType::Plain);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(13, ProofType::Plain, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn verify_zk_proof_log_14() {
-        let test_params = TestParams::new(14, ProofType::ZK);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(14, ProofType::ZK, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn verify_plain_proof_log_14() {
-        let test_params = TestParams::new(14, ProofType::Plain);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(14, ProofType::Plain, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn verify_zk_proof_log_15() {
-        let test_params = TestParams::new(15, ProofType::ZK);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(15, ProofType::ZK, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn verify_plain_proof_log_15() {
-        let test_params = TestParams::new(14, ProofType::Plain);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(14, ProofType::Plain, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn verify_zk_proof_log_16() {
-        let test_params = TestParams::new(16, ProofType::ZK);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(16, ProofType::ZK, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn verify_plain_proof_log_16() {
-        let test_params = TestParams::new(15, ProofType::Plain);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(15, ProofType::Plain, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn verify_zk_proof_log_17() {
-        let test_params = TestParams::new(17, ProofType::ZK);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(17, ProofType::ZK, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn verify_plain_proof_log_17() {
-        let test_params = TestParams::new(17, ProofType::Plain);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(17, ProofType::Plain, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn verify_zk_proof_log_18() {
-        let test_params = TestParams::new(18, ProofType::ZK);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(18, ProofType::ZK, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn verify_plain_proof_log_18() {
-        let test_params = TestParams::new(18, ProofType::Plain);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(18, ProofType::Plain, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn verify_zk_proof_log_19() {
-        let test_params = TestParams::new(19, ProofType::ZK);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(19, ProofType::ZK, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn verify_plain_proof_log_19() {
-        let test_params = TestParams::new(19, ProofType::Plain);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(19, ProofType::Plain, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn verify_zk_proof_log_20() {
-        let test_params = TestParams::new(20, ProofType::ZK);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(20, ProofType::ZK, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn verify_plain_proof_log_20() {
-        let test_params = TestParams::new(20, ProofType::Plain);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(20, ProofType::Plain, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn verify_zk_proof_log_21() {
-        let test_params = TestParams::new(21, ProofType::ZK);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(21, ProofType::ZK, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn verify_plain_proof_log_21() {
-        let test_params = TestParams::new(21, ProofType::Plain);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(21, ProofType::Plain, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn verify_zk_proof_log_22() {
-        let test_params = TestParams::new(22, ProofType::ZK);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(22, ProofType::ZK, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn verify_plain_proof_log_22() {
-        let test_params = TestParams::new(22, ProofType::Plain);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(22, ProofType::Plain, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn verify_zk_proof_log_23() {
-        let test_params = TestParams::new(23, ProofType::ZK);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(23, ProofType::ZK, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn verify_plain_proof_log_23() {
-        let test_params = TestParams::new(23, ProofType::Plain);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(23, ProofType::Plain, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn verify_zk_proof_log_24() {
-        let test_params = TestParams::new(24, ProofType::ZK);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(24, ProofType::ZK, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn verify_plain_proof_log_24() {
-        let test_params = TestParams::new(24, ProofType::Plain);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(24, ProofType::Plain, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn verify_zk_proof_log_25() {
-        let test_params = TestParams::new(25, ProofType::ZK);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(25, ProofType::ZK, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn verify_plain_proof_log_25() {
-        let test_params = TestParams::new(25, ProofType::Plain);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(25, ProofType::Plain, ProtocolVersion::V3_0);
+        let TestData { versioned_vk, versioned_proof, pubs } = get_parameterized_test_data(test_params).unwrap();
         let r;
         #[block]
         {
-            r = do_verify_proof::<T>(&vk, &vproof, &pubs)
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
         };
         assert!(r.is_ok());
     }
