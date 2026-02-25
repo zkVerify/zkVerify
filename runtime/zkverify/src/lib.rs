@@ -621,20 +621,8 @@ impl pallet_aggregate::Config for Runtime {
 }
 
 parameter_types! {
-    pub const ClaimPalletId: PalletId = PalletId(*b"zkv/pclm");
     pub const MaxBeneficiaries: u32 = 1_000_000;
     pub const MaxOpBeneficiaries: u32 = 10_000;
-}
-
-impl pallet_claim::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type PalletId = ClaimPalletId;
-    type ManagerOrigin = EnsureRoot<AccountId>;
-    type Currency = Balances;
-    type UnclaimedDestination = ZKVerifyTreasuryAccount;
-    type WeightInfo = weights::pallet_claim::ZKVWeight<Runtime>;
-    type MaxBeneficiaries = MaxBeneficiaries;
-    const MAX_OP_BENEFICIARIES: u32 = MaxOpBeneficiaries::get();
 }
 
 parameter_types! {
@@ -1180,7 +1168,6 @@ construct_runtime!(
 
         // Our stuff
         Aggregate: pallet_aggregate = 81,
-        Claim: pallet_claim = 82,
         TokenClaim: pallet_token_claim = 83,
         Crl: pallet_crl = 84,
 
@@ -1309,7 +1296,6 @@ mod benches {
         [pallet_transaction_payment, TransactionPayment]
         // our pallets
         [pallet_aggregate, Aggregate]
-        [pallet_claim, Claim]
         [pallet_crl, Crl]
         [pallet_token_claim, TokenClaim]
         // verifiers
