@@ -167,17 +167,6 @@ pub fn test() -> sp_io::TestExternalities {
     .assimilate_storage(&mut t)
     .unwrap();
 
-    pallet_claim::GenesisConfig::<super::Runtime> {
-        beneficiaries: SAMPLE_USERS
-            .iter()
-            .cloned()
-            .map(|user| (user.raw_account.into(), user.starting_balance))
-            .collect(),
-        genesis_balance: total_balances(),
-    }
-    .assimilate_storage(&mut t)
-    .unwrap();
-
     pallet_token_claim::GenesisConfig::<super::Runtime> {
         beneficiaries: SAMPLE_USERS
             .iter()

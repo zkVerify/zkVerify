@@ -8387,22 +8387,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-claim"
-version = "0.1.0"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "log",
- "pallet-balances",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-io",
- "sp-runtime",
-]
-
-[[package]]
 name = "pallet-collator-selection"
 version = "20.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -19759,7 +19743,6 @@ dependencies = [
  "pallet-balances",
  "pallet-bounties",
  "pallet-child-bounties",
- "pallet-claim",
  "pallet-conviction-voting",
  "pallet-crl",
  "pallet-election-provider-support-benchmarking",

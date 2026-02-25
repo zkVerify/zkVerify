@@ -57,7 +57,6 @@ pub mod pallet_vesting;
 pub mod pallet_xcm;
 pub mod xcm;
 
-pub mod pallet_claim;
 pub mod pallet_crl;
 pub mod pallet_token_claim;
 pub mod parachains;
