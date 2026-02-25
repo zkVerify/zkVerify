@@ -55,6 +55,8 @@ use core::marker::PhantomData;
 
 /// Weight functions needed for `pallet_ultrahonk_verifier_verify_proof`.
 pub trait WeightInfo {
+    fn verify_proof_zk_32() -> Weight;
+    fn verify_proof_plain_32() -> Weight;
     fn verify_zk_proof_log_7() -> Weight;
     fn verify_plain_proof_log_7() -> Weight;
     fn verify_zk_proof_log_8() -> Weight;
@@ -97,6 +99,14 @@ pub trait WeightInfo {
 
 // For backwards compatibility and tests.
 impl WeightInfo for () {
+    fn verify_proof_zk_32() -> Weight {
+        // TODO: Replace with actual benchmark results for V0.84 with 32 public inputs
+        Weight::from_parts(12_042_713_000, 0)
+    }
+    fn verify_proof_plain_32() -> Weight {
+        // TODO: Replace with actual benchmark results for V0.84 with 32 public inputs
+        Weight::from_parts(10_641_276_000, 0)
+    }
     fn verify_zk_proof_log_7() -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `0`
