@@ -106,13 +106,13 @@ fn verify_valid_proof(
 }
 
 #[rstest]
-#[case::v3_0(
-    ProtocolVersion::V3_0,
-    hex!("7fe6c7222e7642ddbcf5183de8e7a23f4963f755c47a48f4b7b78eabbaa8f8ff"),
-)]
 #[case::v0_84(
     ProtocolVersion::V0_84,
     hex!("63b5b6dca70f5699bc5c34ef607ad7e8f9df949d54b65dbbea0d404530e489a4"),
+)]
+#[case::v3_0(
+    ProtocolVersion::V3_0,
+    hex!("7fe6c7222e7642ddbcf5183de8e7a23f4963f755c47a48f4b7b78eabbaa8f8ff"),
 )]
 fn verify_vk_hash(#[case] version: ProtocolVersion, #[case] expected: [u8; 32]) {
     let TestData { versioned_vk, .. } = load_test_data(ProofType::Plain, version);
@@ -237,11 +237,10 @@ mod reject {
             pubs,
         } = load_test_data(ProofType::Plain, version);
 
-        let invalid_proof =
-            mutate_proof_bytes_with_type(versioned_proof, ProofType::ZK, |bytes| {
-                let len = bytes.len();
-                bytes[len - 1] = 0x00;
-            });
+        let invalid_proof = mutate_proof_bytes_with_type(versioned_proof, ProofType::ZK, |bytes| {
+            let len = bytes.len();
+            bytes[len - 1] = 0x00;
+        });
 
         assert!(matches!(
             Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &invalid_proof, &pubs),
@@ -310,9 +309,7 @@ mod reject {
     #[test]
     fn proof_with_version_not_matching_the_vk_version() {
         let TestData {
-            versioned_vk,
-            pubs,
-            ..
+            versioned_vk, pubs, ..
         } = load_test_data(ProofType::ZK, ProtocolVersion::V0_84);
 
         let v3_0_versioned_proof = VersionedProof::V3_0(Proof::default());
