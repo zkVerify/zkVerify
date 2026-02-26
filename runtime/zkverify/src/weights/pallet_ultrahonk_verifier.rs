@@ -18,7 +18,7 @@
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 46.2.0
 //! DATE: 2026-02-26, STEPS: `50`, REPEAT: `20`, LOW RANGE: `[]`, HIGH RANGE: `[]`
 //! WORST CASE MAP SIZE: `1000000`
-//! HOSTNAME: `b30bcea0d671`, CPU: `AMD Ryzen 7 7700 8-Core Processor`
+//! HOSTNAME: `f71fc314132f`, CPU: `AMD Ryzen 7 7700 8-Core Processor`
 //! WASM-EXECUTION: `Compiled`, CHAIN: `None`, DB CACHE: `1024`
 
 // Executed Command:
@@ -43,7 +43,7 @@
 // /data/benchmark/runtime/zkverify/src/weights/pallet_ultrahonk_verifier.rs
 // --template
 // /data/benchmark/relay-node/benchmarks/zkv-deploy-weight-template.hbs
-// --base-path=/tmp/tmp.ZUP4FPVAfL
+// --base-path=/tmp/tmp.AYI9u58Vxi
 
 #![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
@@ -65,22 +65,22 @@ impl<T: frame_system::Config> pallet_ultrahonk_verifier::WeightInfo for ZKVWeigh
         // Proof Size summary in bytes:
         //  Measured:  `2045`
         //  Estimated: `5394`
-        // Minimum execution time: 5_350_000 picoseconds.
-        Weight::from_parts(5_521_000, 5394)
+        // Minimum execution time: 5_560_000 picoseconds.
+        Weight::from_parts(5_780_000, 5394)
             .saturating_add(T::DbWeight::get().reads(1_u64))
     }
     fn validate_vk() -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `0`
         //  Estimated: `0`
-        // Minimum execution time: 17_272_000 picoseconds.
-        Weight::from_parts(17_422_000, 0)
+        // Minimum execution time: 17_393_000 picoseconds.
+        Weight::from_parts(17_553_000, 0)
     }
     fn compute_statement_hash() -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `0`
         //  Estimated: `0`
-        // Minimum execution time: 12_553_000 picoseconds.
+        // Minimum execution time: 12_503_000 picoseconds.
         Weight::from_parts(12_704_000, 0)
     }
     /// Storage: `SettlementUltrahonkPallet::Disabled` (r:1 w:0)
@@ -95,8 +95,8 @@ impl<T: frame_system::Config> pallet_ultrahonk_verifier::WeightInfo for ZKVWeigh
         // Proof Size summary in bytes:
         //  Measured:  `76`
         //  Estimated: `5394`
-        // Minimum execution time: 65_922_000 picoseconds.
-        Weight::from_parts(66_764_000, 5394)
+        // Minimum execution time: 66_635_000 picoseconds.
+        Weight::from_parts(67_186_000, 5394)
             .saturating_add(T::DbWeight::get().reads(4_u64))
             .saturating_add(T::DbWeight::get().writes(3_u64))
     }
@@ -110,8 +110,8 @@ impl<T: frame_system::Config> pallet_ultrahonk_verifier::WeightInfo for ZKVWeigh
         // Proof Size summary in bytes:
         //  Measured:  `2210`
         //  Estimated: `5394`
-        // Minimum execution time: 37_750_000 picoseconds.
-        Weight::from_parts(38_501_000, 5394)
+        // Minimum execution time: 37_430_000 picoseconds.
+        Weight::from_parts(37_992_000, 5394)
             .saturating_add(T::DbWeight::get().reads(3_u64))
             .saturating_add(T::DbWeight::get().writes(3_u64))
     }
