@@ -25,20 +25,18 @@ use hp_verifiers::{Verifier, VerifyError};
 use native::bn254::HostHooks as CurveHooksImpl;
 use scale_info::TypeInfo;
 use sp_core::{Get, H256};
-// use ultrahonk_no_std_v3_0::ProofType as UltraHonkProofType;
 
 pub use crate::weight_verify_proof::WeightInfo as WeightInfoVerifyProof;
-use ultrahonk_no_std_v3_0::key::VerificationKey;
-pub use ultrahonk_no_std_v3_0::PUB_SIZE;
+pub use ultrahonk_no_std_v3_0::PUB_SIZE; // Can be obtained from an arbitrary version
 pub use weight::WeightInfo;
 
 pub type RawProof = Vec<u8>;
 pub type Pubs = Vec<[u8; PUB_SIZE]>;
-// pub type Vk = [u8; VK_SIZE];
-// pub type Vk = VersionedVk;
 
+// Minimum allowed value for the logarithm of the polynomial evaluation domain size.
+pub const MIN_BENCHMARKED_LOG_CIRCUIT_SIZE: u64 = 7;
 // Maximum allowed value for the logarithm of the polynomial evaluation domain size.
-const MAX_BENCHMARKED_LOG_CIRCUIT_SIZE: u64 = 25;
+pub const MAX_BENCHMARKED_LOG_CIRCUIT_SIZE: u64 = 25;
 
 pub trait Config {
     /// Maximum supported number of public inputs.
@@ -58,15 +56,6 @@ pub enum Proof {
     ZK(RawProof),
     Plain(RawProof),
 }
-
-// impl From<Proof> for ultrahonk_no_std_v3_0::ProofType {
-//     fn from(proof: Proof) -> Self {
-//         match proof {
-//             Proof::ZK(proof_bytes) => Self::ZK(proof_bytes.into_boxed_slice()),
-//             Proof::Plain(proof_bytes) => Self::Plain(proof_bytes.into_boxed_slice()),
-//         }
-//     }
-// }
 
 impl TryFrom<Proof> for ultrahonk_no_std_v3_0::ProofType {
     type Error = ();
@@ -96,6 +85,15 @@ pub enum ProtocolVersion {
     V3_0,
 }
 
+impl From<&VersionedProof> for ProtocolVersion {
+    fn from(value: &VersionedProof) -> Self {
+        match value {
+            VersionedProof::V0_84(_) => ProtocolVersion::V0_84,
+            VersionedProof::V3_0(_) => ProtocolVersion::V3_0,
+        }
+    }
+}
+
 // Important Notes:
 // i) Please DO NOT alter the indices of existing VersionedProof's variants,
 // ii) If you are introducing new VersionedProof variants, ensure that
@@ -119,24 +117,6 @@ pub enum VersionedVk {
     #[codec(index = 1)]
     V3_0([u8; ultrahonk_no_std_v3_0::VK_SIZE]),
 }
-
-// impl VersionedProof {
-//     fn protocol_version(&self) -> ProtocolVersion {
-//         match self {
-//             VersionedProof::V0_84(_) => ProtocolVersion::V0_84,
-//             VersionedProof::V3_0(_) => ProtocolVersion::V3_0,
-//         }
-//     }
-// }
-
-// impl VersionedVk {
-//     fn protocol_version(&self) -> ProtocolVersion {
-//         match self {
-//             VersionedVk::V0_84(_) => ProtocolVersion::V0_84,
-//             VersionedVk::V3_0(_) => ProtocolVersion::V3_0,
-//         }
-//     }
-// }
 
 impl Proof {
     pub fn new(proof_type: ProofType, proof_bytes: RawProof) -> Self {
@@ -233,8 +213,6 @@ impl<T: Config> Verifier for Ultrahonk<T> {
                     .try_into()
                     .map_err(|_| hp_verifiers::VerifyError::InvalidProofData)?;
 
-                // Ignore weight
-
                 log::trace!("Verifying (no-std)");
                 ultrahonk_no_std_v0_84::verify::<CurveHooksImpl>(vk_bytes, &prepared, pubs)
                     .inspect_err(|e| log::debug!("Cannot verify proof: {e:?}"))
@@ -265,15 +243,20 @@ impl<T: Config> Verifier for Ultrahonk<T> {
                     .map_err(|_| hp_verifiers::VerifyError::InvalidProofData)?;
 
                 let w = {
-                    let log_circuit_size =
-                        VerificationKey::<CurveHooksImpl>::extract_log_circuit_size(vk_bytes)
-                            .map_err(|_| hp_verifiers::VerifyError::InvalidVerificationKey)?;
+                    let log_circuit_size = ultrahonk_no_std_v3_0::key::VerificationKey::<
+                        CurveHooksImpl,
+                    >::extract_log_circuit_size(vk_bytes)
+                    .map_err(|_| hp_verifiers::VerifyError::InvalidVerificationKey)?;
                     ensure!(
                         log_circuit_size <= MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
                         hp_verifiers::VerifyError::InvalidVerificationKey
                     );
 
-                    compute_weight::<T>(log_circuit_size, ProofType::from(&prepared))
+                    compute_weight::<T>(
+                        ProtocolVersion::from(proof),
+                        ProofType::from(&prepared),
+                        log_circuit_size,
+                    )
                 };
 
                 log::trace!("Verifying (no-std)");
@@ -296,7 +279,6 @@ impl<T: Config> Verifier for Ultrahonk<T> {
                             hp_verifiers::VerifyError::VerifyError
                         }
                     })
-                    // .map(|_| None)
                     .map(|_| Some(w))
             }
             _ => {
@@ -311,16 +293,24 @@ impl<T: Config> Verifier for Ultrahonk<T> {
             VersionedVk::V0_84(vk_bytes) => vk_bytes,
             VersionedVk::V3_0(vk_bytes) => vk_bytes,
         };
-        let _vk = VerificationKey::<CurveHooksImpl>::try_from(&vk_bytes[..])
-            .map_err(|e| log::debug!("Invalid Vk: {e:?}"))
-            .map_err(|_| VerifyError::InvalidVerificationKey)?;
+        match vk {
+            VersionedVk::V0_84(_) => {
+                let _vk = ultrahonk_no_std_v0_84::key::VerificationKey::<CurveHooksImpl>::try_from(
+                    &vk_bytes[..],
+                )
+                .map_err(|e| log::debug!("Invalid Vk: {e:?}"))
+                .map_err(|_| VerifyError::InvalidVerificationKey)?;
+            }
+            VersionedVk::V3_0(_) => {
+                let _vk = ultrahonk_no_std_v3_0::key::VerificationKey::<CurveHooksImpl>::try_from(
+                    &vk_bytes[..],
+                )
+                .map_err(|e| log::debug!("Invalid Vk: {e:?}"))
+                .map_err(|_| VerifyError::InvalidVerificationKey)?;
+            }
+        }
 
         Ok(())
-    }
-
-    fn vk_hash(vk: &Self::Vk) -> H256 {
-        // Note: Version encoding is included along with vk bytes
-        sp_io::hashing::sha2_256(&Self::vk_bytes(vk)).into()
     }
 
     fn vk_bytes(vk: &Self::Vk) -> Cow<'_, [u8]> {
@@ -336,7 +326,7 @@ impl<T: Config> Verifier for Ultrahonk<T> {
     }
 
     fn verifier_version_hash(proof: &Self::Proof) -> H256 {
-        // SHA2-256("ultrahonk:vx.yz")
+        // Computed as: SHA2-256("ultrahonk:vx.y")
         let h = match proof {
             VersionedProof::V0_84(_) => hex_literal::hex!(
                 "4966cd7801ae9ef9d7afb52ec3de92f0693e720f58c5c8ecfb23d85b0934f018"
@@ -349,60 +339,22 @@ impl<T: Config> Verifier for Ultrahonk<T> {
     }
 }
 
-fn compute_weight<T: Config>(log_circuit_size: u64, proof_type: ProofType) -> Weight {
+fn compute_weight<T: Config>(
+    protocol_version: ProtocolVersion,
+    proof_type: ProofType,
+    log_circuit_size: u64,
+) -> Weight {
     // Note that for very small circuits (i.e., log_circuit_size < MIN_BENCHMARKED_LOG_CIRCUIT_SIZE),
     // we compute weights using log_circuit_size = MIN_BENCHMARKED_LOG_CIRCUIT_SIZE
-    match (log_circuit_size, proof_type) {
-        (1, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_7(),
-        (1, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_7(),
-        (2, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_7(),
-        (2, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_7(),
-        (3, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_7(),
-        (3, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_7(),
-        (4, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_7(),
-        (4, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_7(),
-        (5, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_7(),
-        (5, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_7(),
-        (6, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_7(),
-        (6, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_7(),
-        (7, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_7(),
-        (7, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_7(),
-        (8, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_8(),
-        (8, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_8(),
-        (9, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_9(),
-        (9, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_9(),
-        (10, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_10(),
-        (10, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_10(),
-        (11, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_11(),
-        (11, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_11(),
-        (12, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_12(),
-        (12, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_12(),
-        (13, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_13(),
-        (13, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_13(),
-        (14, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_14(),
-        (14, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_14(),
-        (15, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_15(),
-        (15, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_15(),
-        (16, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_16(),
-        (16, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_16(),
-        (17, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_17(),
-        (17, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_17(),
-        (18, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_18(),
-        (18, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_18(),
-        (19, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_19(),
-        (19, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_19(),
-        (20, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_20(),
-        (20, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_20(),
-        (21, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_21(),
-        (21, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_21(),
-        (22, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_22(),
-        (22, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_22(),
-        (23, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_23(),
-        (23, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_23(),
-        (24, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_24(),
-        (24, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_24(),
-        (25, ProofType::ZK) => T::WeightInfo::verify_zk_proof_log_25(),
-        (25, ProofType::Plain) => T::WeightInfo::verify_plain_proof_log_25(),
+    match (
+        protocol_version,
+        proof_type,
+        log_circuit_size.max(MIN_BENCHMARKED_LOG_CIRCUIT_SIZE),
+    ) {
+        (ProtocolVersion::V3_0, ProofType::ZK, log_n) => T::WeightInfo::verify_zk_proof_v3_0(log_n),
+        (ProtocolVersion::V3_0, ProofType::Plain, log_n) => {
+            T::WeightInfo::verify_plain_proof_v3_0(log_n)
+        }
         _ => panic!("Invalid value given for log_circuit_size."),
     }
 }
@@ -424,17 +376,18 @@ impl<T: Config, W: WeightInfo> pallet_verifiers::WeightInfo<Ultrahonk<T>> for Ul
         _pubs: &<Ultrahonk<T> as hp_verifiers::Verifier>::Pubs,
     ) -> Weight {
         match proof {
-            VersionedProof::V0_84(inner) => {
-                // V0.84: weight is parameterized by num_public_inputs (worst case = 32)
-                match ProofType::from(inner) {
-                    ProofType::ZK => T::WeightInfo::verify_proof_zk_32(),
-                    ProofType::Plain => T::WeightInfo::verify_proof_plain_32(),
-                }
-            }
+            VersionedProof::V0_84(inner) => match ProofType::from(inner) {
+                ProofType::ZK => T::WeightInfo::verify_zk_proof_v0_84(),
+                ProofType::Plain => T::WeightInfo::verify_plain_proof_v0_84(),
+            },
             VersionedProof::V3_0(inner) => {
                 // V3.0: weight is parameterized by log_circuit_size (worst case = 25)
-                // Without access to the VK here, we conservatively charge the maximum.
-                compute_weight::<T>(MAX_BENCHMARKED_LOG_CIRCUIT_SIZE, ProofType::from(inner))
+                // Without access to the vk here, we conservatively charge the maximum.
+                compute_weight::<T>(
+                    ProtocolVersion::from(proof),
+                    ProofType::from(inner),
+                    MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
+                )
             }
         }
     }

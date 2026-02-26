@@ -30,7 +30,9 @@ impl crate::Config for MockRuntime {
 
 fn load_test_data(proof_type: ProofType, version: ProtocolVersion) -> TestData {
     let test_params = match version {
-        ProtocolVersion::V3_0 => TestParams::new(25, proof_type, version),
+        ProtocolVersion::V3_0 => {
+            TestParams::new(MAX_BENCHMARKED_LOG_CIRCUIT_SIZE, proof_type, version)
+        }
         ProtocolVersion::V0_84 => TestParams::new_v0_84(proof_type),
     };
     get_parameterized_test_data(test_params).expect("test data should be present")
@@ -108,11 +110,11 @@ fn verify_valid_proof(
 #[rstest]
 #[case::v0_84(
     ProtocolVersion::V0_84,
-    hex!("63b5b6dca70f5699bc5c34ef607ad7e8f9df949d54b65dbbea0d404530e489a4"),
+    hex!("293060325b05b7f7ce08e13d028d791f598b4856e3523e1e3e7c8b7f341805d1"),
 )]
 #[case::v3_0(
     ProtocolVersion::V3_0,
-    hex!("7fe6c7222e7642ddbcf5183de8e7a23f4963f755c47a48f4b7b78eabbaa8f8ff"),
+    hex!("22af324f6deda316ee8b2d91cea110dbbf67715caed46b2f953a91725b8032bc"),
 )]
 fn verify_vk_hash(#[case] version: ProtocolVersion, #[case] expected: [u8; 32]) {
     let TestData { versioned_vk, .. } = load_test_data(ProofType::Plain, version);
