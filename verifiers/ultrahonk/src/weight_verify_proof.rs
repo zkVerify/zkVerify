@@ -55,322 +55,33 @@ use core::marker::PhantomData;
 
 /// Weight functions needed for `pallet_ultrahonk_verifier_verify_proof`.
 pub trait WeightInfo {
-    fn verify_proof_zk_32() -> Weight;
-    fn verify_proof_plain_32() -> Weight;
-    fn verify_zk_proof_log_7() -> Weight;
-    fn verify_plain_proof_log_7() -> Weight;
-    fn verify_zk_proof_log_8() -> Weight;
-    fn verify_plain_proof_log_8() -> Weight;
-    fn verify_zk_proof_log_9() -> Weight;
-    fn verify_plain_proof_log_9() -> Weight;
-    fn verify_zk_proof_log_10() -> Weight;
-    fn verify_plain_proof_log_10() -> Weight;
-    fn verify_zk_proof_log_11() -> Weight;
-    fn verify_plain_proof_log_11() -> Weight;
-    fn verify_zk_proof_log_12() -> Weight;
-    fn verify_plain_proof_log_12() -> Weight;
-    fn verify_zk_proof_log_13() -> Weight;
-    fn verify_plain_proof_log_13() -> Weight;
-    fn verify_zk_proof_log_14() -> Weight;
-    fn verify_plain_proof_log_14() -> Weight;
-    fn verify_zk_proof_log_15() -> Weight;
-    fn verify_plain_proof_log_15() -> Weight;
-    fn verify_zk_proof_log_16() -> Weight;
-    fn verify_plain_proof_log_16() -> Weight;
-    fn verify_zk_proof_log_17() -> Weight;
-    fn verify_plain_proof_log_17() -> Weight;
-    fn verify_zk_proof_log_18() -> Weight;
-    fn verify_plain_proof_log_18() -> Weight;
-    fn verify_zk_proof_log_19() -> Weight;
-    fn verify_plain_proof_log_19() -> Weight;
-    fn verify_zk_proof_log_20() -> Weight;
-    fn verify_plain_proof_log_20() -> Weight;
-    fn verify_zk_proof_log_21() -> Weight;
-    fn verify_plain_proof_log_21() -> Weight;
-    fn verify_zk_proof_log_22() -> Weight;
-    fn verify_plain_proof_log_22() -> Weight;
-    fn verify_zk_proof_log_23() -> Weight;
-    fn verify_plain_proof_log_23() -> Weight;
-    fn verify_zk_proof_log_24() -> Weight;
-    fn verify_plain_proof_log_24() -> Weight;
-    fn verify_zk_proof_log_25() -> Weight;
-    fn verify_plain_proof_log_25() -> Weight;
+    fn verify_zk_proof_v3_0(log_n: u64, ) -> Weight;
+    fn verify_plain_proof_v3_0(log_n: u64, ) -> Weight;
+
+    fn verify_zk_proof_v0_84() -> Weight;
+    fn verify_plain_proof_v0_84() -> Weight;
 }
 
 // For backwards compatibility and tests.
 impl WeightInfo for () {
-    fn verify_proof_zk_32() -> Weight {
+    fn verify_zk_proof_v0_84() -> Weight {
         // TODO: Replace with actual benchmark results for V0.84 with 32 public inputs
         Weight::from_parts(12_042_713_000, 0)
     }
-    fn verify_proof_plain_32() -> Weight {
+    fn verify_plain_proof_v0_84() -> Weight {
         // TODO: Replace with actual benchmark results for V0.84 with 32 public inputs
         Weight::from_parts(10_641_276_000, 0)
     }
-    fn verify_zk_proof_log_7() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 11_210_686_000 picoseconds.
-        Weight::from_parts(12_042_713_000, 0)
+
+    fn verify_zk_proof_v3_0(log_n: u64, ) -> Weight {
+        // PLACEHOLDER VALUE
+        Weight::from_parts(3_674_034_551, 0)
+            .saturating_add(Weight::from_parts(204_571_428, 0).saturating_mul(log_n.into()))
     }
-    fn verify_plain_proof_log_7() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 9_705_309_000 picoseconds.
-        Weight::from_parts(10_641_276_000, 0)
-    }
-    fn verify_zk_proof_log_8() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 9_677_385_000 picoseconds.
-        Weight::from_parts(10_226_877_000, 0)
-    }
-    fn verify_plain_proof_log_8() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 8_860_364_000 picoseconds.
-        Weight::from_parts(9_983_710_000, 0)
-    }
-    fn verify_zk_proof_log_9() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 9_473_216_000 picoseconds.
-        Weight::from_parts(10_237_499_000, 0)
-    }
-    fn verify_plain_proof_log_9() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 8_718_126_000 picoseconds.
-        Weight::from_parts(9_582_295_000, 0)
-    }
-    fn verify_zk_proof_log_10() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 9_231_606_000 picoseconds.
-        Weight::from_parts(10_523_737_000, 0)
-    }
-    fn verify_plain_proof_log_10() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 8_786_519_000 picoseconds.
-        Weight::from_parts(9_604_301_000, 0)
-    }
-    fn verify_zk_proof_log_11() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 10_016_554_000 picoseconds.
-        Weight::from_parts(11_035_782_000, 0)
-    }
-    fn verify_plain_proof_log_11() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 7_786_148_000 picoseconds.
-        Weight::from_parts(8_764_924_000, 0)
-    }
-    fn verify_zk_proof_log_12() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 9_643_753_000 picoseconds.
-        Weight::from_parts(10_360_318_000, 0)
-    }
-    fn verify_plain_proof_log_12() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 8_875_536_000 picoseconds.
-        Weight::from_parts(10_556_214_000, 0)
-    }
-    fn verify_zk_proof_log_13() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 10_136_914_000 picoseconds.
-        Weight::from_parts(11_069_771_000, 0)
-    }
-    fn verify_plain_proof_log_13() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 10_765_835_000 picoseconds.
-        Weight::from_parts(12_021_236_000, 0)
-    }
-    fn verify_zk_proof_log_14() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 10_736_258_000 picoseconds.
-        Weight::from_parts(11_339_823_000, 0)
-    }
-    fn verify_plain_proof_log_14() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 9_554_579_000 picoseconds.
-        Weight::from_parts(10_921_853_000, 0)
-    }
-    fn verify_zk_proof_log_15() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 10_201_400_000 picoseconds.
-        Weight::from_parts(11_113_690_000, 0)
-    }
-    fn verify_plain_proof_log_15() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 9_757_463_000 picoseconds.
-        Weight::from_parts(10_777_358_000, 0)
-    }
-    fn verify_zk_proof_log_16() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 10_026_684_000 picoseconds.
-        Weight::from_parts(10_890_393_000, 0)
-    }
-    fn verify_plain_proof_log_16() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 9_323_303_000 picoseconds.
-        Weight::from_parts(10_474_911_000, 0)
-    }
-    fn verify_zk_proof_log_17() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 9_889_564_000 picoseconds.
-        Weight::from_parts(10_858_871_000, 0)
-    }
-    fn verify_plain_proof_log_17() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 9_535_693_000 picoseconds.
-        Weight::from_parts(10_481_548_000, 0)
-    }
-    fn verify_zk_proof_log_18() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 9_745_481_000 picoseconds.
-        Weight::from_parts(10_645_310_000, 0)
-    }
-    fn verify_plain_proof_log_18() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 9_003_555_000 picoseconds.
-        Weight::from_parts(10_388_552_000, 0)
-    }
-    fn verify_zk_proof_log_19() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 9_994_811_000 picoseconds.
-        Weight::from_parts(10_902_545_000, 0)
-    }
-    fn verify_plain_proof_log_19() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 9_558_506_000 picoseconds.
-        Weight::from_parts(10_751_050_000, 0)
-    }
-    fn verify_zk_proof_log_20() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 9_442_891_000 picoseconds.
-        Weight::from_parts(10_756_195_000, 0)
-    }
-    fn verify_plain_proof_log_20() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 9_352_839_000 picoseconds.
-        Weight::from_parts(10_122_146_000, 0)
-    }
-    fn verify_zk_proof_log_21() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 9_507_104_000 picoseconds.
-        Weight::from_parts(10_319_098_000, 0)
-    }
-    fn verify_plain_proof_log_21() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 8_961_133_000 picoseconds.
-        Weight::from_parts(9_937_879_000, 0)
-    }
-    fn verify_zk_proof_log_22() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 8_777_708_000 picoseconds.
-        Weight::from_parts(10_008_334_000, 0)
-    }
-    fn verify_plain_proof_log_22() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 8_744_942_000 picoseconds.
-        Weight::from_parts(10_065_510_000, 0)
-    }
-    fn verify_zk_proof_log_23() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 8_328_668_000 picoseconds.
-        Weight::from_parts(10_244_476_000, 0)
-    }
-    fn verify_plain_proof_log_23() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 8_897_878_000 picoseconds.
-        Weight::from_parts(10_371_252_000, 0)
-    }
-    fn verify_zk_proof_log_24() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 10_048_010_000 picoseconds.
-        Weight::from_parts(11_272_361_000, 0)
-    }
-    fn verify_plain_proof_log_24() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 9_379_579_000 picoseconds.
-        Weight::from_parts(10_390_342_000, 0)
-    }
-    fn verify_zk_proof_log_25() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 9_543_875_000 picoseconds.
-        Weight::from_parts(10_836_496_000, 0)
-    }
-    fn verify_plain_proof_log_25() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 9_186_061_000 picoseconds.
-        Weight::from_parts(10_343_680_000, 0)
+    
+    fn verify_plain_proof_v3_0(log_n: u64, ) -> Weight {
+        // PLACEHOLDER VALUE
+        Weight::from_parts(3_674_034_551, 0)
+            .saturating_add(Weight::from_parts(204_571_428, 0).saturating_mul(log_n.into()))
     }
 }
