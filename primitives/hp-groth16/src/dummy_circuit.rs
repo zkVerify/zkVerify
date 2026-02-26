@@ -53,17 +53,20 @@ pub fn get_instance<E: Pairing>(
         inputs: (0..num_inputs).map(|_| E::ScalarField::rand(rng)).collect(),
     };
 
+    // Extract inputs before circuit is consumed by setup/prove calls
+    let inputs: Vec<Scalar> = circuit
+        .inputs
+        .iter()
+        .map(|input| Scalar::try_from_scalar(*input))
+        .collect::<Result<Vec<_>, _>>()
+        .unwrap();
+
+    // Clone circuit for setup, then pass original to prove (reduces from 2 clones to 1)
     let (pk, vk) = ark_groth16::Groth16::<E>::circuit_specific_setup(circuit.clone(), rng).unwrap();
-    let proof = ark_groth16::Groth16::<E>::prove(&pk, circuit.clone(), rng).unwrap();
+    let proof = ark_groth16::Groth16::<E>::prove(&pk, circuit, rng).unwrap();
 
     let proof: Proof = proof.try_into().unwrap();
     let vk: VerificationKey = vk.try_into().unwrap();
-    let inputs: Vec<Scalar> = circuit
-        .inputs
-        .into_iter()
-        .map(Scalar::try_from_scalar)
-        .collect::<Result<Vec<_>, _>>()
-        .unwrap();
 
     (proof, vk, inputs)
 }
