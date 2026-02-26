@@ -111,9 +111,9 @@ fn pallet_settlement_ultrahonk_verify_proof() {
     use pallet_ultrahonk_verifier::MAX_BENCHMARKED_LOG_CIRCUIT_SIZE;
 
     assert_eq!(
-        <Runtime as pallet_ultrahonk_verifier::Config>::WeightInfo::verify_zk_proof_v3_0(MAX_BENCHMARKED_LOG_CIRCUIT_SIZE)
+        <Runtime as pallet_ultrahonk_verifier::Config>::WeightInfo::verify_zk_proof_v3_0(MAX_BENCHMARKED_LOG_CIRCUIT_SIZE as u32)
         ,
-        crate::weights::pallet_ultrahonk_verifier_verify_proof::ZKVWeight::<Runtime>::verify_zk_proof_v3_0(MAX_BENCHMARKED_LOG_CIRCUIT_SIZE)
+        crate::weights::pallet_ultrahonk_verifier_verify_proof::ZKVWeight::<Runtime>::verify_zk_proof_v3_0(MAX_BENCHMARKED_LOG_CIRCUIT_SIZE as u32)
     );
 }
 
