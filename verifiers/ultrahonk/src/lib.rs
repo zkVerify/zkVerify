@@ -27,7 +27,9 @@ use scale_info::TypeInfo;
 use sp_core::{Get, H256};
 
 pub use crate::weight_verify_proof::WeightInfo as WeightInfoVerifyProof;
-pub use ultrahonk_no_std_v3_0::PUB_SIZE; // Can be obtained from an arbitrary version
+pub use ultrahonk_no_std_v0_84::VK_SIZE as VK_SIZE_V0_84;
+pub use ultrahonk_no_std_v3_0::PUB_SIZE; // Can be obtained from an arbitrary version of the crate
+pub use ultrahonk_no_std_v3_0::VK_SIZE as VK_SIZE_V3_0;
 pub use weight::WeightInfo;
 
 pub type RawProof = Vec<u8>;
@@ -113,9 +115,9 @@ pub enum VersionedProof {
 #[derive(Clone, Debug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub enum VersionedVk {
     #[codec(index = 0)]
-    V0_84([u8; ultrahonk_no_std_v0_84::VK_SIZE]),
+    V0_84([u8; VK_SIZE_V0_84]),
     #[codec(index = 1)]
-    V3_0([u8; ultrahonk_no_std_v3_0::VK_SIZE]),
+    V3_0([u8; VK_SIZE_V3_0]),
 }
 
 impl Proof {
