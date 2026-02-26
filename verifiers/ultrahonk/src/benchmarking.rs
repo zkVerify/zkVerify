@@ -17,7 +17,7 @@
 
 use crate::{
     resources::{get_parameterized_test_data, TestData, TestParams},
-    ProofType, Ultrahonk as Verifier, VersionedProof, MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
+    ProofType, ProtocolVersion, Ultrahonk as Verifier, MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
 };
 use frame_benchmarking::v2::*;
 use frame_system::RawOrigin;
@@ -38,11 +38,15 @@ pub mod benchmarks {
 
     #[benchmark]
     fn get_vk() {
-        let test_params = TestParams::new(MAX_BENCHMARKED_LOG_CIRCUIT_SIZE, ProofType::ZK);
-        let TestData { vk, .. } = get_parameterized_test_data(test_params);
+        let test_params = TestParams::new(
+            MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
+            ProofType::ZK,
+            ProtocolVersion::V3_0,
+        );
+        let TestData { versioned_vk, .. } = get_parameterized_test_data(test_params).unwrap();
         let hash = sp_core::H256::repeat_byte(2);
 
-        insert_vk_anonymous::<T>(vk, hash);
+        insert_vk_anonymous::<T>(versioned_vk, hash);
 
         let r;
         #[block]
@@ -54,28 +58,39 @@ pub mod benchmarks {
 
     #[benchmark]
     fn validate_vk() {
-        let test_params = TestParams::new(MAX_BENCHMARKED_LOG_CIRCUIT_SIZE, ProofType::ZK);
-        let TestData { vk, .. } = get_parameterized_test_data(test_params);
+        let test_params = TestParams::new(
+            MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
+            ProofType::ZK,
+            ProtocolVersion::V3_0,
+        );
+        let TestData { versioned_vk, .. } = get_parameterized_test_data(test_params).unwrap();
 
         let r;
         #[block]
         {
-            r = do_validate_vk::<T>(&vk)
+            r = do_validate_vk::<T>(&versioned_vk)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn compute_statement_hash() {
-        let test_params = TestParams::new(MAX_BENCHMARKED_LOG_CIRCUIT_SIZE, ProofType::ZK);
-        let TestData { vk, proof, pubs } = get_parameterized_test_data(test_params);
-        let vproof = VersionedProof::V3_0(proof);
+        let test_params = TestParams::new(
+            MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
+            ProofType::ZK,
+            ProtocolVersion::V3_0,
+        );
+        let TestData {
+            versioned_vk,
+            versioned_proof,
+            pubs,
+        } = get_parameterized_test_data(test_params).unwrap();
 
-        let vk = VkOrHash::Vk(vk.into());
+        let vk = VkOrHash::Vk(versioned_vk.into());
 
         #[block]
         {
-            do_compute_statement_hash::<T>(&vk, &vproof, &pubs);
+            do_compute_statement_hash::<T>(&vk, &versioned_proof, &pubs);
         }
     }
 
@@ -83,14 +98,18 @@ pub mod benchmarks {
     fn register_vk() {
         // setup code
         let caller = funded_account::<T>();
-        let test_params = TestParams::new(MAX_BENCHMARKED_LOG_CIRCUIT_SIZE, ProofType::ZK);
-        let TestData { vk, .. } = get_parameterized_test_data(test_params);
+        let test_params = TestParams::new(
+            MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
+            ProofType::ZK,
+            ProtocolVersion::V3_0,
+        );
+        let TestData { versioned_vk, .. } = get_parameterized_test_data(test_params).unwrap();
 
         #[extrinsic_call]
-        register_vk(RawOrigin::Signed(caller), vk.into());
+        register_vk(RawOrigin::Signed(caller), versioned_vk.clone().into());
 
         // Verify
-        assert!(do_get_vk::<T>(&do_vk_hash::<T>(&vk)).is_some());
+        assert!(do_get_vk::<T>(&do_vk_hash::<T>(&versioned_vk)).is_some());
     }
 
     #[benchmark]
@@ -98,10 +117,14 @@ pub mod benchmarks {
         // setup code
         let caller = funded_account::<T>();
         let hash = sp_core::H256::repeat_byte(2);
-        let test_params = TestParams::new(MAX_BENCHMARKED_LOG_CIRCUIT_SIZE, ProofType::ZK);
-        let TestData { vk, .. } = get_parameterized_test_data(test_params);
+        let test_params = TestParams::new(
+            MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
+            ProofType::ZK,
+            ProtocolVersion::V3_0,
+        );
+        let TestData { versioned_vk, .. } = get_parameterized_test_data(test_params).unwrap();
 
-        insert_vk::<T>(caller.clone(), vk, hash);
+        insert_vk::<T>(caller.clone(), versioned_vk, hash);
 
         #[extrinsic_call]
         unregister_vk(RawOrigin::Signed(caller), hash);

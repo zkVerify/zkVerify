@@ -92,13 +92,14 @@ fn pallet_settlement_risc0_verify_proof() {
 
 #[test]
 fn pallet_settlement_ultrahonk() {
+    use pallet_ultrahonk_verifier::VK_SIZE_V3_0 as VK_SIZE;
     use pallet_ultrahonk_verifier::{Ultrahonk, WeightInfo};
 
     assert_eq!(
         <<Runtime as pallet_verifiers::Config<Ultrahonk<Runtime>>>::WeightInfo as
         pallet_verifiers::WeightInfo<Ultrahonk<Runtime>>>
         ::register_vk(
-            &[0u8; pallet_ultrahonk_verifier::VK_SIZE]
+            &pallet_ultrahonk_verifier::VersionedVk::V3_0([0u8; VK_SIZE])
         ),
         crate::weights::pallet_ultrahonk_verifier::ZKVWeight::<Runtime>::register_vk()
     );
@@ -107,11 +108,12 @@ fn pallet_settlement_ultrahonk() {
 #[test]
 fn pallet_settlement_ultrahonk_verify_proof() {
     use pallet_ultrahonk_verifier::WeightInfoVerifyProof;
+    use pallet_ultrahonk_verifier::MAX_BENCHMARKED_LOG_CIRCUIT_SIZE;
 
     assert_eq!(
-        <Runtime as pallet_ultrahonk_verifier::Config>::WeightInfo::verify_zk_proof_log_25()
+        <Runtime as pallet_ultrahonk_verifier::Config>::WeightInfo::verify_zk_proof_v3_0(MAX_BENCHMARKED_LOG_CIRCUIT_SIZE)
         ,
-        crate::weights::pallet_ultrahonk_verifier_verify_proof::ZKVWeight::<Runtime>::verify_zk_proof_log_25()
+        crate::weights::pallet_ultrahonk_verifier_verify_proof::ZKVWeight::<Runtime>::verify_zk_proof_v3_0(MAX_BENCHMARKED_LOG_CIRCUIT_SIZE)
     );
 }
 
