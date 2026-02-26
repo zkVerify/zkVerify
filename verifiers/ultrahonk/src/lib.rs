@@ -228,7 +228,7 @@ impl<T: Config> Verifier for Ultrahonk<T> {
                         ultrahonk_no_std_v0_84::errors::VerifyError::KeyError => {
                             hp_verifiers::VerifyError::InvalidVerificationKey
                         }
-                        ultrahonk_no_std_v0_84::errors::VerifyError::InvalidProofError {} => {
+                        ultrahonk_no_std_v0_84::errors::VerifyError::InvalidProofError => {
                             hp_verifiers::VerifyError::InvalidProofData
                         }
                         ultrahonk_no_std_v0_84::errors::VerifyError::OtherError => {
@@ -285,7 +285,7 @@ impl<T: Config> Verifier for Ultrahonk<T> {
             }
             _ => {
                 log::debug!("Proof version does not match Vk version!");
-                return Err(hp_verifiers::VerifyError::VerifyError);
+                Err(hp_verifiers::VerifyError::VerifyError)
             }
         }
     }
@@ -298,14 +298,14 @@ impl<T: Config> Verifier for Ultrahonk<T> {
         match vk {
             VersionedVk::V0_84(_) => {
                 let _vk = ultrahonk_no_std_v0_84::key::VerificationKey::<CurveHooksImpl>::try_from(
-                    &vk_bytes[..],
+                    vk_bytes,
                 )
                 .map_err(|e| log::debug!("Invalid Vk: {e:?}"))
                 .map_err(|_| VerifyError::InvalidVerificationKey)?;
             }
             VersionedVk::V3_0(_) => {
                 let _vk = ultrahonk_no_std_v3_0::key::VerificationKey::<CurveHooksImpl>::try_from(
-                    &vk_bytes[..],
+                    vk_bytes,
                 )
                 .map_err(|e| log::debug!("Invalid Vk: {e:?}"))
                 .map_err(|_| VerifyError::InvalidVerificationKey)?;
