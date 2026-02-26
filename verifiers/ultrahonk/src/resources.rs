@@ -16,10 +16,9 @@
 #![cfg(any(test, feature = "runtime-benchmarks"))]
 #![allow(unused)]
 
-use crate::{ProofType, ProtocolVersion, VersionedProof, VersionedVk};
-
-// Minimum allowed value for the logarithm of the polynomial evaluation domain size.
-const MIN_BENCHMARKED_LOG_CIRCUIT_SIZE: u64 = 7;
+use crate::{
+    ProofType, ProtocolVersion, VersionedProof, VersionedVk, MIN_BENCHMARKED_LOG_CIRCUIT_SIZE,
+};
 
 // Struct containing the parameters pointing to the exact benchmark data that should be used.
 pub struct TestParams {
@@ -128,15 +127,15 @@ struct Data {
 }
 
 static DATA_V0_84_ZK: Data = Data {
-    vk: include_bytes!("resources/v0_84/zk/32/vk"),
-    proof: include_bytes!("resources/v0_84/zk/32/proof"),
-    pubs: include_bytes!("resources/v0_84/zk/32/pubs"),
+    vk: include_bytes!("resources/v0_84/zk/vk"),
+    proof: include_bytes!("resources/v0_84/zk/proof"),
+    pubs: include_bytes!("resources/v0_84/zk/pubs"),
 };
 
 static DATA_V0_84_PLAIN: Data = Data {
-    vk: include_bytes!("resources/v0_84/plain/32/vk"),
-    proof: include_bytes!("resources/v0_84/plain/32/proof"),
-    pubs: include_bytes!("resources/v0_84/plain/32/pubs"),
+    vk: include_bytes!("resources/v0_84/plain/vk"),
+    proof: include_bytes!("resources/v0_84/plain/proof"),
+    pubs: include_bytes!("resources/v0_84/plain/pubs"),
 };
 
 static DATA_PLAIN: &[Data] = &[
