@@ -68,33 +68,33 @@ impl WeightInfo for () {
         // Proof Size summary in bytes:
         //  Measured:  `0`
         //  Estimated: `0`
-        // Minimum execution time: 5_947_460_000 picoseconds.
-        Weight::from_parts(6_849_906_575, 0)
-            // Standard Error: 2_035_637
-            .saturating_add(Weight::from_parts(34_603_619, 0).saturating_mul(n.into()))
+        // Minimum execution time: 5_210_100_000 picoseconds.
+        Weight::from_parts(5_160_849_744, 0)
+            // Standard Error: 3_991_151
+            .saturating_add(Weight::from_parts(184_350_504, 0).saturating_mul(n.into()))
     }
     /// The range of component `n` is `[7, 25]`.
     fn verify_plain_proof_v3_0(n: u32, ) -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `0`
         //  Estimated: `0`
-        // Minimum execution time: 5_708_086_000 picoseconds.
-        Weight::from_parts(5_947_084_192, 0)
-            // Standard Error: 1_865_526
-            .saturating_add(Weight::from_parts(64_447_697, 0).saturating_mul(n.into()))
+        // Minimum execution time: 6_326_170_000 picoseconds.
+        Weight::from_parts(7_046_310_235, 0)
+            // Standard Error: 1_678_794
+            .saturating_add(Weight::from_parts(62_950_206, 0).saturating_mul(n.into()))
     }
     fn verify_zk_proof_v0_84() -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `0`
         //  Estimated: `0`
-        // Minimum execution time: 7_717_708_000 picoseconds.
-        Weight::from_parts(8_552_684_000, 0)
+        // Minimum execution time: 8_224_281_000 picoseconds.
+        Weight::from_parts(9_762_941_000, 0)
     }
     fn verify_plain_proof_v0_84() -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `0`
         //  Estimated: `0`
-        // Minimum execution time: 7_270_669_000 picoseconds.
-        Weight::from_parts(7_993_394_000, 0)
+        // Minimum execution time: 8_576_999_000 picoseconds.
+        Weight::from_parts(9_431_397_000, 0)
     }
 }
