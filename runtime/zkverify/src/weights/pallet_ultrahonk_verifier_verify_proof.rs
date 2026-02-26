@@ -69,13 +69,13 @@ impl<T: frame_system::Config> pallet_ultrahonk_verifier_verify_proof::WeightInfo
         Weight::from_parts(10_641_276_000, 0)
     }
 
-    fn verify_zk_proof_v3_0(log_n: u64, ) -> Weight {
+    fn verify_zk_proof_v3_0(log_n: u32, ) -> Weight {
         // PLACEHOLDER VALUE
         Weight::from_parts(3_674_034_551, 0)
             .saturating_add(Weight::from_parts(204_571_428, 0).saturating_mul(log_n.into()))
     }
     
-    fn verify_plain_proof_v3_0(log_n: u64, ) -> Weight {
+    fn verify_plain_proof_v3_0(log_n: u32, ) -> Weight {
         // PLACEHOLDER VALUE
         Weight::from_parts(3_674_034_551, 0)
             .saturating_add(Weight::from_parts(204_571_428, 0).saturating_mul(log_n.into()))
