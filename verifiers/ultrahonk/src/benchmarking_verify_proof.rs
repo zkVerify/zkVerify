@@ -15,8 +15,11 @@
 
 #![cfg(feature = "runtime-benchmarks")]
 
-use crate::resources::*;
-use crate::{ProofType, Ultrahonk as Verifier};
+use crate::{
+    resources::{get_parameterized_test_data, TestData, TestParams},
+    ProofType, ProtocolVersion, Ultrahonk as Verifier, MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
+    MIN_BENCHMARKED_LOG_CIRCUIT_SIZE,
+};
 use frame_benchmarking::v2::*;
 use hp_verifiers::Verifier as _;
 use pallet_verifiers::benchmarking_utils;
@@ -35,9 +38,12 @@ pub mod benchmarks {
 
     #[benchmark]
     fn verify_zk_proof_v3_0(
-        log_n: Linear<MIN_BENCHMARKED_LOG_CIRCUIT_SIZE, MAX_BENCHMARKED_LOG_CIRCUIT_SIZE>,
+        n: Linear<
+            { MIN_BENCHMARKED_LOG_CIRCUIT_SIZE as u32 },
+            { MAX_BENCHMARKED_LOG_CIRCUIT_SIZE as u32 },
+        >,
     ) {
-        let test_params = TestParams::new(log_n, ProofType::ZK, ProtocolVersion::V3_0);
+        let test_params = TestParams::new(n as u64, ProofType::ZK, ProtocolVersion::V3_0);
         let TestData {
             versioned_vk,
             versioned_proof,
@@ -53,9 +59,12 @@ pub mod benchmarks {
 
     #[benchmark]
     fn verify_plain_proof_v3_0(
-        log_n: Linear<MIN_BENCHMARKED_LOG_CIRCUIT_SIZE, MAX_BENCHMARKED_LOG_CIRCUIT_SIZE>,
+        n: Linear<
+            { MIN_BENCHMARKED_LOG_CIRCUIT_SIZE as u32 },
+            { MAX_BENCHMARKED_LOG_CIRCUIT_SIZE as u32 },
+        >,
     ) {
-        let test_params = TestParams::new(log_n, ProofType::Plain, ProtocolVersion::V3_0);
+        let test_params = TestParams::new(n as u64, ProofType::Plain, ProtocolVersion::V3_0);
         let TestData {
             versioned_vk,
             versioned_proof,
