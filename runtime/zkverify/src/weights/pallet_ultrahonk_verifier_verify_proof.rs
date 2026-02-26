@@ -18,7 +18,7 @@
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 46.2.0
 //! DATE: 2026-02-26, STEPS: `50`, REPEAT: `20`, LOW RANGE: `[]`, HIGH RANGE: `[]`
 //! WORST CASE MAP SIZE: `1000000`
-//! HOSTNAME: `186a6339d01b`, CPU: `AMD Ryzen 7 7700 8-Core Processor`
+//! HOSTNAME: `c5ec1fed2145`, CPU: `AMD Ryzen 7 7700 8-Core Processor`
 //! WASM-EXECUTION: `Compiled`, CHAIN: `None`, DB CACHE: `1024`
 
 // Executed Command:
@@ -43,7 +43,7 @@
 // /data/benchmark/runtime/zkverify/src/weights/pallet_ultrahonk_verifier_verify_proof.rs
 // --template
 // /data/benchmark/relay-node/benchmarks/zkv-deploy-weight-template.hbs
-// --base-path=/tmp/tmp.tDQp6zw5ep
+// --base-path=/tmp/tmp.CEe8lS3D6l
 
 #![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
@@ -64,33 +64,33 @@ impl<T: frame_system::Config> pallet_ultrahonk_verifier_verify_proof::WeightInfo
         // Proof Size summary in bytes:
         //  Measured:  `0`
         //  Estimated: `0`
-        // Minimum execution time: 2_936_895_000 picoseconds.
-        Weight::from_parts(2_697_721_555, 0)
-            // Standard Error: 86_348
-            .saturating_add(Weight::from_parts(36_823_857, 0).saturating_mul(n.into()))
+        // Minimum execution time: 2_934_375_000 picoseconds.
+        Weight::from_parts(2_701_866_879, 0)
+            // Standard Error: 122_641
+            .saturating_add(Weight::from_parts(36_567_630, 0).saturating_mul(n.into()))
     }
     /// The range of component `n` is `[7, 25]`.
     fn verify_plain_proof_v3_0(n: u32, ) -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `0`
         //  Estimated: `0`
-        // Minimum execution time: 2_697_510_000 picoseconds.
-        Weight::from_parts(2_489_805_680, 0)
-            // Standard Error: 72_548
-            .saturating_add(Weight::from_parts(33_461_102, 0).saturating_mul(n.into()))
+        // Minimum execution time: 2_690_201_000 picoseconds.
+        Weight::from_parts(2_490_981_234, 0)
+            // Standard Error: 67_106
+            .saturating_add(Weight::from_parts(33_342_274, 0).saturating_mul(n.into()))
     }
     fn verify_zk_proof_v0_84() -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `0`
         //  Estimated: `0`
-        // Minimum execution time: 4_010_453_000 picoseconds.
-        Weight::from_parts(4_040_018_000, 0)
+        // Minimum execution time: 4_007_410_000 picoseconds.
+        Weight::from_parts(4_042_015_000, 0)
     }
     fn verify_plain_proof_v0_84() -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `0`
         //  Estimated: `0`
-        // Minimum execution time: 3_694_075_000 picoseconds.
-        Weight::from_parts(3_731_765_000, 0)
+        // Minimum execution time: 3_711_200_000 picoseconds.
+        Weight::from_parts(3_751_806_000, 0)
     }
 }
