@@ -349,9 +349,11 @@ fn compute_weight<T: Config>(
         proof_type,
         log_circuit_size.max(MIN_BENCHMARKED_LOG_CIRCUIT_SIZE),
     ) {
-        (ProtocolVersion::V3_0, ProofType::ZK, log_n) => T::WeightInfo::verify_zk_proof_v3_0(log_n),
+        (ProtocolVersion::V3_0, ProofType::ZK, log_n) => {
+            T::WeightInfo::verify_zk_proof_v3_0(log_n as u32)
+        }
         (ProtocolVersion::V3_0, ProofType::Plain, log_n) => {
-            T::WeightInfo::verify_plain_proof_v3_0(log_n)
+            T::WeightInfo::verify_plain_proof_v3_0(log_n as u32)
         }
         _ => panic!("Invalid value given for log_circuit_size."),
     }
@@ -376,11 +378,11 @@ impl<T: Config, W: WeightInfo> pallet_verifiers::WeightInfo<Ultrahonk<T>> for Ul
                 // Without access to the vk here, we conservatively charge the maximum.
                 match inner {
                     Proof::ZK(_) => {
-                        T::WeightInfo::verify_zk_proof_v3_0(MAX_BENCHMARKED_LOG_CIRCUIT_SIZE)
+                        T::WeightInfo::verify_zk_proof_v3_0(MAX_BENCHMARKED_LOG_CIRCUIT_SIZE as u32)
                     }
-                    Proof::Plain(_) => {
-                        T::WeightInfo::verify_plain_proof_v3_0(MAX_BENCHMARKED_LOG_CIRCUIT_SIZE)
-                    }
+                    Proof::Plain(_) => T::WeightInfo::verify_plain_proof_v3_0(
+                        MAX_BENCHMARKED_LOG_CIRCUIT_SIZE as u32,
+                    ),
                 }
             }
         }
