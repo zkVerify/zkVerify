@@ -313,10 +313,6 @@ impl<T: Config> Verifier for Ultrahonk<T> {
         Ok(())
     }
 
-    fn vk_bytes(vk: &Self::Vk) -> Cow<'_, [u8]> {
-        Self::encode_vk(vk)
-    }
-
     fn pubs_bytes(pubs: &Self::Pubs) -> Cow<'_, [u8]> {
         let data = pubs
             .iter()
@@ -356,13 +352,6 @@ fn compute_weight<T: Config>(
             T::WeightInfo::verify_plain_proof_v3_0(log_n)
         }
         _ => panic!("Invalid value given for log_circuit_size."),
-    }
-}
-
-impl<T: Config> Ultrahonk<T> {
-    // Utility function for future-proofing.
-    fn encode_vk(vk: &<Ultrahonk<T> as Verifier>::Vk) -> Cow<'_, [u8]> {
-        Cow::Owned(vk.encode()) // also includes the encoded index for the version of the vk
     }
 }
 
