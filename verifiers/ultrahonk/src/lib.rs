@@ -372,11 +372,14 @@ impl<T: Config, W: WeightInfo> pallet_verifiers::WeightInfo<Ultrahonk<T>> for Ul
             VersionedProof::V3_0(inner) => {
                 // V3.0: weight is parameterized by log_circuit_size (worst case = 25)
                 // Without access to the vk here, we conservatively charge the maximum.
-                compute_weight::<T>(
-                    ProtocolVersion::from(proof),
-                    ProofType::from(inner),
-                    MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
-                )
+                match proof_type {
+                    ProofType::ZK => {
+                        T::WeightInfo::verify_zk_proof_v3_0(MAX_BENCHMARKED_LOG_CIRCUIT_SIZE)
+                    }
+                    ProofType::Plain => {
+                        T::WeightInfo::verify_plain_proof_v3_0(MAX_BENCHMARKED_LOG_CIRCUIT_SIZE)
+                    }
+                }
             }
         }
     }
