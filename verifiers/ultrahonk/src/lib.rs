@@ -178,6 +178,7 @@ impl From<Proof> for RawProof {
 
 pub mod benchmarking;
 pub mod benchmarking_verify_proof;
+pub mod migrations;
 mod resources;
 mod verifier_should;
 mod weight;
