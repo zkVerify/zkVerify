@@ -344,6 +344,11 @@ cumulus-relay-chain-inprocess-interface = { path = "patches/cumulus/client/relay
 cumulus-relay-chain-minimal-node = { path = "patches/cumulus/client/relay-chain-minimal-node" }
 polkadot-node-core-pvf-common = { path = "patches/polkadot/node/core/pvf/common" }
 
+# Temporary patches that enable the upgrade from polkadot-2412 to polkadot-2512.
+# To be removed once done.
+polkadot-primitives = { path = "patches/polkadot/primitives" }
+polkadot-runtime-parachains = { path = "patches/polkadot/runtime/parachains" }
+
 [profile.release]
 # Polkadot runtime requires unwinding.
 panic = "unwind"
