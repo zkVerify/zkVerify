@@ -15,8 +15,10 @@
 
 #![cfg(feature = "runtime-benchmarks")]
 
-use crate::{Proof, ProofType, Ultrahonk as Verifier};
-use alloc::vec::Vec;
+use crate::{
+    resources::{get_parameterized_test_data, TestData, TestParams},
+    ProofType, ProtocolVersion, Ultrahonk as Verifier, MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
+};
 use frame_benchmarking::v2::*;
 use frame_system::RawOrigin;
 use hp_verifiers::Verifier as _;
@@ -25,8 +27,6 @@ pub struct Pallet<T: Config>(crate::Pallet<T>);
 pub trait Config: crate::Config {}
 impl<T: crate::Config> Config for T {}
 pub type Call<T> = pallet_verifiers::Call<T, Verifier<T>>;
-
-include!("resources.rs");
 
 #[allow(clippy::multiple_bound_locations)]
 #[benchmarks(where T: pallet_verifiers::Config<Verifier<T>>)]
@@ -37,53 +37,16 @@ pub mod benchmarks {
     benchmarking_utils!(Verifier<T>, crate::Config);
 
     #[benchmark]
-    fn verify_proof_zk_32() {
-        let proof = Proof::new(
-            ProofType::ZK,
-            include_bytes!("resources/32/zk/zk_proof").to_vec(),
-        );
-        let pubs: Vec<_> = include_bytes!("resources/32/zk/pubs")
-            .chunks_exact(crate::PUB_SIZE)
-            .map(TryInto::try_into)
-            .map(Result::unwrap)
-            .collect();
-        let vk = *include_bytes!("resources/32/zk/vk");
-
-        let r;
-        #[block]
-        {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
-        };
-        assert!(r.is_ok());
-    }
-
-    #[benchmark]
-    fn verify_proof_plain_32() {
-        let proof = Proof::new(
-            ProofType::Plain,
-            include_bytes!("resources/32/plain/plain_proof").to_vec(),
-        );
-        let pubs: Vec<_> = include_bytes!("resources/32/plain/pubs")
-            .chunks_exact(crate::PUB_SIZE)
-            .map(TryInto::try_into)
-            .map(Result::unwrap)
-            .collect();
-        let vk = *include_bytes!("resources/32/plain/vk");
-
-        let r;
-        #[block]
-        {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
-        };
-        assert!(r.is_ok());
-    }
-
-    #[benchmark]
     fn get_vk() {
-        let vk = VALID_VK;
+        let test_params = TestParams::new(
+            MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
+            ProofType::ZK,
+            ProtocolVersion::V3_0,
+        );
+        let TestData { versioned_vk, .. } = get_parameterized_test_data(test_params).unwrap();
         let hash = sp_core::H256::repeat_byte(2);
 
-        insert_vk_anonymous::<T>(vk, hash);
+        insert_vk_anonymous::<T>(versioned_vk, hash);
 
         let r;
         #[block]
@@ -95,34 +58,39 @@ pub mod benchmarks {
 
     #[benchmark]
     fn validate_vk() {
-        let vk = VALID_VK;
+        let test_params = TestParams::new(
+            MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
+            ProofType::ZK,
+            ProtocolVersion::V3_0,
+        );
+        let TestData { versioned_vk, .. } = get_parameterized_test_data(test_params).unwrap();
 
         let r;
         #[block]
         {
-            r = do_validate_vk::<T>(&vk)
+            r = do_validate_vk::<T>(&versioned_vk)
         };
         assert!(r.is_ok());
     }
 
     #[benchmark]
     fn compute_statement_hash() {
-        let proof = Proof::new(
+        let test_params = TestParams::new(
+            MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
             ProofType::ZK,
-            include_bytes!("resources/32/zk/zk_proof").to_vec(),
+            ProtocolVersion::V3_0,
         );
-        let pubs: Vec<_> = include_bytes!("resources/32/zk/pubs")
-            .chunks_exact(crate::PUB_SIZE)
-            .map(TryInto::try_into)
-            .map(Result::unwrap)
-            .collect();
-        let vk = *include_bytes!("resources/32/zk/vk");
+        let TestData {
+            versioned_vk,
+            versioned_proof,
+            pubs,
+        } = get_parameterized_test_data(test_params).unwrap();
 
-        let vk = VkOrHash::Vk(vk.into());
+        let vk = VkOrHash::Vk(versioned_vk.into());
 
         #[block]
         {
-            do_compute_statement_hash::<T>(&vk, &proof, &pubs);
+            do_compute_statement_hash::<T>(&vk, &versioned_proof, &pubs);
         }
     }
 
@@ -130,13 +98,18 @@ pub mod benchmarks {
     fn register_vk() {
         // setup code
         let caller = funded_account::<T>();
-        let vk = VALID_VK;
+        let test_params = TestParams::new(
+            MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
+            ProofType::ZK,
+            ProtocolVersion::V3_0,
+        );
+        let TestData { versioned_vk, .. } = get_parameterized_test_data(test_params).unwrap();
 
         #[extrinsic_call]
-        register_vk(RawOrigin::Signed(caller), vk.into());
+        register_vk(RawOrigin::Signed(caller), versioned_vk.clone().into());
 
         // Verify
-        assert!(do_get_vk::<T>(&do_vk_hash::<T>(&vk)).is_some());
+        assert!(do_get_vk::<T>(&do_vk_hash::<T>(&versioned_vk)).is_some());
     }
 
     #[benchmark]
@@ -144,9 +117,14 @@ pub mod benchmarks {
         // setup code
         let caller = funded_account::<T>();
         let hash = sp_core::H256::repeat_byte(2);
-        let vk = VALID_VK;
+        let test_params = TestParams::new(
+            MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
+            ProofType::ZK,
+            ProtocolVersion::V3_0,
+        );
+        let TestData { versioned_vk, .. } = get_parameterized_test_data(test_params).unwrap();
 
-        insert_vk::<T>(caller.clone(), vk, hash);
+        insert_vk::<T>(caller.clone(), versioned_vk, hash);
 
         #[extrinsic_call]
         unregister_vk(RawOrigin::Signed(caller), hash);
@@ -185,6 +163,7 @@ mod mock {
 
     impl crate::Config for Test {
         type MaxPubs = ConstU32<2060>; // this is arbitrary right now
+        type WeightInfo = ();
     }
 
     #[derive_impl(frame_system::config_preludes::SolochainDefaultConfig as frame_system::DefaultConfig)]

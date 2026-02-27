@@ -29,6 +29,12 @@ zkvTypes = {
   EzklVK: {
     vkBytes: "Bytes"
   },
+  UltrahonkVk: {
+    _enum: {
+      V0_84: 'Bytes',
+      V3_0: 'Bytes'
+    }
+  },
   FflonkVk: {
     power: "u8",
     k1: "U256",
@@ -125,7 +131,7 @@ zkvRpc = {
       params: [
         {
           name: 'vk',
-          type: 'Bytes',
+          type: 'UltrahonkVk',
         },
       ],
       type: 'H256'

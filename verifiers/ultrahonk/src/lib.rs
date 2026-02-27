@@ -17,32 +17,34 @@
 
 extern crate alloc;
 
-use alloc::{borrow::Cow, boxed::Box, vec::Vec};
-use codec::Decode;
-use codec::Encode;
-use codec::MaxEncodedLen;
+use alloc::{borrow::Cow, vec::Vec};
+use codec::{Decode, Encode, MaxEncodedLen};
 use core::marker::PhantomData;
 use frame_support::{ensure, weights::Weight};
 use hp_verifiers::{Verifier, VerifyError};
+use native::bn254::HostHooks as CurveHooksImpl;
 use scale_info::TypeInfo;
 use sp_core::{Get, H256};
-use ultrahonk_no_std::ProofType as UltraHonkProofType;
 
-use native::bn254::HostHooks as CurveHooksImpl;
+pub use crate::weight_verify_proof::WeightInfo as WeightInfoVerifyProof;
+pub use ultrahonk_no_std_v0_84::VK_SIZE as VK_SIZE_V0_84;
+pub use ultrahonk_no_std_v3_0::PUB_SIZE; // Can be obtained from an arbitrary version of the crate
+pub use ultrahonk_no_std_v3_0::VK_SIZE as VK_SIZE_V3_0;
+pub use weight::WeightInfo;
 
-use ultrahonk_no_std::key::VerificationKey;
-pub use ultrahonk_no_std::PLAIN_PROOF_SIZE;
-pub use ultrahonk_no_std::PUB_SIZE;
-pub use ultrahonk_no_std::VK_SIZE;
-pub use ultrahonk_no_std::ZK_PROOF_SIZE;
 pub type RawProof = Vec<u8>;
 pub type Pubs = Vec<[u8; PUB_SIZE]>;
-pub type Vk = [u8; VK_SIZE];
-pub use weight::WeightInfo;
+
+// Minimum allowed value for the logarithm of the polynomial evaluation domain size.
+pub const MIN_BENCHMARKED_LOG_CIRCUIT_SIZE: u64 = 7;
+// Maximum allowed value for the logarithm of the polynomial evaluation domain size.
+pub const MAX_BENCHMARKED_LOG_CIRCUIT_SIZE: u64 = 25;
 
 pub trait Config {
     /// Maximum supported number of public inputs.
     type MaxPubs: Get<u32>;
+    /// Weight info used to compute the verify proof weight
+    type WeightInfo: WeightInfoVerifyProof;
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
@@ -57,22 +59,68 @@ pub enum Proof {
     Plain(RawProof),
 }
 
+impl TryFrom<Proof> for ultrahonk_no_std_v3_0::ProofType {
+    type Error = ();
+
+    fn try_from(proof: Proof) -> Result<Self, Self::Error> {
+        match proof {
+            Proof::ZK(proof_bytes) => Ok(Self::ZK(proof_bytes.into_boxed_slice())),
+            Proof::Plain(proof_bytes) => Ok(Self::Plain(proof_bytes.into_boxed_slice())),
+        }
+    }
+}
+
+impl TryFrom<Proof> for ultrahonk_no_std_v0_84::ProofType {
+    type Error = ();
+
+    fn try_from(proof: Proof) -> Result<Self, Self::Error> {
+        match proof {
+            Proof::ZK(proof_bytes) => Ok(Self::ZK(proof_bytes.try_into().map_err(|_| ())?)),
+            Proof::Plain(proof_bytes) => Ok(Self::Plain(proof_bytes.try_into().map_err(|_| ())?)),
+        }
+    }
+}
+
+#[derive(PartialEq, Eq, Debug)]
+pub enum ProtocolVersion {
+    V0_84,
+    V3_0,
+}
+
+impl From<&VersionedProof> for ProtocolVersion {
+    fn from(value: &VersionedProof) -> Self {
+        match value {
+            VersionedProof::V0_84(_) => ProtocolVersion::V0_84,
+            VersionedProof::V3_0(_) => ProtocolVersion::V3_0,
+        }
+    }
+}
+
+// Important Notes:
+// i) Please DO NOT alter the indices of existing VersionedProof's variants,
+// ii) If you are introducing new VersionedProof variants, ensure that
+// indices match those in VersionedVk.
+#[derive(Clone, Debug, PartialEq, Encode, Decode, TypeInfo)]
+pub enum VersionedProof {
+    #[codec(index = 0)]
+    V0_84(Proof),
+    #[codec(index = 1)]
+    V3_0(Proof),
+}
+
+// Important Notes:
+// i) Please DO NOT alter the indices of existing VersionedVk's variants,
+// ii) If you are introducing new VersionedVk variants, ensure that
+// indices match those in VersionedProof.
+#[derive(Clone, Debug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
+pub enum VersionedVk {
+    #[codec(index = 0)]
+    V0_84([u8; VK_SIZE_V0_84]),
+    #[codec(index = 1)]
+    V3_0([u8; VK_SIZE_V3_0]),
+}
+
 impl Proof {
-    // Expected proof size per type.
-    fn proof_size(&self) -> usize {
-        match self {
-            Proof::ZK(_) => ZK_PROOF_SIZE,
-            Proof::Plain(_) => PLAIN_PROOF_SIZE,
-        }
-    }
-
-    // Actual proof length in bytes.
-    fn len(&self) -> usize {
-        match self {
-            Proof::ZK(proof_bytes) | Proof::Plain(proof_bytes) => proof_bytes.len(),
-        }
-    }
-
     pub fn new(proof_type: ProofType, proof_bytes: RawProof) -> Self {
         match proof_type {
             ProofType::ZK => Self::ZK(proof_bytes),
@@ -83,7 +131,40 @@ impl Proof {
 
 impl Default for Proof {
     fn default() -> Self {
-        Self::Plain(Vec::new()) // mirror Noir's default
+        Self::ZK(Vec::new()) // mirrors Noir's default
+    }
+}
+
+impl Default for VersionedProof {
+    fn default() -> Self {
+        Self::V3_0(Proof::default())
+    }
+}
+
+impl From<&Proof> for ProofType {
+    fn from(proof: &Proof) -> Self {
+        match proof {
+            Proof::ZK(_) => Self::ZK,
+            Proof::Plain(_) => Self::Plain,
+        }
+    }
+}
+
+impl From<&ultrahonk_no_std_v0_84::ProofType> for ProofType {
+    fn from(proof: &ultrahonk_no_std_v0_84::ProofType) -> Self {
+        match proof {
+            ultrahonk_no_std_v0_84::ProofType::ZK(_) => Self::ZK,
+            ultrahonk_no_std_v0_84::ProofType::Plain(_) => Self::Plain,
+        }
+    }
+}
+
+impl From<&ultrahonk_no_std_v3_0::ProofType> for ProofType {
+    fn from(proof: &ultrahonk_no_std_v3_0::ProofType) -> Self {
+        match proof {
+            ultrahonk_no_std_v3_0::ProofType::ZK(_) => Self::ZK,
+            ultrahonk_no_std_v3_0::ProofType::Plain(_) => Self::Plain,
+        }
     }
 }
 
@@ -95,42 +176,23 @@ impl From<Proof> for RawProof {
     }
 }
 
-impl TryFrom<&Proof> for UltraHonkProofType {
-    type Error = ();
-
-    fn try_from(proof: &Proof) -> Result<Self, ()> {
-        if proof.len() != proof.proof_size() {
-            return Err(());
-        }
-
-        match proof {
-            Proof::ZK(proof_bytes) => {
-                let mut bytes = [0u8; ZK_PROOF_SIZE];
-                bytes.copy_from_slice(proof_bytes);
-                Ok(UltraHonkProofType::ZK(Box::new(bytes)))
-            }
-            Proof::Plain(proof_bytes) => {
-                let mut bytes = [0u8; PLAIN_PROOF_SIZE];
-                bytes.copy_from_slice(proof_bytes);
-                Ok(UltraHonkProofType::Plain(Box::new(bytes)))
-            }
-        }
-    }
-}
-
 pub mod benchmarking;
+pub mod benchmarking_verify_proof;
+pub mod migrations;
+mod resources;
 mod verifier_should;
-pub mod weight;
+mod weight;
+mod weight_verify_proof;
 
 #[pallet_verifiers::verifier]
 pub struct Ultrahonk<T>;
 
 impl<T: Config> Verifier for Ultrahonk<T> {
-    type Proof = Proof;
+    type Proof = VersionedProof;
 
     type Pubs = Pubs;
 
-    type Vk = Vk;
+    type Vk = VersionedVk;
 
     fn hash_context_data() -> &'static [u8] {
         b"ultrahonk"
@@ -146,48 +208,112 @@ impl<T: Config> Verifier for Ultrahonk<T> {
             hp_verifiers::VerifyError::InvalidInput
         );
 
-        // Transform input proof into an UltraHonk verifier-compatible proof
-        let prepared_proof: UltraHonkProofType = proof
-            .try_into()
-            .map_err(|_| VerifyError::InvalidProofData)?;
+        match (proof, vk) {
+            (VersionedProof::V0_84(inner_proof), VersionedVk::V0_84(vk_bytes)) => {
+                // Transform input proof into an UltraHonk verifier-compatible proof
+                let prepared: ultrahonk_no_std_v0_84::ProofType = inner_proof
+                    .clone()
+                    .try_into()
+                    .map_err(|_| hp_verifiers::VerifyError::InvalidProofData)?;
 
-        log::trace!("Verifying (no-std)");
-        ultrahonk_no_std::verify::<CurveHooksImpl>(vk, &prepared_proof, pubs)
-            .inspect_err(|e| log::debug!("Cannot verify proof: {e:?}"))
-            .map_err(|e| match e {
-                ultrahonk_no_std::errors::VerifyError::VerificationError { message: _ } => {
-                    hp_verifiers::VerifyError::VerifyError
-                }
-                ultrahonk_no_std::errors::VerifyError::PublicInputError { message: _ } => {
-                    hp_verifiers::VerifyError::InvalidInput
-                }
-                ultrahonk_no_std::errors::VerifyError::KeyError => {
-                    hp_verifiers::VerifyError::InvalidVerificationKey
-                }
-                ultrahonk_no_std::errors::VerifyError::InvalidProofError => {
-                    hp_verifiers::VerifyError::InvalidProofData
-                }
-                ultrahonk_no_std::errors::VerifyError::OtherError => {
-                    hp_verifiers::VerifyError::VerifyError
-                }
-            })
-            .map(|_| None)
+                log::trace!("Verifying (no-std)");
+                ultrahonk_no_std_v0_84::verify::<CurveHooksImpl>(vk_bytes, &prepared, pubs)
+                    .inspect_err(|e| log::debug!("Cannot verify proof: {e:?}"))
+                    .map_err(|e| match e {
+                        ultrahonk_no_std_v0_84::errors::VerifyError::VerificationError {
+                            message: _,
+                        } => hp_verifiers::VerifyError::VerifyError,
+                        ultrahonk_no_std_v0_84::errors::VerifyError::PublicInputError {
+                            message: _,
+                        } => hp_verifiers::VerifyError::InvalidInput,
+                        ultrahonk_no_std_v0_84::errors::VerifyError::KeyError => {
+                            hp_verifiers::VerifyError::InvalidVerificationKey
+                        }
+                        ultrahonk_no_std_v0_84::errors::VerifyError::InvalidProofError => {
+                            hp_verifiers::VerifyError::InvalidProofData
+                        }
+                        ultrahonk_no_std_v0_84::errors::VerifyError::OtherError => {
+                            hp_verifiers::VerifyError::VerifyError
+                        }
+                    })
+                    .map(|_| None)
+            }
+            (VersionedProof::V3_0(inner_proof), VersionedVk::V3_0(vk_bytes)) => {
+                // Transform input proof into an UltraHonk verifier-compatible proof
+                let prepared: ultrahonk_no_std_v3_0::ProofType = inner_proof
+                    .clone()
+                    .try_into()
+                    .map_err(|_| hp_verifiers::VerifyError::InvalidProofData)?;
+
+                let w = {
+                    let log_circuit_size = ultrahonk_no_std_v3_0::key::VerificationKey::<
+                        CurveHooksImpl,
+                    >::extract_log_circuit_size(vk_bytes)
+                    .map_err(|_| hp_verifiers::VerifyError::InvalidVerificationKey)?;
+                    ensure!(
+                        log_circuit_size <= MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
+                        hp_verifiers::VerifyError::InvalidVerificationKey
+                    );
+
+                    compute_weight::<T>(
+                        ProtocolVersion::from(proof),
+                        ProofType::from(&prepared),
+                        log_circuit_size,
+                    )
+                };
+
+                log::trace!("Verifying (no-std)");
+                ultrahonk_no_std_v3_0::verify::<CurveHooksImpl>(vk_bytes, &prepared, pubs)
+                    .inspect_err(|e| log::debug!("Cannot verify proof: {e:?}"))
+                    .map_err(|e| match e {
+                        ultrahonk_no_std_v3_0::errors::VerifyError::VerificationError {
+                            message: _,
+                        } => hp_verifiers::VerifyError::VerifyError,
+                        ultrahonk_no_std_v3_0::errors::VerifyError::PublicInputError {
+                            message: _,
+                        } => hp_verifiers::VerifyError::InvalidInput,
+                        ultrahonk_no_std_v3_0::errors::VerifyError::KeyError => {
+                            hp_verifiers::VerifyError::InvalidVerificationKey
+                        }
+                        ultrahonk_no_std_v3_0::errors::VerifyError::InvalidProofError {
+                            message: _,
+                        } => hp_verifiers::VerifyError::InvalidProofData,
+                        ultrahonk_no_std_v3_0::errors::VerifyError::OtherError => {
+                            hp_verifiers::VerifyError::VerifyError
+                        }
+                    })
+                    .map(|_| Some(w))
+            }
+            _ => {
+                log::debug!("Proof version does not match Vk version!");
+                Err(hp_verifiers::VerifyError::VerifyError)
+            }
+        }
     }
 
     fn validate_vk(vk: &Self::Vk) -> Result<(), VerifyError> {
-        let _vk = VerificationKey::<CurveHooksImpl>::try_from(&vk[..])
-            .map_err(|e| log::debug!("Invalid Vk: {e:?}"))
-            .map_err(|_| VerifyError::InvalidVerificationKey)?;
+        let vk_bytes: &[u8] = match vk {
+            VersionedVk::V0_84(vk_bytes) => vk_bytes,
+            VersionedVk::V3_0(vk_bytes) => vk_bytes,
+        };
+        match vk {
+            VersionedVk::V0_84(_) => {
+                let _vk = ultrahonk_no_std_v0_84::key::VerificationKey::<CurveHooksImpl>::try_from(
+                    vk_bytes,
+                )
+                .map_err(|e| log::debug!("Invalid Vk: {e:?}"))
+                .map_err(|_| VerifyError::InvalidVerificationKey)?;
+            }
+            VersionedVk::V3_0(_) => {
+                let _vk = ultrahonk_no_std_v3_0::key::VerificationKey::<CurveHooksImpl>::try_from(
+                    vk_bytes,
+                )
+                .map_err(|e| log::debug!("Invalid Vk: {e:?}"))
+                .map_err(|_| VerifyError::InvalidVerificationKey)?;
+            }
+        }
 
         Ok(())
-    }
-
-    fn vk_hash(vk: &Self::Vk) -> H256 {
-        sp_io::hashing::sha2_256(&Self::vk_bytes(vk)).into()
-    }
-
-    fn vk_bytes(vk: &Self::Vk) -> Cow<'_, [u8]> {
-        Self::encode_vk(vk)
     }
 
     fn pubs_bytes(pubs: &Self::Pubs) -> Cow<'_, [u8]> {
@@ -197,29 +323,69 @@ impl<T: Config> Verifier for Ultrahonk<T> {
             .collect::<Vec<_>>();
         Cow::Owned(data)
     }
+
+    fn verifier_version_hash(proof: &Self::Proof) -> H256 {
+        // Computed as: SHA2-256("ultrahonk:vx.y")
+        let h = match proof {
+            VersionedProof::V0_84(_) => hex_literal::hex!(
+                "4966cd7801ae9ef9d7afb52ec3de92f0693e720f58c5c8ecfb23d85b0934f018"
+            ),
+            VersionedProof::V3_0(_) => hex_literal::hex!(
+                "55b52ad2b4153c872e27d688f567c1406f0d93b5528dd2b0bf2a9a40df97f1f9"
+            ),
+        };
+        H256(h)
+    }
 }
 
-impl<T: Config> Ultrahonk<T> {
-    // Utility function for future-proofing.
-    fn encode_vk(vk: &Vk) -> Cow<'_, [u8]> {
-        Cow::Owned(vk.to_vec())
+fn compute_weight<T: Config>(
+    protocol_version: ProtocolVersion,
+    proof_type: ProofType,
+    log_circuit_size: u64,
+) -> Weight {
+    // Note that for very small circuits (i.e., log_circuit_size < MIN_BENCHMARKED_LOG_CIRCUIT_SIZE),
+    // we compute weights using log_circuit_size = MIN_BENCHMARKED_LOG_CIRCUIT_SIZE
+    match (
+        protocol_version,
+        proof_type,
+        log_circuit_size.max(MIN_BENCHMARKED_LOG_CIRCUIT_SIZE),
+    ) {
+        (ProtocolVersion::V3_0, ProofType::ZK, log_n) => {
+            T::WeightInfo::verify_zk_proof_v3_0(log_n as u32)
+        }
+        (ProtocolVersion::V3_0, ProofType::Plain, log_n) => {
+            T::WeightInfo::verify_plain_proof_v3_0(log_n as u32)
+        }
+        _ => panic!("Invalid value given for log_circuit_size."),
     }
 }
 
 /// The struct to use in runtime pallet configuration to map the weight computed by this crate
 /// benchmarks to the weight needed by the `pallet-verifiers`.
-pub struct UltrahonkWeight<W: weight::WeightInfo>(PhantomData<W>);
+pub struct UltrahonkWeight<W: WeightInfo>(PhantomData<W>);
 
-impl<T: Config, W: weight::WeightInfo> pallet_verifiers::WeightInfo<Ultrahonk<T>>
-    for UltrahonkWeight<W>
-{
+impl<T: Config, W: WeightInfo> pallet_verifiers::WeightInfo<Ultrahonk<T>> for UltrahonkWeight<W> {
     fn verify_proof(
         proof: &<Ultrahonk<T> as hp_verifiers::Verifier>::Proof,
         _pubs: &<Ultrahonk<T> as hp_verifiers::Verifier>::Pubs,
     ) -> Weight {
         match proof {
-            Proof::ZK(_) => W::verify_proof_zk_32(),
-            Proof::Plain(_) => W::verify_proof_plain_32(),
+            VersionedProof::V0_84(inner) => match ProofType::from(inner) {
+                ProofType::ZK => T::WeightInfo::verify_zk_proof_v0_84(),
+                ProofType::Plain => T::WeightInfo::verify_plain_proof_v0_84(),
+            },
+            VersionedProof::V3_0(inner) => {
+                // V3.0: weight is parameterized by log_circuit_size (worst case = 25)
+                // Without access to the vk here, we conservatively charge the maximum.
+                match inner {
+                    Proof::ZK(_) => {
+                        T::WeightInfo::verify_zk_proof_v3_0(MAX_BENCHMARKED_LOG_CIRCUIT_SIZE as u32)
+                    }
+                    Proof::Plain(_) => T::WeightInfo::verify_plain_proof_v3_0(
+                        MAX_BENCHMARKED_LOG_CIRCUIT_SIZE as u32,
+                    ),
+                }
+            }
         }
     }
 

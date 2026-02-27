@@ -23,7 +23,7 @@ use pallet_fflonk_verifier::{
 };
 use pallet_groth16_verifier::{Curve, Groth16};
 use pallet_plonky2_verifier::{Plonky2, Plonky2Config};
-use pallet_ultrahonk_verifier::{Ultrahonk, VK_SIZE as ULTRAHONK_VK_SIZE};
+use pallet_ultrahonk_verifier::{Ultrahonk, VersionedVk as UltrahonkVersionedVk};
 use pallet_ultraplonk_verifier::{Ultraplonk, VK_SIZE};
 use sp_core::{serde::Deserialize, serde::Serialize, Bytes, H256, U256};
 
@@ -121,6 +121,37 @@ impl From<FflonkVk> for pallet_fflonk_verifier::vk::Vk {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub enum UltrahonkVk {
+    #[serde(alias = "v084")]
+    V0_84(Bytes),
+    #[serde(alias = "v30")]
+    V3_0(Bytes),
+}
+
+impl TryFrom<UltrahonkVk> for UltrahonkVersionedVk {
+    type Error = &'static str;
+
+    fn try_from(vk: UltrahonkVk) -> Result<Self, Self::Error> {
+        match vk {
+            UltrahonkVk::V0_84(bytes) => {
+                let arr = bytes
+                    .0
+                    .try_into()
+                    .map_err(|_| "Incorrect length for V0_84 VK")?;
+                Ok(UltrahonkVersionedVk::V0_84(arr))
+            }
+            UltrahonkVk::V3_0(bytes) => {
+                let arr = bytes
+                    .0
+                    .try_into()
+                    .map_err(|_| "Incorrect length for V3_0 VK")?;
+                Ok(UltrahonkVersionedVk::V3_0(arr))
+            }
+        }
+    }
+}
+
 #[rpc(client, server, namespace = "vk_hash")]
 pub trait VKHashApi<ResponseType> {
     #[method(name = "ezkl")]
@@ -134,7 +165,7 @@ pub trait VKHashApi<ResponseType> {
     #[method(name = "risc0")]
     fn risc0(&self, vk: H256) -> RpcResult<ResponseType>;
     #[method(name = "ultrahonk")]
-    fn ultrahonk(&self, vk: Bytes) -> RpcResult<ResponseType>;
+    fn ultrahonk(&self, vk: UltrahonkVk) -> RpcResult<ResponseType>;
     #[method(name = "ultraplonk")]
     fn ultraplonk(&self, vk: Bytes) -> RpcResult<ResponseType>;
     #[method(name = "sp1")]
@@ -188,21 +219,10 @@ impl VKHashApiServer<H256> for VKHash {
         Ok(vk)
     }
 
-    fn ultrahonk(&self, vk: Bytes) -> RpcResult<H256> {
-        if vk.len() != ULTRAHONK_VK_SIZE {
-            return Err(ErrorObject::owned(
-                1,
-                "Incorrect Slice Length",
-                Some("Incorrect Slice Length".to_string()),
-            ));
-        }
-        let vk: VkOf<Ultrahonk<zkv_runtime::Runtime>> = vk.0.try_into().map_err(|_| {
-            ErrorObject::owned(
-                2,
-                "Deserialize error",
-                Some("Deserialize error".to_string()),
-            )
-        })?;
+    fn ultrahonk(&self, vk: UltrahonkVk) -> RpcResult<H256> {
+        let vk: VkOf<Ultrahonk<zkv_runtime::Runtime>> = vk
+            .try_into()
+            .map_err(|e: &str| ErrorObject::owned(1, e, Some(e.to_string())))?;
         Ok(Ultrahonk::<zkv_runtime::Runtime>::vk_hash(&vk))
     }
 
