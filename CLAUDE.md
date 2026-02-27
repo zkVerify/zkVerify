@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+> See also: [`agents.md`](agents.md) — behavioral guidelines for autonomous AI agents (safety zones, decision rules, workflows).
+
 ## Rust Toolchain
 
 The codebase compiles with the **stable** Rust toolchain, including `cargo fmt` (no nightly required, unlike polkadot-sdk).
