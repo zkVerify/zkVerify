@@ -48,7 +48,7 @@ pub struct InnerMigrateV1ToV2<T>(core::marker::PhantomData<T>);
 
 #[storage_alias]
 type OldVk<T: crate::Config + pallet_verifiers::Config<Ultrahonk<T>>> =
-    StorageMap<crate::Pallet<T>, Identity, H256, VkEntry<Vec<u8>>>;
+    StorageMap<crate::Pallet<T>, Identity, H256, VkEntry<[u8; ultrahonk_no_std_v0_84::VK_SIZE]>>;
 
 impl<T> UncheckedOnRuntimeUpgrade for InnerMigrateV1ToV2<T>
 where
