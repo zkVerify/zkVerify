@@ -27,7 +27,6 @@
 //! This migration drains all existing `Vks` and `Tickets` storage entries for the
 //! UltraHonk verifier instance.
 
-use alloc::vec::Vec;
 use frame_support::traits::Consideration;
 use frame_support::{
     migrations::VersionedMigration, storage_alias, traits::UncheckedOnRuntimeUpgrade, Identity,
