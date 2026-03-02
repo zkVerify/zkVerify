@@ -9412,7 +9412,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "ultrahonk-no-std 0.1.0 (git+https://github.com/zkVerify/ultrahonk_verifier.git?tag=v0.2.1)",
- "ultrahonk-no-std 0.1.0 (git+https://github.com/zkVerify/ultrahonk_verifier.git?tag=v0.3.1)",
+ "ultrahonk-no-std 0.1.0 (git+https://github.com/zkVerify/ultrahonk_verifier.git?tag=v0.3.2)",
 ]
 
 [[package]]
@@ -18040,7 +18040,7 @@ dependencies = [
 [[package]]
 name = "ultrahonk-no-std"
 version = "0.1.0"
-source = "git+https://github.com/zkVerify/ultrahonk_verifier.git?tag=v0.3.1#8803e3063f89225425f030858a4a90634a25a085"
+source = "git+https://github.com/zkVerify/ultrahonk_verifier.git?tag=v0.3.2#986b79b232d0f44c52fe50cd85ba8c3f505fc3c8"
 dependencies = [
  "ark-bn254 0.5.0",
  "ark-bn254-ext",
