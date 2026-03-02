@@ -35,6 +35,6 @@ parameter_types! {
 
     /// Fees split between author and treasury: 100% to author, 0% to treasury.
     pub AllFeesToAuthor: Percent = Percent::from_percent(100);
-    /// No burn fees.
-    pub NoBurnFees: Percent = Percent::from_percent(0);
+    /// Fee to burn.
+    pub BurnFees: Percent = Percent::from_percent(70);
 }
