@@ -371,19 +371,41 @@ impl<T: Config, W: WeightInfo> pallet_verifiers::WeightInfo<Ultrahonk<T>> for Ul
     ) -> Weight {
         match proof {
             VersionedProof::V0_84(inner) => match ProofType::from(inner) {
+                // For V0.84, we conservatively charge the maximum (worst case = 25)
                 ProofType::ZK => T::WeightInfo::verify_zk_proof_v0_84(),
                 ProofType::Plain => T::WeightInfo::verify_plain_proof_v0_84(),
             },
             VersionedProof::V3_0(inner) => {
-                // V3.0: weight is parameterized by log_circuit_size (worst case = 25)
-                // Without access to the vk here, we conservatively charge the maximum.
+                // For V3.0: weight is parameterized by log_circuit_size (worst case = 25)
+                // Although vk is not known here, we are able to derive the value of `log_n`
+                // from the proof length. Note that in case of a mismatch with the value of
+                // `log_n` in the vk, the verifier will still catch the issue.
+                // If the value of `log_n` cannot be derived, an arbitrary amount can be charged.
                 match inner {
-                    Proof::ZK(_) => {
-                        T::WeightInfo::verify_zk_proof_v3_0(MAX_BENCHMARKED_LOG_CIRCUIT_SIZE as u32)
+                    Proof::ZK(bytes) => {
+                        let res = ultrahonk_no_std_v3_0::ProofVariant::ZK
+                            .log_n_from_byte_len(bytes.len());
+                        match res {
+                            Ok(log_n) => T::WeightInfo::verify_zk_proof_v3_0(
+                                MIN_BENCHMARKED_LOG_CIRCUIT_SIZE.max(log_n) as u32,
+                            ),
+                            _ => T::WeightInfo::verify_zk_proof_v3_0(
+                                MAX_BENCHMARKED_LOG_CIRCUIT_SIZE as u32,
+                            ),
+                        }
                     }
-                    Proof::Plain(_) => T::WeightInfo::verify_plain_proof_v3_0(
-                        MAX_BENCHMARKED_LOG_CIRCUIT_SIZE as u32,
-                    ),
+                    Proof::Plain(bytes) => {
+                        let res = ultrahonk_no_std_v3_0::ProofVariant::Plain
+                            .log_n_from_byte_len(bytes.len());
+                        match res {
+                            Ok(log_n) => T::WeightInfo::verify_plain_proof_v3_0(
+                                MIN_BENCHMARKED_LOG_CIRCUIT_SIZE.max(log_n) as u32,
+                            ),
+                            _ => T::WeightInfo::verify_plain_proof_v3_0(
+                                MAX_BENCHMARKED_LOG_CIRCUIT_SIZE as u32,
+                            ),
+                        }
+                    }
                 }
             }
         }

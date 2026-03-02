@@ -28,14 +28,8 @@
 //! UltraHonk verifier instance.
 
 use frame_support::traits::Consideration;
-use frame_support::{
-    migrations::VersionedMigration, storage_alias, traits::UncheckedOnRuntimeUpgrade, Identity,
-};
-use pallet_verifiers::VkEntry;
+use frame_support::{migrations::VersionedMigration, traits::UncheckedOnRuntimeUpgrade};
 use sp_core::Get;
-use sp_core::H256;
-
-use crate::Ultrahonk;
 
 /// Implements [`UncheckedOnRuntimeUpgrade`], migrating the storage from V1 to V2.
 ///
@@ -45,9 +39,20 @@ use crate::Ultrahonk;
 /// verification keys after the migration.
 pub struct InnerMigrateV1ToV2<T>(core::marker::PhantomData<T>);
 
-#[storage_alias]
-type OldVk<T: crate::Config + pallet_verifiers::Config<Ultrahonk<T>>> =
-    StorageMap<crate::Pallet<T>, Identity, H256, VkEntry<[u8; ultrahonk_no_std_v0_84::VK_SIZE]>>;
+mod v1 {
+    use crate::Ultrahonk;
+    use frame_support::{storage_alias, Identity};
+    use pallet_verifiers::VkEntry;
+    use sp_core::H256;
+
+    #[storage_alias]
+    pub type Vks<T: crate::Config + pallet_verifiers::Config<Ultrahonk<T>>> = StorageMap<
+        crate::Pallet<T>,
+        Identity,
+        H256,
+        VkEntry<[u8; ultrahonk_no_std_v0_84::VK_SIZE]>,
+    >;
+}
 
 impl<T> UncheckedOnRuntimeUpgrade for InnerMigrateV1ToV2<T>
 where
@@ -56,7 +61,7 @@ where
     fn on_runtime_upgrade() -> frame_support::weights::Weight {
         let mut reads: u64 = 0;
         let mut writes: u64 = 0;
-        let vks = OldVk::<T>::drain().count() as u64;
+        let vks = v1::Vks::<T>::drain().count() as u64;
         let tickets = pallet_verifiers::Tickets::<T, crate::Ultrahonk<T>>::drain()
             .map(|((account_id, _), ticket)| {
                 if ticket.drop(&account_id).is_err() {
