@@ -387,7 +387,10 @@ impl<T: Config, W: WeightInfo> pallet_verifiers::WeightInfo<Ultrahonk<T>> for Ul
                             .log_n_from_byte_len(bytes.len());
                         match res {
                             Ok(log_n) => T::WeightInfo::verify_zk_proof_v3_0(
-                                MIN_BENCHMARKED_LOG_CIRCUIT_SIZE.max(log_n) as u32,
+                                MIN_BENCHMARKED_LOG_CIRCUIT_SIZE
+                                    .max(log_n)
+                                    .min(MAX_BENCHMARKED_LOG_CIRCUIT_SIZE)
+                                    as u32,
                             ),
                             _ => T::WeightInfo::verify_zk_proof_v3_0(
                                 MAX_BENCHMARKED_LOG_CIRCUIT_SIZE as u32,
@@ -399,7 +402,10 @@ impl<T: Config, W: WeightInfo> pallet_verifiers::WeightInfo<Ultrahonk<T>> for Ul
                             .log_n_from_byte_len(bytes.len());
                         match res {
                             Ok(log_n) => T::WeightInfo::verify_plain_proof_v3_0(
-                                MIN_BENCHMARKED_LOG_CIRCUIT_SIZE.max(log_n) as u32,
+                                MIN_BENCHMARKED_LOG_CIRCUIT_SIZE
+                                    .max(log_n)
+                                    .min(MAX_BENCHMARKED_LOG_CIRCUIT_SIZE)
+                                    as u32,
                             ),
                             _ => T::WeightInfo::verify_plain_proof_v3_0(
                                 MAX_BENCHMARKED_LOG_CIRCUIT_SIZE as u32,
