@@ -178,13 +178,19 @@ fn deal_with_fees() {
         );
 
         DealWithFees::on_unbalanceds([fee, tip].into_iter());
-        // No Burn in this config
-        assert_eq!(Balances::total_issuance(), total_issuance);
+        // 70 % Burned in this config. Here we intentionally duplicate the percent value
+        // We don't want to use the variable, otherwise this test will test nothing more than the
+        // generic ones that are already in place. If we change the value we want that this test
+        // fails.
+        let burned = Perbill::from_percent(70) * fee_amount;
+        let distributed_fee = fee_amount - burned;
+
+        assert_eq!(Balances::total_issuance(), total_issuance - burned);
 
         // All fees and tip to author
         assert_eq!(
             Balances::free_balance(author_account),
-            author_balance + fee_amount + tip_amount
+            author_balance + distributed_fee + tip_amount
         );
 
         // Nothing to the treasury

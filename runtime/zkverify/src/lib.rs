@@ -358,7 +358,7 @@ pub type ZKVFeeUpdate<R> = TargetedFeeAdjustment<
 /// How to handle with fee: Don't burn any fee, give all fee and tip to author.
 pub type DealWithFees = payout::DealWithFees<
     Runtime,
-    payout_conf::NoBurnFees,
+    payout_conf::BurnFees,
     payout_conf::AllFeesToAuthor,
     Authorship,
     TreasuryAccountId<Runtime>,
