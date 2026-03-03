@@ -55,10 +55,11 @@ This is the most common non-trivial extension to the codebase. The steps encode 
 3. **Instantiate in runtime** — add the pallet to `runtime/zkverify/src/lib.rs` with a **new, unused** pallet index (do not reuse or reorder existing indices)
 4. **Wire up callbacks** — register the new pallet with the `Aggregate` pallet via `OnProofVerified`
 5. **Implement benchmarks** — if the verification weight does not depend on proof parameters (size, public inputs), implement only `pallet_verifiers::WeightInfo::verify_proof()` as a fixed upper bound (see `pallet-tee-verifier` for an example). If the weight varies with parameters, `WeightInfo::verify_proof()` returns the upper bound and `Verifier::verify_proof()` returns the actual weight as `Ok(Some(weight))` (see `pallet-risc0-verifier` for this pattern)
-6. **Run `zepter`** — `zepter run check-fix && zepter run format-fix` (or `cargo make zepter`) to fix feature propagation in all affected `Cargo.toml` files
-6. **Add zombienet test data** — create `zombienet-tests/js_scripts/<name>_data.js` with proof/vk/pubs fixtures
-7. **Add zombienet test** — create a `.zndsl` test (start from `0007-proof_with_vk.zndsl` as template)
-8. **Verify** — run pallet tests, runtime tests, and the new zombienet test
+6. **Runtime test** — add a new test to `runtime/zkverify/src/tests/availability.rs`, `runtime/zkverify/src/tests/use_correct_weights/verifiers.rs`, and `runtime/zkverify/src/tests/proxy.rs`.
+7. **Run `zepter`** — `zepter run check-fix && zepter run format-fix` (or `cargo make zepter`) to fix feature propagation in all affected `Cargo.toml` files
+8. **Add zombienet test data** — create `zombienet-tests/js_scripts/<name>_data.js` with proof/vk/pubs fixtures
+9. **Add zombienet test** — extend `0012-aggregate_proofs.zndsl` to cover also this verifier: in `0012-aggregate_proofs.js` add a new entry in `verifiers` array.
+10. **Verify** — run pallet tests, runtime tests, and the new zombienet test
 
 ## Verification After Changes
 

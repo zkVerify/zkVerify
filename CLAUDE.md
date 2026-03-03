@@ -148,7 +148,7 @@ Each test consists of:
 
 - JS/TS test scripts interact with nodes via polkadot.js API and return a single `u64` (0 = pass)
 - Proof data fixtures for each verifier (groth16, fflonk, risc0, sp1, etc.) are in `js_scripts/*_data.js`
-- Start from an existing JS test (e.g., `0007-proof_with_vk.js`) when adding verifier-related tests
+- Extend the existing JS test `0012-aggregate_proofs.js` when adding verifier-related entry
 
 ## Code Style
 
@@ -161,7 +161,7 @@ Each test consists of:
 
 ## Safety-Critical Code
 
-`native/` contains the actual cryptographic proof verification implementations (one sub-crate per proof system: groth16, fflonk, risc0, sp1, …). This code runs outside WASM for performance and is the security-critical core of the chain. Changes here require extra care: incorrect verification logic could accept invalid proofs silently.
+`native/` contains the actual cryptographic proof verification implementations (a single crate with per-system source files, e.g., `groth16.rs`, `risc0.rs`). This code runs outside WASM for performance and is the security-critical core of the chain. Changes here require extra care: incorrect verification logic could accept invalid proofs silently.
 
 Any change to `native/` — including updates to its dependencies — **must** be followed by a complete chain sync test against both testnet and mainnet before merging.
 
