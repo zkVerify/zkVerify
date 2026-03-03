@@ -25,7 +25,7 @@ use alloc::{borrow::Cow, vec::Vec};
 use core::marker::PhantomData;
 
 use frame_support::weights::Weight;
-use hp_verifiers::Verifier;
+use pallet_verifiers::traits::{Verifier, VerifyError};
 use sp1_zkv_verifier::Proof as SP1Proof;
 use sp_core::{Get, H256};
 pub use weight::WeightInfo;
@@ -62,25 +62,25 @@ impl<T: Config> Verifier for Sp1<T> {
         vk: &Self::Vk,
         proof: &Self::Proof,
         pubs: &Self::Pubs,
-    ) -> Result<Option<Weight>, hp_verifiers::VerifyError> {
+    ) -> Result<Option<Weight>, VerifyError> {
         if proof.len() > MAX_PROOF_SIZE {
             log::debug!("Proof exceeds maximum size");
-            Err(hp_verifiers::VerifyError::InvalidProofData)?;
+            Err(VerifyError::InvalidProofData)?;
         }
         if pubs.len() > T::max_pubs_size() as usize {
             log::debug!("Public input exceeds maximum size");
-            Err(hp_verifiers::VerifyError::InvalidInput)?;
+            Err(VerifyError::InvalidInput)?;
         }
 
         let proof: SP1Proof =
             bincode::serde::decode_from_slice(&proof[..], bincode::config::legacy())
                 .inspect_err(|err| log::debug!("Cannot deserialize proof: {err}"))
-                .map_err(|_| hp_verifiers::VerifyError::InvalidProofData)?
+                .map_err(|_| VerifyError::InvalidProofData)?
                 .0;
 
         sp1_zkv_verifier::verify(vk.as_fixed_bytes(), &proof, pubs)
             .inspect_err(|err| log::debug!("Verification error: {err}"))
-            .map_err(|_| hp_verifiers::VerifyError::VerifyError)?;
+            .map_err(|_| VerifyError::VerifyError)?;
 
         Ok(None)
     }
@@ -94,9 +94,9 @@ impl<T: Config> Verifier for Sp1<T> {
     }
 }
 
-pub struct Sp1Weight<W: weight::WeightInfo>(PhantomData<W>);
+pub struct Sp1Weight<W: WeightInfo>(PhantomData<W>);
 
-impl<T: Config, W: weight::WeightInfo> pallet_verifiers::WeightInfo<Sp1<T>> for Sp1Weight<W> {
+impl<T: Config, W: WeightInfo> pallet_verifiers::WeightInfo<Sp1<T>> for Sp1Weight<W> {
     fn verify_proof(
         _proof: &<Sp1<T> as Verifier>::Proof,
         _pubs: &<Sp1<T> as Verifier>::Pubs,

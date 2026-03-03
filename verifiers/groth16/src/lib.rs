@@ -27,7 +27,7 @@ use core::marker::PhantomData;
 use frame_support::pallet_prelude::Weight;
 pub use groth16::{Curve, ProofWithCurve as Proof, VerificationKeyWithCurve as Vk};
 use hp_groth16::Scalar;
-use hp_verifiers::{Verifier, VerifyError};
+use pallet_verifiers::traits::{Verifier, VerifyError};
 
 pub const MAX_NUM_INPUTS: u32 = 64;
 pub use weight::WeightInfo;
@@ -58,10 +58,10 @@ impl<T: Config> Verifier for Groth16<T> {
         pubs: &Self::Pubs,
     ) -> Result<Option<Weight>, VerifyError> {
         if pubs.len() > T::MAX_NUM_INPUTS as usize {
-            return Err(hp_verifiers::VerifyError::InvalidInput);
+            return Err(VerifyError::InvalidInput);
         }
         if pubs.len() + 1 != vk.gamma_abc_g1.len() {
-            return Err(hp_verifiers::VerifyError::InvalidInput);
+            return Err(VerifyError::InvalidInput);
         }
 
         groth16::Groth16::verify_proof(proof.clone().into(), vk.clone(), pubs)
@@ -107,14 +107,14 @@ impl<T: Config, W: WeightInfo> pallet_verifiers::WeightInfo<Groth16<T>> for Grot
         }
     }
 
-    fn unregister_vk() -> frame_support::weights::Weight {
+    fn unregister_vk() -> Weight {
         W::unregister_vk()
     }
 
     fn verify_proof(
         proof: &<Groth16<T> as Verifier>::Proof,
         pubs: &<Groth16<T> as Verifier>::Pubs,
-    ) -> frame_support::weights::Weight {
+    ) -> Weight {
         let n = pubs.len().try_into().expect(concat!(
             "Public inputs should be less than",
             stringify!(T::MAX_NUM_INPUTS),
@@ -126,7 +126,7 @@ impl<T: Config, W: WeightInfo> pallet_verifiers::WeightInfo<Groth16<T>> for Grot
         }
     }
 
-    fn get_vk() -> frame_support::weights::Weight {
+    fn get_vk() -> Weight {
         W::get_vk()
     }
 
@@ -146,7 +146,7 @@ impl<T: Config, W: WeightInfo> pallet_verifiers::WeightInfo<Groth16<T>> for Grot
     fn compute_statement_hash(
         proof: &<Groth16<T> as Verifier>::Proof,
         pubs: &<Groth16<T> as Verifier>::Pubs,
-    ) -> frame_support::weights::Weight {
+    ) -> Weight {
         let Proof { curve, .. } = proof;
         let pubs_len = pubs.len() as u32;
         match curve {

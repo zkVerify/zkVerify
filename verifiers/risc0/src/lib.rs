@@ -21,8 +21,8 @@ use alloc::vec::Vec;
 use alloc::{borrow::Cow, boxed::Box};
 use core::marker::PhantomData;
 use frame_support::{ensure, fail, pallet_prelude::*, weights::Weight};
-use hp_verifiers::{Verifier, VerifyError};
 use log::debug;
+use pallet_verifiers::traits::{Verifier, VerifyError};
 use risc0_derive::R0Proof;
 use risc0_verifier::{v2_1, v2_2, v2_3, v3_0, Journal, SegmentInfo, Verifier as _, Vk as Risc0Vk};
 use sp_core::{Get, H256};
@@ -101,7 +101,7 @@ impl R0Proof {
     fn verify(self, vk: Risc0Vk, journal: Journal) -> Result<(), VerifyError> {
         self.verifier()
             .verify(vk.into(), self.take_proof(), journal)
-            .inspect_err(|e| log::debug!("Cannot verify proof: {e:?}"))
+            .inspect_err(|e| debug!("Cannot verify proof: {e:?}"))
             .map_err(|_| VerifyError::VerifyError)
     }
 
@@ -282,21 +282,21 @@ impl<T: Config> Risc0<T> {
 
 /// The struct to use in runtime pallet configuration to map the weight computed by this crate
 /// benchmarks to the weight needed by the `pallet-verifiers`.
-pub struct Risc0Weight<W: weight::WeightInfo>(PhantomData<W>);
+pub struct Risc0Weight<W: WeightInfo>(PhantomData<W>);
 
-impl<T: Config, W: weight::WeightInfo> pallet_verifiers::WeightInfo<Risc0<T>> for Risc0Weight<W> {
+impl<T: Config, W: WeightInfo> pallet_verifiers::WeightInfo<Risc0<T>> for Risc0Weight<W> {
     fn verify_proof(
-        _proof: &<Risc0<T> as hp_verifiers::Verifier>::Proof,
-        _pubs: &<Risc0<T> as hp_verifiers::Verifier>::Pubs,
+        _proof: &<Risc0<T> as Verifier>::Proof,
+        _pubs: &<Risc0<T> as Verifier>::Pubs,
     ) -> Weight {
         <T as Config>::max_verify_proof_weight()
     }
 
-    fn register_vk(_vk: &<Risc0<T> as hp_verifiers::Verifier>::Vk) -> Weight {
+    fn register_vk(_vk: &<Risc0<T> as Verifier>::Vk) -> Weight {
         W::register_vk()
     }
 
-    fn unregister_vk() -> frame_support::weights::Weight {
+    fn unregister_vk() -> Weight {
         W::unregister_vk()
     }
 
@@ -304,7 +304,7 @@ impl<T: Config, W: weight::WeightInfo> pallet_verifiers::WeightInfo<Risc0<T>> fo
         W::get_vk()
     }
 
-    fn validate_vk(_vk: &<Risc0<T> as hp_verifiers::Verifier>::Vk) -> Weight {
+    fn validate_vk(_vk: &<Risc0<T> as Verifier>::Vk) -> Weight {
         W::validate_vk()
     }
 

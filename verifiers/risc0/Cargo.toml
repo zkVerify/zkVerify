@@ -17,7 +17,6 @@ hex-literal = { workspace = true }
 risc0-verifier = { workspace = true }
 ciborium = { version = "0.2.2", default-features = false }
 native = { workspace = true, default-features = false }
-hp-verifiers = { workspace = true }
 pallet-verifiers = { workspace = true }
 
 codec = { workspace = true }
@@ -42,7 +41,6 @@ std = [
 	"frame-benchmarking?/std",
 	"frame-support/std",
 	"frame-system/std",
-	"hp-verifiers/std",
 	"log/std",
 	"native/std",
 	"pallet-balances/std",

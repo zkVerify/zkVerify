@@ -16,11 +16,12 @@
 
 use super::*;
 use crate::mock::*;
+use crate::traits::{Verifier, WeightInfo};
 use codec::Encode;
 use frame_support::dispatch::{GetDispatchInfo, Pays};
+use frame_support::traits::GetStorageVersion;
 use frame_support::{assert_err, assert_err_ignore_postinfo};
 use frame_support::{assert_noop, assert_ok};
-use hp_verifiers::{Verifier, WeightInfo};
 use rstest::{fixture, rstest};
 use sp_core::H256;
 use sp_runtime::{BuildStorage, DispatchError};
@@ -29,6 +30,7 @@ type Vk = <FakeVerifier as Verifier>::Vk;
 type RError = Error<Test, FakeVerifier>;
 type VkOrHash = super::VkOrHash<Vk>;
 type DisableStorage = Disabled<Test, FakeVerifier>;
+type Event = super::Event<Test, FakeVerifier>;
 
 pub const USER_1: AccountId = 42;
 pub const USER_2: AccountId = 24;
@@ -101,7 +103,6 @@ mod register_should {
                 RuntimeOrigin::signed(USER_1),
                 Box::new(vk)
             ));
-
             System::assert_last_event(
                 Event::VkRegistered {
                     hash: expected_hash,
@@ -374,7 +375,7 @@ mod submit_proof_should {
             assert!(!System::events().is_empty());
 
             System::assert_has_event(
-                Event::<Test, FakeVerifier>::ProofVerified {
+                Event::ProofVerified {
                     statement: VALID_HASH_REGISTERED_VK,
                 }
                 .into(),
@@ -806,4 +807,18 @@ mod disable_should {
             );
         });
     }
+}
+
+#[rstest]
+fn verifier_can_define_its_own_storage_version(mut test_ext: sp_io::TestExternalities) {
+    test_ext.execute_with(|| {
+        assert_eq!(
+            <FakeVerifierPallet as GetStorageVersion>::in_code_storage_version(),
+            1
+        );
+        assert_eq!(
+            <Storage2VerifierPallet as GetStorageVersion>::in_code_storage_version(),
+            2
+        );
+    });
 }

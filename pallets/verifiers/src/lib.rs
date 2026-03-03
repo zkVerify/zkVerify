@@ -19,7 +19,7 @@
 //! This crate abstracts the implementation of a new verifier pallet.
 //! ```ignore
 //! use pallet_verifiers::verifier;
-//! use hp_verifiers::{Verifier, VerifyError};
+//! use pallet_verifiers::traits::{Verifier, VerifyError};
 //! /// The following attribute generates a new verifier pallet in this crate.
 //! #[verifier]
 //! pub struct MyVerifier;
@@ -40,8 +40,10 @@
 //!         vk: &Self::Vk,
 //!         proof: &Self::Proof,
 //!         pubs: &Self::Pubs,
-//!     ) -> Result<(), VerifyError> {
-//!         (vk == proof && pubs == proof).then_some(()).ok_or(VerifyError::VerifyError)
+//!     ) -> Result<Option<sp_weights::Weight>, VerifyError> {
+//!         (vk == proof && pubs == proof)
+//!             .then_some(None)
+//!             .ok_or(VerifyError::VerifyError)
 //!     }
 //!
 //!     fn validate_vk(vk: &Self::Vk) -> Result<(), VerifyError> {
@@ -57,7 +59,7 @@
 //!     }
 //! }
 //! ```
-//! Your crate should also implement a struct that implements the `hp_verifiers::WeightInfo<YourVerifierStruct>`
+//! Your crate should also implement a struct that implements the `pallet_verifiers::traits::WeightInfo<YourVerifierStruct>`
 //! trait. This struct is used to define the weight of the verifier pallet and should map the generic
 //! request in you weight implementation computed with your benchmark.
 
@@ -73,11 +75,13 @@ pub use pallet_verifiers_macros::*;
 pub mod common;
 #[allow(missing_docs)]
 pub mod mock;
+/// The traits and basic implementations for the verifier pallets.
+pub mod traits;
 
 pub mod benchmarking_utils;
 mod tests;
 
-pub use hp_verifiers::WeightInfo;
+pub use traits::WeightInfo;
 #[frame_support::pallet]
 pub mod pallet {
 
@@ -104,16 +108,13 @@ pub mod pallet {
     use sp_io::hashing::keccak_256;
     use sp_runtime::{traits::BadOrigin, ArithmeticError};
 
-    use hp_verifiers::{Verifier, VerifyError, WeightInfo};
-
-    /// The in-code storage version.
-    const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+    use crate::traits::{Verifier, VerifyError, WeightInfo};
 
     /// Type alias for AccountId
     pub type AccountOf<T> = <T as frame_system::Config>::AccountId;
 
     #[pallet::pallet]
-    #[pallet::storage_version(STORAGE_VERSION)]
+    #[pallet::storage_version(I::STORAGE_VERSION)]
     /// The pallet component.
     pub struct Pallet<T, I = ()>(_);
 
@@ -167,7 +168,7 @@ pub mod pallet {
         /// A means of providing some cost while data is stored on-chain.
         type Ticket: Consideration<Self::AccountId, Footprint>;
         /// Weights
-        type WeightInfo: hp_verifiers::WeightInfo<I>;
+        type WeightInfo: WeightInfo<I>;
         /// Currency used in benchmarks.
         #[cfg(feature = "runtime-benchmarks")]
         type Currency: Mutate<AccountOf<Self>>;
@@ -495,7 +496,7 @@ pub mod pallet {
         };
 
         use super::*;
-        use hp_verifiers::{Verifier, NO_VERSION_HASH};
+        use crate::traits::{Verifier, NO_VERSION_HASH};
         use rstest::rstest;
         use sp_core::U256;
 

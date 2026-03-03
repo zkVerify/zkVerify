@@ -137,11 +137,11 @@ fn impl_risc0_proof(data: EnumData) -> proc_macro2::TokenStream {
             DeserializeError,
         }
 
-        impl From<ConvertProofError> for hp_verifiers::VerifyError {
+        impl From<ConvertProofError> for pallet_verifiers::traits::VerifyError {
             fn from(err: ConvertProofError) -> Self {
                 match err {
-                    ConvertProofError::UnsupportedVersion => hp_verifiers::VerifyError::UnsupportedVersion,
-                    ConvertProofError::DeserializeError => hp_verifiers::VerifyError::InvalidProofData,
+                    ConvertProofError::UnsupportedVersion => pallet_verifiers::traits::VerifyError::UnsupportedVersion,
+                    ConvertProofError::DeserializeError => pallet_verifiers::traits::VerifyError::InvalidProofData,
                 }
             }
         }
@@ -295,11 +295,11 @@ mod test {
                 DeserializeError,
             }
 
-            impl From<ConvertProofError> for hp_verifiers::VerifyError {
+            impl From<ConvertProofError> for pallet_verifiers::traits::VerifyError {
                 fn from(err: ConvertProofError) -> Self {
                     match err {
-                        ConvertProofError::UnsupportedVersion => hp_verifiers::VerifyError::UnsupportedVersion,
-                        ConvertProofError::DeserializeError => hp_verifiers::VerifyError::InvalidProofData,
+                        ConvertProofError::UnsupportedVersion => pallet_verifiers::traits::VerifyError::UnsupportedVersion,
+                        ConvertProofError::DeserializeError => pallet_verifiers::traits::VerifyError::InvalidProofData,
                     }
                 }
             }

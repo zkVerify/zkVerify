@@ -37,13 +37,13 @@ fn verify_valid_proof() {
 
 #[test]
 fn reject_too_long_proof() {
-    let proof = vec![0u8; crate::MAX_PROOF_SIZE + 1];
+    let proof = vec![0u8; MAX_PROOF_SIZE + 1];
     let pubs = VALID_PUBS.to_vec();
     let vk = VALID_VK;
 
     assert_eq!(
         Sp1::<Mock>::verify_proof(&vk, &proof, &pubs),
-        Err(hp_verifiers::VerifyError::InvalidProofData)
+        Err(VerifyError::InvalidProofData)
     )
 }
 
@@ -55,7 +55,7 @@ fn reject_too_long_pubs() {
 
     assert_eq!(
         Sp1::<Mock>::verify_proof(&vk, &proof, &pubs),
-        Err(hp_verifiers::VerifyError::InvalidInput)
+        Err(VerifyError::InvalidInput)
     )
 }
 
@@ -69,7 +69,7 @@ fn reject_invalid_proof() {
 
     assert_eq!(
         Sp1::<Mock>::verify_proof(&vk, &proof, &pubs),
-        Err(hp_verifiers::VerifyError::VerifyError)
+        Err(VerifyError::VerifyError)
     )
 }
 
@@ -84,7 +84,7 @@ fn reject_invalid_vk() {
 
     assert_eq!(
         Sp1::<Mock>::verify_proof(&vk, &proof, &pubs),
-        Err(hp_verifiers::VerifyError::VerifyError)
+        Err(VerifyError::VerifyError)
     )
 }
 
@@ -98,6 +98,6 @@ fn reject_invalid_pubs() {
 
     assert_eq!(
         Sp1::<Mock>::verify_proof(&vk, &proof, &pubs),
-        Err(hp_verifiers::VerifyError::VerifyError)
+        Err(VerifyError::VerifyError)
     )
 }

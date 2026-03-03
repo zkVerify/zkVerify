@@ -20,7 +20,7 @@ extern crate alloc;
 use alloc::borrow::Cow;
 use core::marker::PhantomData;
 use frame_support::weights::Weight;
-use hp_verifiers::{Verifier, VerifyError};
+use pallet_verifiers::traits::{Verifier, VerifyError};
 
 pub mod benchmarking;
 mod verifier_should;
@@ -75,7 +75,7 @@ impl Verifier for Fflonk {
             .map(|_| None)
     }
 
-    fn validate_vk(vk: &Self::Vk) -> Result<(), hp_verifiers::VerifyError> {
+    fn validate_vk(vk: &Self::Vk) -> Result<(), VerifyError> {
         let _: fflonk_verifier::VerificationKey = vk
             .clone()
             .try_into()
@@ -93,10 +93,10 @@ impl Verifier for Fflonk {
 /// benchmarks to the weight needed by the `pallet-verifiers`.
 /// In this case the implementation doesn't depends from the kind of proof or public input and
 /// the crate's benchmarks are mapped 1-1 to the `pallet-verifiers`'s one.
-pub struct FflonkWeight<W: weight::WeightInfo>(PhantomData<W>);
+pub struct FflonkWeight<W: WeightInfo>(PhantomData<W>);
 
-impl<W: weight::WeightInfo> pallet_verifiers::WeightInfo<Fflonk> for FflonkWeight<W> {
-    fn register_vk(_vk: &<Fflonk as hp_verifiers::Verifier>::Vk) -> Weight {
+impl<W: WeightInfo> pallet_verifiers::WeightInfo<Fflonk> for FflonkWeight<W> {
+    fn register_vk(_vk: &<Fflonk as Verifier>::Vk) -> Weight {
         W::register_vk()
     }
 

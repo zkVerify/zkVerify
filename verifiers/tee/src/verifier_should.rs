@@ -92,7 +92,7 @@ fn reject_valid_proof_with_revoked_cert() {
 
     assert_eq!(
         Tee::<Mock<MockTime<ConstU64<PRESENT>>, RevokedCrl>>::verify_proof(&vk, &proof, &pubs),
-        Err(hp_verifiers::VerifyError::VerifyError)
+        Err(VerifyError::VerifyError)
     );
 }
 
@@ -107,7 +107,7 @@ fn reject_invalid_proof() {
 
     assert_eq!(
         Tee::<Mock<MockTime<ConstU64<PRESENT>>>>::verify_proof(&vk, &proof, &pubs),
-        Err(hp_verifiers::VerifyError::VerifyError)
+        Err(VerifyError::VerifyError)
     );
 }
 
@@ -120,7 +120,7 @@ fn reject_invalid_vk_signature() {
 
     assert_eq!(
         Tee::<Mock<MockTime<ConstU64<PRESENT>>>>::validate_vk(&vk),
-        Err(hp_verifiers::VerifyError::VerifyError)
+        Err(VerifyError::VerifyError)
     );
 }
 
@@ -135,28 +135,28 @@ fn reject_invalid_time() {
 
     assert_eq!(
         Tee::<Mock<MockTime<ConstU64<PAST>>>>::validate_vk(&vk),
-        Err(hp_verifiers::VerifyError::VerifyError)
+        Err(VerifyError::VerifyError)
     );
 
     assert_eq!(
         Tee::<Mock<MockTime<ConstU64<FUTURE>>>>::validate_vk(&vk),
-        Err(hp_verifiers::VerifyError::VerifyError)
+        Err(VerifyError::VerifyError)
     );
 
     assert_eq!(
         Tee::<Mock<MockTime<ConstU64<PAST>>>>::verify_proof(&vk, &proof, &pubs),
-        Err(hp_verifiers::VerifyError::VerifyError)
+        Err(VerifyError::VerifyError)
     );
 
     assert_eq!(
         Tee::<Mock<MockTime<ConstU64<FUTURE>>>>::verify_proof(&vk, &proof, &pubs),
-        Err(hp_verifiers::VerifyError::VerifyError)
+        Err(VerifyError::VerifyError)
     );
 }
 
 #[test]
 fn reject_too_long_proof() {
-    let proof = vec![0u8; crate::MAX_PROOF_LENGTH as usize + 1];
+    let proof = vec![0u8; MAX_PROOF_LENGTH as usize + 1];
     let pubs = vec![];
     let vk = Vk {
         tcb_response: vec![],
@@ -165,7 +165,7 @@ fn reject_too_long_proof() {
 
     assert_eq!(
         Tee::<Mock<MockTime<ConstU64<PRESENT>>>>::verify_proof(&vk, &proof, &pubs),
-        Err(hp_verifiers::VerifyError::InvalidProofData)
+        Err(VerifyError::InvalidProofData)
     )
 }
 
@@ -180,14 +180,14 @@ fn reject_too_long_vk() {
 
     assert_eq!(
         Tee::<Mock<MockTime<ConstU64<PRESENT>>>>::verify_proof(&vk, &proof, &pubs),
-        Err(hp_verifiers::VerifyError::InvalidVerificationKey)
+        Err(VerifyError::InvalidVerificationKey)
     )
 }
 
 #[test]
 fn reject_invalid_pubs() {
     let proof = vec![];
-    let pubs = vec![0u8; crate::MAX_PUBS_LENGTH as usize + 1];
+    let pubs = vec![0u8; MAX_PUBS_LENGTH as usize + 1];
     let vk = Vk {
         tcb_response: vec![],
         certificates: vec![],
@@ -195,6 +195,6 @@ fn reject_invalid_pubs() {
 
     assert_eq!(
         Tee::<Mock<MockTime<ConstU64<PRESENT>>>>::verify_proof(&vk, &proof, &pubs),
-        Err(hp_verifiers::VerifyError::InvalidInput)
+        Err(VerifyError::InvalidInput)
     )
 }

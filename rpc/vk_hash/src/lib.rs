@@ -14,7 +14,6 @@
 // limitations under the License.
 
 use codec::{Decode, Encode};
-use hp_verifiers::Verifier;
 use jsonrpsee::{core::RpcResult, proc_macros::rpc, types::ErrorObject};
 use pallet_ezkl_verifier::{Ezkl, MAX_VK_LENGTH};
 use pallet_fflonk_verifier::{
@@ -26,6 +25,7 @@ use pallet_plonky2_verifier::{Plonky2, Plonky2Config};
 use pallet_ultrahonk_verifier::{Ultrahonk, VK_SIZE as ULTRAHONK_VK_SIZE};
 use pallet_ultraplonk_verifier::{Ultraplonk, VK_SIZE};
 use sp_core::{serde::Deserialize, serde::Serialize, Bytes, H256, U256};
+use verifiers_traits::Verifier;
 
 type VkOf<V> = <V as Verifier>::Vk;
 

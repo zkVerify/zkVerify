@@ -24,6 +24,7 @@ extern crate alloc;
 use alloc::borrow::Cow;
 use codec::{Decode, Encode, EncodeLike};
 use core::fmt::Debug;
+use frame_support::pallet_prelude::StorageVersion;
 use hex_literal::hex;
 use scale_info::TypeInfo;
 use sp_core::{MaxEncodedLen, H256};
@@ -58,6 +59,11 @@ pub enum VerifyError {
 
 /// The trait that characterizes a verifier.
 pub trait Verifier {
+    /// The verifier pallet Storage version. If you change the vk type, also the storage version
+    /// should change. Remember that in this case you need to write also a storage migration.
+    /// You can still use the default one (`1`) and forget about it if the storage doesn't change.
+    const STORAGE_VERSION: frame_support::traits::StorageVersion = StorageVersion::new(1);
+
     /// The proof format type accepted by the verifier
     type Proof: Arg;
     /// The public inputs format
@@ -96,8 +102,8 @@ pub trait Verifier {
         sp_io::hashing::keccak_256(&Self::vk_bytes(vk)).into()
     }
 
-    /// A vk's byte serialization used to compute the verification key hash. The default implementation
-    /// uses the `scale::encode()` one, but you can customize it.
+    /// A vk's byte serialization used to compute the verification key hash. The default
+    /// implementation uses the `scale::encode()` one, but you can customize it.
     fn vk_bytes(vk: &Self::Vk) -> Cow<'_, [u8]> {
         Cow::Owned(vk.encode())
     }
@@ -181,6 +187,32 @@ impl Verifier for () {
     }
 }
 
+impl<V: Verifier> WeightInfo<V> for () {
+    fn verify_proof(_proof: &V::Proof, _pubs: &V::Pubs) -> Weight {
+        Default::default()
+    }
+
+    fn register_vk(_vk: &V::Vk) -> Weight {
+        Default::default()
+    }
+
+    fn unregister_vk() -> Weight {
+        Default::default()
+    }
+
+    fn get_vk() -> Weight {
+        Default::default()
+    }
+
+    fn validate_vk(_vk: &V::Vk) -> Weight {
+        Default::default()
+    }
+
+    fn compute_statement_hash(_proof: &V::Proof, _pubs: &V::Pubs) -> Weight {
+        Default::default()
+    }
+}
+
 #[cfg(test)]
 mod unit_verifier {
     use super::*;
@@ -191,5 +223,29 @@ mod unit_verifier {
             VerifyError::VerifyError,
             <() as Verifier>::verify_proof(&(), &(), &()).unwrap_err()
         )
+    }
+
+    #[test]
+    fn default_storage_version_is_one() {
+        // A verifier that doesn't override STORAGE_VERSION should get the default (1)
+        struct DefaultVersionVerifier;
+        impl Verifier for DefaultVersionVerifier {
+            type Proof = ();
+            type Pubs = ();
+            type Vk = ();
+            fn hash_context_data() -> &'static [u8] {
+                b"default"
+            }
+            fn verify_proof(_: &(), _: &(), _: &()) -> Result<Option<Weight>, VerifyError> {
+                Ok(None)
+            }
+            fn pubs_bytes(_: &()) -> Cow<'_, [u8]> {
+                Cow::Borrowed(b"")
+            }
+        }
+        assert_eq!(
+            DefaultVersionVerifier::STORAGE_VERSION,
+            StorageVersion::new(1)
+        );
     }
 }

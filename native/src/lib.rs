@@ -31,15 +31,15 @@ pub enum VerifyError {
     InvalidVerificationKey,
 }
 
-impl From<VerifyError> for hp_verifiers::VerifyError {
+impl From<VerifyError> for verifiers_traits::VerifyError {
     fn from(value: VerifyError) -> Self {
         match value {
-            VerifyError::InvalidInput => hp_verifiers::VerifyError::InvalidInput,
-            VerifyError::InvalidProofData => hp_verifiers::VerifyError::InvalidProofData,
+            VerifyError::InvalidInput => verifiers_traits::VerifyError::InvalidInput,
+            VerifyError::InvalidProofData => verifiers_traits::VerifyError::InvalidProofData,
             VerifyError::InvalidVerificationKey => {
-                hp_verifiers::VerifyError::InvalidVerificationKey
+                verifiers_traits::VerifyError::InvalidVerificationKey
             }
-            VerifyError::VerifyError => hp_verifiers::VerifyError::VerifyError,
+            VerifyError::VerifyError => verifiers_traits::VerifyError::VerifyError,
         }
     }
 }

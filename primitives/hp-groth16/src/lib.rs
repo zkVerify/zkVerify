@@ -47,15 +47,15 @@ pub enum Groth16Error {
     VerifyError,
 }
 
-impl From<Groth16Error> for hp_verifiers::VerifyError {
+impl From<Groth16Error> for verifiers_traits::VerifyError {
     fn from(error: Groth16Error) -> Self {
         match error {
-            Groth16Error::InvalidProof => hp_verifiers::VerifyError::InvalidProofData,
+            Groth16Error::InvalidProof => verifiers_traits::VerifyError::InvalidProofData,
             Groth16Error::InvalidVerificationKey => {
-                hp_verifiers::VerifyError::InvalidVerificationKey
+                verifiers_traits::VerifyError::InvalidVerificationKey
             }
-            Groth16Error::InvalidInput => hp_verifiers::VerifyError::InvalidInput,
-            Groth16Error::VerifyError => hp_verifiers::VerifyError::VerifyError,
+            Groth16Error::InvalidInput => verifiers_traits::VerifyError::InvalidInput,
+            Groth16Error::VerifyError => verifiers_traits::VerifyError::VerifyError,
         }
     }
 }
