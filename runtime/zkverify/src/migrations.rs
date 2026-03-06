@@ -17,5 +17,6 @@
 
 pub type Unreleased = (
     pallet_aggregate::migrations::v4::MigrateV3ToV4<crate::Runtime>,
+    pallet_ultrahonk_verifier::migrations::MigrateV1ToV2<crate::Runtime>,
     (),
 );
