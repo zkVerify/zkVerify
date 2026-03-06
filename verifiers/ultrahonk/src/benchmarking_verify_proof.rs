@@ -21,8 +21,8 @@ use crate::{
     MIN_BENCHMARKED_LOG_CIRCUIT_SIZE,
 };
 use frame_benchmarking::v2::*;
-use hp_verifiers::Verifier as _;
 use pallet_verifiers::benchmarking_utils;
+use pallet_verifiers::traits::Verifier as _;
 pub struct Pallet<T: Config>(crate::Pallet<T>);
 pub trait Config: crate::Config {}
 impl<T: crate::Config> Config for T {}
