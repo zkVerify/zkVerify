@@ -1,4 +1,4 @@
-// Copyright 2024, Horizen Labs, Inc.
+// Copyright 2024-2026, Horizen Labs, Inc.
 // Copyright (C) Parity Technologies (UK) Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
