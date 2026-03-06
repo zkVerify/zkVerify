@@ -213,7 +213,7 @@ impl<T: Config> Verifier for Ultrahonk<T> {
                 let prepared: ultrahonk_no_std_v0_84::ProofType = inner_proof
                     .clone()
                     .try_into()
-                    .map_err(|_| hp_verifiers::VerifyError::InvalidProofData)?;
+                    .map_err(|_| VerifyError::InvalidProofData)?;
 
                 log::trace!("Verifying (no-std)");
                 ultrahonk_no_std_v0_84::verify::<CurveHooksImpl>(vk_bytes, &prepared, pubs)
@@ -221,18 +221,18 @@ impl<T: Config> Verifier for Ultrahonk<T> {
                     .map_err(|e| match e {
                         ultrahonk_no_std_v0_84::errors::VerifyError::VerificationError {
                             message: _,
-                        } => hp_verifiers::VerifyError::VerifyError,
+                        } => VerifyError::VerifyError,
                         ultrahonk_no_std_v0_84::errors::VerifyError::PublicInputError {
                             message: _,
-                        } => hp_verifiers::VerifyError::InvalidInput,
+                        } => VerifyError::InvalidInput,
                         ultrahonk_no_std_v0_84::errors::VerifyError::KeyError => {
-                            hp_verifiers::VerifyError::InvalidVerificationKey
+                            VerifyError::InvalidVerificationKey
                         }
                         ultrahonk_no_std_v0_84::errors::VerifyError::InvalidProofError => {
-                            hp_verifiers::VerifyError::InvalidProofData
+                            VerifyError::InvalidProofData
                         }
                         ultrahonk_no_std_v0_84::errors::VerifyError::OtherError => {
-                            hp_verifiers::VerifyError::VerifyError
+                            VerifyError::VerifyError
                         }
                     })
                     .map(|_| None)
@@ -242,16 +242,16 @@ impl<T: Config> Verifier for Ultrahonk<T> {
                 let prepared: ultrahonk_no_std_v3_0::ProofType = inner_proof
                     .clone()
                     .try_into()
-                    .map_err(|_| hp_verifiers::VerifyError::InvalidProofData)?;
+                    .map_err(|_| VerifyError::InvalidProofData)?;
 
                 let w = {
                     let log_circuit_size = ultrahonk_no_std_v3_0::key::VerificationKey::<
                         CurveHooksImpl,
                     >::extract_log_circuit_size(vk_bytes)
-                    .map_err(|_| hp_verifiers::VerifyError::InvalidVerificationKey)?;
+                    .map_err(|_| VerifyError::InvalidVerificationKey)?;
                     ensure!(
                         log_circuit_size <= MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
-                        hp_verifiers::VerifyError::InvalidVerificationKey
+                        VerifyError::InvalidVerificationKey
                     );
 
                     compute_weight::<T>(
@@ -267,25 +267,25 @@ impl<T: Config> Verifier for Ultrahonk<T> {
                     .map_err(|e| match e {
                         ultrahonk_no_std_v3_0::errors::VerifyError::VerificationError {
                             message: _,
-                        } => hp_verifiers::VerifyError::VerifyError,
+                        } => VerifyError::VerifyError,
                         ultrahonk_no_std_v3_0::errors::VerifyError::PublicInputError {
                             message: _,
-                        } => hp_verifiers::VerifyError::InvalidInput,
+                        } => VerifyError::InvalidInput,
                         ultrahonk_no_std_v3_0::errors::VerifyError::KeyError => {
-                            hp_verifiers::VerifyError::InvalidVerificationKey
+                            VerifyError::InvalidVerificationKey
                         }
                         ultrahonk_no_std_v3_0::errors::VerifyError::InvalidProofError {
                             message: _,
-                        } => hp_verifiers::VerifyError::InvalidProofData,
+                        } => VerifyError::InvalidProofData,
                         ultrahonk_no_std_v3_0::errors::VerifyError::OtherError => {
-                            hp_verifiers::VerifyError::VerifyError
+                            VerifyError::VerifyError
                         }
                     })
                     .map(|_| Some(w))
             }
             _ => {
                 log::debug!("Proof version does not match Vk version!");
-                Err(hp_verifiers::VerifyError::VerifyError)
+                Err(VerifyError::VerifyError)
             }
         }
     }
