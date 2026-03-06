@@ -49,7 +49,7 @@ fn validate_proof(curve: Curve, #[case] n: usize) {
 }
 
 mod reject {
-    use hp_verifiers::VerifyError;
+    use pallet_verifiers::traits::VerifyError;
 
     use super::*;
 

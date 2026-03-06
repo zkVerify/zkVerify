@@ -19,7 +19,7 @@ use crate::Plonky2 as Verifier;
 use crate::{resources::get_parameterized_test_data, Plonky2Config, MAX_DEGREE_BITS};
 use frame_benchmarking::v2::*;
 use frame_system::RawOrigin;
-use hp_verifiers::Verifier as _;
+use pallet_verifiers::traits::Verifier as _;
 use pallet_verifiers::{benchmarking_utils, VkOrHash};
 
 pub struct Pallet<T: Config>(crate::Pallet<T>);

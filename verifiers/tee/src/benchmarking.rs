@@ -20,7 +20,7 @@ use alloc::vec;
 use frame_benchmarking::v2::*;
 use frame_support::{pallet_prelude::*, sp_runtime::traits::UniqueSaturatedInto};
 use frame_system::RawOrigin;
-use hp_verifiers::Verifier as _;
+use pallet_verifiers::traits::Verifier as _;
 use pallet_verifiers::{benchmarking_utils, VkOrHash};
 
 pub trait Config: crate::Config {}

@@ -16,7 +16,7 @@
 use alloc::vec::Vec;
 use codec::{Decode, Encode, MaxEncodedLen};
 use core::fmt::Debug;
-use hp_verifiers::VerifyError;
+use pallet_verifiers::traits::VerifyError;
 use scale_info::TypeInfo;
 
 pub use hp_groth16::{vec_max_encoded_len, Proof, Scalar, VerificationKey, G1, G2};

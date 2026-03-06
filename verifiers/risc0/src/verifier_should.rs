@@ -105,7 +105,7 @@ fn return_the_correct_verifier_version_hash(#[case] proof: Proof, #[case] expect
 }
 
 mod reject {
-    use hp_verifiers::VerifyError;
+    use pallet_verifiers::traits::VerifyError;
 
     use super::*;
 

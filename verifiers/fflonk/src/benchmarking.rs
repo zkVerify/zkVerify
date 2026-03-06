@@ -18,7 +18,7 @@
 use crate::Fflonk as Verifier;
 use frame_benchmarking::v2::*;
 use frame_system::RawOrigin;
-use hp_verifiers::Verifier as _;
+use pallet_verifiers::traits::Verifier as _;
 use pallet_verifiers::{benchmarking_utils, VkOrHash};
 pub struct Pallet<T: Config>(crate::Pallet<T>);
 

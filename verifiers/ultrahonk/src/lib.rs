@@ -23,7 +23,7 @@ use codec::Encode;
 use codec::MaxEncodedLen;
 use core::marker::PhantomData;
 use frame_support::{ensure, weights::Weight};
-use hp_verifiers::{Verifier, VerifyError};
+use pallet_verifiers::traits::{Verifier, VerifyError};
 use scale_info::TypeInfo;
 use sp_core::{Get, H256};
 use ultrahonk_no_std::ProofType as UltraHonkProofType;
@@ -143,7 +143,7 @@ impl<T: Config> Verifier for Ultrahonk<T> {
     ) -> Result<Option<Weight>, VerifyError> {
         ensure!(
             pubs.len() <= T::MaxPubs::get() as usize,
-            hp_verifiers::VerifyError::InvalidInput
+            VerifyError::InvalidInput
         );
 
         // Transform input proof into an UltraHonk verifier-compatible proof
@@ -156,20 +156,18 @@ impl<T: Config> Verifier for Ultrahonk<T> {
             .inspect_err(|e| log::debug!("Cannot verify proof: {e:?}"))
             .map_err(|e| match e {
                 ultrahonk_no_std::errors::VerifyError::VerificationError { message: _ } => {
-                    hp_verifiers::VerifyError::VerifyError
+                    VerifyError::VerifyError
                 }
                 ultrahonk_no_std::errors::VerifyError::PublicInputError { message: _ } => {
-                    hp_verifiers::VerifyError::InvalidInput
+                    VerifyError::InvalidInput
                 }
                 ultrahonk_no_std::errors::VerifyError::KeyError => {
-                    hp_verifiers::VerifyError::InvalidVerificationKey
+                    VerifyError::InvalidVerificationKey
                 }
                 ultrahonk_no_std::errors::VerifyError::InvalidProofError => {
-                    hp_verifiers::VerifyError::InvalidProofData
+                    VerifyError::InvalidProofData
                 }
-                ultrahonk_no_std::errors::VerifyError::OtherError => {
-                    hp_verifiers::VerifyError::VerifyError
-                }
+                ultrahonk_no_std::errors::VerifyError::OtherError => VerifyError::VerifyError,
             })
             .map(|_| None)
     }
@@ -208,14 +206,12 @@ impl<T: Config> Ultrahonk<T> {
 
 /// The struct to use in runtime pallet configuration to map the weight computed by this crate
 /// benchmarks to the weight needed by the `pallet-verifiers`.
-pub struct UltrahonkWeight<W: weight::WeightInfo>(PhantomData<W>);
+pub struct UltrahonkWeight<W: WeightInfo>(PhantomData<W>);
 
-impl<T: Config, W: weight::WeightInfo> pallet_verifiers::WeightInfo<Ultrahonk<T>>
-    for UltrahonkWeight<W>
-{
+impl<T: Config, W: WeightInfo> pallet_verifiers::WeightInfo<Ultrahonk<T>> for UltrahonkWeight<W> {
     fn verify_proof(
-        proof: &<Ultrahonk<T> as hp_verifiers::Verifier>::Proof,
-        _pubs: &<Ultrahonk<T> as hp_verifiers::Verifier>::Pubs,
+        proof: &<Ultrahonk<T> as Verifier>::Proof,
+        _pubs: &<Ultrahonk<T> as Verifier>::Pubs,
     ) -> Weight {
         match proof {
             Proof::ZK(_) => W::verify_proof_zk_32(),
@@ -223,11 +219,11 @@ impl<T: Config, W: weight::WeightInfo> pallet_verifiers::WeightInfo<Ultrahonk<T>
         }
     }
 
-    fn register_vk(_vk: &<Ultrahonk<T> as hp_verifiers::Verifier>::Vk) -> Weight {
+    fn register_vk(_vk: &<Ultrahonk<T> as Verifier>::Vk) -> Weight {
         W::register_vk()
     }
 
-    fn unregister_vk() -> frame_support::weights::Weight {
+    fn unregister_vk() -> Weight {
         W::unregister_vk()
     }
 
@@ -235,7 +231,7 @@ impl<T: Config, W: weight::WeightInfo> pallet_verifiers::WeightInfo<Ultrahonk<T>
         W::get_vk()
     }
 
-    fn validate_vk(_vk: &<Ultrahonk<T> as hp_verifiers::Verifier>::Vk) -> Weight {
+    fn validate_vk(_vk: &<Ultrahonk<T> as Verifier>::Vk) -> Weight {
         W::validate_vk()
     }
 

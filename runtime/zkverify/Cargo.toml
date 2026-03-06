@@ -91,7 +91,6 @@ static_assertions = "1.1.0"
 aggregate-rpc-runtime-api = { workspace = true }
 
 pallet-verifiers = { workspace = true }
-hp-verifiers = { workspace = true }
 pallet-ezkl-verifier = { workspace = true }
 pallet-fflonk-verifier = { workspace = true }
 pallet-groth16-verifier = { workspace = true }
@@ -206,7 +205,6 @@ std = [
 	"frame-system/std",
 	"frame-try-runtime?/std",
 	"hp-dispatch/std",
-	"hp-verifiers/std",
 	"log/std",
 	"pallet-aggregate/std",
 	"pallet-authority-discovery/std",

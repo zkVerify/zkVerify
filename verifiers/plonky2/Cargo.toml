@@ -15,7 +15,6 @@ targets = ["x86_64-unknown-linux-gnu"]
 codec = { workspace = true }
 scale-info = { workspace = true }
 sp-core = { workspace = true }
-hp-verifiers = { workspace = true }
 log = "0.4.20"
 hex-literal = { workspace = true, optional = true }
 frame-system = { workspace = true }
@@ -42,7 +41,6 @@ std = [
 	"frame-benchmarking/std",
 	"frame-support/std",
 	"frame-system/std",
-	"hp-verifiers/std",
 	"log/std",
 	"pallet-balances/std",
 	"pallet-verifiers/std",

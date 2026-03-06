@@ -18,7 +18,6 @@ frame-system = { workspace = true }
 codec = { workspace = true }
 hex-literal = { workspace = true, optional = true }
 scale-info = { workspace = true }
-hp-verifiers = { workspace = true }
 log = { workspace = true }
 pallet-verifiers = { workspace = true }
 sp-core = { workspace = true }
@@ -43,7 +42,6 @@ std = [
 	"frame-benchmarking?/std",
 	"frame-support/std",
 	"frame-system/std",
-	"hp-verifiers/std",
 	"log/std",
 	"pallet-babe/std",
 	"pallet-balances/std",

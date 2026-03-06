@@ -18,8 +18,8 @@
 use super::Risc0 as Verifier;
 use crate::Proof;
 use frame_benchmarking::v2::*;
-use hp_verifiers::Verifier as _;
 use pallet_verifiers::benchmarking_utils;
+use pallet_verifiers::traits::Verifier as _;
 
 pub struct Pallet<T: Config>(crate::Pallet<T>);
 

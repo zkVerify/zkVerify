@@ -25,7 +25,7 @@ use core::marker::PhantomData;
 use frame_support::ensure;
 use frame_support::pallet_prelude::Get;
 use frame_support::weights::Weight;
-use hp_verifiers::{Verifier, VerifyError};
+use pallet_verifiers::traits::{Verifier, VerifyError};
 use plonky2::field::extension::Extendable;
 use plonky2::hash::hash_types::RichField;
 use plonky2::plonk::circuit_data::CircuitConfig;
@@ -115,7 +115,7 @@ impl<T: Config> Verifier for Plonky2<T> {
         raw_proof.validate_size()?;
         ensure!(
             raw_pubs.len() <= T::MaxPubsSize::get() as usize,
-            hp_verifiers::VerifyError::InvalidInput
+            VerifyError::InvalidInput
         );
 
         let vk = plonky2_verifier::Vk::from(vk.clone());

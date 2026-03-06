@@ -14,17 +14,18 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 #![cfg(test)]
 
+use crate::traits::{Verifier, VerifyError, WeightInfo};
 use frame_support::{
     derive_impl, parameter_types,
     traits::{fungible::HoldConsideration, LinearStoragePrice},
     weights::{RuntimeDbWeight, Weight},
 };
 use frame_system::RawOrigin;
-use hp_verifiers::{Verifier, VerifyError, WeightInfo};
 use sp_core::{ConstU128, ConstU32};
 use sp_runtime::traits::IdentityLookup;
 
 pub use fake_pallet::FakeVerifier;
+pub use verifier_storage_pallet::Storage2Verifier;
 
 pub type Balance = u128;
 pub type AccountId = u64;
@@ -183,8 +184,40 @@ pub mod fake_pallet {
                 n if [24, 100].contains(&n) || n >= PROOF_WITH_FAKE_VERSION_LOWER_BOUND => {
                     sp_core::H256::from_low_u64_be(n)
                 }
-                _ => hp_verifiers::NO_VERSION_HASH,
+                _ => crate::traits::NO_VERSION_HASH,
             }
+        }
+    }
+}
+
+pub mod verifier_storage_pallet {
+    use super::*;
+    use alloc::borrow::Cow;
+    use frame_support::pallet_prelude::StorageVersion;
+
+    #[crate::verifier]
+    pub struct Storage2Verifier;
+
+    impl Verifier for Storage2Verifier {
+        const STORAGE_VERSION: StorageVersion = StorageVersion::new(2);
+        type Proof = ();
+        type Pubs = ();
+        type Vk = ();
+
+        fn hash_context_data() -> &'static [u8] {
+            b"storage2"
+        }
+
+        fn verify_proof(
+            _vk: &Self::Vk,
+            _proof: &Self::Proof,
+            _pubs: &Self::Pubs,
+        ) -> Result<Option<Weight>, VerifyError> {
+            Ok(None)
+        }
+
+        fn pubs_bytes(_pubs: &Self::Pubs) -> Cow<'_, [u8]> {
+            Cow::Borrowed(b"")
         }
     }
 }
@@ -244,6 +277,7 @@ frame_support::construct_runtime!(
         Balances: pallet_balances,
         CommonVerifiersPallet: crate::common,
         FakeVerifierPallet: fake_pallet,
+        Storage2VerifierPallet: verifier_storage_pallet,
         OnProofVerifiedMock: on_proof_verified,
     }
 );
@@ -282,6 +316,14 @@ impl crate::Config<FakeVerifier> for Test {
         LinearStoragePrice<BaseDeposit, PerByteDeposit, Balance>,
     >;
     type WeightInfo = MockWeightInfo;
+    #[cfg(feature = "runtime-benchmarks")]
+    type Currency = Balances;
+}
+impl crate::Config<Storage2Verifier> for Test {
+    type RuntimeEvent = RuntimeEvent;
+    type OnProofVerified = ();
+    type Ticket = ();
+    type WeightInfo = ();
     #[cfg(feature = "runtime-benchmarks")]
     type Currency = Balances;
 }

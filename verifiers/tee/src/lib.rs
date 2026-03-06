@@ -25,11 +25,11 @@ use alloc::{borrow::Cow, vec::Vec};
 use core::marker::PhantomData;
 
 use frame_support::{ensure, traits::UnixTime, weights::Weight};
-use hp_verifiers::Verifier;
+use pallet_verifiers::traits::Verifier;
 pub use weight::WeightInfo;
 
-use hp_verifiers::VerifyError;
 use pallet_crl::CrlProvider;
+use pallet_verifiers::traits::VerifyError;
 use tee_verifier::{parse_quote, parse_tcb_response, TcbResponse};
 
 use codec::{Decode, Encode, MaxEncodedLen};
@@ -88,7 +88,7 @@ impl<T: Config> Verifier for Tee<T> {
         vk: &Self::Vk,
         proof: &Self::Proof,
         _pubs: &Self::Pubs,
-    ) -> Result<Option<Weight>, hp_verifiers::VerifyError> {
+    ) -> Result<Option<Weight>, VerifyError> {
         ensure!(
             proof.len() <= MAX_PROOF_LENGTH as usize,
             VerifyError::InvalidProofData
@@ -151,9 +151,9 @@ impl<T: Config> Verifier for Tee<T> {
     }
 }
 
-pub struct TeeWeight<W: weight::WeightInfo>(PhantomData<W>);
+pub struct TeeWeight<W: WeightInfo>(PhantomData<W>);
 
-impl<T: Config, W: weight::WeightInfo> pallet_verifiers::WeightInfo<Tee<T>> for TeeWeight<W> {
+impl<T: Config, W: WeightInfo> pallet_verifiers::WeightInfo<Tee<T>> for TeeWeight<W> {
     fn verify_proof(
         _proof: &<Tee<T> as Verifier>::Proof,
         _pubs: &<Tee<T> as Verifier>::Pubs,

@@ -69,7 +69,7 @@ fn compute_correct_weight_for_proof() {
 
 mod reject {
     use frame_support::assert_err;
-    use hp_verifiers::VerifyError;
+    use pallet_verifiers::traits::VerifyError;
 
     use super::*;
 

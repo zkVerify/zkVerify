@@ -16,7 +16,7 @@ workspace = true
 codec = { workspace = true, features = ["max-encoded-len"] }
 scale-info = { workspace = true }
 sp-runtime-interface = { workspace = true }
-hp-verifiers = { workspace = true }
+verifiers-traits = { workspace = true }
 
 
 # ARKWORKS
@@ -56,7 +56,7 @@ std = [
 	"ark-std/std",
 	"codec/std",
 	"frame-support/std",
-	"hp-verifiers/std",
 	"scale-info/std",
 	"sp-runtime-interface/std",
+	"verifiers-traits/std",
 ]

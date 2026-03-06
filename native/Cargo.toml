@@ -22,7 +22,7 @@ risc0-verifier = { workspace = true }
 sp-runtime-interface = { workspace = true }
 codec = { workspace = true }
 log = { workspace = true }
-hp-verifiers = { workspace = true }
+verifiers-traits = { workspace = true }
 hp-groth16 = { workspace = true }
 
 [dev-dependencies]
@@ -41,7 +41,7 @@ std = [
 	"dep:bincode",
 	"hp-groth16/implementation",
 	"hp-groth16/std",
-	"hp-verifiers/std",
 	"log/std",
 	"sp-runtime-interface/std",
+	"verifiers-traits/std",
 ]

@@ -49,10 +49,11 @@ zkVerify is a Substrate relay chain specialized for ZK proof verification. The c
 
 ### Verifier System (the core abstraction)
 
-**`primitives/hp-verifiers/src/lib.rs`** — defines the `Verifier` trait that every proof system implements:
+**`pallets/verifiers/traits/src/lib.rs`** — defines the `Verifier` trait that every proof system implements:
 
 ```rust
 pub trait Verifier {
+  const STORAGE_VERSION: frame_support::traits::StorageVersion = StorageVersion::new(1);
     type Proof: Arg;
     type Pubs: Arg;   // Public inputs
     type Vk: VkArg;   // Verification key
@@ -152,6 +153,24 @@ Each test consists of:
 
 ## Code Style
 
+- **License header**: every new `.rs` source file must start with the Apache-2.0 license header used throughout the codebase:
+  ```rust
+  // Copyright 2026, Horizen Labs, Inc.
+  // SPDX-License-Identifier: Apache-2.0
+
+  // Licensed under the Apache License, Version 2.0 (the "License");
+  // you may not use this file except in compliance with the License.
+  // You may obtain a copy of the License at
+  //
+  // 	http://www.apache.org/licenses/LICENSE-2.0
+  //
+  // Unless required by applicable law or agreed to in writing, software
+  // distributed under the License is distributed on an "AS IS" BASIS,
+  // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  // See the License for the specific language governing permissions and
+  // limitations under the License.
+  ```
+  Files licensed under GPL-3.0 (e.g. `verifiers/fflonk/`) use the corresponding GPL header instead. Check existing files in the same directory for the correct license.
 - **Indentation**: 4 spaces (standard `rustfmt` defaults — no custom `rustfmt.toml` at workspace root)
 - **Line width**: 100 characters max
 - **`unwrap()`**: avoid it; if an invariant makes a panic provably impossible, add a proof comment ending with `; qed`; otherwise prefer `expect("reason")` with a descriptive message over a bare `unwrap()`

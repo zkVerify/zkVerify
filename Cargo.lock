@@ -4959,12 +4959,12 @@ dependencies = [
  "ark-std 0.4.0",
  "frame-support",
  "hex-literal",
- "hp-verifiers",
  "parity-scale-codec",
  "rstest",
  "rstest_reuse",
  "scale-info",
  "sp-runtime-interface",
+ "verifiers-traits",
 ]
 
 [[package]]
@@ -4973,18 +4973,6 @@ version = "0.1.0"
 dependencies = [
  "impl-trait-for-tuples",
  "sp-core",
- "sp-weights",
-]
-
-[[package]]
-name = "hp-verifiers"
-version = "0.1.0"
-dependencies = [
- "hex-literal",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-io",
  "sp-weights",
 ]
 
@@ -7353,11 +7341,11 @@ dependencies = [
  "ark-scale",
  "bincode 1.3.3",
  "hp-groth16",
- "hp-verifiers",
  "log",
  "parity-scale-codec",
  "risc0-verifier",
  "sp-runtime-interface",
+ "verifiers-traits",
 ]
 
 [[package]]
@@ -8560,7 +8548,6 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal",
- "hp-verifiers",
  "log",
  "native",
  "pallet-balances",
@@ -8600,7 +8587,6 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal",
- "hp-verifiers",
  "log",
  "pallet-balances",
  "pallet-verifiers",
@@ -8644,7 +8630,6 @@ dependencies = [
  "frame-system",
  "hex-literal",
  "hp-groth16",
- "hp-verifiers",
  "native",
  "pallet-balances",
  "pallet-verifiers",
@@ -8946,7 +8931,6 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal",
- "hp-verifiers",
  "log",
  "pallet-balances",
  "pallet-verifiers",
@@ -9049,7 +9033,6 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal",
- "hp-verifiers",
  "log",
  "native",
  "pallet-balances",
@@ -9162,7 +9145,6 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal",
- "hp-verifiers",
  "log",
  "pallet-balances",
  "pallet-verifiers",
@@ -9271,7 +9253,6 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal",
- "hp-verifiers",
  "log",
  "pallet-babe",
  "pallet-balances",
@@ -9420,7 +9401,6 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal",
- "hp-verifiers",
  "log",
  "native",
  "pallet-balances",
@@ -9441,7 +9421,6 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal",
- "hp-verifiers",
  "log",
  "native",
  "pallet-balances",
@@ -9479,7 +9458,6 @@ dependencies = [
  "frame-system",
  "hex-literal",
  "hp-on-proof-verified",
- "hp-verifiers",
  "log",
  "pallet-balances",
  "pallet-verifiers-macros",
@@ -9489,6 +9467,8 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "sp-weights",
+ "verifiers-traits",
 ]
 
 [[package]]
@@ -18227,6 +18207,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
 
 [[package]]
+name = "verifiers-traits"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "hex-literal",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-weights",
+]
+
+[[package]]
 name = "version_check"
 version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -18237,7 +18230,6 @@ name = "vk-hash"
 version = "0.1.0"
 dependencies = [
  "hp-groth16",
- "hp-verifiers",
  "jsonrpsee 0.24.9",
  "pallet-ezkl-verifier",
  "pallet-fflonk-verifier",
@@ -18248,6 +18240,7 @@ dependencies = [
  "parity-scale-codec",
  "serde",
  "sp-core",
+ "verifiers-traits",
  "zkv-runtime",
 ]
 
@@ -19729,7 +19722,6 @@ dependencies = [
  "frame-try-runtime",
  "hex-literal",
  "hp-dispatch",
- "hp-verifiers",
  "log",
  "pallet-aggregate",
  "pallet-authority-discovery",
