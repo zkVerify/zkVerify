@@ -92,6 +92,7 @@ impl From<&VersionedProof> for ProtocolVersion {
         match value {
             VersionedProof::V0_84(_) => ProtocolVersion::V0_84,
             VersionedProof::V3_0(_) => ProtocolVersion::V3_0,
+            // VersionedProof::V4_0(_) => ProtocolVersion::V3_0,
         }
     }
 }
@@ -106,6 +107,8 @@ pub enum VersionedProof {
     V0_84(Proof),
     #[codec(index = 1)]
     V3_0(Proof),
+    // #[codev(index = 2)]
+    // V4_0(Proof),
 }
 
 // Important Notes:
@@ -118,6 +121,8 @@ pub enum VersionedVk {
     V0_84([u8; VK_SIZE_V0_84]),
     #[codec(index = 1)]
     V3_0([u8; VK_SIZE_V3_0]),
+    // #[codev(index = 2)]
+    // V4_0([u8; VK_SIZE_V3_0 + 10]),
 }
 
 impl Proof {
@@ -188,6 +193,8 @@ mod weight_verify_proof;
 pub struct Ultrahonk<T>;
 
 impl<T: Config> Verifier for Ultrahonk<T> {
+    const STORAGE_VERSION: StorageVersion = StorageVersion::new(2);
+
     type Proof = VersionedProof;
 
     type Pubs = Pubs;
