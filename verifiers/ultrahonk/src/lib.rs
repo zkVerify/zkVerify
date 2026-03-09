@@ -20,6 +20,7 @@ extern crate alloc;
 use alloc::{borrow::Cow, vec::Vec};
 use codec::{Decode, Encode, MaxEncodedLen};
 use core::marker::PhantomData;
+use frame_support::traits::StorageVersion;
 use frame_support::{ensure, weights::Weight};
 use native::bn254::HostHooks as CurveHooksImpl;
 use pallet_verifiers::traits::{Verifier, VerifyError};
