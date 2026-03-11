@@ -34,7 +34,6 @@ use tee_verifier::{parse_nitro_attestation, parse_quote, parse_tcb_response, Tcb
 
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
-use sp_core::Get;
 
 #[pallet_verifiers::verifier]
 pub struct Tee<T>;
@@ -65,19 +64,14 @@ impl MaxEncodedLen for Vk {
     }
 }
 
+pub trait CaNameProvider {
+    fn ca_name_for(vk: &Vk) -> &'static str;
+}
+
 pub trait Config {
     type UnixTime: UnixTime;
     type Crl: CrlProvider;
-    type IntelCaName: Get<&'static str>;
-    type NitroCaName: Get<&'static str>;
-    /// The CA name to use for Intel CRL lookups.
-    fn intel_ca_name() -> &'static str {
-        Self::IntelCaName::get()
-    }
-    /// The CA name to use for Nitro CRL lookups.
-    fn nitro_ca_name() -> &'static str {
-        Self::NitroCaName::get()
-    }
+    type CaName: CaNameProvider;
 }
 
 impl<T: Config> Verifier for Tee<T> {
@@ -107,7 +101,9 @@ impl<T: Config> Verifier for Tee<T> {
 
         let now = T::UnixTime::now().as_secs();
 
-        let crl = T::Crl::get_crl(T::ca_name()).map_err(|_| VerifyError::MissingCrl)?;
+        // Always require the CA to be registered, even if empty, to allow for unpermissioned CRL
+        // updates.
+        let crl = T::Crl::get_crl(T::CaName::ca_name_for(vk)).map_err(|_| VerifyError::MissingCrl)?;
 
         match vk {
             Vk::Intel {
@@ -140,9 +136,8 @@ impl<T: Config> Verifier for Tee<T> {
                 let attestation = parse_nitro_attestation(proof)
                     .map_err(|_| VerifyError::InvalidProofData)?;
 
-                let crl = T::Crl::get_crl(T::nitro_ca_name()).ok();
                 attestation
-                    .verify(crl.as_ref(), now)
+                    .verify(Some(&crl), now)
                     .map_err(|_| VerifyError::VerifyError)
                     .map(|_| None)
             }
@@ -168,13 +163,14 @@ impl<T: Config> Verifier for Tee<T> {
                         .map_err(|_| VerifyError::InvalidVerificationKey)?;
 
                 let now = T::UnixTime::now().as_secs();
-                let crl = T::Crl::get_crl(T::intel_ca_name()).map_err(|_| VerifyError::MissingCrl)?;
+                let crl = T::Crl::get_crl(T::CaName::ca_name_for(vk)).map_err(|_| VerifyError::MissingCrl)?;
                 tcb_response
                     .verify(certificates.to_vec(), &crl, now)
                     .map_err(|_| VerifyError::VerifyError)
             }
-            // Nitro has no VK data to validate — the attestation document is self-contained
-            Vk::Nitro => Ok(()),
+            // Nitro has no VK data to validate, the attestation document is self-contained
+            // => no point in registering a vk
+            Vk::Nitro => Err(VerifyError::InvalidVerificationKey),
         }
     }
 
