@@ -938,7 +938,7 @@ parameter_types! {
 impl pallet_tee_verifier::Config for Runtime {
     type UnixTime = Timestamp;
     type Crl = pallet_crl::Pallet<Runtime>;
-    type CaName = IntelCaName;
+    type IntelCaName = IntelCaName;
     type NitroCaName = NitroCaName;
 }
 
