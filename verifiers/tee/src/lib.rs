@@ -68,11 +68,11 @@ impl MaxEncodedLen for Vk {
 pub trait Config {
     type UnixTime: UnixTime;
     type Crl: CrlProvider;
-    type CaName: Get<&'static str>;
+    type IntelCaName: Get<&'static str>;
     type NitroCaName: Get<&'static str>;
     /// The CA name to use for Intel CRL lookups.
-    fn ca_name() -> &'static str {
-        Self::CaName::get()
+    fn intel_ca_name() -> &'static str {
+        Self::IntelCaName::get()
     }
     /// The CA name to use for Nitro CRL lookups.
     fn nitro_ca_name() -> &'static str {
@@ -168,7 +168,7 @@ impl<T: Config> Verifier for Tee<T> {
                         .map_err(|_| VerifyError::InvalidVerificationKey)?;
 
                 let now = T::UnixTime::now().as_secs();
-                let crl = T::Crl::get_crl(T::ca_name()).map_err(|_| VerifyError::MissingCrl)?;
+                let crl = T::Crl::get_crl(T::intel_ca_name()).map_err(|_| VerifyError::MissingCrl)?;
                 tcb_response
                     .verify(certificates.to_vec(), &crl, now)
                     .map_err(|_| VerifyError::VerifyError)
