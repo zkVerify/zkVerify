@@ -930,16 +930,20 @@ impl pallet_verifiers::common::Config for Runtime {
     type CommonWeightInfo = Runtime;
 }
 
-parameter_types! {
-    pub const IntelCaName: &'static str = "Intel_SGX_Processor";
-    pub const NitroCaName: &'static str = "AWS_Nitro";
+pub struct TeeCaNames;
+impl pallet_tee_verifier::CaNameProvider for TeeCaNames {
+    fn ca_name_for(vk: &pallet_tee_verifier::Vk) -> &'static str {
+        match vk {
+            pallet_tee_verifier::Vk::Intel { .. } => "Intel_SGX_Processor",
+            pallet_tee_verifier::Vk::Nitro => "AWS_Nitro",
+        }
+    }
 }
 
 impl pallet_tee_verifier::Config for Runtime {
     type UnixTime = Timestamp;
     type Crl = pallet_crl::Pallet<Runtime>;
-    type IntelCaName = IntelCaName;
-    type NitroCaName = NitroCaName;
+    type CaName = TeeCaNames;
 }
 
 pub type TeeVerifier = pallet_tee_verifier::Tee<Runtime>;

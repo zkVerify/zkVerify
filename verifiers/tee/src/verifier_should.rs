@@ -16,7 +16,6 @@
 #![cfg(test)]
 
 use core::time::Duration;
-use frame_support::parameter_types;
 use hex_literal::hex;
 use sp_core::{ConstU64, Get};
 
@@ -61,17 +60,21 @@ impl CrlProvider for RevokedCrl {
     }
 }
 
-parameter_types! {
-    pub const CaName: &'static str = "foo";
-    pub const NitroCaName: &'static str = "AWS_Nitro";
+struct MockCaName;
+impl CaNameProvider for MockCaName {
+    fn ca_name_for(vk: &Vk) -> &'static str {
+        match vk {
+            Vk::Intel { .. } => "Intel_SGX_Processor",
+            Vk::Nitro => "AWS_Nitro",
+        }
+    }
 }
 
 struct Mock<T: UnixTime, C: CrlProvider = EmptyCrl>(PhantomData<(T, C)>);
 impl<T: UnixTime, C: CrlProvider> Config for Mock<T, C> {
     type UnixTime = T;
     type Crl = C;
-    type CaName = CaName;
-    type NitroCaName = NitroCaName;
+    type CaName = MockCaName;
 }
 
 #[test]
@@ -244,7 +247,7 @@ fn reject_nitro_with_expired_timestamp() {
 }
 
 #[test]
-fn validate_nitro_vk_always_succeeds() {
+fn validate_nitro_vk_always_fails() {
     let vk = Vk::Nitro;
-    assert!(Tee::<Mock<MockTime<ConstU64<NITRO_NOW>>>>::validate_vk(&vk).is_ok());
+    assert!(Tee::<Mock<MockTime<ConstU64<NITRO_NOW>>>>::validate_vk(&vk).is_err());
 }

@@ -31,14 +31,15 @@ pub type Call<T> = pallet_verifiers::Call<T, Verifier<T>>;
 const INTEL_PRESENT: u64 = 1769092187000; // Thu, 22 Jan 2026 14:29:47 GMT, in ms
 const NITRO_PRESENT: u64 = 1668034320696; // Wed, 09 Nov 2022 22:52:00 GMT, in ms
 
-/// Insert an empty CRL for the TEE verifier's configured CA name into pallet_crl storage.
+/// Insert an empty CRL for the given Vk variant's CA name into pallet_crl storage.
 /// This allows `T::Crl::get_crl()` to succeed during benchmarks without requiring a full
 /// CRL update extrinsic.
-fn setup_empty_crl<T>()
+fn setup_empty_crl<T>(vk: &Vk)
 where
     T: crate::Config + pallet_crl::Config,
 {
-    let ca_name_bytes: alloc::vec::Vec<u8> = T::ca_name().as_bytes().to_vec();
+    let ca_name_str = <T as crate::Config>::CaName::ca_name_for(vk);
+    let ca_name_bytes: alloc::vec::Vec<u8> = ca_name_str.as_bytes().to_vec();
     let bounded_ca_name: pallet_crl::CaName<T> = ca_name_bytes
         .try_into()
         .expect("CA name fits within MaxCaNameLength");
@@ -86,7 +87,7 @@ mod benchmarks {
         };
 
         set_timestamp::<T>(INTEL_PRESENT);
-        setup_empty_crl::<T>();
+        setup_empty_crl::<T>(&vk);
 
         let r;
         #[block]
@@ -150,7 +151,7 @@ mod benchmarks {
         };
 
         set_timestamp::<T>(INTEL_PRESENT);
-        setup_empty_crl::<T>();
+        setup_empty_crl::<T>(&vk);
 
         let r;
         #[block]
@@ -199,7 +200,7 @@ mod benchmarks {
         };
 
         set_timestamp::<T>(INTEL_PRESENT);
-        setup_empty_crl::<T>();
+        setup_empty_crl::<T>(&vk);
 
         #[extrinsic_call]
         register_vk(RawOrigin::Signed(caller), vk.clone().into());
@@ -249,9 +250,17 @@ mod mock {
     type AccountId = u64;
 
     parameter_types! {
-        pub const IntelCaName: &'static str = "Intel_SGX_Processor";
-        pub const NitroCaName: &'static str = "AWS_Nitro";
         pub const MaxCaNameLength: u32 = 64;
+    }
+
+    pub struct TeeCaNames;
+    impl crate::CaNameProvider for TeeCaNames {
+        fn ca_name_for(vk: &crate::Vk) -> &'static str {
+            match vk {
+                crate::Vk::Intel { .. } => "Intel_SGX_Processor",
+                crate::Vk::Nitro => "AWS_Nitro",
+            }
+        }
     }
 
     frame_support::construct_runtime!(
@@ -270,8 +279,7 @@ mod mock {
     impl crate::Config for Test {
         type UnixTime = Timestamp;
         type Crl = pallet_crl::Pallet<Test>;
-        type CaName = IntelCaName;
-        type NitroCaName = NitroCaName;
+        type CaName = TeeCaNames;
     }
 
     #[derive_impl(frame_system::config_preludes::SolochainDefaultConfig as frame_system::DefaultConfig)]
@@ -362,7 +370,10 @@ mod mock {
             System::set_block_number(1);
             Timestamp::set_timestamp(crate::benchmarking::INTEL_PRESENT); // Thu, 22 Jan 2026 14:29:47 GMT
                                                                     // Set up an empty CRL for the Intel SGX CA so benchmark tests can look up CRL data.
-            crate::benchmarking::setup_empty_crl::<Test>();
+            crate::benchmarking::setup_empty_crl::<Test>(&crate::Vk::Intel {
+                tcb_response: vec![],
+                certificates: vec![],
+            });
         });
         ext
     }
