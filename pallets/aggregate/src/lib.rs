@@ -52,6 +52,7 @@
 //!
 
 extern crate alloc;
+extern crate core;
 
 pub use pallet::*;
 pub use weight::WeightInfo;
@@ -1257,7 +1258,10 @@ pub mod pallet {
         } else {
             T::Hold::release(&reason.into(), account, amount, Precision::BestEffort)
         }
-        .expect("Call user should exists. qed");
+        .inspect_err(|_| {
+            log::debug!("The delivery owner have not enough funds to receive tip and fee")
+        })
+        .unwrap_or_default();
 
         let remain = amount.defensive_saturating_sub(transfer);
 

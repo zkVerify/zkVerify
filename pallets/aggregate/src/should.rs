@@ -407,7 +407,7 @@ fn reserve_at_least_the_publish_proof_price_fraction_when_on_proof_verified() {
         let statement = H256::from_low_u64_be(123);
         let account = USER_1;
 
-        Aggregate::on_proof_verified(Some(account), DOMAIN, statement);
+        Aggregate::on_proof_verified(Some(account), DOMAIN_NO_DELIVERY, statement);
 
         assert_eq!(Balances::reserved_balance(account), DOMAIN_FEE);
     })
@@ -535,6 +535,7 @@ mod clean_the_published_storage_on_initialize {
 
 mod aggregate {
     use super::*;
+    use frame_support::traits::fungible::Mutate;
 
     fn dispatch_info() -> DispatchInfo {
         Call::<Test>::aggregate {
@@ -568,6 +569,7 @@ mod aggregate {
     #[test]
     fn dispatch_aggregation() {
         test().execute_with(|| {
+            const SIZE: u128 = DOMAIN_SIZE as u128;
             add_aggregations(Some(USER_2), DOMAIN, DOMAIN_SIZE);
 
             // Record initial balance of delivery owner
@@ -581,6 +583,7 @@ mod aggregate {
                 aggregation,
                 destination,
                 delivery_owner,
+                fee,
                 ..
             } = MockDispatchAggregation::pop().expect("No call received");
 
@@ -592,12 +595,40 @@ mod aggregate {
             let domain = Domains::<Test>::get(domain_id).unwrap();
             let owner_tip = *domain.delivery.owner_tip();
 
+            // Remember that we're charge just a fraction to each user
+            let expected_owner_tip = (owner_tip / SIZE) * SIZE;
+            let expected_fee = (fee / SIZE) * SIZE;
+
             // Verify delivery owner's final balance
             let final_balance = Balances::free_balance(USER_DELIVERY_OWNER);
             assert_eq!(
                 final_balance,
-                initial_balance + owner_tip,
+                initial_balance + expected_fee + expected_owner_tip,
                 "Delivery owner should only receive their tip"
+            );
+        })
+    }
+
+    #[test]
+    fn dispatch_aggregation_should_not_fails_even_if_the_delivery_owner_plus_the_delivery_fee_is_under_the_existential_deposit(
+    ) {
+        test().execute_with(|| {
+            add_aggregations(Some(USER_2), DOMAIN, DOMAIN_SIZE);
+
+            Balances::set_balance(&USER_DELIVERY_OWNER, 0);
+
+            // Record initial balance of delivery owner
+            let initial_balance = Balances::free_balance(USER_DELIVERY_OWNER);
+            assert_eq!(
+                initial_balance, 0,
+                "Delivery owner should start with 0 balance"
+            );
+
+            Aggregate::aggregate(Origin::Signed(USER_1).into(), DOMAIN_ID, 1).unwrap();
+
+            assert_eq!(
+                initial_balance, 0,
+                "Test should check a fail without panic: Delivery owner should end also with 0 balance"
             );
         })
     }
@@ -677,7 +708,7 @@ mod aggregate {
                     )
                 })
                 .collect::<Vec<(u64, _)>>();
-            let expected_balances = [
+            let orig_balances = [
                 Balances::free_balance(USER_1),
                 Balances::free_balance(USER_2),
             ];
@@ -692,6 +723,22 @@ mod aggregate {
                 DOMAIN_ID,
                 1
             ));
+
+            let MockDispatchAggregation { fee, .. } =
+                MockDispatchAggregation::pop().expect("No call received");
+            let domain = Domains::<Test>::get(DOMAIN_ID).unwrap();
+            let owner_tip = *domain.delivery.owner_tip();
+            let delivery_per_statement =
+                fee / DOMAIN_SIZE as u128 + owner_tip / DOMAIN_SIZE as u128;
+
+            let expected_balances = [
+                orig_balances[0]
+                    - delivery_per_statement
+                        * elements.iter().filter(|(a, _)| *a == USER_1).count() as u128,
+                orig_balances[1]
+                    - delivery_per_statement
+                        * elements.iter().filter(|(a, _)| *a == USER_2).count() as u128,
+            ];
 
             assert_eq!(
                 Balances::free_balance(ROOT_USER),
