@@ -228,7 +228,7 @@ fn reject_invalid_nitro_proof() {
 
     assert_eq!(
         Tee::<Mock<MockTime<ConstU64<NITRO_NOW>>>>::verify_proof(&vk, &proof, &pubs),
-        Err(hp_verifiers::VerifyError::VerifyError)
+        Err(VerifyError::VerifyError)
     );
 }
 
@@ -242,7 +242,7 @@ fn reject_nitro_with_expired_timestamp() {
     const NITRO_FUTURE: u64 = NITRO_NOW + 365 * 24 * 3600;
     assert_eq!(
         Tee::<Mock<MockTime<ConstU64<NITRO_FUTURE>>>>::verify_proof(&vk, &proof, &pubs),
-        Err(hp_verifiers::VerifyError::VerifyError)
+        Err(VerifyError::VerifyError)
     );
 }
 

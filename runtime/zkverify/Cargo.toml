@@ -312,6 +312,7 @@ try-runtime = [
 	"pallet-transaction-payment/try-runtime",
 	"pallet-treasury/try-runtime",
 	"pallet-utility/try-runtime",
+	"pallet-tee-verifier/try-runtime",
 	"pallet-verifiers/try-runtime",
 	"pallet-vesting/try-runtime",
 	"pallet-xcm/try-runtime",

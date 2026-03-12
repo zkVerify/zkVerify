@@ -27,7 +27,6 @@
 
 mod weight;
 
-#[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
 mod mock;

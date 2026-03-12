@@ -15,7 +15,7 @@
 
 #![cfg(feature = "runtime-benchmarks")]
 
-use crate::{Tee as Verifier, Vk};
+use crate::{CaNameProvider, Tee as Verifier, Vk};
 use alloc::vec;
 use frame_benchmarking::v2::*;
 use frame_support::{pallet_prelude::*, sp_runtime::traits::UniqueSaturatedInto};
@@ -369,7 +369,7 @@ mod mock {
         ext.execute_with(|| {
             System::set_block_number(1);
             Timestamp::set_timestamp(crate::benchmarking::INTEL_PRESENT); // Thu, 22 Jan 2026 14:29:47 GMT
-                                                                    // Set up an empty CRL for the Intel SGX CA so benchmark tests can look up CRL data.
+                                                                          // Set up an empty CRL for the Intel SGX CA so benchmark tests can look up CRL data.
             crate::benchmarking::setup_empty_crl::<Test>(&crate::Vk::Intel {
                 tcb_response: vec![],
                 certificates: vec![],

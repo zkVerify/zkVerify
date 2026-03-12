@@ -2029,6 +2029,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "coset"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1eb98d5e9155e2cf7cd942c8b3033097d4563b6fb0a00b9caecb74669555c058"
+dependencies = [
+ "ciborium",
+ "ciborium-io",
+]
+
+[[package]]
 name = "cpp_demangle"
 version = "0.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9676,6 +9686,7 @@ dependencies = [
  "sp-consensus-babe",
  "sp-core",
  "sp-io",
+ "sp-runtime",
  "tee-verifier",
 ]
 
@@ -17549,13 +17560,16 @@ checksum = "61c41af27dd6d1e27b1b16b489db798443478cef1f06a660c96db617ba5de3b1"
 [[package]]
 name = "tee-verifier"
 version = "0.1.0"
-source = "git+https://github.com/zkVerify/tee-verifier.git?tag=v0.1.0#3cfdb7c621086b44fc3f2af640d35ac4acaff888"
+source = "git+https://github.com/zkVerify/tee-verifier.git?branch=dr/nitro#09072b911b13dc893bde5faa4946bb5b8b770e3b"
 dependencies = [
  "asn1_der",
  "chrono",
+ "ciborium",
+ "coset",
  "hex",
  "hex-literal",
  "p256",
+ "p384",
  "pem 3.0.6",
  "serde",
  "serde-json-core",
