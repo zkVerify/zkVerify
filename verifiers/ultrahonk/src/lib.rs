@@ -93,7 +93,6 @@ impl From<&VersionedProof> for ProtocolVersion {
         match value {
             VersionedProof::V0_84(_) => ProtocolVersion::V0_84,
             VersionedProof::V3_0(_) => ProtocolVersion::V3_0,
-            // VersionedProof::V4_0(_) => ProtocolVersion::V3_0,
         }
     }
 }
@@ -108,8 +107,6 @@ pub enum VersionedProof {
     V0_84(Proof),
     #[codec(index = 1)]
     V3_0(Proof),
-    // #[codev(index = 2)]
-    // V4_0(Proof),
 }
 
 // Important Notes:
@@ -122,8 +119,6 @@ pub enum VersionedVk {
     V0_84([u8; VK_SIZE_V0_84]),
     #[codec(index = 1)]
     V3_0([u8; VK_SIZE_V3_0]),
-    // #[codev(index = 2)]
-    // V4_0([u8; VK_SIZE_V3_0 + 10]),
 }
 
 impl Proof {
@@ -182,6 +177,50 @@ impl From<Proof> for RawProof {
     }
 }
 
+trait IntoVerifyError {
+    fn into_verify_error(self) -> VerifyError;
+}
+
+impl IntoVerifyError for ultrahonk_no_std_v0_84::errors::VerifyError {
+    fn into_verify_error(self) -> VerifyError {
+        match self {
+            ultrahonk_no_std_v0_84::errors::VerifyError::VerificationError { message: _ } => {
+                VerifyError::VerifyError
+            }
+            ultrahonk_no_std_v0_84::errors::VerifyError::PublicInputError { message: _ } => {
+                VerifyError::InvalidInput
+            }
+            ultrahonk_no_std_v0_84::errors::VerifyError::KeyError => {
+                VerifyError::InvalidVerificationKey
+            }
+            ultrahonk_no_std_v0_84::errors::VerifyError::InvalidProofError => {
+                VerifyError::InvalidProofData
+            }
+            ultrahonk_no_std_v0_84::errors::VerifyError::OtherError => VerifyError::VerifyError,
+        }
+    }
+}
+
+impl IntoVerifyError for ultrahonk_no_std_v3_0::errors::VerifyError {
+    fn into_verify_error(self) -> VerifyError {
+        match self {
+            ultrahonk_no_std_v3_0::errors::VerifyError::VerificationError { message: _ } => {
+                VerifyError::VerifyError
+            }
+            ultrahonk_no_std_v3_0::errors::VerifyError::PublicInputError { message: _ } => {
+                VerifyError::InvalidInput
+            }
+            ultrahonk_no_std_v3_0::errors::VerifyError::KeyError => {
+                VerifyError::InvalidVerificationKey
+            }
+            ultrahonk_no_std_v3_0::errors::VerifyError::InvalidProofError { message: _ } => {
+                VerifyError::InvalidProofData
+            }
+            ultrahonk_no_std_v3_0::errors::VerifyError::OtherError => VerifyError::VerifyError,
+        }
+    }
+}
+
 pub mod benchmarking;
 pub mod benchmarking_verify_proof;
 pub mod migrations;
@@ -227,23 +266,7 @@ impl<T: Config> Verifier for Ultrahonk<T> {
                 log::trace!("Verifying (no-std)");
                 ultrahonk_no_std_v0_84::verify::<CurveHooksImpl>(vk_bytes, &prepared, pubs)
                     .inspect_err(|e| log::debug!("Cannot verify proof: {e:?}"))
-                    .map_err(|e| match e {
-                        ultrahonk_no_std_v0_84::errors::VerifyError::VerificationError {
-                            message: _,
-                        } => VerifyError::VerifyError,
-                        ultrahonk_no_std_v0_84::errors::VerifyError::PublicInputError {
-                            message: _,
-                        } => VerifyError::InvalidInput,
-                        ultrahonk_no_std_v0_84::errors::VerifyError::KeyError => {
-                            VerifyError::InvalidVerificationKey
-                        }
-                        ultrahonk_no_std_v0_84::errors::VerifyError::InvalidProofError => {
-                            VerifyError::InvalidProofData
-                        }
-                        ultrahonk_no_std_v0_84::errors::VerifyError::OtherError => {
-                            VerifyError::VerifyError
-                        }
-                    })
+                    .map_err(IntoVerifyError::into_verify_error)
                     .map(|_| None)
             }
             (VersionedProof::V3_0(inner_proof), VersionedVk::V3_0(vk_bytes)) => {
@@ -253,7 +276,7 @@ impl<T: Config> Verifier for Ultrahonk<T> {
                     .try_into()
                     .map_err(|_| VerifyError::InvalidProofData)?;
 
-                let w = {
+                let _ = {
                     let log_circuit_size = ultrahonk_no_std_v3_0::key::VerificationKey::<
                         CurveHooksImpl,
                     >::extract_log_circuit_size(vk_bytes)
@@ -273,24 +296,8 @@ impl<T: Config> Verifier for Ultrahonk<T> {
                 log::trace!("Verifying (no-std)");
                 ultrahonk_no_std_v3_0::verify::<CurveHooksImpl>(vk_bytes, &prepared, pubs)
                     .inspect_err(|e| log::debug!("Cannot verify proof: {e:?}"))
-                    .map_err(|e| match e {
-                        ultrahonk_no_std_v3_0::errors::VerifyError::VerificationError {
-                            message: _,
-                        } => VerifyError::VerifyError,
-                        ultrahonk_no_std_v3_0::errors::VerifyError::PublicInputError {
-                            message: _,
-                        } => VerifyError::InvalidInput,
-                        ultrahonk_no_std_v3_0::errors::VerifyError::KeyError => {
-                            VerifyError::InvalidVerificationKey
-                        }
-                        ultrahonk_no_std_v3_0::errors::VerifyError::InvalidProofError {
-                            message: _,
-                        } => VerifyError::InvalidProofData,
-                        ultrahonk_no_std_v3_0::errors::VerifyError::OtherError => {
-                            VerifyError::VerifyError
-                        }
-                    })
-                    .map(|_| Some(w))
+                    .map_err(IntoVerifyError::into_verify_error)
+                    .map(|_| None)
             }
             _ => {
                 log::debug!("Proof version does not match Vk version!");
@@ -394,12 +401,11 @@ impl<T: Config, W: WeightInfo> pallet_verifiers::WeightInfo<Ultrahonk<T>> for Ul
                         let res = ultrahonk_no_std_v3_0::ProofVariant::ZK
                             .log_n_from_byte_len(bytes.len());
                         match res {
-                            Ok(log_n) => T::WeightInfo::verify_zk_proof_v3_0(
-                                MIN_BENCHMARKED_LOG_CIRCUIT_SIZE
-                                    .max(log_n)
-                                    .min(MAX_BENCHMARKED_LOG_CIRCUIT_SIZE)
-                                    as u32,
-                            ),
+                            Ok(log_n) => T::WeightInfo::verify_zk_proof_v3_0(log_n.clamp(
+                                MIN_BENCHMARKED_LOG_CIRCUIT_SIZE,
+                                MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
+                            )
+                                as u32),
                             _ => T::WeightInfo::verify_zk_proof_v3_0(
                                 MAX_BENCHMARKED_LOG_CIRCUIT_SIZE as u32,
                             ),
@@ -409,12 +415,11 @@ impl<T: Config, W: WeightInfo> pallet_verifiers::WeightInfo<Ultrahonk<T>> for Ul
                         let res = ultrahonk_no_std_v3_0::ProofVariant::Plain
                             .log_n_from_byte_len(bytes.len());
                         match res {
-                            Ok(log_n) => T::WeightInfo::verify_plain_proof_v3_0(
-                                MIN_BENCHMARKED_LOG_CIRCUIT_SIZE
-                                    .max(log_n)
-                                    .min(MAX_BENCHMARKED_LOG_CIRCUIT_SIZE)
-                                    as u32,
-                            ),
+                            Ok(log_n) => T::WeightInfo::verify_plain_proof_v3_0(log_n.clamp(
+                                MIN_BENCHMARKED_LOG_CIRCUIT_SIZE,
+                                MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
+                            )
+                                as u32),
                             _ => T::WeightInfo::verify_plain_proof_v3_0(
                                 MAX_BENCHMARKED_LOG_CIRCUIT_SIZE as u32,
                             ),
