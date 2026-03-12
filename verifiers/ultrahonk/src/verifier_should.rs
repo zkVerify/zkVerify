@@ -21,6 +21,18 @@ use super::*;
 use hex_literal::hex;
 use rstest::rstest;
 
+impl Default for Proof {
+    fn default() -> Self {
+        Self::ZK(Vec::new()) // mirrors Noir's default
+    }
+}
+
+impl Default for VersionedProof {
+    fn default() -> Self {
+        Self::V3_0(Proof::default())
+    }
+}
+
 struct MockRuntime;
 
 impl crate::Config for MockRuntime {

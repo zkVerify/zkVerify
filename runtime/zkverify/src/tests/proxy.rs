@@ -65,7 +65,7 @@ use crate::RuntimeCall;
 #[case::ultrahonk_submit_proof(
     RuntimeCall::SettlementUltrahonkPallet(pallet_verifiers::Call::submit_proof {
         vk_or_hash: Default::default(),
-        proof: Default::default(),
+        proof: pallet_ultrahonk_verifier::VersionedProof::V3_0(pallet_ultrahonk_verifier::Proof::ZK(Vec::new())).into(),
         pubs: Default::default(),
         domain_id: None,
         })
