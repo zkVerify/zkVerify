@@ -122,7 +122,7 @@ ezkl-no-std = { git = "https://github.com/zkVerify/ezkl_verifier.git", default-f
 ultrahonk-no-std-v0_84 = { git = "https://github.com/zkVerify/ultrahonk_verifier.git", package = "ultrahonk-no-std", default-features = false, tag = "v0.2.1" }
 ultrahonk-no-std-v3_0 = { git = "https://github.com/zkVerify/ultrahonk_verifier.git", package = "ultrahonk-no-std", default-features = false, tag = "v0.3.2" }
 ultraplonk-no-std = { git = "https://github.com/zkVerify/ultraplonk_verifier.git", default-features = false, tag = "v0.4.0" }
-tee-verifier = { git = "https://github.com/zkVerify/tee-verifier.git", default-features = false, tag = "v0.1.0" }
+tee-verifier = { git = "https://github.com/zkVerify/tee-verifier.git", default-features = false, branch = "dr/nitro" } # TODO: add tag
 serde-json-core = { version = "0.6.0", default-features = false }
 
 zkv-benchmarks = { path = "relay-node/benchmarks" }

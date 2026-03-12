@@ -18,13 +18,14 @@
 extern crate alloc;
 
 pub mod benchmarking;
+pub mod migrations;
 mod verifier_should;
 mod weight;
 
 use alloc::{borrow::Cow, vec::Vec};
 use core::marker::PhantomData;
 
-use frame_support::{ensure, traits::UnixTime, weights::Weight};
+use frame_support::{ensure, pallet_prelude::StorageVersion, traits::UnixTime, weights::Weight};
 use pallet_verifiers::traits::Verifier;
 pub use weight::WeightInfo;
 
@@ -75,6 +76,8 @@ pub trait Config {
 }
 
 impl<T: Config> Verifier for Tee<T> {
+    const STORAGE_VERSION: StorageVersion = StorageVersion::new(2);
+
     type Proof = Proof;
 
     type Pubs = Pubs;
@@ -103,7 +106,8 @@ impl<T: Config> Verifier for Tee<T> {
 
         // Always require the CA to be registered, even if empty, to allow for unpermissioned CRL
         // updates.
-        let crl = T::Crl::get_crl(T::CaName::ca_name_for(vk)).map_err(|_| VerifyError::MissingCrl)?;
+        let crl =
+            T::Crl::get_crl(T::CaName::ca_name_for(vk)).map_err(|_| VerifyError::VerifyError)?;
 
         match vk {
             Vk::Intel {
@@ -119,8 +123,8 @@ impl<T: Config> Verifier for Tee<T> {
                 );
 
                 let quote = parse_quote(proof).map_err(|_| VerifyError::InvalidProofData)?;
-                let tcb_response = parse_tcb_response(&tcb_response[..])
-                    .map_err(|_| VerifyError::InvalidInput)?;
+                let tcb_response =
+                    parse_tcb_response(&tcb_response[..]).map_err(|_| VerifyError::InvalidInput)?;
 
                 tcb_response
                     .tcb_info
@@ -133,8 +137,8 @@ impl<T: Config> Verifier for Tee<T> {
                     .map(|_| None)
             }
             Vk::Nitro => {
-                let attestation = parse_nitro_attestation(proof)
-                    .map_err(|_| VerifyError::InvalidProofData)?;
+                let attestation =
+                    parse_nitro_attestation(proof).map_err(|_| VerifyError::InvalidProofData)?;
 
                 attestation
                     .verify(Some(&crl), now)
@@ -163,7 +167,8 @@ impl<T: Config> Verifier for Tee<T> {
                         .map_err(|_| VerifyError::InvalidVerificationKey)?;
 
                 let now = T::UnixTime::now().as_secs();
-                let crl = T::Crl::get_crl(T::CaName::ca_name_for(vk)).map_err(|_| VerifyError::MissingCrl)?;
+                let crl = T::Crl::get_crl(T::CaName::ca_name_for(vk))
+                    .map_err(|_| VerifyError::VerifyError)?;
                 tcb_response
                     .verify(certificates.to_vec(), &crl, now)
                     .map_err(|_| VerifyError::VerifyError)
