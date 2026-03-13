@@ -63,6 +63,9 @@ impl<T: Config> Verifier for Groth16<T> {
         if pubs.len() + 1 != vk.gamma_abc_g1.len() {
             return Err(VerifyError::InvalidInput);
         }
+        if proof.curve != vk.curve {
+            return Err(VerifyError::InvalidProofData);
+        }
 
         groth16::Groth16::verify_proof(proof.clone().into(), vk.clone(), pubs)
             .and_then(|r| r.then_some(()).ok_or(VerifyError::VerifyError))

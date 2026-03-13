@@ -109,4 +109,19 @@ mod reject {
             Err(VerifyError::InvalidInput)
         );
     }
+
+    #[apply(curves)]
+    fn incoherent_curves(curve: Curve) {
+        let (mut proof, vk, inputs) = groth16::Groth16::get_instance(4, Some(0), curve);
+
+        proof.curve = match curve {
+            Curve::Bn254 => Curve::Bls12_381,
+            Curve::Bls12_381 => Curve::Bn254,
+        };
+
+        assert_eq!(
+            Groth16::<Mock>::verify_proof(&vk, &proof, &inputs),
+            Err(VerifyError::InvalidProofData)
+        );
+    }
 }
