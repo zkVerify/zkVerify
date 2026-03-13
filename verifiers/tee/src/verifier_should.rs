@@ -75,6 +75,7 @@ impl<T: UnixTime, C: CrlProvider> Config for Mock<T, C> {
     type UnixTime = T;
     type Crl = C;
     type CaName = MockCaName;
+    type WeightInfo = ();
 }
 
 #[test]

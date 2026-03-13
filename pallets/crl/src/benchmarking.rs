@@ -163,6 +163,7 @@ mod benchmarks {
         };
 
         let caller: T::AccountId = whitelisted_caller();
+        set_timestamp::<T>(PRESENT_MS);
 
         #[extrinsic_call]
         update_crl(RawOrigin::Signed(caller), name, crl_input);

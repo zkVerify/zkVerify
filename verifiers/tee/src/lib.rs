@@ -31,7 +31,9 @@ pub use weight::WeightInfo;
 
 use pallet_crl::CrlProvider;
 use pallet_verifiers::traits::VerifyError;
-use tee_verifier::{nitro_parse_attestation, intel_parse_quote, intel_parse_tcb_response, TcbResponse};
+use tee_verifier::{
+    intel_parse_quote, intel_parse_tcb_response, nitro_parse_attestation, TcbResponse,
+};
 
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
@@ -73,6 +75,7 @@ pub trait Config {
     type UnixTime: UnixTime;
     type Crl: CrlProvider;
     type CaName: CaNameProvider;
+    type WeightInfo: WeightInfo;
 }
 
 impl<T: Config> Verifier for Tee<T> {
@@ -123,8 +126,8 @@ impl<T: Config> Verifier for Tee<T> {
                 );
 
                 let quote = intel_parse_quote(proof).map_err(|_| VerifyError::InvalidProofData)?;
-                let tcb_response =
-                    intel_parse_tcb_response(&tcb_response[..]).map_err(|_| VerifyError::InvalidInput)?;
+                let tcb_response = intel_parse_tcb_response(&tcb_response[..])
+                    .map_err(|_| VerifyError::InvalidInput)?;
 
                 tcb_response
                     .tcb_info
@@ -134,7 +137,7 @@ impl<T: Config> Verifier for Tee<T> {
                 quote
                     .verify(&tcb_response.tcb_info, &crl, now)
                     .map_err(|_| VerifyError::VerifyError)
-                    .map(|_| None)
+                    .map(|_| Some(T::WeightInfo::intel_verify_proof()))
             }
             Vk::Nitro => {
                 let attestation =
@@ -143,7 +146,7 @@ impl<T: Config> Verifier for Tee<T> {
                 attestation
                     .verify(Some(&crl), now)
                     .map_err(|_| VerifyError::VerifyError)
-                    .map(|_| None)
+                    .map(|_| Some(T::WeightInfo::nitro_verify_proof()))
             }
         }
     }
@@ -191,7 +194,7 @@ impl<T: Config, W: WeightInfo> pallet_verifiers::WeightInfo<Tee<T>> for TeeWeigh
         _proof: &<Tee<T> as Verifier>::Proof,
         _pubs: &<Tee<T> as Verifier>::Pubs,
     ) -> Weight {
-        W::verify_proof()
+        W::intel_verify_proof().max(W::nitro_verify_proof())
     }
 
     fn register_vk(_vk: &<Tee<T> as Verifier>::Vk) -> Weight {
