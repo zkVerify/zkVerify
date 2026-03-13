@@ -12196,7 +12196,7 @@ version = "0.13.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "be769465445e8c1474e9c5dac2018218498557af32d9ed057325ec9a41ae81bf"
 dependencies = [
- "heck 0.5.0",
+ "heck 0.4.1",
  "itertools 0.14.0",
  "log",
  "multimap",
@@ -15873,7 +15873,7 @@ version = "0.8.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c1c97747dbf44bb1ca44a561ece23508e99cb592e862f22222dcf42f51d1e451"
 dependencies = [
- "heck 0.5.0",
+ "heck 0.4.1",
  "proc-macro2",
  "quote",
  "syn 2.0.117",
@@ -17560,7 +17560,7 @@ checksum = "61c41af27dd6d1e27b1b16b489db798443478cef1f06a660c96db617ba5de3b1"
 [[package]]
 name = "tee-verifier"
 version = "0.1.0"
-source = "git+https://github.com/zkVerify/tee-verifier.git?branch=dr/nitro#09072b911b13dc893bde5faa4946bb5b8b770e3b"
+source = "git+https://github.com/zkVerify/tee-verifier.git?branch=dr/nitro#5385427ed887294e8b40b0f5e2587ac7ae4edfa8"
 dependencies = [
  "asn1_der",
  "chrono",

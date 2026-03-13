@@ -21,8 +21,8 @@
 //! This pallet allows a manager to register Certificate Authorities (CAs) and update their
 //! CRLs independently. Each CA has its own root certificate for CRL signature verification.
 //!
-//! The CRL is parsed and validated using the `tee-verifier` crate's `parse_pem_crl` or
-//! `parse_der_crl` functions, which verify the CRL signature against a certificate chain
+//! The CRL is parsed and validated using the `tee-verifier` crate's `parse_crl_pem` or
+//! `parse_crl_der` functions, which verify the CRL signature against a certificate chain
 //! (PEM) or a single signing certificate (DER).
 
 mod weight;
@@ -103,7 +103,7 @@ pub enum CrlInput {
 pub mod pallet {
     use super::*;
     use frame_system::pallet_prelude::*;
-    use tee_verifier::{parse_der_crl, parse_pem_crl};
+    use tee_verifier::{parse_crl_der, parse_crl_pem};
 
     #[pallet::pallet]
     pub struct Pallet<T>(_);
@@ -453,7 +453,7 @@ pub mod pallet {
                     if cert_chain.len() > MAX_CERT_CHAIN_PEM_LENGTH as usize {
                         return Err(Error::<T>::CertChainPemTooLarge.into());
                     }
-                    parse_pem_crl(
+                    parse_crl_pem(
                         &crl,
                         &cert_chain,
                         Some(ca_info.root_cert.as_slice()),
@@ -467,7 +467,7 @@ pub mod pallet {
                     if cert_chain.len() > MAX_CERT_CHAIN_DER_LENGTH as usize {
                         return Err(Error::<T>::CertChainDerTooLarge.into());
                     }
-                    parse_der_crl(
+                    parse_crl_der(
                         &crl,
                         &cert_chain,
                         Some(ca_info.root_cert.as_slice()),
