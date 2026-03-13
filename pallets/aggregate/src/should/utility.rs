@@ -89,13 +89,19 @@ pub fn statement_entry(
     statement: H256,
 ) -> StatementEntry<AccountId, Balance> {
     let size = |d: &Domain<Test>| d.max_aggregation_size as BalanceOf<Test>;
-    let aggregation_size: BalanceOf<Test> = domain
-        .map(size)
-        .or_else(|| Domains::<Test>::get(DOMAIN_ID).map(|d| size(&d)))
-        .unwrap();
+    let default_domain = Domains::<Test>::get(DOMAIN_ID).unwrap();
+    let domain = domain.or(Some(&default_domain));
+    let aggregation_size: BalanceOf<Test> = domain.map(size).unwrap();
+    let delivery = domain
+        .map(|d| d.delivery.owner_tip() + d.delivery.fee())
+        .unwrap_or_default();
+
     StatementEntry::new(
         account,
-        Reserve::<Balance>::new(ESTIMATED_FEE_CORRECTED as u128 / aggregation_size, 0),
+        Reserve::<Balance>::new(
+            ESTIMATED_FEE_CORRECTED as u128 / aggregation_size,
+            delivery / aggregation_size,
+        ),
         statement,
     )
 }

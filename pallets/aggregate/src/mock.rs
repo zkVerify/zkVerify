@@ -33,8 +33,8 @@ use frame_system::RawOrigin;
 use hp_dispatch::{Destination, DispatchAggregation};
 use scale_info::TypeInfo;
 use sp_core::{ConstU128, ConstU32, Get, H256};
-use sp_runtime::traits::Member;
-use sp_runtime::{traits::IdentityLookup, BuildStorage, DispatchResult, Perbill};
+use sp_runtime::traits::{IdentityLookup, Member};
+use sp_runtime::{BuildStorage, DispatchResult, Perbill};
 use std::collections::{HashMap, VecDeque};
 use std::marker::PhantomData;
 
@@ -43,16 +43,19 @@ parameter_types! {
     pub const MaxPendingPublishQueueSize: u32 = 16;
 }
 
-pub const ESTIMATED_FEE: u32 = 6400;
+pub const ESTIMATED_FEE: u32 = 64000;
 pub const FEE_PERCENT_CORRECTION: u32 = 10;
 pub const ESTIMATED_FEE_CORRECTED: u32 = (ESTIMATED_FEE * (100 + FEE_PERCENT_CORRECTION)) / 100;
 
 pub type Balance = u128;
 pub type AccountId = u64;
 pub type Origin = RawOrigin<AccountId>;
+pub const EXISTENTIAL: Balance = 1_000_u128;
 
 pub const DOMAIN_ID: u32 = 51;
 pub const DOMAIN: Option<u32> = Some(DOMAIN_ID);
+pub const DOMAIN_ID_NO_DELIVERY: u32 = 15;
+pub const DOMAIN_NO_DELIVERY: Option<u32> = Some(DOMAIN_ID_NO_DELIVERY);
 pub const DOMAIN_ID_NONE: u32 = 666;
 pub const DOMAIN_NONE: Option<u32> = Some(DOMAIN_ID_NONE);
 pub const DOMAIN_ID_ONLY_OWNER: u32 = 111;
@@ -93,7 +96,8 @@ pub static USERS: &[(AccountId, Balance)] = &[
     (PUBLISHER_USER, 1_000_000_000),
     (NO_DOMAIN_FEE_FUND_USER, (DOMAIN_FEE / 2) as u128),
     (NO_DELIVERY_FUND_USER, DOMAIN_FEE + 1 as u128),
-    (NO_FUND_USER, 1_u128),
+    (USER_DELIVERY_OWNER, 1_000_000_000),
+    (NO_FUND_USER, EXISTENTIAL),
 ];
 
 pub struct MockWeightInfo;
@@ -493,7 +497,7 @@ pub fn priced_none_delivering(delivery_fee: Balance, owner_tip: Balance) -> Deli
 #[derive_impl(frame_system::config_preludes::SolochainDefaultConfig as frame_system::DefaultConfig)]
 impl frame_system::Config for Test {
     type AccountId = AccountId;
-    type Lookup = IdentityLookup<Self::AccountId>;
+    type Lookup = IdentityLookup<AccountId>;
     type Block = frame_system::mocking::MockBlockU32<Test>;
     type AccountData = pallet_balances::AccountData<Balance>;
     type DbWeight = MockDbWeight;
@@ -508,7 +512,7 @@ impl pallet_balances::Config for Test {
     /// The ubiquitous event type.
     type RuntimeEvent = RuntimeEvent;
     type DustRemoval = ();
-    type ExistentialDeposit = ConstU128<1>;
+    type ExistentialDeposit = ConstU128<EXISTENTIAL>;
     type AccountStore = System;
     type WeightInfo = ();
     type FreezeIdentifier = ();
@@ -567,6 +571,21 @@ pub fn test() -> sp_io::TestExternalities {
             DOMAIN_ID,
             crate::Domain::<Test>::create(
                 DOMAIN_ID,
+                USER_DOMAIN_1.into(),
+                1,
+                DOMAIN_SIZE,
+                DOMAIN_QUEUE_SIZE,
+                crate::data::AggregateSecurityRules::Untrusted,
+                crate::data::ProofSecurityRules::Untrusted,
+                None,
+                None,
+                priced_none_delivering(100, 123).into(),
+            ),
+        );
+        Domains::<Test>::insert(
+            DOMAIN_ID_NO_DELIVERY,
+            crate::Domain::<Test>::create(
+                DOMAIN_ID_NO_DELIVERY,
                 USER_DOMAIN_1.into(),
                 1,
                 DOMAIN_SIZE,
