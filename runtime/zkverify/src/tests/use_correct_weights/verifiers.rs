@@ -162,15 +162,15 @@ fn pallet_settlement_sp1() {
 
 #[test]
 fn pallet_settlement_tee() {
-    use pallet_tee_verifier::{Tee, WeightInfo};
+    use pallet_tee_verifier::{Tee, Vk, WeightInfo};
 
+    type W = crate::weights::pallet_tee_verifier::ZKVWeight<Runtime>;
     assert_eq!(
         <<Runtime as pallet_verifiers::Config<Tee<Runtime>>>::WeightInfo as
             pallet_verifiers::WeightInfo<Tee<Runtime>>>
-            ::verify_proof(
-            &Vec::new(),
-            &Vec::new()
+            ::register_vk(
+                &Vk::Nitro
         ),
-        crate::weights::pallet_tee_verifier::ZKVWeight::<Runtime>::verify_proof()
+        W::register_vk()
     );
 }

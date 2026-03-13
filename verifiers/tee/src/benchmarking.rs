@@ -72,7 +72,7 @@ mod benchmarks {
     benchmarking_utils!(Verifier<T>, crate::Config);
 
     #[benchmark]
-    fn verify_proof() {
+    fn intel_verify_proof() {
         let proof = include_bytes!("resources/intel/valid_quote.dat").to_vec();
         let pubs = vec![];
         let vk = Vk::Intel {
@@ -98,12 +98,13 @@ mod benchmarks {
     }
 
     #[benchmark]
-    fn verify_proof_nitro() {
+    fn nitro_verify_proof() {
         let proof = include_bytes!("resources/nitro/valid_attestation.bin").to_vec();
         let pubs = vec![];
         let vk = Vk::Nitro;
 
         set_timestamp::<T>(NITRO_PRESENT);
+        setup_empty_crl::<T>(&vk);
 
         let r;
         #[block]
@@ -280,6 +281,7 @@ mod mock {
         type UnixTime = Timestamp;
         type Crl = pallet_crl::Pallet<Test>;
         type CaName = TeeCaNames;
+        type WeightInfo = ();
     }
 
     #[derive_impl(frame_system::config_preludes::SolochainDefaultConfig as frame_system::DefaultConfig)]

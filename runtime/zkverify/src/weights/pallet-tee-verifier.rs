@@ -61,11 +61,16 @@ pub struct ZKVWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_tee_verifier::WeightInfo for ZKVWeight<T> {
     /// Storage: `Timestamp::Now` (r:1 w:0)
     /// Proof: `Timestamp::Now` (`max_values`: Some(1), `max_size`: Some(8), added: 503, mode: `MaxEncodedLen`)
-    fn verify_proof() -> Weight {
+    fn intel_verify_proof() -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `57`
         //  Estimated: `1493`
         // Minimum execution time: 7_282_936_000 picoseconds.
+        Weight::from_parts(7_296_231_000, 1493)
+            .saturating_add(T::DbWeight::get().reads(1_u64))
+    }
+    fn nitro_verify_proof() -> Weight {
+        // Placeholder — to be updated after running benchmarks
         Weight::from_parts(7_296_231_000, 1493)
             .saturating_add(T::DbWeight::get().reads(1_u64))
     }

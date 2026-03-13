@@ -944,6 +944,7 @@ impl pallet_tee_verifier::Config for Runtime {
     type UnixTime = Timestamp;
     type Crl = pallet_crl::Pallet<Runtime>;
     type CaName = TeeCaNames;
+    type WeightInfo = weights::pallet_tee_verifier::ZKVWeight<Runtime>;
 }
 
 pub type TeeVerifier = pallet_tee_verifier::Tee<Runtime>;
