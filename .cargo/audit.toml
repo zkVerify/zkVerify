@@ -4,7 +4,6 @@ ignore = [
     # some Polkadot libraries are dependent on. They will be updated
     # once we update Polkadot packages to latest version
     "RUSTSEC-2024-0421",
-    "RUSTSEC-2024-0336",
     "RUSTSEC-2025-0009",
     # The next two coming from outdated wasmtime dependency from wich polkadot
     # and substrate crates are dependent on. Unfortunally seams that also the
@@ -46,7 +45,11 @@ ignore = [
     # "Specific to implementations using the wasi:http/types.fields resource in wasmtime-wasi-http."
     # We do not use wasmtime-wasi-http (not present in Cargo.lock) — wasmtime is used only for
     # Substrate PVF/runtime Wasm execution, so we are unaffected.
-
+    "RUSTSEC-2026-0037", # quinn-proto v0.10.6 — stale lockfile entry (libp2p-quic -> quinn -> quinn-proto 0.10).
+    # https://rustsec.org/advisories/RUSTSEC-2026-0037
+    # Nothing in the workspace actually depends on this chain (`cargo tree` confirms it).
+    # It remains in Cargo.lock because Cargo resolves optional dependencies in the lockfile
+    # (libp2p's optional `quic` feature pulls it in). Cannot be updated: no patched 0.10.x exists.
 ]
 informational_warnings = ["unmaintained", "yanked"]
 
