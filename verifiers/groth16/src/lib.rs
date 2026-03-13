@@ -63,6 +63,11 @@ impl<T: Config> Verifier for Groth16<T> {
         if pubs.len() + 1 != vk.gamma_abc_g1.len() {
             return Err(VerifyError::InvalidInput);
         }
+        // Note: pre-dispatch weight is computed from `proof.curve` (see `Groth16Weight`),
+        // so incoherent calls are still charged before hitting this check.
+        if proof.curve != vk.curve {
+            return Err(VerifyError::InvalidProofData);
+        }
 
         groth16::Groth16::verify_proof(proof.clone().into(), vk.clone(), pubs)
             .and_then(|r| r.then_some(()).ok_or(VerifyError::VerifyError))
@@ -77,6 +82,8 @@ impl<T: Config> Verifier for Groth16<T> {
         Cow::Owned(data)
     }
 
+    /// Validates internal consistency of the VK on its own curve.
+    /// Cross-field curve coherence (proof.curve == vk.curve) is checked in `verify_proof`.
     fn validate_vk(vk: &Self::Vk) -> Result<(), VerifyError> {
         let curve = vk.curve;
         let vk = vk.clone().vk();
