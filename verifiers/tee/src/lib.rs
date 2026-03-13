@@ -31,7 +31,7 @@ pub use weight::WeightInfo;
 
 use pallet_crl::CrlProvider;
 use pallet_verifiers::traits::VerifyError;
-use tee_verifier::{parse_nitro_attestation, parse_quote, parse_tcb_response, TcbResponse};
+use tee_verifier::{nitro_parse_attestation, intel_parse_quote, intel_parse_tcb_response, TcbResponse};
 
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
@@ -122,9 +122,9 @@ impl<T: Config> Verifier for Tee<T> {
                     VerifyError::InvalidVerificationKey
                 );
 
-                let quote = parse_quote(proof).map_err(|_| VerifyError::InvalidProofData)?;
+                let quote = intel_parse_quote(proof).map_err(|_| VerifyError::InvalidProofData)?;
                 let tcb_response =
-                    parse_tcb_response(&tcb_response[..]).map_err(|_| VerifyError::InvalidInput)?;
+                    intel_parse_tcb_response(&tcb_response[..]).map_err(|_| VerifyError::InvalidInput)?;
 
                 tcb_response
                     .tcb_info
@@ -138,7 +138,7 @@ impl<T: Config> Verifier for Tee<T> {
             }
             Vk::Nitro => {
                 let attestation =
-                    parse_nitro_attestation(proof).map_err(|_| VerifyError::InvalidProofData)?;
+                    nitro_parse_attestation(proof).map_err(|_| VerifyError::InvalidProofData)?;
 
                 attestation
                     .verify(Some(&crl), now)

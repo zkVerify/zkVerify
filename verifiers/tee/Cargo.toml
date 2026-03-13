@@ -60,6 +60,10 @@ std = [
 try-runtime = [
 	"frame-support/try-runtime",
 	"frame-system/try-runtime",
+	"pallet-babe/try-runtime",
+	"pallet-balances/try-runtime",
+	"pallet-crl/try-runtime",
+	"pallet-timestamp/try-runtime",
 	"pallet-verifiers/try-runtime",
 	"sp-runtime/try-runtime",
 ]
@@ -75,4 +79,5 @@ runtime-benchmarks = [
 	"pallet-crl/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
 	"pallet-verifiers/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
 ]
