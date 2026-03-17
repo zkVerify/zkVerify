@@ -33,12 +33,14 @@ use sp_runtime::codec::Encode;
 
 use polkadot_runtime_parachains::{
     assigner_coretime as parachains_assigner_coretime, configuration as parachains_configuration,
-    configuration::ActiveConfigHrmpChannelSizeAndCapacityRatio, coretime,
-    disputes as parachains_disputes, disputes::slashing as parachains_slashing,
+    configuration::ActiveConfigHrmpChannelSizeAndCapacityRatio,
+    coretime, disputes as parachains_disputes,
+    disputes::slashing as parachains_slashing,
     dmp as parachains_dmp, hrmp as parachains_hrmp, inclusion as parachains_inclusion,
     initializer as parachains_initializer, on_demand as parachains_on_demand,
     origin as parachains_origin, paras as parachains_paras,
-    paras_inherent as parachains_paras_inherent, runtime_api_impl::v13 as runtime_impl,
+    paras_inherent as parachains_paras_inherent,
+    runtime_api_impl::{v13 as runtime_impl, vstaging as staging_runtime_impl},
     scheduler as parachains_scheduler, session_info as parachains_session_info,
     shared as parachains_shared,
 };
@@ -59,6 +61,7 @@ use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId};
 use pallet_session::historical as session_historical;
 use pallet_timestamp::Now;
 use pallet_transaction_payment::{FeeDetails, RuntimeDispatchInfo};
+use polkadot_primitives::async_backing::Constraints;
 use polkadot_primitives::{
     slashing, AccountId, AccountIndex, Balance, BlockNumber, CandidateEvent, CandidateHash,
     CommittedCandidateReceiptV2 as CommittedCandidateReceipt, CoreIndex, CoreState, DisputeState,
@@ -73,7 +76,7 @@ use polkadot_runtime_common::{
 };
 use polkadot_runtime_parachains::reward_points::RewardValidatorsWithEraPoints;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
-use sp_core::{ConstU32, OpaqueMetadata};
+use sp_core::{ConstBool, ConstU32, OpaqueMetadata};
 use sp_runtime::{
     curve::PiecewiseLinear,
     generic, impl_opaque_keys,
@@ -196,6 +199,26 @@ where
 
     fn create_transaction(call: Self::RuntimeCall, extension: Self::Extension) -> Self::Extrinsic {
         UncheckedExtrinsic::new_transaction(call, extension)
+    }
+}
+
+impl<C> frame_system::offchain::CreateAuthorizedTransaction<C> for Runtime
+where
+    RuntimeCall: From<C>,
+{
+    fn create_extension() -> Self::Extension {
+        (
+            frame_system::AuthorizeCall::<Runtime>::new(),
+            frame_system::CheckNonZeroSender::<Runtime>::new(),
+            frame_system::CheckSpecVersion::<Runtime>::new(),
+            frame_system::CheckTxVersion::<Runtime>::new(),
+            frame_system::CheckGenesis::<Runtime>::new(),
+            frame_system::CheckMortality::<Runtime>::from(generic::Era::Immortal),
+            frame_system::CheckNonce::<Runtime>::from(0),
+            frame_system::CheckWeight::<Runtime>::new(),
+            pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
+            frame_system::WeightReclaim::<Runtime>::new(),
+        )
     }
 }
 
@@ -326,14 +349,15 @@ impl pallet_session::Config for Runtime {
     type SessionHandler = <SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
     type Keys = SessionKeys;
     type WeightInfo = ();
-    type DisablingStrategy = pallet_session::disabling::UpToLimitDisablingStrategy;
+    type DisablingStrategy = pallet_session::disabling::UpToLimitWithReEnablingDisablingStrategy;
     type Currency = Balances;
     type KeyDeposit = ();
 }
 
 impl pallet_session::historical::Config for Runtime {
-    type FullIdentification = pallet_staking::Exposure<AccountId, Balance>;
-    type FullIdentificationOf = pallet_staking::DefaultExposureOf<Runtime>;
+    type RuntimeEvent = RuntimeEvent;
+    type FullIdentification = ();
+    type FullIdentificationOf = pallet_staking::UnitIdentificationOf<Self>;
 }
 
 pallet_staking_reward_curve::build! {
@@ -358,7 +382,7 @@ parameter_types! {
     pub const MaxExposurePageSize: u32 = 64;
     pub const MaxNominators: u32 = 256;
     pub const MaxAuthorities: u32 = 100_000;
-    pub const OnChainMaxWinners: u32 = u32::MAX;
+    pub const OnChainMaxWinners: u32 = MaxAuthorities::get();
     // Unbounded number of election targets and voters.
     pub ElectionBoundsOnChain: ElectionBounds = ElectionBoundsBuilder::default().build();
 }
@@ -371,9 +395,9 @@ impl onchain::Config for OnChainSeqPhragmen {
     type DataProvider = Staking;
     type WeightInfo = ();
     type MaxWinnersPerPage = OnChainMaxWinners;
-    type MaxBackersPerWinner = ConstU32<512>;
+    type MaxBackersPerWinner = ConstU32<{ u32::MAX }>;
     type Bounds = ElectionBoundsOnChain;
-    type Sort = ();
+    type Sort = ConstBool<true>;
 }
 
 /// Upper limit on the number of NPOS nominations.
@@ -412,7 +436,7 @@ impl pallet_staking::Config for Runtime {
     type BenchmarkingConfig = polkadot_runtime_common::StakingBenchmarkingConfig;
     type EventListeners = ();
     type WeightInfo = ();
-    type Filter = ();
+    type Filter = frame_support::traits::Nothing;
 }
 
 parameter_types! {
@@ -453,6 +477,7 @@ where
             .saturating_sub(1);
         let tip = 0;
         let tx_ext: TxExtension = (
+            frame_system::AuthorizeCall::<Runtime>::new(),
             frame_system::CheckNonZeroSender::<Runtime>::new(),
             frame_system::CheckSpecVersion::<Runtime>::new(),
             frame_system::CheckTxVersion::<Runtime>::new(),
@@ -464,6 +489,7 @@ where
             frame_system::CheckNonce::<Runtime>::from(nonce),
             frame_system::CheckWeight::<Runtime>::new(),
             pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
+            frame_system::WeightReclaim::<Runtime>::new(),
         )
             .into();
         let raw_payload = SignedPayload::new(call, tx_ext)
@@ -711,6 +737,7 @@ pub mod pallet_test_notifier {
 
     #[pallet::config]
     pub trait Config: frame_system::Config + pallet_xcm::Config {
+        #[allow(deprecated)]
         type RuntimeEvent: IsType<<Self as frame_system::Config>::RuntimeEvent> + From<Event<Self>>;
         type RuntimeOrigin: IsType<<Self as frame_system::Config>::RuntimeOrigin>
             + Into<Result<pallet_xcm::Origin, <Self as Config>::RuntimeOrigin>>;
@@ -853,6 +880,7 @@ pub type SignedBlock = generic::SignedBlock<Block>;
 pub type BlockId = generic::BlockId<Block>;
 /// The extension to the basic transaction logic.
 pub type TxExtension = (
+    frame_system::AuthorizeCall<Runtime>,
     frame_system::CheckNonZeroSender<Runtime>,
     frame_system::CheckSpecVersion<Runtime>,
     frame_system::CheckTxVersion<Runtime>,
@@ -861,6 +889,7 @@ pub type TxExtension = (
     frame_system::CheckNonce<Runtime>,
     frame_system::CheckWeight<Runtime>,
     pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
+    frame_system::WeightReclaim<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic =
@@ -955,7 +984,7 @@ sp_api::impl_runtime_apis! {
         }
     }
 
-    #[api_version(13)]
+    #[api_version(15)]
     impl polkadot_primitives::runtime_api::ParachainHost<Block> for Runtime {
         fn validators() -> Vec<ValidatorId> {
             runtime_impl::validators::<Runtime>()
@@ -1095,15 +1124,8 @@ sp_api::impl_runtime_apis! {
         }
 
         fn async_backing_params() -> polkadot_primitives::AsyncBackingParams {
+            #[allow(deprecated)]
             runtime_impl::async_backing_params::<Runtime>()
-        }
-
-        fn backing_constraints(para_id: ParaId) -> Option<polkadot_primitives::vstaging::async_backing::Constraints> {
-            parachains_staging_runtime_api_impl::backing_constraints::<Runtime>(para_id)
-        }
-
-        fn scheduling_lookahead() -> u32 {
-            parachains_staging_runtime_api_impl::scheduling_lookahead::<Runtime>()
         }
 
         fn approval_voting_params() -> polkadot_primitives::ApprovalVotingParams {
@@ -1129,6 +1151,23 @@ sp_api::impl_runtime_apis! {
         fn validation_code_bomb_limit() -> u32 {
             runtime_impl::validation_code_bomb_limit::<Runtime>()
         }
+
+        fn unapplied_slashes_v2(
+        ) -> Vec<(SessionIndex, CandidateHash, slashing::PendingSlashes)> {
+            runtime_impl::unapplied_slashes_v2::<Runtime>()
+        }
+
+        fn backing_constraints(para_id: ParaId) -> Option<Constraints> {
+            runtime_impl::backing_constraints::<Runtime>(para_id)
+        }
+
+        fn scheduling_lookahead() -> u32 {
+            runtime_impl::scheduling_lookahead::<Runtime>()
+        }
+
+        fn para_ids() -> Vec<ParaId> {
+            staging_runtime_impl::para_ids::<Runtime>()
+        }
     }
 
     impl fg_primitives::GrandpaApi<Block> for Runtime {
@@ -1137,7 +1176,7 @@ sp_api::impl_runtime_apis! {
         }
 
         fn current_set_id() -> fg_primitives::SetId {
-            Grandpa::current_set_id()
+            pallet_grandpa::CurrentSetId::<Runtime>::get()
         }
 
         fn submit_report_equivocation_unsigned_extrinsic(

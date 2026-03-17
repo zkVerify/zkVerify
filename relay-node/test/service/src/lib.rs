@@ -284,12 +284,8 @@ pub fn run_collator_node(
         rpc_handlers,
         overseer_handle,
         ..
-    } = new_full(
-        config,
-        IsParachainNode::Collator(collator_pair),
-        None,
-    )
-    .expect("could not create zkVerify test service");
+    } = new_full(config, IsParachainNode::Collator(collator_pair), None)
+        .expect("could not create zkVerify test service");
 
     let overseer_handle = overseer_handle.expect("test node must have an overseer handle");
     let peer_id = network.local_peer_id();
@@ -434,6 +430,7 @@ pub fn construct_extrinsic(
         .unwrap_or(2) as u64;
     let tip = 0;
     let tx_ext: test_runtime::TxExtension = (
+        frame_system::AuthorizeCall::<Runtime>::new(),
         frame_system::CheckNonZeroSender::<Runtime>::new(),
         frame_system::CheckSpecVersion::<Runtime>::new(),
         frame_system::CheckTxVersion::<Runtime>::new(),
@@ -442,16 +439,19 @@ pub fn construct_extrinsic(
         frame_system::CheckNonce::<Runtime>::from(nonce),
         frame_system::CheckWeight::<Runtime>::new(),
         pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
+        frame_system::WeightReclaim::<Runtime>::new(),
     );
     let raw_payload = SignedPayload::from_raw(
         function.clone(),
         tx_ext.clone(),
         (
             (),
+            (),
             VERSION.spec_version,
             VERSION.transaction_version,
             genesis_block,
             current_block_hash,
+            (),
             (),
             (),
             (),
