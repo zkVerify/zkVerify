@@ -307,7 +307,6 @@ parameter_types! {
 }
 
 impl crate::Config<FakeVerifier> for Test {
-    type RuntimeEvent = RuntimeEvent;
     type OnProofVerified = OnProofVerifiedMock;
     type Ticket = HoldConsideration<
         AccountId,

@@ -73,6 +73,7 @@ pub use {
     sc_client_api::AuxStore,
     sp_authority_discovery::AuthorityDiscoveryApi,
     sp_blockchain::{HeaderBackend, HeaderMetadata},
+    sp_consensus_babe::inherents::BabeCreateInherentDataProviders,
     sp_consensus_babe::BabeApi,
 };
 
@@ -462,7 +463,13 @@ fn new_partial<ChainSelection>(
         (
             impl Fn(rpc::SubscriptionTaskExecutor) -> Result<rpc::RpcExtension, SubstrateServiceError>,
             (
-                babe::BabeBlockImport<Block, FullClient, FullGrandpaBlockImport<ChainSelection>>,
+                babe::BabeBlockImport<
+                    Block,
+                    FullClient,
+                    FullGrandpaBlockImport<ChainSelection>,
+                    BabeCreateInherentDataProviders<Block>,
+                    ChainSelection,
+                >,
                 sc_consensus_grandpa::LinkHalf<Block, FullClient, ChainSelection>,
                 babe::BabeLink<Block>,
             ),
@@ -501,34 +508,38 @@ where
     let justification_import = grandpa_block_import.clone();
 
     let babe_config = babe::configuration(&*client)?;
-    let (block_import, babe_link) =
-        sc_consensus_babe::block_import(babe_config.clone(), grandpa_block_import, client.clone())?;
+    let slot_duration = babe_config.slot_duration();
+    let create_inherent_data_providers: BabeCreateInherentDataProviders<Block> = Arc::new(
+        move |_, ()| async move {
+            let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
+            let slot =
+                sp_consensus_babe::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
+                    *timestamp,
+                    slot_duration,
+                );
+            Ok((slot, timestamp))
+        },
+    );
+    let (block_import, babe_link) = sc_consensus_babe::block_import(
+        babe_config.clone(),
+        grandpa_block_import,
+        client.clone(),
+        create_inherent_data_providers,
+        select_chain.clone(),
+        OffchainTransactionPoolFactory::new(transaction_pool.clone()),
+    )?;
 
-    let slot_duration = babe_link.config().slot_duration();
-    let (import_queue, babe_worker_handle) = sc_consensus_babe::import_queue(
-        sc_consensus_babe::ImportQueueParams {
+    let (import_queue, babe_worker_handle) =
+        sc_consensus_babe::import_queue(sc_consensus_babe::ImportQueueParams {
             link: babe_link.clone(),
             block_import: block_import.clone(),
             justification_import: Some(Box::new(justification_import)),
             client: client.clone(),
-            select_chain: select_chain.clone(),
-            create_inherent_data_providers: move |_, ()| async move {
-                let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
-
-                let slot =
-                    sp_consensus_babe::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
-                    	*timestamp,
-                    	slot_duration,
-                    );
-
-                Ok((slot, timestamp))
-            },
+            slot_duration: babe_link.config().slot_duration(),
             spawner: &task_manager.spawn_essential_handle(),
             registry: config.prometheus_registry(),
             telemetry: telemetry.as_ref().map(|x| x.handle()),
-            offchain_tx_pool_factory: OffchainTransactionPoolFactory::new(transaction_pool.clone()),
-        },
-    )?;
+        })?;
 
     let justification_stream = grandpa_link.justification_stream();
     let shared_authority_set = grandpa_link.shared_authority_set().clone();
@@ -621,8 +632,6 @@ pub struct NewFullParams<OverseerGenerator: OverseerGen> {
     #[allow(dead_code)]
     pub malus_finality_delay: Option<u32>,
     pub hwbench: Option<sc_sysinfo::HwBench>,
-    /// Enable approval voting processing in parallel.
-    pub enable_approval_voting_parallel: bool,
 }
 
 #[cfg(feature = "full-node")]
@@ -679,9 +688,13 @@ impl IsParachainNode {
     }
 }
 
+/// The number of hours to keep finalized data in the availability store for live networks.
+const KEEP_FINALIZED_FOR_LIVE_NETWORKS: u32 = 25;
+
 pub const AVAILABILITY_CONFIG: AvailabilityConfig = AvailabilityConfig {
     col_data: parachains_db::REAL_COLUMNS.col_availability_data,
     col_meta: parachains_db::REAL_COLUMNS.col_availability_meta,
+    keep_finalized_for: KEEP_FINALIZED_FOR_LIVE_NETWORKS,
 };
 
 /// Create a new full node of arbitrary runtime and executor.
@@ -714,7 +727,6 @@ pub fn new_full<
         execute_workers_max_num,
         prepare_workers_soft_max_num,
         prepare_workers_hard_max_num,
-        enable_approval_voting_parallel,
     }: NewFullParams<OverseerGenerator>,
 ) -> Result<NewFull, Error> {
     use polkadot_availability_recovery::FETCH_CHUNKS_THRESHOLD;
@@ -748,7 +760,6 @@ pub fn new_full<
             overseer_handle.clone(),
             metrics,
             Some(basics.task_manager.spawn_handle()),
-            enable_approval_voting_parallel,
         )
     } else {
         SelectRelayChain::new_longest_chain(basics.backend.clone())
@@ -893,9 +904,6 @@ pub fn new_full<
         } else {
             None
         };
-        let (statement_req_receiver, cfg) =
-            IncomingRequest::get_config_receiver::<_, Network>(&req_protocol_names);
-        net_config.add_request_response_protocol(cfg);
         let (candidate_req_v2_receiver, cfg) =
             IncomingRequest::get_config_receiver::<_, Network>(&req_protocol_names);
         net_config.add_request_response_protocol(cfg);
@@ -930,18 +938,18 @@ pub fn new_full<
             pov_req_receiver,
             chunk_req_v1_receiver,
             chunk_req_v2_receiver,
-            statement_req_receiver,
             candidate_req_v2_receiver,
             approval_voting_config,
             dispute_req_receiver,
             dispute_coordinator_config,
             chain_selection_config,
             fetch_chunks_threshold,
-            enable_approval_voting_parallel,
+            invulnerable_ah_collators: std::collections::HashSet::new(),
+            collator_protocol_hold_off: None,
         })
     };
 
-    let (network, system_rpc_tx, tx_handler_controller, network_starter, sync_service) =
+    let (network, system_rpc_tx, tx_handler_controller, sync_service) =
         sc_service::build_network(sc_service::BuildNetworkParams {
             config: &config,
             net_config,
@@ -991,6 +999,7 @@ pub fn new_full<
         system_rpc_tx,
         tx_handler_controller,
         telemetry: telemetry.as_mut(),
+        tracing_execute_block: None,
     })?;
 
     if let Some(hwbench) = hwbench {
@@ -1054,6 +1063,7 @@ pub fn new_full<
 				Box::pin(dht_event_stream),
 				authority_discovery_role,
 				prometheus_registry.clone(),
+                task_manager.spawn_handle(),
 			);
 
 			task_manager.spawn_handle().spawn(
@@ -1253,8 +1263,6 @@ pub fn new_full<
             sc_consensus_grandpa::run_grandpa_voter(grandpa_config)?,
         );
     }
-
-    network_starter.start_network();
 
     Ok(NewFull {
         task_manager,

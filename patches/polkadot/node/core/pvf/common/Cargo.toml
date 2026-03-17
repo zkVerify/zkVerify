@@ -11,17 +11,16 @@ workspace = true
 
 [dependencies]
 # zkVerify customization: native host functions for proof verification
-native = { workspace = true }
+native = { workspace = true, default-features = true }
 
 cpu-time = { workspace = true }
 futures = { workspace = true }
-gum.default-features = true
-gum.workspace = true
+tracing-gum = { version = "23.0.0" }
 libc = { workspace = true }
 nix = { features = ["resource", "sched"], workspace = true }
 thiserror = { workspace = true }
 
-codec = { features = ["derive"], workspace = true }
+parity-scale-codec = { version = "3.6.1", default-features = false, features = ["derive"] }
 polkadot-node-primitives.default-features = true
 polkadot-node-primitives.workspace = true
 polkadot-parachain-primitives.default-features = true

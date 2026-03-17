@@ -585,7 +585,6 @@ where
 }
 
 impl pallet_aggregate::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
     type RuntimeHoldReason = RuntimeHoldReason;
     type AggregationSize = AggregateMaxSize;
     type MaxPendingPublishQueueSize = AggregateQueueSize;
@@ -637,7 +636,6 @@ parameter_types! {
 }
 
 impl pallet_crl::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
     type ManagerOrigin = EnsureRoot<AccountId>;
     type WeightInfo = weights::pallet_crl::ZKVWeight<Runtime>;
     type MaxCaNameLength = MaxCaNameLength;
@@ -651,7 +649,6 @@ parameter_types! {
 }
 
 impl pallet_token_claim::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
     type PalletId = TokenClaimPalletId;
     type ManagerOrigin = EnsureRoot<AccountId>;
     type Currency = Balances;
@@ -916,6 +913,8 @@ impl pallet_identity::Config for Runtime {
     type MaxSuffixLength = MaxSuffixLength;
     type MaxUsernameLength = MaxUsernameLength;
     type WeightInfo = weights::pallet_identity::ZKVWeight<Runtime>;
+    #[cfg(feature = "runtime-benchmarks")]
+    type BenchmarkHelper = ();
 }
 
 mod vk_registration_parameters {
@@ -1833,6 +1832,7 @@ impl_runtime_apis! {
         }
 
         fn async_backing_params() -> primitives::AsyncBackingParams {
+            #[allow(deprecated)]
             parachains_runtime_api_impl::async_backing_params::<Runtime>()
         }
 
@@ -1917,7 +1917,7 @@ impl_runtime_apis! {
         fn dispatch_benchmark(
             config: frame_benchmarking::BenchmarkConfig
         ) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, alloc::string::String> {
-            use frame_benchmarking::{baseline, Benchmarking, BenchmarkBatch};
+            use frame_benchmarking::{baseline, BenchmarkBatch};
             use sp_storage::TrackedStorageKey;
             use frame_system_benchmarking::Pallet as SystemBench;
             use frame_system_benchmarking::extensions::Pallet as SystemExtensionsBench;
@@ -2078,11 +2078,12 @@ impl_runtime_apis! {
                         Ok((origin, ticket, assets))
                     }
 
-                    fn fee_asset() -> Result<Asset, BenchmarkError> {
-                        Ok(Asset {
+                    fn worst_case_for_trader() -> Result<(Asset, xcm::v3::WeightLimit), BenchmarkError> {
+                        let fee_asset = Asset {
                             id: xcm_config::FeeAssetId::get(),
                             fun: Fungible(currency::MILLIONS),
-                        })
+                        };
+                        Ok((fee_asset, xcm::v3::WeightLimit::Unlimited))
                     }
 
                     fn unlockable_asset() -> Result<(Location, Location, Asset), BenchmarkError> {
@@ -2125,7 +2126,7 @@ impl_runtime_apis! {
         }
 
         fn execute_block(
-            block: Block,
+            block: LazyBlock,
             state_root_check: bool,
             signature_check: bool,
             select: frame_try_runtime::TryStateSelect,

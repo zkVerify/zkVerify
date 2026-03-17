@@ -40,13 +40,17 @@ use cumulus_primitives_core::{
 use polkadot_primitives::CandidateEvent;
 use cumulus_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayChainResult};
 use futures::{FutureExt, Stream, StreamExt};
+use sc_network::{
+    request_responses::IncomingRequest,
+    service::traits::NetworkService,
+};
 use service::{
     CollatorPair, Configuration, FullBackend, FullClient, Handle, NewFull, TaskManager,
 };
 use sc_cli::{RuntimeVersion, SubstrateCli};
 use sc_client_api::{
     blockchain::BlockStatus, Backend, BlockchainEvents, HeaderBackend, ImportNotifications,
-    StorageProof,
+    StorageProof, TrieCacheContext,
 };
 use sc_telemetry::TelemetryWorkerHandle;
 use sp_api::{CallApiAt, CallApiAtParams, CallContext, ProvideRuntimeApi};
@@ -223,7 +227,7 @@ impl RelayChainInterface for RelayChainInProcessInterface {
         relay_parent: PHash,
         key: &[u8],
     ) -> RelayChainResult<Option<StorageValue>> {
-        let state = self.backend.state_at(relay_parent)?;
+        let state = self.backend.state_at(relay_parent, TrieCacheContext::Untrusted)?;
         state.storage(key).map_err(RelayChainError::GenericError)
     }
 
@@ -232,7 +236,7 @@ impl RelayChainInterface for RelayChainInProcessInterface {
         relay_parent: PHash,
         relevant_keys: &Vec<Vec<u8>>,
     ) -> RelayChainResult<StorageProof> {
-        let state_backend = self.backend.state_at(relay_parent)?;
+        let state_backend = self.backend.state_at(relay_parent, TrieCacheContext::Untrusted)?;
 
         sp_state_machine::prove_read(state_backend, relevant_keys)
             .map_err(RelayChainError::StateMachineError)
@@ -392,7 +396,6 @@ fn build_polkadot_full_node(
             execute_workers_max_num: None,
             prepare_workers_hard_max_num: None,
             prepare_workers_soft_max_num: None,
-            enable_approval_voting_parallel: false,
         },
     )?;
 
@@ -406,7 +409,12 @@ pub fn build_inprocess_relay_chain(
     telemetry_worker_handle: Option<TelemetryWorkerHandle>,
     task_manager: &mut TaskManager,
     hwbench: Option<sc_sysinfo::HwBench>,
-) -> RelayChainResult<(Arc<(dyn RelayChainInterface + 'static)>, Option<CollatorPair>)> {
+) -> RelayChainResult<(
+    Arc<(dyn RelayChainInterface + 'static)>,
+    Option<CollatorPair>,
+    Arc<dyn NetworkService>,
+    async_channel::Receiver<IncomingRequest>,
+)> {
     // This is essentially a hack, but we want to ensure that we send the correct node version
     // to the telemetry.
     polkadot_config.impl_version = zkv_cli::Cli::impl_version();
@@ -431,7 +439,10 @@ pub fn build_inprocess_relay_chain(
 
     task_manager.add_child(full_node.task_manager);
 
-    Ok((relay_chain_interface, collator_key))
+    // Create a dummy channel for paranode requests - not used in inprocess mode
+    let (_sender, receiver) = async_channel::bounded(1);
+
+    Ok((relay_chain_interface, collator_key, full_node.network, receiver))
 }
 
 #[cfg(test)]

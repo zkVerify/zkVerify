@@ -17,7 +17,7 @@
 
 extern crate alloc;
 
-use alloc::{borrow::Cow, boxed::Box, vec::Vec};
+use alloc::{borrow::Cow, vec::Vec};
 use codec::Decode;
 use codec::DecodeWithMemTracking;
 use codec::Encode;
@@ -117,7 +117,7 @@ impl From<&VersionedProof> for ProtocolVersion {
 // i) Please DO NOT alter the indices of existing VersionedProof's variants,
 // ii) If you are introducing new VersionedProof variants, ensure that
 // indices match those in VersionedVk.
-#[derive(Clone, Debug, PartialEq, Encode, Decode, TypeInfo)]
+#[derive(Clone, Debug, PartialEq, Encode, Decode, DecodeWithMemTracking, TypeInfo)]
 pub enum VersionedProof {
     #[codec(index = 0)]
     V0_84(Proof),
@@ -131,7 +131,9 @@ pub enum VersionedProof {
 // i) Please DO NOT alter the indices of existing VersionedVk's variants,
 // ii) If you are introducing new VersionedVk variants, ensure that
 // indices match those in VersionedProof.
-#[derive(Clone, Debug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
+#[derive(
+    Clone, Debug, PartialEq, Encode, Decode, DecodeWithMemTracking, MaxEncodedLen, TypeInfo,
+)]
 pub enum VersionedVk {
     #[codec(index = 0)]
     V0_84([u8; VK_SIZE_V0_84]),
