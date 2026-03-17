@@ -21,13 +21,14 @@ use super::*;
 use mock::*;
 use pallet::{CaName, CertificateAuthorities, Error, Event, Revoked};
 
-// Helper constructors for CrlInput variants
-fn pem_input(crl: Vec<u8>, cert_chain: Vec<u8>) -> CrlInput {
-    CrlInput::Pem { crl, cert_chain }
-}
+impl CrlInput {
+    fn from_pem(crl: Vec<u8>, cert_chain: Vec<u8>) -> Self {
+        CrlInput::Pem { crl, cert_chain }
+    }
 
-fn der_input(crl: Vec<u8>, cert_chain: Vec<u8>) -> CrlInput {
-    CrlInput::Der { crl, cert_chain }
+    fn from_der(crl: Vec<u8>, cert_chain: Vec<u8>) -> Self {
+        CrlInput::Der { crl, cert_chain }
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -142,441 +143,449 @@ fn unregister_ca_wrong_origin() {
 }
 
 // ---------------------------------------------------------------------------
-// update_crl — PEM basic
+// PEM
 // ---------------------------------------------------------------------------
 
-#[test]
-fn update_crl_pem() {
-    test().execute_with(|| {
-        assert_ok!(CrlPallet::register_ca(
-            Origin::Root.into(),
-            CA_NAME.to_vec(),
-            root_cert(),
-        ));
+mod pem {
+    use super::*;
 
-        assert_ok!(CrlPallet::update_crl(
-            Origin::Signed(ALICE).into(),
-            CA_NAME.to_vec(),
-            pem_input(crl_inter1_v1(), chain1()),
-        ));
+    #[test]
+    fn update_crl_pem() {
+        test().execute_with(|| {
+            assert_ok!(CrlPallet::register_ca(
+                Origin::Root.into(),
+                CA_NAME.to_vec(),
+                root_cert(),
+            ));
 
-        let bounded_name: CaName<Test> = CA_NAME.to_vec().try_into().unwrap();
-        let ca_info = CertificateAuthorities::<Test>::get(&bounded_name).unwrap();
-        assert_eq!(ca_info.revoked_count, 3);
-        assert_eq!(ca_info.crl_versions.len(), 1);
-
-        let revoked = Revoked::<Test>::get(&bounded_name).unwrap();
-        assert_eq!(revoked.len(), 3);
-    })
-}
-
-#[test]
-fn update_crl_pem_ca_not_found() {
-    test().execute_with(|| {
-        assert_noop!(
-            CrlPallet::update_crl(
-                Origin::Signed(ALICE).into(),
-                b"NonExistent".to_vec(),
-                pem_input(crl_inter1_v1(), chain1()),
-            ),
-            Error::<Test>::CaNotFound
-        );
-    })
-}
-
-#[test]
-fn update_crl_pem_not_newer_same_issuer() {
-    test().execute_with(|| {
-        assert_ok!(CrlPallet::register_ca(
-            Origin::Root.into(),
-            CA_NAME.to_vec(),
-            root_cert(),
-        ));
-
-        // First update succeeds
-        assert_ok!(CrlPallet::update_crl(
-            Origin::Signed(ALICE).into(),
-            CA_NAME.to_vec(),
-            pem_input(crl_inter1_v1(), chain1()),
-        ));
-
-        // Same CRL (same thisUpdate) should be rejected
-        assert_noop!(
-            CrlPallet::update_crl(
+            assert_ok!(CrlPallet::update_crl(
                 Origin::Signed(ALICE).into(),
                 CA_NAME.to_vec(),
-                pem_input(crl_inter1_v1(), chain1()),
-            ),
-            Error::<Test>::NotNewerCrl
-        );
-    })
-}
+                CrlInput::from_pem(crl_inter1_v1(), chain1()),
+            ));
 
-// ---------------------------------------------------------------------------
-// update_crl — PEM per-issuer version tracking
-// ---------------------------------------------------------------------------
+            let bounded_name: CaName<Test> = CA_NAME.to_vec().try_into().unwrap();
+            let ca_info = CertificateAuthorities::<Test>::get(&bounded_name).unwrap();
+            assert_eq!(ca_info.revoked_count, 3);
+            assert_eq!(ca_info.crl_versions.len(), 1);
 
-#[test]
-fn update_crl_pem_two_issuers_independently() {
-    test().execute_with(|| {
-        assert_ok!(CrlPallet::register_ca(
-            Origin::Root.into(),
-            CA_NAME.to_vec(),
-            root_cert(),
-        ));
+            let revoked = Revoked::<Test>::get(&bounded_name).unwrap();
+            assert_eq!(revoked.len(), 3);
+        })
+    }
 
-        // Update from issuer 1 (3 revoked certs)
-        assert_ok!(CrlPallet::update_crl(
-            Origin::Signed(ALICE).into(),
-            CA_NAME.to_vec(),
-            pem_input(crl_inter1_v1(), chain1()),
-        ));
+    #[test]
+    fn update_crl_pem_ca_not_found() {
+        test().execute_with(|| {
+            assert_noop!(
+                CrlPallet::update_crl(
+                    Origin::Signed(ALICE).into(),
+                    b"NonExistent".to_vec(),
+                    CrlInput::from_pem(crl_inter1_v1(), chain1()),
+                ),
+                Error::<Test>::CaNotFound
+            );
+        })
+    }
 
-        let bounded_name: CaName<Test> = CA_NAME.to_vec().try_into().unwrap();
-        let ca_info = CertificateAuthorities::<Test>::get(&bounded_name).unwrap();
-        assert_eq!(ca_info.revoked_count, 3);
-        assert_eq!(ca_info.crl_versions.len(), 1);
+    #[test]
+    fn update_crl_pem_not_newer_same_issuer() {
+        test().execute_with(|| {
+            assert_ok!(CrlPallet::register_ca(
+                Origin::Root.into(),
+                CA_NAME.to_vec(),
+                root_cert(),
+            ));
 
-        // Update from issuer 2 (2 revoked certs) — should merge, not replace
-        assert_ok!(CrlPallet::update_crl(
-            Origin::Signed(ALICE).into(),
-            CA_NAME.to_vec(),
-            pem_input(crl_inter2(), chain2()),
-        ));
-
-        let ca_info = CertificateAuthorities::<Test>::get(&bounded_name).unwrap();
-        assert_eq!(ca_info.revoked_count, 5); // 3 from issuer1 + 2 from issuer2
-        assert_eq!(ca_info.crl_versions.len(), 2); // two distinct issuers tracked
-
-        let revoked = Revoked::<Test>::get(&bounded_name).unwrap();
-        assert_eq!(revoked.len(), 5);
-    })
-}
-
-#[test]
-fn update_crl_pem_replaces_same_issuer_entries() {
-    test().execute_with(|| {
-        assert_ok!(CrlPallet::register_ca(
-            Origin::Root.into(),
-            CA_NAME.to_vec(),
-            root_cert(),
-        ));
-
-        // Update from issuer 1 v1 (3 revoked certs)
-        assert_ok!(CrlPallet::update_crl(
-            Origin::Signed(ALICE).into(),
-            CA_NAME.to_vec(),
-            pem_input(crl_inter1_v1(), chain1()),
-        ));
-
-        // Update from issuer 2 (2 revoked certs)
-        assert_ok!(CrlPallet::update_crl(
-            Origin::Signed(ALICE).into(),
-            CA_NAME.to_vec(),
-            pem_input(crl_inter2(), chain2()),
-        ));
-
-        let bounded_name: CaName<Test> = CA_NAME.to_vec().try_into().unwrap();
-        assert_eq!(
-            CertificateAuthorities::<Test>::get(&bounded_name)
-                .unwrap()
-                .revoked_count,
-            5
-        );
-
-        // Update issuer 1 with v2 (5 revoked certs) — should replace issuer1's 3 entries
-        assert_ok!(CrlPallet::update_crl(
-            Origin::Signed(ALICE).into(),
-            CA_NAME.to_vec(),
-            pem_input(crl_inter1_v2(), chain1()),
-        ));
-
-        let ca_info = CertificateAuthorities::<Test>::get(&bounded_name).unwrap();
-        assert_eq!(ca_info.revoked_count, 7); // 5 from issuer1 v2 + 2 from issuer2
-        assert_eq!(ca_info.crl_versions.len(), 2); // still two issuers
-
-        let revoked = Revoked::<Test>::get(&bounded_name).unwrap();
-        assert_eq!(revoked.len(), 7);
-    })
-}
-
-#[test]
-fn update_crl_pem_not_newer_does_not_affect_other_issuer() {
-    test().execute_with(|| {
-        assert_ok!(CrlPallet::register_ca(
-            Origin::Root.into(),
-            CA_NAME.to_vec(),
-            root_cert(),
-        ));
-
-        // Update issuer 1 v2 (newer) first
-        assert_ok!(CrlPallet::update_crl(
-            Origin::Signed(ALICE).into(),
-            CA_NAME.to_vec(),
-            pem_input(crl_inter1_v2(), chain1()),
-        ));
-
-        // Update issuer 2 — should succeed even though issuer 2's thisUpdate may be
-        // older than issuer 1's, since version tracking is per-issuer
-        assert_ok!(CrlPallet::update_crl(
-            Origin::Signed(ALICE).into(),
-            CA_NAME.to_vec(),
-            pem_input(crl_inter2(), chain2()),
-        ));
-
-        let bounded_name: CaName<Test> = CA_NAME.to_vec().try_into().unwrap();
-        let ca_info = CertificateAuthorities::<Test>::get(&bounded_name).unwrap();
-        assert_eq!(ca_info.revoked_count, 7); // 5 + 2
-        assert_eq!(ca_info.crl_versions.len(), 2);
-    })
-}
-
-#[test]
-fn update_crl_pem_older_rejected_for_same_issuer_only() {
-    test().execute_with(|| {
-        assert_ok!(CrlPallet::register_ca(
-            Origin::Root.into(),
-            CA_NAME.to_vec(),
-            root_cert(),
-        ));
-
-        // Update issuer 1 with v2 (newer)
-        assert_ok!(CrlPallet::update_crl(
-            Origin::Signed(ALICE).into(),
-            CA_NAME.to_vec(),
-            pem_input(crl_inter1_v2(), chain1()),
-        ));
-
-        // Try issuer 1 v1 (older) — should be rejected
-        assert_noop!(
-            CrlPallet::update_crl(
+            // First update succeeds
+            assert_ok!(CrlPallet::update_crl(
                 Origin::Signed(ALICE).into(),
                 CA_NAME.to_vec(),
-                pem_input(crl_inter1_v1(), chain1()),
-            ),
-            Error::<Test>::NotNewerCrl
-        );
+                CrlInput::from_pem(crl_inter1_v1(), chain1()),
+            ));
 
-        // Issuer 2 should still work
-        assert_ok!(CrlPallet::update_crl(
-            Origin::Signed(ALICE).into(),
-            CA_NAME.to_vec(),
-            pem_input(crl_inter2(), chain2()),
-        ));
-    })
-}
+            // Same CRL (same thisUpdate) should be rejected
+            assert_noop!(
+                CrlPallet::update_crl(
+                    Origin::Signed(ALICE).into(),
+                    CA_NAME.to_vec(),
+                    CrlInput::from_pem(crl_inter1_v1(), chain1()),
+                ),
+                Error::<Test>::NotNewerCrl
+            );
+        })
+    }
 
-// ---------------------------------------------------------------------------
-// unregister_ca clears multi-issuer data
-// ---------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------
+    // update_crl — PEM per-issuer version tracking
+    // ---------------------------------------------------------------------------
 
-#[test]
-fn unregister_ca_clears_all_issuers() {
-    test().execute_with(|| {
-        assert_ok!(CrlPallet::register_ca(
-            Origin::Root.into(),
-            CA_NAME.to_vec(),
-            root_cert(),
-        ));
-        assert_ok!(CrlPallet::update_crl(
-            Origin::Signed(ALICE).into(),
-            CA_NAME.to_vec(),
-            pem_input(crl_inter1_v1(), chain1()),
-        ));
-        assert_ok!(CrlPallet::update_crl(
-            Origin::Signed(ALICE).into(),
-            CA_NAME.to_vec(),
-            pem_input(crl_inter2(), chain2()),
-        ));
+    #[test]
+    fn update_crl_pem_two_issuers_independently() {
+        test().execute_with(|| {
+            assert_ok!(CrlPallet::register_ca(
+                Origin::Root.into(),
+                CA_NAME.to_vec(),
+                root_cert(),
+            ));
 
-        let bounded_name: CaName<Test> = CA_NAME.to_vec().try_into().unwrap();
-        assert_eq!(Revoked::<Test>::get(&bounded_name).unwrap().len(), 5);
-
-        assert_ok!(CrlPallet::unregister_ca(
-            Origin::Root.into(),
-            CA_NAME.to_vec(),
-        ));
-
-        assert!(CertificateAuthorities::<Test>::get(&bounded_name).is_none());
-        assert!(Revoked::<Test>::get(&bounded_name).is_none());
-    })
-}
-
-// ---------------------------------------------------------------------------
-// update_crl — DER
-// ---------------------------------------------------------------------------
-
-#[test]
-fn update_crl_der() {
-    test().execute_with(|| {
-        assert_ok!(CrlPallet::register_ca(
-            Origin::Root.into(),
-            CA_NAME.to_vec(),
-            root_cert(),
-        ));
-
-        assert_ok!(CrlPallet::update_crl(
-            Origin::Signed(ALICE).into(),
-            CA_NAME.to_vec(),
-            der_input(crl_inter1_v1_der(), chain1_der()),
-        ));
-
-        let bounded_name: CaName<Test> = CA_NAME.to_vec().try_into().unwrap();
-        let ca_info = CertificateAuthorities::<Test>::get(&bounded_name).unwrap();
-        assert_eq!(ca_info.revoked_count, 3);
-        assert_eq!(ca_info.crl_versions.len(), 1);
-
-        let revoked = Revoked::<Test>::get(&bounded_name).unwrap();
-        assert_eq!(revoked.len(), 3);
-    })
-}
-
-#[test]
-fn update_crl_der_ca_not_found() {
-    test().execute_with(|| {
-        assert_noop!(
-            CrlPallet::update_crl(
-                Origin::Signed(ALICE).into(),
-                b"NonExistent".to_vec(),
-                der_input(crl_inter1_v1_der(), chain1_der()),
-            ),
-            Error::<Test>::CaNotFound
-        );
-    })
-}
-
-#[test]
-fn update_crl_der_not_newer_same_issuer() {
-    test().execute_with(|| {
-        assert_ok!(CrlPallet::register_ca(
-            Origin::Root.into(),
-            CA_NAME.to_vec(),
-            root_cert(),
-        ));
-
-        assert_ok!(CrlPallet::update_crl(
-            Origin::Signed(ALICE).into(),
-            CA_NAME.to_vec(),
-            der_input(crl_inter1_v1_der(), chain1_der()),
-        ));
-
-        assert_noop!(
-            CrlPallet::update_crl(
+            // Update from issuer 1 (3 revoked certs)
+            assert_ok!(CrlPallet::update_crl(
                 Origin::Signed(ALICE).into(),
                 CA_NAME.to_vec(),
-                der_input(crl_inter1_v1_der(), chain1_der()),
-            ),
-            Error::<Test>::NotNewerCrl
-        );
-    })
-}
+                CrlInput::from_pem(crl_inter1_v1(), chain1()),
+            ));
 
-#[test]
-fn update_crl_der_two_issuers_independently() {
-    test().execute_with(|| {
-        assert_ok!(CrlPallet::register_ca(
-            Origin::Root.into(),
-            CA_NAME.to_vec(),
-            root_cert(),
-        ));
+            let bounded_name: CaName<Test> = CA_NAME.to_vec().try_into().unwrap();
+            let ca_info = CertificateAuthorities::<Test>::get(&bounded_name).unwrap();
+            assert_eq!(ca_info.revoked_count, 3);
+            assert_eq!(ca_info.crl_versions.len(), 1);
 
-        assert_ok!(CrlPallet::update_crl(
-            Origin::Signed(ALICE).into(),
-            CA_NAME.to_vec(),
-            der_input(crl_inter1_v1_der(), chain1_der()),
-        ));
+            // Update from issuer 2 (2 revoked certs) — should merge, not replace
+            assert_ok!(CrlPallet::update_crl(
+                Origin::Signed(ALICE).into(),
+                CA_NAME.to_vec(),
+                CrlInput::from_pem(crl_inter2(), chain2()),
+            ));
 
-        let bounded_name: CaName<Test> = CA_NAME.to_vec().try_into().unwrap();
-        let ca_info = CertificateAuthorities::<Test>::get(&bounded_name).unwrap();
-        assert_eq!(ca_info.revoked_count, 3);
+            let ca_info = CertificateAuthorities::<Test>::get(&bounded_name).unwrap();
+            assert_eq!(ca_info.revoked_count, 5); // 3 from issuer1 + 2 from issuer2
+            assert_eq!(ca_info.crl_versions.len(), 2); // two distinct issuers tracked
 
-        assert_ok!(CrlPallet::update_crl(
-            Origin::Signed(ALICE).into(),
-            CA_NAME.to_vec(),
-            der_input(crl_inter2_der(), chain2_der()),
-        ));
+            let revoked = Revoked::<Test>::get(&bounded_name).unwrap();
+            assert_eq!(revoked.len(), 5);
+        })
+    }
 
-        let ca_info = CertificateAuthorities::<Test>::get(&bounded_name).unwrap();
-        assert_eq!(ca_info.revoked_count, 5);
-        assert_eq!(ca_info.crl_versions.len(), 2);
-    })
-}
+    #[test]
+    fn update_crl_pem_replaces_same_issuer_entries() {
+        test().execute_with(|| {
+            assert_ok!(CrlPallet::register_ca(
+                Origin::Root.into(),
+                CA_NAME.to_vec(),
+                root_cert(),
+            ));
 
-#[test]
-fn update_crl_der_replaces_same_issuer_entries() {
-    test().execute_with(|| {
-        assert_ok!(CrlPallet::register_ca(
-            Origin::Root.into(),
-            CA_NAME.to_vec(),
-            root_cert(),
-        ));
+            // Update from issuer 1 v1 (3 revoked certs)
+            assert_ok!(CrlPallet::update_crl(
+                Origin::Signed(ALICE).into(),
+                CA_NAME.to_vec(),
+                CrlInput::from_pem(crl_inter1_v1(), chain1()),
+            ));
 
-        assert_ok!(CrlPallet::update_crl(
-            Origin::Signed(ALICE).into(),
-            CA_NAME.to_vec(),
-            der_input(crl_inter1_v1_der(), chain1_der()),
-        ));
+            // Update from issuer 2 (2 revoked certs)
+            assert_ok!(CrlPallet::update_crl(
+                Origin::Signed(ALICE).into(),
+                CA_NAME.to_vec(),
+                CrlInput::from_pem(crl_inter2(), chain2()),
+            ));
 
-        assert_ok!(CrlPallet::update_crl(
-            Origin::Signed(ALICE).into(),
-            CA_NAME.to_vec(),
-            der_input(crl_inter2_der(), chain2_der()),
-        ));
+            let bounded_name: CaName<Test> = CA_NAME.to_vec().try_into().unwrap();
+            assert_eq!(
+                CertificateAuthorities::<Test>::get(&bounded_name)
+                    .unwrap()
+                    .revoked_count,
+                5
+            );
 
-        let bounded_name: CaName<Test> = CA_NAME.to_vec().try_into().unwrap();
-        assert_eq!(
-            CertificateAuthorities::<Test>::get(&bounded_name)
-                .unwrap()
-                .revoked_count,
-            5
-        );
+            // Update issuer 1 with v2 (5 revoked certs) — should replace issuer1's 3 entries
+            assert_ok!(CrlPallet::update_crl(
+                Origin::Signed(ALICE).into(),
+                CA_NAME.to_vec(),
+                CrlInput::from_pem(crl_inter1_v2(), chain1()),
+            ));
 
-        assert_ok!(CrlPallet::update_crl(
-            Origin::Signed(ALICE).into(),
-            CA_NAME.to_vec(),
-            der_input(crl_inter1_v2_der(), chain1_der()),
-        ));
+            let ca_info = CertificateAuthorities::<Test>::get(&bounded_name).unwrap();
+            assert_eq!(ca_info.revoked_count, 7); // 5 from issuer1 v2 + 2 from issuer2
+            assert_eq!(ca_info.crl_versions.len(), 2); // still two issuers
 
-        let ca_info = CertificateAuthorities::<Test>::get(&bounded_name).unwrap();
-        assert_eq!(ca_info.revoked_count, 7);
-        assert_eq!(ca_info.crl_versions.len(), 2);
-    })
+            let revoked = Revoked::<Test>::get(&bounded_name).unwrap();
+            assert_eq!(revoked.len(), 7);
+        })
+    }
+
+    #[test]
+    fn update_crl_pem_not_newer_does_not_affect_other_issuer() {
+        test().execute_with(|| {
+            assert_ok!(CrlPallet::register_ca(
+                Origin::Root.into(),
+                CA_NAME.to_vec(),
+                root_cert(),
+            ));
+
+            // Update issuer 1 v2 (newer) first
+            assert_ok!(CrlPallet::update_crl(
+                Origin::Signed(ALICE).into(),
+                CA_NAME.to_vec(),
+                CrlInput::from_pem(crl_inter1_v2(), chain1()),
+            ));
+
+            // Update issuer 2 — should succeed even though issuer 2's thisUpdate may be
+            // older than issuer 1's, since version tracking is per-issuer
+            assert_ok!(CrlPallet::update_crl(
+                Origin::Signed(ALICE).into(),
+                CA_NAME.to_vec(),
+                CrlInput::from_pem(crl_inter2(), chain2()),
+            ));
+
+            let bounded_name: CaName<Test> = CA_NAME.to_vec().try_into().unwrap();
+            let ca_info = CertificateAuthorities::<Test>::get(&bounded_name).unwrap();
+            assert_eq!(ca_info.revoked_count, 7); // 5 + 2
+            assert_eq!(ca_info.crl_versions.len(), 2);
+        })
+    }
+
+    #[test]
+    fn update_crl_pem_older_rejected_for_same_issuer_only() {
+        test().execute_with(|| {
+            assert_ok!(CrlPallet::register_ca(
+                Origin::Root.into(),
+                CA_NAME.to_vec(),
+                root_cert(),
+            ));
+
+            // Update issuer 1 with v2 (newer)
+            assert_ok!(CrlPallet::update_crl(
+                Origin::Signed(ALICE).into(),
+                CA_NAME.to_vec(),
+                CrlInput::from_pem(crl_inter1_v2(), chain1()),
+            ));
+
+            // Try issuer 1 v1 (older) — should be rejected
+            assert_noop!(
+                CrlPallet::update_crl(
+                    Origin::Signed(ALICE).into(),
+                    CA_NAME.to_vec(),
+                    CrlInput::from_pem(crl_inter1_v1(), chain1()),
+                ),
+                Error::<Test>::NotNewerCrl
+            );
+
+            // Issuer 2 should still work
+            assert_ok!(CrlPallet::update_crl(
+                Origin::Signed(ALICE).into(),
+                CA_NAME.to_vec(),
+                CrlInput::from_pem(crl_inter2(), chain2()),
+            ));
+        })
+    }
+
+    // ---------------------------------------------------------------------------
+    // unregister_ca clears multi-issuer data
+    // ---------------------------------------------------------------------------
+
+    #[test]
+    fn unregister_ca_clears_all_issuers() {
+        test().execute_with(|| {
+            assert_ok!(CrlPallet::register_ca(
+                Origin::Root.into(),
+                CA_NAME.to_vec(),
+                root_cert(),
+            ));
+            assert_ok!(CrlPallet::update_crl(
+                Origin::Signed(ALICE).into(),
+                CA_NAME.to_vec(),
+                CrlInput::from_pem(crl_inter1_v1(), chain1()),
+            ));
+            assert_ok!(CrlPallet::update_crl(
+                Origin::Signed(ALICE).into(),
+                CA_NAME.to_vec(),
+                CrlInput::from_pem(crl_inter2(), chain2()),
+            ));
+
+            let bounded_name: CaName<Test> = CA_NAME.to_vec().try_into().unwrap();
+            assert_eq!(Revoked::<Test>::get(&bounded_name).unwrap().len(), 5);
+
+            assert_ok!(CrlPallet::unregister_ca(
+                Origin::Root.into(),
+                CA_NAME.to_vec(),
+            ));
+
+            assert!(CertificateAuthorities::<Test>::get(&bounded_name).is_none());
+            assert!(Revoked::<Test>::get(&bounded_name).is_none());
+        })
+    }
 }
 
 // ---------------------------------------------------------------------------
-// CrlProvider trait
+// DER
 // ---------------------------------------------------------------------------
 
-#[test]
-fn get_crl_returns_all_issuers() {
-    test().execute_with(|| {
-        assert_ok!(CrlPallet::register_ca(
-            Origin::Root.into(),
-            CA_NAME.to_vec(),
-            root_cert(),
-        ));
-        assert_ok!(CrlPallet::update_crl(
-            Origin::Signed(ALICE).into(),
-            CA_NAME.to_vec(),
-            pem_input(crl_inter1_v1(), chain1()),
-        ));
-        assert_ok!(CrlPallet::update_crl(
-            Origin::Signed(ALICE).into(),
-            CA_NAME.to_vec(),
-            pem_input(crl_inter2(), chain2()),
-        ));
+mod der {
+    use super::*;
 
-        let ca_name_str = core::str::from_utf8(CA_NAME).unwrap();
-        let crl =
-            <CrlPallet as CrlProvider>::get_crl(ca_name_str).expect("CRL should be available");
-        assert_eq!(crl.len(), 5); // 3 from issuer1 + 2 from issuer2
-    })
-}
+    #[test]
+    fn update_crl_der() {
+        test().execute_with(|| {
+            assert_ok!(CrlPallet::register_ca(
+                Origin::Root.into(),
+                CA_NAME.to_vec(),
+                root_cert(),
+            ));
 
-#[test]
-fn get_crl_err_on_not_found() {
-    test().execute_with(|| {
-        let result = <CrlPallet as CrlProvider>::get_crl("NonExistent");
-        assert!(result.is_err());
-    })
+            assert_ok!(CrlPallet::update_crl(
+                Origin::Signed(ALICE).into(),
+                CA_NAME.to_vec(),
+                CrlInput::from_der(crl_inter1_v1_der(), chain1_der()),
+            ));
+
+            let bounded_name: CaName<Test> = CA_NAME.to_vec().try_into().unwrap();
+            let ca_info = CertificateAuthorities::<Test>::get(&bounded_name).unwrap();
+            assert_eq!(ca_info.revoked_count, 3);
+            assert_eq!(ca_info.crl_versions.len(), 1);
+
+            let revoked = Revoked::<Test>::get(&bounded_name).unwrap();
+            assert_eq!(revoked.len(), 3);
+        })
+    }
+
+    #[test]
+    fn update_crl_der_ca_not_found() {
+        test().execute_with(|| {
+            assert_noop!(
+                CrlPallet::update_crl(
+                    Origin::Signed(ALICE).into(),
+                    b"NonExistent".to_vec(),
+                    CrlInput::from_der(crl_inter1_v1_der(), chain1_der()),
+                ),
+                Error::<Test>::CaNotFound
+            );
+        })
+    }
+
+    #[test]
+    fn update_crl_der_not_newer_same_issuer() {
+        test().execute_with(|| {
+            assert_ok!(CrlPallet::register_ca(
+                Origin::Root.into(),
+                CA_NAME.to_vec(),
+                root_cert(),
+            ));
+
+            assert_ok!(CrlPallet::update_crl(
+                Origin::Signed(ALICE).into(),
+                CA_NAME.to_vec(),
+                CrlInput::from_der(crl_inter1_v1_der(), chain1_der()),
+            ));
+
+            assert_noop!(
+                CrlPallet::update_crl(
+                    Origin::Signed(ALICE).into(),
+                    CA_NAME.to_vec(),
+                    CrlInput::from_der(crl_inter1_v1_der(), chain1_der()),
+                ),
+                Error::<Test>::NotNewerCrl
+            );
+        })
+    }
+
+    #[test]
+    fn update_crl_der_two_issuers_independently() {
+        test().execute_with(|| {
+            assert_ok!(CrlPallet::register_ca(
+                Origin::Root.into(),
+                CA_NAME.to_vec(),
+                root_cert(),
+            ));
+
+            assert_ok!(CrlPallet::update_crl(
+                Origin::Signed(ALICE).into(),
+                CA_NAME.to_vec(),
+                CrlInput::from_der(crl_inter1_v1_der(), chain1_der()),
+            ));
+
+            let bounded_name: CaName<Test> = CA_NAME.to_vec().try_into().unwrap();
+            let ca_info = CertificateAuthorities::<Test>::get(&bounded_name).unwrap();
+            assert_eq!(ca_info.revoked_count, 3);
+
+            assert_ok!(CrlPallet::update_crl(
+                Origin::Signed(ALICE).into(),
+                CA_NAME.to_vec(),
+                CrlInput::from_der(crl_inter2_der(), chain2_der()),
+            ));
+
+            let ca_info = CertificateAuthorities::<Test>::get(&bounded_name).unwrap();
+            assert_eq!(ca_info.revoked_count, 5);
+            assert_eq!(ca_info.crl_versions.len(), 2);
+        })
+    }
+
+    #[test]
+    fn update_crl_der_replaces_same_issuer_entries() {
+        test().execute_with(|| {
+            assert_ok!(CrlPallet::register_ca(
+                Origin::Root.into(),
+                CA_NAME.to_vec(),
+                root_cert(),
+            ));
+
+            assert_ok!(CrlPallet::update_crl(
+                Origin::Signed(ALICE).into(),
+                CA_NAME.to_vec(),
+                CrlInput::from_der(crl_inter1_v1_der(), chain1_der()),
+            ));
+
+            assert_ok!(CrlPallet::update_crl(
+                Origin::Signed(ALICE).into(),
+                CA_NAME.to_vec(),
+                CrlInput::from_der(crl_inter2_der(), chain2_der()),
+            ));
+
+            let bounded_name: CaName<Test> = CA_NAME.to_vec().try_into().unwrap();
+            assert_eq!(
+                CertificateAuthorities::<Test>::get(&bounded_name)
+                    .unwrap()
+                    .revoked_count,
+                5
+            );
+
+            assert_ok!(CrlPallet::update_crl(
+                Origin::Signed(ALICE).into(),
+                CA_NAME.to_vec(),
+                CrlInput::from_der(crl_inter1_v2_der(), chain1_der()),
+            ));
+
+            let ca_info = CertificateAuthorities::<Test>::get(&bounded_name).unwrap();
+            assert_eq!(ca_info.revoked_count, 7);
+            assert_eq!(ca_info.crl_versions.len(), 2);
+        })
+    }
+
+    // ---------------------------------------------------------------------------
+    // CrlProvider trait
+    // ---------------------------------------------------------------------------
+
+    #[test]
+    fn get_crl_returns_all_issuers() {
+        test().execute_with(|| {
+            assert_ok!(CrlPallet::register_ca(
+                Origin::Root.into(),
+                CA_NAME.to_vec(),
+                root_cert(),
+            ));
+            assert_ok!(CrlPallet::update_crl(
+                Origin::Signed(ALICE).into(),
+                CA_NAME.to_vec(),
+                CrlInput::from_pem(crl_inter1_v1(), chain1()),
+            ));
+            assert_ok!(CrlPallet::update_crl(
+                Origin::Signed(ALICE).into(),
+                CA_NAME.to_vec(),
+                CrlInput::from_pem(crl_inter2(), chain2()),
+            ));
+
+            let ca_name_str = core::str::from_utf8(CA_NAME).unwrap();
+            let crl =
+                <CrlPallet as CrlProvider>::get_crl(ca_name_str).expect("CRL should be available");
+            assert_eq!(crl.len(), 5); // 3 from issuer1 + 2 from issuer2
+        })
+    }
+
+    #[test]
+    fn get_crl_err_on_not_found() {
+        test().execute_with(|| {
+            let result = <CrlPallet as CrlProvider>::get_crl("NonExistent");
+            assert!(result.is_err());
+        })
+    }
 }

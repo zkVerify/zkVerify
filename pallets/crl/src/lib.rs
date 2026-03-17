@@ -427,7 +427,10 @@ pub mod pallet {
         /// * `TooManyIssuers` - Too many distinct CRL issuers for this CA.
         /// * `NotNewerCrl` - The CRL is not newer than the one already stored for this issuer.
         #[pallet::call_index(2)]
-        #[pallet::weight(T::WeightInfo::update_pem_crl(MAX_REVOKED_CERTS_PER_CA))]
+        #[pallet::weight(match crl_input {
+            CrlInput::Pem { .. } => T::WeightInfo::update_pem_crl(MAX_REVOKED_CERTS_PER_CA),
+            CrlInput::Der { .. } => T::WeightInfo::update_der_crl(MAX_REVOKED_CERTS_PER_CA),
+        })]
         pub fn update_crl(
             origin: OriginFor<T>,
             ca_name: Vec<u8>,
