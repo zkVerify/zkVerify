@@ -1,41 +1,41 @@
 [advisories]
 ignore = [
-    "RUSTSEC-2025-0009",
-    # The next two coming from outdated wasmtime dependency from wich polkadot
-    # and substrate crates are dependent on. Unfortunally seams that also the
-    # newver versions still depend from the same wasmtime version.
-    "RUSTSEC-2025-0055", # coming from indirect dependency tracing-subscriber v0.2
-    # on the other end the v0.3.20 break console log output formatting
-    # how reported in https://github.com/tokio-rs/tracing/issues/3369
-    "RUSTSEC-2025-0118", # coming from indirect dependency wasmtime v0.8.1.
+    "RUSTSEC-2025-0009", # ring v0.16.20 — stale lockfile entry (rcgen v0.11.3 -> ring 0.16).
+    # https://rustsec.org/advisories/RUSTSEC-2025-0009
+    # Nothing in the workspace actually depends on this chain (`cargo tree` confirms it).
+    # It remains in Cargo.lock because Cargo resolves optional dependencies in the lockfile.
+    # Cannot be updated: rcgen 0.11.x requires ring 0.16.x.
+    "RUSTSEC-2025-0055", # tracing-subscriber v0.2.25 via ark-relations v0.4.0
+    # (ark-relations unconditionally enables tracing-subscriber 0.2.x with its std feature).
+    # https://rustsec.org/advisories/RUSTSEC-2025-0055
+    # This is an upstream arkworks issue; no patched version of ark-relations avoids it.
+    "RUSTSEC-2025-0118", # wasmtime v35.0.0 via sc-executor-wasmtime v0.43.0 (polkadot-sdk, cannot upgrade independently).
     # From https://rustsec.org/advisories/RUSTSEC-2025-0118 ->
     # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-hc7m-r6v8-hg9q
-    # "This is a bug in Wasmtime's safe Rust API. It should not be possible to cause unsoundness
-    # with Wasmtime's embedding API if unsafe is not used. Embeddings which do not use the wasm
-    # threads proposal nor created shared memories nor actually share shared memories across
-    # threads are unaffected. Only if shared memories are created across threads might an
-    # embedding be affected."
+    # "Embeddings which do not use the wasm threads proposal nor created shared memories
+    # nor actually share shared memories across threads are unaffected."
     # We fall in the case where we don't use wasm threads at all.
-    "RUSTSEC-2026-0002", # coming from indirect dependency in smoldot-light and libp2p-identif@0.43.1.
-    # the first is just used in parazkvtest so we can ignore it.
-    # For the second one, we looked into the code at https://github.com/libp2p/rust-libp2p.git@libp2p-identify-v0.43.1
-    # and in protocols/identify/src/behaviour.rs we can see that there isn't any mutable iterator used for
-    # `lru::LruCache`: so the unsound code is never exercised.
-    "RUSTSEC-2026-0006", # coming from indirect dependency wasmtime v35.0.0 via sc-executor-wasmtime v0.43.0.
+    "RUSTSEC-2026-0002", # lru v0.12.5 — used by libp2p-identify v0.45.0 and libp2p-swarm v0.45.1
+    # (polkadot-sdk transitive dependency via libp2p v0.54.1).
+    # https://rustsec.org/advisories/RUSTSEC-2026-0002
+    # We checked the libp2p-identify code at v0.45.0 and libp2p-swarm at v0.45.1:
+    # no mutable iterator (IterMut) is used on lru::LruCache, so the unsound code path
+    # is never exercised.
+    "RUSTSEC-2026-0006", # wasmtime v35.0.0 via sc-executor-wasmtime v0.43.0 (polkadot-sdk, cannot upgrade independently).
     # From https://rustsec.org/advisories/RUSTSEC-2026-0006 ->
     # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-vc8c-j3xm-xj73
     # The vulnerability (segfault or out-of-sandbox load with f64.copysign on x86-64) only triggers
     # when signals-based-traps is DISABLED in the wasmtime Config.
     # Substrate's sc-executor-wasmtime uses wasmtime::Config::new() which has signals_based_traps
     # enabled by default, and never disables it. Therefore this code path is never exercised.
-    "RUSTSEC-2026-0020", # wasmtime v8.0.1 via sc-executor-wasmtime (polkadot-sdk, cannot upgrade independently).
+    "RUSTSEC-2026-0020", # wasmtime v35.0.0 via sc-executor-wasmtime v0.43.0 (polkadot-sdk, cannot upgrade independently).
     # https://rustsec.org/advisories/RUSTSEC-2026-0020 ->
     # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-852m-cvvp-9p4w
     # "Wasmtime's implementations of WASIp1 and WASIp2 are affected by this vulnerability."
     # We use wasmtime exclusively as a Wasm executor for Substrate PVF/runtime blobs via
     # sc-executor-wasmtime. Neither wasmtime-wasi nor any WASI context is present in our
     # dependency tree, so we are unaffected.
-    "RUSTSEC-2026-0021", # wasmtime v8.0.1 via sc-executor-wasmtime (polkadot-sdk, cannot upgrade independently).
+    "RUSTSEC-2026-0021", # wasmtime v35.0.0 via sc-executor-wasmtime v0.43.0 (polkadot-sdk, cannot upgrade independently).
     # https://rustsec.org/advisories/RUSTSEC-2026-0021 ->
     # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-243v-98vx-264h
     # "Specific to implementations using the wasi:http/types.fields resource in wasmtime-wasi-http."

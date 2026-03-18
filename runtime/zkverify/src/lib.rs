@@ -1274,6 +1274,9 @@ pub type ParachainMigrations = parachains::Migrations;
 #[allow(unused_parens)]
 type Migrations = (migrations::Unreleased, ParachainMigrations);
 
+// NOTE: CandidateReceiptV2 node feature is NOT enabled via migration.
+// It must be configured on-chain BEFORE upgrading validator nodes to this runtime version.
+
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic =
     generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, TxExtension>;
