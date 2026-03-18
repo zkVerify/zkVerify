@@ -1,4 +1,4 @@
-// Copyright 2024, Horizen Labs, Inc.
+// Copyright 2024-2026, Horizen Labs, Inc.
 // Copyright (C) Parity Technologies (UK) Ltd.
 
 // This program is free software: you can redistribute it and/or modify

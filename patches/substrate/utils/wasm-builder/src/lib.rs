@@ -90,7 +90,7 @@
 //!   also be built. This is necessary to make sure the standard library crates only use the exact
 //!   WASM feature set that our executor supports. Enabled by default for RISC-V target and WASM
 //!   target (but only if Rust < 1.84). Disabled by default for WASM target and Rust >= 1.84.
-//! - `WASM_BUILD_LEGACY_TARGET` - If set to `1` or `true`, forces the use of `wasm32-unknown-unknown`
+//! - `WASM_BUILD_LEGACY_TARGET` - If set to `1`, forces the use of `wasm32-unknown-unknown`
 //!   target instead of `wasm32v1-none` even on Rust >= 1.84. This is useful when some dependencies
 //!   don't properly support the stricter `wasm32v1-none` target.
 //! - `WASM_BUILD_CARGO_ARGS` - This can take a string as space separated list of `cargo` arguments.
@@ -486,7 +486,7 @@ impl RuntimeTarget {
 		match (crate::get_bool_environment_variable(crate::WASM_BUILD_STD), self) {
 			(Some(false), _) => None, // Explicitly disabled
 			(_, RuntimeTarget::Wasm) if Self::should_use_wasm32v1_none(cargo_command) => None, // wasm32v1-none has MVP features built-in
-			(_, RuntimeTarget::Wasm) => Some("build-std"), // Legacy wasm32-unknown-unknown
+			(_, RuntimeTarget::Wasm) => Some("build-std=core,alloc"), // Legacy wasm32-unknown-unknown (no_std)
 			_ => Some("build-std=core,alloc"), // RISC-V or explicit WASM_BUILD_STD=1
 		}
 	}

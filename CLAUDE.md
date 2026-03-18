@@ -103,7 +103,7 @@ Runtime features: `runtime-benchmarks`, `try-runtime`, `fast-runtime`, `volta`.
 
 ### Patches (`patches/`)
 
-Vendored patched versions of upstream polkadot-sdk crates (stable2412). Each patch dir has `PATCH.md`, `patch.patch`, `rustfmt.toml`. Do not edit these without understanding the upstream diff.
+Vendored patched versions of upstream polkadot-sdk crates (stable2512). Each patch dir has `PATCH.md`, `patch.patch`, `rustfmt.toml`. Do not edit these without understanding the upstream diff.
 
 ## End-to-End Tests (`zombienet-tests/`)
 
