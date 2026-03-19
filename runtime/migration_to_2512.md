@@ -405,21 +405,11 @@ No storage migration required, but code changes needed:
 - Update any code using `XcmPaymentApiV1` to `XcmPaymentApiV2`
 - `query_delivery_fees` now requires an `asset_id` parameter
 
-### 5. CandidateReceiptV2 NodeFeature
+### 5. CandidateReceiptV2 NodeFeature (Manual — NOT a runtime migration)
 
-**No Storage Version Change** (configuration pallet version unchanged)
+**No runtime migration**. The `EnableCandidateReceiptV2` migration was removed from the code. Instead, `CandidateReceiptV2` (feature index 3) must be enabled on-chain via governance **before** upgrading validator nodes to this runtime version. See the comment at `runtime/zkverify/src/lib.rs:1277`.
 
-**Migration**: `parachains::migrations::EnableCandidateReceiptV2<Runtime>`
-
-**Purpose**: Enables `CandidateReceiptV2` (feature index 3) in the on-chain `HostConfiguration.node_features`. In polkadot-stable2512, the `CollationGeneration` subsystem unconditionally creates V2 candidate descriptors — validators reject collations unless this feature is enabled (see "CandidateReceiptV2 and NodeFeatures" section above).
-
-**Details**:
-- The genesis config already enables the feature for new chains, but existing chains upgrading need this migration
-- Dispatches `configuration::Pallet::set_node_feature(Root, 3, true)` to schedule the change via the pallet's own `schedule_config_update` logic, avoiding direct manipulation of pallet-internal storage
-- The feature activates after a session delay (`cur+2`), which is the standard configuration change cadence
-- Uses `.expect()` on the dispatch result: `set_node_feature` with `RawOrigin::Root` and a valid feature index has no realistic failure path (the origin check always passes, and the consistency check won't reject a node feature toggle). If it somehow did fail, panicking is preferable to silently proceeding without the feature — that would break parachain block backing. Note: a panic in `on_runtime_upgrade` reverts the entire block, effectively preventing the new runtime from producing blocks; recovery would require a governance `system.setCode` with a fixed runtime
-
-**Location**: Defined in `runtime/zkverify/src/parachains.rs` (parachain migrations), composed into the runtime's `Migrations` tuple via `ParachainMigrations` in `lib.rs`
+The genesis config already enables the feature for new chains. Existing chains must schedule the feature flag via `configuration::Pallet::set_node_feature(3, true)` through a governance call. The feature activates after a session delay (`cur+2`), which is the standard configuration change cadence. Without it, the `CollationGeneration` subsystem unconditionally creates V2 candidate descriptors that validators will reject (see "CandidateReceiptV2 and NodeFeatures" section above)
 
 ### Migration Order
 
@@ -437,15 +427,14 @@ pub type Unreleased = (
     >,
 );
 
-// In runtime/zkverify/src/parachains.rs
-pub type Unreleased = (
-    // 3. Enable CandidateReceiptV2 in HostConfiguration
-    EnableCandidateReceiptV2<Runtime>,
-);
+// In runtime/zkverify/src/parachains.rs — no parachain migrations needed
+pub type Unreleased = ();
 
 // In runtime/zkverify/src/lib.rs — both are composed together:
 type Migrations = (migrations::Unreleased, ParachainMigrations);
 ```
+
+**Note**: CandidateReceiptV2 is NOT included as a runtime migration — it must be enabled on-chain via governance before the upgrade (see §5 above).
 
 ### Verification
 
