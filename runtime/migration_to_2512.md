@@ -171,9 +171,8 @@ node_features.set(
 The following pallets no longer require explicit `type RuntimeEvent = RuntimeEvent;` because the event type is now propagated through a supertype trait bound on `Config`:
 
 - `pallet_aggregate`
-- `pallet_claim`
 - `pallet_token_claim`
-- `pallet_verifiers` (all instances: Fflonk, Groth16, SP1, Risc0, Ultrahonk, Ultraplonk, Plonky2, EZKL)
+- `pallet_verifiers` (all instances: Fflonk, Groth16, SP1, Risc0, Ultrahonk, Ultraplonk, Plonky2, EZKL, Tee)
 
 ### Derive Macro Changes
 
@@ -311,9 +310,9 @@ pub type TxExtension = (
 
 Both `AuthorizeCall` and `WeightReclaim` are available in `frame-system` v45.0.0 (our dependency) but not yet used. They can be added independently when needed.
 
-### Placeholder Weight Functions Added
+### New Weight Functions Added
 
-New weight functions added with placeholder values (to be benchmarked):
+New weight functions required by polkadot-stable2512. Most have been benchmarked; those marked with (\*) are placeholders still to be benchmarked:
 
 - `frame_system_extensions`: `weight_reclaim()`
 - `pallet_bags_list`: `on_idle()`
@@ -323,15 +322,15 @@ New weight functions added with placeholder values (to be benchmarked):
 - `pallet_proxy`: `poke_deposit()`
 - `pallet_staking`: `migrate_currency()`, `manual_slash()`
 - `pallet_utility`: `dispatch_as_fallible()`, `if_else()`
-- `pallet_xcm`: `add_authorized_alias()`, `remove_authorized_alias()`, `weigh_message()`
+- `pallet_xcm`: `add_authorized_alias()`, `remove_authorized_alias()`, `weigh_message()` (\*)
 - `parachains::coretime`: `credit_account()`
-- `parachains::on_demand`: `place_order_with_credits()`
+- `parachains::on_demand`: `place_order_with_credits()` (\*)
 - `parachains::paras`: `remove_upgrade_cooldown()`, `authorize_force_set_current_code_hash()`, `apply_authorized_force_set_current_code()`
 - `parachains::slashing`: `report_dispute_lost` renamed to `report_dispute_lost_unsigned`
 
 ### Build Changes (`build.rs`)
 
-- `WASM_BUILD_LEGACY_TARGET=1` set to use `wasm32-unknown-unknown` instead of `wasm32v1-none` (workaround for `bit-vec` dependency in risc0-verifier)
+- `WASM_BUILD_LEGACY_TARGET=1` set to use `wasm32-unknown-unknown` instead of `wasm32v1-none` (workaround for `bit-vec` dependency via risc0-circuit-rv32im)
 
 ## Required Migrations
 
@@ -425,6 +424,7 @@ pub type Unreleased = (
         Runtime,
         pallet_staking::migrations::v17::MigrateDisabledToSession<Runtime>,
     >,
+    // ... non-SDK migrations (pallet-specific) omitted — see migrations.rs for the full list
 );
 
 // In runtime/zkverify/src/parachains.rs — no parachain migrations needed
