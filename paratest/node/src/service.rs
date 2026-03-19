@@ -13,7 +13,6 @@ use paratest_runtime::{
 // Cumulus Imports
 use cumulus_client_collator::service::CollatorService;
 use cumulus_client_consensus_common::ParachainBlockImport as TParachainBlockImport;
-// Removed: cumulus_client_consensus_proposer::Proposer - ProposerFactory now directly implements ProposerInterface
 use cumulus_client_service::{
     build_network, build_relay_chain_interface, prepare_node_config, start_relay_chain_tasks,
     BuildNetworkParams, CollatorSybilResistance, DARecoveryProfile, StartRelayChainTasksParams,
