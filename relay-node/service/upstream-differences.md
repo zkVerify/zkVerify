@@ -31,17 +31,17 @@ potentially be removed to reduce maintenance burden.
 
 The fundamental architectural difference is **single-runtime vs multi-runtime**:
 
-| Aspect | Upstream | zkv-service |
-|--------|----------|-------------|
-| Runtimes | Polkadot, Kusama, Westend, Rococo | Single zkv-runtime |
-| Chain variants | 4 + Unknown | 2 (Volta, ZkVerify) + Unknown |
-| Runtime selection | Feature-gated (`westend-native`, `rococo-native`) | Always `zkv-runtime` |
-| Fake runtime API | Yes (`fake_runtime_api.rs`) | Not needed |
-| BEEFY consensus | Full support | Intentionally absent |
-| MMR gadget | Conditional | Absent |
-| Litep2p network backend | Supported | Not used (Libp2p only) |
-| Custom host functions | Standard | `native::HLNativeHostFunctions` for proof verification |
-| Custom RPC | Via `polkadot-rpc` crate | Inline `rpc.rs` module |
+| Aspect                  | Upstream                                          | zkv-service                                            |
+|-------------------------|---------------------------------------------------|--------------------------------------------------------|
+| Runtimes                | Polkadot, Kusama, Westend, Rococo                 | Single zkv-runtime                                     |
+| Chain variants          | 4 + Unknown                                       | 2 (Volta, zkVerify) + Unknown                          |
+| Runtime selection       | Feature-gated (`westend-native`, `rococo-native`) | Always `zkv-runtime`                                   |
+| Fake runtime API        | Yes (`fake_runtime_api.rs`)                       | Not needed                                             |
+| BEEFY consensus         | Full support                                      | Intentionally absent                                   |
+| MMR gadget              | Conditional                                       | Absent                                                 |
+| Litep2p network backend | Supported                                         | Not used (Libp2p only)                                 |
+| Custom host functions   | Standard                                          | `native::HLNativeHostFunctions` for proof verification |
+| Custom RPC              | Via `polkadot-rpc` crate                          | Inline `rpc.rs` module                                 |
 
 ---
 
