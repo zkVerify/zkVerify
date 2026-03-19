@@ -455,7 +455,7 @@ Code that uses `Balances::balance()` expecting total balance (including staked a
 
 ### 3. Paratest Collator PeerId
 
-The paratest collator node (`paratest/node/src/service.rs`) was using `PeerId::random()` for the collator peer ID passed to the lookahead collator `AuraParams`. This prevented proper collator-validator communication because the advertised peer ID didn't match the actual network peer ID. Fixed by passing `network.local_peer_id()` through to `start_consensus()`.
+The paratest collator node (`paratest/node/src/service.rs:391`) uses `PeerId::random()` for the `collator_peer_id` field in the lookahead collator `AuraParams`. This is a new required field in polkadot-stable2512. Using a random peer ID may cause collator-validator communication issues (the advertised peer ID won't match the actual network peer ID), but it is acceptable for the test parachain. A production collator should pass `network.local_peer_id()` instead.
 
 ### 4. Benchmark: pallet_bags_list::on_idle
 
