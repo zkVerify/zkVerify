@@ -347,6 +347,10 @@ New weight functions added with placeholder values (to be benchmarked):
 - Uses max severity (`Perbill::from_percent(100)`) for all existing disabled validators
 - This means offenders before the migration will not be re-enabled this era unless there are other 100% offenders
 
+**Implementation**: Reads the entire `DisabledValidators` `Vec<u32>` (a single `StorageValue`) in one storage read, maps each entry to `(u32, OffenceSeverity)` in memory, and writes the result back in one storage write. Weight: `reads_writes(1, 1)`.
+
+**DoS / unbounded-storage analysis**: `DisabledValidators` is a single `StorageValue`, not a `StorageMap`, so the migration performs exactly 1 read + 1 write regardless of the number of entries. After v16, the storage type becomes `BoundedVec<(u32, OffenceSeverity), ConstU32<333>>` (hard cap of 333 entries). The practical upper bound is much tighter: the runtime uses `UpToLimitDisablingStrategy` (Byzantine threshold factor = 1/3) with `MaxActiveValidators = 200`, yielding a disabling limit of `(200 − 1) / 3 = 66`. Inflating this list requires committing slashable offences (e.g. BABE/GRANDPA equivocations), which means controlling validator keys and losing staked funds to slashing — making it economically infeasible to bloat the storage. Even in the worst case (333 entries), the in-memory map over small tuples is negligible compared to block execution time. **No attack surface**.
+
 **Usage**:
 ```rust
 // In runtime migrations tuple
@@ -367,6 +371,10 @@ type Migrations = (
 **Details**:
 - Must be coordinated with the staking v15→v16 migration
 - Uses `pallet_staking::migrations::v17::MigrateDisabledToSession<T>` as the source
+
+**Implementation**: The `MigrateDisabledToSession` source calls `DisabledValidators::<T>::take()` on staking's `BoundedVec<(u32, OffenceSeverity), ConstU32<333>>` (1 storage read + delete), and `MigrateV0ToV1` writes the result into pallet-session's `DisabledValidators` (1 storage write). Total weight: `reads_writes(1, 1)`.
+
+**DoS / unbounded-storage analysis**: This migration operates on the same `DisabledValidators` storage value already bounded by the staking v16 migration (`BoundedVec` capped at 333). The same cryptoeconomic constraints apply — disabling a validator requires committing a slashable offence with real staked funds. The pallet-session destination storage is typed as `Vec<(u32, OffenceSeverity)>` (unbounded at the type level), but the input is bounded at 333 by the source type, and the practical limit remains 66 due to `UpToLimitDisablingStrategy`. The entire operation is 1 read + 1 write of a small value. **No attack surface**.
 
 **Usage**:
 ```rust
