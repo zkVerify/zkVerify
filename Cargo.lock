@@ -19287,7 +19287,7 @@ dependencies = [
 
 [[package]]
 name = "zkv-cli"
-version = "11.0.0"
+version = "31.0.0"
 dependencies = [
  "clap",
  "frame-benchmarking-cli",
@@ -19441,7 +19441,7 @@ dependencies = [
 
 [[package]]
 name = "zkv-service"
-version = "11.0.0"
+version = "31.0.0"
 dependencies = [
  "aggregate-rpc",
  "assert_matches",

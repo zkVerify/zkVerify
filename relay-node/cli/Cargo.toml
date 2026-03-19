@@ -1,7 +1,7 @@
 [package]
 name = "zkv-cli"
 description = "ZkVerify Relay-chain Client Node"
-version = "11.0.0"
+version = "31.0.0"
 authors.workspace = true
 edition.workspace = true
 license = "GPL-3.0"
