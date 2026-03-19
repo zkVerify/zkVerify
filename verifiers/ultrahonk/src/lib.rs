@@ -18,10 +18,7 @@
 extern crate alloc;
 
 use alloc::{borrow::Cow, vec::Vec};
-use codec::Decode;
-use codec::DecodeWithMemTracking;
-use codec::Encode;
-use codec::MaxEncodedLen;
+use codec::{Decode, DecodeWithMemTracking, Encode, MaxEncodedLen};
 use core::marker::PhantomData;
 use frame_support::traits::StorageVersion;
 use frame_support::{ensure, weights::Weight};
