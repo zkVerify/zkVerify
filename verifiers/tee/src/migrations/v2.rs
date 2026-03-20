@@ -92,7 +92,7 @@ where
         writes += vks + tickets;
 
         log::info!(
-            target: "runtime::ultrahonk",
+            target: "runtime::tee",
             "Tee migration V1->V2: drained {} Vks and {} Tickets entries",
             vks,
             tickets,
@@ -107,6 +107,7 @@ where
         let ticket_count =
             pallet_verifiers::Tickets::<T, crate::Tee<T>>::iter_keys().count() as u64;
         log::info!(
+            target: "runtime::tee",
             "tee-verifier pre_upgrade v1->v2: {vk_count} VKs and {ticket_count} tickets to remove"
         );
         Ok((vk_count, ticket_count).encode())
@@ -131,6 +132,7 @@ where
         );
 
         log::info!(
+            target: "runtime::tee",
             "tee-verifier post_upgrade v1->v2: OK, removed {pre_vk_count} VKs and {pre_ticket_count} tickets"
         );
         Ok(())
