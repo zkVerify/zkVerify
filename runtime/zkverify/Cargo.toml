@@ -307,6 +307,7 @@ try-runtime = [
 	"pallet-session/try-runtime",
 	"pallet-staking/try-runtime",
 	"pallet-sudo/try-runtime",
+	"pallet-tee-verifier/try-runtime",
 	"pallet-timestamp/try-runtime",
 	"pallet-token-claim/try-runtime",
 	"pallet-transaction-payment/try-runtime",

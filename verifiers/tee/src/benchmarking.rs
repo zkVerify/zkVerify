@@ -15,7 +15,7 @@
 
 #![cfg(feature = "runtime-benchmarks")]
 
-use crate::{Tee as Verifier, Vk};
+use crate::{CaNameProvider, Tee as Verifier, Vk};
 use alloc::vec;
 use frame_benchmarking::v2::*;
 use frame_support::{pallet_prelude::*, sp_runtime::traits::UniqueSaturatedInto};
@@ -28,16 +28,18 @@ pub struct Pallet<T: Config>(crate::Pallet<T>);
 impl<T: crate::Config> Config for T {}
 pub type Call<T> = pallet_verifiers::Call<T, Verifier<T>>;
 
-const PRESENT: u64 = 1769092187000; // Thu, 22 Jan 2026 14:29:47 GMT, in ms
+const INTEL_PRESENT: u64 = 1769092187000; // Thu, 22 Jan 2026 14:29:47 GMT, in ms
+const NITRO_PRESENT: u64 = 1668034320696; // Wed, 09 Nov 2022 22:52:00 GMT, in ms
 
-/// Insert an empty CRL for the TEE verifier's configured CA name into pallet_crl storage.
+/// Insert an empty CRL for the given Vk variant's CA name into pallet_crl storage.
 /// This allows `T::Crl::get_crl()` to succeed during benchmarks without requiring a full
 /// CRL update extrinsic.
-fn setup_empty_crl<T>()
+fn setup_empty_crl<T>(vk: &Vk)
 where
     T: crate::Config + pallet_crl::Config,
 {
-    let ca_name_bytes: alloc::vec::Vec<u8> = T::ca_name().as_bytes().to_vec();
+    let ca_name_str = <T as crate::Config>::CaName::ca_name_for(vk);
+    let ca_name_bytes: alloc::vec::Vec<u8> = ca_name_str.as_bytes().to_vec();
     let bounded_ca_name: pallet_crl::CaName<T> = ca_name_bytes
         .try_into()
         .expect("CA name fits within MaxCaNameLength");
@@ -70,10 +72,10 @@ mod benchmarks {
     benchmarking_utils!(Verifier<T>, crate::Config);
 
     #[benchmark]
-    fn verify_proof() {
+    fn intel_verify_proof() {
         let proof = include_bytes!("resources/intel/valid_quote.dat").to_vec();
         let pubs = vec![];
-        let vk = Vk {
+        let vk = Vk::Intel {
             tcb_response: include_bytes!("resources/intel/valid_tcbinfo.json")
                 .to_vec()
                 .try_into()
@@ -84,8 +86,25 @@ mod benchmarks {
                 .unwrap(),
         };
 
-        set_timestamp::<T>(PRESENT);
-        setup_empty_crl::<T>();
+        set_timestamp::<T>(INTEL_PRESENT);
+        setup_empty_crl::<T>(&vk);
+
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn nitro_verify_proof() {
+        let proof = include_bytes!("resources/nitro/valid_attestation.bin").to_vec();
+        let pubs = vec![];
+        let vk = Vk::Nitro;
+
+        set_timestamp::<T>(NITRO_PRESENT);
+        setup_empty_crl::<T>(&vk);
 
         let r;
         #[block]
@@ -97,7 +116,7 @@ mod benchmarks {
 
     #[benchmark]
     fn get_vk() {
-        let vk = Vk {
+        let vk = Vk::Intel {
             tcb_response: include_bytes!("resources/intel/valid_tcbinfo.json")
                 .to_vec()
                 .try_into()
@@ -121,7 +140,7 @@ mod benchmarks {
 
     #[benchmark]
     fn validate_vk() {
-        let vk = Vk {
+        let vk = Vk::Intel {
             tcb_response: include_bytes!("resources/intel/valid_tcbinfo.json")
                 .to_vec()
                 .try_into()
@@ -132,8 +151,8 @@ mod benchmarks {
                 .unwrap(),
         };
 
-        set_timestamp::<T>(PRESENT);
-        setup_empty_crl::<T>();
+        set_timestamp::<T>(INTEL_PRESENT);
+        setup_empty_crl::<T>(&vk);
 
         let r;
         #[block]
@@ -147,7 +166,7 @@ mod benchmarks {
     fn compute_statement_hash() {
         let proof = include_bytes!("resources/intel/valid_quote.dat").to_vec();
         let pubs = vec![];
-        let vk = Vk {
+        let vk = Vk::Intel {
             tcb_response: include_bytes!("resources/intel/valid_tcbinfo.json")
                 .to_vec()
                 .try_into()
@@ -170,7 +189,7 @@ mod benchmarks {
     fn register_vk() {
         // setup code
         let caller = funded_account::<T>();
-        let vk = Vk {
+        let vk = Vk::Intel {
             tcb_response: include_bytes!("resources/intel/valid_tcbinfo.json")
                 .to_vec()
                 .try_into()
@@ -181,8 +200,8 @@ mod benchmarks {
                 .unwrap(),
         };
 
-        set_timestamp::<T>(PRESENT);
-        setup_empty_crl::<T>();
+        set_timestamp::<T>(INTEL_PRESENT);
+        setup_empty_crl::<T>(&vk);
 
         #[extrinsic_call]
         register_vk(RawOrigin::Signed(caller), vk.clone().into());
@@ -196,7 +215,7 @@ mod benchmarks {
         // setup code
         let caller: T::AccountId = funded_account::<T>();
         let hash = sp_core::H256::repeat_byte(2);
-        let vk = Vk {
+        let vk = Vk::Intel {
             tcb_response: include_bytes!("resources/intel/valid_tcbinfo.json")
                 .to_vec()
                 .try_into()
@@ -232,8 +251,17 @@ mod mock {
     type AccountId = u64;
 
     parameter_types! {
-        pub const IntelCaName: &'static str = "Intel_SGX_Processor";
         pub const MaxCaNameLength: u32 = 64;
+    }
+
+    pub struct TeeCaNames;
+    impl crate::CaNameProvider for TeeCaNames {
+        fn ca_name_for(vk: &crate::Vk) -> &'static str {
+            match vk {
+                crate::Vk::Intel { .. } => "Intel_SGX_Processor",
+                crate::Vk::Nitro => "AWS_Nitro",
+            }
+        }
     }
 
     frame_support::construct_runtime!(
@@ -252,7 +280,8 @@ mod mock {
     impl crate::Config for Test {
         type UnixTime = Timestamp;
         type Crl = pallet_crl::Pallet<Test>;
-        type CaName = IntelCaName;
+        type CaName = TeeCaNames;
+        type WeightInfo = ();
     }
 
     #[derive_impl(frame_system::config_preludes::SolochainDefaultConfig as frame_system::DefaultConfig)]
@@ -341,9 +370,12 @@ mod mock {
         );
         ext.execute_with(|| {
             System::set_block_number(1);
-            Timestamp::set_timestamp(crate::benchmarking::PRESENT); // Thu, 22 Jan 2026 14:29:47 GMT
-                                                                    // Set up an empty CRL for the Intel SGX CA so benchmark tests can look up CRL data.
-            crate::benchmarking::setup_empty_crl::<Test>();
+            Timestamp::set_timestamp(crate::benchmarking::INTEL_PRESENT); // Thu, 22 Jan 2026 14:29:47 GMT
+                                                                          // Set up an empty CRL for the Intel SGX CA so benchmark tests can look up CRL data.
+            crate::benchmarking::setup_empty_crl::<Test>(&crate::Vk::Intel {
+                tcb_response: vec![],
+                certificates: vec![],
+            });
         });
         ext
     }

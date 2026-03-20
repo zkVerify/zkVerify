@@ -21,6 +21,7 @@ scale-info = { workspace = true }
 log = { workspace = true }
 pallet-verifiers = { workspace = true }
 sp-core = { workspace = true }
+sp-runtime = { workspace = true }
 sp-io = { workspace = true, optional = true }
 tee-verifier = { workspace = true }
 pallet-crl = { workspace = true }
@@ -53,7 +54,18 @@ std = [
 	"sp-consensus-babe/std",
 	"sp-core/std",
 	"sp-io?/std",
+	"sp-runtime/std",
 	"tee-verifier/std",
+]
+try-runtime = [
+	"frame-support/try-runtime",
+	"frame-system/try-runtime",
+	"pallet-babe/try-runtime",
+	"pallet-balances/try-runtime",
+	"pallet-crl/try-runtime",
+	"pallet-timestamp/try-runtime",
+	"pallet-verifiers/try-runtime",
+	"sp-runtime/try-runtime",
 ]
 runtime-benchmarks = [
 	"dep:frame-benchmarking",
@@ -67,4 +79,5 @@ runtime-benchmarks = [
 	"pallet-crl/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
 	"pallet-verifiers/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
 ]

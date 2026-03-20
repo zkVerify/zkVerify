@@ -18,23 +18,25 @@
 extern crate alloc;
 
 pub mod benchmarking;
+pub mod migrations;
 mod verifier_should;
 mod weight;
 
 use alloc::{borrow::Cow, vec::Vec};
 use core::marker::PhantomData;
 
-use frame_support::{ensure, traits::UnixTime, weights::Weight};
+use frame_support::{ensure, pallet_prelude::StorageVersion, traits::UnixTime, weights::Weight};
 use pallet_verifiers::traits::Verifier;
 pub use weight::WeightInfo;
 
 use pallet_crl::CrlProvider;
 use pallet_verifiers::traits::VerifyError;
-use tee_verifier::{parse_quote, parse_tcb_response, TcbResponse};
+use tee_verifier::{
+    intel_parse_quote, intel_parse_tcb_response, nitro_parse_attestation, TcbResponse,
+};
 
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
-use sp_core::Get;
 
 #[pallet_verifiers::verifier]
 pub struct Tee<T>;
@@ -43,16 +45,19 @@ pub type Proof = Vec<u8>;
 pub type Pubs = Vec<u8>;
 
 // Max size in bytes of the vk payloads
-pub const MAX_VK_LENGTH: u32 = 8192;
+pub const MAX_VK_LENGTH: u32 = 65536;
 // Max size in bytes of the quote
-pub const MAX_PROOF_LENGTH: u32 = 8192;
+pub const MAX_PROOF_LENGTH: u32 = 65536;
 // Max size in bytes of the pubs; this pallet does not need any pubs
 pub const MAX_PUBS_LENGTH: u32 = 0;
 
 #[derive(Clone, Debug, PartialEq, Encode, Decode, TypeInfo)]
-pub struct Vk {
-    pub tcb_response: Vec<u8>,
-    pub certificates: Vec<u8>,
+pub enum Vk {
+    Intel {
+        tcb_response: Vec<u8>,
+        certificates: Vec<u8>,
+    },
+    Nitro,
 }
 
 impl MaxEncodedLen for Vk {
@@ -62,18 +67,20 @@ impl MaxEncodedLen for Vk {
     }
 }
 
+pub trait CaNameProvider {
+    fn ca_name_for(vk: &Vk) -> &'static str;
+}
+
 pub trait Config {
     type UnixTime: UnixTime;
     type Crl: CrlProvider;
-    type CaName: Get<&'static str>;
-    /// The CA name to use for CRL lookups.
-    /// Defaults to INTEL_SGX_PROCESSOR_CA if not overridden.
-    fn ca_name() -> &'static str {
-        Self::CaName::get()
-    }
+    type CaName: CaNameProvider;
+    type WeightInfo: WeightInfo;
 }
 
 impl<T: Config> Verifier for Tee<T> {
+    const STORAGE_VERSION: StorageVersion = StorageVersion::new(2);
+
     type Proof = Proof;
 
     type Pubs = Pubs;
@@ -97,53 +104,82 @@ impl<T: Config> Verifier for Tee<T> {
             _pubs.len() <= MAX_PUBS_LENGTH as usize,
             VerifyError::InvalidInput
         );
-        ensure!(
-            vk.tcb_response.len() <= MAX_VK_LENGTH as usize
-                && vk.certificates.len() <= MAX_VK_LENGTH as usize
-                && !vk.tcb_response.is_empty()
-                && !vk.certificates.is_empty(),
-            VerifyError::InvalidVerificationKey
-        );
-
-        let quote = parse_quote(proof).map_err(|_| VerifyError::InvalidProofData)?;
-        let tcb_response =
-            parse_tcb_response(&vk.tcb_response[..]).map_err(|_| VerifyError::InvalidInput)?;
 
         let now = T::UnixTime::now().as_secs();
-        // Check that the tcbInfo is still valid at the verification timestamp
-        tcb_response
-            .tcb_info
-            .verify(now)
-            .map_err(|_| VerifyError::VerifyError)?;
 
-        let crl = T::Crl::get_crl(T::ca_name()).map_err(|_| VerifyError::VerifyError)?;
-        // Verify the attestation
-        quote
-            .verify(&tcb_response.tcb_info, &crl, now)
-            .map_err(|_| VerifyError::VerifyError)
-            .map(|_| None)
+        // Always require the CA to be registered, even if empty, to allow for unpermissioned CRL
+        // updates.
+        let crl =
+            T::Crl::get_crl(T::CaName::ca_name_for(vk)).map_err(|_| VerifyError::VerifyError)?;
+
+        match vk {
+            Vk::Intel {
+                tcb_response,
+                certificates,
+            } => {
+                ensure!(
+                    tcb_response.len() <= MAX_VK_LENGTH as usize
+                        && certificates.len() <= MAX_VK_LENGTH as usize
+                        && !tcb_response.is_empty()
+                        && !certificates.is_empty(),
+                    VerifyError::InvalidVerificationKey
+                );
+
+                let quote = intel_parse_quote(proof).map_err(|_| VerifyError::InvalidProofData)?;
+                let tcb_response = intel_parse_tcb_response(&tcb_response[..])
+                    .map_err(|_| VerifyError::InvalidInput)?;
+
+                tcb_response
+                    .tcb_info
+                    .verify(now)
+                    .map_err(|_| VerifyError::VerifyError)?;
+
+                quote
+                    .verify(&tcb_response.tcb_info, &crl, now)
+                    .map_err(|_| VerifyError::VerifyError)
+                    .map(|_| Some(T::WeightInfo::intel_verify_proof()))
+            }
+            Vk::Nitro => {
+                let attestation =
+                    nitro_parse_attestation(proof).map_err(|_| VerifyError::InvalidProofData)?;
+
+                attestation
+                    .verify(Some(&crl), now)
+                    .map_err(|_| VerifyError::VerifyError)
+                    .map(|_| Some(T::WeightInfo::nitro_verify_proof()))
+            }
+        }
     }
 
     fn validate_vk(vk: &Self::Vk) -> Result<(), VerifyError> {
-        if vk.tcb_response.len() > MAX_VK_LENGTH as usize
-            || vk.certificates.len() > MAX_VK_LENGTH as usize
-            || vk.tcb_response.is_empty()
-            || vk.certificates.is_empty()
-        {
-            return Err(VerifyError::InvalidVerificationKey);
+        match vk {
+            Vk::Intel {
+                tcb_response,
+                certificates,
+            } => {
+                if tcb_response.len() > MAX_VK_LENGTH as usize
+                    || certificates.len() > MAX_VK_LENGTH as usize
+                    || tcb_response.is_empty()
+                    || certificates.is_empty()
+                {
+                    return Err(VerifyError::InvalidVerificationKey);
+                }
+
+                let (tcb_response, _used): (TcbResponse, usize) =
+                    serde_json_core::from_slice(&tcb_response[..])
+                        .map_err(|_| VerifyError::InvalidVerificationKey)?;
+
+                let now = T::UnixTime::now().as_secs();
+                let crl = T::Crl::get_crl(T::CaName::ca_name_for(vk))
+                    .map_err(|_| VerifyError::VerifyError)?;
+                tcb_response
+                    .verify(certificates.to_vec(), &crl, now)
+                    .map_err(|_| VerifyError::VerifyError)
+            }
+            // Nitro has no VK data to validate, the attestation document is self-contained
+            // => no point in registering a vk
+            Vk::Nitro => Err(VerifyError::InvalidVerificationKey),
         }
-
-        let (tcb_response, _used): (TcbResponse, usize) =
-            serde_json_core::from_slice(&vk.tcb_response[..])
-                .map_err(|_| VerifyError::InvalidVerificationKey)?;
-
-        let now = T::UnixTime::now().as_secs();
-        let crl = T::Crl::get_crl(T::ca_name()).map_err(|_| VerifyError::VerifyError)?;
-        // Check that the tcbInfo is still valid at the verification timestamp and that the
-        // signature is valid
-        tcb_response
-            .verify(vk.certificates.to_vec(), &crl, now)
-            .map_err(|_| VerifyError::VerifyError)
     }
 
     fn pubs_bytes(pubs: &Self::Pubs) -> Cow<'_, [u8]> {
@@ -158,7 +194,7 @@ impl<T: Config, W: WeightInfo> pallet_verifiers::WeightInfo<Tee<T>> for TeeWeigh
         _proof: &<Tee<T> as Verifier>::Proof,
         _pubs: &<Tee<T> as Verifier>::Pubs,
     ) -> Weight {
-        W::verify_proof()
+        W::intel_verify_proof().max(W::nitro_verify_proof())
     }
 
     fn register_vk(_vk: &<Tee<T> as Verifier>::Vk) -> Weight {
