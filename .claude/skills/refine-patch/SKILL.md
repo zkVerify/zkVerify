@@ -86,6 +86,11 @@ Identify each difference and classify it:
 For each file, start from the upstream version and apply ONLY the necessary
 zkVerify customizations. This ensures the minimal diff.
 
+**Critical rule: never hand-edit `patch.patch` directly.** Always modify the
+source files and regenerate the patch using `diff` (Step 5). Hand-editing
+patch files leads to malformed hunk headers, incorrect line counts, and
+mismatched context lines that cause application failures.
+
 ### Cargo.toml changes
 
 Patches to `Cargo.toml` typically require these standard modifications:
@@ -148,6 +153,34 @@ You may also need to exclude files like `README.md` or `*.orig` if present.
 Check existing patches for the exclude patterns used.
 
 Review the generated patch to verify it contains ONLY the necessary changes.
+
+### 5a. Validate the patch with a round-trip test
+
+After generating the patch, verify it reproduces the patched source exactly:
+
+```bash
+# Create a temp working area
+VERIFY_TMP=$(mktemp -d)
+
+# Copy patched source and normalize the patch paths
+cp -r <patched-crate-dir>/src "$VERIFY_TMP/patched/src"
+cp <patched-crate-dir>/Cargo.toml "$VERIFY_TMP/patched/" 2>/dev/null
+sed 's|--- <upstream-path>|--- upstream/|g; s|+++ <patched-path>|+++ patched/|g' \
+  <patched-crate-dir>/patch.patch > "$VERIFY_TMP/normalized.patch"
+
+# Reverse-apply to recover upstream, then forward-apply to reconstruct
+cp -r "$VERIFY_TMP/patched" "$VERIFY_TMP/upstream"
+cd "$VERIFY_TMP/upstream" && patch -R -p1 < ../normalized.patch
+cp -r "$VERIFY_TMP/upstream" "$VERIFY_TMP/forward"
+cd "$VERIFY_TMP/forward" && patch -p1 < ../normalized.patch
+
+# Compare -- must be identical and apply without fuzz or offsets
+diff -r "$VERIFY_TMP/patched" "$VERIFY_TMP/forward"
+```
+
+If the round-trip fails or `patch` reports fuzz/offsets, **do not fix the patch
+file by hand**. Instead, fix the source files and regenerate the patch (go back
+to Step 5).
 
 ## Step 6: Write/update the `PATCH.md`
 
