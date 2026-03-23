@@ -50,6 +50,15 @@ ignore = [
     # Nothing in the workspace actually depends on this chain (`cargo tree` confirms it).
     # It remains in Cargo.lock because Cargo resolves optional dependencies in the lockfile
     # (libp2p's optional `quic` feature pulls it in). Cannot be updated: no patched 0.10.x exists.
+    "RUSTSEC-2026-0049", # rustls-webpki v0.101.7 and v0.102.8 — CRL distribution point matching bug.
+    # https://rustsec.org/advisories/RUSTSEC-2026-0049 ->
+    # https://github.com/rustls/webpki/security/advisories/GHSA-pwjx-qhcg-rvj4
+    # The vulnerability only affects TLS CRL-based certificate revocation checking, which is opt-in
+    # in rustls (requires explicitly calling `.with_crls()`). We never configure CRL revocation
+    # checking — the vulnerable code path is never reached. The v0.103.9 instance was updated to
+    # v0.103.10; the 0.101.x and 0.102.x versions are transitive deps from polkadot-sdk
+    # (libp2p-websocket -> rustls 0.21, jsonrpsee -> rustls 0.22) with no patched versions
+    # in those major lines.
 ]
 informational_warnings = ["unmaintained", "yanked"]
 
