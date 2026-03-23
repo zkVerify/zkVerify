@@ -102,4 +102,12 @@ impl<T: frame_system::Config> pallet_utility::WeightInfo for ZKVWeight<T> {
             // Standard Error: 1_653
             .saturating_add(Weight::from_parts(2_469_123, 0).saturating_mul(c.into()))
     }
+    fn dispatch_as_fallible() -> Weight {
+        // Placeholder weight for dispatch_as_fallible
+        Weight::from_parts(5_000_000, 0)
+    }
+    fn if_else() -> Weight {
+        // Placeholder weight for if_else
+        Weight::from_parts(5_000_000, 0)
+    }
 }

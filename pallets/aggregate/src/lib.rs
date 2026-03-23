@@ -306,7 +306,9 @@ pub mod pallet {
         NextAggregationIdUnavailable,
     }
 
-    #[derive(Debug, Clone, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen)]
+    #[derive(
+        Debug, Clone, PartialEq, Encode, Decode, DecodeWithMemTracking, TypeInfo, MaxEncodedLen,
+    )]
     /// The cause of a missed aggregation.
     pub enum CannotAggregateCause {
         /// No account

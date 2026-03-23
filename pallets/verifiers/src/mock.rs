@@ -320,7 +320,6 @@ impl crate::Config<FakeVerifier> for Test {
     type Currency = Balances;
 }
 impl crate::Config<Storage2Verifier> for Test {
-    type RuntimeEvent = RuntimeEvent;
     type OnProofVerified = ();
     type Ticket = ();
     type WeightInfo = ();

@@ -19,11 +19,9 @@ use alloc::{vec, vec::Vec};
 use ark_ec::{pairing::Pairing, AffineRepr};
 use ark_ff::PrimeField;
 use ark_serialize::SerializationError;
-use codec::{Decode, Encode, MaxEncodedLen};
+use codec::{Decode, DecodeWithMemTracking, Encode, MaxEncodedLen};
 use core::fmt::Debug;
 use scale_info::TypeInfo;
-use sp_runtime_interface::pass_by::{PassByCodec, PassByInner};
-
 /// Maximum sizes for G1 in bytes
 pub const G1_MAX_SIZE: u32 = 96;
 /// Maximum sizes for G2 in bytes
@@ -35,7 +33,7 @@ pub fn vec_max_encoded_len(element_size: usize, len: u32) -> usize {
 }
 
 /// A elliptic point curve
-#[derive(Clone, Debug, PartialEq, Encode, Decode, TypeInfo, PassByInner)]
+#[derive(Clone, Debug, PartialEq, Encode, Decode, DecodeWithMemTracking, TypeInfo)]
 pub struct G1(pub Vec<u8>);
 
 impl MaxEncodedLen for G1 {
@@ -45,7 +43,7 @@ impl MaxEncodedLen for G1 {
 }
 
 /// A paired elliptic point curve
-#[derive(Clone, Debug, PartialEq, Encode, Decode, TypeInfo, PassByInner)]
+#[derive(Clone, Debug, PartialEq, Encode, Decode, DecodeWithMemTracking, TypeInfo)]
 pub struct G2(pub Vec<u8>);
 
 impl MaxEncodedLen for G2 {
@@ -55,11 +53,11 @@ impl MaxEncodedLen for G2 {
 }
 
 /// A generic scalar field element.
-#[derive(Clone, Debug, PartialEq, Encode, Decode, TypeInfo, PassByInner)]
+#[derive(Clone, Debug, PartialEq, Encode, Decode, DecodeWithMemTracking, TypeInfo)]
 pub struct Scalar(pub Vec<u8>);
 
 /// A generic Proof.
-#[derive(Clone, Debug, PartialEq, Encode, Decode, TypeInfo, PassByCodec)]
+#[derive(Clone, Debug, PartialEq, Encode, Decode, DecodeWithMemTracking, TypeInfo)]
 pub struct Proof {
     /// `a` point
     pub a: G1,
@@ -70,7 +68,7 @@ pub struct Proof {
 }
 
 /// A generic Verification Key.
-#[derive(Clone, Debug, PartialEq, Encode, Decode, TypeInfo, PassByCodec)]
+#[derive(Clone, Debug, PartialEq, Encode, Decode, DecodeWithMemTracking, TypeInfo)]
 pub struct VerificationKey {
     /// `alpha_g1` point
     pub alpha_g1: G1,

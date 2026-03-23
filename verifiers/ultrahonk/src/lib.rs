@@ -17,8 +17,11 @@
 
 extern crate alloc;
 
-use alloc::{borrow::Cow, vec::Vec};
-use codec::{Decode, Encode, MaxEncodedLen};
+use alloc::{borrow::Cow, boxed::Box, vec::Vec};
+use codec::Decode;
+use codec::DecodeWithMemTracking;
+use codec::Encode;
+use codec::MaxEncodedLen;
 use core::marker::PhantomData;
 use frame_support::traits::StorageVersion;
 use frame_support::{ensure, weights::Weight};
@@ -56,13 +59,15 @@ pub trait Config {
     type WeightInfo: WeightInfoVerifyProof;
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
+#[derive(
+    Copy, Clone, Debug, PartialEq, Encode, Decode, DecodeWithMemTracking, MaxEncodedLen, TypeInfo,
+)]
 pub enum ProofType {
     ZK,
     Plain,
 }
 
-#[derive(Clone, Debug, PartialEq, Encode, Decode, TypeInfo)]
+#[derive(Clone, Debug, PartialEq, Encode, Decode, DecodeWithMemTracking, TypeInfo)]
 pub enum Proof {
     ZK(RawProof),
     Plain(RawProof),
