@@ -486,7 +486,7 @@ impl RuntimeTarget {
 		match (crate::get_bool_environment_variable(crate::WASM_BUILD_STD), self) {
 			(Some(false), _) => None, // Explicitly disabled
 			(_, RuntimeTarget::Wasm) if Self::should_use_wasm32v1_none(cargo_command) => None, // wasm32v1-none has MVP features built-in
-			(_, RuntimeTarget::Wasm) => Some("build-std=core,alloc"), // Legacy wasm32-unknown-unknown (no_std)
+			(_, RuntimeTarget::Wasm) => Some("build-std"), // Legacy wasm32-unknown-unknown
 			_ => Some("build-std=core,alloc"), // RISC-V or explicit WASM_BUILD_STD=1
 		}
 	}

@@ -16615,8 +16615,8 @@ checksum = "b1dd07eb858a2067e2f3c7155d54e929265c264e6f37efe3ee7a8d1b5a1dd0ba"
 
 [[package]]
 name = "tee-verifier"
-version = "0.1.0"
-source = "git+https://github.com/zkVerify/tee-verifier.git?branch=dr/nitro#5385427ed887294e8b40b0f5e2587ac7ae4edfa8"
+version = "0.2.0"
+source = "git+https://github.com/zkVerify/tee-verifier.git?tag=v0.2.0#15614ce4bcc046895417c5cea5bc5a27fc979418"
 dependencies = [
  "asn1_der",
  "chrono",

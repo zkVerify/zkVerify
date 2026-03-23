@@ -5,7 +5,7 @@ diff -ruN '--exclude=*.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' '--e
  //!   also be built. This is necessary to make sure the standard library crates only use the exact
  //!   WASM feature set that our executor supports. Enabled by default for RISC-V target and WASM
  //!   target (but only if Rust < 1.84). Disabled by default for WASM target and Rust >= 1.84.
-+//! - `WASM_BUILD_LEGACY_TARGET` - If set to `1` or `true`, forces the use of `wasm32-unknown-unknown`
++//! - `WASM_BUILD_LEGACY_TARGET` - If set to `1`, forces the use of `wasm32-unknown-unknown`
 +//!   target instead of `wasm32v1-none` even on Rust >= 1.84. This is useful when some dependencies
 +//!   don't properly support the stricter `wasm32v1-none` target.
  //! - `WASM_BUILD_CARGO_ARGS` - This can take a string as space separated list of `cargo` arguments.
