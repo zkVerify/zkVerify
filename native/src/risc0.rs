@@ -49,12 +49,15 @@ impl<'a> Poseidon2Mix<'a> {
 
     #[inline]
     #[cfg(feature = "std")]
-    /// SAFETY: BabyBearElem is always u32 and use `repr(transparent)`. Moreover
-    /// this method is private and it's just used by `poseidon2_mix` that cannot be
-    /// accessed outside of this module: only `Self::poseidon2_mix()` call it
-    /// that can be just called from a `Poseidon2Mix` struct.
-    /// The `Poseidon2Mix` struct can be built just from a mutable slice of `BabyBearElem`
-    /// with the correct size.
+    /// SAFETY: The pointer cast from `*mut u8` to `*mut Poseidon2Slice` (`[BabyBearElem; N]`)
+    /// is sound because:
+    /// 1. **Size**: the `assert_eq!` guarantees the byte length matches `POSEIDON2_ARG_BYTES_SIZE`.
+    /// 2. **Alignment**: `BabyBearElem` is `repr(transparent)` over `u32` (4-byte aligned).
+    ///    All callers originate from a `&mut [BabyBearElem]` reinterpreted as bytes by the
+    ///    runtime interface layer, so the pointer is always at least 4-byte aligned.
+    /// 3. **Validity**: this method is private and only called by `poseidon2_mix` (v1 and v2),
+    ///    which receive data from the WASM runtime interface. The underlying memory is always
+    ///    a valid `BabyBearElem` array whose invariants are maintained by `poseidon2_mix()`.
     fn from_mut_bytes(bytes: &mut [u8]) -> Self {
         assert_eq!(bytes.len(), POSEIDON2_ARG_BYTES_SIZE);
         Self::new(unsafe { &mut *(bytes.as_mut_ptr() as *mut Poseidon2Slice) })
