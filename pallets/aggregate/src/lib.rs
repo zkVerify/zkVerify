@@ -1245,7 +1245,7 @@ pub mod pallet {
         dest: Option<&AccountOf<T>>,
         amount: BalanceOf<T>,
     ) {
-        let transfer = if let Some(dest) = dest {
+        let transfer = dest.and_then(|dest|
             T::Hold::transfer_on_hold(
                 &reason.into(),
                 account,
@@ -1255,13 +1255,18 @@ pub mod pallet {
                 Restriction::Free,
                 Fortitude::Polite,
             )
-        } else {
+                .inspect_err(|_| {
+                    log::debug!("The delivery owner doesn't have not enough funds to receive tip and fee")
+                })
+                .ok()
+        ).or_else(
+            ||
             T::Hold::release(&reason.into(), account, amount, Precision::BestEffort)
-        }
-        .inspect_err(|_| {
-            log::debug!("The delivery owner have not enough funds to receive tip and fee")
-        })
-        .unwrap_or_default();
+                .inspect_err(|_| {
+                    log::debug!("The account that submitted the proof doesn't have enough funds to get back tip and fee")
+                })
+                .ok()
+        ).unwrap_or_default();
 
         let remain = amount.defensive_saturating_sub(transfer);
 
