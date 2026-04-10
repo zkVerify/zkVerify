@@ -237,7 +237,7 @@ pub mod pallet {
                 }
                 // Check if we can add a new statement
                 if !domain.can_add_statement() {
-                    log::warn!("Storage complete, skip");
+                    log::debug!("Storage complete, skip");
                     Self::deposit_event(Event::<T>::CannotAggregate {
                         statement,
                         cause: CannotAggregateCause::DomainStorageFull { domain_id },
@@ -246,7 +246,7 @@ pub mod pallet {
                     return;
                 }
                 if !domain.is_authorized_to_add_proof(&account) {
-                    log::warn!("Invalid proof submitter, skip");
+                    log::debug!("Invalid proof submitter, skip");
                     Self::deposit_event(Event::<T>::CannotAggregate {
                         statement,
                         cause: CannotAggregateCause::UnauthorizedUser,
