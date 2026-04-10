@@ -1112,15 +1112,19 @@ pub mod pallet {
                         if domain.state != DomainState::Removable {
                             Err(Error::<T>::InvalidDomainState)?
                         } else {
-                            if let (Some(o), Some(t)) =
-                                (owner.account(), domain.ticket_domain.take())
-                            {
+                            let ticket_domain = domain.ticket_domain.take();
+                            if let (Some(o), Some(t)) = (
+                                owner.account().or_else(|| domain.owner.account()),
+                                ticket_domain,
+                            ) {
                                 let _ =
                                     t.drop(o).defensive_proof("Drop should always succeed: qed");
                             }
+                            let ticket_allow_list =
+                                domain.ticket_allowlist.take().map(|t| t.ticket);
                             if let (Some(o), Some(t)) = (
-                                owner.account(),
-                                domain.ticket_allowlist.take().map(|t| t.ticket),
+                                owner.account().or_else(|| domain.owner.account()),
+                                ticket_allow_list,
                             ) {
                                 let _ =
                                     t.drop(o).defensive_proof("Drop should always succeed: qed");

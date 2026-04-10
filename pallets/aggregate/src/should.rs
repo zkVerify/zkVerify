@@ -1887,9 +1887,11 @@ mod unregister_domain {
         }
     }
 
-    #[test]
-    fn unregister_domain_drop_consideration_tickets() {
-        let origin = Origin::Signed(USER_DOMAIN_1);
+    #[rstest]
+    #[case::owner(USER_DOMAIN_1)]
+    #[case::manager(ROOT_USER)]
+    fn unregister_domain_drop_consideration_tickets(#[case] user: AccountId) {
+        let origin = Origin::Signed(user);
         test().execute_with(|| {
             let id =
                 register_removable_domain(USER_DOMAIN_1, Some(ProofSecurityRules::OnlyAllowlisted));
