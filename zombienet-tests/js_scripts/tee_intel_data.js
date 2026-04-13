@@ -120,7 +120,10 @@ const https = require('https');
 function fetchTdxTcbInfo() {
     return new Promise((resolve, reject) => {
         const url = `https://api.trustedservices.intel.com/tdx/certification/v4/tcb?fmspc=${FMSPC}`;
-        https.get(url, (res) => {
+        // Skip TLS verification: the server's root CA (Sectigo) may not be in
+        // Node.js's bundled CA list, and zombienet disables NODE_OPTIONS.
+        // The TCB response is verified cryptographically on-chain.
+        https.get(url, {rejectUnauthorized: false}, (res) => {
             if (res.statusCode !== 200) {
                 reject(new Error(`Intel API returned status ${res.statusCode}`));
                 return;
