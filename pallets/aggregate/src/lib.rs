@@ -237,7 +237,7 @@ pub mod pallet {
                 }
                 // Check if we can add a new statement
                 if !domain.can_add_statement() {
-                    log::warn!("Storage complete, skip");
+                    log::debug!("Storage complete, skip");
                     Self::deposit_event(Event::<T>::CannotAggregate {
                         statement,
                         cause: CannotAggregateCause::DomainStorageFull { domain_id },
@@ -246,7 +246,7 @@ pub mod pallet {
                     return;
                 }
                 if !domain.is_authorized_to_add_proof(&account) {
-                    log::warn!("Invalid proof submitter, skip");
+                    log::debug!("Invalid proof submitter, skip");
                     Self::deposit_event(Event::<T>::CannotAggregate {
                         statement,
                         cause: CannotAggregateCause::UnauthorizedUser,
@@ -1112,15 +1112,19 @@ pub mod pallet {
                         if domain.state != DomainState::Removable {
                             Err(Error::<T>::InvalidDomainState)?
                         } else {
-                            if let (Some(o), Some(t)) =
-                                (owner.account(), domain.ticket_domain.take())
-                            {
+                            let ticket_domain = domain.ticket_domain.take();
+                            if let (Some(o), Some(t)) = (
+                                owner.account().or_else(|| domain.owner.account()),
+                                ticket_domain,
+                            ) {
                                 let _ =
                                     t.drop(o).defensive_proof("Drop should always succeed: qed");
                             }
+                            let ticket_allow_list =
+                                domain.ticket_allowlist.take().map(|t| t.ticket);
                             if let (Some(o), Some(t)) = (
-                                owner.account(),
-                                domain.ticket_allowlist.take().map(|t| t.ticket),
+                                owner.account().or_else(|| domain.owner.account()),
+                                ticket_allow_list,
                             ) {
                                 let _ =
                                     t.drop(o).defensive_proof("Drop should always succeed: qed");
@@ -1245,7 +1249,7 @@ pub mod pallet {
         dest: Option<&AccountOf<T>>,
         amount: BalanceOf<T>,
     ) {
-        let transfer = if let Some(dest) = dest {
+        let transfer = dest.and_then(|dest|
             T::Hold::transfer_on_hold(
                 &reason.into(),
                 account,
@@ -1255,13 +1259,18 @@ pub mod pallet {
                 Restriction::Free,
                 Fortitude::Polite,
             )
-        } else {
+                .inspect_err(|_| {
+                    log::debug!("The delivery owner doesn't have not enough funds to receive tip and fee")
+                })
+                .ok()
+        ).or_else(
+            ||
             T::Hold::release(&reason.into(), account, amount, Precision::BestEffort)
-        }
-        .inspect_err(|_| {
-            log::debug!("The delivery owner have not enough funds to receive tip and fee")
-        })
-        .unwrap_or_default();
+                .inspect_err(|_| {
+                    log::debug!("The account that submitted the proof doesn't have enough funds to get back tip and fee")
+                })
+                .ok()
+        ).unwrap_or_default();
 
         let remain = amount.defensive_saturating_sub(transfer);
 

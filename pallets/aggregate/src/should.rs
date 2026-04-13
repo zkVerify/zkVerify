@@ -623,12 +623,23 @@ mod aggregate {
                 initial_balance, 0,
                 "Delivery owner should start with 0 balance"
             );
+            let hold_balance = Balances::total_balance_on_hold((&USER_2).into());
+            assert!(
+                hold_balance > 0,
+                "Submitter should have balance on hold"
+            );
 
             Aggregate::aggregate(Origin::Signed(USER_1).into(), DOMAIN_ID, 1).unwrap();
 
             assert_eq!(
                 initial_balance, 0,
                 "Test should check a fail without panic: Delivery owner should end also with 0 balance"
+            );
+
+            let hold_balance = Balances::total_balance_on_hold((&USER_2).into());
+            assert_eq!(
+                hold_balance, 0,
+                "Submitter should recover all hold balance"
             );
         })
     }
@@ -1876,9 +1887,11 @@ mod unregister_domain {
         }
     }
 
-    #[test]
-    fn unregister_domain_drop_consideration_tickets() {
-        let origin = Origin::Signed(USER_DOMAIN_1);
+    #[rstest]
+    #[case::owner(USER_DOMAIN_1)]
+    #[case::manager(ROOT_USER)]
+    fn unregister_domain_drop_consideration_tickets(#[case] user: AccountId) {
+        let origin = Origin::Signed(user);
         test().execute_with(|| {
             let id =
                 register_removable_domain(USER_DOMAIN_1, Some(ProofSecurityRules::OnlyAllowlisted));
