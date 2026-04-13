@@ -59,6 +59,70 @@ ignore = [
     # v0.103.10; the 0.101.x and 0.102.x versions are transitive deps from polkadot-sdk
     # (libp2p-websocket -> rustls 0.21, jsonrpsee -> rustls 0.22) with no patched versions
     # in those major lines.
+    #
+    # ── April 2026 batch: wasmtime 8.0.1 via sc-executor-wasmtime ──
+    # All advisories below affect wasmtime ≥8.0.1, pinned by polkadot-sdk (stable2412)
+    # through sc-executor-wasmtime. Cannot be upgraded independently.
+    #
+    # -- Winch compiler backend (not used) --
+    # `wasmtime-winch` is not present in Cargo.lock; Substrate uses Cranelift exclusively.
+    "RUSTSEC-2026-0095", # CRITICAL — Winch sandbox-escaping memory access.
+    # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-4w5r-mg47-r5m2
+    # Winch backend only — we use Cranelift. Unaffected.
+    "RUSTSEC-2026-0089", # MEDIUM — Host panic when Winch executes `table.fill`.
+    # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-q49f-xg75-m9xw
+    # Winch backend only — we use Cranelift. Unaffected.
+    "RUSTSEC-2026-0094", # MEDIUM — Improperly masked return value from `table.grow` with Winch.
+    # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-f984-pcp8-v2p7
+    # Winch backend only — we use Cranelift. Unaffected.
+    "RUSTSEC-2026-0086", # LOW — Host data leakage with 64-bit tables and Winch.
+    # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-m9w2-8782-2946
+    # Winch backend only — we use Cranelift. Unaffected.
+    #
+    # -- Component model (not used) --
+    # Substrate uses core Wasm only; no component-model crates are in Cargo.lock.
+    "RUSTSEC-2026-0093", # MEDIUM — Heap OOB read in component model UTF-16 string transcoding.
+    # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-394w-hwhg-8vgm
+    # Component model only. Unaffected.
+    "RUSTSEC-2026-0091", # MEDIUM — OOB write or crash transcoding component model strings.
+    # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-394w-hwhg-8vgm
+    # Component model only. Unaffected.
+    "RUSTSEC-2026-0092", # MEDIUM — Panic transcoding misaligned component model UTF-16 strings.
+    # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-jxhv-7h78-9775
+    # Component model only. Unaffected.
+    "RUSTSEC-2026-0085", # MEDIUM — Panic when lifting `flags` component value.
+    # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-m758-wjhj-p3jq
+    # Component model only. Unaffected.
+    #
+    # -- Architecture/config-specific (conditions not met) --
+    "RUSTSEC-2026-0096", # CRITICAL — Miscompiled guest heap access on aarch64 Cranelift.
+    # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-jhxm-h53p-jm7w
+    # Requires ALL of: (1) 64-bit Wasm linear memory (`Config::wasm_memory64` enabled),
+    # (2) Spectre mitigations or signals-based traps disabled, (3) aarch64 architecture.
+    # Substrate runtimes use 32-bit Wasm linear memories and do not enable `wasm_memory64`,
+    # so the miscompiled load pattern is never generated. Unaffected.
+    "RUSTSEC-2026-0088", # LOW — Data leakage between pooling allocator instances.
+    # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-6wgr-89rj-399p
+    # Per the advisory: "Wasmtime is not vulnerable to this issue with its default settings."
+    # Requires non-default pooling allocator configuration with `memory_guard_size` = 0 and
+    # `memory_reservation` < 4 GiB. Substrate does not use the pooling allocator. Unaffected.
+    "RUSTSEC-2026-0087", # MEDIUM — Segfault with `f64x2.splat` on Cranelift x86-64.
+    # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-qqfj-4vcm-26hv
+    # Requires ALL of: (1) x86-64 without SSE3 (SSE3 has been universal since 2004),
+    # (2) `signals_based_traps` disabled with guard pages enabled, (3) guest executes
+    # `f64x2.splat` SIMD instruction. Substrate runtime Wasm does not use SIMD, and any
+    # x86-64 CPU from the last 20 years has SSE3. Unaffected.
+    "RUSTSEC-2026-0097", # rand v0.8.5 — unsound aliased &mut via thread_rng() reseeding with custom logger.
+    # https://rustsec.org/advisories/RUSTSEC-2026-0097 ->
+    # https://github.com/rust-random/rand/pull/1763
+    # The vulnerability requires the `log` optional feature to be enabled in rand (so that
+    # internal log!() calls compile in and can trigger reentrant thread_rng() access from a
+    # custom logger). In our build, `log` is NOT enabled for rand 0.8.5 — confirmed via
+    # `cargo tree -p rand@0.8.5 -e features`: only alloc, default, getrandom, libc,
+    # rand_chacha, std, std_rng are active. Without `log`, the logging code paths are
+    # compiled out and the unsound aliased mutable reference can never be constructed.
+    # rand 0.8.5 has no patched 0.8.x release; it is a transitive dep from arkworks
+    # (ark-std), polkadot-sdk, plonky2, and sp1, none of which have moved to rand ≥0.9.
 ]
 informational_warnings = ["unmaintained", "yanked"]
 
