@@ -55,10 +55,31 @@ ignore = [
     # https://github.com/rustls/webpki/security/advisories/GHSA-pwjx-qhcg-rvj4
     # The vulnerability only affects TLS CRL-based certificate revocation checking, which is opt-in
     # in rustls (requires explicitly calling `.with_crls()`). We never configure CRL revocation
-    # checking — the vulnerable code path is never reached. The v0.103.9 instance was updated to
-    # v0.103.10; the 0.101.x and 0.102.x versions are transitive deps from polkadot-sdk
+    # checking — the vulnerable code path is never reached. The v0.103.x instance was updated to
+    # v0.103.13; the 0.101.x and 0.102.x versions are transitive deps from polkadot-sdk
     # (libp2p-websocket -> rustls 0.21, jsonrpsee -> rustls 0.22) with no patched versions
     # in those major lines.
+    "RUSTSEC-2026-0098", # rustls-webpki v0.101.7 and v0.102.8 — URI name constraints incorrectly accepted.
+    # https://rustsec.org/advisories/RUSTSEC-2026-0098 ->
+    # https://github.com/advisories/GHSA-965h-392x-2mh5
+    # Name constraints for URI names were ignored and therefore accepted. Exploitation requires
+    # both a valid certificate signature AND deliberate certificate misissuance by a CA. The
+    # v0.103.x instance was updated to v0.103.13; the 0.101.x and 0.102.x versions are transitive
+    # deps from polkadot-sdk (libp2p-websocket -> rustls 0.21, jsonrpsee -> rustls 0.22) with no
+    # patched versions in those major lines.
+    "RUSTSEC-2026-0099", # rustls-webpki v0.101.7 and v0.102.8 — wildcard name constraint bypass.
+    # https://rustsec.org/advisories/RUSTSEC-2026-0099 ->
+    # https://github.com/advisories/GHSA-xgp8-3hg3-c2mh
+    # A name constraint like `accept.example.com` could be bypassed by a wildcard certificate
+    # `*.example.com`. Exploitation requires both a valid certificate signature AND deliberate
+    # certificate misissuance by a CA. Same transitive dep situation as RUSTSEC-2026-0098 above.
+    "RUSTSEC-2026-0104", # rustls-webpki v0.101.7 and v0.102.8 — panic in CRL parsing.
+    # https://rustsec.org/advisories/RUSTSEC-2026-0104 ->
+    # https://github.com/advisories/GHSA-82j2-j2ch-gfr8
+    # Reachable panic when parsing a CRL with an empty BIT STRING in `onlySomeReasons`. This is a
+    # DoS vulnerability affecting only applications that actively use CRLs. We never configure CRL
+    # revocation checking (no `.with_crls()` calls) — the CRL parsing code is never reached.
+    # Same transitive dep situation as RUSTSEC-2026-0049 above.
     #
     # ── April 2026 batch: wasmtime 8.0.1 via sc-executor-wasmtime ──
     # All advisories below affect wasmtime ≥8.0.1, pinned by polkadot-sdk (stable2412)
