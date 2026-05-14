@@ -144,6 +144,25 @@ ignore = [
     # compiled out and the unsound aliased mutable reference can never be constructed.
     # rand 0.8.5 has no patched 0.8.x release; it is a transitive dep from arkworks
     # (ark-std), polkadot-sdk, plonky2, and sp1, none of which have moved to rand ≥0.9.
+    #
+    # ── May 2026 batch: hickory-proto via polkadot-sdk networking ──
+    #
+    "RUSTSEC-2026-0119", # hickory-proto v0.24.4 and v0.25.2 — O(n²) CPU exhaustion in DNS message encoding.
+    # https://rustsec.org/advisories/RUSTSEC-2026-0119 ->
+    # https://github.com/hickory-dns/hickory-dns/security/advisories/GHSA-q2qq-hmj6-3wpp
+    # MODERATE severity DoS via crafted DNS messages with many records triggering quadratic name
+    # compression. v0.24.4 comes from libp2p-dns -> hickory-resolver (polkadot-sdk via
+    # sc-telemetry -> libp2p 0.54.1). v0.25.2 comes from litep2p -> hickory-resolver
+    # (polkadot-sdk via sc-network -> litep2p 0.9.5). Fix is in 0.26.1; no patched 0.24.x or
+    # 0.25.x exists, and parent crates are pinned by polkadot-sdk stable2412.
+    "RUSTSEC-2026-0118", # hickory-proto v0.25.2 — NSEC3 closest-encloser proof validation unbounded loop.
+    # https://rustsec.org/advisories/RUSTSEC-2026-0118 ->
+    # https://github.com/hickory-dns/hickory-dns/security/advisories/GHSA-3v94-mw7p-v465
+    # HIGH severity DoS affecting DNSSEC validation. Requires `DnssecDnsHandle` with
+    # `dnssec-ring` or `dnssec-aws-lc-rs` feature enabled. In our build, hickory-proto 0.25.2
+    # has only `futures-io` and `std` features enabled — no DNSSEC features are active
+    # (`cargo tree -p hickory-proto@0.25.2 -e features` confirms this). The DNSSEC validation
+    # code is not compiled, so the vulnerable code path is unreachable. Unaffected.
 ]
 informational_warnings = ["unmaintained", "yanked"]
 
