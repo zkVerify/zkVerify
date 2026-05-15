@@ -31,6 +31,7 @@ const { PROOF: RISC0_V2_2_PROOF, PUBS: RISC0_V2_2_PUBS, VK: RISC0_V2_2_VK } = re
 const { PROOF: RISC0_V3_0_PROOF, PUBS: RISC0_V3_0_PUBS, VK: RISC0_V3_0_VK } = require('./risc0_v3_0_data.js');
 const { ZK_PROOF: ULTRAHONK_V0_84_ZK_PROOF, PLAIN_PROOF: ULTRAHONK_V0_84_PLAIN_PROOF, PUBS: ULTRAHONK_V0_84_PUBS, VK: ULTRAHONK_V0_84_VK } = require('./ultrahonk_v0_84_data.js');
 const { ZK_PROOF: ULTRAHONK_V3_0_ZK_PROOF, PLAIN_PROOF: ULTRAHONK_V3_0_PLAIN_PROOF, PUBS: ULTRAHONK_V3_0_PUBS, VK: ULTRAHONK_V3_0_VK } = require('./ultrahonk_v3_0_data.js');
+const { PLAIN_PROOF: ULTRAHONK_LEGACY_PLAIN_PROOF, PUBS: ULTRAHONK_LEGACY_PUBS, VK: ULTRAHONK_LEGACY_VK } = require('./ultrahonk_legacy_data.js');
 const { PROOF: ULTRAPLONK_PROOF, PUBS: ULTRAPLONK_PUBS, VK: ULTRAPLONK_VK } = require('./ultraplonk_data.js');
 const { PROOF: PLONKY2_PROOF, PUBS: PLONKY2_PUBS, VK: PLONKY2_VK } = require('./plonky2_data.js');
 const { PROOF: SP1_PROOF, PUBS: SP1_PUBS, VK: SP1_VK } = require('./sp1_data.js');
@@ -88,6 +89,11 @@ async function run(nodeName, networkInfo, _args) {
             name: "Ultrahonk.V.0.84 (Plain)",
             pallet: api.tx.settlementUltrahonkPallet,
             args: [{ 'Vk': ULTRAHONK_V0_84_VK }, ULTRAHONK_V0_84_PLAIN_PROOF, ULTRAHONK_V0_84_PUBS],
+        },
+        {
+            name: "Ultrahonk.Legacy (Plain)",
+            pallet: api.tx.settlementUltrahonkPallet,
+            args: [{ 'Vk': ULTRAHONK_LEGACY_VK }, ULTRAHONK_LEGACY_PLAIN_PROOF, ULTRAHONK_LEGACY_PUBS],
         },
         {
             name: "Ultraplonk",
