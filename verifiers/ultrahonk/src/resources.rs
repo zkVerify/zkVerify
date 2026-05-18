@@ -48,6 +48,15 @@ impl TestParams {
             protocol_version: ProtocolVersion::V0_84,
         }
     }
+
+    // For handling Legacy (same data as V0_84, different version wrapping)
+    pub fn new_legacy(proof_type: ProofType) -> Self {
+        Self {
+            log_circuit_size: None,
+            proof_type,
+            protocol_version: ProtocolVersion::Legacy,
+        }
+    }
 }
 
 pub struct TestData {
@@ -92,7 +101,7 @@ pub fn get_parameterized_test_data(test_params: TestParams) -> Result<TestData, 
                 pubs,
             })
         }
-        ProtocolVersion::V0_84 => {
+        ProtocolVersion::V0_84 | ProtocolVersion::Legacy => {
             let raw_test_data = match test_params.proof_type {
                 ProofType::ZK => &DATA_V0_84_ZK,
                 ProofType::Plain => &DATA_V0_84_PLAIN,
@@ -102,9 +111,17 @@ pub fn get_parameterized_test_data(test_params: TestParams) -> Result<TestData, 
                 .vk
                 .try_into()
                 .expect("Benchmark file should always have the correct vk size");
-            let versioned_vk = VersionedVk::V0_84(raw_vk);
             let proof = crate::Proof::new(test_params.proof_type, raw_test_data.proof.to_vec());
-            let versioned_proof = crate::VersionedProof::V0_84(proof);
+            let (versioned_vk, versioned_proof) = match test_params.protocol_version {
+                ProtocolVersion::Legacy => (
+                    VersionedVk::Legacy(raw_vk),
+                    crate::VersionedProof::Legacy(proof),
+                ),
+                _ => (
+                    VersionedVk::V0_84(raw_vk),
+                    crate::VersionedProof::V0_84(proof),
+                ),
+            };
             let pubs = raw_test_data
                 .pubs
                 .chunks_exact(crate::PUB_SIZE)

@@ -95,6 +95,7 @@ impl TryFrom<Proof> for ultrahonk_no_std_v0_84::ProofType {
 pub enum ProtocolVersion {
     V0_84,
     V3_0,
+    Legacy,
 }
 
 impl From<&VersionedProof> for ProtocolVersion {
@@ -102,6 +103,7 @@ impl From<&VersionedProof> for ProtocolVersion {
         match value {
             VersionedProof::V0_84(_) => ProtocolVersion::V0_84,
             VersionedProof::V3_0(_) => ProtocolVersion::V3_0,
+            VersionedProof::Legacy(_) => ProtocolVersion::Legacy,
         }
     }
 }
@@ -116,6 +118,8 @@ pub enum VersionedProof {
     V0_84(Proof),
     #[codec(index = 1)]
     V3_0(Proof),
+    #[codec(index = 2)]
+    Legacy(Proof),
 }
 
 // Important Notes:
@@ -128,6 +132,8 @@ pub enum VersionedVk {
     V0_84([u8; VK_SIZE_V0_84]),
     #[codec(index = 1)]
     V3_0([u8; VK_SIZE_V3_0]),
+    #[codec(index = 2)]
+    Legacy([u8; VK_SIZE_V0_84]),
 }
 
 impl Proof {
@@ -245,7 +251,8 @@ impl<T: Config> Verifier for Ultrahonk<T> {
         );
 
         match (proof, vk) {
-            (VersionedProof::V0_84(inner_proof), VersionedVk::V0_84(vk_bytes)) => {
+            (VersionedProof::V0_84(inner_proof), VersionedVk::V0_84(vk_bytes))
+            | (VersionedProof::Legacy(inner_proof), VersionedVk::Legacy(vk_bytes)) => {
                 // Transform input proof into an UltraHonk verifier-compatible proof
                 let prepared: ultrahonk_no_std_v0_84::ProofType = inner_proof.clone().try_into()?;
 
@@ -278,11 +285,11 @@ impl<T: Config> Verifier for Ultrahonk<T> {
 
     fn validate_vk(vk: &Self::Vk) -> Result<(), VerifyError> {
         let vk_bytes: &[u8] = match vk {
-            VersionedVk::V0_84(vk_bytes) => vk_bytes,
+            VersionedVk::V0_84(vk_bytes) | VersionedVk::Legacy(vk_bytes) => vk_bytes,
             VersionedVk::V3_0(vk_bytes) => vk_bytes,
         };
         match vk {
-            VersionedVk::V0_84(_) => {
+            VersionedVk::V0_84(_) | VersionedVk::Legacy(_) => {
                 let _vk = ultrahonk_no_std_v0_84::key::VerificationKey::<CurveHooksImpl>::try_from(
                     vk_bytes,
                 )
@@ -301,6 +308,24 @@ impl<T: Config> Verifier for Ultrahonk<T> {
         Ok(())
     }
 
+    fn vk_hash(vk: &Self::Vk) -> H256 {
+        match vk {
+            // Legacy uses SHA2-256 of raw VK bytes to match the pre-versioning hash.
+            // See commit 113a728c, verifiers/ultrahonk/src/lib.rs:183-184
+            VersionedVk::Legacy(_) => sp_io::hashing::sha2_256(&Self::vk_bytes(vk)).into(),
+            _ => sp_io::hashing::keccak_256(&Self::vk_bytes(vk)).into(),
+        }
+    }
+
+    fn vk_bytes(vk: &Self::Vk) -> Cow<'_, [u8]> {
+        match vk {
+            // Legacy returns raw bytes (no enum prefix) to match the pre-versioning encoding.
+            // See commit 113a728c, verifiers/ultrahonk/src/lib.rs:187-188,202-204
+            VersionedVk::Legacy(bytes) => Cow::Owned(bytes.to_vec()),
+            _ => Cow::Owned(vk.encode()),
+        }
+    }
+
     fn pubs_bytes(pubs: &Self::Pubs) -> Cow<'_, [u8]> {
         let data = pubs
             .iter()
@@ -311,15 +336,17 @@ impl<T: Config> Verifier for Ultrahonk<T> {
 
     fn verifier_version_hash(proof: &Self::Proof) -> H256 {
         // Computed as: SHA2-256("ultrahonk:vx.y")
-        let h = match proof {
-            VersionedProof::V0_84(_) => hex_literal::hex!(
+        match proof {
+            VersionedProof::V0_84(_) => H256(hex_literal::hex!(
                 "4966cd7801ae9ef9d7afb52ec3de92f0693e720f58c5c8ecfb23d85b0934f018"
-            ),
-            VersionedProof::V3_0(_) => hex_literal::hex!(
+            )),
+            VersionedProof::V3_0(_) => H256(hex_literal::hex!(
                 "55b52ad2b4153c872e27d688f567c1406f0d93b5528dd2b0bf2a9a40df97f1f9"
-            ),
-        };
-        H256(h)
+            )),
+            // Legacy returns NO_VERSION_HASH to preserve backward compatibility with
+            // the pre-versioning statement hash (before commit 83e40f29).
+            VersionedProof::Legacy(_) => pallet_verifiers::traits::NO_VERSION_HASH,
+        }
     }
 }
 
@@ -368,11 +395,13 @@ impl<T: Config, W: WeightInfo> pallet_verifiers::WeightInfo<Ultrahonk<T>> for Ul
         _pubs: &<Ultrahonk<T> as Verifier>::Pubs,
     ) -> Weight {
         match proof {
-            VersionedProof::V0_84(inner) => match ProofType::from(inner) {
-                // For V0.84, we conservatively charge the maximum (worst case = 25)
-                ProofType::ZK => T::WeightInfo::verify_zk_proof_v0_84(),
-                ProofType::Plain => T::WeightInfo::verify_plain_proof_v0_84(),
-            },
+            VersionedProof::V0_84(inner) | VersionedProof::Legacy(inner) => {
+                match ProofType::from(inner) {
+                    // For V0.84/Legacy, we conservatively charge the maximum (worst case = 25)
+                    ProofType::ZK => T::WeightInfo::verify_zk_proof_v0_84(),
+                    ProofType::Plain => T::WeightInfo::verify_plain_proof_v0_84(),
+                }
+            }
             VersionedProof::V3_0(inner) => {
                 // For V3.0: weight is parameterized by log_circuit_size.
                 // We conservatively charge the maximum (worst case = 25)
