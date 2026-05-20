@@ -1,7 +1,6 @@
 const { ApiPromise, WsProvider } = require('@polkadot/api');
 const { isHex } = require('@polkadot/util');
 const Keyring = require('@polkadot/keyring').default;
-const { BigInt } = require('@polkadot/x-bigint');
 const fs = require('fs');
 const readline = require('readline');
 
@@ -138,7 +137,7 @@ function usage() {
 }
 
 function parse_args() {
-    let args = process.argv.slice(2)
+    const args = process.argv.slice(2)
     let result = {
         ws_endpoint: DEFAULT_WS_ENDPOINT,
         ss58_prefix: DEFAULT_PREFIX,
@@ -151,7 +150,7 @@ function parse_args() {
     for (let i = 0; i < args.length; i += 1) {
         if (args[i] === '-e' || args[i] === '--end-point') {
             result.ws_endpoint = args[++i];
-            let address = DEFAULT_WS_ENDPOINTS[result.ws_endpoint];
+            const address = DEFAULT_WS_ENDPOINTS[result.ws_endpoint];
             if (address !== undefined) {
                 result.ws_endpoint = address
             }
@@ -162,7 +161,7 @@ function parse_args() {
             continue;
         }
         else if (args[i] === '-u' || args[i] === '--uri') {
-            result.secret = args[++i] 
+            result.secret = args[++i];
             continue;
         }
         else if (args[i] === '-o' || args[i] === '--out') {
@@ -174,7 +173,7 @@ function parse_args() {
         }
         extra_args.push(args[i]);
     }
-    if (extra_args.length != 0) {
+    if (extra_args.length !== 0) {
         usage();
     }
     return result;
@@ -193,8 +192,8 @@ function confirmation(query) {
 }
 
 function read_file_name(path, fname_prefix, addr, idx) {
-    addr_path = `${path}/${addr}`;
-    fname = `${addr_path}/${fname_prefix}_${addr}_${idx}.txt`;
+    const addr_path = `${path}/${addr}`;
+    const fname = `${addr_path}/${fname_prefix}_${addr}_${idx}.txt`;
     if (!fs.existsSync(fname)) {
         return undefined;
     }
@@ -203,10 +202,10 @@ function read_file_name(path, fname_prefix, addr, idx) {
 }
 
 function read_files(path, fname_prefix, addr) {
-    txs = [];
-    idx = 0;
-    tx = read_file_name(path, fname_prefix, addr, idx);
-    while (tx != undefined) {
+    const txs = [];
+    let idx = 0;
+    let tx = read_file_name(path, fname_prefix, addr, idx);
+    while (tx !== undefined) {
         txs.push(tx);
         tx = read_file_name(path, fname_prefix, addr, ++idx);
     }
@@ -239,8 +238,8 @@ async function main() {
 
     console.log(`Number of extrinsics: ${txs.length}`);
 
-    i = 0;
-    for (tx of txs) {
+    let i = 0;
+    for (const tx of txs) {
         print_highlight(`Sending tx ${i++}`);
         const result = await send(api, account, tx);
         if (result === -1) {
