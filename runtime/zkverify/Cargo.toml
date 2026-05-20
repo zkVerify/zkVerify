@@ -1,6 +1,6 @@
 [package]
 name = "zkv-runtime"
-version = "1.6.1"
+version = "1.6.2"
 description = "zkVerify Runtime."
 authors.workspace = true
 homepage = "https://github.com/zkVerify/zkVerify"
@@ -312,6 +312,7 @@ try-runtime = [
 	"pallet-token-claim/try-runtime",
 	"pallet-transaction-payment/try-runtime",
 	"pallet-treasury/try-runtime",
+	"pallet-ultrahonk-verifier/try-runtime",
 	"pallet-utility/try-runtime",
 	"pallet-verifiers/try-runtime",
 	"pallet-vesting/try-runtime",
