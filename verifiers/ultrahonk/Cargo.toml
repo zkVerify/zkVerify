@@ -23,6 +23,7 @@ log = { workspace = true }
 hex-literal = { workspace = true }
 native = { workspace = true }
 sp-io = { workspace = true }
+sp-runtime = { workspace = true }
 ultrahonk-no-std-v0_84 = { workspace = true }
 ultrahonk-no-std-v3_0 = { workspace = true }
 
@@ -53,6 +54,13 @@ std = [
 	"ultrahonk-no-std-v3_0/std",
 ]
 default = [ "std" ]
+try-runtime = [
+	"frame-support/try-runtime",
+	"frame-system/try-runtime",
+	"pallet-balances/try-runtime",
+	"pallet-verifiers/try-runtime",
+	"sp-runtime/try-runtime",
+]
 runtime-benchmarks = [
 	"dep:frame-benchmarking",
 	"frame-benchmarking/runtime-benchmarks",
