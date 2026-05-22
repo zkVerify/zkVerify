@@ -28,7 +28,7 @@ sp_api::decl_runtime_apis! {
     #[api_version(1)]
     pub trait AggregateApi
     {
-        // Returns the Merkle path for the given (domain_id, aggregation_id) and proof hash
+        // Returns the Merkle path for the given (domain_id, aggregation_id) and statement hash
         fn get_statement_path(domain_id: u32, aggregation_id: u64, statement: sp_core::H256) -> Result<MerkleProof, PathRequestError>;
     }
 }
