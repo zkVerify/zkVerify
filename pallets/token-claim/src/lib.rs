@@ -294,7 +294,7 @@ pub mod pallet {
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
         fn on_initialize(_now: BlockNumberFor<T>) -> Weight {
             let account = Self::account_id();
-            if T::Currency::balance(&account).is_zero() {
+            if !frame_system::Pallet::<T>::account_exists(&account) {
                 // Mint existential deposit
                 let _ = T::Currency::mint_into(&account, T::Currency::minimum_balance());
             }
