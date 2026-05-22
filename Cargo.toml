@@ -9,6 +9,7 @@ resolver = "2"
 
 members = [
     "runtime/zkverify",
+    "verifier-nostd-check",
     "primitives/hp-dispatch",
     "primitives/hp-on-proof-verified",
     "native",
@@ -21,6 +22,7 @@ members = [
     "primitives/hp-groth16",
     "verifiers/fflonk",
     "verifiers/groth16",
+    "verifiers/kimchi",
     "verifiers/risc0",
     "verifiers/risc0/risc0-derive",
     "verifiers/ultrahonk",
@@ -111,6 +113,7 @@ hp-groth16 = { path = "primitives/hp-groth16", default-features = false }
 pallet-ezkl-verifier = { path = "verifiers/ezkl", default-features = false }
 pallet-fflonk-verifier = { path = "verifiers/fflonk", default-features = false }
 pallet-groth16-verifier = { path = "verifiers/groth16", default-features = false }
+pallet-kimchi-verifier = { path = "verifiers/kimchi", default-features = false }
 pallet-risc0-verifier = { path = "verifiers/risc0", default-features = false }
 pallet-ultrahonk-verifier = { path = "verifiers/ultrahonk", default-features = false }
 pallet-ultraplonk-verifier = { path = "verifiers/ultraplonk", default-features = false }
@@ -341,6 +344,9 @@ cumulus-relay-chain-rpc-interface = { version = "0.21.2" }
 substrate-rpc-client = { version = "0.47.0" }
 
 [patch.crates-io]
+# Kimchi pulls `bcs` through `o1-utils`; the crates.io release enables
+# `serde/std`, which breaks Substrate runtime WASM with duplicate `panic_impl`.
+bcs = { git = "https://github.com/o1-labs/bcs", rev = "d9c996b0" }
 cumulus-relay-chain-inprocess-interface = { path = "patches/cumulus/client/relay-chain-inprocess-interface" }
 cumulus-relay-chain-minimal-node = { path = "patches/cumulus/client/relay-chain-minimal-node" }
 polkadot-node-core-pvf-common = { path = "patches/polkadot/node/core/pvf/common" }

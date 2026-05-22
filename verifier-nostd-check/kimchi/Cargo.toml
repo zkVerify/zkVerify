@@ -1,0 +1,20 @@
+[package]
+name = "kimchi-check"
+version = "0.1.0"
+edition.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+
+[dependencies]
+frame-support.workspace = true
+pallet-kimchi-verifier = { workspace = true }
+pallet-verifiers = { workspace = true }
+
+[features]
+default = [ "std" ]
+std = [
+	"frame-support/std",
+	"pallet-kimchi-verifier/std",
+	"pallet-verifiers/std",
+]

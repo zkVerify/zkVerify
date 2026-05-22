@@ -399,6 +399,7 @@ dependencies = [
  "num-bigint 0.4.6",
  "num-traits",
  "paste",
+ "rayon",
  "zeroize",
 ]
 
@@ -501,6 +502,7 @@ dependencies = [
  "educe",
  "fnv",
  "hashbrown 0.15.5",
+ "rayon",
 ]
 
 [[package]]
@@ -1119,6 +1121,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2af50177e190e07a26ab74f8b1efbfe2ef87da2116221318cb1c2e82baf7de06"
 
 [[package]]
+name = "bcs"
+version = "0.1.6"
+source = "git+https://github.com/o1-labs/bcs?rev=d9c996b0#d9c996b04d84a6e4333a1b75201ecf91257c67fa"
+dependencies = [
+ "serde",
+ "thiserror 2.0.18",
+]
+
+[[package]]
 name = "beef"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1641,6 +1652,19 @@ dependencies = [
  "cipher 0.4.4",
  "poly1305",
  "zeroize",
+]
+
+[[package]]
+name = "checker-template"
+version = "0.1.0"
+dependencies = [
+ "kimchi-check",
+ "maybe-fail",
+ "risc0",
+ "sp-api",
+ "sp-version",
+ "substrate-wasm-builder",
+ "ultraplonk",
 ]
 
 [[package]]
@@ -3113,7 +3137,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7ab67060fc6b8ef687992d439ca0fa36e7ed17e9a0b16b25b601e8757df720de"
 dependencies = [
  "data-encoding",
- "syn 1.0.109",
+ "syn 2.0.117",
 ]
 
 [[package]]
@@ -3198,6 +3222,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7cd812cc2bc1d69d4764bd80df88b4317eaef9e773c75226407d9bc0876b211c"
 dependencies = [
  "powerfmt",
+ "serde_core",
 ]
 
 [[package]]
@@ -4801,6 +4826,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "groupmap"
+version = "0.7.0"
+source = "git+https://github.com/o1-labs/proof-systems?tag=0.7.0#36a8b510cd34b9bd350e04989c87280f99e21e37"
+dependencies = [
+ "ark-ec 0.5.0",
+ "ark-ff 0.5.0",
+]
+
+[[package]]
 name = "h2"
 version = "0.3.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4980,6 +5014,9 @@ name = "hex"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "hex-conservative"
@@ -5707,6 +5744,11 @@ dependencies = [
 ]
 
 [[package]]
+name = "internal-tracing"
+version = "0.7.0"
+source = "git+https://github.com/o1-labs/proof-systems?tag=0.7.0#36a8b510cd34b9bd350e04989c87280f99e21e37"
+
+[[package]]
 name = "io-lifetimes"
 version = "1.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6232,6 +6274,47 @@ name = "keystream"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c33070833c9ee02266356de0c43f723152bd38bd96ddf52c82b3af10c9138b28"
+
+[[package]]
+name = "kimchi"
+version = "0.7.0"
+source = "git+https://github.com/o1-labs/proof-systems?tag=0.7.0#36a8b510cd34b9bd350e04989c87280f99e21e37"
+dependencies = [
+ "ark-ec 0.5.0",
+ "ark-ff 0.5.0",
+ "ark-poly 0.5.0",
+ "ark-serialize 0.5.0",
+ "blake2 0.10.6",
+ "groupmap",
+ "hex",
+ "internal-tracing",
+ "itertools 0.12.1",
+ "log",
+ "mina-curves",
+ "mina-poseidon",
+ "num-bigint 0.4.6",
+ "num-integer",
+ "o1-utils",
+ "poly-commitment",
+ "rand 0.8.5",
+ "rand_core 0.6.4",
+ "rmp-serde",
+ "serde",
+ "serde_with",
+ "sha2 0.10.9",
+ "strum 0.27.2",
+ "strum_macros 0.26.4",
+ "thiserror 2.0.18",
+]
+
+[[package]]
+name = "kimchi-check"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "pallet-kimchi-verifier",
+ "pallet-verifiers",
+]
 
 [[package]]
 name = "kvdb"
@@ -7371,6 +7454,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "maybe-fail"
+version = "0.1.0"
+dependencies = [
+ "bit-vec",
+]
+
+[[package]]
 name = "memchr"
 version = "2.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7460,6 +7550,35 @@ dependencies = [
  "log",
  "objc",
  "paste",
+]
+
+[[package]]
+name = "mina-curves"
+version = "0.7.0"
+source = "git+https://github.com/o1-labs/proof-systems?tag=0.7.0#36a8b510cd34b9bd350e04989c87280f99e21e37"
+dependencies = [
+ "ark-bn254 0.5.0",
+ "ark-ec 0.5.0",
+ "ark-ff 0.5.0",
+ "ark-std 0.5.0",
+ "num-bigint 0.4.6",
+]
+
+[[package]]
+name = "mina-poseidon"
+version = "0.7.0"
+source = "git+https://github.com/o1-labs/proof-systems?tag=0.7.0#36a8b510cd34b9bd350e04989c87280f99e21e37"
+dependencies = [
+ "ark-ec 0.5.0",
+ "ark-ff 0.5.0",
+ "ark-poly 0.5.0",
+ "ark-serialize 0.5.0",
+ "mina-curves",
+ "o1-utils",
+ "rand 0.8.5",
+ "rayon",
+ "serde",
+ "serde_with",
 ]
 
 [[package]]
@@ -7996,6 +8115,7 @@ dependencies = [
  "num-integer",
  "num-traits",
  "rand 0.8.5",
+ "serde",
 ]
 
 [[package]]
@@ -8094,6 +8214,30 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.117",
+]
+
+[[package]]
+name = "o1-utils"
+version = "0.7.0"
+source = "git+https://github.com/o1-labs/proof-systems?tag=0.7.0#36a8b510cd34b9bd350e04989c87280f99e21e37"
+dependencies = [
+ "ark-ff 0.5.0",
+ "ark-poly 0.5.0",
+ "ark-serialize 0.5.0",
+ "bcs",
+ "hex",
+ "num-bigint 0.4.6",
+ "num-integer",
+ "rand 0.8.5",
+ "rayon",
+ "rmp-serde",
+ "rustversion",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "sha2 0.10.9",
+ "spin 0.10.0",
+ "thiserror 2.0.18",
 ]
 
 [[package]]
@@ -9113,6 +9257,33 @@ dependencies = [
  "sp-io",
  "sp-keyring",
  "sp-runtime",
+]
+
+[[package]]
+name = "pallet-kimchi-verifier"
+version = "0.1.0"
+dependencies = [
+ "ark-ff 0.5.0",
+ "ark-serialize 0.5.0",
+ "bincode 2.0.1",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "hex-literal",
+ "kimchi",
+ "log",
+ "mina-curves",
+ "mina-poseidon",
+ "pallet-balances",
+ "pallet-verifiers",
+ "parity-scale-codec",
+ "poly-commitment",
+ "rand_chacha 0.3.1",
+ "rand_core 0.6.4",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
 ]
 
 [[package]]
@@ -11828,6 +11999,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "poly-commitment"
+version = "0.7.0"
+source = "git+https://github.com/o1-labs/proof-systems?tag=0.7.0#36a8b510cd34b9bd350e04989c87280f99e21e37"
+dependencies = [
+ "ark-ec 0.5.0",
+ "ark-ff 0.5.0",
+ "ark-poly 0.5.0",
+ "ark-serialize 0.5.0",
+ "blake2 0.10.6",
+ "groupmap",
+ "hashbrown 0.15.5",
+ "hex",
+ "itertools 0.12.1",
+ "mina-curves",
+ "mina-poseidon",
+ "num-bigint 0.4.6",
+ "o1-utils",
+ "rand 0.8.5",
+ "rand_core 0.6.4",
+ "rayon",
+ "rmp-serde",
+ "serde",
+ "serde_with",
+ "thiserror 2.0.18",
+ "zeroize",
+]
+
+[[package]]
 name = "poly1305"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -12197,7 +12396,7 @@ version = "0.13.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "be769465445e8c1474e9c5dac2018218498557af32d9ed057325ec9a41ae81bf"
 dependencies = [
- "heck 0.4.1",
+ "heck 0.5.0",
  "itertools 0.14.0",
  "log",
  "multimap",
@@ -12570,9 +12769,9 @@ checksum = "60a357793950651c4ed0f3f52338f53b2f809f32d83a07f72909fa13e4c6c1e3"
 
 [[package]]
 name = "rayon"
-version = "1.11.0"
+version = "1.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "368f01d005bf8fd9b1206fb6fa653e6c4a81ceb1466406b81792d87c5677a58f"
+checksum = "b418a60154510ca1a002a752ca9714984e21e4241e804d32555251faf8b78ffa"
 dependencies = [
  "either",
  "rayon-core",
@@ -12853,6 +13052,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "risc0"
+version = "0.1.0"
+dependencies = [
+ "risc0-verifier",
+]
+
+[[package]]
 name = "risc0-binfmt"
 version = "1.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -13123,6 +13329,25 @@ name = "rle-decode-fast"
 version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3582f63211428f83597b51b2ddb88e2a91a9d52d12831f9d08f5e624e8977422"
+
+[[package]]
+name = "rmp"
+version = "0.8.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4ba8be72d372b2c9b35542551678538b562e7cf86c3315773cae48dfbfe7790c"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
+name = "rmp-serde"
+version = "1.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72f81bee8c8ef9b577d1681a70ebbc962c232461e397b22c208c43c04b67a155"
+dependencies = [
+ "rmp",
+ "serde",
+]
 
 [[package]]
 name = "rocksdb"
@@ -15098,6 +15323,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "schemars"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4cd191f9397d57d581cddd31014772520aa448f65ef991055d7f61582c65165f"
+dependencies = [
+ "dyn-clone",
+ "ref-cast",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "schemars"
+version = "1.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a2b42f36aa1cd011945615b92222f6bf73c599a102a300334cd7f8dbeec726cc"
+dependencies = [
+ "dyn-clone",
+ "ref-cast",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "schnellru"
 version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -15396,6 +15645,10 @@ dependencies = [
  "base64 0.22.1",
  "chrono",
  "hex",
+ "indexmap 1.9.3",
+ "indexmap 2.13.0",
+ "schemars 0.9.0",
+ "schemars 1.2.1",
  "serde_core",
  "serde_json",
  "serde_with_macros",
@@ -15874,7 +16127,7 @@ version = "0.8.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c1c97747dbf44bb1ca44a561ece23508e99cb592e862f22222dcf42f51d1e451"
 dependencies = [
- "heck 0.4.1",
+ "heck 0.5.0",
  "proc-macro2",
  "quote",
  "syn 2.0.117",
@@ -16888,6 +17141,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6980e8d7511241f8acf4aebddbb1ff938df5eebe98691418c4468d0b72a96a67"
 
 [[package]]
+name = "spin"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d5fe4ccb98d9c292d56fec89a5e07da7fc4cf0dc11e156b41793132775d3e591"
+
+[[package]]
 name = "spinning_top"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -17088,6 +17347,12 @@ checksum = "8fec0f0aef304996cf250b31b5a10dee7980c85da9d759361292b8bca5a18f06"
 dependencies = [
  "strum_macros 0.26.4",
 ]
+
+[[package]]
+name = "strum"
+version = "0.27.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "af23d6f6c1a224baef9d3f61e287d2761385a5b88fdab4eb4c6f11aeb54c4bcf"
 
 [[package]]
 name = "strum_macros"
@@ -18527,6 +18792,14 @@ dependencies = [
  "hex-literal",
  "sha3",
  "snafu 0.8.9",
+]
+
+[[package]]
+name = "ultraplonk"
+version = "0.1.0"
+dependencies = [
+ "hex-literal",
+ "ultraplonk-no-std",
 ]
 
 [[package]]
@@ -20422,6 +20695,7 @@ dependencies = [
  "pallet-grandpa",
  "pallet-groth16-verifier",
  "pallet-identity",
+ "pallet-kimchi-verifier",
  "pallet-message-queue",
  "pallet-multisig",
  "pallet-offences",
