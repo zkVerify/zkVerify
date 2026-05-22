@@ -333,20 +333,44 @@ where
             Metrics::register(registry)?,
             rand::rngs::StdRng::from_entropy(),
         ))
-        .approval_distribution(ApprovalDistributionSubsystem::new(
-            approval_voting_parallel_metrics.approval_distribution_metrics(),
-            approval_voting_config.slot_duration_millis,
-            Arc::new(RealAssignmentCriteria {}),
-        ))
-        .approval_voting(ApprovalVotingSubsystem::with_config(
-            approval_voting_config,
-            parachains_db.clone(),
-            keystore.clone(),
-            Box::new(sync_service.clone()),
-            approval_voting_parallel_metrics.approval_voting_metrics(),
-            Arc::new(spawner.clone()),
-        ))
-        .approval_voting_parallel(DummySubsystem)
+        // Wire approval voting subsystems conditionally based on the flag.
+        // If parallel AV is enabled, start the parallel subsystem and disable classic ones.
+        // Otherwise, start classic approval-voting and approval-distribution and keep AVP as dummy.
+        .approval_distribution(if enable_approval_voting_parallel {
+            DummySubsystem
+        } else {
+            ApprovalDistributionSubsystem::new(
+                approval_voting_parallel_metrics.approval_distribution_metrics(),
+                approval_voting_config.slot_duration_millis,
+                Arc::new(RealAssignmentCriteria {}),
+            )
+        })
+        .approval_voting(if enable_approval_voting_parallel {
+            DummySubsystem
+        } else {
+            ApprovalVotingSubsystem::with_config(
+                approval_voting_config,
+                parachains_db.clone(),
+                keystore.clone(),
+                Box::new(sync_service.clone()),
+                approval_voting_parallel_metrics.approval_voting_metrics(),
+                Arc::new(spawner.clone()),
+            )
+        })
+        .approval_voting_parallel(if enable_approval_voting_parallel {
+            // NOTE: we intentionally mirror the classic subsystem constructor arguments.
+            // This ensures consistent behavior when toggling the flag.
+            ApprovalVotingParallelSubsystem::with_config(
+                approval_voting_config,
+                parachains_db.clone(),
+                keystore.clone(),
+                Box::new(sync_service.clone()),
+                approval_voting_parallel_metrics,
+                Arc::new(spawner.clone()),
+            )
+        } else {
+            DummySubsystem
+        })
         .gossip_support(GossipSupportSubsystem::new(
             keystore.clone(),
             authority_discovery_service.clone(),
