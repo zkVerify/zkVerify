@@ -105,7 +105,7 @@ fn test_harness<T: Future<Output = VirtualOverseer>>(
 
     futures::pin_mut!(test_fut);
     futures::pin_mut!(selection_process);
-    futures::executor::block_on(future::join(
+    let _ = futures::executor::block_on(future::join(
         async move {
             let _overseer = test_fut.await;
         },
