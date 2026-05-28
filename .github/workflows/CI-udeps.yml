@@ -23,5 +23,3 @@ jobs:
           cache_key: "udeps"
           cargo_binaries_install: "cargo-udeps"
           skip_wasm_build: "yes"
-          llvm: 'yes'
-          libclang-dev: 'yes'
