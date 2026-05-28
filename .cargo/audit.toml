@@ -9,80 +9,39 @@ ignore = [
     # (ark-relations unconditionally enables tracing-subscriber 0.2.x with its std feature).
     # https://rustsec.org/advisories/RUSTSEC-2025-0055
     # This is an upstream arkworks issue; no patched version of ark-relations avoids it.
-    "RUSTSEC-2025-0118", # wasmtime v35.0.0 via sc-executor-wasmtime v0.43.0 (polkadot-sdk, cannot upgrade independently).
-    # From https://rustsec.org/advisories/RUSTSEC-2025-0118 ->
+    "RUSTSEC-2025-0118", # wasmtime v35.0.0 — shared memory thread safety issue.
+    # https://rustsec.org/advisories/RUSTSEC-2025-0118 ->
     # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-hc7m-r6v8-hg9q
     # "Embeddings which do not use the wasm threads proposal nor created shared memories
     # nor actually share shared memories across threads are unaffected."
     # We fall in the case where we don't use wasm threads at all.
-    "RUSTSEC-2026-0002", # lru v0.12.5 — used by libp2p-identify v0.45.0 and libp2p-swarm v0.45.1
-    # (polkadot-sdk transitive dependency via libp2p v0.54.1).
-    # https://rustsec.org/advisories/RUSTSEC-2026-0002
-    # We checked the libp2p-identify code at v0.45.0 and libp2p-swarm at v0.45.1:
-    # no mutable iterator (IterMut) is used on lru::LruCache, so the unsound code path
-    # is never exercised.
-    "RUSTSEC-2026-0006", # wasmtime v35.0.0 via sc-executor-wasmtime v0.43.0 (polkadot-sdk, cannot upgrade independently).
-    # From https://rustsec.org/advisories/RUSTSEC-2026-0006 ->
+    "RUSTSEC-2026-0006", # wasmtime v35.0.0 — segfault with f64.copysign on x86-64.
+    # https://rustsec.org/advisories/RUSTSEC-2026-0006 ->
     # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-vc8c-j3xm-xj73
-    # The vulnerability (segfault or out-of-sandbox load with f64.copysign on x86-64) only triggers
-    # when signals-based-traps is DISABLED in the wasmtime Config.
+    # The vulnerability only triggers when signals-based-traps is DISABLED in the wasmtime Config.
     # Substrate's sc-executor-wasmtime uses wasmtime::Config::new() which has signals_based_traps
     # enabled by default, and never disables it. Therefore this code path is never exercised.
-    "RUSTSEC-2026-0020", # wasmtime v35.0.0 via sc-executor-wasmtime v0.43.0 (polkadot-sdk, cannot upgrade independently).
+    "RUSTSEC-2026-0020", # wasmtime v35.0.0 — WASI path traversal.
     # https://rustsec.org/advisories/RUSTSEC-2026-0020 ->
     # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-852m-cvvp-9p4w
     # "Wasmtime's implementations of WASIp1 and WASIp2 are affected by this vulnerability."
     # We use wasmtime exclusively as a Wasm executor for Substrate PVF/runtime blobs via
     # sc-executor-wasmtime. Neither wasmtime-wasi nor any WASI context is present in our
     # dependency tree, so we are unaffected.
-    "RUSTSEC-2026-0021", # wasmtime v35.0.0 via sc-executor-wasmtime v0.43.0 (polkadot-sdk, cannot upgrade independently).
+    "RUSTSEC-2026-0021", # wasmtime v35.0.0 — WASI HTTP fields resource issue.
     # https://rustsec.org/advisories/RUSTSEC-2026-0021 ->
     # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-243v-98vx-264h
     # "Specific to implementations using the wasi:http/types.fields resource in wasmtime-wasi-http."
     # We do not use wasmtime-wasi-http (not present in Cargo.lock) — wasmtime is used only for
     # Substrate PVF/runtime Wasm execution, so we are unaffected.
-    "RUSTSEC-2026-0037", # quinn-proto v0.10.6 — stale lockfile entry (libp2p-quic -> quinn -> quinn-proto 0.10).
-    # https://rustsec.org/advisories/RUSTSEC-2026-0037
-    # Nothing in the workspace actually depends on this chain (`cargo tree` confirms it).
-    # It remains in Cargo.lock because Cargo resolves optional dependencies in the lockfile
-    # (libp2p's optional `quic` feature pulls it in). Cannot be updated: no patched 0.10.x exists.
-    "RUSTSEC-2026-0049", # rustls-webpki v0.101.7 and v0.102.8 — CRL distribution point matching bug.
-    # https://rustsec.org/advisories/RUSTSEC-2026-0049 ->
-    # https://github.com/rustls/webpki/security/advisories/GHSA-pwjx-qhcg-rvj4
-    # The vulnerability only affects TLS CRL-based certificate revocation checking, which is opt-in
-    # in rustls (requires explicitly calling `.with_crls()`). We never configure CRL revocation
-    # checking — the vulnerable code path is never reached. The v0.103.x instance was updated to
-    # v0.103.13; the 0.101.x and 0.102.x versions are transitive deps from polkadot-sdk
-    # (libp2p-websocket -> rustls 0.21, jsonrpsee -> rustls 0.22) with no patched versions
-    # in those major lines.
-    "RUSTSEC-2026-0098", # rustls-webpki v0.101.7 and v0.102.8 — URI name constraints incorrectly accepted.
-    # https://rustsec.org/advisories/RUSTSEC-2026-0098 ->
-    # https://github.com/advisories/GHSA-965h-392x-2mh5
-    # Name constraints for URI names were ignored and therefore accepted. Exploitation requires
-    # both a valid certificate signature AND deliberate certificate misissuance by a CA. The
-    # v0.103.x instance was updated to v0.103.13; the 0.101.x and 0.102.x versions are transitive
-    # deps from polkadot-sdk (libp2p-websocket -> rustls 0.21, jsonrpsee -> rustls 0.22) with no
-    # patched versions in those major lines.
-    "RUSTSEC-2026-0099", # rustls-webpki v0.101.7 and v0.102.8 — wildcard name constraint bypass.
-    # https://rustsec.org/advisories/RUSTSEC-2026-0099 ->
-    # https://github.com/advisories/GHSA-xgp8-3hg3-c2mh
-    # A name constraint like `accept.example.com` could be bypassed by a wildcard certificate
-    # `*.example.com`. Exploitation requires both a valid certificate signature AND deliberate
-    # certificate misissuance by a CA. Same transitive dep situation as RUSTSEC-2026-0098 above.
-    "RUSTSEC-2026-0104", # rustls-webpki v0.101.7 and v0.102.8 — panic in CRL parsing.
-    # https://rustsec.org/advisories/RUSTSEC-2026-0104 ->
-    # https://github.com/advisories/GHSA-82j2-j2ch-gfr8
-    # Reachable panic when parsing a CRL with an empty BIT STRING in `onlySomeReasons`. This is a
-    # DoS vulnerability affecting only applications that actively use CRLs. We never configure CRL
-    # revocation checking (no `.with_crls()` calls) — the CRL parsing code is never reached.
-    # Same transitive dep situation as RUSTSEC-2026-0049 above.
-    #
-    # ── April 2026 batch: wasmtime 8.0.1 via sc-executor-wasmtime ──
-    # All advisories below affect wasmtime ≥8.0.1, pinned by polkadot-sdk (stable2412)
-    # through sc-executor-wasmtime. Cannot be upgraded independently.
-    #
-    # -- Winch compiler backend (not used) --
-    # `wasmtime-winch` is not present in Cargo.lock; Substrate uses Cranelift exclusively.
+    "RUSTSEC-2026-0114", # wasmtime v35.0.0 — panic when allocating oversized table (MEDIUM, DoS only).
+    # https://rustsec.org/advisories/RUSTSEC-2026-0114 ->
+    # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-p8xm-42r7-89xg
+    # Arithmetic overflow panic when a Wasm module declares a table with an extremely large size,
+    # leveraging the memory64 proposal's 64-bit range. Requires the on-demand allocator and
+    # memory64 to be enabled. Substrate runtime Wasm blobs are compiled for wasm32 and are
+    # governance-controlled (not attacker-supplied). PVF validation only runs Wasm from registered
+    # parachains. This is a DoS (panic), not a sandbox escape. Unaffected in practice.
     "RUSTSEC-2026-0095", # CRITICAL — Winch sandbox-escaping memory access.
     # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-4w5r-mg47-r5m2
     # Winch backend only — we use Cranelift. Unaffected.
@@ -95,9 +54,6 @@ ignore = [
     "RUSTSEC-2026-0086", # LOW — Host data leakage with 64-bit tables and Winch.
     # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-m9w2-8782-2946
     # Winch backend only — we use Cranelift. Unaffected.
-    #
-    # -- Component model (not used) --
-    # Substrate uses core Wasm only; no component-model crates are in Cargo.lock.
     "RUSTSEC-2026-0093", # MEDIUM — Heap OOB read in component model UTF-16 string transcoding.
     # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-394w-hwhg-8vgm
     # Component model only. Unaffected.
@@ -110,8 +66,6 @@ ignore = [
     "RUSTSEC-2026-0085", # MEDIUM — Panic when lifting `flags` component value.
     # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-m758-wjhj-p3jq
     # Component model only. Unaffected.
-    #
-    # -- Architecture/config-specific (conditions not met) --
     "RUSTSEC-2026-0096", # CRITICAL — Miscompiled guest heap access on aarch64 Cranelift.
     # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-jhxm-h53p-jm7w
     # Requires ALL of: (1) 64-bit Wasm linear memory (`Config::wasm_memory64` enabled),
@@ -129,6 +83,29 @@ ignore = [
     # (2) `signals_based_traps` disabled with guard pages enabled, (3) guest executes
     # `f64x2.splat` SIMD instruction. Substrate runtime Wasm does not use SIMD, and any
     # x86-64 CPU from the last 20 years has SSE3. Unaffected.
+    "RUSTSEC-2026-0002", # lru v0.12.5 — used by libp2p-identify v0.45.0 and libp2p-swarm v0.45.1
+    # (polkadot-sdk transitive dependency via libp2p v0.54.1).
+    # https://rustsec.org/advisories/RUSTSEC-2026-0002
+    # We checked the libp2p-identify code at v0.45.0 and libp2p-swarm at v0.45.1:
+    # no mutable iterator (IterMut) is used on lru::LruCache, so the unsound code path
+    # is never exercised.
+    "RUSTSEC-2026-0098", # rustls-webpki v0.101.7 — URI name constraints incorrectly accepted.
+    # https://rustsec.org/advisories/RUSTSEC-2026-0098 ->
+    # https://github.com/advisories/GHSA-965h-392x-2mh5
+    # Name constraints for URI names were ignored and therefore accepted. Exploitation requires
+    # both a valid certificate signature AND deliberate certificate misissuance by a CA.
+    "RUSTSEC-2026-0099", # rustls-webpki v0.101.7 — wildcard name constraint bypass.
+    # https://rustsec.org/advisories/RUSTSEC-2026-0099 ->
+    # https://github.com/advisories/GHSA-xgp8-3hg3-c2mh
+    # A name constraint like `accept.example.com` could be bypassed by a wildcard certificate
+    # `*.example.com`. Exploitation requires both a valid certificate signature AND deliberate
+    # certificate misissuance by a CA.
+    "RUSTSEC-2026-0104", # rustls-webpki v0.101.7 — panic in CRL parsing.
+    # https://rustsec.org/advisories/RUSTSEC-2026-0104 ->
+    # https://github.com/advisories/GHSA-82j2-j2ch-gfr8
+    # Reachable panic when parsing a CRL with an empty BIT STRING in `onlySomeReasons`. This is a
+    # DoS vulnerability affecting only applications that actively use CRLs. We never configure CRL
+    # revocation checking (no `.with_crls()` calls) — the CRL parsing code is never reached.
     "RUSTSEC-2026-0097", # rand v0.8.5 — unsound aliased &mut via thread_rng() reseeding with custom logger.
     # https://rustsec.org/advisories/RUSTSEC-2026-0097 ->
     # https://github.com/rust-random/rand/pull/1763
@@ -139,18 +116,16 @@ ignore = [
     # rand_chacha, std, std_rng are active. Without `log`, the logging code paths are
     # compiled out and the unsound aliased mutable reference can never be constructed.
     # rand 0.8.5 has no patched 0.8.x release; it is a transitive dep from arkworks
-    # (ark-std), polkadot-sdk, plonky2, and sp1, none of which have moved to rand ≥0.9.
-    #
-    # ── May 2026 batch: hickory-proto via polkadot-sdk networking ──
-    #
-    "RUSTSEC-2026-0119", # hickory-proto v0.24.4 and v0.25.2 — O(n²) CPU exhaustion in DNS message encoding.
+    # (ark-std), polkadot-sdk, plonky2, and sp1, none of which have moved to rand >=0.9.
+    # (rand 0.9.x was updated to 0.9.4 which is patched.)
+    "RUSTSEC-2026-0119", # hickory-proto v0.24.4 and v0.25.2 — O(n^2) CPU exhaustion in DNS message encoding.
     # https://rustsec.org/advisories/RUSTSEC-2026-0119 ->
     # https://github.com/hickory-dns/hickory-dns/security/advisories/GHSA-q2qq-hmj6-3wpp
     # MODERATE severity DoS via crafted DNS messages with many records triggering quadratic name
     # compression. v0.24.4 comes from libp2p-dns -> hickory-resolver (polkadot-sdk via
     # sc-telemetry -> libp2p 0.54.1). v0.25.2 comes from litep2p -> hickory-resolver
     # (polkadot-sdk via sc-network -> litep2p 0.9.5). Fix is in 0.26.1; no patched 0.24.x or
-    # 0.25.x exists, and parent crates are pinned by polkadot-sdk stable2412.
+    # 0.25.x exists, and parent crates are pinned by polkadot-sdk stable2512.
     "RUSTSEC-2026-0118", # hickory-proto v0.25.2 — NSEC3 closest-encloser proof validation unbounded loop.
     # https://rustsec.org/advisories/RUSTSEC-2026-0118 ->
     # https://github.com/hickory-dns/hickory-dns/security/advisories/GHSA-3v94-mw7p-v465
