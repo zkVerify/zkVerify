@@ -268,9 +268,9 @@ fn check_wasm_toolchain_installed(
 	}
 
 	if cargo_command.supports_wasm32v1_none_target() &&
-			!cargo_command.is_wasm32v1_none_target_installed() &&
-			!is_forced_wasm_build_legacy_target()
-		{
+		!cargo_command.is_wasm32v1_none_target_installed() &&
+		!is_forced_wasm_build_legacy_target() // zkVerify customization: suppress warning when legacy target is forced
+	{
 		build_helper::warning!("You are building WASM runtime using `wasm32-unknown-unknown` target, although Rust >= 1.84 supports `wasm32v1-none` target!");
 		build_helper::warning!("You can install it with `rustup target add wasm32v1-none --toolchain {toolchain}` if you're using `rustup`.");
 		build_helper::warning!("After installing `wasm32v1-none` target, you must rebuild WASM runtime from scratch, use `cargo clean` before building.");

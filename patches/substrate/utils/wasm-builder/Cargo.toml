@@ -51,13 +51,13 @@ sp-version = { optional = true, workspace = true, default-features = true }
 #
 # This pulls in quite a lot of dependencies and thus, is disabled by default.
 metadata-hash = [
- "array-bytes",
- "codec",
- "frame-metadata",
- "merkleized-metadata",
- "sc-executor",
- "sp-core",
- "sp-io",
- "sp-tracing",
- "sp-version",
+	"array-bytes",
+	"codec",
+	"frame-metadata",
+	"merkleized-metadata",
+	"sc-executor",
+	"sp-core",
+	"sp-io",
+	"sp-tracing",
+	"sp-version",
 ]

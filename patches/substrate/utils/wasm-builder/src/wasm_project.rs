@@ -873,9 +873,12 @@ fn build_bloaty_blob(
 			// https://blog.rust-lang.org/2024/09/24/webassembly-targets-change-in-default-target-features.html#disabling-on-by-default-webassembly-proposals
 
 			// zkVerify patch: Add -C target-cpu=mvp when using legacy wasm32-unknown-unknown target
-			// This disables post-MVP WASM features that cause UnknownOpcode errors
+			// This disables post-MVP WASM features that cause UnknownOpcode errors.
+			// Also restore --allow-undefined which was removed from the wasm32-unknown-unknown
+			// target spec in Rust 1.96; without it wasm-ld treats host-function imports as
+			// undefined-symbol errors.
 			if target.rustc_target(&cargo_cmd) == "wasm32-unknown-unknown" {
-				rustflags.push_str("-C target-cpu=mvp -C target-feature=-sign-ext ");
+				rustflags.push_str("-C target-cpu=mvp -C target-feature=-sign-ext -C link-arg=--allow-undefined ");
 			}
 
 			rustflags.push_str("-C link-arg=--export-table ");
