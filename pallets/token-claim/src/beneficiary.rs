@@ -1,6 +1,6 @@
 use crate::{Config, EthereumAddress, EthereumSignature};
 use alloc::vec::Vec;
-use codec::{Decode, Encode, MaxEncodedLen};
+use codec::{Decode, DecodeWithMemTracking, Encode, MaxEncodedLen};
 use core::cmp::Ordering;
 use frame_support::{defensive, pallet_prelude::TypeInfo};
 use serde::{self, Deserialize, Serialize};
@@ -9,7 +9,18 @@ use sp_runtime::traits::Verify;
 pub const MSG_PREFIX: &[u8] = b"<Bytes>";
 pub const MSG_SUFFIX: &[u8] = b"</Bytes>";
 
-#[derive(Clone, PartialEq, Encode, Decode, TypeInfo, Serialize, Deserialize, Eq, MaxEncodedLen)]
+#[derive(
+    Clone,
+    PartialEq,
+    Encode,
+    Decode,
+    DecodeWithMemTracking,
+    TypeInfo,
+    Serialize,
+    Deserialize,
+    Eq,
+    MaxEncodedLen,
+)]
 #[scale_info(skip_type_params(T))]
 /// A beneficiary with a Substrate-based address or an Ethereum address
 pub enum Beneficiary<T: Config> {

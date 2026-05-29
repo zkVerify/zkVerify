@@ -138,7 +138,7 @@ mod benchmarks {
         ]
         .concat();
         let (signature, signer) = T::BenchmarkHelper::sign_claim_ethereum(claim_message.as_slice());
-        let beneficiary = Beneficiary::<T>::Ethereum(signer.clone());
+        let beneficiary = Beneficiary::<T>::Ethereum(signer);
 
         // Insert beneficiary
         let amount =
@@ -186,7 +186,7 @@ mod benchmarks {
 
         // Generate eth beneficiary
         let eth_addr = secp_utils::eth(&secp_utils::secret_from_seed(b"//EthBeneficiary"));
-        let beneficiary = Beneficiary::<T>::Ethereum(eth_addr.clone());
+        let beneficiary = Beneficiary::<T>::Ethereum(eth_addr);
         let dest: T::AccountId = account("test dest", 0, 0); // Generate dest
 
         // Insert beneficiary

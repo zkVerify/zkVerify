@@ -13,13 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 46.2.0
-//! DATE: 2025-06-05 (Y/M/D)
-//! HOSTNAME: `9f9a3dac6197`, CPU: `AMD Ryzen 7 7700 8-Core Processor`
+//! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 53.0.0
+//! DATE: 2026-02-17 (Y/M/D)
+//! HOSTNAME: `8c0b4684ea67`, CPU: `AMD Ryzen 7 7700 8-Core Processor`
 //!
 //! SHORT-NAME: `extrinsic`, LONG-NAME: `ExtrinsicBase`, RUNTIME: `Development`
 //! WARMUPS: `10`, REPEAT: `100`
-//! WEIGHT-PATH: `/data/benchmark/runtime/src/weights`
+//! WEIGHT-PATH: `/data/benchmark/runtime/zkverify/src/weights`
 //! WEIGHT-METRIC: `Average`, WEIGHT-MUL: `1.0`, WEIGHT-ADD: `0`
 
 // Executed Command:
@@ -27,11 +27,11 @@
 //   benchmark
 //   overhead
 //   --chain=dev
-//   --weight-path=/data/benchmark/runtime/src/weights
+//   --weight-path=/data/benchmark/runtime/zkverify/src/weights
 //   --header=/data/benchmark/HEADER-APACHE2
 //   --warmup=10
 //   --repeat=100
-//   --base-path=/tmp/tmp.LQE1fxMBsI
+//   --base-path=/tmp/tmp.yy4bwRyPb4
 
 use sp_core::parameter_types;
 use sp_weights::{constants::WEIGHT_REF_TIME_PER_NANOS, Weight};
@@ -41,17 +41,17 @@ parameter_types! {
     /// Calculated by multiplying the *Average* with `1.0` and adding `0`.
     ///
     /// Stats nanoseconds:
-    ///   Min, Max: 103_928, 105_382
-    ///   Average:  104_489
-    ///   Median:   104_449
-    ///   Std-Dev:  356.24
+    ///   Min, Max: 101_896, 103_295
+    ///   Average:  102_382
+    ///   Median:   102_269
+    ///   Std-Dev:  339.17
     ///
     /// Percentiles nanoseconds:
-    ///   99th: 105_330
-    ///   95th: 105_178
-    ///   75th: 104_688
+    ///   99th: 103_289
+    ///   95th: 103_162
+    ///   75th: 102_479
     pub const ExtrinsicBaseWeight: Weight =
-        Weight::from_parts(WEIGHT_REF_TIME_PER_NANOS.saturating_mul(104_489), 0);
+        Weight::from_parts(WEIGHT_REF_TIME_PER_NANOS.saturating_mul(102_382), 0);
 }
 
 #[cfg(test)]

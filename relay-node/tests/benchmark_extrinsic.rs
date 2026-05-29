@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-use assert_cmd::cargo::cargo_bin;
 use rstest::rstest;
 use std::{process::Command, result::Result};
 
@@ -40,7 +39,7 @@ fn benchmark_extrinsic_rejects_non_dev_runtimes(#[case] runtime: &str) {
 }
 
 fn benchmark_extrinsic(runtime: &str, pallet: &str, extrinsic: &str) -> Result<(), String> {
-    let status = Command::new(cargo_bin(common::NODE))
+    let status = Command::new(assert_cmd::cargo::cargo_bin!("zkv-relay"))
         .args(["benchmark", "extrinsic", "--chain", runtime])
         .args(["--pallet", pallet, "--extrinsic", extrinsic])
         // Run with low repeats for faster execution.

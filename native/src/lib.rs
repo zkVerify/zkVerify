@@ -16,13 +16,13 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode};
-use sp_runtime_interface::pass_by::PassByCodec;
 
 mod accelerated_bn;
+mod compat;
 mod groth16;
 mod risc0;
 
-#[derive(PassByCodec, Encode, Decode)]
+#[derive(Encode, Decode)]
 #[cfg_attr(test, derive(Debug))]
 pub enum VerifyError {
     InvalidInput,

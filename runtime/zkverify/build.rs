@@ -18,6 +18,11 @@ fn main() {
     {
         std::env::remove_var("CARGO_FEATURE_STD");
         std::env::remove_var("CARGO_FEATURE_DEFAULT");
+        // Use legacy wasm target (wasm32-unknown-unknown) instead of wasm32v1-none
+        // because some dependencies (bit-vec via risc0-circuit-rv32im) don't properly
+        // support the stricter wasm32v1-none target.
+        // TODO: Remove this once risc0-verifier upstream fixes the bit-vec dependency.
+        std::env::set_var("WASM_BUILD_LEGACY_TARGET", "1");
         use wasm_builder_ext::WasmBuilderExt;
         substrate_wasm_builder::WasmBuilder::init_with_defaults()
             .handle_metadata_hash()

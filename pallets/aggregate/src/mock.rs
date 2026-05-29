@@ -441,8 +441,6 @@ impl<const V: u32> EstimateCallFee<CallOf<Test>, BalanceOf<Test>> for MockEstima
 pub type MockEstimateCallFee = MockEstimateCallFeeImpl<ESTIMATED_FEE>;
 
 impl crate::Config for Test {
-    type RuntimeEvent = RuntimeEvent;
-
     type RuntimeHoldReason = RuntimeHoldReason;
 
     type WeightInfo = MockWeightInfo;
@@ -559,6 +557,7 @@ pub fn test() -> sp_io::TestExternalities {
         .unwrap();
     pallet_balances::GenesisConfig::<Test> {
         balances: USERS.to_vec(),
+        dev_accounts: None,
     }
     .assimilate_storage(&mut t)
     .unwrap();

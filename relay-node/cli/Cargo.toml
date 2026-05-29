@@ -1,7 +1,7 @@
 [package]
 name = "zkv-cli"
 description = "ZkVerify Relay-chain Client Node"
-version = "11.0.0"
+version = "31.0.0"
 authors.workspace = true
 edition.workspace = true
 license = "GPL-3.0"
@@ -33,8 +33,8 @@ sp-keyring = { workspace = true }
 sp-runtime = { workspace = true }
 sp-maybe-compressed-blob = { workspace = true }
 frame-benchmarking-cli = { workspace = true, optional = true }
-sc-cli = { workspace = true, optional = true }
-sc-service = { workspace = true, optional = true }
+sc-cli = { workspace = true, optional = true, default-features = true }
+sc-service = { workspace = true, optional = true, default-features = true }
 polkadot-node-metrics = { workspace = true }
 polkadot-node-primitives = { workspace = true }
 sc-tracing = { workspace = true, optional = true }

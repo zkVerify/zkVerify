@@ -20,8 +20,8 @@ use crate::{currency::Balance, types::AccountId, SessionKeys, BABE_GENESIS_EPOCH
 use alloc::{boxed::Box, vec, vec::Vec};
 use helper::*;
 use polkadot_primitives::{
-    ApprovalVotingParams, AssignmentId, AsyncBackingParams, AuthorityDiscoveryId, BlockNumber,
-    NodeFeatures, SchedulerParams, ValidatorId,
+    node_features, ApprovalVotingParams, AssignmentId, AsyncBackingParams, AuthorityDiscoveryId,
+    BlockNumber, NodeFeatures, SchedulerParams, ValidatorId,
 };
 use polkadot_runtime_parachains::configuration::HostConfiguration;
 use sp_consensus_babe::AuthorityId as BabeId;
@@ -49,6 +49,16 @@ fn session_keys(
 
 fn parachains_host_configuration() -> HostConfiguration<BlockNumber> {
     use polkadot_primitives::{MAX_CODE_SIZE, MAX_POV_SIZE};
+
+    let mut node_features = NodeFeatures::new();
+    node_features.resize(
+        node_features::FeatureIndex::FirstUnassigned as usize + 1,
+        false,
+    );
+    node_features.set(
+        node_features::FeatureIndex::CandidateReceiptV2 as u8 as usize,
+        true,
+    );
 
     HostConfiguration {
         validation_upgrade_cooldown: 2u32, // Don't care for now: we work only with system (thus, trusted) parachains
@@ -91,7 +101,7 @@ fn parachains_host_configuration() -> HostConfiguration<BlockNumber> {
         max_validators: None, // No Max
         dispute_post_conclusion_acceptance_period: 50,
         pvf_voting_ttl: 2,
-        node_features: NodeFeatures::EMPTY,
+        node_features,
         approval_voting_params: ApprovalVotingParams {
             max_approval_coalesce_count: 1,
         },

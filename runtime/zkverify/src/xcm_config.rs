@@ -23,7 +23,7 @@ use super::{
 };
 use frame_support::{
     parameter_types,
-    traits::{Contains, Equals, Everything, Nothing},
+    traits::{Contains, Disabled, Equals, Everything, Nothing},
 };
 use frame_system::EnsureRoot;
 use pallet_xcm::XcmPassthrough;
@@ -224,12 +224,16 @@ impl xcm_executor::Config for XcmConfig {
     type MessageExporter = ();
     type UniversalAliases = Nothing;
     type CallDispatcher = RuntimeCall;
+    #[cfg(not(feature = "runtime-benchmarks"))]
     type SafeCallFilter = Nothing;
+    #[cfg(feature = "runtime-benchmarks")]
+    type SafeCallFilter = Everything;
     type Aliasers = Nothing;
     type TransactionalProcessor = FrameTransactionalProcessor;
     type HrmpNewChannelOpenRequestHandler = ();
     type HrmpChannelAcceptedHandler = ();
     type HrmpChannelClosingHandler = ();
+    type XcmEventEmitter = XcmPallet;
 }
 
 /// Type to convert an `Origin` type value into a `Location` value which represents an interior
@@ -266,4 +270,6 @@ impl pallet_xcm::Config for Runtime {
     type RemoteLockConsumerIdentifier = ();
     type WeightInfo = XcmPalletZKVWeight<Runtime>;
     type AdminOrigin = EnsureRoot<AccountId>;
+    // Disable user-driven aliasing - xcm_executor::Config::Aliasers handles alias restrictions
+    type AuthorizedAliasConsideration = Disabled;
 }

@@ -4,6 +4,8 @@ RUN apt-get update -qq \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
       clang \
       lld \
+      llvm \
+      libclang-dev \
       protobuf-compiler \
     && apt-get -y clean \
     && apt-get -y autoclean \

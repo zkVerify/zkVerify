@@ -35,7 +35,7 @@ use tee_verifier::{
     intel_parse_quote, intel_parse_tcb_response, nitro_parse_attestation, TcbResponse,
 };
 
-use codec::{Decode, Encode, MaxEncodedLen};
+use codec::{Decode, DecodeWithMemTracking, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 
 #[pallet_verifiers::verifier]
@@ -51,7 +51,7 @@ pub const MAX_PROOF_LENGTH: u32 = 65536;
 // Max size in bytes of the pubs; this pallet does not need any pubs
 pub const MAX_PUBS_LENGTH: u32 = 0;
 
-#[derive(Clone, Debug, PartialEq, Encode, Decode, TypeInfo)]
+#[derive(Clone, Debug, PartialEq, Encode, Decode, DecodeWithMemTracking, TypeInfo)]
 pub enum Vk {
     Intel {
         tcb_response: Vec<u8>,

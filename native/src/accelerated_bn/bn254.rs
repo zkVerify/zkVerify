@@ -18,6 +18,7 @@
 use crate::accelerated_bn::utils;
 use ark_bn254_ext::CurveHooks;
 use ark_ec::{pairing::Pairing, CurveConfig};
+use sp_runtime_interface::pass_by::{AllocateAndReturnByCodec, PassFatPointerAndRead};
 use sp_runtime_interface::runtime_interface;
 
 pub use ark_bn254_ext::{fq, fq::*, fq12, fq12::*, fq2, fq2::*, fq6, fq6::*, fr, fr::*};
@@ -139,7 +140,10 @@ pub trait HostCalls {
     ///   - `b`: `ArkScale<Vec<G2Affine>>`.
     /// - Returns encoded:  `ArkScale<Bn254::TargetField>`.
     #[allow(clippy::result_unit_err)]
-    fn bn254_multi_miller_loop(a: &[u8], b: &[u8]) -> Result<Vec<u8>, ()> {
+    fn bn254_multi_miller_loop(
+        a: PassFatPointerAndRead<&[u8]>,
+        b: PassFatPointerAndRead<&[u8]>,
+    ) -> AllocateAndReturnByCodec<Result<Vec<u8>, ()>> {
         utils::native::multi_miller_loop::<ark_bn254::Bn254>(a, b)
     }
 
@@ -148,7 +152,9 @@ pub trait HostCalls {
     /// - Receives encoded: `ArkScale<Bn254::TargetField>`.
     /// - Returns encoded:  `ArkScale<Bn254::TargetField>`.
     #[allow(clippy::result_unit_err)]
-    fn bn254_final_exponentiation(f: &[u8]) -> Result<Vec<u8>, ()> {
+    fn bn254_final_exponentiation(
+        f: PassFatPointerAndRead<&[u8]>,
+    ) -> AllocateAndReturnByCodec<Result<Vec<u8>, ()>> {
         utils::native::final_exponentiation::<ark_bn254::Bn254>(f)
     }
 
@@ -159,7 +165,10 @@ pub trait HostCalls {
     ///   - `scalars`: `ArkScale<Vec<G1Config::ScalarField>>`.
     /// - Returns encoded: `ArkScaleProjective<G1Projective>`.
     #[allow(clippy::result_unit_err)]
-    fn bn254_msm_g1(bases: &[u8], scalars: &[u8]) -> Result<Vec<u8>, ()> {
+    fn bn254_msm_g1(
+        bases: PassFatPointerAndRead<&[u8]>,
+        scalars: PassFatPointerAndRead<&[u8]>,
+    ) -> AllocateAndReturnByCodec<Result<Vec<u8>, ()>> {
         utils::native::msm_sw::<ark_bn254::g1::Config>(bases, scalars)
     }
 
@@ -170,7 +179,10 @@ pub trait HostCalls {
     ///   - `scalars`: `ArkScale<Vec<G2Config::ScalarField>>`.
     /// - Returns encoded: `ArkScaleProjective<G2Projective>`.
     #[allow(clippy::result_unit_err)]
-    fn bn254_msm_g2(bases: &[u8], scalars: &[u8]) -> Result<Vec<u8>, ()> {
+    fn bn254_msm_g2(
+        bases: PassFatPointerAndRead<&[u8]>,
+        scalars: PassFatPointerAndRead<&[u8]>,
+    ) -> AllocateAndReturnByCodec<Result<Vec<u8>, ()>> {
         utils::native::msm_sw::<ark_bn254::g2::Config>(bases, scalars)
     }
 
@@ -181,7 +193,10 @@ pub trait HostCalls {
     ///   - `scalar`: `ArkScale<Vec<u64>>`.
     /// - Returns encoded: `ArkScaleProjective<G1Projective>`.
     #[allow(clippy::result_unit_err)]
-    fn bn254_mul_projective_g1(base: &[u8], scalar: &[u8]) -> Result<Vec<u8>, ()> {
+    fn bn254_mul_projective_g1(
+        base: PassFatPointerAndRead<&[u8]>,
+        scalar: PassFatPointerAndRead<&[u8]>,
+    ) -> AllocateAndReturnByCodec<Result<Vec<u8>, ()>> {
         utils::native::mul_projective_sw::<ark_bn254::g1::Config>(base, scalar)
     }
 
@@ -192,7 +207,10 @@ pub trait HostCalls {
     ///   - `scalar`: `ArkScale<Vec<u64>>`.
     /// - Returns encoded: `ArkScaleProjective<ark_bn254::G2Projective>`.
     #[allow(clippy::result_unit_err)]
-    fn bn254_mul_projective_g2(base: &[u8], scalar: &[u8]) -> Result<Vec<u8>, ()> {
+    fn bn254_mul_projective_g2(
+        base: PassFatPointerAndRead<&[u8]>,
+        scalar: PassFatPointerAndRead<&[u8]>,
+    ) -> AllocateAndReturnByCodec<Result<Vec<u8>, ()>> {
         utils::native::mul_projective_sw::<ark_bn254::g2::Config>(base, scalar)
     }
 }

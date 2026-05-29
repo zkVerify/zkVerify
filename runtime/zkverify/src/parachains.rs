@@ -76,7 +76,10 @@ impl initializer::Config for Runtime {
 
 impl disputes::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
-    type RewardValidators = parachains_reward_points::RewardValidatorsWithEraPoints<Runtime>;
+    type RewardValidators = parachains_reward_points::RewardValidatorsWithEraPoints<
+        Runtime,
+        pallet_staking::Pallet<Runtime>,
+    >;
     type SlashingHandler = slashing::SlashValidatorsForDisputes<ParasSlashing>;
     type WeightInfo = weights::parachains::disputes::ZKVWeight<Runtime>;
 }
@@ -142,7 +145,10 @@ impl parachains_session_info::Config for Runtime {
 impl inclusion::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type DisputesHandler = ParasDisputes;
-    type RewardValidators = parachains_reward_points::RewardValidatorsWithEraPoints<Runtime>;
+    type RewardValidators = parachains_reward_points::RewardValidatorsWithEraPoints<
+        Runtime,
+        pallet_staking::Pallet<Runtime>,
+    >;
     type MessageQueue = MessageQueue;
     type WeightInfo = weights::parachains::inclusion::ZKVWeight<Runtime>;
 }
@@ -159,6 +165,12 @@ impl paras::Config for Runtime {
     type OnNewHead = crate::Registrar;
     type WeightInfo = weights::parachains::paras::ZKVWeight<Runtime>;
     type AssignCoretime = ParachainsAssignmentProvider;
+    type Fungible = Balances;
+    #[cfg(not(feature = "runtime-benchmarks"))]
+    type CooldownRemovalMultiplier = sp_core::ConstU128<2>;
+    #[cfg(feature = "runtime-benchmarks")]
+    type CooldownRemovalMultiplier = sp_core::ConstU128<10_000_000_000>;
+    type AuthorizeCurrentCodeOrigin = EnsureRoot<AccountId>;
 }
 
 parameter_types! {
@@ -275,7 +287,6 @@ impl Get<InteriorLocation> for BrokerPot {
 impl coretime::Config for Runtime {
     type RuntimeOrigin = RuntimeOrigin;
     type RuntimeEvent = RuntimeEvent;
-    type Currency = Balances;
     type BrokerId = BrokerId;
     type BrokerPotLocation = BrokerPot;
     type WeightInfo = weights::parachains::coretime::ZKVWeight<Runtime>;
@@ -295,9 +306,6 @@ impl coretime::Config for Runtime {
 pub type Migrations = migrations::Unreleased;
 
 pub mod migrations {
-    #[allow(unused_imports)]
-    use super::*;
-
     /// Unreleased migrations. Add new ones here:
     pub type Unreleased = ();
 }

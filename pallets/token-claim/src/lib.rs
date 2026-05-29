@@ -116,10 +116,7 @@ pub mod pallet {
     pub struct Pallet<T>(_);
 
     #[pallet::config]
-    pub trait Config: frame_system::Config {
-        /// The overarching event type.
-        type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
-
+    pub trait Config: frame_system::Config<RuntimeEvent: From<Event<Self>>> {
         /// The claim's pallet id, used for deriving its sovereign account ID.
         #[pallet::constant]
         type PalletId: Get<PalletId>;
@@ -297,7 +294,7 @@ pub mod pallet {
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
         fn on_initialize(_now: BlockNumberFor<T>) -> Weight {
             let account = Self::account_id();
-            if T::Currency::balance(&account).is_zero() {
+            if !frame_system::Pallet::<T>::account_exists(&account) {
                 // Mint existential deposit
                 let _ = T::Currency::mint_into(&account, T::Currency::minimum_balance());
             }

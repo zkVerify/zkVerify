@@ -214,7 +214,6 @@ mod tests {
     }
 
     impl pallet_verifiers::Config<Ultrahonk<Test>> for Test {
-        type RuntimeEvent = RuntimeEvent;
         type OnProofVerified = ();
         type WeightInfo = crate::UltrahonkWeight<()>;
         type Ticket = HoldConsideration<
