@@ -12,11 +12,7 @@ macro_rules! log {
 /// Identify if the current path is a static or dynamic lib
 pub fn is_dyn_or_static_lib(p: impl AsRef<Path>) -> bool {
     let p = p.as_ref();
-    if let Some((name, ext)) = p
-        .file_name()
-        .and_then(OsStr::to_str)
-        .zip(p.extension())
-    {
+    if let Some((name, ext)) = p.file_name().and_then(OsStr::to_str).zip(p.extension()) {
         (ext == "a" || ext == "so" || ext == "dylib") && name.starts_with("lib")
     } else {
         false
