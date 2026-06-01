@@ -1,64 +1,82 @@
 [package]
 authors.workspace = true
 name = "cumulus-relay-chain-minimal-node"
-version = "0.22.1"
+version = "0.31.0"
 edition.workspace = true
 description = "Minimal node implementation to be used in tandem with RPC or light-client mode."
 license = "GPL-3.0-or-later WITH Classpath-exception-2.0"
+homepage.workspace = true
+repository.workspace = true
 
-[lints]
-workspace = true
+[lints.clippy]
+# Workspace lints (copied from [workspace.lints.clippy])
+all = { level = "allow", priority = 0 }
+correctness = { level = "deny", priority = 1 }
+suspicious = { level = "deny", priority = 1 }
+complexity = { level = "deny", priority = 1 }
+style = { level = "warn", priority = 1 }
+unnecessary_cast = { level = "allow", priority = 2 }
+useless_conversion = { level = "allow", priority = 2 }
+zero-prefixed-literal = { level = "allow", priority = 2 }
+multiple_bound_locations = { level = "allow", priority = 2 }
+# Upstream code suppressions (not part of zkVerify patch changes)
+type_complexity = { level = "allow", priority = 2 }
+too_many_arguments = { level = "allow", priority = 2 }
+extra_unused_type_parameters = { level = "allow", priority = 2 }
 
 [dependencies]
-polkadot-primitives.workspace = true
-polkadot-primitives.default-features = true
-polkadot-core-primitives.workspace = true
-polkadot-core-primitives.default-features = true
-polkadot-overseer.workspace = true
-polkadot-overseer.default-features = true
-polkadot-node-subsystem-util.workspace = true
-polkadot-node-subsystem-util.default-features = true
-polkadot-node-network-protocol.workspace = true
-polkadot-node-network-protocol.default-features = true
-polkadot-network-bridge.workspace = true
-polkadot-network-bridge.default-features = true
-service.workspace = true
-service.default-features = true
-sc-authority-discovery.workspace = true
-sc-authority-discovery.default-features = true
-sc-network.workspace = true
-sc-network.default-features = true
-sc-network-common.workspace = true
-sc-network-common.default-features = true
-sc-service.workspace = true
-sc-service.default-features = true
-sc-client-api.workspace = true
-sc-client-api.default-features = true
-prometheus-endpoint.workspace = true
-prometheus-endpoint.default-features = true
-sc-tracing.workspace = true
-sc-tracing.default-features = true
-sc-utils.workspace = true
-sc-utils.default-features = true
-sp-api.workspace = true
-sp-api.default-features = true
-sp-consensus-babe.workspace = true
-sp-consensus-babe.default-features = true
-sp-consensus.workspace = true
-sp-consensus.default-features = true
-sp-runtime.workspace = true
-sp-runtime.default-features = true
-sp-blockchain.workspace = true
-sp-blockchain.default-features = true
-tokio = { features = ["macros"], workspace = true, default-features = true }
-cumulus-relay-chain-interface.workspace = true
-cumulus-relay-chain-interface.default-features = true
-cumulus-relay-chain-rpc-interface.workspace = true
-cumulus-relay-chain-rpc-interface.default-features = true
-cumulus-primitives-core.workspace = true
+cumulus-client-bootnodes.default-features = true
+cumulus-client-bootnodes.workspace = true
 cumulus-primitives-core.default-features = true
+cumulus-primitives-core.workspace = true
+cumulus-relay-chain-interface.default-features = true
+cumulus-relay-chain-interface.workspace = true
+cumulus-relay-chain-rpc-interface.default-features = true
+cumulus-relay-chain-rpc-interface.workspace = true
+polkadot-core-primitives.default-features = true
+polkadot-core-primitives.workspace = true
+polkadot-network-bridge.default-features = true
+polkadot-network-bridge.workspace = true
+polkadot-node-network-protocol.default-features = true
+polkadot-node-network-protocol.workspace = true
+polkadot-node-subsystem-util.default-features = true
+polkadot-node-subsystem-util.workspace = true
+polkadot-overseer.default-features = true
+polkadot-overseer.workspace = true
+polkadot-primitives.default-features = true
+polkadot-primitives.workspace = true
+# zkVerify customization: use zkv-service instead of polkadot-service
+service.default-features = true
+service.workspace = true
+prometheus-endpoint.default-features = true
+prometheus-endpoint.workspace = true
+sc-authority-discovery.default-features = true
+sc-authority-discovery.workspace = true
+sc-client-api.default-features = true
+sc-client-api.workspace = true
+sc-network.default-features = true
+sc-network.workspace = true
+sc-network-common.default-features = true
+sc-network-common.workspace = true
+sc-service.default-features = true
+sc-service.workspace = true
+sc-tracing.default-features = true
+sc-tracing.workspace = true
+sc-utils.default-features = true
+sc-utils.workspace = true
+sp-api.default-features = true
+sp-api.workspace = true
+sp-blockchain.default-features = true
+sp-blockchain.workspace = true
+sp-consensus.default-features = true
+sp-consensus.workspace = true
+sp-consensus-babe.default-features = true
+sp-consensus-babe.workspace = true
+sp-runtime.default-features = true
+sp-runtime.workspace = true
 
 array-bytes = { workspace = true, default-features = true }
-tracing = { workspace = true, default-features = true }
+async-channel = { workspace = true }
 async-trait = { workspace = true }
 futures = { workspace = true }
+tracing = { workspace = true, default-features = true }

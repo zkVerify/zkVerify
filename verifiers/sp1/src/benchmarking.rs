@@ -164,7 +164,6 @@ mod mock {
     }
 
     impl pallet_verifiers::Config<crate::Sp1<Test>> for Test {
-        type RuntimeEvent = RuntimeEvent;
         type OnProofVerified = ();
         type WeightInfo = crate::Sp1Weight<()>;
         type Ticket = HoldConsideration<

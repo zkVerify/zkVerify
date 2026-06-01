@@ -17,7 +17,7 @@
 //! zkVerify CLI library.
 
 /// Node version **Should be the same of the one in `relay-node/Cargo.toml`**.
-pub const NODE_VERSION: &str = "1.1.0";
+pub const NODE_VERSION: &str = "2.0.0";
 
 use clap::Parser;
 use std::path::PathBuf;
