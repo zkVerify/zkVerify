@@ -25,7 +25,6 @@ use crate::accelerated_bn::utils;
 #[cfg(feature = "std")]
 use crate::VerifyError;
 
-#[cfg(feature = "std")]
 const VESTA16_SRS_SIZE: usize = 1 << 16;
 
 /// Returns the built-in Vesta16 SRS blinding commitment.
@@ -53,7 +52,14 @@ pub fn vesta16_srs_msm(
     extra_bases: &[Vesta],
     extra_scalars: &[Fp],
 ) -> Result<ProjectiveVesta, ()> {
-    if extra_bases.len() != extra_scalars.len() {
+    let srs_len_u32 = srs_len;
+    let srs_len = usize::try_from(srs_len).map_err(|_| ())?;
+    if srs_len == 0
+        || !srs_len.is_power_of_two()
+        || srs_len > VESTA16_SRS_SIZE
+        || g_scalars.len() != srs_len
+        || extra_bases.len() != extra_scalars.len()
+    {
         return Err(());
     }
 
@@ -61,8 +67,13 @@ pub fn vesta16_srs_msm(
     let g_scalars = utils::encode(g_scalars);
     let extra_bases = utils::encode(extra_bases);
     let extra_scalars = utils::encode(extra_scalars);
-    let result =
-        host_calls::vesta16_srs_msm(srs_len, &h_scalar, &g_scalars, &extra_bases, &extra_scalars)?;
+    let result = host_calls::vesta16_srs_msm(
+        srs_len_u32,
+        &h_scalar,
+        &g_scalars,
+        &extra_bases,
+        &extra_scalars,
+    )?;
     utils::decode_proj_sw(&result)
 }
 
@@ -264,7 +275,7 @@ mod native_builtin_srs {
         extra_scalars: &[u8],
     ) -> Result<Vec<u8>, ()> {
         let srs_len = usize::try_from(srs_len).map_err(|_| ())?;
-        if srs_len == 0 || srs_len > VESTA16_SRS_SIZE {
+        if srs_len == 0 || !srs_len.is_power_of_two() || srs_len > VESTA16_SRS_SIZE {
             return Err(());
         }
 
@@ -355,10 +366,10 @@ mod native_builtin_srs {
 
 #[cfg(test)]
 mod tests {
-    use ark_ec::AffineRepr;
-    use ark_ff::{One, Zero};
-
     use super::*;
+    use ark_ec::{AffineRepr, VariableBaseMSM};
+    use ark_ff::{One, Zero};
+    use poly_commitment::{ipa::SRS as IpaSrs, SRS as _};
 
     #[test]
     fn vesta16_lagrange_basis_prefix_returns_requested_prefix() {
@@ -403,6 +414,11 @@ mod tests {
     }
 
     #[test]
+    fn vesta16_srs_msm_rejects_non_power_of_two_length() {
+        assert!(vesta16_srs_msm(3, Fp::zero(), &[Fp::zero(); 3], &[], &[]).is_err());
+    }
+
+    #[test]
     fn vesta16_srs_msm_rejects_mismatched_srs_scalar_length() {
         assert!(vesta16_srs_msm(2, Fp::zero(), &[Fp::zero()], &[], &[]).is_err());
     }
@@ -418,5 +434,36 @@ mod tests {
             prewarm_vesta16_srs(&[9]),
             Err(VerifyError::InvalidVerificationKey)
         );
+    }
+
+    #[test]
+    fn vesta16_srs_msm_matches_direct_srs_msm() {
+        let srs_len = 8;
+        let h_scalar = Fp::from(11_u64);
+        let g_scalars = (0..srs_len)
+            .map(|i| Fp::from((i + 1) as u64))
+            .collect::<Vec<_>>();
+        let extra_bases = vec![Vesta::generator(), Vesta::generator()];
+        let extra_scalars = vec![Fp::from(17_u64), Fp::from(23_u64)];
+
+        let actual = vesta16_srs_msm(
+            srs_len as u32,
+            h_scalar,
+            &g_scalars,
+            &extra_bases,
+            &extra_scalars,
+        )
+        .expect("native SRS MSM succeeds");
+
+        let srs = IpaSrs::<Vesta>::create(VESTA16_SRS_SIZE);
+        let mut bases = vec![srs.h];
+        bases.extend_from_slice(&srs.g[..srs_len]);
+        bases.extend_from_slice(&extra_bases);
+        let mut scalars = vec![h_scalar];
+        scalars.extend_from_slice(&g_scalars);
+        scalars.extend_from_slice(&extra_scalars);
+        let expected = ProjectiveVesta::msm(&bases, &scalars).expect("direct SRS MSM succeeds");
+
+        assert_eq!(actual, expected);
     }
 }

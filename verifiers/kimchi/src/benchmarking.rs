@@ -15,7 +15,9 @@
 
 #![cfg(feature = "runtime-benchmarks")]
 
-use crate::{Config as VerifierConfig, Kimchi as Verifier, KimchiSrsId, Proof, Pubs, Vk, PUB_SIZE};
+use crate::{
+    Config as VerifierConfig, Kimchi as Verifier, KimchiProfileId, Proof, Pubs, Vk, PUB_SIZE,
+};
 use frame_benchmarking::v2::*;
 use frame_system::RawOrigin;
 use pallet_verifiers::traits::Verifier as _;
@@ -34,7 +36,7 @@ const BENCH_PUBS: &[u8] = include_bytes!("resources/generated_65536_pubs_64/pubs
 fn benchmark_data<T: VerifierConfig>() -> (Proof, Vk<T>, Pubs) {
     (
         BENCH_PROOF.to_vec(),
-        Vk::new(BENCH_VERIFIER_INDEX.to_vec(), KimchiSrsId::Vesta16),
+        Vk::new(BENCH_VERIFIER_INDEX.to_vec(), KimchiProfileId::Vesta16),
         decode_pubs(BENCH_PUBS),
     )
 }

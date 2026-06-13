@@ -334,7 +334,7 @@ fn pallet_kimchi_availability() {
 
         let dummy_vk = pallet_kimchi_verifier::Vk::<Runtime>::new(
             vec![0u8],
-            pallet_kimchi_verifier::KimchiSrsId::Vesta16,
+            pallet_kimchi_verifier::KimchiProfileId::Vesta16,
         );
         let dummy_proof = Vec::new();
         let dummy_pubs = Vec::new();

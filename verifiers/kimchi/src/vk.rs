@@ -13,7 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::Config;
+use crate::{
+    profile::{KimchiProfile, Vesta16},
+    Config,
+};
 use alloc::vec::Vec;
 use core::{fmt, marker::PhantomData};
 
@@ -21,26 +24,27 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::pallet_prelude::TypeInfo;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Encode, Decode, TypeInfo, MaxEncodedLen)]
-pub enum KimchiSrsId {
+pub enum KimchiProfileId {
+    /// Canonical bincode-v2 Vesta proof/VK encoding with the fixed Vesta16 SRS.
     Vesta16,
 }
 
-impl KimchiSrsId {
+impl KimchiProfileId {
     pub const fn min_domain_size(self) -> usize {
         match self {
-            Self::Vesta16 => 1 << 10,
+            Self::Vesta16 => Vesta16::MIN_DOMAIN_SIZE,
         }
     }
 
     pub const fn max_poly_size(self) -> usize {
         match self {
-            Self::Vesta16 => 1 << 16,
+            Self::Vesta16 => Vesta16::MAX_DOMAIN_SIZE,
         }
     }
 
     pub const fn max_public_inputs(self) -> usize {
         match self {
-            Self::Vesta16 => 64,
+            Self::Vesta16 => Vesta16::MAX_PUBLIC_INPUTS,
         }
     }
 }
@@ -49,15 +53,15 @@ impl KimchiSrsId {
 #[scale_info(skip_type_params(T))]
 pub struct KimchiVk<T> {
     pub verifier_index_bytes: Vec<u8>,
-    pub srs_id: KimchiSrsId,
+    pub profile: KimchiProfileId,
     _marker: PhantomData<T>,
 }
 
 impl<T> KimchiVk<T> {
-    pub fn new(verifier_index_bytes: Vec<u8>, srs_id: KimchiSrsId) -> Self {
+    pub fn new(verifier_index_bytes: Vec<u8>, profile: KimchiProfileId) -> Self {
         Self {
             verifier_index_bytes,
-            srs_id,
+            profile,
             _marker: PhantomData,
         }
     }
@@ -67,7 +71,7 @@ impl<T> Clone for KimchiVk<T> {
     fn clone(&self) -> Self {
         Self {
             verifier_index_bytes: self.verifier_index_bytes.clone(),
-            srs_id: self.srs_id,
+            profile: self.profile,
             _marker: PhantomData,
         }
     }
@@ -77,14 +81,14 @@ impl<T> fmt::Debug for KimchiVk<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("KimchiVk")
             .field("verifier_index_bytes", &self.verifier_index_bytes)
-            .field("srs_id", &self.srs_id)
+            .field("profile", &self.profile)
             .finish()
     }
 }
 
 impl<T> PartialEq for KimchiVk<T> {
     fn eq(&self, other: &Self) -> bool {
-        self.verifier_index_bytes == other.verifier_index_bytes && self.srs_id == other.srs_id
+        self.verifier_index_bytes == other.verifier_index_bytes && self.profile == other.profile
     }
 }
 
@@ -92,6 +96,6 @@ impl<T: Config> MaxEncodedLen for KimchiVk<T> {
     fn max_encoded_len() -> usize {
         codec::Compact(T::max_vk_size()).encoded_size()
             + T::max_vk_size() as usize
-            + KimchiSrsId::max_encoded_len()
+            + KimchiProfileId::max_encoded_len()
     }
 }

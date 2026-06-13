@@ -12,5 +12,5 @@ exports.PROOF = PROOF;
 exports.PUBS = [];
 exports.VK = {
     verifierIndexBytes: VERIFIER_INDEX,
-    srsId: 'Vesta16',
+    profile: 'Vesta16',
 };

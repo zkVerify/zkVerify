@@ -16,8 +16,8 @@
 #![cfg(feature = "runtime-benchmarks")]
 
 use crate::{
-    Config as VerifierConfig, Fp, Kimchi as Verifier, KimchiSrsId, NativeProof,
-    NativeVerifierIndex, Proof, Pubs, Vk, PUB_SIZE,
+    Config as VerifierConfig, Fp, Kimchi as Verifier, KimchiProfileId, Proof, Pubs, Vesta16Proof,
+    Vesta16VerifierIndex, Vk, PUB_SIZE,
 };
 use alloc::vec::Vec;
 use frame_benchmarking::v2::*;
@@ -40,16 +40,20 @@ const DOMAIN_65536_PUBS_64_VERIFIER_INDEX: &[u8] =
     include_bytes!("resources/generated_65536_pubs_64/verifier_index.bin");
 const DOMAIN_65536_PUBS_64_PUBS: &[u8] =
     include_bytes!("resources/generated_65536_pubs_64/pubs.bin");
+const FOREIGN_FIELD_MUL_PROOF: &[u8] = include_bytes!("resources/foreign_field_mul/proof.bin");
+const FOREIGN_FIELD_MUL_VERIFIER_INDEX: &[u8] =
+    include_bytes!("resources/foreign_field_mul/verifier_index.bin");
+const FOREIGN_FIELD_MUL_PUBS: &[u8] = include_bytes!("resources/foreign_field_mul/pubs.bin");
 
 fn benchmark_data<T: VerifierConfig>(
     proof: &[u8],
     verifier_index: &[u8],
     pubs: &[u8],
-    srs_id: KimchiSrsId,
+    profile: KimchiProfileId,
 ) -> (Proof, Vk<T>, Pubs) {
     (
         proof.to_vec(),
-        Vk::new(verifier_index.to_vec(), srs_id),
+        Vk::new(verifier_index.to_vec(), profile),
         decode_pubs(pubs),
     )
 }
@@ -59,7 +63,7 @@ fn domain_4096_data<T: VerifierConfig>() -> (Proof, Vk<T>, Pubs) {
         DOMAIN_4096_PROOF,
         DOMAIN_4096_VERIFIER_INDEX,
         &[],
-        KimchiSrsId::Vesta16,
+        KimchiProfileId::Vesta16,
     )
 }
 
@@ -68,7 +72,16 @@ fn domain_65536_pubs_64_data<T: VerifierConfig>() -> (Proof, Vk<T>, Pubs) {
         DOMAIN_65536_PUBS_64_PROOF,
         DOMAIN_65536_PUBS_64_VERIFIER_INDEX,
         DOMAIN_65536_PUBS_64_PUBS,
-        KimchiSrsId::Vesta16,
+        KimchiProfileId::Vesta16,
+    )
+}
+
+fn foreign_field_mul_data<T: VerifierConfig>() -> (Proof, Vk<T>, Pubs) {
+    benchmark_data::<T>(
+        FOREIGN_FIELD_MUL_PROOF,
+        FOREIGN_FIELD_MUL_VERIFIER_INDEX,
+        FOREIGN_FIELD_MUL_PUBS,
+        KimchiProfileId::Vesta16,
     )
 }
 
@@ -89,27 +102,42 @@ fn decode_pubs(bytes: &[u8]) -> Pubs {
 
 fn prepared_data<T: VerifierConfig>(
     data: impl FnOnce() -> (Proof, Vk<T>, Pubs),
-) -> (NativeVerifierIndex, NativeProof, Vec<Fp>, ChaCha20Rng) {
+) -> (Vesta16VerifierIndex, Vesta16Proof, Vec<Fp>, ChaCha20Rng) {
     let (raw_proof, vk, raw_pubs) = data();
     let proof = crate::decode_proof(&raw_proof).expect("benchmark proof should decode");
     let public_input =
         crate::decode_public_input(&raw_pubs).expect("benchmark public input should decode");
     let mut verifier_index = crate::decode_vk(&vk).expect("benchmark VK should decode");
-    crate::prepare_verifier_index(&mut verifier_index, vk.srs_id)
+    crate::prepare_verifier_index(&mut verifier_index, vk.profile)
         .expect("benchmark verifier index should prepare");
     let rng = crate::make_rng(&vk, &raw_proof, &raw_pubs);
 
     (verifier_index, proof, public_input, rng)
 }
 
+fn decoded_data<T: VerifierConfig>(
+    data: impl FnOnce() -> (Proof, Vk<T>, Pubs),
+) -> (KimchiProfileId, Vesta16VerifierIndex, Vesta16Proof) {
+    let (raw_proof, vk, _) = data();
+    let proof = crate::decode_proof(&raw_proof).expect("benchmark proof should decode");
+    let verifier_index = crate::decode_vk(&vk).expect("benchmark VK should decode");
+
+    (vk.profile, verifier_index, proof)
+}
+
 fn prepared_domain_4096_data<T: VerifierConfig>(
-) -> (NativeVerifierIndex, NativeProof, Vec<Fp>, ChaCha20Rng) {
+) -> (Vesta16VerifierIndex, Vesta16Proof, Vec<Fp>, ChaCha20Rng) {
     prepared_data(domain_4096_data::<T>)
 }
 
 fn prepared_domain_65536_pubs_64_data<T: VerifierConfig>(
-) -> (NativeVerifierIndex, NativeProof, Vec<Fp>, ChaCha20Rng) {
+) -> (Vesta16VerifierIndex, Vesta16Proof, Vec<Fp>, ChaCha20Rng) {
     prepared_data(domain_65536_pubs_64_data::<T>)
+}
+
+fn prepared_foreign_field_mul_data<T: VerifierConfig>(
+) -> (Vesta16VerifierIndex, Vesta16Proof, Vec<Fp>, ChaCha20Rng) {
+    prepared_data(foreign_field_mul_data::<T>)
 }
 
 #[allow(clippy::multiple_bound_locations)]
@@ -144,6 +172,18 @@ mod benchmarks {
     }
 
     #[benchmark]
+    fn verify_proof_foreign_field_mul() {
+        let (proof, vk, pubs) = foreign_field_mul_data::<T>();
+
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&vk, &proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
     fn decode_proof_domain_4096() {
         let proof = DOMAIN_4096_PROOF;
 
@@ -158,6 +198,18 @@ mod benchmarks {
     #[benchmark]
     fn decode_proof_domain_65536_pubs_64() {
         let proof = DOMAIN_65536_PUBS_64_PROOF;
+
+        let decoded;
+        #[block]
+        {
+            decoded = crate::decode_proof(proof)
+        };
+        assert!(decoded.is_ok());
+    }
+
+    #[benchmark]
+    fn decode_proof_foreign_field_mul() {
+        let proof = FOREIGN_FIELD_MUL_PROOF;
 
         let decoded;
         #[block]
@@ -192,6 +244,18 @@ mod benchmarks {
     }
 
     #[benchmark]
+    fn decode_vk_foreign_field_mul() {
+        let (_, vk, _) = foreign_field_mul_data::<T>();
+
+        let decoded;
+        #[block]
+        {
+            decoded = crate::decode_vk(&vk)
+        };
+        assert!(decoded.is_ok());
+    }
+
+    #[benchmark]
     fn builtin_srs_domain_4096() {
         let (_, vk, _) = domain_4096_data::<T>();
         let verifier_index = crate::decode_vk(&vk).expect("benchmark VK should decode");
@@ -202,7 +266,7 @@ mod benchmarks {
         #[block]
         {
             srs = crate::builtin_srs(
-                vk.srs_id,
+                vk.profile,
                 verifier_index.max_poly_size,
                 domain_size,
                 verifier_index.public,
@@ -222,7 +286,27 @@ mod benchmarks {
         #[block]
         {
             srs = crate::builtin_srs(
-                vk.srs_id,
+                vk.profile,
+                verifier_index.max_poly_size,
+                domain_size,
+                verifier_index.public,
+            )
+        };
+        assert!(srs.is_ok());
+    }
+
+    #[benchmark]
+    fn builtin_srs_foreign_field_mul() {
+        let (_, vk, _) = foreign_field_mul_data::<T>();
+        let verifier_index = crate::decode_vk(&vk).expect("benchmark VK should decode");
+        let domain_size = usize::try_from(verifier_index.domain.size)
+            .expect("benchmark domain size should fit usize");
+
+        let srs;
+        #[block]
+        {
+            srs = crate::builtin_srs(
+                vk.profile,
                 verifier_index.max_poly_size,
                 domain_size,
                 verifier_index.public,
@@ -239,7 +323,7 @@ mod benchmarks {
         let prepared;
         #[block]
         {
-            prepared = crate::prepare_verifier_index(&mut verifier_index, vk.srs_id)
+            prepared = crate::prepare_verifier_index(&mut verifier_index, vk.profile)
         };
         assert!(prepared.is_ok());
     }
@@ -252,16 +336,68 @@ mod benchmarks {
         let prepared;
         #[block]
         {
-            prepared = crate::prepare_verifier_index(&mut verifier_index, vk.srs_id)
+            prepared = crate::prepare_verifier_index(&mut verifier_index, vk.profile)
         };
         assert!(prepared.is_ok());
+    }
+
+    #[benchmark]
+    fn prepare_verifier_index_foreign_field_mul() {
+        let (_, vk, _) = foreign_field_mul_data::<T>();
+        let mut verifier_index = crate::decode_vk(&vk).expect("benchmark VK should decode");
+
+        let prepared;
+        #[block]
+        {
+            prepared = crate::prepare_verifier_index(&mut verifier_index, vk.profile)
+        };
+        assert!(prepared.is_ok());
+    }
+
+    #[benchmark]
+    fn validate_profile_domain_4096() {
+        let (profile, verifier_index, proof) = decoded_data(domain_4096_data::<T>);
+
+        let valid;
+        #[block]
+        {
+            valid = crate::profile::validate_verifier_index(profile, &verifier_index)
+                .and_then(|()| crate::profile::validate_proof(profile, &proof, &verifier_index))
+        };
+        assert!(valid.is_ok());
+    }
+
+    #[benchmark]
+    fn validate_profile_domain_65536_pubs_64() {
+        let (profile, verifier_index, proof) = decoded_data(domain_65536_pubs_64_data::<T>);
+
+        let valid;
+        #[block]
+        {
+            valid = crate::profile::validate_verifier_index(profile, &verifier_index)
+                .and_then(|()| crate::profile::validate_proof(profile, &proof, &verifier_index))
+        };
+        assert!(valid.is_ok());
+    }
+
+    #[benchmark]
+    fn validate_profile_foreign_field_mul() {
+        let (profile, verifier_index, proof) = decoded_data(foreign_field_mul_data::<T>);
+
+        let valid;
+        #[block]
+        {
+            valid = crate::profile::validate_verifier_index(profile, &verifier_index)
+                .and_then(|()| crate::profile::validate_proof(profile, &proof, &verifier_index))
+        };
+        assert!(valid.is_ok());
     }
 
     #[benchmark]
     fn lagrange_basis_domain_4096() {
         let (_, vk, _) = domain_4096_data::<T>();
         let mut verifier_index = crate::decode_vk(&vk).expect("benchmark VK should decode");
-        crate::prepare_verifier_index(&mut verifier_index, vk.srs_id)
+        crate::prepare_verifier_index(&mut verifier_index, vk.profile)
             .expect("benchmark verifier index should prepare");
 
         let basis_len;
@@ -279,7 +415,7 @@ mod benchmarks {
     fn lagrange_basis_domain_65536() {
         let (_, vk, _) = domain_65536_pubs_64_data::<T>();
         let mut verifier_index = crate::decode_vk(&vk).expect("benchmark VK should decode");
-        crate::prepare_verifier_index(&mut verifier_index, vk.srs_id)
+        crate::prepare_verifier_index(&mut verifier_index, vk.profile)
             .expect("benchmark verifier index should prepare");
 
         let basis_len;
@@ -300,7 +436,7 @@ mod benchmarks {
         let r;
         #[block]
         {
-            r = crate::verify_native_proof_with_rng(
+            r = crate::verify_vesta16_proof_with_rng(
                 &verifier_index,
                 &proof,
                 &public_input,
@@ -318,7 +454,24 @@ mod benchmarks {
         let r;
         #[block]
         {
-            r = crate::verify_native_proof_with_rng(
+            r = crate::verify_vesta16_proof_with_rng(
+                &verifier_index,
+                &proof,
+                &public_input,
+                &mut rng,
+            )
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_prepared_foreign_field_mul() {
+        let (verifier_index, proof, public_input, mut rng) = prepared_foreign_field_mul_data::<T>();
+
+        let r;
+        #[block]
+        {
+            r = crate::verify_vesta16_proof_with_rng(
                 &verifier_index,
                 &proof,
                 &public_input,
@@ -341,7 +494,7 @@ mod benchmarks {
         let r;
         #[block]
         {
-            r = crate::verify_native_proof_with_rng(
+            r = crate::verify_vesta16_proof_with_rng(
                 &verifier_index,
                 &proof,
                 &public_input,
@@ -365,7 +518,7 @@ mod benchmarks {
         let r;
         #[block]
         {
-            r = crate::verify_native_proof_with_rng(
+            r = crate::verify_vesta16_proof_with_rng(
                 &verifier_index,
                 &proof,
                 &public_input,

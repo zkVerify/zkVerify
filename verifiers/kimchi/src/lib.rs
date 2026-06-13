@@ -21,6 +21,7 @@ pub mod benchmarking;
 pub mod benchmarking_verify_proof;
 mod builtin_opening;
 mod builtin_srs;
+mod profile;
 mod verifier_should;
 mod vk;
 mod weight;
@@ -60,22 +61,22 @@ use pallet_verifiers::traits::{Verifier, VerifyError};
 use rand_chacha::ChaCha20Rng;
 use rand_core::{CryptoRng, RngCore, SeedableRng};
 
-pub use crate::vk::{KimchiSrsId, KimchiVk as Vk};
+pub use crate::vk::{KimchiProfileId, KimchiVk as Vk};
 pub use crate::weight::WeightInfo;
 pub use crate::weight_verify_proof::WeightInfo as WeightInfoVerifyProof;
 
 pub const PUB_SIZE: usize = 32;
-pub const MAX_BENCHMARKED_DOMAIN_SIZE: usize = 65_536;
 
 pub type Proof = Vec<u8>;
 pub type Pubs = Vec<[u8; PUB_SIZE]>;
 
+use crate::profile::{KimchiProfile, Vesta16};
 use crate::{builtin_opening::BuiltinOpeningProof, builtin_srs::BuiltinSrs};
 
-type NativeOpeningProof = BuiltinOpeningProof;
-type NativeProof = ProverProof<Vesta, NativeOpeningProof, FULL_ROUNDS>;
-type NativeSrs = BuiltinSrs;
-type NativeVerifierIndex = VerifierIndex<FULL_ROUNDS, Vesta, NativeSrs>;
+type Vesta16OpeningProof = BuiltinOpeningProof;
+type Vesta16Proof = ProverProof<Vesta, Vesta16OpeningProof, FULL_ROUNDS>;
+type Vesta16Srs = BuiltinSrs;
+type Vesta16VerifierIndex = VerifierIndex<FULL_ROUNDS, Vesta, Vesta16Srs>;
 
 pub trait Config: 'static {
     /// Maximum number of bytes contained in the proof.
@@ -97,10 +98,6 @@ pub trait Config: 'static {
 
     fn max_vk_size() -> u32 {
         Self::MaxVkSize::get()
-    }
-
-    fn max_verify_proof_weight() -> Weight {
-        Self::WeightInfo::verify_proof_domain_65536_pubs_64()
     }
 }
 
@@ -129,7 +126,7 @@ impl<T: Config> Verifier for Kimchi<T> {
     }
 
     fn verifier_version_hash(_proof: &Self::Proof) -> sp_core::H256 {
-        sp_io::hashing::sha2_256(b"kimchi:v1:builtin-srs").into()
+        sp_io::hashing::sha2_256(b"kimchi:v1:vesta16:bincode2-canonical:builtin-srs").into()
     }
 
     fn verify_proof(
@@ -150,11 +147,18 @@ impl<T: Config> Verifier for Kimchi<T> {
         let proof = decode_proof(raw_proof)?;
         let public_input = decode_public_input(raw_pubs)?;
         let mut verifier_index = decode_vk(vk)?;
-        prepare_verifier_index(&mut verifier_index, vk.srs_id)?;
+        prepare_verifier_index(&mut verifier_index, vk.profile)?;
+        ensure!(
+            raw_pubs.len() == verifier_index.public,
+            VerifyError::InvalidInput
+        );
+        profile::validate_proof(vk.profile, &proof, &verifier_index)
+            .inspect_err(|error| log::debug!("Unsupported Kimchi proof profile: {error:?}"))
+            .map_err(|_| VerifyError::InvalidProofData)?;
         let verify_weight = compute_verify_weight::<T>(&verifier_index);
 
         let mut rng = make_rng(vk, raw_proof, raw_pubs);
-        verify_native_proof_with_rng(&verifier_index, &proof, &public_input, &mut rng)?;
+        verify_vesta16_proof_with_rng(&verifier_index, &proof, &public_input, &mut rng)?;
 
         Ok(Some(verify_weight))
     }
@@ -163,7 +167,7 @@ impl<T: Config> Verifier for Kimchi<T> {
         vk.validate_size()?;
 
         let mut verifier_index = decode_vk(vk)?;
-        prepare_verifier_index(&mut verifier_index, vk.srs_id)
+        prepare_verifier_index(&mut verifier_index, vk.profile)
     }
 
     fn pubs_bytes(pubs: &Self::Pubs) -> Cow<'_, [u8]> {
@@ -176,13 +180,11 @@ impl<T: Config> Verifier for Kimchi<T> {
     }
 }
 
-fn compute_verify_weight<T: Config>(verifier_index: &NativeVerifierIndex) -> Weight {
+fn compute_verify_weight<T: Config>(verifier_index: &Vesta16VerifierIndex) -> Weight {
     if verifier_index.max_poly_size <= 4096 {
         T::WeightInfo::verify_proof_domain_4096()
-    } else if verifier_index.max_poly_size <= MAX_BENCHMARKED_DOMAIN_SIZE {
-        T::WeightInfo::verify_proof_domain_65536_pubs_64()
     } else {
-        T::max_verify_proof_weight()
+        T::WeightInfo::verify_proof_domain_65536_pubs_64()
     }
 }
 
@@ -220,11 +222,18 @@ impl<T: Config, W: WeightInfo> pallet_verifiers::WeightInfo<Kimchi<T>> for Kimch
     }
 }
 
-fn decode_proof(bytes: &[u8]) -> Result<NativeProof, VerifyError> {
-    bincode::serde::decode_from_slice(bytes, bincode::config::standard())
-        .map(|(proof, _)| proof)
+fn decode_proof(bytes: &[u8]) -> Result<Vesta16Proof, VerifyError> {
+    let config = bincode::config::standard().with_limit::<{ Vesta16::MAX_DECODED_PROOF_BYTES }>();
+    let (proof, consumed): (Vesta16Proof, usize) = bincode::serde::decode_from_slice(bytes, config)
         .inspect_err(|error| log::debug!("Cannot decode Kimchi proof bytes: {error}"))
-        .map_err(|_| VerifyError::InvalidProofData)
+        .map_err(|_| VerifyError::InvalidProofData)?;
+    ensure!(consumed == bytes.len(), VerifyError::InvalidProofData);
+    ensure!(
+        bincode::serde::encode_to_vec(&proof, bincode::config::standard())
+            .is_ok_and(|encoded| encoded == bytes),
+        VerifyError::InvalidProofData
+    );
+    Ok(proof)
 }
 
 fn decode_public_input(raw_pubs: &Pubs) -> Result<Vec<Fp>, VerifyError> {
@@ -238,36 +247,48 @@ fn decode_public_input(raw_pubs: &Pubs) -> Result<Vec<Fp>, VerifyError> {
         .collect()
 }
 
-fn decode_vk<T: Config>(vk: &Vk<T>) -> Result<NativeVerifierIndex, VerifyError> {
-    let verifier_index: NativeVerifierIndex =
-        bincode::serde::decode_from_slice(&vk.verifier_index_bytes, bincode::config::standard())
-            .map(|(verifier_index, _)| verifier_index)
+fn decode_vk<T: Config>(vk: &Vk<T>) -> Result<Vesta16VerifierIndex, VerifyError> {
+    let config = bincode::config::standard().with_limit::<{ Vesta16::MAX_DECODED_VK_BYTES }>();
+    let (verifier_index, consumed): (Vesta16VerifierIndex, usize) =
+        bincode::serde::decode_from_slice(&vk.verifier_index_bytes, config)
             .inspect_err(|error| log::debug!("Cannot decode Kimchi verifier index: {error}"))
             .map_err(|_| VerifyError::InvalidVerificationKey)?;
+    ensure!(
+        consumed == vk.verifier_index_bytes.len(),
+        VerifyError::InvalidVerificationKey
+    );
+    ensure!(
+        bincode::serde::encode_to_vec(&verifier_index, bincode::config::standard())
+            .is_ok_and(|encoded| encoded == vk.verifier_index_bytes),
+        VerifyError::InvalidVerificationKey
+    );
 
     Ok(verifier_index)
 }
 
 fn prepare_verifier_index(
-    verifier_index: &mut NativeVerifierIndex,
-    srs_id: KimchiSrsId,
+    verifier_index: &mut Vesta16VerifierIndex,
+    profile: KimchiProfileId,
 ) -> Result<(), VerifyError> {
+    profile::validate_verifier_index(profile, verifier_index)
+        .inspect_err(|error| log::debug!("Unsupported Kimchi verifier index profile: {error:?}"))
+        .map_err(|_| VerifyError::InvalidVerificationKey)?;
     let domain_size = usize::try_from(verifier_index.domain.size)
         .map_err(|_| VerifyError::InvalidVerificationKey)?;
 
     if verifier_index.max_poly_size == 0
         || !verifier_index.max_poly_size.is_power_of_two()
-        || srs_id.max_poly_size() < verifier_index.max_poly_size
-        || domain_size < srs_id.min_domain_size()
+        || profile.max_poly_size() < verifier_index.max_poly_size
+        || domain_size < profile.min_domain_size()
         || verifier_index.max_poly_size < domain_size
-        || srs_id.max_poly_size() < domain_size
-        || srs_id.max_public_inputs() < verifier_index.public
+        || profile.max_poly_size() < domain_size
+        || profile.max_public_inputs() < verifier_index.public
     {
         return Err(VerifyError::InvalidVerificationKey);
     }
 
     verifier_index.srs = builtin_srs(
-        srs_id,
+        profile,
         verifier_index.max_poly_size,
         domain_size,
         verifier_index.public,
@@ -277,12 +298,12 @@ fn prepare_verifier_index(
 }
 
 fn builtin_srs(
-    srs_id: KimchiSrsId,
+    profile: KimchiProfileId,
     max_poly_size: usize,
     domain_size: usize,
     public_inputs: usize,
-) -> Result<Arc<NativeSrs>, VerifyError> {
-    NativeSrs::load(srs_id, max_poly_size, domain_size, public_inputs)
+) -> Result<Arc<Vesta16Srs>, VerifyError> {
+    Vesta16Srs::load(profile, max_poly_size, domain_size, public_inputs)
         .inspect_err(|_| log::debug!("Cannot load built-in Kimchi SRS parameters"))
         .map(Arc::new)
         .map_err(|_| VerifyError::InvalidVerificationKey)
@@ -315,9 +336,9 @@ fn prepare_verifier_index_metadata<Srs>(
     Ok(())
 }
 
-fn verify_native_proof_with_rng<R>(
-    verifier_index: &NativeVerifierIndex,
-    proof: &NativeProof,
+fn verify_vesta16_proof_with_rng<R>(
+    verifier_index: &Vesta16VerifierIndex,
+    proof: &Vesta16Proof,
     public_input: &[Fp],
     rng: &mut R,
 ) -> Result<(), VerifyError>
@@ -331,7 +352,7 @@ where
         Vesta,
         DefaultFqSponge<VestaParameters, PlonkSpongeConstantsKimchi, FULL_ROUNDS>,
         DefaultFrSponge<Fp, PlonkSpongeConstantsKimchi, FULL_ROUNDS>,
-        NativeOpeningProof,
+        Vesta16OpeningProof,
         R,
     >(&group_map, verifier_index, proof, public_input, rng)
     .inspect_err(|error| log::debug!("Kimchi verification failed: {error:?}"))
@@ -377,7 +398,8 @@ fn map_kimchi_verify_error(error: KimchiVerifyError) -> VerifyError {
 fn make_rng<T: Config>(vk: &Vk<T>, proof: &Proof, pubs: &Pubs) -> ChaCha20Rng {
     // Kimchi verification needs RNG input for batch-combination scalars. Hashing
     // the statement material keeps runtime execution deterministic across nodes.
-    let seed = sp_io::hashing::blake2_256(&(vk, proof, pubs).encode());
+    let seed =
+        sp_io::hashing::blake2_256(&(b"kimchi:v1:vesta16:verify-rng", vk, proof, pubs).encode());
     ChaCha20Rng::from_seed(seed)
 }
 

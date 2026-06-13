@@ -1111,7 +1111,7 @@ impl pallet_verifiers::Config<UltraplonkVerifier> for Runtime {
 }
 
 parameter_types! {
-    // Provisional limits for the prepared verifier index + serialized SRS payload.
+    // Consensus limits for the Vesta16 Kimchi verification profile.
     pub const KimchiMaxPubs: u32 = 64;
     pub const KimchiMaxProofSize: u32 = 262_144;
     pub const KimchiMaxVkSize: u32 = 65_536;

@@ -26,11 +26,11 @@ use poly_commitment::{commitment::BlindedCommitment, error::CommitmentError, Pol
 #[cfg(feature = "std")]
 use rand_core::{CryptoRng, RngCore};
 
-use crate::KimchiSrsId;
+use crate::KimchiProfileId;
 
 #[derive(Clone, Debug, Default)]
 pub struct BuiltinSrs {
-    srs_id: Option<KimchiSrsId>,
+    profile: Option<KimchiProfileId>,
     max_poly_size: usize,
     domain_size: usize,
     blinding_commitment: Vesta,
@@ -40,16 +40,18 @@ pub struct BuiltinSrs {
 
 impl BuiltinSrs {
     pub fn load(
-        srs_id: KimchiSrsId,
+        profile: KimchiProfileId,
         max_poly_size: usize,
         domain_size: usize,
         public_inputs: usize,
     ) -> Result<Self, ()> {
         if max_poly_size == 0
-            || max_poly_size > srs_id.max_poly_size()
-            || domain_size < srs_id.min_domain_size()
-            || domain_size > max_poly_size
-            || domain_size > srs_id.max_poly_size()
+            || max_poly_size > profile.max_poly_size()
+            || domain_size < profile.min_domain_size()
+            || max_poly_size < domain_size
+            || !max_poly_size.is_power_of_two()
+            || domain_size > profile.max_poly_size()
+            || public_inputs > profile.max_public_inputs()
         {
             return Err(());
         }
@@ -60,11 +62,11 @@ impl BuiltinSrs {
             .ok_or(())?;
         let count = u32::try_from(public_inputs).map_err(|_| ())?;
 
-        let blinding_commitment = match srs_id {
-            KimchiSrsId::Vesta16 => native::vesta::vesta16_blinding_commitment(),
+        let blinding_commitment = match profile {
+            KimchiProfileId::Vesta16 => native::vesta::vesta16_blinding_commitment(),
         }?;
-        let lagrange_points = match srs_id {
-            KimchiSrsId::Vesta16 => {
+        let lagrange_points = match profile {
+            KimchiProfileId::Vesta16 => {
                 native::vesta::vesta16_lagrange_basis_prefix(domain_log2 as u8, count)
             }
         }?;
@@ -74,7 +76,7 @@ impl BuiltinSrs {
         }
 
         Ok(Self {
-            srs_id: Some(srs_id),
+            profile: Some(profile),
             max_poly_size,
             domain_size,
             blinding_commitment,
@@ -86,8 +88,8 @@ impl BuiltinSrs {
         })
     }
 
-    pub const fn srs_id(&self) -> Option<KimchiSrsId> {
-        self.srs_id
+    pub const fn profile(&self) -> Option<KimchiProfileId> {
+        self.profile
     }
 
     #[cfg(feature = "std")]

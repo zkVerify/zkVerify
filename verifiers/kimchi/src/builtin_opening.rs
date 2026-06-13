@@ -42,18 +42,24 @@ use crate::builtin_srs::BuiltinSrs;
 #[serde(transparent)]
 pub struct BuiltinOpeningProof(OpeningProof<Vesta, FULL_ROUNDS>);
 
-#[cfg(test)]
 impl BuiltinOpeningProof {
+    pub(crate) fn rounds(&self) -> usize {
+        self.0.lr.len()
+    }
+
+    #[cfg(test)]
     pub(crate) fn clear_rounds_for_test(&mut self) {
         self.0.lr.clear();
     }
 
+    #[cfg(test)]
     pub(crate) fn duplicate_round_for_test(&mut self) {
         if let Some(round) = self.0.lr.last().copied() {
             self.0.lr.push(round);
         }
     }
 
+    #[cfg(test)]
     pub(crate) fn corrupt_z1_for_test(&mut self) {
         self.0.z1 += Fp::one();
     }
@@ -211,8 +217,8 @@ where
     let Ok(srs_len) = u32::try_from(srs_len) else {
         return false;
     };
-    let result = match srs.srs_id() {
-        Some(crate::KimchiSrsId::Vesta16) => native::vesta::vesta16_srs_msm(
+    let result = match srs.profile() {
+        Some(crate::KimchiProfileId::Vesta16) => native::vesta::vesta16_srs_msm(
             srs_len,
             h_scalar,
             &g_scalars,

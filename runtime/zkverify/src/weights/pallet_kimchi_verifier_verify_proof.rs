@@ -65,7 +65,7 @@ impl<T: frame_system::Config> pallet_kimchi_verifier_verify_proof::WeightInfo fo
         //  Measured:  `0`
         //  Estimated: `0`
         // Minimum execution time: 15_495_000_000 picoseconds.
-        // Includes a 25% margin for accepted optional Kimchi gate combinations.
+        // Includes a 25% margin over the strict Vesta16 profile benchmark.
         Weight::from_parts(19_798_000_000, 0)
     }
 
@@ -74,7 +74,7 @@ impl<T: frame_system::Config> pallet_kimchi_verifier_verify_proof::WeightInfo fo
         //  Measured:  `0`
         //  Estimated: `0`
         // Minimum execution time: 56_800_000_000 picoseconds.
-        // Includes a 25% margin for accepted optional Kimchi gate combinations.
+        // Includes a 25% margin over the strict Vesta16 profile benchmark.
         Weight::from_parts(74_082_000_000, 0)
     }
 }
