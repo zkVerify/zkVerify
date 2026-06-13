@@ -1,4 +1,4 @@
-// Copyright 2024-2026, Horizen Labs, Inc.
+// Copyright 2026, Horizen Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,11 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#![warn(missing_docs)]
+//! Native acceleration for Pasta curves.
 
-pub mod bn254;
-
-pub(crate) mod utils;
-
-#[cfg(test)]
-mod test_utils;
+pub mod vesta;

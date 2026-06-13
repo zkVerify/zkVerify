@@ -76,7 +76,12 @@ pub use {
     sp_consensus_babe::BabeApi,
 };
 
-use std::{collections::HashMap, path::PathBuf, sync::Arc, time::Duration};
+use std::{
+    collections::HashMap,
+    path::PathBuf,
+    sync::Arc,
+    time::{Duration, Instant},
+};
 
 use prometheus_endpoint::Registry;
 pub use sc_service as service;
@@ -242,6 +247,9 @@ pub enum Error {
         node_version: String,
         worker_path: PathBuf,
     },
+
+    #[error("Failed to prewarm Kimchi native verifier parameters: {0:?}")]
+    KimchiNativePrewarm(native::VerifyError),
 }
 
 /// Identifies the variant of the chain.
@@ -684,6 +692,22 @@ pub const AVAILABILITY_CONFIG: AvailabilityConfig = AvailabilityConfig {
     col_meta: parachains_db::REAL_COLUMNS.col_availability_meta,
 };
 
+/// Prepare all consensus-supported native verifier parameters before block execution.
+pub fn prewarm_native_verifier_parameters() -> Result<(), Error> {
+    const KIMCHI_DOMAIN_LOG2_SIZES: &[u8] = &[10, 11, 12, 13, 14, 15, 16];
+
+    let started_at = Instant::now();
+    log::info!("Prewarming Kimchi native verifier parameters for Vesta SRS 2^16");
+    native::vesta::prewarm_vesta16_srs(KIMCHI_DOMAIN_LOG2_SIZES)
+        .map_err(Error::KimchiNativePrewarm)?;
+    log::info!(
+        "Prewarmed Kimchi native verifier parameters in {:?}",
+        started_at.elapsed()
+    );
+
+    Ok(())
+}
+
 /// Create a new full node of arbitrary runtime and executor.
 ///
 /// This is an advanced feature and not recommended for general use. Generally, `build_full` is
@@ -728,6 +752,8 @@ pub fn new_full<
 
     let disable_grandpa = config.disable_grandpa;
     let name = config.network.node_name.clone();
+
+    prewarm_native_verifier_parameters()?;
 
     let basics = new_partial_basics(&mut config, telemetry_worker_handle)?;
 
@@ -1272,6 +1298,7 @@ macro_rules! chain_ops {
     ($config:expr, $telemetry_worker_handle:expr) => {{
         let telemetry_worker_handle = $telemetry_worker_handle;
         let mut config = $config;
+        prewarm_native_verifier_parameters()?;
         let basics = new_partial_basics(config, telemetry_worker_handle)?;
 
         use ::sc_consensus::LongestChain;

@@ -332,7 +332,10 @@ fn pallet_kimchi_availability() {
     test().execute_with(|| {
         let dummy_origin = AccountId32::new([0; 32]);
 
-        let dummy_vk = pallet_kimchi_verifier::Vk::<Runtime>::new(vec![0u8], vec![0u8]);
+        let dummy_vk = pallet_kimchi_verifier::Vk::<Runtime>::new(
+            vec![0u8],
+            pallet_kimchi_verifier::KimchiSrsId::Vesta16,
+        );
         let dummy_proof = Vec::new();
         let dummy_pubs = Vec::new();
 

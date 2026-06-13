@@ -7,11 +7,10 @@ function readHex(...parts) {
 
 const PROOF = readHex('verifiers', 'kimchi', 'src', 'resources', 'generated_4096', 'proof.bin');
 const VERIFIER_INDEX = readHex('verifiers', 'kimchi', 'src', 'resources', 'generated_4096', 'verifier_index.bin');
-const SRS = readHex('verifiers', 'kimchi', 'src', 'resources', 'generated_4096', 'srs.bin');
 
 exports.PROOF = PROOF;
 exports.PUBS = [];
 exports.VK = {
     verifierIndexBytes: VERIFIER_INDEX,
-    srsBytes: SRS,
+    srsId: 'Vesta16',
 };

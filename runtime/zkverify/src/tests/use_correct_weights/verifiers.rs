@@ -148,7 +148,7 @@ fn pallet_settlement_plonky2() {
 
 #[test]
 fn pallet_settlement_kimchi() {
-    use pallet_kimchi_verifier::{Kimchi, Vk, WeightInfo};
+    use pallet_kimchi_verifier::{Kimchi, KimchiSrsId, Vk, WeightInfo};
 
     let proof = Vec::<u8>::new();
     let pubs = Vec::<[u8; pallet_kimchi_verifier::PUB_SIZE]>::new();
@@ -167,7 +167,7 @@ fn pallet_settlement_kimchi() {
         <<Runtime as pallet_verifiers::Config<Kimchi<Runtime>>>::WeightInfo as
         pallet_verifiers::WeightInfo<Kimchi<Runtime>>>
         ::register_vk(
-            &Vk::new(Vec::new(), Vec::new())
+            &Vk::new(Vec::new(), KimchiSrsId::Vesta16)
         ),
         crate::weights::pallet_kimchi_verifier::ZKVWeight::<Runtime>::register_vk()
     );

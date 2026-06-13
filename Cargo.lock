@@ -7889,9 +7889,12 @@ dependencies = [
  "ark-ff 0.5.0",
  "ark-scale",
  "bincode 1.3.3",
+ "blake2 0.10.6",
  "hp-groth16",
  "log",
+ "mina-curves",
  "parity-scale-codec",
+ "poly-commitment",
  "risc0-verifier",
  "sp-runtime-interface",
  "verifiers-traits",
@@ -9264,6 +9267,7 @@ name = "pallet-kimchi-verifier"
 version = "0.1.0"
 dependencies = [
  "ark-ff 0.5.0",
+ "ark-poly 0.5.0",
  "ark-serialize 0.5.0",
  "bincode 2.0.1",
  "frame-benchmarking",
@@ -9274,6 +9278,7 @@ dependencies = [
  "log",
  "mina-curves",
  "mina-poseidon",
+ "native",
  "pallet-balances",
  "pallet-verifiers",
  "parity-scale-codec",

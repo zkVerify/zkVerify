@@ -18,6 +18,7 @@ use frame_support::weights::Weight;
 /// Weight functions needed for `pallet_kimchi_verifier_verify_proof`.
 pub trait WeightInfo {
     fn verify_proof_domain_4096() -> Weight;
+    fn verify_proof_domain_65536_pubs_64() -> Weight;
 }
 
 // For backwards compatibility and tests.
@@ -26,7 +27,15 @@ impl WeightInfo for () {
         // Proof Size summary in bytes:
         //  Measured:  `0`
         //  Estimated: `0`
-        // Minimum execution time: 4_291_078_000_000 picoseconds.
-        Weight::from_parts(4_307_497_000_000, 0)
+        // Minimum execution time: 15_495_000_000 picoseconds.
+        Weight::from_parts(19_798_000_000, 0)
+    }
+
+    fn verify_proof_domain_65536_pubs_64() -> Weight {
+        // Proof Size summary in bytes:
+        //  Measured:  `0`
+        //  Estimated: `0`
+        // Minimum execution time: 56_800_000_000 picoseconds.
+        Weight::from_parts(74_082_000_000, 0)
     }
 }

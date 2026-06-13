@@ -15,8 +15,7 @@
 
 #![cfg(feature = "runtime-benchmarks")]
 
-use crate::{Config as VerifierConfig, Kimchi as Verifier, Proof, Pubs, Vk};
-use alloc::vec::Vec;
+use crate::{Config as VerifierConfig, Kimchi as Verifier, KimchiSrsId, Proof, Pubs, Vk, PUB_SIZE};
 use frame_benchmarking::v2::*;
 use frame_system::RawOrigin;
 use pallet_verifiers::traits::Verifier as _;
@@ -27,18 +26,32 @@ pub struct Pallet<T: Config>(crate::Pallet<T>);
 impl<T: crate::Config> Config for T {}
 pub type Call<T> = pallet_verifiers::Call<T, Verifier<T>>;
 
-// Generated from a valid generic Kimchi circuit with domain size 4096 so the
-// serialized SRS stays within the runtime's current MaxSrsSize bound.
-const BENCH_PROOF: &[u8] = include_bytes!("resources/generated_4096/proof.bin");
-const BENCH_VERIFIER_INDEX: &[u8] = include_bytes!("resources/generated_4096/verifier_index.bin");
-const BENCH_SRS: &[u8] = include_bytes!("resources/generated_4096/srs.bin");
+const BENCH_PROOF: &[u8] = include_bytes!("resources/generated_65536_pubs_64/proof.bin");
+const BENCH_VERIFIER_INDEX: &[u8] =
+    include_bytes!("resources/generated_65536_pubs_64/verifier_index.bin");
+const BENCH_PUBS: &[u8] = include_bytes!("resources/generated_65536_pubs_64/pubs.bin");
 
 fn benchmark_data<T: VerifierConfig>() -> (Proof, Vk<T>, Pubs) {
     (
         BENCH_PROOF.to_vec(),
-        Vk::new(BENCH_VERIFIER_INDEX.to_vec(), BENCH_SRS.to_vec()),
-        Vec::new(),
+        Vk::new(BENCH_VERIFIER_INDEX.to_vec(), KimchiSrsId::Vesta16),
+        decode_pubs(BENCH_PUBS),
     )
+}
+
+fn decode_pubs(bytes: &[u8]) -> Pubs {
+    assert!(
+        bytes.len().is_multiple_of(PUB_SIZE),
+        "Kimchi public input fixture must be a sequence of {PUB_SIZE}-byte fields"
+    );
+    bytes
+        .chunks_exact(PUB_SIZE)
+        .map(|chunk| {
+            chunk
+                .try_into()
+                .expect("chunks_exact always returns PUB_SIZE bytes")
+        })
+        .collect()
 }
 
 #[allow(clippy::multiple_bound_locations)]
@@ -152,7 +165,6 @@ mod mock {
         type MaxProofSize = ConstU32<262144>;
         type MaxPubs = ConstU32<64>;
         type MaxVkSize = ConstU32<65536>;
-        type MaxSrsSize = ConstU32<262144>;
         type WeightInfo = ();
     }
 

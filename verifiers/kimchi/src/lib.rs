@@ -19,6 +19,8 @@ extern crate alloc;
 
 pub mod benchmarking;
 pub mod benchmarking_verify_proof;
+mod builtin_opening;
+mod builtin_srs;
 mod verifier_should;
 mod vk;
 mod weight;
@@ -55,26 +57,24 @@ use mina_poseidon::{
     sponge::{DefaultFqSponge, DefaultFrSponge},
 };
 use pallet_verifiers::traits::{Verifier, VerifyError};
-use poly_commitment::{
-    ipa::{OpeningProof, SRS as IpaSrs},
-    SRS as SrsTrait,
-};
 use rand_chacha::ChaCha20Rng;
 use rand_core::{CryptoRng, RngCore, SeedableRng};
 
-pub use crate::vk::KimchiVk as Vk;
+pub use crate::vk::{KimchiSrsId, KimchiVk as Vk};
 pub use crate::weight::WeightInfo;
 pub use crate::weight_verify_proof::WeightInfo as WeightInfoVerifyProof;
 
 pub const PUB_SIZE: usize = 32;
-pub const MAX_BENCHMARKED_DOMAIN_SIZE: usize = 4096;
+pub const MAX_BENCHMARKED_DOMAIN_SIZE: usize = 65_536;
 
 pub type Proof = Vec<u8>;
 pub type Pubs = Vec<[u8; PUB_SIZE]>;
 
-type NativeOpeningProof = OpeningProof<Vesta, FULL_ROUNDS>;
+use crate::{builtin_opening::BuiltinOpeningProof, builtin_srs::BuiltinSrs};
+
+type NativeOpeningProof = BuiltinOpeningProof;
 type NativeProof = ProverProof<Vesta, NativeOpeningProof, FULL_ROUNDS>;
-type NativeSrs = IpaSrs<Vesta>;
+type NativeSrs = BuiltinSrs;
 type NativeVerifierIndex = VerifierIndex<FULL_ROUNDS, Vesta, NativeSrs>;
 
 pub trait Config: 'static {
@@ -84,8 +84,6 @@ pub trait Config: 'static {
     type MaxPubs: frame_support::traits::Get<u32>;
     /// Maximum number of bytes contained in the verifier index payload.
     type MaxVkSize: frame_support::traits::Get<u32>;
-    /// Maximum number of bytes contained in the serialized SRS payload.
-    type MaxSrsSize: frame_support::traits::Get<u32>;
     /// Parameterized weights for Kimchi proof verification.
     type WeightInfo: WeightInfoVerifyProof;
 
@@ -101,12 +99,8 @@ pub trait Config: 'static {
         Self::MaxVkSize::get()
     }
 
-    fn max_srs_size() -> u32 {
-        Self::MaxSrsSize::get()
-    }
-
     fn max_verify_proof_weight() -> Weight {
-        Self::WeightInfo::verify_proof_domain_4096()
+        Self::WeightInfo::verify_proof_domain_65536_pubs_64()
     }
 }
 
@@ -115,10 +109,6 @@ impl<T: Config> Vk<T> {
         if self.verifier_index_bytes.is_empty()
             || self.verifier_index_bytes.len() > T::max_vk_size() as usize
         {
-            return Err(VerifyError::InvalidVerificationKey);
-        }
-
-        if self.srs_bytes.is_empty() || self.srs_bytes.len() > T::max_srs_size() as usize {
             return Err(VerifyError::InvalidVerificationKey);
         }
 
@@ -138,6 +128,10 @@ impl<T: Config> Verifier for Kimchi<T> {
         b"kimchi"
     }
 
+    fn verifier_version_hash(_proof: &Self::Proof) -> sp_core::H256 {
+        sp_io::hashing::sha2_256(b"kimchi:v1:builtin-srs").into()
+    }
+
     fn verify_proof(
         vk: &Self::Vk,
         raw_proof: &Self::Proof,
@@ -155,8 +149,8 @@ impl<T: Config> Verifier for Kimchi<T> {
 
         let proof = decode_proof(raw_proof)?;
         let public_input = decode_public_input(raw_pubs)?;
-        let (mut verifier_index, srs) = decode_vk(vk)?;
-        prepare_verifier_index(&mut verifier_index, srs)?;
+        let mut verifier_index = decode_vk(vk)?;
+        prepare_verifier_index(&mut verifier_index, vk.srs_id)?;
         let verify_weight = compute_verify_weight::<T>(&verifier_index);
 
         let mut rng = make_rng(vk, raw_proof, raw_pubs);
@@ -168,8 +162,8 @@ impl<T: Config> Verifier for Kimchi<T> {
     fn validate_vk(vk: &Self::Vk) -> Result<(), VerifyError> {
         vk.validate_size()?;
 
-        let (mut verifier_index, srs) = decode_vk(vk)?;
-        prepare_verifier_index(&mut verifier_index, srs)
+        let mut verifier_index = decode_vk(vk)?;
+        prepare_verifier_index(&mut verifier_index, vk.srs_id)
     }
 
     fn pubs_bytes(pubs: &Self::Pubs) -> Cow<'_, [u8]> {
@@ -183,8 +177,10 @@ impl<T: Config> Verifier for Kimchi<T> {
 }
 
 fn compute_verify_weight<T: Config>(verifier_index: &NativeVerifierIndex) -> Weight {
-    if verifier_index.max_poly_size <= MAX_BENCHMARKED_DOMAIN_SIZE {
+    if verifier_index.max_poly_size <= 4096 {
         T::WeightInfo::verify_proof_domain_4096()
+    } else if verifier_index.max_poly_size <= MAX_BENCHMARKED_DOMAIN_SIZE {
+        T::WeightInfo::verify_proof_domain_65536_pubs_64()
     } else {
         T::max_verify_proof_weight()
     }
@@ -242,36 +238,65 @@ fn decode_public_input(raw_pubs: &Pubs) -> Result<Vec<Fp>, VerifyError> {
         .collect()
 }
 
-fn decode_vk<T: Config>(vk: &Vk<T>) -> Result<(NativeVerifierIndex, Arc<NativeSrs>), VerifyError> {
+fn decode_vk<T: Config>(vk: &Vk<T>) -> Result<NativeVerifierIndex, VerifyError> {
     let verifier_index: NativeVerifierIndex =
         bincode::serde::decode_from_slice(&vk.verifier_index_bytes, bincode::config::standard())
             .map(|(verifier_index, _)| verifier_index)
             .inspect_err(|error| log::debug!("Cannot decode Kimchi verifier index: {error}"))
             .map_err(|_| VerifyError::InvalidVerificationKey)?;
-    let srs: NativeSrs =
-        bincode::serde::decode_from_slice(&vk.srs_bytes, bincode::config::standard())
-            .map(|(srs, _)| srs)
-            .inspect_err(|error| log::debug!("Cannot decode Kimchi SRS: {error}"))
-            .map_err(|_| VerifyError::InvalidVerificationKey)?;
 
-    Ok((verifier_index, Arc::new(srs)))
+    Ok(verifier_index)
 }
 
 fn prepare_verifier_index(
     verifier_index: &mut NativeVerifierIndex,
-    srs: Arc<NativeSrs>,
+    srs_id: KimchiSrsId,
 ) -> Result<(), VerifyError> {
-    if srs.max_poly_size() < verifier_index.max_poly_size {
+    let domain_size = usize::try_from(verifier_index.domain.size)
+        .map_err(|_| VerifyError::InvalidVerificationKey)?;
+
+    if verifier_index.max_poly_size == 0
+        || !verifier_index.max_poly_size.is_power_of_two()
+        || srs_id.max_poly_size() < verifier_index.max_poly_size
+        || domain_size < srs_id.min_domain_size()
+        || verifier_index.max_poly_size < domain_size
+        || srs_id.max_poly_size() < domain_size
+        || srs_id.max_public_inputs() < verifier_index.public
+    {
         return Err(VerifyError::InvalidVerificationKey);
     }
 
+    verifier_index.srs = builtin_srs(
+        srs_id,
+        verifier_index.max_poly_size,
+        domain_size,
+        verifier_index.public,
+    )?;
+
+    prepare_verifier_index_metadata(verifier_index)
+}
+
+fn builtin_srs(
+    srs_id: KimchiSrsId,
+    max_poly_size: usize,
+    domain_size: usize,
+    public_inputs: usize,
+) -> Result<Arc<NativeSrs>, VerifyError> {
+    NativeSrs::load(srs_id, max_poly_size, domain_size, public_inputs)
+        .inspect_err(|_| log::debug!("Cannot load built-in Kimchi SRS parameters"))
+        .map(Arc::new)
+        .map_err(|_| VerifyError::InvalidVerificationKey)
+}
+
+fn prepare_verifier_index_metadata<Srs>(
+    verifier_index: &mut VerifierIndex<FULL_ROUNDS, Vesta, Srs>,
+) -> Result<(), VerifyError> {
     let feature_flags = compute_feature_flags(verifier_index);
     let (linearization, powers_of_alpha) = expr_linearization(Some(&feature_flags), true);
     let (endo_q, _endo_r) = poly_commitment::ipa::endos::<Pallas>();
     let domain = verifier_index.domain;
     let zk_rows = verifier_index.zk_rows;
 
-    verifier_index.srs = srs;
     verifier_index.endo = endo_q;
     verifier_index.linearization = linearization;
     verifier_index.powers_of_alpha = powers_of_alpha;
@@ -356,7 +381,9 @@ fn make_rng<T: Config>(vk: &Vk<T>, proof: &Proof, pubs: &Pubs) -> ChaCha20Rng {
     ChaCha20Rng::from_seed(seed)
 }
 
-fn compute_feature_flags(verifier_index: &NativeVerifierIndex) -> FeatureFlags {
+fn compute_feature_flags<Srs>(
+    verifier_index: &VerifierIndex<FULL_ROUNDS, Vesta, Srs>,
+) -> FeatureFlags {
     let xor = verifier_index.xor_comm.is_some();
     let range_check0 = verifier_index.range_check0_comm.is_some();
     let range_check1 = verifier_index.range_check1_comm.is_some();
