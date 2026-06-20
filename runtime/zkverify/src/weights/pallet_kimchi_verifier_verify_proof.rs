@@ -24,7 +24,7 @@
 //! Kimchi verification uses benchmark-informed formula weights. The domain base
 //! tiers below come from benchmark measurements with guard margins; the
 //! public-input coefficient is derived from `#[benchmark(extra)]` scaling probes
-//! and rounded up for the production formula.
+//! and rounded up to a flat, chunk-independent production coefficient.
 
 // Executed Command:
 // ./target/release/zkv-relay
@@ -103,9 +103,10 @@ impl<T: frame_system::Config> pallet_kimchi_verifier_verify_proof::WeightInfo fo
     }
 
     fn verify_proof_public_input() -> Weight {
-        // Per-public-input, per-chunk slope.
-        // Local benchmark slopes are about 7.5 us/chunk/public input, rounded
-        // up to 10 us for the production formula.
-        Weight::from_parts(10_000_000, 0)
+        // Flat per-public-input coefficient. Local benchmarks show about
+        // 7.5 us/chunk/public input; 50 us/public input covers the supported
+        // four-chunk maximum with margin and keeps the production formula
+        // chunk-independent.
+        Weight::from_parts(50_000_000, 0)
     }
 }

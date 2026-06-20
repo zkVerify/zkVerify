@@ -654,7 +654,7 @@ mod benchmarks {
     }
 
     // Public-input variants are coefficient probes. The production WeightInfo
-    // exposes a single per-input slope, so these must not be emitted by the
+    // exposes a single per-input coefficient, so these must not be emitted by the
     // default weight-generation pass.
     #[benchmark(extra)]
     fn verify_proof_domain_4096_pubs_64() {
@@ -1057,7 +1057,7 @@ mod benchmarks {
     }
 
     #[benchmark(extra)]
-    fn reject_public_input_count_mismatch_after_prepare() {
+    fn reject_public_input_count_mismatch_before_prepare() {
         let (proof, vk, _) = domain_262144_pubs_64_data::<T>();
         let pubs = Vec::new();
 

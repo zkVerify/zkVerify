@@ -203,8 +203,7 @@ fn pallet_settlement_kimchi_verify_proof() {
         )
         .saturating_add(
             <Runtime as pallet_kimchi_verifier::Config>::WeightInfo::verify_proof_public_input()
-                .saturating_mul(1024)
-                .saturating_mul(4),
+                .saturating_mul(1024),
         );
     assert!(
         crate::weights::pallet_kimchi_verifier::ZKVWeight::<Runtime>::verify_proof().ref_time()

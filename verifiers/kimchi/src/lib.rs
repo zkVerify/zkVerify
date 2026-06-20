@@ -198,7 +198,7 @@ fn compute_verify_weight<T: Config>(verifier_index: &Vesta16VerifierIndex) -> We
         T::WeightInfo::verify_proof_domain_262144_pubs_0()
     };
 
-    base.saturating_add(public_input_weight::<T>(verifier_index.public, num_chunks))
+    base.saturating_add(public_input_weight::<T>(verifier_index.public))
 }
 
 fn is_small_domain_weight_eligible(
@@ -222,12 +222,9 @@ fn has_optional_features(verifier_index: &Vesta16VerifierIndex) -> bool {
         || verifier_index.lookup_index.is_some()
 }
 
-fn public_input_weight<T: Config>(public_inputs: usize, num_chunks: usize) -> Weight {
+fn public_input_weight<T: Config>(public_inputs: usize) -> Weight {
     let public_inputs = u64::try_from(public_inputs).unwrap_or(u64::MAX);
-    let num_chunks = u64::try_from(num_chunks).unwrap_or(u64::MAX).max(1);
-    T::WeightInfo::verify_proof_public_input()
-        .saturating_mul(public_inputs)
-        .saturating_mul(num_chunks)
+    T::WeightInfo::verify_proof_public_input().saturating_mul(public_inputs)
 }
 
 pub struct KimchiWeight<W: WeightInfo>(PhantomData<W>);

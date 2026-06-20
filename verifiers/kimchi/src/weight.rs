@@ -28,8 +28,8 @@ pub trait WeightInfo {
 impl WeightInfo for () {
     fn verify_proof() -> Weight {
         // Static upper bound for the Kimchi verification formula:
-        // 176ms four-chunk base + 1024 public inputs * 4 chunks * 10us.
-        Weight::from_parts(216_960_000_000, 0)
+        // 176ms four-chunk base + 1024 public inputs * 50us.
+        Weight::from_parts(227_200_000_000, 0)
     }
 
     fn get_vk() -> Weight {

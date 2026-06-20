@@ -72,8 +72,8 @@ impl<T: frame_system::Config> pallet_kimchi_verifier::WeightInfo for ZKVWeight<T
         //  Estimated: `0`
         // Minimum execution time: 170_488_000_000 picoseconds.
         // Static upper bound for post-dispatch Kimchi verification formula:
-        // 176ms four-chunk base + 1024 public inputs * 4 chunks * 10us.
-        Weight::from_parts(216_960_000_000, 0)
+        // 176ms four-chunk base + 1024 public inputs * 50us.
+        Weight::from_parts(227_200_000_000, 0)
     }
     /// Storage: `SettlementKimchiPallet::Vks` (r:1 w:0)
     /// Proof: `SettlementKimchiPallet::Vks` (`max_values`: None, `max_size`: Some(65581), added: 68056, mode: `MaxEncodedLen`)

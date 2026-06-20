@@ -21,7 +21,7 @@ pub trait WeightInfo {
     fn verify_proof_domain_65536_pubs_0() -> Weight;
     fn verify_proof_domain_131072_pubs_0() -> Weight;
     fn verify_proof_domain_262144_pubs_0() -> Weight;
-    /// Per-public-input, per-chunk formula coefficient derived from the
+    /// Per-public-input formula coefficient derived from the
     /// `#[benchmark(extra)]` public-input scaling probes.
     fn verify_proof_public_input() -> Weight;
 }
@@ -66,9 +66,10 @@ impl WeightInfo for () {
     }
 
     fn verify_proof_public_input() -> Weight {
-        // Per-public-input, per-chunk slope.
-        // Local benchmark slopes are about 7.5 us/chunk/public input, rounded
-        // up to 10 us for the production formula.
-        Weight::from_parts(10_000_000, 0)
+        // Flat per-public-input coefficient. Local benchmarks show about
+        // 7.5 us/chunk/public input; 50 us/public input covers the supported
+        // four-chunk maximum with margin and keeps the production formula
+        // chunk-independent.
+        Weight::from_parts(50_000_000, 0)
     }
 }

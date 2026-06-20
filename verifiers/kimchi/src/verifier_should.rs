@@ -51,11 +51,9 @@ fn dummy_vk() -> Vk<MockConfig> {
     Vk::new(vec![1_u8, 2, 3], KimchiProfileId::Vesta16)
 }
 
-fn add_public_inputs(weight: Weight, public_inputs: u64, num_chunks: u64) -> Weight {
+fn add_public_inputs(weight: Weight, public_inputs: u64) -> Weight {
     weight.saturating_add(
-        <() as WeightInfoVerifyProof>::verify_proof_public_input()
-            .saturating_mul(public_inputs)
-            .saturating_mul(num_chunks),
+        <() as WeightInfoVerifyProof>::verify_proof_public_input().saturating_mul(public_inputs),
     )
 }
 
@@ -82,8 +80,7 @@ fn two_chunk_profile_uses_upper_verification_weight() {
         compute_verify_weight::<MockConfig>(&verifier_index),
         add_public_inputs(
             <() as WeightInfoVerifyProof>::verify_proof_domain_131072_pubs_0(),
-            64,
-            2
+            64
         )
     );
 }
@@ -101,8 +98,7 @@ fn four_chunk_profile_uses_upper_verification_weight() {
         compute_verify_weight::<MockConfig>(&verifier_index),
         add_public_inputs(
             <() as WeightInfoVerifyProof>::verify_proof_domain_262144_pubs_0(),
-            1024,
-            4
+            1024
         )
     );
 }
@@ -120,8 +116,7 @@ fn small_domain_with_fixed_vesta16_srs_uses_upper_one_chunk_weight() {
         compute_verify_weight::<MockConfig>(&verifier_index),
         add_public_inputs(
             <() as WeightInfoVerifyProof>::verify_proof_domain_65536_pubs_0(),
-            64,
-            1
+            64
         )
     );
 }
@@ -141,8 +136,7 @@ fn small_max_feature_profile_uses_upper_one_chunk_weight() {
         compute_verify_weight::<MockConfig>(&verifier_index),
         add_public_inputs(
             <() as WeightInfoVerifyProof>::verify_proof_domain_65536_pubs_0(),
-            64,
-            1
+            64
         )
     );
 }
@@ -163,7 +157,7 @@ fn small_base_profile_uses_small_verification_weight() {
 }
 
 #[test]
-fn small_simple_profile_uses_small_weight_with_public_input_slope() {
+fn small_simple_profile_uses_small_weight_with_public_input_coefficient() {
     let verifier_index: Vesta16VerifierIndex = bincode::serde::decode_from_slice(
         include_bytes!("resources/generated_4096_maxpoly_4096_simple_pubs_64/verifier_index.bin"),
         bincode::config::standard(),
@@ -175,8 +169,7 @@ fn small_simple_profile_uses_small_weight_with_public_input_slope() {
         compute_verify_weight::<MockConfig>(&verifier_index),
         add_public_inputs(
             <() as WeightInfoVerifyProof>::verify_proof_domain_4096_pubs_0(),
-            64,
-            1
+            64
         )
     );
 }
