@@ -20,6 +20,11 @@
 //! WORST CASE MAP SIZE: `1000000`
 //! HOSTNAME: `Ozans-MacBook-Pro`, CPU: `<UNKNOWN>`
 //! WASM-EXECUTION: `Compiled`, CHAIN: `None`, DB CACHE: `1024`
+//!
+//! Kimchi verification uses benchmark-informed formula weights. The domain base
+//! tiers below come from benchmark measurements with guard margins; the
+//! public-input coefficient is derived from `#[benchmark(extra)]` scaling probes
+//! and rounded up for the production formula.
 
 // Executed Command:
 // ./target/release/zkv-relay

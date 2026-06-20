@@ -21,6 +21,8 @@ pub trait WeightInfo {
     fn verify_proof_domain_65536_pubs_0() -> Weight;
     fn verify_proof_domain_131072_pubs_0() -> Weight;
     fn verify_proof_domain_262144_pubs_0() -> Weight;
+    /// Per-public-input, per-chunk formula coefficient derived from the
+    /// `#[benchmark(extra)]` public-input scaling probes.
     fn verify_proof_public_input() -> Weight;
 }
 

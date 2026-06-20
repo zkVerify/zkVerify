@@ -140,7 +140,9 @@ mod benchmarks {
         assert!(do_get_vk::<T>(&hash).is_none());
     }
 
-    #[benchmark]
+    // Diagnostic end-to-end submit paths. The generated WeightInfo trait only
+    // prices the reusable pieces consumed by the generic verifier pallet.
+    #[benchmark(extra)]
     fn submit_proof_inline_vk() {
         let caller = funded_account::<T>();
         let (proof, vk, pubs) = benchmark_data::<T>();
@@ -156,7 +158,7 @@ mod benchmarks {
         );
     }
 
-    #[benchmark]
+    #[benchmark(extra)]
     fn submit_proof_registered_vk() {
         let caller = funded_account::<T>();
         let (proof, vk, pubs) = benchmark_data::<T>();

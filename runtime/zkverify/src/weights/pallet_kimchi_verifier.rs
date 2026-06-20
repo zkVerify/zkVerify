@@ -20,6 +20,11 @@
 //! WORST CASE MAP SIZE: `1000000`
 //! HOSTNAME: `Ozans-MacBook-Pro`, CPU: `<UNKNOWN>`
 //! WASM-EXECUTION: `Compiled`, CHAIN: `None`, DB CACHE: `1024`
+//!
+//! Kimchi verification uses benchmark-informed formula weights. The storage
+//! operation weights below come from the generated benchmark output, while
+//! `verify_proof()` is normalized to the static upper bound of the post-dispatch
+//! verification formula.
 
 // Executed Command:
 // target/release/zkv-relay

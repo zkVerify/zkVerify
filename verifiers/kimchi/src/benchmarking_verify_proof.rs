@@ -653,7 +653,10 @@ mod benchmarks {
         assert!(r.is_ok());
     }
 
-    #[benchmark]
+    // Public-input variants are coefficient probes. The production WeightInfo
+    // exposes a single per-input slope, so these must not be emitted by the
+    // default weight-generation pass.
+    #[benchmark(extra)]
     fn verify_proof_domain_4096_pubs_64() {
         let (proof, vk, pubs) = domain_4096_simple_pubs_64_data::<T>();
 
@@ -665,7 +668,7 @@ mod benchmarks {
         assert!(r.is_ok());
     }
 
-    #[benchmark]
+    #[benchmark(extra)]
     fn verify_proof_domain_4096_pubs_256() {
         let (proof, vk, pubs) = domain_4096_simple_pubs_256_data::<T>();
 
@@ -677,7 +680,7 @@ mod benchmarks {
         assert!(r.is_ok());
     }
 
-    #[benchmark]
+    #[benchmark(extra)]
     fn verify_proof_domain_4096_pubs_1024() {
         let (proof, vk, pubs) = domain_4096_simple_pubs_1024_data::<T>();
 
@@ -797,7 +800,7 @@ mod benchmarks {
         assert!(r.is_ok());
     }
 
-    #[benchmark]
+    #[benchmark(extra)]
     fn verify_proof_domain_65536_pubs_64() {
         let (proof, vk, pubs) = domain_65536_pubs_64_data::<T>();
 
@@ -809,7 +812,7 @@ mod benchmarks {
         assert!(r.is_ok());
     }
 
-    #[benchmark]
+    #[benchmark(extra)]
     fn verify_proof_domain_65536_pubs_256() {
         let (proof, vk, pubs) = domain_65536_pubs_256_data::<T>();
 
@@ -821,7 +824,7 @@ mod benchmarks {
         assert!(r.is_ok());
     }
 
-    #[benchmark]
+    #[benchmark(extra)]
     fn verify_proof_domain_65536_pubs_1024() {
         let (proof, vk, pubs) = domain_65536_pubs_1024_data::<T>();
 
@@ -845,7 +848,7 @@ mod benchmarks {
         assert!(r.is_ok());
     }
 
-    #[benchmark]
+    #[benchmark(extra)]
     fn verify_proof_domain_131072_pubs_64() {
         let (proof, vk, pubs) = domain_131072_pubs_64_data::<T>();
 
@@ -857,7 +860,7 @@ mod benchmarks {
         assert!(r.is_ok());
     }
 
-    #[benchmark]
+    #[benchmark(extra)]
     fn verify_proof_domain_131072_pubs_256() {
         let (proof, vk, pubs) = domain_131072_pubs_256_data::<T>();
 
@@ -869,7 +872,7 @@ mod benchmarks {
         assert!(r.is_ok());
     }
 
-    #[benchmark]
+    #[benchmark(extra)]
     fn verify_proof_domain_131072_pubs_1024() {
         let (proof, vk, pubs) = domain_131072_pubs_1024_data::<T>();
 
@@ -881,7 +884,7 @@ mod benchmarks {
         assert!(r.is_ok());
     }
 
-    #[benchmark]
+    #[benchmark(extra)]
     fn verify_proof_domain_262144_pubs_64() {
         let (proof, vk, pubs) = domain_262144_pubs_64_data::<T>();
 
@@ -929,7 +932,7 @@ mod benchmarks {
         assert!(r.is_ok());
     }
 
-    #[benchmark]
+    #[benchmark(extra)]
     fn verify_proof_domain_262144_pubs_256() {
         let (proof, vk, pubs) = domain_262144_pubs_256_data::<T>();
 
@@ -941,7 +944,7 @@ mod benchmarks {
         assert!(r.is_ok());
     }
 
-    #[benchmark]
+    #[benchmark(extra)]
     fn verify_proof_domain_262144_pubs_1024() {
         let (proof, vk, pubs) = domain_262144_pubs_1024_data::<T>();
 

@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use frame_support::weights::Weight;
+use frame_support::weights::{constants::RocksDbWeight, Weight};
 
 /// Weight functions needed for `pallet_kimchi_verifier`.
 pub trait WeightInfo {
@@ -27,26 +27,32 @@ pub trait WeightInfo {
 
 impl WeightInfo for () {
     fn verify_proof() -> Weight {
+        // Static upper bound for the Kimchi verification formula:
+        // 176ms four-chunk base + 1024 public inputs * 4 chunks * 10us.
         Weight::from_parts(216_960_000_000, 0)
     }
 
     fn get_vk() -> Weight {
-        Weight::from_parts(0, 0)
+        Weight::from_parts(5_000_000, 69_046).saturating_add(RocksDbWeight::get().reads(1_u64))
     }
 
     fn validate_vk() -> Weight {
-        Weight::from_parts(0, 0)
+        Weight::from_parts(57_302_000_000, 0)
     }
 
     fn compute_statement_hash() -> Weight {
-        Weight::from_parts(0, 0)
+        Weight::from_parts(117_000_000, 0)
     }
 
     fn register_vk() -> Weight {
-        Weight::from_parts(0, 0)
+        Weight::from_parts(57_316_000_000, 69_046)
+            .saturating_add(RocksDbWeight::get().reads(4_u64))
+            .saturating_add(RocksDbWeight::get().writes(3_u64))
     }
 
     fn unregister_vk() -> Weight {
-        Weight::from_parts(0, 0)
+        Weight::from_parts(34_000_000, 69_046)
+            .saturating_add(RocksDbWeight::get().reads(3_u64))
+            .saturating_add(RocksDbWeight::get().writes(3_u64))
     }
 }
