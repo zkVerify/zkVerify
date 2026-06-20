@@ -27,8 +27,36 @@ impl crate::Config for MockConfig {
     type WeightInfo = ();
 }
 
+pub struct ProductionEnvelopeConfig;
+
+impl crate::Config for ProductionEnvelopeConfig {
+    type MaxProofSize = ConstU32<262144>;
+    type MaxPubs = ConstU32<1024>;
+    type MaxVkSize = ConstU32<65536>;
+    type WeightInfo = ();
+}
+
+#[cfg(feature = "runtime-benchmarks")]
+pub struct WidePubsConfig;
+
+#[cfg(feature = "runtime-benchmarks")]
+impl crate::Config for WidePubsConfig {
+    type MaxProofSize = ConstU32<262144>;
+    type MaxPubs = ConstU32<65536>;
+    type MaxVkSize = ConstU32<65536>;
+    type WeightInfo = ();
+}
+
 fn dummy_vk() -> Vk<MockConfig> {
     Vk::new(vec![1_u8, 2, 3], KimchiProfileId::Vesta16)
+}
+
+fn add_public_inputs(weight: Weight, public_inputs: u64, num_chunks: u64) -> Weight {
+    weight.saturating_add(
+        <() as WeightInfoVerifyProof>::verify_proof_public_input()
+            .saturating_mul(public_inputs)
+            .saturating_mul(num_chunks),
+    )
 }
 
 #[test]
@@ -39,6 +67,118 @@ fn flatten_public_inputs_for_statement_hash() {
     assert_eq!(flattened.len(), PUB_SIZE * 2);
     assert!(flattened[..PUB_SIZE].iter().all(|byte| *byte == 1));
     assert!(flattened[PUB_SIZE..].iter().all(|byte| *byte == 2));
+}
+
+#[test]
+fn two_chunk_profile_uses_upper_verification_weight() {
+    let verifier_index: Vesta16VerifierIndex = bincode::serde::decode_from_slice(
+        include_bytes!("resources/generated_131072_lookup_runtime_pubs_64/verifier_index.bin"),
+        bincode::config::standard(),
+    )
+    .map(|(index, _)| index)
+    .expect("two-chunk fixture verifier index should decode");
+
+    assert_eq!(
+        compute_verify_weight::<MockConfig>(&verifier_index),
+        add_public_inputs(
+            <() as WeightInfoVerifyProof>::verify_proof_domain_131072_pubs_0(),
+            64,
+            2
+        )
+    );
+}
+
+#[test]
+fn four_chunk_profile_uses_upper_verification_weight() {
+    let verifier_index: Vesta16VerifierIndex = bincode::serde::decode_from_slice(
+        include_bytes!("resources/generated_262144_lookup_runtime_pubs_1024/verifier_index.bin"),
+        bincode::config::standard(),
+    )
+    .map(|(index, _)| index)
+    .expect("four-chunk fixture verifier index should decode");
+
+    assert_eq!(
+        compute_verify_weight::<MockConfig>(&verifier_index),
+        add_public_inputs(
+            <() as WeightInfoVerifyProof>::verify_proof_domain_262144_pubs_0(),
+            1024,
+            4
+        )
+    );
+}
+
+#[test]
+fn small_domain_with_fixed_vesta16_srs_uses_upper_one_chunk_weight() {
+    let verifier_index: Vesta16VerifierIndex = bincode::serde::decode_from_slice(
+        include_bytes!("resources/generated_4096_lookup_runtime_pubs_64/verifier_index.bin"),
+        bincode::config::standard(),
+    )
+    .map(|(index, _)| index)
+    .expect("small-domain fixed-SRS fixture verifier index should decode");
+
+    assert_eq!(
+        compute_verify_weight::<MockConfig>(&verifier_index),
+        add_public_inputs(
+            <() as WeightInfoVerifyProof>::verify_proof_domain_65536_pubs_0(),
+            64,
+            1
+        )
+    );
+}
+
+#[test]
+fn small_max_feature_profile_uses_upper_one_chunk_weight() {
+    let verifier_index: Vesta16VerifierIndex = bincode::serde::decode_from_slice(
+        include_bytes!(
+            "resources/generated_4096_maxpoly_4096_lookup_runtime_pubs_64/verifier_index.bin"
+        ),
+        bincode::config::standard(),
+    )
+    .map(|(index, _)| index)
+    .expect("small max-feature fixture verifier index should decode");
+
+    assert_eq!(
+        compute_verify_weight::<MockConfig>(&verifier_index),
+        add_public_inputs(
+            <() as WeightInfoVerifyProof>::verify_proof_domain_65536_pubs_0(),
+            64,
+            1
+        )
+    );
+}
+
+#[test]
+fn small_base_profile_uses_small_verification_weight() {
+    let verifier_index: Vesta16VerifierIndex = bincode::serde::decode_from_slice(
+        include_bytes!("resources/generated_4096/verifier_index.bin"),
+        bincode::config::standard(),
+    )
+    .map(|(index, _)| index)
+    .expect("small base fixture verifier index should decode");
+
+    assert_eq!(
+        compute_verify_weight::<MockConfig>(&verifier_index),
+        <() as WeightInfoVerifyProof>::verify_proof_domain_4096_pubs_0()
+    );
+}
+
+#[test]
+fn small_simple_profile_uses_small_weight_with_public_input_slope() {
+    let verifier_index: Vesta16VerifierIndex = bincode::serde::decode_from_slice(
+        include_bytes!("resources/generated_4096_maxpoly_4096_simple_pubs_64/verifier_index.bin"),
+        bincode::config::standard(),
+    )
+    .map(|(index, _)| index)
+    .expect("small simple fixture verifier index should decode");
+
+    assert_eq!(
+        compute_verify_weight::<MockConfig>(&verifier_index),
+        add_public_inputs(
+            <() as WeightInfoVerifyProof>::verify_proof_domain_4096_pubs_0(),
+            64,
+            1
+        )
+    );
 }
 
 mod accept {
@@ -63,6 +203,17 @@ mod accept {
             .expect("fixture proof should verify");
     }
 
+    fn fixture_pubs(bytes: &[u8]) -> Pubs {
+        bytes
+            .chunks_exact(PUB_SIZE)
+            .map(|bytes| {
+                bytes
+                    .try_into()
+                    .expect("fixture public input has field size")
+            })
+            .collect()
+    }
+
     #[test]
     fn domain_4096_fixture_is_accepted() {
         fixture_is_accepted(
@@ -73,19 +224,119 @@ mod accept {
     }
 
     #[test]
+    fn small_max_feature_fixture_is_accepted() {
+        fixture_is_accepted(
+            include_bytes!(
+                "resources/generated_4096_maxpoly_4096_lookup_runtime_pubs_64/proof.bin"
+            ),
+            include_bytes!(
+                "resources/generated_4096_maxpoly_4096_lookup_runtime_pubs_64/verifier_index.bin"
+            ),
+            fixture_pubs(include_bytes!(
+                "resources/generated_4096_maxpoly_4096_lookup_runtime_pubs_64/pubs.bin"
+            )),
+        );
+    }
+
+    #[test]
+    fn small_domain_with_fixed_vesta16_srs_fixture_is_accepted() {
+        fixture_is_accepted(
+            include_bytes!("resources/generated_4096_lookup_runtime_pubs_64/proof.bin"),
+            include_bytes!("resources/generated_4096_lookup_runtime_pubs_64/verifier_index.bin"),
+            fixture_pubs(include_bytes!(
+                "resources/generated_4096_lookup_runtime_pubs_64/pubs.bin"
+            )),
+        );
+    }
+
+    #[test]
     fn domain_65536_with_64_public_inputs_fixture_is_accepted() {
-        let pubs = include_bytes!("resources/generated_65536_pubs_64/pubs.bin")
-            .chunks_exact(PUB_SIZE)
-            .map(|bytes| {
-                bytes
-                    .try_into()
-                    .expect("fixture public input has field size")
-            })
-            .collect();
         fixture_is_accepted(
             include_bytes!("resources/generated_65536_pubs_64/proof.bin"),
             include_bytes!("resources/generated_65536_pubs_64/verifier_index.bin"),
-            pubs,
+            fixture_pubs(include_bytes!("resources/generated_65536_pubs_64/pubs.bin")),
+        );
+    }
+
+    #[test]
+    fn one_chunk_lookup_runtime_fixture_is_accepted() {
+        fixture_is_accepted(
+            include_bytes!("resources/generated_65536_lookup_runtime_pubs_64/proof.bin"),
+            include_bytes!("resources/generated_65536_lookup_runtime_pubs_64/verifier_index.bin"),
+            fixture_pubs(include_bytes!(
+                "resources/generated_65536_lookup_runtime_pubs_64/pubs.bin"
+            )),
+        );
+    }
+
+    #[test]
+    fn two_chunk_domain_131072_with_64_public_inputs_fixture_is_accepted() {
+        fixture_is_accepted(
+            include_bytes!("resources/generated_131072_pubs_64/proof.bin"),
+            include_bytes!("resources/generated_131072_pubs_64/verifier_index.bin"),
+            fixture_pubs(include_bytes!(
+                "resources/generated_131072_pubs_64/pubs.bin"
+            )),
+        );
+    }
+
+    #[test]
+    fn two_chunk_lookup_runtime_fixture_is_accepted() {
+        fixture_is_accepted(
+            include_bytes!("resources/generated_131072_lookup_runtime_pubs_64/proof.bin"),
+            include_bytes!("resources/generated_131072_lookup_runtime_pubs_64/verifier_index.bin"),
+            fixture_pubs(include_bytes!(
+                "resources/generated_131072_lookup_runtime_pubs_64/pubs.bin"
+            )),
+        );
+    }
+
+    #[test]
+    fn four_chunk_lookup_runtime_with_1024_public_inputs_fixture_is_accepted() {
+        fixture_is_accepted(
+            include_bytes!("resources/generated_262144_lookup_runtime_pubs_1024/proof.bin"),
+            include_bytes!(
+                "resources/generated_262144_lookup_runtime_pubs_1024/verifier_index.bin"
+            ),
+            fixture_pubs(include_bytes!(
+                "resources/generated_262144_lookup_runtime_pubs_1024/pubs.bin"
+            )),
+        );
+    }
+
+    #[test]
+    fn production_envelope_accepts_four_chunk_1024_public_inputs() {
+        let proof = include_bytes!("resources/generated_262144_lookup_runtime_pubs_1024/proof.bin")
+            .to_vec();
+        let vk = Vk::<ProductionEnvelopeConfig>::new(
+            include_bytes!(
+                "resources/generated_262144_lookup_runtime_pubs_1024/verifier_index.bin"
+            )
+            .to_vec(),
+            KimchiProfileId::Vesta16,
+        );
+        let pubs = fixture_pubs(include_bytes!(
+            "resources/generated_262144_lookup_runtime_pubs_1024/pubs.bin"
+        ));
+
+        assert!(
+            Kimchi::<ProductionEnvelopeConfig>::verify_proof(&vk, &proof, &pubs).is_ok(),
+            "four-chunk/1024-public-input fixture should verify under production caps"
+        );
+    }
+
+    #[cfg(not(feature = "runtime-benchmarks"))]
+    #[test]
+    fn production_envelope_rejects_eight_chunk_verifier_index() {
+        let vk = Vk::<ProductionEnvelopeConfig>::new(
+            include_bytes!("resources/generated_524288_lookup_runtime_pubs_64/verifier_index.bin")
+                .to_vec(),
+            KimchiProfileId::Vesta16,
+        );
+
+        assert_err!(
+            Kimchi::<ProductionEnvelopeConfig>::validate_vk(&vk),
+            VerifyError::InvalidVerificationKey
         );
     }
 
@@ -98,14 +349,11 @@ mod accept {
         );
     }
 
-    #[test]
-    fn accelerated_opening_matches_upstream_for_domain_4096_fixture() {
+    fn accelerated_opening_matches_upstream(raw_proof: Vec<u8>, raw_vk: Vec<u8>, raw_pubs: Pubs) {
         type UpstreamOpeningProof = OpeningProof<Vesta, FULL_ROUNDS>;
         type UpstreamProof = ProverProof<Vesta, UpstreamOpeningProof, FULL_ROUNDS>;
         type UpstreamVerifierIndex = VerifierIndex<FULL_ROUNDS, Vesta, IpaSrs<Vesta>>;
 
-        let raw_proof = include_bytes!("resources/generated_4096/proof.bin").to_vec();
-        let raw_vk = include_bytes!("resources/generated_4096/verifier_index.bin").to_vec();
         let vk = Vk::<MockConfig>::new(raw_vk.clone(), KimchiProfileId::Vesta16);
         let proof: UpstreamProof =
             bincode::serde::decode_from_slice(&raw_proof, bincode::config::standard())
@@ -118,7 +366,9 @@ mod accept {
         verifier_index.srs = Arc::new(IpaSrs::create(verifier_index.max_poly_size));
         prepare_verifier_index_metadata(&mut verifier_index)
             .expect("upstream verifier index metadata should prepare");
-        let mut rng = make_rng(&vk, &raw_proof, &Vec::new());
+        let public_input =
+            decode_public_input(&raw_pubs).expect("fixture public inputs should decode");
+        let mut rng = make_rng(&vk, &raw_proof, &raw_pubs);
 
         verify_with_rng::<
             FULL_ROUNDS,
@@ -127,8 +377,47 @@ mod accept {
             DefaultFrSponge<Fp, PlonkSpongeConstantsKimchi, FULL_ROUNDS>,
             UpstreamOpeningProof,
             _,
-        >(&vesta_group_map(), &verifier_index, &proof, &[], &mut rng)
+        >(
+            &vesta_group_map(),
+            &verifier_index,
+            &proof,
+            &public_input,
+            &mut rng,
+        )
         .expect("upstream IPA verifier should accept accelerated fixture");
+    }
+
+    #[test]
+    fn accelerated_opening_matches_upstream_for_domain_4096_fixture() {
+        accelerated_opening_matches_upstream(
+            include_bytes!("resources/generated_4096/proof.bin").to_vec(),
+            include_bytes!("resources/generated_4096/verifier_index.bin").to_vec(),
+            Vec::new(),
+        );
+    }
+
+    #[test]
+    fn accelerated_opening_matches_upstream_for_small_domain_fixed_vesta16_srs_fixture() {
+        accelerated_opening_matches_upstream(
+            include_bytes!("resources/generated_4096_lookup_runtime_pubs_64/proof.bin").to_vec(),
+            include_bytes!("resources/generated_4096_lookup_runtime_pubs_64/verifier_index.bin")
+                .to_vec(),
+            fixture_pubs(include_bytes!(
+                "resources/generated_4096_lookup_runtime_pubs_64/pubs.bin"
+            )),
+        );
+    }
+
+    #[test]
+    fn accelerated_opening_matches_upstream_for_two_chunk_fixture() {
+        accelerated_opening_matches_upstream(
+            include_bytes!("resources/generated_131072_lookup_runtime_pubs_64/proof.bin").to_vec(),
+            include_bytes!("resources/generated_131072_lookup_runtime_pubs_64/verifier_index.bin")
+                .to_vec(),
+            fixture_pubs(include_bytes!(
+                "resources/generated_131072_lookup_runtime_pubs_64/pubs.bin"
+            )),
+        );
     }
 }
 
@@ -154,6 +443,40 @@ mod reject {
         .expect("fixture verifier index should decode")
     }
 
+    fn fixture_verifier_index_from_bytes(bytes: &[u8]) -> Vesta16VerifierIndex {
+        bincode::serde::decode_from_slice(bytes, bincode::config::standard())
+            .map(|(verifier_index, _)| verifier_index)
+            .expect("fixture verifier index should decode")
+    }
+
+    fn two_chunk_fixture_verifier_index() -> Vesta16VerifierIndex {
+        fixture_verifier_index_from_bytes(include_bytes!(
+            "resources/generated_131072_lookup_runtime_pubs_64/verifier_index.bin"
+        ))
+    }
+
+    fn four_chunk_fixture_verifier_index() -> Vesta16VerifierIndex {
+        fixture_verifier_index_from_bytes(include_bytes!(
+            "resources/generated_262144_lookup_runtime_pubs_1024/verifier_index.bin"
+        ))
+    }
+
+    fn set_verifier_index_shape(
+        verifier_index: &mut Vesta16VerifierIndex,
+        max_poly_size: usize,
+        domain_size: usize,
+    ) {
+        use ark_poly::{EvaluationDomain, Radix2EvaluationDomain};
+
+        verifier_index.max_poly_size = max_poly_size;
+        verifier_index.domain =
+            Radix2EvaluationDomain::new(domain_size).expect("radix-2 domain should exist");
+        let num_chunks = profile::expected_chunks(max_poly_size, domain_size)
+            .expect("test shape should derive chunks");
+        verifier_index.zk_rows =
+            (kimchi::circuits::constraints::zk_rows_strict_lower_bound(num_chunks) + 1) as u64;
+    }
+
     fn fixture_proof_and_index() -> (Proof, Vesta16Proof, Vesta16VerifierIndex) {
         let raw_proof = include_bytes!("resources/generated_4096/proof.bin").to_vec();
         let proof = decode_proof(&raw_proof).expect("fixture proof should decode");
@@ -162,6 +485,22 @@ mod reject {
             .expect("fixture verifier index should prepare");
 
         (raw_proof, proof, verifier_index)
+    }
+
+    fn two_chunk_fixture_proof_and_index() -> (Vesta16Proof, Vesta16VerifierIndex) {
+        let proof = decode_proof(include_bytes!(
+            "resources/generated_131072_pubs_64/proof.bin"
+        ))
+        .expect("two-chunk fixture proof should decode");
+        let vk = Vk::<MockConfig>::new(
+            include_bytes!("resources/generated_131072_pubs_64/verifier_index.bin").to_vec(),
+            KimchiProfileId::Vesta16,
+        );
+        let mut verifier_index = decode_vk(&vk).expect("two-chunk fixture index should decode");
+        prepare_verifier_index(&mut verifier_index, KimchiProfileId::Vesta16)
+            .expect("two-chunk fixture verifier index should prepare");
+
+        (proof, verifier_index)
     }
 
     fn encode_proof(proof: &Vesta16Proof) -> Proof {
@@ -234,9 +573,9 @@ mod reject {
     }
 
     #[test]
-    fn domain_larger_than_srs_prefix_is_rejected() {
+    fn domain_requiring_more_than_four_chunks_is_rejected() {
         let mut verifier_index = fixture_verifier_index();
-        verifier_index.max_poly_size = 1024;
+        verifier_index.max_poly_size = 512;
 
         assert_err!(
             prepare_verifier_index(&mut verifier_index, KimchiProfileId::Vesta16),
@@ -245,12 +584,40 @@ mod reject {
     }
 
     #[test]
-    fn unsupported_small_domain_is_rejected() {
+    fn domain_larger_than_work_envelope_is_rejected() {
+        use ark_poly::{EvaluationDomain, Radix2EvaluationDomain};
+
+        let mut verifier_index = fixture_verifier_index();
+        verifier_index.domain = Radix2EvaluationDomain::new(1 << 18)
+            .expect("radix-2 domain above the work envelope should exist");
+
+        assert_err!(
+            prepare_verifier_index(&mut verifier_index, KimchiProfileId::Vesta16),
+            VerifyError::InvalidVerificationKey
+        );
+    }
+
+    #[test]
+    fn smallest_zkfunction_domain_is_accepted() {
         use ark_poly::{EvaluationDomain, Radix2EvaluationDomain};
 
         let mut verifier_index = fixture_verifier_index();
         verifier_index.domain =
-            Radix2EvaluationDomain::new(512).expect("small radix-2 domain should exist");
+            Radix2EvaluationDomain::new(8).expect("small radix-2 domain should exist");
+
+        assert!(
+            prepare_verifier_index(&mut verifier_index, KimchiProfileId::Vesta16).is_ok(),
+            "domain 2^3 is the smallest domain for a valid Kimchi circuit"
+        );
+    }
+
+    #[test]
+    fn domain_too_small_for_a_valid_kimchi_circuit_is_rejected() {
+        use ark_poly::{EvaluationDomain, Radix2EvaluationDomain};
+
+        let mut verifier_index = fixture_verifier_index();
+        verifier_index.domain =
+            Radix2EvaluationDomain::new(4).expect("small radix-2 domain should exist");
 
         assert_err!(
             prepare_verifier_index(&mut verifier_index, KimchiProfileId::Vesta16),
@@ -350,7 +717,7 @@ mod reject {
     }
 
     #[test]
-    fn multi_chunk_verifier_commitment_is_rejected() {
+    fn unexpected_extra_verifier_commitment_chunk_is_rejected() {
         let mut verifier_index = fixture_verifier_index();
         let extra_chunk = verifier_index.generic_comm.chunks[0];
         verifier_index.generic_comm.chunks.push(extra_chunk);
@@ -358,6 +725,56 @@ mod reject {
         assert_err!(
             prepare_verifier_index(&mut verifier_index, KimchiProfileId::Vesta16),
             VerifyError::InvalidVerificationKey
+        );
+    }
+
+    #[test]
+    fn one_chunk_matching_smaller_max_poly_size_is_accepted_by_profile() {
+        let mut verifier_index = fixture_verifier_index();
+        set_verifier_index_shape(&mut verifier_index, 1 << 15, 1 << 15);
+
+        assert!(
+            profile::validate_verifier_index(KimchiProfileId::Vesta16, &verifier_index).is_ok()
+        );
+    }
+
+    #[test]
+    fn two_chunk_benchmarked_shape_is_accepted_by_profile() {
+        let verifier_index = two_chunk_fixture_verifier_index();
+
+        assert!(
+            profile::validate_verifier_index(KimchiProfileId::Vesta16, &verifier_index).is_ok()
+        );
+    }
+
+    #[test]
+    fn four_chunk_benchmarked_shape_is_accepted_by_profile() {
+        let verifier_index = four_chunk_fixture_verifier_index();
+
+        assert!(
+            profile::validate_verifier_index(KimchiProfileId::Vesta16, &verifier_index).is_ok()
+        );
+    }
+
+    #[cfg(not(feature = "runtime-benchmarks"))]
+    #[test]
+    fn production_profile_rejects_unpriced_two_chunk_shape() {
+        let mut verifier_index = two_chunk_fixture_verifier_index();
+        set_verifier_index_shape(&mut verifier_index, 1 << 15, 1 << 16);
+
+        assert!(
+            profile::validate_verifier_index(KimchiProfileId::Vesta16, &verifier_index).is_err()
+        );
+    }
+
+    #[cfg(not(feature = "runtime-benchmarks"))]
+    #[test]
+    fn production_profile_rejects_unpriced_four_chunk_shape() {
+        let mut verifier_index = four_chunk_fixture_verifier_index();
+        set_verifier_index_shape(&mut verifier_index, 1 << 15, 1 << 17);
+
+        assert!(
+            profile::validate_verifier_index(KimchiProfileId::Vesta16, &verifier_index).is_err()
         );
     }
 
@@ -431,10 +848,30 @@ mod reject {
     }
 
     #[test]
-    fn multi_chunk_proof_commitment_is_rejected_before_verification() {
+    fn unexpected_extra_proof_commitment_chunk_is_rejected_before_verification() {
         let (_, mut proof, verifier_index) = fixture_proof_and_index();
         let extra_chunk = proof.commitments.w_comm[0].chunks[0];
         proof.commitments.w_comm[0].chunks.push(extra_chunk);
+
+        assert!(
+            profile::validate_proof(KimchiProfileId::Vesta16, &proof, &verifier_index).is_err()
+        );
+    }
+
+    #[test]
+    fn two_chunk_proof_with_missing_commitment_chunk_is_rejected_before_verification() {
+        let (mut proof, verifier_index) = two_chunk_fixture_proof_and_index();
+        proof.commitments.w_comm[0].chunks.pop();
+
+        assert!(
+            profile::validate_proof(KimchiProfileId::Vesta16, &proof, &verifier_index).is_err()
+        );
+    }
+
+    #[test]
+    fn two_chunk_proof_with_missing_evaluation_chunk_is_rejected_before_verification() {
+        let (mut proof, verifier_index) = two_chunk_fixture_proof_and_index();
+        proof.evals.w[0].zeta.pop();
 
         assert!(
             profile::validate_proof(KimchiProfileId::Vesta16, &proof, &verifier_index).is_err()
@@ -551,6 +988,50 @@ mod reject {
         assert_err!(
             Kimchi::<MockConfig>::verify_proof(&dummy_vk(), &proof, &pubs),
             VerifyError::InvalidInput
+        );
+    }
+
+    #[test]
+    fn production_envelope_rejects_1025_public_inputs_early() {
+        let proof = include_bytes!("resources/generated_262144_lookup_runtime_pubs_1024/proof.bin")
+            .to_vec();
+        let vk = Vk::<ProductionEnvelopeConfig>::new(
+            include_bytes!(
+                "resources/generated_262144_lookup_runtime_pubs_1024/verifier_index.bin"
+            )
+            .to_vec(),
+            KimchiProfileId::Vesta16,
+        );
+        let pubs = vec![[0_u8; PUB_SIZE]; ProductionEnvelopeConfig::max_pubs() as usize + 1];
+
+        assert_err!(
+            Kimchi::<ProductionEnvelopeConfig>::verify_proof(&vk, &proof, &pubs),
+            VerifyError::InvalidInput
+        );
+    }
+
+    #[cfg(feature = "runtime-benchmarks")]
+    #[test]
+    #[ignore = "diagnostic attack-surface probe; run explicitly when measuring oversized public inputs"]
+    fn oversized_65536_public_inputs_without_effective_cap_reaches_prepare_before_rejection() {
+        let proof =
+            include_bytes!("resources/generated_262144_lookup_runtime_pubs_64/proof.bin").to_vec();
+        let vk = Vk::<WidePubsConfig>::new(
+            include_bytes!("resources/generated_262144_lookup_runtime_pubs_64/verifier_index.bin")
+                .to_vec(),
+            KimchiProfileId::Vesta16,
+        );
+        let pubs = vec![[0_u8; PUB_SIZE]; 1 << 16];
+        let started = std::time::Instant::now();
+
+        assert_err!(
+            Kimchi::<WidePubsConfig>::verify_proof(&vk, &proof, &pubs),
+            VerifyError::InvalidInput
+        );
+
+        eprintln!(
+            "65536 oversized public inputs without effective cap rejected in {:?}",
+            started.elapsed()
         );
     }
 

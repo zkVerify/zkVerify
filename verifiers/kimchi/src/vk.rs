@@ -38,6 +38,12 @@ impl KimchiProfileId {
 
     pub const fn max_poly_size(self) -> usize {
         match self {
+            Self::Vesta16 => Vesta16::MAX_POLY_SIZE,
+        }
+    }
+
+    pub const fn max_domain_size(self) -> usize {
+        match self {
             Self::Vesta16 => Vesta16::MAX_DOMAIN_SIZE,
         }
     }

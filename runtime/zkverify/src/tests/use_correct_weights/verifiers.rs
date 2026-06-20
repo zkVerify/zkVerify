@@ -175,11 +175,40 @@ fn pallet_settlement_kimchi() {
 
 #[test]
 fn pallet_settlement_kimchi_verify_proof() {
-    use pallet_kimchi_verifier::WeightInfoVerifyProof;
+    use pallet_kimchi_verifier::{WeightInfo, WeightInfoVerifyProof};
 
     assert_eq!(
-        <Runtime as pallet_kimchi_verifier::Config>::WeightInfo::verify_proof_domain_4096(),
-        crate::weights::pallet_kimchi_verifier_verify_proof::ZKVWeight::<Runtime>::verify_proof_domain_4096()
+        <Runtime as pallet_kimchi_verifier::Config>::WeightInfo::verify_proof_domain_4096_pubs_0(),
+        crate::weights::pallet_kimchi_verifier_verify_proof::ZKVWeight::<Runtime>::verify_proof_domain_4096_pubs_0()
+    );
+    assert_eq!(
+        <Runtime as pallet_kimchi_verifier::Config>::WeightInfo::verify_proof_domain_65536_pubs_0(),
+        crate::weights::pallet_kimchi_verifier_verify_proof::ZKVWeight::<Runtime>::verify_proof_domain_65536_pubs_0()
+    );
+    assert_eq!(
+        <Runtime as pallet_kimchi_verifier::Config>::WeightInfo::verify_proof_domain_131072_pubs_0(),
+        crate::weights::pallet_kimchi_verifier_verify_proof::ZKVWeight::<Runtime>::verify_proof_domain_131072_pubs_0()
+    );
+    assert_eq!(
+        <Runtime as pallet_kimchi_verifier::Config>::WeightInfo::verify_proof_domain_262144_pubs_0(),
+        crate::weights::pallet_kimchi_verifier_verify_proof::ZKVWeight::<Runtime>::verify_proof_domain_262144_pubs_0()
+    );
+    assert_eq!(
+        <Runtime as pallet_kimchi_verifier::Config>::WeightInfo::verify_proof_public_input(),
+        crate::weights::pallet_kimchi_verifier_verify_proof::ZKVWeight::<Runtime>::verify_proof_public_input()
+    );
+
+    let worst_supported_verify_proof =
+        <Runtime as pallet_kimchi_verifier::Config>::WeightInfo::verify_proof_domain_262144_pubs_0(
+        )
+        .saturating_add(
+            <Runtime as pallet_kimchi_verifier::Config>::WeightInfo::verify_proof_public_input()
+                .saturating_mul(1024)
+                .saturating_mul(4),
+        );
+    assert!(
+        crate::weights::pallet_kimchi_verifier::ZKVWeight::<Runtime>::verify_proof().ref_time()
+            >= worst_supported_verify_proof.ref_time()
     );
 }
 

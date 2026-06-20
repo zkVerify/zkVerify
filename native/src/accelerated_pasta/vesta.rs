@@ -37,8 +37,12 @@ pub fn vesta16_blinding_commitment() -> Result<Vesta, ()> {
 /// Returns the first `count` Lagrange-basis commitments for the built-in
 /// Vesta16 SRS and the given radix-2 domain.
 #[allow(clippy::result_unit_err)]
-pub fn vesta16_lagrange_basis_prefix(domain_log2: u8, count: u32) -> Result<Vec<Vesta>, ()> {
-    let result = host_calls::vesta16_lagrange_basis_prefix(domain_log2, count)?;
+pub fn vesta16_lagrange_basis_prefix(
+    max_poly_size: u32,
+    domain_log2: u8,
+    count: u32,
+) -> Result<Vec<Vec<Vesta>>, ()> {
+    let result = host_calls::vesta16_lagrange_basis_prefix(max_poly_size, domain_log2, count)?;
     utils::decode(&result)
 }
 
@@ -100,7 +104,20 @@ pub trait HostCalls {
     /// - returns: `ArkScale<Vec<Vesta>>`
     #[allow(clippy::result_unit_err)]
     fn vesta16_lagrange_basis_prefix(domain_log2: u8, count: u32) -> Result<Vec<u8>, ()> {
-        native_builtin_srs::lagrange_basis_prefix(domain_log2, count)
+        native_builtin_srs::lagrange_basis_prefix_v1(domain_log2, count)
+    }
+
+    /// Chunk-aware built-in Vesta16 Lagrange-basis commitment prefix.
+    ///
+    /// - returns: `ArkScale<Vec<Vec<Vesta>>>`
+    #[version(2)]
+    #[allow(clippy::result_unit_err)]
+    fn vesta16_lagrange_basis_prefix(
+        max_poly_size: u32,
+        domain_log2: u8,
+        count: u32,
+    ) -> Result<Vec<u8>, ()> {
+        native_builtin_srs::lagrange_basis_prefix(max_poly_size, domain_log2, count)
     }
 
     /// Built-in Vesta16 SRS-backed variable-base MSM.
@@ -135,13 +152,73 @@ mod native_builtin_srs {
 
     type Blake2b256 = Blake2b<U32>;
 
-    const MIN_DOMAIN_LOG2_SIZE: u8 = 10;
-    const MAX_DOMAIN_LOG2_SIZE: u8 = 16;
+    #[cfg(not(feature = "runtime-benchmarks"))]
+    const MAX_CHUNKS: usize = 4;
+    #[cfg(feature = "runtime-benchmarks")]
+    const MAX_CHUNKS: usize = 16;
+    const PREWARM_PREFIX_CHECK_CHUNKS: usize = 2;
+    const MIN_DOMAIN_LOG2_SIZE: u8 = 3;
+    const MIN_MAX_POLY_LOG2_SIZE: u8 = MIN_DOMAIN_LOG2_SIZE - 1;
+    #[cfg(not(feature = "runtime-benchmarks"))]
+    const MAX_DOMAIN_LOG2_SIZE: u8 = 18;
+    #[cfg(feature = "runtime-benchmarks")]
+    const MAX_DOMAIN_LOG2_SIZE: u8 = 20;
+    const V1_MIN_DOMAIN_LOG2_SIZE: u8 = 10;
+    const V1_MAX_DOMAIN_LOG2_SIZE: u8 = 16;
     const VESTA_SRS_16_DIGEST: [u8; 32] = [
         118, 145, 96, 85, 33, 218, 182, 195, 62, 93, 252, 115, 198, 97, 194, 14, 79, 26, 208, 65,
         35, 3, 60, 185, 99, 21, 119, 27, 198, 4, 152, 179,
     ];
     const VESTA_SRS_16_LAGRANGE_DIGESTS: &[(u8, [u8; 32])] = &[
+        (
+            3,
+            [
+                103, 74, 217, 157, 134, 51, 119, 73, 214, 100, 89, 166, 101, 42, 239, 88, 34, 68,
+                139, 145, 155, 79, 166, 248, 252, 244, 174, 167, 225, 98, 44, 159,
+            ],
+        ),
+        (
+            4,
+            [
+                232, 240, 71, 118, 134, 9, 247, 104, 227, 35, 195, 98, 13, 122, 70, 151, 146, 75,
+                205, 240, 8, 160, 197, 83, 126, 97, 199, 135, 163, 119, 83, 27,
+            ],
+        ),
+        (
+            5,
+            [
+                111, 163, 158, 207, 232, 183, 37, 7, 162, 227, 38, 137, 42, 209, 213, 158, 96, 102,
+                147, 178, 20, 253, 223, 253, 188, 72, 152, 246, 146, 210, 20, 86,
+            ],
+        ),
+        (
+            6,
+            [
+                6, 91, 23, 36, 185, 24, 154, 250, 98, 51, 47, 69, 236, 206, 132, 160, 11, 18, 141,
+                144, 183, 114, 203, 74, 155, 119, 52, 46, 170, 198, 189, 14,
+            ],
+        ),
+        (
+            7,
+            [
+                228, 141, 33, 68, 95, 170, 101, 232, 117, 129, 49, 109, 240, 113, 223, 102, 127,
+                90, 168, 89, 38, 84, 167, 162, 121, 181, 133, 26, 57, 222, 119, 187,
+            ],
+        ),
+        (
+            8,
+            [
+                224, 111, 210, 21, 62, 198, 84, 199, 123, 103, 161, 50, 177, 41, 246, 135, 173,
+                218, 138, 189, 120, 226, 238, 3, 87, 177, 52, 171, 83, 60, 191, 54,
+            ],
+        ),
+        (
+            9,
+            [
+                237, 25, 139, 164, 4, 35, 84, 55, 10, 54, 138, 69, 54, 248, 120, 175, 21, 154, 170,
+                15, 155, 102, 114, 192, 188, 247, 101, 98, 233, 33, 175, 25,
+            ],
+        ),
         (
             10,
             [
@@ -192,8 +269,149 @@ mod native_builtin_srs {
             ],
         ),
     ];
+    const VESTA_SRS_16_MULTI_CHUNK_LAGRANGE_DIGESTS: &[(u8, [u8; 32])] = &[
+        (
+            3,
+            [
+                229, 190, 121, 214, 251, 139, 69, 151, 102, 141, 191, 190, 155, 101, 149, 136, 196,
+                193, 130, 250, 118, 127, 82, 255, 246, 241, 124, 199, 184, 9, 177, 106,
+            ],
+        ),
+        (
+            4,
+            [
+                165, 36, 159, 45, 245, 150, 34, 175, 17, 242, 79, 92, 5, 199, 55, 9, 220, 92, 71,
+                255, 173, 213, 215, 201, 83, 66, 17, 186, 73, 228, 168, 86,
+            ],
+        ),
+        (
+            5,
+            [
+                247, 186, 160, 139, 249, 204, 184, 190, 254, 138, 61, 209, 36, 234, 14, 106, 75,
+                231, 33, 251, 48, 234, 160, 159, 179, 219, 137, 222, 35, 242, 85, 86,
+            ],
+        ),
+        (
+            6,
+            [
+                219, 109, 157, 64, 21, 67, 206, 64, 205, 43, 153, 255, 125, 222, 115, 219, 118, 6,
+                249, 107, 234, 188, 154, 251, 108, 5, 173, 176, 165, 233, 212, 45,
+            ],
+        ),
+        (
+            7,
+            [
+                16, 1, 4, 180, 146, 35, 254, 200, 110, 185, 117, 55, 24, 12, 49, 215, 178, 83, 186,
+                7, 83, 15, 255, 18, 100, 172, 197, 76, 71, 231, 98, 53,
+            ],
+        ),
+        (
+            8,
+            [
+                233, 201, 232, 95, 225, 115, 147, 91, 253, 126, 175, 68, 110, 141, 172, 231, 34,
+                183, 27, 158, 55, 229, 68, 50, 117, 137, 244, 92, 137, 238, 201, 135,
+            ],
+        ),
+        (
+            9,
+            [
+                194, 86, 58, 61, 245, 23, 225, 111, 157, 182, 203, 19, 96, 231, 135, 5, 18, 209,
+                143, 231, 96, 55, 248, 93, 39, 136, 173, 188, 52, 5, 51, 87,
+            ],
+        ),
+        (
+            10,
+            [
+                93, 52, 113, 184, 5, 16, 227, 120, 235, 15, 8, 109, 198, 14, 219, 49, 60, 173, 178,
+                240, 29, 126, 147, 126, 1, 65, 232, 237, 58, 3, 175, 242,
+            ],
+        ),
+        (
+            11,
+            [
+                109, 127, 216, 27, 234, 190, 71, 167, 76, 133, 15, 119, 121, 58, 180, 147, 143, 19,
+                23, 250, 168, 235, 185, 126, 13, 82, 187, 37, 170, 228, 201, 92,
+            ],
+        ),
+        (
+            12,
+            [
+                244, 219, 78, 87, 216, 216, 25, 220, 30, 49, 64, 220, 251, 127, 12, 255, 118, 177,
+                132, 177, 247, 165, 43, 91, 10, 76, 69, 0, 74, 67, 17, 17,
+            ],
+        ),
+        (
+            13,
+            [
+                80, 134, 43, 85, 38, 131, 167, 202, 101, 111, 41, 175, 203, 44, 149, 73, 172, 48,
+                244, 211, 104, 230, 238, 75, 173, 46, 2, 173, 34, 9, 112, 114,
+            ],
+        ),
+        (
+            14,
+            [
+                8, 219, 126, 74, 246, 133, 149, 188, 219, 162, 52, 200, 77, 49, 32, 29, 161, 101,
+                27, 185, 188, 73, 242, 221, 25, 241, 11, 35, 231, 94, 101, 125,
+            ],
+        ),
+        (
+            15,
+            [
+                50, 152, 211, 120, 17, 90, 181, 111, 54, 216, 160, 237, 53, 41, 155, 199, 242, 195,
+                46, 163, 208, 215, 218, 36, 229, 105, 53, 166, 113, 186, 240, 134,
+            ],
+        ),
+        (
+            16,
+            [
+                69, 29, 29, 208, 183, 140, 109, 111, 73, 202, 244, 104, 184, 240, 24, 205, 9, 183,
+                153, 129, 95, 175, 142, 91, 210, 212, 93, 127, 248, 61, 93, 69,
+            ],
+        ),
+        (
+            17,
+            [
+                15, 69, 0, 239, 233, 69, 85, 43, 101, 38, 62, 24, 15, 147, 91, 50, 92, 38, 252,
+                209, 224, 100, 129, 222, 138, 175, 235, 169, 76, 168, 147, 240,
+            ],
+        ),
+    ];
+    pub(super) const VESTA_SRS_16_FOUR_CHUNK_LAGRANGE_DIGESTS: &[(u8, [u8; 32])] = &[
+        #[cfg(feature = "runtime-benchmarks")]
+        (
+            14,
+            [
+                242, 127, 98, 43, 88, 132, 124, 240, 41, 223, 35, 189, 61, 101, 208, 54, 177, 134,
+                238, 6, 62, 3, 76, 110, 159, 76, 77, 93, 70, 143, 47, 34,
+            ],
+        ),
+        (
+            18,
+            [
+                235, 170, 147, 63, 172, 75, 33, 247, 242, 236, 222, 107, 47, 81, 59, 137, 236, 183,
+                156, 79, 162, 91, 158, 173, 199, 0, 52, 209, 199, 84, 196, 243,
+            ],
+        ),
+    ];
+    #[cfg(feature = "runtime-benchmarks")]
+    pub(super) const VESTA_SRS_16_EIGHT_CHUNK_LAGRANGE_DIGESTS: &[(u8, [u8; 32])] = &[(
+        19,
+        [
+            79, 170, 209, 106, 40, 214, 30, 39, 200, 162, 15, 209, 245, 229, 78, 7, 57, 125, 62,
+            252, 40, 80, 81, 29, 135, 91, 195, 172, 63, 159, 251, 4,
+        ],
+    )];
+    #[cfg(feature = "runtime-benchmarks")]
+    pub(super) const VESTA_SRS_16_SIXTEEN_CHUNK_LAGRANGE_DIGESTS: &[(u8, [u8; 32])] = &[(
+        20,
+        [
+            248, 70, 135, 84, 117, 18, 212, 242, 9, 108, 51, 10, 110, 112, 107, 28, 148, 213, 204,
+            78, 3, 120, 101, 78, 31, 49, 213, 43, 11, 100, 136, 194,
+        ],
+    )];
 
     static VESTA16_SRS: OnceLock<IpaSrs<Vesta>> = OnceLock::new();
+    static VESTA16_PREFIX_SRS: OnceLock<Vec<(usize, IpaSrs<Vesta>)>> = OnceLock::new();
     static VESTA16_PARAMETER_CHECK: OnceLock<bool> = OnceLock::new();
 
     fn srs() -> &'static IpaSrs<Vesta> {
@@ -211,6 +429,26 @@ mod native_builtin_srs {
         Ok(srs)
     }
 
+    fn checked_srs_prefix(max_poly_size: usize) -> Result<&'static IpaSrs<Vesta>, VerifyError> {
+        let srs = checked_srs()?;
+        if max_poly_size == VESTA16_SRS_SIZE {
+            return Ok(srs);
+        }
+
+        VESTA16_PREFIX_SRS
+            .get_or_init(|| {
+                (MIN_MAX_POLY_LOG2_SIZE..16)
+                    .map(|log2_size| {
+                        let size = 1_usize << log2_size;
+                        (size, IpaSrs::new(srs.g[..size].to_vec(), srs.h))
+                    })
+                    .collect()
+            })
+            .iter()
+            .find_map(|(size, srs)| (*size == max_poly_size).then_some(srs))
+            .ok_or(VerifyError::InvalidVerificationKey)
+    }
+
     pub fn prewarm(domain_log2_sizes: &[u8]) -> Result<(), VerifyError> {
         if domain_log2_sizes.iter().any(|domain_log2_size| {
             !(MIN_DOMAIN_LOG2_SIZE..=MAX_DOMAIN_LOG2_SIZE).contains(domain_log2_size)
@@ -224,8 +462,25 @@ mod native_builtin_srs {
                 .checked_shl(u32::from(domain_log2_size))
                 .ok_or(VerifyError::InvalidVerificationKey)?;
             let basis = srs.get_lagrange_basis_from_domain_size(domain_size);
-            if !lagrange_basis_matches_expected(domain_log2_size, basis.as_slice()) {
+            if !lagrange_basis_matches_expected(
+                VESTA16_SRS_SIZE,
+                domain_log2_size,
+                basis.as_slice(),
+            ) {
                 return Err(VerifyError::IncompatibleParameters);
+            }
+
+            if domain_size <= VESTA16_SRS_SIZE {
+                let max_poly_size = domain_size / PREWARM_PREFIX_CHECK_CHUNKS;
+                let basis = checked_srs_prefix(max_poly_size)?
+                    .get_lagrange_basis_from_domain_size(domain_size);
+                if !lagrange_basis_matches_expected(
+                    max_poly_size,
+                    domain_log2_size,
+                    basis.as_slice(),
+                ) {
+                    return Err(VerifyError::IncompatibleParameters);
+                }
             }
         }
 
@@ -238,17 +493,13 @@ mod native_builtin_srs {
             .map_err(|_| ())
     }
 
-    pub fn lagrange_basis_prefix(domain_log2: u8, count: u32) -> Result<Vec<u8>, ()> {
-        if !(MIN_DOMAIN_LOG2_SIZE..=MAX_DOMAIN_LOG2_SIZE).contains(&domain_log2) {
+    pub fn lagrange_basis_prefix_v1(domain_log2: u8, count: u32) -> Result<Vec<u8>, ()> {
+        if !(V1_MIN_DOMAIN_LOG2_SIZE..=V1_MAX_DOMAIN_LOG2_SIZE).contains(&domain_log2) {
             return Err(());
         }
 
-        let domain_size = 1_usize
-            .checked_shl(domain_log2.into())
-            .filter(|domain_size| *domain_size <= VESTA16_SRS_SIZE)
-            .ok_or(())?;
+        let domain_size = 1_usize.checked_shl(domain_log2.into()).ok_or(())?;
         let count = usize::try_from(count).map_err(|_| ())?;
-
         if count > domain_size {
             return Err(());
         }
@@ -264,6 +515,49 @@ mod native_builtin_srs {
             prefix.push(*point);
         }
 
+        Ok(utils::encode(prefix))
+    }
+
+    pub fn lagrange_basis_prefix(
+        max_poly_size: u32,
+        domain_log2: u8,
+        count: u32,
+    ) -> Result<Vec<u8>, ()> {
+        if !(MIN_DOMAIN_LOG2_SIZE..=MAX_DOMAIN_LOG2_SIZE).contains(&domain_log2) {
+            return Err(());
+        }
+
+        let max_poly_size = usize::try_from(max_poly_size).map_err(|_| ())?;
+        let domain_size = 1_usize.checked_shl(domain_log2.into()).ok_or(())?;
+        let count = usize::try_from(count).map_err(|_| ())?;
+
+        if max_poly_size == 0
+            || !max_poly_size.is_power_of_two()
+            || max_poly_size > VESTA16_SRS_SIZE
+            || count > domain_size
+        {
+            return Err(());
+        }
+        let num_chunks = domain_size.div_ceil(max_poly_size);
+        if num_chunks > MAX_CHUNKS {
+            return Err(());
+        }
+
+        let basis_srs = if num_chunks == 1 {
+            checked_srs().map_err(|_| ())?
+        } else {
+            checked_srs_prefix(max_poly_size).map_err(|_| ())?
+        };
+        let basis = basis_srs.get_lagrange_basis_from_domain_size(domain_size);
+        if !lagrange_basis_matches_expected(max_poly_size, domain_log2, basis.as_slice()) {
+            return Err(());
+        }
+
+        let prefix = basis
+            .iter()
+            .take(count)
+            .map(|commitment| commitment.chunks.clone())
+            .collect::<Vec<_>>();
         Ok(utils::encode(prefix))
     }
 
@@ -309,10 +603,24 @@ mod native_builtin_srs {
     }
 
     fn lagrange_basis_matches_expected(
+        max_poly_size: usize,
         domain_log2_size: u8,
         basis: &[poly_commitment::PolyComm<Vesta>],
     ) -> bool {
-        VESTA_SRS_16_LAGRANGE_DIGESTS
+        let domain_size = 1_usize << domain_log2_size;
+        let num_chunks = domain_size.div_ceil(max_poly_size);
+        let expected_digests = match num_chunks {
+            1 => VESTA_SRS_16_LAGRANGE_DIGESTS,
+            2 => VESTA_SRS_16_MULTI_CHUNK_LAGRANGE_DIGESTS,
+            4 => VESTA_SRS_16_FOUR_CHUNK_LAGRANGE_DIGESTS,
+            #[cfg(feature = "runtime-benchmarks")]
+            8 => VESTA_SRS_16_EIGHT_CHUNK_LAGRANGE_DIGESTS,
+            #[cfg(feature = "runtime-benchmarks")]
+            16 => VESTA_SRS_16_SIXTEEN_CHUNK_LAGRANGE_DIGESTS,
+            _ => return false,
+        };
+
+        expected_digests
             .iter()
             .find_map(|(log2_size, digest)| (*log2_size == domain_log2_size).then_some(digest))
             .is_some_and(|expected| {
@@ -350,6 +658,20 @@ mod native_builtin_srs {
         Ok(hasher.finalize().into())
     }
 
+    #[cfg(all(test, feature = "runtime-benchmarks"))]
+    pub(super) fn lagrange_basis_digest_for_test(
+        max_poly_size: usize,
+        domain_log2_size: u8,
+    ) -> Result<[u8; 32], VerifyError> {
+        let domain_size = 1_usize
+            .checked_shl(u32::from(domain_log2_size))
+            .ok_or(VerifyError::InvalidVerificationKey)?;
+        let basis =
+            checked_srs_prefix(max_poly_size)?.get_lagrange_basis_from_domain_size(domain_size);
+
+        lagrange_basis_digest(domain_log2_size, basis.as_slice())
+    }
+
     fn hash_usize(hasher: &mut Blake2b256, value: usize) {
         hasher.update((value as u64).to_le_bytes());
     }
@@ -373,19 +695,40 @@ mod tests {
 
     #[test]
     fn vesta16_lagrange_basis_prefix_returns_requested_prefix() {
-        let prefix = vesta16_lagrange_basis_prefix(10, 2).expect("native basis prefix succeeds");
+        let prefix =
+            vesta16_lagrange_basis_prefix(1 << 16, 10, 2).expect("native basis prefix succeeds");
 
         assert_eq!(prefix.len(), 2);
+        assert!(prefix.iter().all(|commitment| commitment.len() == 1));
+    }
+
+    #[test]
+    fn vesta16_lagrange_basis_prefix_v1_remains_available_for_old_runtimes() {
+        let encoded = native_builtin_srs::lagrange_basis_prefix_v1(10, 2)
+            .expect("v1 native basis prefix succeeds");
+        let prefix: Vec<Vesta> = utils::decode(&encoded).expect("v1 basis prefix decodes");
+
+        assert_eq!(prefix.len(), 2);
+        assert!(native_builtin_srs::lagrange_basis_prefix_v1(9, 2).is_err());
     }
 
     #[test]
     fn vesta16_lagrange_basis_prefix_rejects_unsupported_domain() {
-        assert!(vesta16_lagrange_basis_prefix(9, 2).is_err());
+        assert!(vesta16_lagrange_basis_prefix(1 << 16, 2, 2).is_err());
     }
 
     #[test]
     fn vesta16_lagrange_basis_prefix_rejects_count_larger_than_domain() {
-        assert!(vesta16_lagrange_basis_prefix(10, 1025).is_err());
+        assert!(vesta16_lagrange_basis_prefix(1 << 16, 10, 1025).is_err());
+    }
+
+    #[test]
+    fn vesta16_lagrange_basis_prefix_returns_multi_chunk_commitments() {
+        let prefix =
+            vesta16_lagrange_basis_prefix(1 << 9, 10, 2).expect("native basis prefix succeeds");
+
+        assert_eq!(prefix.len(), 2);
+        assert!(prefix.iter().all(|commitment| commitment.len() == 2));
     }
 
     #[test]
@@ -425,13 +768,20 @@ mod tests {
 
     #[test]
     fn vesta16_prewarm_accepts_supported_domains() {
-        prewarm_vesta16_srs(&[10, 11, 12]).expect("prewarm succeeds");
+        prewarm_vesta16_srs(&[3, 10, 11, 12]).expect("prewarm succeeds");
+    }
+
+    #[test]
+    #[ignore = "expensive full consensus-parameter prewarm"]
+    fn vesta16_prewarm_accepts_all_consensus_domains() {
+        prewarm_vesta16_srs(&[3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18])
+            .expect("full prewarm succeeds");
     }
 
     #[test]
     fn vesta16_prewarm_rejects_unsupported_domains() {
         assert_eq!(
-            prewarm_vesta16_srs(&[9]),
+            prewarm_vesta16_srs(&[2]),
             Err(VerifyError::InvalidVerificationKey)
         );
     }
@@ -465,5 +815,80 @@ mod tests {
         let expected = ProjectiveVesta::msm(&bases, &scalars).expect("direct SRS MSM succeeds");
 
         assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn vesta16_four_chunk_lagrange_digest_matches_benchmark_constant() {
+        let digest = native_builtin_srs::lagrange_basis_digest_for_test(1 << 16, 18)
+            .expect("four-chunk digest should compute");
+
+        assert_eq!(
+            digest,
+            native_builtin_srs::VESTA_SRS_16_FOUR_CHUNK_LAGRANGE_DIGESTS[0].1
+        );
+    }
+
+    #[cfg(feature = "runtime-benchmarks")]
+    #[test]
+    fn vesta16_four_chunk_domain_14_lagrange_digest_matches_benchmark_constant() {
+        let digest = native_builtin_srs::lagrange_basis_digest_for_test(1 << 12, 14)
+            .expect("four-chunk domain 2^14 digest should compute");
+
+        assert!(native_builtin_srs::VESTA_SRS_16_FOUR_CHUNK_LAGRANGE_DIGESTS
+            .iter()
+            .any(|(domain_log2, expected)| *domain_log2 == 14 && *expected == digest));
+    }
+
+    #[cfg(feature = "runtime-benchmarks")]
+    #[test]
+    fn vesta16_eight_chunk_lagrange_digest_matches_benchmark_constant() {
+        let digest = native_builtin_srs::lagrange_basis_digest_for_test(1 << 16, 19)
+            .expect("eight-chunk digest should compute");
+
+        assert_eq!(
+            digest,
+            native_builtin_srs::VESTA_SRS_16_EIGHT_CHUNK_LAGRANGE_DIGESTS[0].1
+        );
+    }
+
+    #[cfg(feature = "runtime-benchmarks")]
+    #[test]
+    fn vesta16_sixteen_chunk_lagrange_digest_matches_benchmark_constant() {
+        let digest = native_builtin_srs::lagrange_basis_digest_for_test(1 << 16, 20)
+            .expect("sixteen-chunk digest should compute");
+
+        assert_eq!(
+            digest,
+            native_builtin_srs::VESTA_SRS_16_SIXTEEN_CHUNK_LAGRANGE_DIGESTS[0].1
+        );
+    }
+
+    #[test]
+    fn vesta16_lagrange_basis_prefix_returns_four_chunk_commitments() {
+        let prefix =
+            vesta16_lagrange_basis_prefix(1 << 16, 18, 2).expect("native basis prefix succeeds");
+
+        assert_eq!(prefix.len(), 2);
+        assert!(prefix.iter().all(|commitment| commitment.len() == 4));
+    }
+
+    #[cfg(feature = "runtime-benchmarks")]
+    #[test]
+    fn vesta16_lagrange_basis_prefix_returns_eight_chunk_commitments() {
+        let prefix =
+            vesta16_lagrange_basis_prefix(1 << 16, 19, 2).expect("native basis prefix succeeds");
+
+        assert_eq!(prefix.len(), 2);
+        assert!(prefix.iter().all(|commitment| commitment.len() == 8));
+    }
+
+    #[cfg(feature = "runtime-benchmarks")]
+    #[test]
+    fn vesta16_lagrange_basis_prefix_returns_sixteen_chunk_commitments() {
+        let prefix =
+            vesta16_lagrange_basis_prefix(1 << 16, 20, 2).expect("native basis prefix succeeds");
+
+        assert_eq!(prefix.len(), 2);
+        assert!(prefix.iter().all(|commitment| commitment.len() == 16));
     }
 }

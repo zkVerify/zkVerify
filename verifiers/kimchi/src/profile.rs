@@ -20,6 +20,7 @@
 
 use alloc::vec::Vec;
 use kimchi::{
+    circuits::constraints::zk_rows_strict_lower_bound,
     circuits::lookup::lookups::{LookupFeatures, LookupInfo, LookupPatterns},
     proof::{PointEvaluations, ProofEvaluations},
     verifier_index::LookupVerifierIndex,
@@ -40,12 +41,13 @@ pub(crate) enum ProfileError {
 pub(crate) trait KimchiProfile {
     const MAX_DECODED_PROOF_BYTES: usize;
     const MAX_DECODED_VK_BYTES: usize;
+    const MAX_CHUNKS: usize;
     const MAX_DOMAIN_SIZE: usize;
     const MAX_LOOKUP_TABLE_WIDTH: usize;
+    const MAX_POLY_SIZE: usize;
     const MAX_PREV_CHALLENGES: usize;
     const MAX_PUBLIC_INPUTS: usize;
     const MIN_DOMAIN_SIZE: usize;
-    const ZK_ROWS: u64;
 
     fn supports_domain_size(domain_size: usize) -> bool {
         domain_size.is_power_of_two()
@@ -53,22 +55,29 @@ pub(crate) trait KimchiProfile {
     }
 }
 
-/// Production profile for externally submitted, single-chunk Vesta Kimchi proofs.
+/// Production profile for externally submitted Vesta Kimchi proofs.
 ///
 /// Generic Kimchi custom gates and lookup arguments are supported. Recursive
-/// accumulators remain a Pickles concern, and polynomial chunking requires a
-/// different built-in SRS adapter.
+/// accumulators remain a Pickles concern. The chunk and public-input caps are
+/// the benchmarked block-work envelope.
 pub(crate) struct Vesta16;
 
 impl KimchiProfile for Vesta16 {
     const MAX_DECODED_PROOF_BYTES: usize = 262_144;
     const MAX_DECODED_VK_BYTES: usize = 65_536;
-    const MAX_DOMAIN_SIZE: usize = 1 << 16;
+    #[cfg(not(feature = "runtime-benchmarks"))]
+    const MAX_CHUNKS: usize = 4;
+    #[cfg(feature = "runtime-benchmarks")]
+    const MAX_CHUNKS: usize = 16;
+    const MAX_DOMAIN_SIZE: usize = Self::MAX_POLY_SIZE * Self::MAX_CHUNKS;
     const MAX_LOOKUP_TABLE_WIDTH: usize = 3;
+    const MAX_POLY_SIZE: usize = 1 << 16;
     const MAX_PREV_CHALLENGES: usize = 0;
-    const MAX_PUBLIC_INPUTS: usize = 64;
-    const MIN_DOMAIN_SIZE: usize = 1 << 10;
-    const ZK_ROWS: u64 = 3;
+    #[cfg(not(feature = "runtime-benchmarks"))]
+    const MAX_PUBLIC_INPUTS: usize = 1024;
+    #[cfg(feature = "runtime-benchmarks")]
+    const MAX_PUBLIC_INPUTS: usize = 1024;
+    const MIN_DOMAIN_SIZE: usize = 1 << 3;
 }
 
 pub(crate) fn validate_verifier_index(
@@ -93,11 +102,17 @@ pub(crate) fn validate_proof(
 fn validate_vesta16_verifier_index(index: &Vesta16VerifierIndex) -> Result<(), ProfileError> {
     let domain_size =
         usize::try_from(index.domain.size).map_err(|_| ProfileError::VerifierIndexConfiguration)?;
+    let num_chunks = expected_chunks(index.max_poly_size, domain_size)
+        .ok_or(ProfileError::VerifierIndexConfiguration)?;
+    let expected_zk_rows = u64::try_from(zk_rows_strict_lower_bound(num_chunks) + 1)
+        .map_err(|_| ProfileError::VerifierIndexConfiguration)?;
+
     if !Vesta16::supports_domain_size(domain_size)
-        || index.max_poly_size < domain_size
-        || index.max_poly_size > Vesta16::MAX_DOMAIN_SIZE
+        || index.max_poly_size > Vesta16::MAX_POLY_SIZE
         || !index.max_poly_size.is_power_of_two()
-        || index.zk_rows != Vesta16::ZK_ROWS
+        || num_chunks > Vesta16::MAX_CHUNKS
+        || !vesta16_supports_work_shape(index.max_poly_size, domain_size, num_chunks)
+        || index.zk_rows != expected_zk_rows
         || index.public > Vesta16::MAX_PUBLIC_INPUTS
         || index.prev_challenges > Vesta16::MAX_PREV_CHALLENGES
     {
@@ -123,10 +138,36 @@ fn validate_vesta16_verifier_index(index: &Vesta16VerifierIndex) -> Result<(), P
         .chain(index.xor_comm.iter())
         .chain(index.rot_comm.iter())
     {
-        validate_single_chunk(commitment)?;
+        validate_commitment(commitment, num_chunks)?;
     }
 
-    validate_lookup_verifier_index(index)
+    validate_lookup_verifier_index(index, num_chunks)
+}
+
+fn vesta16_supports_work_shape(
+    max_poly_size: usize,
+    domain_size: usize,
+    num_chunks: usize,
+) -> bool {
+    #[cfg(feature = "runtime-benchmarks")]
+    {
+        let _ = (max_poly_size, domain_size);
+        num_chunks <= Vesta16::MAX_CHUNKS
+    }
+
+    #[cfg(not(feature = "runtime-benchmarks"))]
+    {
+        match num_chunks {
+            1 => domain_size <= max_poly_size && max_poly_size <= Vesta16::MAX_POLY_SIZE,
+            2 => {
+                max_poly_size == Vesta16::MAX_POLY_SIZE && domain_size == Vesta16::MAX_POLY_SIZE * 2
+            }
+            4 => {
+                max_poly_size == Vesta16::MAX_POLY_SIZE && domain_size == Vesta16::MAX_POLY_SIZE * 4
+            }
+            _ => false,
+        }
+    }
 }
 
 fn validate_vesta16_proof(
@@ -134,6 +175,10 @@ fn validate_vesta16_proof(
     index: &Vesta16VerifierIndex,
 ) -> Result<(), ProfileError> {
     validate_vesta16_verifier_index(index)?;
+    let domain_size =
+        usize::try_from(index.domain.size).map_err(|_| ProfileError::ProofConfiguration)?;
+    let num_chunks = expected_chunks(index.max_poly_size, domain_size)
+        .ok_or(ProfileError::ProofConfiguration)?;
 
     if !proof.prev_challenges.is_empty()
         || proof.proof.rounds() != index.max_poly_size.trailing_zeros() as usize
@@ -147,17 +192,20 @@ fn validate_vesta16_proof(
         .iter()
         .chain([&proof.commitments.z_comm])
     {
-        validate_single_chunk(commitment)?;
+        validate_commitment(commitment, num_chunks)?;
     }
-    if proof.commitments.t_comm.is_empty() || proof.commitments.t_comm.len() > 7 {
+    if proof.commitments.t_comm.is_empty() || proof.commitments.t_comm.len() > 7 * num_chunks {
         return Err(ProfileError::CommitmentChunks);
     }
 
-    validate_lookup_proof(proof, index)?;
-    validate_evaluations(&proof.evals, index)
+    validate_lookup_proof(proof, index, num_chunks)?;
+    validate_evaluations(&proof.evals, index, num_chunks)
 }
 
-fn validate_lookup_verifier_index(index: &Vesta16VerifierIndex) -> Result<(), ProfileError> {
+fn validate_lookup_verifier_index(
+    index: &Vesta16VerifierIndex,
+    num_chunks: usize,
+) -> Result<(), ProfileError> {
     let gate_patterns = LookupPatterns {
         xor: index.xor_comm.is_some(),
         lookup: false,
@@ -213,7 +261,7 @@ fn validate_lookup_verifier_index(index: &Vesta16VerifierIndex) -> Result<(), Pr
         .chain(lookup_index.table_ids.iter())
         .chain(lookup_index.runtime_tables_selector.iter())
     {
-        validate_single_chunk(commitment)?;
+        validate_commitment(commitment, num_chunks)?;
     }
 
     Ok(())
@@ -222,6 +270,7 @@ fn validate_lookup_verifier_index(index: &Vesta16VerifierIndex) -> Result<(), Pr
 fn validate_lookup_proof(
     proof: &Vesta16Proof,
     index: &Vesta16VerifierIndex,
+    num_chunks: usize,
 ) -> Result<(), ProfileError> {
     match (&proof.commitments.lookup, &index.lookup_index) {
         (None, None) => Ok(()),
@@ -238,7 +287,7 @@ fn validate_lookup_proof(
                 .chain([&commitments.aggreg])
                 .chain(commitments.runtime.iter())
             {
-                validate_single_chunk(commitment)?;
+                validate_commitment(commitment, num_chunks)?;
             }
 
             Ok(())
@@ -247,8 +296,8 @@ fn validate_lookup_proof(
     }
 }
 
-fn validate_single_chunk<T>(commitment: &PolyComm<T>) -> Result<(), ProfileError> {
-    (commitment.chunks.len() == 1)
+fn validate_commitment<T>(commitment: &PolyComm<T>, num_chunks: usize) -> Result<(), ProfileError> {
+    (commitment.chunks.len() == num_chunks)
         .then_some(())
         .ok_or(ProfileError::CommitmentChunks)
 }
@@ -256,6 +305,7 @@ fn validate_single_chunk<T>(commitment: &PolyComm<T>) -> Result<(), ProfileError
 fn validate_evaluations(
     evals: &ProofEvaluations<PointEvaluations<Vec<Fp>>>,
     index: &Vesta16VerifierIndex,
+    num_chunks: usize,
 ) -> Result<(), ProfileError> {
     let ProofEvaluations {
         public,
@@ -301,21 +351,31 @@ fn validate_evaluations(
             endomul_scalar_selector,
         ])
     {
-        validate_single_evaluation(evaluation)?;
+        validate_evaluation(evaluation, num_chunks)?;
     }
 
-    validate_optional_evaluation(range_check0_selector, index.range_check0_comm.is_some())?;
-    validate_optional_evaluation(range_check1_selector, index.range_check1_comm.is_some())?;
+    validate_optional_evaluation(
+        range_check0_selector,
+        index.range_check0_comm.is_some(),
+        num_chunks,
+    )?;
+    validate_optional_evaluation(
+        range_check1_selector,
+        index.range_check1_comm.is_some(),
+        num_chunks,
+    )?;
     validate_optional_evaluation(
         foreign_field_add_selector,
         index.foreign_field_add_comm.is_some(),
+        num_chunks,
     )?;
     validate_optional_evaluation(
         foreign_field_mul_selector,
         index.foreign_field_mul_comm.is_some(),
+        num_chunks,
     )?;
-    validate_optional_evaluation(xor_selector, index.xor_comm.is_some())?;
-    validate_optional_evaluation(rot_selector, index.rot_comm.is_some())?;
+    validate_optional_evaluation(xor_selector, index.xor_comm.is_some(), num_chunks)?;
+    validate_optional_evaluation(rot_selector, index.rot_comm.is_some(), num_chunks)?;
 
     validate_lookup_evaluations(
         (
@@ -330,6 +390,7 @@ fn validate_evaluations(
             foreign_field_mul_lookup_selector,
         ),
         index.lookup_index.as_ref(),
+        num_chunks,
     )
 }
 
@@ -357,6 +418,7 @@ fn validate_lookup_evaluations(
         &Option<PointEvaluations<Vec<Fp>>>,
     ),
     lookup_index: Option<&LookupVerifierIndex<mina_curves::pasta::Vesta>>,
+    num_chunks: usize,
 ) -> Result<(), ProfileError> {
     let Some(lookup_index) = lookup_index else {
         if lookup_aggregation.is_some()
@@ -374,40 +436,65 @@ fn validate_lookup_evaluations(
         return Ok(());
     };
 
-    validate_optional_evaluation(lookup_aggregation, true)?;
-    validate_optional_evaluation(lookup_table, true)?;
+    validate_optional_evaluation(lookup_aggregation, true, num_chunks)?;
+    validate_optional_evaluation(lookup_table, true, num_chunks)?;
     for (position, evaluation) in lookup_sorted.iter().enumerate() {
-        validate_optional_evaluation(evaluation, position <= lookup_index.lookup_info.max_per_row)?;
+        validate_optional_evaluation(
+            evaluation,
+            position <= lookup_index.lookup_info.max_per_row,
+            num_chunks,
+        )?;
     }
 
     let patterns = lookup_index.lookup_info.features.patterns;
     let runtime = lookup_index.runtime_tables_selector.is_some();
-    validate_optional_evaluation(runtime_lookup_table, runtime)?;
-    validate_optional_evaluation(runtime_lookup_table_selector, runtime)?;
-    validate_optional_evaluation(xor_lookup_selector, patterns.xor)?;
-    validate_optional_evaluation(lookup_gate_lookup_selector, patterns.lookup)?;
-    validate_optional_evaluation(range_check_lookup_selector, patterns.range_check)?;
+    validate_optional_evaluation(runtime_lookup_table, runtime, num_chunks)?;
+    validate_optional_evaluation(runtime_lookup_table_selector, runtime, num_chunks)?;
+    validate_optional_evaluation(xor_lookup_selector, patterns.xor, num_chunks)?;
+    validate_optional_evaluation(lookup_gate_lookup_selector, patterns.lookup, num_chunks)?;
+    validate_optional_evaluation(
+        range_check_lookup_selector,
+        patterns.range_check,
+        num_chunks,
+    )?;
     validate_optional_evaluation(
         foreign_field_mul_lookup_selector,
         patterns.foreign_field_mul,
+        num_chunks,
     )
 }
 
 fn validate_optional_evaluation(
     evaluation: &Option<PointEvaluations<Vec<Fp>>>,
     expected: bool,
+    num_chunks: usize,
 ) -> Result<(), ProfileError> {
     if evaluation.is_some() != expected {
         return Err(ProfileError::EvaluationLengths);
     }
     if let Some(evaluation) = evaluation {
-        validate_single_evaluation(evaluation)?;
+        validate_evaluation(evaluation, num_chunks)?;
     }
     Ok(())
 }
 
-fn validate_single_evaluation(evaluation: &PointEvaluations<Vec<Fp>>) -> Result<(), ProfileError> {
-    (evaluation.zeta.len() == 1 && evaluation.zeta_omega.len() == 1)
+fn validate_evaluation(
+    evaluation: &PointEvaluations<Vec<Fp>>,
+    num_chunks: usize,
+) -> Result<(), ProfileError> {
+    (evaluation.zeta.len() == num_chunks && evaluation.zeta_omega.len() == num_chunks)
         .then_some(())
         .ok_or(ProfileError::EvaluationLengths)
+}
+
+pub(crate) fn expected_chunks(max_poly_size: usize, domain_size: usize) -> Option<usize> {
+    if max_poly_size == 0 || !max_poly_size.is_power_of_two() || !domain_size.is_power_of_two() {
+        return None;
+    }
+
+    Some(if domain_size < max_poly_size {
+        1
+    } else {
+        domain_size / max_poly_size
+    })
 }

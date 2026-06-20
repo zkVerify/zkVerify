@@ -60,21 +60,47 @@ use crate::parachains;
 pub struct ZKVWeight<T>(PhantomData<T>);
 
 impl<T: frame_system::Config> pallet_kimchi_verifier_verify_proof::WeightInfo for ZKVWeight<T> {
-    fn verify_proof_domain_4096() -> Weight {
+    fn verify_proof_domain_4096_pubs_0() -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `0`
         //  Estimated: `0`
-        // Minimum execution time: 15_495_000_000 picoseconds.
-        // Includes a 25% margin over the strict Vesta16 profile benchmark.
-        Weight::from_parts(19_798_000_000, 0)
+        // Measured median execution time: 15_993_000_000 picoseconds.
+        // Includes guard margin over a small simple-profile benchmark. Feature-heavy
+        // small proofs route to the one-chunk upper tier.
+        Weight::from_parts(21_000_000_000, 0)
     }
 
-    fn verify_proof_domain_65536_pubs_64() -> Weight {
+    fn verify_proof_domain_65536_pubs_0() -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `0`
         //  Estimated: `0`
-        // Minimum execution time: 56_800_000_000 picoseconds.
-        // Includes a 25% margin over the strict Vesta16 profile benchmark.
-        Weight::from_parts(74_082_000_000, 0)
+        // Measured median execution time: 62_396_000_000 picoseconds.
+        // Includes guard margin over the max-feature one-chunk benchmark.
+        Weight::from_parts(80_000_000_000, 0)
+    }
+
+    fn verify_proof_domain_131072_pubs_0() -> Weight {
+        // Proof Size summary in bytes:
+        //  Measured:  `0`
+        //  Estimated: `0`
+        // Measured median execution time: 81_968_000_000 picoseconds.
+        // Includes guard margin over the two-chunk lookup/runtime-table profile benchmark.
+        Weight::from_parts(105_000_000_000, 0)
+    }
+
+    fn verify_proof_domain_262144_pubs_0() -> Weight {
+        // Proof Size summary in bytes:
+        //  Measured:  `0`
+        //  Estimated: `0`
+        // Measured median execution time: 139_340_000_000 picoseconds.
+        // Includes guard margin over the four-chunk lookup/runtime-table profile benchmark.
+        Weight::from_parts(176_000_000_000, 0)
+    }
+
+    fn verify_proof_public_input() -> Weight {
+        // Per-public-input, per-chunk slope.
+        // Local benchmark slopes are about 7.5 us/chunk/public input, rounded
+        // up to 10 us for the production formula.
+        Weight::from_parts(10_000_000, 0)
     }
 }

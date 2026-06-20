@@ -19,7 +19,7 @@ extern crate alloc;
 
 use alloc::{vec, vec::Vec};
 use frame_support::traits::ConstU32;
-use pallet_kimchi_verifier::{Kimchi, Vk, PUB_SIZE};
+use pallet_kimchi_verifier::{Kimchi, KimchiProfileId, Vk, PUB_SIZE};
 use pallet_verifiers::traits::Verifier;
 
 struct DummyConfig;
@@ -28,12 +28,11 @@ impl pallet_kimchi_verifier::Config for DummyConfig {
     type MaxProofSize = ConstU32<1024>;
     type MaxPubs = ConstU32<4>;
     type MaxVkSize = ConstU32<1024>;
-    type MaxSrsSize = ConstU32<1024>;
     type WeightInfo = ();
 }
 
 pub fn verify() {
-    let vk = Vk::<DummyConfig>::new(vec![1_u8, 2, 3], vec![4_u8, 5, 6]);
+    let vk = Vk::<DummyConfig>::new(vec![1_u8, 2, 3], KimchiProfileId::Vesta16);
     let proof = Vec::new();
     let pubs = vec![[0_u8; PUB_SIZE]];
 

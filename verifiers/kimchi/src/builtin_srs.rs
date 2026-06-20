@@ -48,9 +48,9 @@ impl BuiltinSrs {
         if max_poly_size == 0
             || max_poly_size > profile.max_poly_size()
             || domain_size < profile.min_domain_size()
-            || max_poly_size < domain_size
             || !max_poly_size.is_power_of_two()
-            || domain_size > profile.max_poly_size()
+            || domain_size > profile.max_domain_size()
+            || crate::profile::expected_chunks(max_poly_size, domain_size).is_none()
             || public_inputs > profile.max_public_inputs()
         {
             return Err(());
@@ -65,25 +65,25 @@ impl BuiltinSrs {
         let blinding_commitment = match profile {
             KimchiProfileId::Vesta16 => native::vesta::vesta16_blinding_commitment(),
         }?;
-        let lagrange_points = match profile {
-            KimchiProfileId::Vesta16 => {
-                native::vesta::vesta16_lagrange_basis_prefix(domain_log2 as u8, count)
-            }
+        let max_poly_size = u32::try_from(max_poly_size).map_err(|_| ())?;
+        let lagrange_chunks = match profile {
+            KimchiProfileId::Vesta16 => native::vesta::vesta16_lagrange_basis_prefix(
+                max_poly_size,
+                domain_log2 as u8,
+                count,
+            ),
         }?;
 
-        if lagrange_points.len() != public_inputs {
+        if lagrange_chunks.len() != public_inputs {
             return Err(());
         }
 
         Ok(Self {
             profile: Some(profile),
-            max_poly_size,
+            max_poly_size: max_poly_size as usize,
             domain_size,
             blinding_commitment,
-            lagrange_basis_prefix: lagrange_points
-                .into_iter()
-                .map(|point| PolyComm::new(vec![point]))
-                .collect(),
+            lagrange_basis_prefix: lagrange_chunks.into_iter().map(PolyComm::new).collect(),
             empty_lagrange_basis: Vec::new(),
         })
     }

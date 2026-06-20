@@ -28,10 +28,12 @@ pub struct Pallet<T: Config>(crate::Pallet<T>);
 impl<T: crate::Config> Config for T {}
 pub type Call<T> = pallet_verifiers::Call<T, Verifier<T>>;
 
-const BENCH_PROOF: &[u8] = include_bytes!("resources/generated_65536_pubs_64/proof.bin");
+const BENCH_PROOF: &[u8] =
+    include_bytes!("resources/generated_262144_lookup_runtime_pubs_1024/proof.bin");
 const BENCH_VERIFIER_INDEX: &[u8] =
-    include_bytes!("resources/generated_65536_pubs_64/verifier_index.bin");
-const BENCH_PUBS: &[u8] = include_bytes!("resources/generated_65536_pubs_64/pubs.bin");
+    include_bytes!("resources/generated_262144_lookup_runtime_pubs_1024/verifier_index.bin");
+const BENCH_PUBS: &[u8] =
+    include_bytes!("resources/generated_262144_lookup_runtime_pubs_1024/pubs.bin");
 
 fn benchmark_data<T: VerifierConfig>() -> (Proof, Vk<T>, Pubs) {
     (
@@ -138,6 +140,39 @@ mod benchmarks {
         assert!(do_get_vk::<T>(&hash).is_none());
     }
 
+    #[benchmark]
+    fn submit_proof_inline_vk() {
+        let caller = funded_account::<T>();
+        let (proof, vk, pubs) = benchmark_data::<T>();
+        let vk_or_hash = VkOrHash::Vk(vk.into());
+
+        #[extrinsic_call]
+        submit_proof(
+            RawOrigin::Signed(caller),
+            vk_or_hash,
+            proof.into(),
+            pubs.into(),
+            None,
+        );
+    }
+
+    #[benchmark]
+    fn submit_proof_registered_vk() {
+        let caller = funded_account::<T>();
+        let (proof, vk, pubs) = benchmark_data::<T>();
+        let hash = do_vk_hash::<T>(&vk);
+        insert_vk::<T>(caller.clone(), vk, hash);
+
+        #[extrinsic_call]
+        submit_proof(
+            RawOrigin::Signed(caller),
+            VkOrHash::Hash(hash),
+            proof.into(),
+            pubs.into(),
+            None,
+        );
+    }
+
     impl_benchmark_test_suite!(Pallet, super::mock::test_ext(), super::mock::Test);
 }
 
@@ -165,7 +200,7 @@ mod mock {
 
     impl crate::Config for Test {
         type MaxProofSize = ConstU32<262144>;
-        type MaxPubs = ConstU32<64>;
+        type MaxPubs = ConstU32<1024>;
         type MaxVkSize = ConstU32<65536>;
         type WeightInfo = ();
     }

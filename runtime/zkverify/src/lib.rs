@@ -1110,9 +1110,12 @@ impl pallet_verifiers::Config<UltraplonkVerifier> for Runtime {
     type Currency = Balances;
 }
 
+// Consensus limits for the Vesta16 Kimchi verification profile.
 parameter_types! {
-    // Consensus limits for the Vesta16 Kimchi verification profile.
-    pub const KimchiMaxPubs: u32 = 64;
+    pub const KimchiMaxPubs: u32 = 1024;
+}
+
+parameter_types! {
     pub const KimchiMaxProofSize: u32 = 262_144;
     pub const KimchiMaxVkSize: u32 = 65_536;
 }

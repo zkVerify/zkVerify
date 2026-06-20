@@ -126,7 +126,10 @@ impl<T: Config> Verifier for Kimchi<T> {
     }
 
     fn verifier_version_hash(_proof: &Self::Proof) -> sp_core::H256 {
-        sp_io::hashing::sha2_256(b"kimchi:v1:vesta16:bincode2-canonical:builtin-srs").into()
+        sp_io::hashing::sha2_256(
+            b"kimchi:v3:vesta16:bincode2-canonical:builtin-srs:chunks4-pubs1024",
+        )
+        .into()
     }
 
     fn verify_proof(
@@ -145,13 +148,13 @@ impl<T: Config> Verifier for Kimchi<T> {
         );
 
         let proof = decode_proof(raw_proof)?;
-        let public_input = decode_public_input(raw_pubs)?;
         let mut verifier_index = decode_vk(vk)?;
-        prepare_verifier_index(&mut verifier_index, vk.profile)?;
         ensure!(
             raw_pubs.len() == verifier_index.public,
             VerifyError::InvalidInput
         );
+        prepare_verifier_index(&mut verifier_index, vk.profile)?;
+        let public_input = decode_public_input(raw_pubs)?;
         profile::validate_proof(vk.profile, &proof, &verifier_index)
             .inspect_err(|error| log::debug!("Unsupported Kimchi proof profile: {error:?}"))
             .map_err(|_| VerifyError::InvalidProofData)?;
@@ -181,11 +184,50 @@ impl<T: Config> Verifier for Kimchi<T> {
 }
 
 fn compute_verify_weight<T: Config>(verifier_index: &Vesta16VerifierIndex) -> Weight {
-    if verifier_index.max_poly_size <= 4096 {
-        T::WeightInfo::verify_proof_domain_4096()
+    let domain_size = usize::try_from(verifier_index.domain.size).unwrap_or(usize::MAX);
+    let num_chunks =
+        profile::expected_chunks(verifier_index.max_poly_size, domain_size).unwrap_or(usize::MAX);
+
+    let base = if is_small_domain_weight_eligible(verifier_index, domain_size, num_chunks) {
+        T::WeightInfo::verify_proof_domain_4096_pubs_0()
+    } else if num_chunks <= 1 {
+        T::WeightInfo::verify_proof_domain_65536_pubs_0()
+    } else if num_chunks <= 2 {
+        T::WeightInfo::verify_proof_domain_131072_pubs_0()
     } else {
-        T::WeightInfo::verify_proof_domain_65536_pubs_64()
-    }
+        T::WeightInfo::verify_proof_domain_262144_pubs_0()
+    };
+
+    base.saturating_add(public_input_weight::<T>(verifier_index.public, num_chunks))
+}
+
+fn is_small_domain_weight_eligible(
+    verifier_index: &Vesta16VerifierIndex,
+    domain_size: usize,
+    num_chunks: usize,
+) -> bool {
+    domain_size <= 4096
+        && verifier_index.max_poly_size <= 4096
+        && num_chunks == 1
+        && !has_optional_features(verifier_index)
+}
+
+fn has_optional_features(verifier_index: &Vesta16VerifierIndex) -> bool {
+    verifier_index.range_check0_comm.is_some()
+        || verifier_index.range_check1_comm.is_some()
+        || verifier_index.foreign_field_add_comm.is_some()
+        || verifier_index.foreign_field_mul_comm.is_some()
+        || verifier_index.xor_comm.is_some()
+        || verifier_index.rot_comm.is_some()
+        || verifier_index.lookup_index.is_some()
+}
+
+fn public_input_weight<T: Config>(public_inputs: usize, num_chunks: usize) -> Weight {
+    let public_inputs = u64::try_from(public_inputs).unwrap_or(u64::MAX);
+    let num_chunks = u64::try_from(num_chunks).unwrap_or(u64::MAX).max(1);
+    T::WeightInfo::verify_proof_public_input()
+        .saturating_mul(public_inputs)
+        .saturating_mul(num_chunks)
 }
 
 pub struct KimchiWeight<W: WeightInfo>(PhantomData<W>);
@@ -280,8 +322,7 @@ fn prepare_verifier_index(
         || !verifier_index.max_poly_size.is_power_of_two()
         || profile.max_poly_size() < verifier_index.max_poly_size
         || domain_size < profile.min_domain_size()
-        || verifier_index.max_poly_size < domain_size
-        || profile.max_poly_size() < domain_size
+        || profile.max_domain_size() < domain_size
         || profile.max_public_inputs() < verifier_index.public
     {
         return Err(VerifyError::InvalidVerificationKey);

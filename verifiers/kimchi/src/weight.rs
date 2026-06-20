@@ -27,7 +27,7 @@ pub trait WeightInfo {
 
 impl WeightInfo for () {
     fn verify_proof() -> Weight {
-        Weight::from_parts(0, 0)
+        Weight::from_parts(216_960_000_000, 0)
     }
 
     fn get_vk() -> Weight {
