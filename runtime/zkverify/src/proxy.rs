@@ -14,7 +14,7 @@
 // limitations under the License.
 
 use crate::RuntimeCall;
-use codec::{Decode, Encode, MaxEncodedLen};
+use codec::{Decode, DecodeWithMemTracking, Encode, MaxEncodedLen};
 use frame_support::traits::InstanceFilter;
 use sp_runtime::RuntimeDebug;
 
@@ -29,6 +29,7 @@ use sp_runtime::RuntimeDebug;
     PartialOrd,
     Encode,
     Decode,
+    DecodeWithMemTracking,
     RuntimeDebug,
     MaxEncodedLen,
     scale_info::TypeInfo,

@@ -22,7 +22,7 @@
 extern crate alloc;
 
 use alloc::borrow::Cow;
-use codec::{Decode, Encode, EncodeLike};
+use codec::{Decode, DecodeWithMemTracking, Encode, EncodeLike};
 use core::fmt::Debug;
 use frame_support::pallet_prelude::StorageVersion;
 use hex_literal::hex;
@@ -36,8 +36,11 @@ pub const NO_VERSION_HASH: H256 = H256(hex!(
 ));
 
 /// Define the minimum traits that proofs and public inputs should implement.
-pub trait Arg: Debug + Clone + PartialEq + Encode + Decode + TypeInfo {}
-impl<T: Debug + Clone + PartialEq + Encode + Decode + TypeInfo> Arg for T {}
+pub trait Arg:
+    Debug + Clone + PartialEq + Encode + Decode + DecodeWithMemTracking + TypeInfo
+{
+}
+impl<T: Debug + Clone + PartialEq + Encode + Decode + DecodeWithMemTracking + TypeInfo> Arg for T {}
 /// Define the minimum traits that verification keys should implement.
 pub trait VkArg: Arg + MaxEncodedLen + EncodeLike {}
 impl<T: Arg + MaxEncodedLen + EncodeLike> VkArg for T {}

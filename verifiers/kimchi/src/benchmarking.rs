@@ -222,7 +222,6 @@ mod mock {
     }
 
     impl pallet_verifiers::Config<crate::Kimchi<Test>> for Test {
-        type RuntimeEvent = RuntimeEvent;
         type OnProofVerified = ();
         type WeightInfo = crate::KimchiWeight<()>;
         type Ticket = HoldConsideration<

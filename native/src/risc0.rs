@@ -13,12 +13,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::compat::PassPointerAndReadWrite;
+use sp_runtime_interface::pass_by::PassFatPointerAndReadWrite;
 use sp_runtime_interface::runtime_interface;
 
 use risc0_verifier::poseidon2_injection::{BabyBearElem, POSEIDON2_CELLS};
 
 /// Define the byte slice for poseidon2 mix call argument type.
 pub type Poseidon2ArgBytes = [u8; (u32::BITS as usize / u8::BITS as usize) * POSEIDON2_CELLS];
+/// The expected size of the Poseidon2ArgBytes array.
+pub const POSEIDON2_ARG_BYTES_SIZE: usize =
+    (u32::BITS as usize / u8::BITS as usize) * POSEIDON2_CELLS;
 /// Define the `BabyBearElem` slice for poseidon2 mix call argument type.
 type Poseidon2Slice = [BabyBearElem; POSEIDON2_CELLS];
 
@@ -42,20 +47,6 @@ impl<'a> Poseidon2Mix<'a> {
         risc_0_accelerate::poseidon2_mix(self.into_mut_bytes())
     }
 
-    #[inline]
-    #[cfg(feature = "std")]
-    /// SAFETY: BabyBearElem is always u32 and use `repr(transparent)`. Moreover
-    /// this method is private and it's just used by `poseidon2_mix` that cannot be
-    /// accessed outside of this module: only `Self::poseidon2_mix()` call it
-    /// that can be just called from a `Poseidon2Mix` struct.
-    /// The `Poseidon2Mix` struct can be built just from a mutable slice of `BabyBearElem`
-    /// with the correct size.
-    fn from_mut_bytes(bytes: &mut Poseidon2ArgBytes) -> Self {
-        Self::new(unsafe {
-            core::mem::transmute::<&mut Poseidon2ArgBytes, &mut Poseidon2Slice>(bytes)
-        })
-    }
-
     /// SAFETY: BabyBearElem is always u32 and use `repr(transparent)`. The inner
     /// mut slice can just be built from a mutable slice of `BabyBearElem`
     /// with the correct size. Moreover, all invariants of the `BabyBearElem` will
@@ -67,10 +58,40 @@ impl<'a> Poseidon2Mix<'a> {
     }
 }
 
+/// Decode a byte buffer into a properly aligned `Poseidon2Slice`, run `poseidon2_mix`,
+/// and write the result back. Uses `u32::from_le_bytes` / `to_le_bytes` so no alignment
+/// or host-endianness assumptions are needed — safe for both the v1 thin-pointer path
+/// (stack `[u8; N]` with alignment 1) and the v2 fat-pointer path.
+#[cfg(feature = "std")]
+fn poseidon2_mix_bytes(bytes: &mut [u8]) {
+    assert_eq!(bytes.len(), POSEIDON2_ARG_BYTES_SIZE);
+    let mut cells: Poseidon2Slice = core::array::from_fn(|i| {
+        let offset = i * 4;
+        let w = u32::from_le_bytes(bytes[offset..offset + 4].try_into().expect(
+            "POSEIDON2_ARG_BYTES_SIZE is POSEIDON2_CELLS * 4, so each 4-byte chunk is valid; qed",
+        ));
+        BabyBearElem::new_raw(w)
+    });
+    risc0_verifier::poseidon2_injection::poseidon2_mix(&mut cells);
+    for (i, cell) in cells.iter().enumerate() {
+        let offset = i * 4;
+        bytes[offset..offset + 4].copy_from_slice(&cell.as_u32_montgomery().to_le_bytes());
+    }
+}
+
 #[runtime_interface]
 pub trait Risc0Accelerate {
-    fn poseidon2_mix(bytes: &mut Poseidon2ArgBytes) {
-        let cells = Poseidon2Mix::from_mut_bytes(bytes);
-        risc0_verifier::poseidon2_injection::poseidon2_mix(cells.inner);
+    /// Version 1: old ABI (thin pointer, i32). Registered for old on-chain runtimes.
+    #[version(1, register_only)]
+    fn poseidon2_mix(
+        bytes: PassPointerAndReadWrite<&mut Poseidon2ArgBytes, POSEIDON2_ARG_BYTES_SIZE>,
+    ) {
+        poseidon2_mix_bytes(bytes);
+    }
+
+    /// Version 2: new ABI (fat pointer, i64). Used by the current runtime.
+    #[version(2)]
+    fn poseidon2_mix(bytes: PassFatPointerAndReadWrite<&mut [u8]>) {
+        poseidon2_mix_bytes(bytes);
     }
 }

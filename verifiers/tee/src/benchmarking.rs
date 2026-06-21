@@ -299,7 +299,6 @@ mod mock {
     }
 
     impl pallet_verifiers::Config<crate::Tee<Test>> for Test {
-        type RuntimeEvent = RuntimeEvent;
         type OnProofVerified = ();
         type WeightInfo = crate::TeeWeight<()>;
         type Ticket = HoldConsideration<
@@ -312,7 +311,6 @@ mod mock {
     }
 
     impl pallet_crl::Config for Test {
-        type RuntimeEvent = RuntimeEvent;
         type ManagerOrigin = frame_system::EnsureRoot<AccountId>;
         type WeightInfo = ();
         type MaxCaNameLength = MaxCaNameLength;

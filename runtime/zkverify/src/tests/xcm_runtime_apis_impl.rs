@@ -6,7 +6,7 @@ use xcm::{
 };
 use xcm_runtime_apis::{
     conversions::runtime_decl_for_location_to_account_api::LocationToAccountApiV1,
-    fees::{runtime_decl_for_xcm_payment_api::XcmPaymentApiV1, Error as XcmPaymentApiError},
+    fees::Error as XcmPaymentApiError,
 };
 
 use super::*;
@@ -25,6 +25,7 @@ fn xcm_program() -> VersionedXcm<()> {
 
 mod query_acceptable_payment_assets {
     use super::*;
+    use xcm_runtime_apis::fees::runtime_decl_for_xcm_payment_api::XcmPaymentApiV2;
 
     #[rstest]
     #[case::v3(3)]
@@ -52,6 +53,7 @@ mod query_acceptable_payment_assets {
 
 mod query_weight_to_asset_fee {
     use super::*;
+    use xcm_runtime_apis::fees::runtime_decl_for_xcm_payment_api::XcmPaymentApiV2;
 
     #[rstest]
     #[case::v3(3)]
@@ -105,6 +107,7 @@ mod query_weight_to_asset_fee {
 
 mod query_xcm_weight {
     use super::*;
+    use xcm_runtime_apis::fees::runtime_decl_for_xcm_payment_api::XcmPaymentApiV2;
 
     #[rstest]
     fn returns_nonzero_weight_for_nonempty_program(xcm_program: VersionedXcm<()>) {
@@ -126,14 +129,17 @@ mod query_xcm_weight {
 
 mod query_delivery_fees {
     use super::*;
+    use xcm_runtime_apis::fees::runtime_decl_for_xcm_payment_api::XcmPaymentApiV2;
 
     #[rstest]
     fn is_routed(xcm_program: VersionedXcm<()>) {
         test().execute_with(|| {
+            let asset_id = VersionedAssetId::V5(AssetId(TokenLocation::get()));
             assert_eq!(
                 Runtime::query_delivery_fees(
                     VersionedLocation::V5(RootLocation::get()),
                     xcm_program,
+                    asset_id,
                 )
                 .unwrap_err(),
                 XcmPaymentApiError::Unroutable

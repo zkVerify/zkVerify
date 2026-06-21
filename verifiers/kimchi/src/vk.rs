@@ -20,10 +20,21 @@ use crate::{
 use alloc::vec::Vec;
 use core::{fmt, marker::PhantomData};
 
-use codec::{Decode, Encode, MaxEncodedLen};
+use codec::{Decode, DecodeWithMemTracking, Encode, MaxEncodedLen};
 use frame_support::pallet_prelude::TypeInfo;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Encode, Decode, TypeInfo, MaxEncodedLen)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+    Encode,
+    Decode,
+    DecodeWithMemTracking,
+    TypeInfo,
+    MaxEncodedLen,
+)]
 pub enum KimchiProfileId {
     /// Canonical bincode-v2 Vesta proof/VK encoding with the fixed Vesta16 SRS.
     Vesta16,
@@ -55,7 +66,7 @@ impl KimchiProfileId {
     }
 }
 
-#[derive(Encode, Decode, TypeInfo)]
+#[derive(Encode, Decode, DecodeWithMemTracking, TypeInfo)]
 #[scale_info(skip_type_params(T))]
 pub struct KimchiVk<T> {
     pub verifier_index_bytes: Vec<u8>,

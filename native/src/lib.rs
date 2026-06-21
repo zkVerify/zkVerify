@@ -16,14 +16,14 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode};
-use sp_runtime_interface::pass_by::PassByCodec;
 
 mod accelerated_bn;
 mod accelerated_pasta;
+mod compat;
 mod groth16;
 mod risc0;
 
-#[derive(PassByCodec, Encode, Decode, Debug, PartialEq, Eq)]
+#[derive(Encode, Decode, Debug, PartialEq, Eq)]
 pub enum VerifyError {
     InvalidInput,
     InvalidProofData,

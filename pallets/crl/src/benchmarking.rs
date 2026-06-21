@@ -222,7 +222,6 @@ mod mock {
     }
 
     impl crate::Config for Test {
-        type RuntimeEvent = RuntimeEvent;
         type ManagerOrigin = frame_system::EnsureRoot<AccountId>;
         type WeightInfo = ();
         type MaxCaNameLength = MaxCaNameLength;

@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-use assert_cmd::cargo::cargo_bin;
 use rstest::rstest;
 use std::{process::Command, result::Result};
 use tempfile::tempdir;
@@ -44,7 +43,7 @@ fn benchmark_overhead(runtime: &str) -> Result<(), String> {
     let base_path = tmp_dir.path();
 
     // Invoke `benchmark overhead` with all options to make sure that they are valid.
-    let status = Command::new(cargo_bin(common::NODE))
+    let status = Command::new(assert_cmd::cargo::cargo_bin!("zkv-relay"))
         .args(["benchmark", "overhead", "--chain", runtime])
         .arg("-d")
         .arg(base_path)

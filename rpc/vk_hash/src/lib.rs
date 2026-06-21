@@ -127,6 +127,8 @@ pub enum UltrahonkVk {
     V0_84(Bytes),
     #[serde(alias = "v30")]
     V3_0(Bytes),
+    #[serde(alias = "legacy")]
+    Legacy(Bytes),
 }
 
 impl TryFrom<UltrahonkVk> for UltrahonkVersionedVk {
@@ -147,6 +149,13 @@ impl TryFrom<UltrahonkVk> for UltrahonkVersionedVk {
                     .try_into()
                     .map_err(|_| "Incorrect length for V3_0 VK")?;
                 Ok(UltrahonkVersionedVk::V3_0(arr))
+            }
+            UltrahonkVk::Legacy(bytes) => {
+                let arr = bytes
+                    .0
+                    .try_into()
+                    .map_err(|_| "Incorrect length for Legacy VK")?;
+                Ok(UltrahonkVersionedVk::Legacy(arr))
             }
         }
     }

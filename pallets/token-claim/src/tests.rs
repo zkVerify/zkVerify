@@ -3,7 +3,7 @@ use crate::mock::RuntimeEvent as TestEvent;
 use crate::mock::*;
 use crate::EthereumSignature;
 use crate::*;
-use frame_support::{assert_err, assert_noop, assert_ok};
+use frame_support::{assert_err, assert_noop, assert_ok, traits::Hooks};
 use frame_system::{EventRecord, Phase};
 use sp_core::TypedGet;
 use sp_runtime::{traits::BadOrigin, RuntimeAppPublic, TokenError};
@@ -1402,5 +1402,65 @@ mod validate_unsigned {
             ),
             b"hQh2WM3CAzYWSuwjXcPJabvhRv8kKSqfC8zqKdMHrVSZjVMfj"
         );
+    }
+}
+
+mod on_initialize {
+    use super::*;
+    use frame_support::traits::fungible::Inspect;
+
+    #[test]
+    fn does_not_mint_when_account_exists_with_only_reserved_balance() {
+        test().execute_with(|| {
+            let account = Claim::account_id();
+
+            // After genesis on_initialize, the pot has ED in free balance
+            assert_eq!(Balances::balance(&account), EXISTENTIAL_DEPOSIT);
+
+            // Simulate a scenario where all free balance has been moved to reserved
+            // (e.g. via a hold), so free = 0 but the account still exists.
+            frame_system::Account::<Test>::mutate(account, |a| {
+                a.data.reserved = a.data.free;
+                a.data.free = 0;
+            });
+
+            // Confirm setup: free balance is zero but account exists
+            assert_eq!(Balances::balance(&account), 0);
+            assert!(frame_system::Pallet::<Test>::account_exists(&account));
+
+            let issuance_before = Balances::total_issuance();
+
+            // on_initialize should NOT mint because the account exists
+            Claim::on_initialize(2);
+
+            assert_eq!(
+                Balances::total_issuance(),
+                issuance_before,
+                "on_initialize should not mint ED when account exists with reserved balance"
+            );
+        });
+    }
+
+    #[test]
+    fn mints_ed_when_account_does_not_exist() {
+        test().execute_with(|| {
+            let account = Claim::account_id();
+
+            // Remove the account entirely by zeroing everything
+            frame_system::Account::<Test>::remove(account);
+
+            assert!(!frame_system::Pallet::<Test>::account_exists(&account));
+
+            let issuance_before = Balances::total_issuance();
+
+            Claim::on_initialize(2);
+
+            assert_eq!(
+                Balances::total_issuance(),
+                issuance_before + EXISTENTIAL_DEPOSIT,
+                "on_initialize should mint ED when account does not exist"
+            );
+            assert!(frame_system::Pallet::<Test>::account_exists(&account));
+        });
     }
 }

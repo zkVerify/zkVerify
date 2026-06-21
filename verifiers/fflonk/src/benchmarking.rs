@@ -162,7 +162,6 @@ mod mock {
     }
 
     impl pallet_verifiers::Config<crate::Fflonk> for Test {
-        type RuntimeEvent = RuntimeEvent;
         type OnProofVerified = ();
         type WeightInfo = crate::FflonkWeight<()>;
         type Ticket = HoldConsideration<

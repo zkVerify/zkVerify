@@ -1,0 +1,174 @@
+diff -ruN '--exclude=*.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' /tmp/tmp.oSQY3S2k5B/polkadot-sdk/substrate/utils/wasm-builder/Cargo.toml /home/mdamico/devel/zkVerify/patches/substrate/utils/wasm-builder/Cargo.toml
+--- /tmp/tmp.oSQY3S2k5B/polkadot-sdk/substrate/utils/wasm-builder/Cargo.toml	2026-05-29 12:52:33.968315839 +0200
++++ /home/mdamico/devel/zkVerify/patches/substrate/utils/wasm-builder/Cargo.toml	2026-05-29 12:53:08.158006858 +0200
+@@ -1,6 +1,6 @@
+ [package]
+ name = "substrate-wasm-builder"
+-version = "31.0.0"
++version = "31.1.0"
+ authors.workspace = true
+ description = "Utility for building WASM binaries"
+ edition.workspace = true
+diff -ruN '--exclude=*.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' /tmp/tmp.oSQY3S2k5B/polkadot-sdk/substrate/utils/wasm-builder/src/lib.rs /home/mdamico/devel/zkVerify/patches/substrate/utils/wasm-builder/src/lib.rs
+--- /tmp/tmp.oSQY3S2k5B/polkadot-sdk/substrate/utils/wasm-builder/src/lib.rs	2026-05-29 12:52:33.969000751 +0200
++++ /home/mdamico/devel/zkVerify/patches/substrate/utils/wasm-builder/src/lib.rs	2026-05-28 09:28:39.169589087 +0200
+@@ -90,6 +90,9 @@
+ //!   also be built. This is necessary to make sure the standard library crates only use the exact
+ //!   WASM feature set that our executor supports. Enabled by default for RISC-V target and WASM
+ //!   target (but only if Rust < 1.84). Disabled by default for WASM target and Rust >= 1.84.
++//! - `WASM_BUILD_LEGACY_TARGET` - If set to `1`, forces the use of `wasm32-unknown-unknown`
++//!   target instead of `wasm32v1-none` even on Rust >= 1.84. This is useful when some dependencies
++//!   don't properly support the stricter `wasm32v1-none` target.
+ //! - `WASM_BUILD_CARGO_ARGS` - This can take a string as space separated list of `cargo` arguments.
+ //!   It was added specifically for the use case of enabling JSON diagnostic messages during the
+ //!   build phase, to be used by IDEs that parse them, but it might be useful for other cases too.
+@@ -176,6 +179,10 @@
+ /// during the build phase.
+ const WASM_BUILD_CARGO_ARGS: &str = "WASM_BUILD_CARGO_ARGS";
+ 
++/// Environment variable to force the use of `wasm32-unknown-unknown` target instead of
++/// `wasm32v1-none` even on Rust >= 1.84.
++const WASM_BUILD_LEGACY_TARGET: &str = "WASM_BUILD_LEGACY_TARGET";
++
+ /// The target to use for the runtime. Valid values are `wasm` (default) or `riscv`.
+ const RUNTIME_TARGET: &str = "SUBSTRATE_RUNTIME_TARGET";
+ 
+@@ -405,6 +412,11 @@
+ 	}
+ }
+ 
++/// Return if the legacy target is forced via the environment variable
++fn is_forced_wasm_build_legacy_target() -> bool {
++	get_bool_environment_variable(crate::WASM_BUILD_LEGACY_TARGET).unwrap_or(false)
++}
++
+ #[derive(Copy, Clone, PartialEq, Eq)]
+ enum RuntimeTarget {
+ 	Wasm,
+@@ -430,17 +442,27 @@
+ 		}
+ 	}
+ 
++	/// Returns true if we should use wasm32v1-none target for WASM builds.
++	fn should_use_wasm32v1_none(cargo_command: &CargoCommand) -> bool {
++		if is_forced_wasm_build_legacy_target() {
++			return false;
++		}
++		cargo_command.is_wasm32v1_none_target_available()
++	}
++
+ 	/// Figures out the target parameter value for rustc.
+ 	fn rustc_target(self, cargo_command: &CargoCommand) -> String {
+ 		match self {
+ 			RuntimeTarget::Wasm =>
+-				if cargo_command.is_wasm32v1_none_target_available() {
++				if Self::should_use_wasm32v1_none(cargo_command) {
+ 					"wasm32v1-none".into()
+ 				} else {
+ 					"wasm32-unknown-unknown".into()
+ 				},
+ 			RuntimeTarget::Riscv => {
+-				let path = polkavm_linker::target_json_32_path().expect("riscv not found");
++				let mut args = polkavm_linker::TargetJsonArgs::default();
++				args.is_64_bit = false;
++				let path = polkavm_linker::target_json_path(args).expect("riscv not found");
+ 				path.into_os_string().into_string().unwrap()
+ 			},
+ 		}
+@@ -450,7 +472,7 @@
+ 	fn rustc_target_dir(self, cargo_command: &CargoCommand) -> &'static str {
+ 		match self {
+ 			RuntimeTarget::Wasm =>
+-				if cargo_command.is_wasm32v1_none_target_available() {
++				if Self::should_use_wasm32v1_none(cargo_command) {
+ 					"wasm32v1-none".into()
+ 				} else {
+ 					"wasm32-unknown-unknown".into()
+@@ -461,20 +483,11 @@
+ 
+ 	/// Figures out the build-std argument.
+ 	fn rustc_target_build_std(self, cargo_command: &CargoCommand) -> Option<&'static str> {
+-		if !crate::get_bool_environment_variable(crate::WASM_BUILD_STD).unwrap_or_else(
+-			|| match self {
+-				RuntimeTarget::Wasm => !cargo_command.is_wasm32v1_none_target_available(),
+-				RuntimeTarget::Riscv => true,
+-			},
+-		) {
+-			return None;
++		match (crate::get_bool_environment_variable(crate::WASM_BUILD_STD), self) {
++			(Some(false), _) => None, // Explicitly disabled
++			(_, RuntimeTarget::Wasm) if Self::should_use_wasm32v1_none(cargo_command) => None, // wasm32v1-none has MVP features built-in
++			(_, RuntimeTarget::Wasm) => Some("build-std"), // Legacy wasm32-unknown-unknown
++			_ => Some("build-std=core,alloc"), // RISC-V or explicit WASM_BUILD_STD=1
+ 		}
+-
+-		// This is a nightly-only flag.
+-
+-		// We only build `core` and `alloc` crates since wasm-builder disables `std` featue for
+-		// runtime. Thus the runtime is `#![no_std]` crate.
+-
+-		Some("build-std=core,alloc")
+ 	}
+ }
+diff -ruN '--exclude=*.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' /tmp/tmp.oSQY3S2k5B/polkadot-sdk/substrate/utils/wasm-builder/src/prerequisites.rs /home/mdamico/devel/zkVerify/patches/substrate/utils/wasm-builder/src/prerequisites.rs
+--- /tmp/tmp.oSQY3S2k5B/polkadot-sdk/substrate/utils/wasm-builder/src/prerequisites.rs	2026-05-29 12:52:33.969000751 +0200
++++ /home/mdamico/devel/zkVerify/patches/substrate/utils/wasm-builder/src/prerequisites.rs	2026-05-29 12:53:21.584106657 +0200
+@@ -15,7 +15,7 @@
+ // See the License for the specific language governing permissions and
+ // limitations under the License.
+ 
+-use crate::{write_file_if_changed, CargoCommand, CargoCommandVersioned, RuntimeTarget};
++use crate::{is_forced_wasm_build_legacy_target, write_file_if_changed, CargoCommand, CargoCommandVersioned, RuntimeTarget};
+ 
+ use console::style;
+ use std::{
+@@ -268,7 +268,8 @@
+ 	}
+ 
+ 	if cargo_command.supports_wasm32v1_none_target() &&
+-		!cargo_command.is_wasm32v1_none_target_installed()
++		!cargo_command.is_wasm32v1_none_target_installed() &&
++		!is_forced_wasm_build_legacy_target() // zkVerify customization: suppress warning when legacy target is forced
+ 	{
+ 		build_helper::warning!("You are building WASM runtime using `wasm32-unknown-unknown` target, although Rust >= 1.84 supports `wasm32v1-none` target!");
+ 		build_helper::warning!("You can install it with `rustup target add wasm32v1-none --toolchain {toolchain}` if you're using `rustup`.");
+diff -ruN '--exclude=*.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' /tmp/tmp.oSQY3S2k5B/polkadot-sdk/substrate/utils/wasm-builder/src/wasm_project.rs /home/mdamico/devel/zkVerify/patches/substrate/utils/wasm-builder/src/wasm_project.rs
+--- /tmp/tmp.oSQY3S2k5B/polkadot-sdk/substrate/utils/wasm-builder/src/wasm_project.rs	2026-05-29 12:52:33.969752625 +0200
++++ /home/mdamico/devel/zkVerify/patches/substrate/utils/wasm-builder/src/wasm_project.rs	2026-05-29 12:51:06.560101889 +0200
+@@ -23,6 +23,7 @@
+ use cargo_metadata::{DependencyKind, Metadata, MetadataCommand};
+ use console::style;
+ use parity_wasm::elements::{deserialize_buffer, Module};
++use polkavm_linker::TargetInstructionSet;
+ use std::{
+ 	borrow::ToOwned,
+ 	collections::HashSet,
+@@ -871,8 +872,13 @@
+ 			// Also see:
+ 			// https://blog.rust-lang.org/2024/09/24/webassembly-targets-change-in-default-target-features.html#disabling-on-by-default-webassembly-proposals
+ 
+-			if !cargo_cmd.is_wasm32v1_none_target_available() {
+-				rustflags.push_str("-C target-cpu=mvp ");
++			// zkVerify patch: Add -C target-cpu=mvp when using legacy wasm32-unknown-unknown target
++			// This disables post-MVP WASM features that cause UnknownOpcode errors.
++			// Also restore --allow-undefined which was removed from the wasm32-unknown-unknown
++			// target spec in Rust 1.96; without it wasm-ld treats host-function imports as
++			// undefined-symbol errors.
++			if target.rustc_target(&cargo_cmd) == "wasm32-unknown-unknown" {
++				rustflags.push_str("-C target-cpu=mvp -C target-feature=-sign-ext -C link-arg=--allow-undefined ");
+ 			}
+ 
+ 			rustflags.push_str("-C link-arg=--export-table ");
+@@ -1006,7 +1012,11 @@
+ 				let mut config = polkavm_linker::Config::default();
+ 				config.set_strip(true); // TODO: This shouldn't always be done.
+ 
+-				let program = match polkavm_linker::program_from_elf(config, &blob_bytes) {
++				let program = match polkavm_linker::program_from_elf(
++					config,
++					TargetInstructionSet::Latest,
++					&blob_bytes,
++				) {
+ 					Ok(program) => program,
+ 					Err(error) => {
+ 						println!("Failed to link the runtime blob; this is probably a bug!");

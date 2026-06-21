@@ -35,7 +35,7 @@ mod should;
 extern crate alloc;
 
 use alloc::vec::Vec;
-
+use codec::DecodeWithMemTracking;
 use frame_support::pallet_prelude::*;
 use frame_support::{dispatch::PostDispatchInfo, traits::UnixTime};
 pub use pallet::*;
@@ -81,7 +81,7 @@ pub trait CrlProvider {
 }
 
 /// Input data for CRL updates, supporting both PEM and DER formats.
-#[derive(Clone, PartialEq, Eq, Encode, Decode, TypeInfo, RuntimeDebug)]
+#[derive(Clone, PartialEq, Eq, Encode, Decode, DecodeWithMemTracking, TypeInfo, RuntimeDebug)]
 pub enum CrlInput {
     /// PEM-encoded CRL and certificate chain.
     Pem {
@@ -110,9 +110,6 @@ pub mod pallet {
 
     #[pallet::config]
     pub trait Config: frame_system::Config {
-        /// The overarching event type.
-        type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
-
         /// Manager origin allowed to register CAs and update CRLs.
         type ManagerOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 

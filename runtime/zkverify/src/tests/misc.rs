@@ -28,8 +28,10 @@ fn check_starting_balances_and_existential_limit() {
         // This creates a few public keys used to be converted to AccountId
 
         for sample_user in testsfixtures::SAMPLE_USERS {
+            // Use Inspect::total_balance() to include held amounts (e.g., staking bonds)
+            // since SDK 2512 uses holds instead of reservations for staking
             assert_eq!(
-                Balances::balance(&sample_user.raw_account.into()),
+                <Balances as Inspect<_>>::total_balance(&sample_user.raw_account.into()),
                 sample_user.starting_balance
             );
         }

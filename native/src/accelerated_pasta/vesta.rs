@@ -19,6 +19,7 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 use mina_curves::pasta::{Fp, ProjectiveVesta, Vesta};
+use sp_runtime_interface::pass_by::{AllocateAndReturnByCodec, PassFatPointerAndRead};
 use sp_runtime_interface::runtime_interface;
 
 use crate::accelerated_bn::utils;
@@ -95,7 +96,7 @@ pub trait HostCalls {
     ///
     /// - returns: `ArkScale<Vesta>`
     #[allow(clippy::result_unit_err)]
-    fn vesta16_blinding_commitment() -> Result<Vec<u8>, ()> {
+    fn vesta16_blinding_commitment() -> AllocateAndReturnByCodec<Result<Vec<u8>, ()>> {
         native_builtin_srs::blinding_commitment()
     }
 
@@ -103,7 +104,10 @@ pub trait HostCalls {
     ///
     /// - returns: `ArkScale<Vec<Vesta>>`
     #[allow(clippy::result_unit_err)]
-    fn vesta16_lagrange_basis_prefix(domain_log2: u8, count: u32) -> Result<Vec<u8>, ()> {
+    fn vesta16_lagrange_basis_prefix(
+        domain_log2: u8,
+        count: u32,
+    ) -> AllocateAndReturnByCodec<Result<Vec<u8>, ()>> {
         native_builtin_srs::lagrange_basis_prefix_v1(domain_log2, count)
     }
 
@@ -116,7 +120,7 @@ pub trait HostCalls {
         max_poly_size: u32,
         domain_log2: u8,
         count: u32,
-    ) -> Result<Vec<u8>, ()> {
+    ) -> AllocateAndReturnByCodec<Result<Vec<u8>, ()>> {
         native_builtin_srs::lagrange_basis_prefix(max_poly_size, domain_log2, count)
     }
 
@@ -130,11 +134,11 @@ pub trait HostCalls {
     #[allow(clippy::result_unit_err)]
     fn vesta16_srs_msm(
         srs_len: u32,
-        h_scalar: &[u8],
-        g_scalars: &[u8],
-        extra_bases: &[u8],
-        extra_scalars: &[u8],
-    ) -> Result<Vec<u8>, ()> {
+        h_scalar: PassFatPointerAndRead<&[u8]>,
+        g_scalars: PassFatPointerAndRead<&[u8]>,
+        extra_bases: PassFatPointerAndRead<&[u8]>,
+        extra_scalars: PassFatPointerAndRead<&[u8]>,
+    ) -> AllocateAndReturnByCodec<Result<Vec<u8>, ()>> {
         native_builtin_srs::srs_msm(srs_len, h_scalar, g_scalars, extra_bases, extra_scalars)
     }
 }

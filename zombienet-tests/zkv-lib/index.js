@@ -32,7 +32,8 @@ zkvTypes = {
   UltrahonkVk: {
     _enum: {
       V0_84: 'Bytes',
-      V3_0: 'Bytes'
+      V3_0: 'Bytes',
+      Legacy: 'Bytes'
     }
   },
   FflonkVk: {

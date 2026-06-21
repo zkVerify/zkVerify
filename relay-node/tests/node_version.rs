@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-use assert_cmd::cargo::cargo_bin;
 use common::run_with_timeout;
 use std::{
     process::{self, Command},
@@ -26,7 +25,7 @@ pub mod common;
 #[tokio::test]
 async fn check_version() {
     run_with_timeout(Duration::from_secs(5), async move {
-        let out = Command::new(cargo_bin(common::NODE))
+        let out = Command::new(assert_cmd::cargo::cargo_bin!("zkv-relay"))
             .stdout(process::Stdio::piped())
             .stderr(process::Stdio::piped())
             .args([
