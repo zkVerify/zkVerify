@@ -127,7 +127,7 @@ impl<T: Config> Verifier for Kimchi<T> {
 
     fn verifier_version_hash(_proof: &Self::Proof) -> sp_core::H256 {
         sp_io::hashing::sha2_256(
-            b"kimchi:v3:vesta16:bincode2-canonical:builtin-srs:chunks4-pubs1024",
+            b"kimchi:v1:vesta16:bincode2-canonical:builtin-srs:chunks4-pubs1024",
         )
         .into()
     }
