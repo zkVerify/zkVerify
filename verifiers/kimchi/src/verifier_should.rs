@@ -36,17 +36,6 @@ impl crate::Config for ProductionEnvelopeConfig {
     type WeightInfo = ();
 }
 
-#[cfg(feature = "runtime-benchmarks")]
-pub struct WidePubsConfig;
-
-#[cfg(feature = "runtime-benchmarks")]
-impl crate::Config for WidePubsConfig {
-    type MaxProofSize = ConstU32<262144>;
-    type MaxPubs = ConstU32<65536>;
-    type MaxVkSize = ConstU32<65536>;
-    type WeightInfo = ();
-}
-
 fn dummy_vk() -> Vk<MockConfig> {
     Vk::new(vec![1_u8, 2, 3], KimchiProfileId::Vesta16)
 }
@@ -318,12 +307,26 @@ mod accept {
         );
     }
 
-    #[cfg(not(feature = "runtime-benchmarks"))]
     #[test]
     fn production_envelope_rejects_eight_chunk_verifier_index() {
+        use ark_poly::{EvaluationDomain, Radix2EvaluationDomain};
+
+        let mut verifier_index: Vesta16VerifierIndex = bincode::serde::decode_from_slice(
+            include_bytes!(
+                "resources/generated_262144_lookup_runtime_pubs_1024/verifier_index.bin"
+            ),
+            bincode::config::standard(),
+        )
+        .map(|(index, _)| index)
+        .expect("four-chunk fixture verifier index should decode");
+        verifier_index.domain =
+            Radix2EvaluationDomain::new(1 << 19).expect("eight-chunk domain should exist");
+        verifier_index.zk_rows =
+            (kimchi::circuits::constraints::zk_rows_strict_lower_bound(8) + 1) as u64;
+
         let vk = Vk::<ProductionEnvelopeConfig>::new(
-            include_bytes!("resources/generated_524288_lookup_runtime_pubs_64/verifier_index.bin")
-                .to_vec(),
+            bincode::serde::encode_to_vec(&verifier_index, bincode::config::standard())
+                .expect("mutated verifier index should encode"),
             KimchiProfileId::Vesta16,
         );
 
@@ -749,7 +752,6 @@ mod reject {
         );
     }
 
-    #[cfg(not(feature = "runtime-benchmarks"))]
     #[test]
     fn production_profile_rejects_unpriced_two_chunk_shape() {
         let mut verifier_index = two_chunk_fixture_verifier_index();
@@ -760,7 +762,6 @@ mod reject {
         );
     }
 
-    #[cfg(not(feature = "runtime-benchmarks"))]
     #[test]
     fn production_profile_rejects_unpriced_four_chunk_shape() {
         let mut verifier_index = four_chunk_fixture_verifier_index();
@@ -1000,31 +1001,6 @@ mod reject {
         assert_err!(
             Kimchi::<ProductionEnvelopeConfig>::verify_proof(&vk, &proof, &pubs),
             VerifyError::InvalidInput
-        );
-    }
-
-    #[cfg(feature = "runtime-benchmarks")]
-    #[test]
-    #[ignore = "diagnostic attack-surface probe; run explicitly when measuring oversized public inputs"]
-    fn oversized_65536_public_inputs_without_effective_cap_reaches_prepare_before_rejection() {
-        let proof =
-            include_bytes!("resources/generated_262144_lookup_runtime_pubs_64/proof.bin").to_vec();
-        let vk = Vk::<WidePubsConfig>::new(
-            include_bytes!("resources/generated_262144_lookup_runtime_pubs_64/verifier_index.bin")
-                .to_vec(),
-            KimchiProfileId::Vesta16,
-        );
-        let pubs = vec![[0_u8; PUB_SIZE]; 1 << 16];
-        let started = std::time::Instant::now();
-
-        assert_err!(
-            Kimchi::<WidePubsConfig>::verify_proof(&vk, &proof, &pubs),
-            VerifyError::InvalidInput
-        );
-
-        eprintln!(
-            "65536 oversized public inputs without effective cap rejected in {:?}",
-            started.elapsed()
         );
     }
 

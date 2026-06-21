@@ -152,17 +152,11 @@ mod native_builtin_srs {
 
     type Blake2b256 = Blake2b<U32>;
 
-    #[cfg(not(feature = "runtime-benchmarks"))]
     const MAX_CHUNKS: usize = 4;
-    #[cfg(feature = "runtime-benchmarks")]
-    const MAX_CHUNKS: usize = 16;
     const PREWARM_PREFIX_CHECK_CHUNKS: usize = 2;
     const MIN_DOMAIN_LOG2_SIZE: u8 = 3;
     const MIN_MAX_POLY_LOG2_SIZE: u8 = MIN_DOMAIN_LOG2_SIZE - 1;
-    #[cfg(not(feature = "runtime-benchmarks"))]
     const MAX_DOMAIN_LOG2_SIZE: u8 = 18;
-    #[cfg(feature = "runtime-benchmarks")]
-    const MAX_DOMAIN_LOG2_SIZE: u8 = 20;
     const V1_MIN_DOMAIN_LOG2_SIZE: u8 = 10;
     const V1_MAX_DOMAIN_LOG2_SIZE: u8 = 16;
     const VESTA_SRS_16_DIGEST: [u8; 32] = [
@@ -376,37 +370,11 @@ mod native_builtin_srs {
             ],
         ),
     ];
-    pub(super) const VESTA_SRS_16_FOUR_CHUNK_LAGRANGE_DIGESTS: &[(u8, [u8; 32])] = &[
-        #[cfg(feature = "runtime-benchmarks")]
-        (
-            14,
-            [
-                242, 127, 98, 43, 88, 132, 124, 240, 41, 223, 35, 189, 61, 101, 208, 54, 177, 134,
-                238, 6, 62, 3, 76, 110, 159, 76, 77, 93, 70, 143, 47, 34,
-            ],
-        ),
-        (
-            18,
-            [
-                235, 170, 147, 63, 172, 75, 33, 247, 242, 236, 222, 107, 47, 81, 59, 137, 236, 183,
-                156, 79, 162, 91, 158, 173, 199, 0, 52, 209, 199, 84, 196, 243,
-            ],
-        ),
-    ];
-    #[cfg(feature = "runtime-benchmarks")]
-    pub(super) const VESTA_SRS_16_EIGHT_CHUNK_LAGRANGE_DIGESTS: &[(u8, [u8; 32])] = &[(
-        19,
+    pub(super) const VESTA_SRS_16_FOUR_CHUNK_LAGRANGE_DIGESTS: &[(u8, [u8; 32])] = &[(
+        18,
         [
-            79, 170, 209, 106, 40, 214, 30, 39, 200, 162, 15, 209, 245, 229, 78, 7, 57, 125, 62,
-            252, 40, 80, 81, 29, 135, 91, 195, 172, 63, 159, 251, 4,
-        ],
-    )];
-    #[cfg(feature = "runtime-benchmarks")]
-    pub(super) const VESTA_SRS_16_SIXTEEN_CHUNK_LAGRANGE_DIGESTS: &[(u8, [u8; 32])] = &[(
-        20,
-        [
-            248, 70, 135, 84, 117, 18, 212, 242, 9, 108, 51, 10, 110, 112, 107, 28, 148, 213, 204,
-            78, 3, 120, 101, 78, 31, 49, 213, 43, 11, 100, 136, 194,
+            235, 170, 147, 63, 172, 75, 33, 247, 242, 236, 222, 107, 47, 81, 59, 137, 236, 183,
+            156, 79, 162, 91, 158, 173, 199, 0, 52, 209, 199, 84, 196, 243,
         ],
     )];
 
@@ -613,10 +581,6 @@ mod native_builtin_srs {
             1 => VESTA_SRS_16_LAGRANGE_DIGESTS,
             2 => VESTA_SRS_16_MULTI_CHUNK_LAGRANGE_DIGESTS,
             4 => VESTA_SRS_16_FOUR_CHUNK_LAGRANGE_DIGESTS,
-            #[cfg(feature = "runtime-benchmarks")]
-            8 => VESTA_SRS_16_EIGHT_CHUNK_LAGRANGE_DIGESTS,
-            #[cfg(feature = "runtime-benchmarks")]
-            16 => VESTA_SRS_16_SIXTEEN_CHUNK_LAGRANGE_DIGESTS,
             _ => return false,
         };
 
@@ -658,7 +622,7 @@ mod native_builtin_srs {
         Ok(hasher.finalize().into())
     }
 
-    #[cfg(all(test, feature = "runtime-benchmarks"))]
+    #[cfg(test)]
     pub(super) fn lagrange_basis_digest_for_test(
         max_poly_size: usize,
         domain_log2_size: u8,
@@ -828,41 +792,6 @@ mod tests {
         );
     }
 
-    #[cfg(feature = "runtime-benchmarks")]
-    #[test]
-    fn vesta16_four_chunk_domain_14_lagrange_digest_matches_benchmark_constant() {
-        let digest = native_builtin_srs::lagrange_basis_digest_for_test(1 << 12, 14)
-            .expect("four-chunk domain 2^14 digest should compute");
-
-        assert!(native_builtin_srs::VESTA_SRS_16_FOUR_CHUNK_LAGRANGE_DIGESTS
-            .iter()
-            .any(|(domain_log2, expected)| *domain_log2 == 14 && *expected == digest));
-    }
-
-    #[cfg(feature = "runtime-benchmarks")]
-    #[test]
-    fn vesta16_eight_chunk_lagrange_digest_matches_benchmark_constant() {
-        let digest = native_builtin_srs::lagrange_basis_digest_for_test(1 << 16, 19)
-            .expect("eight-chunk digest should compute");
-
-        assert_eq!(
-            digest,
-            native_builtin_srs::VESTA_SRS_16_EIGHT_CHUNK_LAGRANGE_DIGESTS[0].1
-        );
-    }
-
-    #[cfg(feature = "runtime-benchmarks")]
-    #[test]
-    fn vesta16_sixteen_chunk_lagrange_digest_matches_benchmark_constant() {
-        let digest = native_builtin_srs::lagrange_basis_digest_for_test(1 << 16, 20)
-            .expect("sixteen-chunk digest should compute");
-
-        assert_eq!(
-            digest,
-            native_builtin_srs::VESTA_SRS_16_SIXTEEN_CHUNK_LAGRANGE_DIGESTS[0].1
-        );
-    }
-
     #[test]
     fn vesta16_lagrange_basis_prefix_returns_four_chunk_commitments() {
         let prefix =
@@ -870,25 +799,5 @@ mod tests {
 
         assert_eq!(prefix.len(), 2);
         assert!(prefix.iter().all(|commitment| commitment.len() == 4));
-    }
-
-    #[cfg(feature = "runtime-benchmarks")]
-    #[test]
-    fn vesta16_lagrange_basis_prefix_returns_eight_chunk_commitments() {
-        let prefix =
-            vesta16_lagrange_basis_prefix(1 << 16, 19, 2).expect("native basis prefix succeeds");
-
-        assert_eq!(prefix.len(), 2);
-        assert!(prefix.iter().all(|commitment| commitment.len() == 8));
-    }
-
-    #[cfg(feature = "runtime-benchmarks")]
-    #[test]
-    fn vesta16_lagrange_basis_prefix_returns_sixteen_chunk_commitments() {
-        let prefix =
-            vesta16_lagrange_basis_prefix(1 << 16, 20, 2).expect("native basis prefix succeeds");
-
-        assert_eq!(prefix.len(), 2);
-        assert!(prefix.iter().all(|commitment| commitment.len() == 16));
     }
 }

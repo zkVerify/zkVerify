@@ -65,17 +65,11 @@ pub(crate) struct Vesta16;
 impl KimchiProfile for Vesta16 {
     const MAX_DECODED_PROOF_BYTES: usize = 262_144;
     const MAX_DECODED_VK_BYTES: usize = 65_536;
-    #[cfg(not(feature = "runtime-benchmarks"))]
     const MAX_CHUNKS: usize = 4;
-    #[cfg(feature = "runtime-benchmarks")]
-    const MAX_CHUNKS: usize = 16;
     const MAX_DOMAIN_SIZE: usize = Self::MAX_POLY_SIZE * Self::MAX_CHUNKS;
     const MAX_LOOKUP_TABLE_WIDTH: usize = 3;
     const MAX_POLY_SIZE: usize = 1 << 16;
     const MAX_PREV_CHALLENGES: usize = 0;
-    #[cfg(not(feature = "runtime-benchmarks"))]
-    const MAX_PUBLIC_INPUTS: usize = 1024;
-    #[cfg(feature = "runtime-benchmarks")]
     const MAX_PUBLIC_INPUTS: usize = 1024;
     const MIN_DOMAIN_SIZE: usize = 1 << 3;
 }
@@ -149,24 +143,11 @@ fn vesta16_supports_work_shape(
     domain_size: usize,
     num_chunks: usize,
 ) -> bool {
-    #[cfg(feature = "runtime-benchmarks")]
-    {
-        let _ = (max_poly_size, domain_size);
-        num_chunks <= Vesta16::MAX_CHUNKS
-    }
-
-    #[cfg(not(feature = "runtime-benchmarks"))]
-    {
-        match num_chunks {
-            1 => domain_size <= max_poly_size && max_poly_size <= Vesta16::MAX_POLY_SIZE,
-            2 => {
-                max_poly_size == Vesta16::MAX_POLY_SIZE && domain_size == Vesta16::MAX_POLY_SIZE * 2
-            }
-            4 => {
-                max_poly_size == Vesta16::MAX_POLY_SIZE && domain_size == Vesta16::MAX_POLY_SIZE * 4
-            }
-            _ => false,
-        }
+    match num_chunks {
+        1 => domain_size <= max_poly_size && max_poly_size <= Vesta16::MAX_POLY_SIZE,
+        2 => max_poly_size == Vesta16::MAX_POLY_SIZE && domain_size == Vesta16::MAX_POLY_SIZE * 2,
+        4 => max_poly_size == Vesta16::MAX_POLY_SIZE && domain_size == Vesta16::MAX_POLY_SIZE * 4,
+        _ => false,
     }
 }
 

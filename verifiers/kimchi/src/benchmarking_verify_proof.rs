@@ -62,62 +62,6 @@ const DOMAIN_4096_SIMPLE_PUBS_1024_VERIFIER_INDEX: &[u8] =
     include_bytes!("resources/generated_4096_maxpoly_4096_simple_pubs_1024/verifier_index.bin");
 const DOMAIN_4096_SIMPLE_PUBS_1024_PUBS: &[u8] =
     include_bytes!("resources/generated_4096_maxpoly_4096_simple_pubs_1024/pubs.bin");
-const DOMAIN_16384_MAXPOLY_8192_PUBS_0_PROOF: &[u8] =
-    include_bytes!("resources/generated_16384_maxpoly_8192_lookup_runtime_pubs_0/proof.bin");
-const DOMAIN_16384_MAXPOLY_8192_PUBS_0_VERIFIER_INDEX: &[u8] = include_bytes!(
-    "resources/generated_16384_maxpoly_8192_lookup_runtime_pubs_0/verifier_index.bin"
-);
-const DOMAIN_16384_MAXPOLY_8192_PUBS_0_PUBS: &[u8] =
-    include_bytes!("resources/generated_16384_maxpoly_8192_lookup_runtime_pubs_0/pubs.bin");
-const DOMAIN_16384_MAXPOLY_8192_PUBS_64_PROOF: &[u8] =
-    include_bytes!("resources/generated_16384_maxpoly_8192_lookup_runtime_pubs_64/proof.bin");
-const DOMAIN_16384_MAXPOLY_8192_PUBS_64_VERIFIER_INDEX: &[u8] = include_bytes!(
-    "resources/generated_16384_maxpoly_8192_lookup_runtime_pubs_64/verifier_index.bin"
-);
-const DOMAIN_16384_MAXPOLY_8192_PUBS_64_PUBS: &[u8] =
-    include_bytes!("resources/generated_16384_maxpoly_8192_lookup_runtime_pubs_64/pubs.bin");
-const DOMAIN_16384_MAXPOLY_8192_PUBS_256_PROOF: &[u8] =
-    include_bytes!("resources/generated_16384_maxpoly_8192_lookup_runtime_pubs_256/proof.bin");
-const DOMAIN_16384_MAXPOLY_8192_PUBS_256_VERIFIER_INDEX: &[u8] = include_bytes!(
-    "resources/generated_16384_maxpoly_8192_lookup_runtime_pubs_256/verifier_index.bin"
-);
-const DOMAIN_16384_MAXPOLY_8192_PUBS_256_PUBS: &[u8] =
-    include_bytes!("resources/generated_16384_maxpoly_8192_lookup_runtime_pubs_256/pubs.bin");
-const DOMAIN_16384_MAXPOLY_8192_PUBS_1024_PROOF: &[u8] =
-    include_bytes!("resources/generated_16384_maxpoly_8192_lookup_runtime_pubs_1024/proof.bin");
-const DOMAIN_16384_MAXPOLY_8192_PUBS_1024_VERIFIER_INDEX: &[u8] = include_bytes!(
-    "resources/generated_16384_maxpoly_8192_lookup_runtime_pubs_1024/verifier_index.bin"
-);
-const DOMAIN_16384_MAXPOLY_8192_PUBS_1024_PUBS: &[u8] =
-    include_bytes!("resources/generated_16384_maxpoly_8192_lookup_runtime_pubs_1024/pubs.bin");
-const DOMAIN_16384_MAXPOLY_4096_PUBS_0_PROOF: &[u8] =
-    include_bytes!("resources/generated_16384_maxpoly_4096_lookup_runtime_pubs_0/proof.bin");
-const DOMAIN_16384_MAXPOLY_4096_PUBS_0_VERIFIER_INDEX: &[u8] = include_bytes!(
-    "resources/generated_16384_maxpoly_4096_lookup_runtime_pubs_0/verifier_index.bin"
-);
-const DOMAIN_16384_MAXPOLY_4096_PUBS_0_PUBS: &[u8] =
-    include_bytes!("resources/generated_16384_maxpoly_4096_lookup_runtime_pubs_0/pubs.bin");
-const DOMAIN_16384_MAXPOLY_4096_PUBS_64_PROOF: &[u8] =
-    include_bytes!("resources/generated_16384_maxpoly_4096_lookup_runtime_pubs_64/proof.bin");
-const DOMAIN_16384_MAXPOLY_4096_PUBS_64_VERIFIER_INDEX: &[u8] = include_bytes!(
-    "resources/generated_16384_maxpoly_4096_lookup_runtime_pubs_64/verifier_index.bin"
-);
-const DOMAIN_16384_MAXPOLY_4096_PUBS_64_PUBS: &[u8] =
-    include_bytes!("resources/generated_16384_maxpoly_4096_lookup_runtime_pubs_64/pubs.bin");
-const DOMAIN_16384_MAXPOLY_4096_PUBS_256_PROOF: &[u8] =
-    include_bytes!("resources/generated_16384_maxpoly_4096_lookup_runtime_pubs_256/proof.bin");
-const DOMAIN_16384_MAXPOLY_4096_PUBS_256_VERIFIER_INDEX: &[u8] = include_bytes!(
-    "resources/generated_16384_maxpoly_4096_lookup_runtime_pubs_256/verifier_index.bin"
-);
-const DOMAIN_16384_MAXPOLY_4096_PUBS_256_PUBS: &[u8] =
-    include_bytes!("resources/generated_16384_maxpoly_4096_lookup_runtime_pubs_256/pubs.bin");
-const DOMAIN_16384_MAXPOLY_4096_PUBS_1024_PROOF: &[u8] =
-    include_bytes!("resources/generated_16384_maxpoly_4096_lookup_runtime_pubs_1024/proof.bin");
-const DOMAIN_16384_MAXPOLY_4096_PUBS_1024_VERIFIER_INDEX: &[u8] = include_bytes!(
-    "resources/generated_16384_maxpoly_4096_lookup_runtime_pubs_1024/verifier_index.bin"
-);
-const DOMAIN_16384_MAXPOLY_4096_PUBS_1024_PUBS: &[u8] =
-    include_bytes!("resources/generated_16384_maxpoly_4096_lookup_runtime_pubs_1024/pubs.bin");
 const DOMAIN_65536_PUBS_0_PROOF: &[u8] =
     include_bytes!("resources/generated_65536_lookup_runtime_pubs_0/proof.bin");
 const DOMAIN_65536_PUBS_0_VERIFIER_INDEX: &[u8] =
@@ -202,24 +146,6 @@ const DOMAIN_262144_PUBS_1024_VERIFIER_INDEX: &[u8] =
     include_bytes!("resources/generated_262144_lookup_runtime_pubs_1024/verifier_index.bin");
 const DOMAIN_262144_PUBS_1024_PUBS: &[u8] =
     include_bytes!("resources/generated_262144_lookup_runtime_pubs_1024/pubs.bin");
-const DOMAIN_524288_PUBS_64_PROOF: &[u8] =
-    include_bytes!("resources/generated_524288_lookup_runtime_pubs_64/proof.bin");
-const DOMAIN_524288_PUBS_64_VERIFIER_INDEX: &[u8] =
-    include_bytes!("resources/generated_524288_lookup_runtime_pubs_64/verifier_index.bin");
-const DOMAIN_524288_PUBS_64_PUBS: &[u8] =
-    include_bytes!("resources/generated_524288_lookup_runtime_pubs_64/pubs.bin");
-const DOMAIN_524288_PUBS_1024_PROOF: &[u8] =
-    include_bytes!("resources/generated_524288_lookup_runtime_pubs_1024/proof.bin");
-const DOMAIN_524288_PUBS_1024_VERIFIER_INDEX: &[u8] =
-    include_bytes!("resources/generated_524288_lookup_runtime_pubs_1024/verifier_index.bin");
-const DOMAIN_524288_PUBS_1024_PUBS: &[u8] =
-    include_bytes!("resources/generated_524288_lookup_runtime_pubs_1024/pubs.bin");
-const DOMAIN_1048576_PUBS_64_PROOF: &[u8] =
-    include_bytes!("resources/generated_1048576_lookup_runtime_pubs_64/proof.bin");
-const DOMAIN_1048576_PUBS_64_VERIFIER_INDEX: &[u8] =
-    include_bytes!("resources/generated_1048576_lookup_runtime_pubs_64/verifier_index.bin");
-const DOMAIN_1048576_PUBS_64_PUBS: &[u8] =
-    include_bytes!("resources/generated_1048576_lookup_runtime_pubs_64/pubs.bin");
 const FOREIGN_FIELD_MUL_PROOF: &[u8] = include_bytes!("resources/foreign_field_mul/proof.bin");
 const FOREIGN_FIELD_MUL_VERIFIER_INDEX: &[u8] =
     include_bytes!("resources/foreign_field_mul/verifier_index.bin");
@@ -279,78 +205,6 @@ fn domain_4096_simple_pubs_1024_data<T: VerifierConfig>() -> (Proof, Vk<T>, Pubs
         DOMAIN_4096_SIMPLE_PUBS_1024_PROOF,
         DOMAIN_4096_SIMPLE_PUBS_1024_VERIFIER_INDEX,
         DOMAIN_4096_SIMPLE_PUBS_1024_PUBS,
-        KimchiProfileId::Vesta16,
-    )
-}
-
-fn domain_16384_maxpoly_8192_pubs_0_data<T: VerifierConfig>() -> (Proof, Vk<T>, Pubs) {
-    benchmark_data::<T>(
-        DOMAIN_16384_MAXPOLY_8192_PUBS_0_PROOF,
-        DOMAIN_16384_MAXPOLY_8192_PUBS_0_VERIFIER_INDEX,
-        DOMAIN_16384_MAXPOLY_8192_PUBS_0_PUBS,
-        KimchiProfileId::Vesta16,
-    )
-}
-
-fn domain_16384_maxpoly_8192_pubs_64_data<T: VerifierConfig>() -> (Proof, Vk<T>, Pubs) {
-    benchmark_data::<T>(
-        DOMAIN_16384_MAXPOLY_8192_PUBS_64_PROOF,
-        DOMAIN_16384_MAXPOLY_8192_PUBS_64_VERIFIER_INDEX,
-        DOMAIN_16384_MAXPOLY_8192_PUBS_64_PUBS,
-        KimchiProfileId::Vesta16,
-    )
-}
-
-fn domain_16384_maxpoly_8192_pubs_256_data<T: VerifierConfig>() -> (Proof, Vk<T>, Pubs) {
-    benchmark_data::<T>(
-        DOMAIN_16384_MAXPOLY_8192_PUBS_256_PROOF,
-        DOMAIN_16384_MAXPOLY_8192_PUBS_256_VERIFIER_INDEX,
-        DOMAIN_16384_MAXPOLY_8192_PUBS_256_PUBS,
-        KimchiProfileId::Vesta16,
-    )
-}
-
-fn domain_16384_maxpoly_8192_pubs_1024_data<T: VerifierConfig>() -> (Proof, Vk<T>, Pubs) {
-    benchmark_data::<T>(
-        DOMAIN_16384_MAXPOLY_8192_PUBS_1024_PROOF,
-        DOMAIN_16384_MAXPOLY_8192_PUBS_1024_VERIFIER_INDEX,
-        DOMAIN_16384_MAXPOLY_8192_PUBS_1024_PUBS,
-        KimchiProfileId::Vesta16,
-    )
-}
-
-fn domain_16384_maxpoly_4096_pubs_0_data<T: VerifierConfig>() -> (Proof, Vk<T>, Pubs) {
-    benchmark_data::<T>(
-        DOMAIN_16384_MAXPOLY_4096_PUBS_0_PROOF,
-        DOMAIN_16384_MAXPOLY_4096_PUBS_0_VERIFIER_INDEX,
-        DOMAIN_16384_MAXPOLY_4096_PUBS_0_PUBS,
-        KimchiProfileId::Vesta16,
-    )
-}
-
-fn domain_16384_maxpoly_4096_pubs_64_data<T: VerifierConfig>() -> (Proof, Vk<T>, Pubs) {
-    benchmark_data::<T>(
-        DOMAIN_16384_MAXPOLY_4096_PUBS_64_PROOF,
-        DOMAIN_16384_MAXPOLY_4096_PUBS_64_VERIFIER_INDEX,
-        DOMAIN_16384_MAXPOLY_4096_PUBS_64_PUBS,
-        KimchiProfileId::Vesta16,
-    )
-}
-
-fn domain_16384_maxpoly_4096_pubs_256_data<T: VerifierConfig>() -> (Proof, Vk<T>, Pubs) {
-    benchmark_data::<T>(
-        DOMAIN_16384_MAXPOLY_4096_PUBS_256_PROOF,
-        DOMAIN_16384_MAXPOLY_4096_PUBS_256_VERIFIER_INDEX,
-        DOMAIN_16384_MAXPOLY_4096_PUBS_256_PUBS,
-        KimchiProfileId::Vesta16,
-    )
-}
-
-fn domain_16384_maxpoly_4096_pubs_1024_data<T: VerifierConfig>() -> (Proof, Vk<T>, Pubs) {
-    benchmark_data::<T>(
-        DOMAIN_16384_MAXPOLY_4096_PUBS_1024_PROOF,
-        DOMAIN_16384_MAXPOLY_4096_PUBS_1024_VERIFIER_INDEX,
-        DOMAIN_16384_MAXPOLY_4096_PUBS_1024_PUBS,
         KimchiProfileId::Vesta16,
     )
 }
@@ -481,33 +335,6 @@ fn domain_262144_pubs_1024_data<T: VerifierConfig>() -> (Proof, Vk<T>, Pubs) {
     )
 }
 
-fn domain_524288_pubs_64_data<T: VerifierConfig>() -> (Proof, Vk<T>, Pubs) {
-    benchmark_data::<T>(
-        DOMAIN_524288_PUBS_64_PROOF,
-        DOMAIN_524288_PUBS_64_VERIFIER_INDEX,
-        DOMAIN_524288_PUBS_64_PUBS,
-        KimchiProfileId::Vesta16,
-    )
-}
-
-fn domain_524288_pubs_1024_data<T: VerifierConfig>() -> (Proof, Vk<T>, Pubs) {
-    benchmark_data::<T>(
-        DOMAIN_524288_PUBS_1024_PROOF,
-        DOMAIN_524288_PUBS_1024_VERIFIER_INDEX,
-        DOMAIN_524288_PUBS_1024_PUBS,
-        KimchiProfileId::Vesta16,
-    )
-}
-
-fn domain_1048576_pubs_64_data<T: VerifierConfig>() -> (Proof, Vk<T>, Pubs) {
-    benchmark_data::<T>(
-        DOMAIN_1048576_PUBS_64_PROOF,
-        DOMAIN_1048576_PUBS_64_VERIFIER_INDEX,
-        DOMAIN_1048576_PUBS_64_PUBS,
-        KimchiProfileId::Vesta16,
-    )
-}
-
 fn foreign_field_mul_data<T: VerifierConfig>() -> (Proof, Vk<T>, Pubs) {
     benchmark_data::<T>(
         FOREIGN_FIELD_MUL_PROOF,
@@ -602,21 +429,6 @@ fn prepared_domain_262144_pubs_1024_data<T: VerifierConfig>(
     prepared_data(domain_262144_pubs_1024_data::<T>)
 }
 
-fn prepared_domain_524288_pubs_64_data<T: VerifierConfig>(
-) -> (Vesta16VerifierIndex, Vesta16Proof, Vec<Fp>, ChaCha20Rng) {
-    prepared_data(domain_524288_pubs_64_data::<T>)
-}
-
-fn prepared_domain_524288_pubs_1024_data<T: VerifierConfig>(
-) -> (Vesta16VerifierIndex, Vesta16Proof, Vec<Fp>, ChaCha20Rng) {
-    prepared_data(domain_524288_pubs_1024_data::<T>)
-}
-
-fn prepared_domain_1048576_pubs_64_data<T: VerifierConfig>(
-) -> (Vesta16VerifierIndex, Vesta16Proof, Vec<Fp>, ChaCha20Rng) {
-    prepared_data(domain_1048576_pubs_64_data::<T>)
-}
-
 fn prepared_foreign_field_mul_data<T: VerifierConfig>(
 ) -> (Vesta16VerifierIndex, Vesta16Proof, Vec<Fp>, ChaCha20Rng) {
     prepared_data(foreign_field_mul_data::<T>)
@@ -683,102 +495,6 @@ mod benchmarks {
     #[benchmark(extra)]
     fn verify_proof_domain_4096_pubs_1024() {
         let (proof, vk, pubs) = domain_4096_simple_pubs_1024_data::<T>();
-
-        let r;
-        #[block]
-        {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
-        };
-        assert!(r.is_ok());
-    }
-
-    #[benchmark(extra)]
-    fn verify_proof_domain_16384_maxpoly_8192_pubs_0() {
-        let (proof, vk, pubs) = domain_16384_maxpoly_8192_pubs_0_data::<T>();
-
-        let r;
-        #[block]
-        {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
-        };
-        assert!(r.is_ok());
-    }
-
-    #[benchmark(extra)]
-    fn verify_proof_domain_16384_maxpoly_8192_pubs_64() {
-        let (proof, vk, pubs) = domain_16384_maxpoly_8192_pubs_64_data::<T>();
-
-        let r;
-        #[block]
-        {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
-        };
-        assert!(r.is_ok());
-    }
-
-    #[benchmark(extra)]
-    fn verify_proof_domain_16384_maxpoly_8192_pubs_256() {
-        let (proof, vk, pubs) = domain_16384_maxpoly_8192_pubs_256_data::<T>();
-
-        let r;
-        #[block]
-        {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
-        };
-        assert!(r.is_ok());
-    }
-
-    #[benchmark(extra)]
-    fn verify_proof_domain_16384_maxpoly_8192_pubs_1024() {
-        let (proof, vk, pubs) = domain_16384_maxpoly_8192_pubs_1024_data::<T>();
-
-        let r;
-        #[block]
-        {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
-        };
-        assert!(r.is_ok());
-    }
-
-    #[benchmark(extra)]
-    fn verify_proof_domain_16384_maxpoly_4096_pubs_0() {
-        let (proof, vk, pubs) = domain_16384_maxpoly_4096_pubs_0_data::<T>();
-
-        let r;
-        #[block]
-        {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
-        };
-        assert!(r.is_ok());
-    }
-
-    #[benchmark(extra)]
-    fn verify_proof_domain_16384_maxpoly_4096_pubs_64() {
-        let (proof, vk, pubs) = domain_16384_maxpoly_4096_pubs_64_data::<T>();
-
-        let r;
-        #[block]
-        {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
-        };
-        assert!(r.is_ok());
-    }
-
-    #[benchmark(extra)]
-    fn verify_proof_domain_16384_maxpoly_4096_pubs_256() {
-        let (proof, vk, pubs) = domain_16384_maxpoly_4096_pubs_256_data::<T>();
-
-        let r;
-        #[block]
-        {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
-        };
-        assert!(r.is_ok());
-    }
-
-    #[benchmark(extra)]
-    fn verify_proof_domain_16384_maxpoly_4096_pubs_1024() {
-        let (proof, vk, pubs) = domain_16384_maxpoly_4096_pubs_1024_data::<T>();
 
         let r;
         #[block]
@@ -947,42 +663,6 @@ mod benchmarks {
     #[benchmark(extra)]
     fn verify_proof_domain_262144_pubs_1024() {
         let (proof, vk, pubs) = domain_262144_pubs_1024_data::<T>();
-
-        let r;
-        #[block]
-        {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
-        };
-        assert!(r.is_ok());
-    }
-
-    #[benchmark(extra)]
-    fn verify_proof_domain_524288_pubs_64() {
-        let (proof, vk, pubs) = domain_524288_pubs_64_data::<T>();
-
-        let r;
-        #[block]
-        {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
-        };
-        assert!(r.is_ok());
-    }
-
-    #[benchmark(extra)]
-    fn verify_proof_domain_524288_pubs_1024() {
-        let (proof, vk, pubs) = domain_524288_pubs_1024_data::<T>();
-
-        let r;
-        #[block]
-        {
-            r = do_verify_proof::<T>(&vk, &proof, &pubs)
-        };
-        assert!(r.is_ok());
-    }
-
-    #[benchmark(extra)]
-    fn verify_proof_domain_1048576_pubs_64() {
-        let (proof, vk, pubs) = domain_1048576_pubs_64_data::<T>();
 
         let r;
         #[block]
@@ -1319,66 +999,6 @@ mod benchmarks {
     }
 
     #[benchmark(extra)]
-    fn builtin_srs_domain_524288_pubs_64() {
-        let (_, vk, _) = domain_524288_pubs_64_data::<T>();
-        let verifier_index = crate::decode_vk(&vk).expect("benchmark VK should decode");
-        let domain_size = usize::try_from(verifier_index.domain.size)
-            .expect("benchmark domain size should fit usize");
-
-        let srs;
-        #[block]
-        {
-            srs = crate::builtin_srs(
-                vk.profile,
-                verifier_index.max_poly_size,
-                domain_size,
-                verifier_index.public,
-            )
-        };
-        assert!(srs.is_ok());
-    }
-
-    #[benchmark(extra)]
-    fn builtin_srs_domain_524288_pubs_1024() {
-        let (_, vk, _) = domain_524288_pubs_1024_data::<T>();
-        let verifier_index = crate::decode_vk(&vk).expect("benchmark VK should decode");
-        let domain_size = usize::try_from(verifier_index.domain.size)
-            .expect("benchmark domain size should fit usize");
-
-        let srs;
-        #[block]
-        {
-            srs = crate::builtin_srs(
-                vk.profile,
-                verifier_index.max_poly_size,
-                domain_size,
-                verifier_index.public,
-            )
-        };
-        assert!(srs.is_ok());
-    }
-
-    #[benchmark(extra)]
-    fn builtin_srs_domain_1048576_pubs_64() {
-        let (_, vk, _) = domain_1048576_pubs_64_data::<T>();
-        let verifier_index = crate::decode_vk(&vk).expect("benchmark VK should decode");
-        let domain_size = usize::try_from(verifier_index.domain.size)
-            .expect("benchmark domain size should fit usize");
-
-        let srs;
-        #[block]
-        {
-            srs = crate::builtin_srs(
-                vk.profile,
-                verifier_index.max_poly_size,
-                domain_size,
-                verifier_index.public,
-            )
-        };
-        assert!(srs.is_ok());
-    }
-
-    #[benchmark(extra)]
     fn builtin_srs_foreign_field_mul() {
         let (_, vk, _) = foreign_field_mul_data::<T>();
         let verifier_index = crate::decode_vk(&vk).expect("benchmark VK should decode");
@@ -1490,45 +1110,6 @@ mod benchmarks {
     }
 
     #[benchmark(extra)]
-    fn prepare_verifier_index_domain_524288_pubs_64() {
-        let (_, vk, _) = domain_524288_pubs_64_data::<T>();
-        let mut verifier_index = crate::decode_vk(&vk).expect("benchmark VK should decode");
-
-        let prepared;
-        #[block]
-        {
-            prepared = crate::prepare_verifier_index(&mut verifier_index, vk.profile)
-        };
-        assert!(prepared.is_ok());
-    }
-
-    #[benchmark(extra)]
-    fn prepare_verifier_index_domain_524288_pubs_1024() {
-        let (_, vk, _) = domain_524288_pubs_1024_data::<T>();
-        let mut verifier_index = crate::decode_vk(&vk).expect("benchmark VK should decode");
-
-        let prepared;
-        #[block]
-        {
-            prepared = crate::prepare_verifier_index(&mut verifier_index, vk.profile)
-        };
-        assert!(prepared.is_ok());
-    }
-
-    #[benchmark(extra)]
-    fn prepare_verifier_index_domain_1048576_pubs_64() {
-        let (_, vk, _) = domain_1048576_pubs_64_data::<T>();
-        let mut verifier_index = crate::decode_vk(&vk).expect("benchmark VK should decode");
-
-        let prepared;
-        #[block]
-        {
-            prepared = crate::prepare_verifier_index(&mut verifier_index, vk.profile)
-        };
-        assert!(prepared.is_ok());
-    }
-
-    #[benchmark(extra)]
     fn prepare_verifier_index_foreign_field_mul() {
         let (_, vk, _) = foreign_field_mul_data::<T>();
         let mut verifier_index = crate::decode_vk(&vk).expect("benchmark VK should decode");
@@ -1570,19 +1151,6 @@ mod benchmarks {
     #[benchmark(extra)]
     fn validate_profile_domain_262144_pubs_64() {
         let (profile, verifier_index, proof) = decoded_data(domain_262144_pubs_64_data::<T>);
-
-        let valid;
-        #[block]
-        {
-            valid = crate::profile::validate_verifier_index(profile, &verifier_index)
-                .and_then(|()| crate::profile::validate_proof(profile, &proof, &verifier_index))
-        };
-        assert!(valid.is_ok());
-    }
-
-    #[benchmark(extra)]
-    fn validate_profile_domain_1048576_pubs_64() {
-        let (profile, verifier_index, proof) = decoded_data(domain_1048576_pubs_64_data::<T>);
 
         let valid;
         #[block]
@@ -1645,24 +1213,6 @@ mod benchmarks {
     #[benchmark(extra)]
     fn lagrange_basis_domain_262144() {
         let (_, vk, _) = domain_262144_pubs_64_data::<T>();
-        let mut verifier_index = crate::decode_vk(&vk).expect("benchmark VK should decode");
-        crate::prepare_verifier_index(&mut verifier_index, vk.profile)
-            .expect("benchmark verifier index should prepare");
-
-        let basis_len;
-        #[block]
-        {
-            basis_len = verifier_index
-                .srs()
-                .get_lagrange_basis(verifier_index.domain)
-                .len()
-        };
-        assert_eq!(basis_len, verifier_index.public);
-    }
-
-    #[benchmark(extra)]
-    fn lagrange_basis_domain_1048576() {
-        let (_, vk, _) = domain_1048576_pubs_64_data::<T>();
         let mut verifier_index = crate::decode_vk(&vk).expect("benchmark VK should decode");
         crate::prepare_verifier_index(&mut verifier_index, vk.profile)
             .expect("benchmark verifier index should prepare");
@@ -1825,60 +1375,6 @@ mod benchmarks {
     fn verify_prepared_domain_262144_pubs_1024() {
         let (verifier_index, proof, public_input, mut rng) =
             prepared_domain_262144_pubs_1024_data::<T>();
-
-        let r;
-        #[block]
-        {
-            r = crate::verify_vesta16_proof_with_rng(
-                &verifier_index,
-                &proof,
-                &public_input,
-                &mut rng,
-            )
-        };
-        assert!(r.is_ok());
-    }
-
-    #[benchmark(extra)]
-    fn verify_prepared_domain_524288_pubs_64() {
-        let (verifier_index, proof, public_input, mut rng) =
-            prepared_domain_524288_pubs_64_data::<T>();
-
-        let r;
-        #[block]
-        {
-            r = crate::verify_vesta16_proof_with_rng(
-                &verifier_index,
-                &proof,
-                &public_input,
-                &mut rng,
-            )
-        };
-        assert!(r.is_ok());
-    }
-
-    #[benchmark(extra)]
-    fn verify_prepared_domain_524288_pubs_1024() {
-        let (verifier_index, proof, public_input, mut rng) =
-            prepared_domain_524288_pubs_1024_data::<T>();
-
-        let r;
-        #[block]
-        {
-            r = crate::verify_vesta16_proof_with_rng(
-                &verifier_index,
-                &proof,
-                &public_input,
-                &mut rng,
-            )
-        };
-        assert!(r.is_ok());
-    }
-
-    #[benchmark(extra)]
-    fn verify_prepared_domain_1048576_pubs_64() {
-        let (verifier_index, proof, public_input, mut rng) =
-            prepared_domain_1048576_pubs_64_data::<T>();
 
         let r;
         #[block]

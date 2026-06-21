@@ -694,13 +694,8 @@ pub const AVAILABILITY_CONFIG: AvailabilityConfig = AvailabilityConfig {
 
 /// Prepare all consensus-supported native verifier parameters before block execution.
 pub fn prewarm_native_verifier_parameters() -> Result<(), Error> {
-    #[cfg(not(feature = "runtime-benchmarks"))]
     const KIMCHI_DOMAIN_LOG2_SIZES: &[u8] =
         &[3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
-    #[cfg(feature = "runtime-benchmarks")]
-    const KIMCHI_DOMAIN_LOG2_SIZES: &[u8] = &[
-        3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-    ];
 
     let started_at = Instant::now();
     log::info!("Prewarming Kimchi native verifier parameters for Vesta SRS 2^16");
