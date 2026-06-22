@@ -15,14 +15,25 @@ function readFields(...parts) {
     );
 }
 
-const FIXTURE = ['verifiers', 'kimchi', 'src', 'resources', 'generated_131072_lookup_runtime_pubs_64'];
-const PROOF = readHex(...FIXTURE, 'proof.bin');
-const PUBS = readFields(...FIXTURE, 'pubs.bin');
-const VERIFIER_INDEX = readHex(...FIXTURE, 'verifier_index.bin');
+function readFixture(name) {
+    const fixture = ['verifiers', 'kimchi', 'src', 'resources', name];
+    return {
+        PROOF: readHex(...fixture, 'proof.bin'),
+        PUBS: readFields(...fixture, 'pubs.bin'),
+        VK: {
+            verifierIndexBytes: readHex(...fixture, 'verifier_index.bin'),
+            profile: 'Vesta16',
+        },
+    };
+}
 
-exports.PROOF = PROOF;
-exports.PUBS = PUBS;
-exports.VK = {
-    verifierIndexBytes: VERIFIER_INDEX,
-    profile: 'Vesta16',
-};
+const TWO_CHUNK_LOOKUP_RUNTIME_PUBS_64 = readFixture('generated_131072_lookup_runtime_pubs_64');
+
+exports.ONE_CHUNK_SIMPLE_PUBS_0 = readFixture('generated_4096_maxpoly_4096_simple_pubs_0');
+exports.TWO_CHUNK_LOOKUP_RUNTIME_PUBS_64 = TWO_CHUNK_LOOKUP_RUNTIME_PUBS_64;
+exports.FOUR_CHUNK_ALL_FEATURES_PUBS_0 = readFixture('generated_262144_all_features_pubs_0');
+exports.FOUR_CHUNK_ALL_FEATURES_PUBS_1024 = readFixture('generated_262144_all_features_pubs_1024');
+
+exports.PROOF = TWO_CHUNK_LOOKUP_RUNTIME_PUBS_64.PROOF;
+exports.PUBS = TWO_CHUNK_LOOKUP_RUNTIME_PUBS_64.PUBS;
+exports.VK = TWO_CHUNK_LOOKUP_RUNTIME_PUBS_64.VK;
