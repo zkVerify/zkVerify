@@ -29,11 +29,11 @@ impl<T: crate::Config> Config for T {}
 pub type Call<T> = pallet_verifiers::Call<T, Verifier<T>>;
 
 const BENCH_PROOF: &[u8] =
-    include_bytes!("resources/generated_262144_lookup_runtime_pubs_1024/proof.bin");
+    include_bytes!("resources/generated_262144_all_features_pubs_1024/proof.bin");
 const BENCH_VERIFIER_INDEX: &[u8] =
-    include_bytes!("resources/generated_262144_lookup_runtime_pubs_1024/verifier_index.bin");
+    include_bytes!("resources/generated_262144_all_features_pubs_1024/verifier_index.bin");
 const BENCH_PUBS: &[u8] =
-    include_bytes!("resources/generated_262144_lookup_runtime_pubs_1024/pubs.bin");
+    include_bytes!("resources/generated_262144_all_features_pubs_1024/pubs.bin");
 
 fn benchmark_data<T: VerifierConfig>() -> (Proof, Vk<T>, Pubs) {
     (

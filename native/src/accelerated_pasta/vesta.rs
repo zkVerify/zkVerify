@@ -145,7 +145,10 @@ pub trait HostCalls {
 
 #[cfg(feature = "std")]
 mod native_builtin_srs {
-    use std::sync::OnceLock;
+    use std::sync::{
+        atomic::{AtomicU8, Ordering},
+        OnceLock,
+    };
 
     use ark_ec::VariableBaseMSM;
     use ark_scale::ark_serialize::CanonicalSerialize;
@@ -161,8 +164,12 @@ mod native_builtin_srs {
     const MIN_DOMAIN_LOG2_SIZE: u8 = 3;
     const MIN_MAX_POLY_LOG2_SIZE: u8 = MIN_DOMAIN_LOG2_SIZE - 1;
     const MAX_DOMAIN_LOG2_SIZE: u8 = 18;
+    const VESTA16_SRS_LOG2_SIZE: u8 = 16;
     const V1_MIN_DOMAIN_LOG2_SIZE: u8 = 10;
     const V1_MAX_DOMAIN_LOG2_SIZE: u8 = 16;
+    const LAGRANGE_BASIS_CHECK_UNKNOWN: u8 = 0;
+    const LAGRANGE_BASIS_CHECK_FAILED: u8 = 1;
+    const LAGRANGE_BASIS_CHECK_PASSED: u8 = 2;
     const VESTA_SRS_16_DIGEST: [u8; 32] = [
         118, 145, 96, 85, 33, 218, 182, 195, 62, 93, 252, 115, 198, 97, 194, 14, 79, 26, 208, 65,
         35, 3, 60, 185, 99, 21, 119, 27, 198, 4, 152, 179,
@@ -385,6 +392,8 @@ mod native_builtin_srs {
     static VESTA16_SRS: OnceLock<IpaSrs<Vesta>> = OnceLock::new();
     static VESTA16_PREFIX_SRS: OnceLock<Vec<(usize, IpaSrs<Vesta>)>> = OnceLock::new();
     static VESTA16_PARAMETER_CHECK: OnceLock<bool> = OnceLock::new();
+    // Digesting a full Lagrange basis is expensive and depends only on this shape.
+    static VESTA16_LAGRANGE_BASIS_CHECKS: OnceLock<Vec<AtomicU8>> = OnceLock::new();
 
     fn srs() -> &'static IpaSrs<Vesta> {
         VESTA16_SRS.get_or_init(|| IpaSrs::<Vesta>::create(VESTA16_SRS_SIZE))
@@ -434,7 +443,7 @@ mod native_builtin_srs {
                 .checked_shl(u32::from(domain_log2_size))
                 .ok_or(VerifyError::InvalidVerificationKey)?;
             let basis = srs.get_lagrange_basis_from_domain_size(domain_size);
-            if !lagrange_basis_matches_expected(
+            if !cached_lagrange_basis_matches_expected(
                 VESTA16_SRS_SIZE,
                 domain_log2_size,
                 basis.as_slice(),
@@ -446,7 +455,7 @@ mod native_builtin_srs {
                 let max_poly_size = domain_size / PREWARM_PREFIX_CHECK_CHUNKS;
                 let basis = checked_srs_prefix(max_poly_size)?
                     .get_lagrange_basis_from_domain_size(domain_size);
-                if !lagrange_basis_matches_expected(
+                if !cached_lagrange_basis_matches_expected(
                     max_poly_size,
                     domain_log2_size,
                     basis.as_slice(),
@@ -521,7 +530,7 @@ mod native_builtin_srs {
             checked_srs_prefix(max_poly_size).map_err(|_| ())?
         };
         let basis = basis_srs.get_lagrange_basis_from_domain_size(domain_size);
-        if !lagrange_basis_matches_expected(max_poly_size, domain_log2, basis.as_slice()) {
+        if !cached_lagrange_basis_matches_expected(max_poly_size, domain_log2, basis.as_slice()) {
             return Err(());
         }
 
@@ -574,28 +583,100 @@ mod native_builtin_srs {
             && srs_digest(srs).is_ok_and(|digest| digest == VESTA_SRS_16_DIGEST)
     }
 
-    fn lagrange_basis_matches_expected(
+    fn cached_lagrange_basis_matches_expected(
         max_poly_size: usize,
         domain_log2_size: u8,
         basis: &[poly_commitment::PolyComm<Vesta>],
     ) -> bool {
-        let domain_size = 1_usize << domain_log2_size;
+        let Some(domain_size) = 1_usize.checked_shl(u32::from(domain_log2_size)) else {
+            return false;
+        };
+        if basis.len() != domain_size {
+            return false;
+        }
+
+        let Some(expected) = expected_lagrange_basis_digest(max_poly_size, domain_log2_size) else {
+            return false;
+        };
+        let Some(slot) = lagrange_basis_check_slot(max_poly_size, domain_log2_size) else {
+            return false;
+        };
+
+        match slot.load(Ordering::Acquire) {
+            LAGRANGE_BASIS_CHECK_PASSED => return true,
+            LAGRANGE_BASIS_CHECK_FAILED => return false,
+            _ => {}
+        }
+
+        let matches_expected =
+            lagrange_basis_digest(domain_log2_size, basis).is_ok_and(|digest| &digest == expected);
+        if !matches_expected {
+            slot.store(LAGRANGE_BASIS_CHECK_FAILED, Ordering::Release);
+            return false;
+        }
+
+        match slot.compare_exchange(
+            LAGRANGE_BASIS_CHECK_UNKNOWN,
+            LAGRANGE_BASIS_CHECK_PASSED,
+            Ordering::AcqRel,
+            Ordering::Acquire,
+        ) {
+            Ok(_) => true,
+            Err(LAGRANGE_BASIS_CHECK_PASSED) => true,
+            Err(_) => false,
+        }
+    }
+
+    fn expected_lagrange_basis_digest(
+        max_poly_size: usize,
+        domain_log2_size: u8,
+    ) -> Option<&'static [u8; 32]> {
+        if max_poly_size == 0 {
+            return None;
+        }
+
+        let domain_size = 1_usize.checked_shl(u32::from(domain_log2_size))?;
         let num_chunks = domain_size.div_ceil(max_poly_size);
         let expected_digests = match num_chunks {
             1 => VESTA_SRS_16_LAGRANGE_DIGESTS,
             2 => VESTA_SRS_16_MULTI_CHUNK_LAGRANGE_DIGESTS,
             4 => VESTA_SRS_16_FOUR_CHUNK_LAGRANGE_DIGESTS,
-            _ => return false,
+            _ => return None,
         };
 
         expected_digests
             .iter()
             .find_map(|(log2_size, digest)| (*log2_size == domain_log2_size).then_some(digest))
-            .is_some_and(|expected| {
-                basis.len() == 1_usize << domain_log2_size
-                    && lagrange_basis_digest(domain_log2_size, basis)
-                        .is_ok_and(|digest| &digest == expected)
+    }
+
+    fn lagrange_basis_check_slot(
+        max_poly_size: usize,
+        domain_log2_size: u8,
+    ) -> Option<&'static AtomicU8> {
+        if max_poly_size == 0
+            || !max_poly_size.is_power_of_two()
+            || domain_log2_size > MAX_DOMAIN_LOG2_SIZE
+        {
+            return None;
+        }
+
+        let max_poly_log2 = usize::try_from(max_poly_size.trailing_zeros()).ok()?;
+        if max_poly_log2 > usize::from(VESTA16_SRS_LOG2_SIZE) {
+            return None;
+        }
+
+        let stride = usize::from(VESTA16_SRS_LOG2_SIZE) + 1;
+        let slot = usize::from(domain_log2_size)
+            .checked_mul(stride)?
+            .checked_add(max_poly_log2)?;
+        VESTA16_LAGRANGE_BASIS_CHECKS
+            .get_or_init(|| {
+                let slots = (usize::from(MAX_DOMAIN_LOG2_SIZE) + 1) * stride;
+                (0..slots)
+                    .map(|_| AtomicU8::new(LAGRANGE_BASIS_CHECK_UNKNOWN))
+                    .collect()
             })
+            .get(slot)
     }
 
     fn srs_digest(srs: &IpaSrs<Vesta>) -> Result<[u8; 32], VerifyError> {
@@ -638,6 +719,18 @@ mod native_builtin_srs {
             checked_srs_prefix(max_poly_size)?.get_lagrange_basis_from_domain_size(domain_size);
 
         lagrange_basis_digest(domain_log2_size, basis.as_slice())
+    }
+
+    #[cfg(test)]
+    pub(super) fn lagrange_basis_check_state_for_test(
+        max_poly_size: usize,
+        domain_log2_size: u8,
+    ) -> Option<bool> {
+        match lagrange_basis_check_slot(max_poly_size, domain_log2_size)?.load(Ordering::Acquire) {
+            LAGRANGE_BASIS_CHECK_PASSED => Some(true),
+            LAGRANGE_BASIS_CHECK_FAILED => Some(false),
+            _ => None,
+        }
     }
 
     fn hash_usize(hasher: &mut Blake2b256, value: usize) {
@@ -697,6 +790,26 @@ mod tests {
 
         assert_eq!(prefix.len(), 2);
         assert!(prefix.iter().all(|commitment| commitment.len() == 2));
+    }
+
+    #[test]
+    fn vesta16_lagrange_basis_prefix_records_verified_digest_shape() {
+        let max_poly_size = 1 << 12;
+        let domain_log2 = 13;
+
+        let prefix = vesta16_lagrange_basis_prefix(max_poly_size, domain_log2, 2)
+            .expect("native basis prefix succeeds");
+        let prefix_again = vesta16_lagrange_basis_prefix(max_poly_size, domain_log2, 2)
+            .expect("cached native basis prefix succeeds");
+
+        assert_eq!(prefix, prefix_again);
+        assert_eq!(
+            native_builtin_srs::lagrange_basis_check_state_for_test(
+                max_poly_size as usize,
+                domain_log2
+            ),
+            Some(true)
+        );
     }
 
     #[test]

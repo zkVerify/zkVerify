@@ -1149,7 +1149,6 @@ impl pallet_kimchi_verifier::Config for Runtime {
 pub type KimchiVerifier = pallet_kimchi_verifier::Kimchi<Runtime>;
 
 impl pallet_verifiers::Config<KimchiVerifier> for Runtime {
-    type RuntimeEvent = RuntimeEvent;
     type OnProofVerified = Aggregate;
     type Ticket = VkRegistrationHoldConsideration;
     type WeightInfo =

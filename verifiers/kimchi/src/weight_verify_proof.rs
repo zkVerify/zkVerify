@@ -61,7 +61,7 @@ impl WeightInfo for () {
         //  Measured:  `0`
         //  Estimated: `0`
         // Measured median execution time: 139_340_000_000 picoseconds.
-        // Includes guard margin over the four-chunk lookup/runtime-table profile benchmark.
+        // Includes guard margin over the four-chunk all-features profile benchmark.
         Weight::from_parts(176_000_000_000, 0)
     }
 

@@ -117,11 +117,11 @@ const DOMAIN_262144_PUBS_64_VERIFIER_INDEX: &[u8] =
 const DOMAIN_262144_PUBS_64_PUBS: &[u8] =
     include_bytes!("resources/generated_262144_lookup_runtime_pubs_64/pubs.bin");
 const DOMAIN_262144_PUBS_0_PROOF: &[u8] =
-    include_bytes!("resources/generated_262144_lookup_runtime_pubs_0/proof.bin");
+    include_bytes!("resources/generated_262144_all_features_pubs_0/proof.bin");
 const DOMAIN_262144_PUBS_0_VERIFIER_INDEX: &[u8] =
-    include_bytes!("resources/generated_262144_lookup_runtime_pubs_0/verifier_index.bin");
+    include_bytes!("resources/generated_262144_all_features_pubs_0/verifier_index.bin");
 const DOMAIN_262144_PUBS_0_PUBS: &[u8] =
-    include_bytes!("resources/generated_262144_lookup_runtime_pubs_0/pubs.bin");
+    include_bytes!("resources/generated_262144_all_features_pubs_0/pubs.bin");
 const DOMAIN_262144_PUBS_1_PROOF: &[u8] =
     include_bytes!("resources/generated_262144_lookup_runtime_pubs_1/proof.bin");
 const DOMAIN_262144_PUBS_1_VERIFIER_INDEX: &[u8] =

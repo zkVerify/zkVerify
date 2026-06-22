@@ -77,11 +77,26 @@ fn two_chunk_profile_uses_upper_verification_weight() {
 #[test]
 fn four_chunk_profile_uses_upper_verification_weight() {
     let verifier_index: Vesta16VerifierIndex = bincode::serde::decode_from_slice(
+        include_bytes!("resources/generated_262144_all_features_pubs_0/verifier_index.bin"),
+        bincode::config::standard(),
+    )
+    .map(|(index, _)| index)
+    .expect("four-chunk all-features fixture verifier index should decode");
+
+    assert_eq!(
+        compute_verify_weight::<MockConfig>(&verifier_index),
+        <() as WeightInfoVerifyProof>::verify_proof_domain_262144_pubs_0()
+    );
+}
+
+#[test]
+fn four_chunk_profile_adds_public_input_weight() {
+    let verifier_index: Vesta16VerifierIndex = bincode::serde::decode_from_slice(
         include_bytes!("resources/generated_262144_lookup_runtime_pubs_1024/verifier_index.bin"),
         bincode::config::standard(),
     )
     .map(|(index, _)| index)
-    .expect("four-chunk fixture verifier index should decode");
+    .expect("four-chunk public-input fixture verifier index should decode");
 
     assert_eq!(
         compute_verify_weight::<MockConfig>(&verifier_index),
@@ -287,23 +302,32 @@ mod accept {
     }
 
     #[test]
-    fn production_envelope_accepts_four_chunk_1024_public_inputs() {
-        let proof = include_bytes!("resources/generated_262144_lookup_runtime_pubs_1024/proof.bin")
-            .to_vec();
+    fn four_chunk_all_features_fixture_is_accepted() {
+        fixture_is_accepted(
+            include_bytes!("resources/generated_262144_all_features_pubs_0/proof.bin"),
+            include_bytes!("resources/generated_262144_all_features_pubs_0/verifier_index.bin"),
+            fixture_pubs(include_bytes!(
+                "resources/generated_262144_all_features_pubs_0/pubs.bin"
+            )),
+        );
+    }
+
+    #[test]
+    fn production_envelope_accepts_four_chunk_all_features_1024_public_inputs() {
+        let proof =
+            include_bytes!("resources/generated_262144_all_features_pubs_1024/proof.bin").to_vec();
         let vk = Vk::<ProductionEnvelopeConfig>::new(
-            include_bytes!(
-                "resources/generated_262144_lookup_runtime_pubs_1024/verifier_index.bin"
-            )
-            .to_vec(),
+            include_bytes!("resources/generated_262144_all_features_pubs_1024/verifier_index.bin")
+                .to_vec(),
             KimchiProfileId::Vesta16,
         );
         let pubs = fixture_pubs(include_bytes!(
-            "resources/generated_262144_lookup_runtime_pubs_1024/pubs.bin"
+            "resources/generated_262144_all_features_pubs_1024/pubs.bin"
         ));
 
         assert!(
             Kimchi::<ProductionEnvelopeConfig>::verify_proof(&vk, &proof, &pubs).is_ok(),
-            "four-chunk/1024-public-input fixture should verify under production caps"
+            "four-chunk all-features/1024-public-input fixture should verify under production caps"
         );
     }
 
@@ -453,7 +477,7 @@ mod reject {
 
     fn four_chunk_fixture_verifier_index() -> Vesta16VerifierIndex {
         fixture_verifier_index_from_bytes(include_bytes!(
-            "resources/generated_262144_lookup_runtime_pubs_1024/verifier_index.bin"
+            "resources/generated_262144_all_features_pubs_0/verifier_index.bin"
         ))
     }
 
@@ -750,6 +774,39 @@ mod reject {
         assert!(
             profile::validate_verifier_index(KimchiProfileId::Vesta16, &verifier_index).is_ok()
         );
+    }
+
+    #[test]
+    fn four_chunk_benchmarked_fixture_enables_all_optional_features() {
+        let verifier_index = four_chunk_fixture_verifier_index();
+        let lookup_index = verifier_index
+            .lookup_index
+            .as_ref()
+            .expect("all-features fixture should include lookup index");
+
+        assert_eq!(verifier_index.domain.size, 1 << 18);
+        assert_eq!(verifier_index.max_poly_size, 1 << 16);
+        assert_eq!(verifier_index.public, 0);
+        assert!(verifier_index.range_check0_comm.is_some());
+        assert!(verifier_index.range_check1_comm.is_some());
+        assert!(verifier_index.foreign_field_add_comm.is_some());
+        assert!(verifier_index.foreign_field_mul_comm.is_some());
+        assert!(verifier_index.xor_comm.is_some());
+        assert!(verifier_index.rot_comm.is_some());
+        assert_eq!(
+            lookup_index.lookup_info.features.patterns,
+            LookupPatterns {
+                xor: true,
+                lookup: true,
+                range_check: true,
+                foreign_field_mul: true,
+            }
+        );
+        assert!(lookup_index.lookup_selectors.xor.is_some());
+        assert!(lookup_index.lookup_selectors.lookup.is_some());
+        assert!(lookup_index.lookup_selectors.range_check.is_some());
+        assert!(lookup_index.lookup_selectors.ffmul.is_some());
+        assert!(lookup_index.runtime_tables_selector.is_some());
     }
 
     #[test]
