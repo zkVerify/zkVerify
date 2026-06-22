@@ -175,7 +175,9 @@ fn validate_vesta16_proof(
     {
         validate_commitment(commitment, num_chunks)?;
     }
-    if proof.commitments.t_comm.len() < num_chunks || proof.commitments.t_comm.len() > 7 * num_chunks {
+    if proof.commitments.t_comm.len() < num_chunks
+        || proof.commitments.t_comm.len() > 7 * num_chunks
+    {
         return Err(ProfileError::CommitmentChunks);
     }
 

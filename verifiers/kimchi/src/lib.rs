@@ -225,8 +225,8 @@ fn has_optional_features(verifier_index: &Vesta16VerifierIndex) -> bool {
 }
 
 fn public_input_weight<T: Config>(public_inputs: usize) -> Weight {
-    let public_inputs = u64::try_from(public_inputs)
-        .expect("public bounded by MAX_PUBLIC_INPUTS = 1024; qed");
+    let public_inputs =
+        u64::try_from(public_inputs).expect("public bounded by MAX_PUBLIC_INPUTS = 1024; qed");
     T::WeightInfo::verify_proof_public_input().saturating_mul(public_inputs)
 }
 
