@@ -108,6 +108,7 @@ fn validate_vesta16_verifier_index(index: &Vesta16VerifierIndex) -> Result<(), P
         || !vesta16_supports_work_shape(index.max_poly_size, domain_size, num_chunks)
         || index.zk_rows != expected_zk_rows
         || index.public > Vesta16::MAX_PUBLIC_INPUTS
+        || index.public > domain_size
         || index.prev_challenges > Vesta16::MAX_PREV_CHALLENGES
     {
         return Err(ProfileError::VerifierIndexConfiguration);
@@ -155,7 +156,6 @@ fn validate_vesta16_proof(
     proof: &Vesta16Proof,
     index: &Vesta16VerifierIndex,
 ) -> Result<(), ProfileError> {
-    validate_vesta16_verifier_index(index)?;
     let domain_size =
         usize::try_from(index.domain.size).map_err(|_| ProfileError::ProofConfiguration)?;
     let num_chunks = expected_chunks(index.max_poly_size, domain_size)
@@ -175,7 +175,7 @@ fn validate_vesta16_proof(
     {
         validate_commitment(commitment, num_chunks)?;
     }
-    if proof.commitments.t_comm.is_empty() || proof.commitments.t_comm.len() > 7 * num_chunks {
+    if proof.commitments.t_comm.len() < num_chunks || proof.commitments.t_comm.len() > 7 * num_chunks {
         return Err(ProfileError::CommitmentChunks);
     }
 

@@ -29,6 +29,7 @@ mod weight_verify_proof;
 
 use alloc::{borrow::Cow, sync::Arc, vec::Vec};
 #[cfg(not(feature = "std"))]
+// no_std Substrate runtimes are single-threaded; aliasing OnceCell as OnceLock is safe here.
 use core::cell::OnceCell as OnceLock;
 use core::marker::PhantomData;
 #[cfg(feature = "std")]
@@ -184,9 +185,10 @@ impl<T: Config> Verifier for Kimchi<T> {
 }
 
 fn compute_verify_weight<T: Config>(verifier_index: &Vesta16VerifierIndex) -> Weight {
-    let domain_size = usize::try_from(verifier_index.domain.size).unwrap_or(usize::MAX);
-    let num_chunks =
-        profile::expected_chunks(verifier_index.max_poly_size, domain_size).unwrap_or(usize::MAX);
+    let domain_size = usize::try_from(verifier_index.domain.size)
+        .expect("domain.size validated by prepare_verifier_index; qed");
+    let num_chunks = profile::expected_chunks(verifier_index.max_poly_size, domain_size)
+        .expect("expected_chunks is Some after prepare_verifier_index; qed");
 
     let base = if is_small_domain_weight_eligible(verifier_index, domain_size, num_chunks) {
         T::WeightInfo::verify_proof_domain_4096_pubs_0()
@@ -223,7 +225,8 @@ fn has_optional_features(verifier_index: &Vesta16VerifierIndex) -> bool {
 }
 
 fn public_input_weight<T: Config>(public_inputs: usize) -> Weight {
-    let public_inputs = u64::try_from(public_inputs).unwrap_or(u64::MAX);
+    let public_inputs = u64::try_from(public_inputs)
+        .expect("public bounded by MAX_PUBLIC_INPUTS = 1024; qed");
     T::WeightInfo::verify_proof_public_input().saturating_mul(public_inputs)
 }
 
@@ -261,18 +264,33 @@ impl<T: Config, W: WeightInfo> pallet_verifiers::WeightInfo<Kimchi<T>> for Kimch
     }
 }
 
+fn decode_canonical<T, C>(
+    bytes: &[u8],
+    config: C,
+    log_context: &str,
+    make_err: fn() -> VerifyError,
+) -> Result<T, VerifyError>
+where
+    T: serde::Serialize + serde::de::DeserializeOwned,
+    C: bincode::config::Config,
+{
+    let (value, consumed): (T, usize) = bincode::serde::decode_from_slice(bytes, config)
+        .inspect_err(|e| log::debug!("{log_context}: {e}"))
+        .map_err(|_| make_err())?;
+    ensure!(consumed == bytes.len(), make_err());
+    ensure!(
+        bincode::serde::encode_to_vec(&value, bincode::config::standard())
+            .is_ok_and(|encoded| encoded == bytes),
+        make_err()
+    );
+    Ok(value)
+}
+
 fn decode_proof(bytes: &[u8]) -> Result<Vesta16Proof, VerifyError> {
     let config = bincode::config::standard().with_limit::<{ Vesta16::MAX_DECODED_PROOF_BYTES }>();
-    let (proof, consumed): (Vesta16Proof, usize) = bincode::serde::decode_from_slice(bytes, config)
-        .inspect_err(|error| log::debug!("Cannot decode Kimchi proof bytes: {error}"))
-        .map_err(|_| VerifyError::InvalidProofData)?;
-    ensure!(consumed == bytes.len(), VerifyError::InvalidProofData);
-    ensure!(
-        bincode::serde::encode_to_vec(&proof, bincode::config::standard())
-            .is_ok_and(|encoded| encoded == bytes),
+    decode_canonical(bytes, config, "Cannot decode Kimchi proof bytes", || {
         VerifyError::InvalidProofData
-    );
-    Ok(proof)
+    })
 }
 
 fn decode_public_input(raw_pubs: &Pubs) -> Result<Vec<Fp>, VerifyError> {
@@ -288,21 +306,12 @@ fn decode_public_input(raw_pubs: &Pubs) -> Result<Vec<Fp>, VerifyError> {
 
 fn decode_vk<T: Config>(vk: &Vk<T>) -> Result<Vesta16VerifierIndex, VerifyError> {
     let config = bincode::config::standard().with_limit::<{ Vesta16::MAX_DECODED_VK_BYTES }>();
-    let (verifier_index, consumed): (Vesta16VerifierIndex, usize) =
-        bincode::serde::decode_from_slice(&vk.verifier_index_bytes, config)
-            .inspect_err(|error| log::debug!("Cannot decode Kimchi verifier index: {error}"))
-            .map_err(|_| VerifyError::InvalidVerificationKey)?;
-    ensure!(
-        consumed == vk.verifier_index_bytes.len(),
-        VerifyError::InvalidVerificationKey
-    );
-    ensure!(
-        bincode::serde::encode_to_vec(&verifier_index, bincode::config::standard())
-            .is_ok_and(|encoded| encoded == vk.verifier_index_bytes),
-        VerifyError::InvalidVerificationKey
-    );
-
-    Ok(verifier_index)
+    decode_canonical(
+        &vk.verifier_index_bytes,
+        config,
+        "Cannot decode Kimchi verifier index",
+        || VerifyError::InvalidVerificationKey,
+    )
 }
 
 fn prepare_verifier_index(

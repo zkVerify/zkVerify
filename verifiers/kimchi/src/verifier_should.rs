@@ -943,6 +943,20 @@ mod reject {
     }
 
     #[test]
+    fn two_chunk_proof_with_insufficient_quotient_commitment_chunks_is_rejected_before_verification(
+    ) {
+        let (mut proof, verifier_index) = two_chunk_fixture_proof_and_index();
+        // num_chunks == 2 for this fixture; dropping to 1 undercuts the lower bound.
+        while proof.commitments.t_comm.len() > 1 {
+            proof.commitments.t_comm.chunks.pop();
+        }
+
+        assert!(
+            profile::validate_proof(KimchiProfileId::Vesta16, &proof, &verifier_index).is_err()
+        );
+    }
+
+    #[test]
     fn proof_without_public_evaluations_is_accepted_for_zero_public_inputs() {
         let (_, mut proof, verifier_index) = fixture_proof_and_index();
         proof.evals.public = None;
