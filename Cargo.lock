@@ -221,9 +221,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.100"
+version = "1.0.103"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a23eb6b1614318a8071c9b2521f36b424b2c83db5eb3a0fead4a6c0809af6e61"
+checksum = "2a4385e2e34eb35d6b3efe798b9eb88096925d87726c0798709bf56d9ed84af3"
 
 [[package]]
 name = "approx"
@@ -6807,9 +6807,9 @@ dependencies = [
 
 [[package]]
 name = "memmap2"
-version = "0.9.9"
+version = "0.9.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "744133e4a0e0a658e1374cf3bf8e415c4052a15a111acd372764c55b4177d490"
+checksum = "d1219ed1b7f229ee7104d281dd01d6802fe28bb6e95d292942c4daacdeb798c0"
 dependencies = [
  "libc",
 ]
@@ -11760,9 +11760,9 @@ dependencies = [
 
 [[package]]
 name = "quinn-proto"
-version = "0.11.14"
+version = "0.11.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "434b42fec591c96ef50e21e886936e66d3cc3f737104fdb9b737c40ffb94c098"
+checksum = "4fcb935c5bec503c2f0e306bdd3e58bb9029dcb14fa8d9ac76e3a5256ac0763e"
 dependencies = [
  "bytes",
  "getrandom 0.3.4",
@@ -12981,7 +12981,7 @@ checksum = "6b52a39c5ae942a5db75eca82a7c0e50a4d469185651ef52677967860315bc63"
 dependencies = [
  "array-bytes 6.2.3",
  "docify",
- "memmap2 0.9.9",
+ "memmap2 0.9.11",
  "parity-scale-codec",
  "sc-chain-spec-derive",
  "sc-client-api",
@@ -16489,7 +16489,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "751a2823d606b5d0a7616499e4130a516ebd01a44f39811be2b9600936509c23"
 dependencies = [
  "debugid",
- "memmap2 0.9.9",
+ "memmap2 0.9.11",
  "stable_deref_trait",
  "uuid",
 ]

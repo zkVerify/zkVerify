@@ -134,6 +134,26 @@ ignore = [
     # has only `futures-io` and `std` features enabled — no DNSSEC features are active
     # (`cargo tree -p hickory-proto@0.25.2 -e features` confirms this). The DNSSEC validation
     # code is not compiled, so the vulnerable code path is unreachable. Unaffected.
+    "RUSTSEC-2026-0186", # memmap2 v0.5.10 — unchecked pointer offset in advise/flush range functions.
+    # https://rustsec.org/advisories/RUSTSEC-2026-0186
+    # Unsoundness: out-of-bounds offset/len passed to advise_range/flush_range/flush_async_range/
+    # unchecked_advise_range reach pointer arithmetic handed to syscalls (pointer is not
+    # dereferenced). Fixed in memmap2 0.9.11. The 0.5.10 copy comes from parity-db v0.4.13
+    # (polkadot-sdk transitive via sc-client-db -> parity-db), which requires memmap2 ^0.5 and
+    # has no 0.4.x release on the patched line; parity-db 0.4.13 is pinned by polkadot-sdk
+    # stable2512. (The other memmap2 copy, 0.9.x, was updated to 0.9.11.)
+    # Verified against the parity-db 0.4.13 source: the ONLY affected function it calls is
+    # MmapMut::flush_range, once, in Index::flush() (src/index.rs:605):
+    #   map.flush_range(META_SIZE, map.len() - META_SIZE)
+    # The advise_range/unchecked_advise_range/flush_async_range functions are never used
+    # (parity-db does madvise via a raw libc::madvise call, not the memmap2 wrapper). The
+    # flush_range range is in-bounds by construction: the index file is always created at
+    # file_size = total_entries(index_bits) * 8 + META_SIZE (META_SIZE is a 16 KiB constant),
+    # so [META_SIZE, map.len()) is exactly the map minus its header. Both arguments are pure
+    # functions of the local index geometry, never of transaction/proof/block/network data, so a
+    # remote attacker has no path to the out-of-bounds trigger. (The only theoretical trigger is a
+    # locally truncated index file making map.len() < META_SIZE underflow the len — this needs
+    # local DB write access, which is outside the remote threat model.)
 ]
 informational_warnings = ["unmaintained", "yanked"]
 
