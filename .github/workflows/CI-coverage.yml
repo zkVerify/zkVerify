@@ -18,7 +18,7 @@ jobs:
         uses: ./.github/actions/cmd-in-docker
         with:
           command: >-
-            /bin/bash -c 'set -o pipefail && cargo llvm-cov clean --workspace && find . -name \"*.profraw\" -delete
+            /bin/bash -c 'set -o pipefail && export CARGO_PROFILE_DEV_DEBUG=0 && cargo llvm-cov clean --workspace && find . -name \"*.profraw\" -delete
             && cargo llvm-cov --no-rustc-wrapper --all-features --workspace --exclude zkv-relay --exclude paratest-node --exclude test-service --lcov --output-path lcov.info
             && cargo llvm-cov report --json --output-path coverage_report.json --summary-only && cargo llvm-cov report | tee coverage_summary.txt'
           use_cache: 'yes'

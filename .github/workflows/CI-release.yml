@@ -18,6 +18,10 @@ on:
         required: true
         type: boolean
         default: false
+    outputs:
+      is-a-prod-release:
+        description: "Whether the tag is a production release"
+        value: ${{ jobs.check-requirements.outputs.is-a-prod-release }}
     secrets:
       DOCKER_HUB_USERNAME:
         required: true
