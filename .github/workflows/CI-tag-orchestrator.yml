@@ -33,7 +33,8 @@ jobs:
 
   rustdoc-job:
     name: Rustdoc job
+    needs: [ release ]
     uses: ./.github/workflows/CI-rustdoc.yml
-    if: ${{ vars.TAG_RELEASE_DRY_RUN != 'true' }}
+    if: ${{ vars.TAG_RELEASE_DRY_RUN != 'true' && needs.release.outputs.is-a-prod-release == 'true' }}
     with:
       deploy: 'yes'
