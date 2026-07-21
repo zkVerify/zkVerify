@@ -9,7 +9,6 @@ resolver = "2"
 
 members = [
     "runtime/zkverify",
-    "verifier-nostd-check",
     "primitives/hp-dispatch",
     "primitives/hp-on-proof-verified",
     "native",

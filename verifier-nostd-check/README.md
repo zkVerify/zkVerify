@@ -48,8 +48,7 @@ In the template you can find three examples:
 
 1. `ultraplonk`: load a proof and verify it.
 2. `risc0`: just load the context
-3. `kimchi`: exercise the actual `pallet-kimchi-verifier` runtime path with a dummy config.
-4. `maybe-fail`: a simple crate that include a dependency `bit-vec` with `std` feature enabled, till the this crate
+3. `maybe-fail`: a simple crate that include a dependency `bit-vec` with `std` feature enabled, till the this crate
    remains a dependency but not used everything compile fine, but if you gate in the `bit-vec` usage by enable the
    feature `fail` it will fail.
 

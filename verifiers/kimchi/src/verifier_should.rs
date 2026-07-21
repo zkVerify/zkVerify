@@ -453,6 +453,11 @@ mod reject {
         verifier_index::LookupVerifierIndex,
     };
     use pallet_verifiers::traits::VerifyError;
+    use poly_commitment::{
+        ipa::{OpeningProof, SRS as IpaSrs},
+        SRS as _,
+    };
+    use std::sync::{Arc, OnceLock};
 
     fn fixture_verifier_index() -> Vesta16VerifierIndex {
         bincode::serde::decode_from_slice(
@@ -531,6 +536,64 @@ mod reject {
     fn encode_verifier_index(verifier_index: &Vesta16VerifierIndex) -> Vec<u8> {
         bincode::serde::encode_to_vec(verifier_index, bincode::config::standard())
             .expect("fixture verifier index should encode")
+    }
+
+    fn assert_accelerated_and_upstream_reject(proof: &Vesta16Proof) {
+        type UpstreamOpeningProof = OpeningProof<Vesta, FULL_ROUNDS>;
+        type UpstreamProof = ProverProof<Vesta, UpstreamOpeningProof, FULL_ROUNDS>;
+        type UpstreamVerifierIndex = VerifierIndex<FULL_ROUNDS, Vesta, IpaSrs<Vesta>>;
+        static UPSTREAM_SRS: OnceLock<Arc<IpaSrs<Vesta>>> = OnceLock::new();
+
+        let raw_proof = encode_proof(proof);
+        let raw_vk = include_bytes!("resources/generated_4096/verifier_index.bin").to_vec();
+        let raw_pubs = Vec::new();
+        let vk = Vk::<MockConfig>::new(raw_vk.clone(), KimchiProfileId::Vesta16);
+        let mut accelerated_index =
+            decode_vk(&vk).expect("fixture verifier index should decode for accelerated verifier");
+        prepare_verifier_index(&mut accelerated_index, KimchiProfileId::Vesta16)
+            .expect("fixture verifier index should prepare for accelerated verifier");
+        let mut accelerated_rng = make_rng(&vk, &raw_proof, &raw_pubs);
+
+        assert_eq!(
+            verify_vesta16_proof_with_rng(&accelerated_index, proof, &[], &mut accelerated_rng),
+            Err(VerifyError::VerifyError),
+            "accelerated verifier should reject mutated fixture",
+        );
+
+        let upstream_proof: UpstreamProof =
+            bincode::serde::decode_from_slice(&raw_proof, bincode::config::standard())
+                .map(|(proof, _)| proof)
+                .expect("mutated fixture should decode with upstream opening proof");
+        let mut upstream_index: UpstreamVerifierIndex =
+            bincode::serde::decode_from_slice(&raw_vk, bincode::config::standard())
+                .map(|(index, _)| index)
+                .expect("fixture verifier index should decode with upstream SRS");
+        upstream_index.srs = Arc::clone(
+            UPSTREAM_SRS.get_or_init(|| Arc::new(IpaSrs::create(upstream_index.max_poly_size))),
+        );
+        prepare_verifier_index_metadata(&mut upstream_index)
+            .expect("upstream verifier index metadata should prepare");
+        let mut upstream_rng = make_rng(&vk, &raw_proof, &raw_pubs);
+
+        let upstream_result = verify_with_rng::<
+            FULL_ROUNDS,
+            Vesta,
+            DefaultFqSponge<VestaParameters, PlonkSpongeConstantsKimchi, FULL_ROUNDS>,
+            DefaultFrSponge<Fp, PlonkSpongeConstantsKimchi, FULL_ROUNDS>,
+            UpstreamOpeningProof,
+            _,
+        >(
+            &vesta_group_map(),
+            &upstream_index,
+            &upstream_proof,
+            &[],
+            &mut upstream_rng,
+        );
+
+        assert!(
+            upstream_result.is_err(),
+            "upstream verifier should reject the same mutated fixture"
+        );
     }
 
     fn lookup_features(patterns: LookupPatterns, uses_runtime_tables: bool) -> LookupFeatures {
@@ -985,32 +1048,27 @@ mod reject {
 
     #[test]
     fn opening_with_too_few_rounds_is_rejected() {
-        let (raw_proof, mut proof, verifier_index) = fixture_proof_and_index();
-        let vk = Vk::<MockConfig>::new(
-            include_bytes!("resources/generated_4096/verifier_index.bin").to_vec(),
-            KimchiProfileId::Vesta16,
-        );
-        let raw_pubs = Vec::new();
+        let (_, mut proof, _) = fixture_proof_and_index();
         proof.proof.clear_rounds_for_test();
-        let mut rng = make_rng(&vk, &raw_proof, &raw_pubs);
 
-        assert_eq!(
-            verify_vesta16_proof_with_rng(&verifier_index, &proof, &[], &mut rng),
-            Err(VerifyError::VerifyError)
-        );
+        assert_accelerated_and_upstream_reject(&proof);
     }
 
     #[test]
     fn opening_with_too_many_rounds_is_rejected() {
-        let (raw_proof, mut proof, verifier_index) = fixture_proof_and_index();
+        let (_, mut proof, verifier_index) = fixture_proof_and_index();
+        proof.proof.duplicate_round_for_test();
+        let raw_proof = encode_proof(&proof);
         let vk = Vk::<MockConfig>::new(
             include_bytes!("resources/generated_4096/verifier_index.bin").to_vec(),
             KimchiProfileId::Vesta16,
         );
         let raw_pubs = Vec::new();
-        proof.proof.duplicate_round_for_test();
         let mut rng = make_rng(&vk, &raw_proof, &raw_pubs);
 
+        // Upstream `SRS::verify` in `proof-systems` 0.7.0 panics while indexing the challenge
+        // coefficients for an oversized round vector. This local shape guard must reject before
+        // entering that implementation, so this malformed case cannot be a differential test.
         assert_eq!(
             verify_vesta16_proof_with_rng(&verifier_index, &proof, &[], &mut rng),
             Err(VerifyError::VerifyError)
@@ -1019,19 +1077,10 @@ mod reject {
 
     #[test]
     fn corrupted_opening_scalar_is_rejected() {
-        let (raw_proof, mut proof, verifier_index) = fixture_proof_and_index();
-        let vk = Vk::<MockConfig>::new(
-            include_bytes!("resources/generated_4096/verifier_index.bin").to_vec(),
-            KimchiProfileId::Vesta16,
-        );
-        let raw_pubs = Vec::new();
+        let (_, mut proof, _) = fixture_proof_and_index();
         proof.proof.corrupt_z1_for_test();
-        let mut rng = make_rng(&vk, &raw_proof, &raw_pubs);
 
-        assert_eq!(
-            verify_vesta16_proof_with_rng(&verifier_index, &proof, &[], &mut rng),
-            Err(VerifyError::VerifyError)
-        );
+        assert_accelerated_and_upstream_reject(&proof);
     }
 
     #[test]

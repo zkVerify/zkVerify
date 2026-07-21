@@ -25,11 +25,6 @@ pub fn risc0() {
     risc0::verify();
 }
 
-#[unsafe(no_mangle)]
-pub fn kimchi() {
-    kimchi_check::verify();
-}
-
 #[cfg(not(feature = "dont-link-maybe-fail"))]
 #[unsafe(no_mangle)]
 pub fn maybe_fail() {

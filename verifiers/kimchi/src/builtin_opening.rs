@@ -100,6 +100,15 @@ impl OpenProof<Vesta, FULL_ROUNDS> for BuiltinOpeningProof {
     }
 }
 
+// Specialized copy of `poly_commitment::ipa::SRS::verify` from `proof-systems` tag
+// `0.7.0`, commit `36a8b510cd34b9bd350e04989c87280f99e21e37`, in
+// `poly-commitment/src/ipa.rs` lines 301-502. This version specializes the generic verifier to
+// Vesta, validates the fixed-SRS shape, and partitions the final MSM so the built-in SRS terms can
+// be delegated to the native host function.
+//
+// Maintenance invariant: re-diff this entire function against the pinned upstream `SRS::verify`
+// on every `proof-systems` bump. Do not update the dependency without reconciling every upstream
+// verifier change here; silent divergence can become a proof-verification soundness bug.
 #[allow(clippy::too_many_lines)]
 fn verify_with_native_srs_msm<EFqSponge, RNG>(
     srs: &BuiltinSrs,

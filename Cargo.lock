@@ -1110,15 +1110,6 @@ dependencies = [
 
 [[package]]
 name = "bincode"
-version = "1.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1f45e9417d87227c7a56d22e471c6206462cba514c7590c09aff4cf6d1ddcad"
-dependencies = [
- "serde",
-]
-
-[[package]]
-name = "bincode"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "36eaf5d7b090263e8150820482d5d93cd964a81e4019913c972f4edcc6edb740"
@@ -1594,19 +1585,6 @@ dependencies = [
  "cipher 0.4.4",
  "poly1305",
  "zeroize",
-]
-
-[[package]]
-name = "checker-template"
-version = "0.1.0"
-dependencies = [
- "kimchi-check",
- "maybe-fail",
- "risc0",
- "sp-api",
- "sp-version",
- "substrate-wasm-builder",
- "ultraplonk",
 ]
 
 [[package]]
@@ -6004,15 +5982,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "kimchi-check"
-version = "0.1.0"
-dependencies = [
- "frame-support",
- "pallet-kimchi-verifier",
- "pallet-verifiers",
-]
-
-[[package]]
 name = "kvdb"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6885,13 +6854,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "maybe-fail"
-version = "0.1.0"
-dependencies = [
- "bit-vec",
-]
-
-[[package]]
 name = "memchr"
 version = "2.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7289,7 +7251,6 @@ dependencies = [
  "ark-ec 0.5.0",
  "ark-ff 0.5.0",
  "ark-scale",
- "bincode 1.3.3",
  "blake2 0.10.6",
  "hp-groth16",
  "log",
@@ -8647,7 +8608,7 @@ dependencies = [
  "ark-ff 0.5.0",
  "ark-poly 0.5.0",
  "ark-serialize 0.5.0",
- "bincode 2.0.1",
+ "bincode",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -9137,7 +9098,7 @@ dependencies = [
 name = "pallet-sp1-verifier"
 version = "0.1.0"
 dependencies = [
- "bincode 2.0.1",
+ "bincode",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -12397,13 +12358,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bd124222d17ad93a644ed9d011a40f4fb64aa54275c08cc216524a9ea82fb09f"
 dependencies = [
  "digest 0.10.7",
-]
-
-[[package]]
-name = "risc0"
-version = "0.1.0"
-dependencies = [
- "risc0-verifier",
 ]
 
 [[package]]
@@ -16063,7 +16017,7 @@ name = "sp1-primitives"
 version = "5.0.5"
 source = "git+https://github.com/zkVerify/sp1.git?tag=v5.0.5-no_std#f38233d0ed9ccb1e6835d054193b0951dccd75bd"
 dependencies = [
- "bincode 2.0.1",
+ "bincode",
  "blake3",
  "cfg-if",
  "hex",
@@ -16150,7 +16104,7 @@ name = "sp1-zkv-verifier"
 version = "0.2.0"
 source = "git+https://github.com/zkVerify/sp1-verifier.git?tag=v0.2.0#9370b2581a4fe869c6a95d959ec73548635fd4e6"
 dependencies = [
- "bincode 2.0.1",
+ "bincode",
  "blake3",
  "itertools 0.13.0",
  "p3-baby-bear",
@@ -17768,14 +17722,6 @@ dependencies = [
  "hex-literal",
  "sha3",
  "snafu 0.8.9",
-]
-
-[[package]]
-name = "ultraplonk"
-version = "0.1.0"
-dependencies = [
- "hex-literal",
- "ultraplonk-no-std",
 ]
 
 [[package]]
