@@ -113,21 +113,9 @@ pub trait HostCalls {
         native_builtin_srs::blinding_commitment()
     }
 
-    /// Built-in Vesta16 Lagrange-basis commitment prefix.
-    ///
-    /// - returns: `ArkScale<Vec<Vesta>>`
-    #[allow(clippy::result_unit_err)]
-    fn vesta16_lagrange_basis_prefix(
-        domain_log2: u8,
-        count: u32,
-    ) -> AllocateAndReturnByCodec<Result<Vec<u8>, ()>> {
-        native_builtin_srs::lagrange_basis_prefix_v1(domain_log2, count)
-    }
-
     /// Chunk-aware built-in Vesta16 Lagrange-basis commitment prefix.
     ///
     /// - returns: `ArkScale<Vec<Vec<Vesta>>>`
-    #[version(2)]
     #[allow(clippy::result_unit_err)]
     fn vesta16_lagrange_basis_prefix(
         max_poly_size: u32,
@@ -174,8 +162,6 @@ mod native_builtin_srs {
 
     const PREWARM_PREFIX_CHECK_CHUNKS: usize = 2;
     const MIN_MAX_POLY_LOG2_SIZE: u8 = VESTA16_MIN_DOMAIN_LOG2_SIZE - 1;
-    const V1_MIN_DOMAIN_LOG2_SIZE: u8 = 10;
-    const V1_MAX_DOMAIN_LOG2_SIZE: u8 = 16;
     const LAGRANGE_BASIS_CHECK_UNKNOWN: u8 = 0;
     const LAGRANGE_BASIS_CHECK_FAILED: u8 = 1;
     const LAGRANGE_BASIS_CHECK_PASSED: u8 = 2;
@@ -484,31 +470,6 @@ mod native_builtin_srs {
             .map_err(|_| ())
     }
 
-    pub fn lagrange_basis_prefix_v1(domain_log2: u8, count: u32) -> Result<Vec<u8>, ()> {
-        if !(V1_MIN_DOMAIN_LOG2_SIZE..=V1_MAX_DOMAIN_LOG2_SIZE).contains(&domain_log2) {
-            return Err(());
-        }
-
-        let domain_size = 1_usize.checked_shl(domain_log2.into()).ok_or(())?;
-        let count = usize::try_from(count).map_err(|_| ())?;
-        if count > domain_size {
-            return Err(());
-        }
-
-        let basis = checked_srs()
-            .map_err(|_| ())?
-            .get_lagrange_basis_from_domain_size(domain_size);
-        let mut prefix = Vec::with_capacity(count);
-        for commitment in basis.iter().take(count) {
-            let [point] = commitment.chunks.as_slice() else {
-                return Err(());
-            };
-            prefix.push(*point);
-        }
-
-        Ok(utils::encode(prefix))
-    }
-
     pub fn lagrange_basis_prefix(
         max_poly_size: u32,
         domain_log2: u8,
@@ -771,16 +732,6 @@ mod tests {
 
         assert_eq!(prefix.len(), 2);
         assert!(prefix.iter().all(|commitment| commitment.len() == 1));
-    }
-
-    #[test]
-    fn vesta16_lagrange_basis_prefix_v1_remains_available_for_old_runtimes() {
-        let encoded = native_builtin_srs::lagrange_basis_prefix_v1(10, 2)
-            .expect("v1 native basis prefix succeeds");
-        let prefix: Vec<Vesta> = utils::decode(&encoded).expect("v1 basis prefix decodes");
-
-        assert_eq!(prefix.len(), 2);
-        assert!(native_builtin_srs::lagrange_basis_prefix_v1(9, 2).is_err());
     }
 
     #[test]
