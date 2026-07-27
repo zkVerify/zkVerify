@@ -19,6 +19,7 @@ use codec::{Decode, Encode};
 
 mod accelerated_bn;
 mod accelerated_pasta;
+mod arkworks_utils;
 mod compat;
 mod groth16;
 mod risc0;

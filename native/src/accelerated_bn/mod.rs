@@ -17,7 +17,5 @@
 
 pub mod bn254;
 
-pub(crate) mod utils;
-
 #[cfg(test)]
 mod test_utils;
