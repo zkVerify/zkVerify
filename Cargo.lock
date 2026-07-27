@@ -7244,7 +7244,7 @@ checksum = "6a51313c5820b0b02bd422f4b44776fbf47961755c74ce64afc73bfad10226c3"
 
 [[package]]
 name = "native"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "ark-bn254 0.5.0",
  "ark-bn254-ext",
@@ -8628,6 +8628,7 @@ dependencies = [
  "serde",
  "sp-core",
  "sp-io",
+ "static_assertions",
 ]
 
 [[package]]

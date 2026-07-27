@@ -12,28 +12,29 @@ license = "Apache-2.0"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-ark-ff = { version = "0.5", default-features = false }
-ark-poly = { version = "0.5", default-features = false }
-ark-serialize = { version = "0.5", default-features = false }
-bincode = { version = "2", default-features = false, features = ["alloc", "serde"] }
+ark-ff = { workspace = true }
+ark-poly = { workspace = true }
+ark-serialize = { workspace = true }
+bincode = { workspace = true }
 codec = { workspace = true }
 frame-benchmarking = { workspace = true, optional = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
 hex-literal = { workspace = true, optional = true }
-kimchi = { git = "https://github.com/o1-labs/proof-systems", tag = "0.7.0", default-features = false }
+kimchi = { workspace = true }
 log = { workspace = true }
-mina-curves = { git = "https://github.com/o1-labs/proof-systems", tag = "0.7.0", default-features = false }
-mina-poseidon = { git = "https://github.com/o1-labs/proof-systems", tag = "0.7.0", default-features = false }
+mina-curves = { workspace = true }
+mina-poseidon = { workspace = true }
 native = { workspace = true }
 pallet-verifiers = { workspace = true }
-poly-commitment = { git = "https://github.com/o1-labs/proof-systems", tag = "0.7.0", default-features = false }
-rand_chacha = { version = "0.3", default-features = false }
-rand_core = { version = "0.6", default-features = false }
+poly-commitment = { workspace = true }
+rand_chacha = { workspace = true }
+rand_core = { workspace = true }
 scale-info = { workspace = true }
 serde = { workspace = true }
 sp-core = { workspace = true }
 sp-io = { workspace = true }
+static_assertions = { workspace = true }
 
 [dev-dependencies]
 hex-literal = { workspace = true }

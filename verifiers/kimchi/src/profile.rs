@@ -27,6 +27,7 @@ use kimchi::{
 };
 use mina_curves::pasta::Fp;
 use poly_commitment::PolyComm;
+use static_assertions::const_assert;
 
 use crate::{KimchiProfileId, Vesta16Proof, Vesta16VerifierIndex};
 
@@ -73,6 +74,11 @@ impl KimchiProfile for Vesta16 {
     const MAX_PUBLIC_INPUTS: usize = 1024;
     const MIN_DOMAIN_SIZE: usize = 1 << 3;
 }
+
+const_assert!(Vesta16::MAX_CHUNKS <= native::vesta::VESTA16_MAX_CHUNKS);
+const_assert!(Vesta16::MAX_POLY_SIZE <= native::vesta::VESTA16_SRS_SIZE);
+const_assert!(Vesta16::MIN_DOMAIN_SIZE >= native::vesta::VESTA16_MIN_DOMAIN_SIZE);
+const_assert!(Vesta16::MAX_DOMAIN_SIZE <= native::vesta::VESTA16_MAX_DOMAIN_SIZE);
 
 pub(crate) fn validate_verifier_index(
     profile: KimchiProfileId,

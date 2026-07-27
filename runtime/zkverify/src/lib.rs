@@ -1146,6 +1146,19 @@ impl pallet_kimchi_verifier::Config for Runtime {
     type WeightInfo = weights::pallet_kimchi_verifier_verify_proof::ZKVWeight<Runtime>;
 }
 
+const_assert!(
+    KimchiMaxProofSize::get() as usize
+        <= pallet_kimchi_verifier::KimchiProfileId::Vesta16.max_proof_size()
+);
+const_assert!(
+    KimchiMaxPubs::get() as usize
+        <= pallet_kimchi_verifier::KimchiProfileId::Vesta16.max_public_inputs()
+);
+const_assert!(
+    KimchiMaxVkSize::get() as usize
+        <= pallet_kimchi_verifier::KimchiProfileId::Vesta16.max_vk_size()
+);
+
 pub type KimchiVerifier = pallet_kimchi_verifier::Kimchi<Runtime>;
 
 impl pallet_verifiers::Config<KimchiVerifier> for Runtime {

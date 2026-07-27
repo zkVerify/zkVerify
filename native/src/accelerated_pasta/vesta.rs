@@ -22,11 +22,24 @@ use mina_curves::pasta::{Fp, ProjectiveVesta, Vesta};
 use sp_runtime_interface::pass_by::{AllocateAndReturnByCodec, PassFatPointerAndRead};
 use sp_runtime_interface::runtime_interface;
 
-use crate::accelerated_bn::utils;
+use crate::arkworks_utils as utils;
 #[cfg(feature = "std")]
 use crate::VerifyError;
 
-const VESTA16_SRS_SIZE: usize = 1 << 16;
+/// Base-two logarithm of the built-in Vesta16 SRS size.
+pub const VESTA16_SRS_LOG2_SIZE: u8 = 16;
+/// Number of bases in the built-in Vesta16 SRS.
+pub const VESTA16_SRS_SIZE: usize = 1 << VESTA16_SRS_LOG2_SIZE;
+/// Maximum number of polynomial commitment chunks supported by the Vesta host functions.
+pub const VESTA16_MAX_CHUNKS: usize = 4;
+/// Base-two logarithm of the smallest supported Vesta evaluation domain.
+pub const VESTA16_MIN_DOMAIN_LOG2_SIZE: u8 = 3;
+/// Base-two logarithm of the largest supported Vesta evaluation domain.
+pub const VESTA16_MAX_DOMAIN_LOG2_SIZE: u8 = 18;
+/// Smallest Vesta evaluation domain supported by the native parameters.
+pub const VESTA16_MIN_DOMAIN_SIZE: usize = 1 << VESTA16_MIN_DOMAIN_LOG2_SIZE;
+/// Largest Vesta evaluation domain supported by the native parameters.
+pub const VESTA16_MAX_DOMAIN_SIZE: usize = 1 << VESTA16_MAX_DOMAIN_LOG2_SIZE;
 
 /// Returns the built-in Vesta16 SRS blinding commitment.
 #[allow(clippy::result_unit_err)]
@@ -159,12 +172,8 @@ mod native_builtin_srs {
 
     type Blake2b256 = Blake2b<U32>;
 
-    const MAX_CHUNKS: usize = 4;
     const PREWARM_PREFIX_CHECK_CHUNKS: usize = 2;
-    const MIN_DOMAIN_LOG2_SIZE: u8 = 3;
-    const MIN_MAX_POLY_LOG2_SIZE: u8 = MIN_DOMAIN_LOG2_SIZE - 1;
-    const MAX_DOMAIN_LOG2_SIZE: u8 = 18;
-    const VESTA16_SRS_LOG2_SIZE: u8 = 16;
+    const MIN_MAX_POLY_LOG2_SIZE: u8 = VESTA16_MIN_DOMAIN_LOG2_SIZE - 1;
     const V1_MIN_DOMAIN_LOG2_SIZE: u8 = 10;
     const V1_MAX_DOMAIN_LOG2_SIZE: u8 = 16;
     const LAGRANGE_BASIS_CHECK_UNKNOWN: u8 = 0;
@@ -432,7 +441,8 @@ mod native_builtin_srs {
 
     pub fn prewarm(domain_log2_sizes: &[u8]) -> Result<(), VerifyError> {
         if domain_log2_sizes.iter().any(|domain_log2_size| {
-            !(MIN_DOMAIN_LOG2_SIZE..=MAX_DOMAIN_LOG2_SIZE).contains(domain_log2_size)
+            !(VESTA16_MIN_DOMAIN_LOG2_SIZE..=VESTA16_MAX_DOMAIN_LOG2_SIZE)
+                .contains(domain_log2_size)
         }) {
             return Err(VerifyError::InvalidVerificationKey);
         }
@@ -504,7 +514,7 @@ mod native_builtin_srs {
         domain_log2: u8,
         count: u32,
     ) -> Result<Vec<u8>, ()> {
-        if !(MIN_DOMAIN_LOG2_SIZE..=MAX_DOMAIN_LOG2_SIZE).contains(&domain_log2) {
+        if !(VESTA16_MIN_DOMAIN_LOG2_SIZE..=VESTA16_MAX_DOMAIN_LOG2_SIZE).contains(&domain_log2) {
             return Err(());
         }
 
@@ -520,7 +530,7 @@ mod native_builtin_srs {
             return Err(());
         }
         let num_chunks = domain_size.div_ceil(max_poly_size);
-        if num_chunks > MAX_CHUNKS {
+        if num_chunks > VESTA16_MAX_CHUNKS {
             return Err(());
         }
 
@@ -655,7 +665,7 @@ mod native_builtin_srs {
     ) -> Option<&'static AtomicU8> {
         if max_poly_size == 0
             || !max_poly_size.is_power_of_two()
-            || domain_log2_size > MAX_DOMAIN_LOG2_SIZE
+            || domain_log2_size > VESTA16_MAX_DOMAIN_LOG2_SIZE
         {
             return None;
         }
@@ -671,7 +681,7 @@ mod native_builtin_srs {
             .checked_add(max_poly_log2)?;
         VESTA16_LAGRANGE_BASIS_CHECKS
             .get_or_init(|| {
-                let slots = (usize::from(MAX_DOMAIN_LOG2_SIZE) + 1) * stride;
+                let slots = (usize::from(VESTA16_MAX_DOMAIN_LOG2_SIZE) + 1) * stride;
                 (0..slots)
                     .map(|_| AtomicU8::new(LAGRANGE_BASIS_CHECK_UNKNOWN))
                     .collect()

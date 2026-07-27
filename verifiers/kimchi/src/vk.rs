@@ -64,6 +64,18 @@ impl KimchiProfileId {
             Self::Vesta16 => Vesta16::MAX_PUBLIC_INPUTS,
         }
     }
+
+    pub const fn max_proof_size(self) -> usize {
+        match self {
+            Self::Vesta16 => Vesta16::MAX_DECODED_PROOF_BYTES,
+        }
+    }
+
+    pub const fn max_vk_size(self) -> usize {
+        match self {
+            Self::Vesta16 => Vesta16::MAX_DECODED_VK_BYTES,
+        }
+    }
 }
 
 #[derive(Encode, Decode, DecodeWithMemTracking, TypeInfo)]
