@@ -21,6 +21,8 @@ use alloc::vec::Vec;
 use mina_curves::pasta::{Fp, ProjectiveVesta, Vesta};
 use sp_runtime_interface::pass_by::{AllocateAndReturnByCodec, PassFatPointerAndRead};
 use sp_runtime_interface::runtime_interface;
+#[cfg(feature = "std")]
+use std::path::Path;
 
 use crate::arkworks_utils as utils;
 #[cfg(feature = "std")]
@@ -95,11 +97,26 @@ pub fn vesta16_srs_msm(
     utils::decode_proj_sw(&result)
 }
 
-/// Builds and validates the built-in Vesta16 SRS and Lagrange bases before
-/// proof verification can encounter the first-use cache cost.
+/// Result of preparing all Vesta16 verifier parameters.
 #[cfg(feature = "std")]
-pub fn prewarm_vesta16_srs(domain_log2_sizes: &[u8]) -> Result<(), VerifyError> {
-    native_builtin_srs::prewarm(domain_log2_sizes)
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Vesta16PrewarmStatus {
+    /// All precomputed Lagrange bases were loaded from a validated local cache.
+    Loaded,
+    /// The parameters were generated and persisted to the local cache.
+    Generated,
+    /// The parameters were generated, but the local cache could not be persisted.
+    GeneratedWithoutCache,
+}
+
+/// Builds and validates every supported Vesta16 Lagrange basis before proof
+/// verification can encounter a first-use cost.
+///
+/// A validated cache is loaded from `cache_root` when available. Missing or
+/// invalid cache data is regenerated from the built-in SRS.
+#[cfg(feature = "std")]
+pub fn prewarm_vesta16_srs(cache_root: &Path) -> Result<Vesta16PrewarmStatus, VerifyError> {
+    native_builtin_srs::prewarm(cache_root)
 }
 
 /// Native interfaces for Vesta verifier parameters.
@@ -146,20 +163,30 @@ pub trait HostCalls {
 
 #[cfg(feature = "std")]
 mod native_builtin_srs {
-    use std::sync::{
-        atomic::{AtomicU8, Ordering},
-        OnceLock,
+    use std::{
+        fs::{self, File, OpenOptions},
+        io::{self, BufReader, BufWriter, Read, Write},
+        path::{Path, PathBuf},
+        sync::{
+            atomic::{AtomicU8, Ordering},
+            Mutex, OnceLock,
+        },
     };
 
     use ark_ec::VariableBaseMSM;
-    use ark_scale::ark_serialize::CanonicalSerialize;
+    use ark_scale::ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
     use blake2::{digest::consts::U32, Blake2b, Digest};
-    use poly_commitment::{ipa::SRS as IpaSrs, SRS as _};
+    use poly_commitment::{ipa::SRS as IpaSrs, PolyComm, SRS as _};
 
     use super::*;
 
     type Blake2b256 = Blake2b<U32>;
 
+    // Uncompressed points make cache loading substantially faster. Every complete basis is
+    // authenticated against its baked compressed-point digest before it enters the SRS cache.
+    const CACHE_FILE_NAME: &str = "kimchi-vesta16-v1.cache";
+    const CACHE_MAGIC: &[u8; 16] = b"ZKVKIMCHIVESTA1\0";
+    const CACHE_FORMAT_VERSION: u32 = 1;
     const PREWARM_PREFIX_CHECK_CHUNKS: usize = 2;
     const MIN_MAX_POLY_LOG2_SIZE: u8 = VESTA16_MIN_DOMAIN_LOG2_SIZE - 1;
     const LAGRANGE_BASIS_CHECK_UNKNOWN: u8 = 0;
@@ -389,6 +416,18 @@ mod native_builtin_srs {
     static VESTA16_PARAMETER_CHECK: OnceLock<bool> = OnceLock::new();
     // Digesting a full Lagrange basis is expensive and depends only on this shape.
     static VESTA16_LAGRANGE_BASIS_CHECKS: OnceLock<Vec<AtomicU8>> = OnceLock::new();
+    static VESTA16_PREWARM_LOCK: Mutex<()> = Mutex::new(());
+
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    struct LagrangeShape {
+        max_poly_size: usize,
+        domain_log2_size: u8,
+    }
+
+    struct CachedLagrangeBasis {
+        shape: LagrangeShape,
+        basis: Vec<PolyComm<Vesta>>,
+    }
 
     fn srs() -> &'static IpaSrs<Vesta> {
         VESTA16_SRS.get_or_init(|| IpaSrs::<Vesta>::create(VESTA16_SRS_SIZE))
@@ -425,43 +464,349 @@ mod native_builtin_srs {
             .ok_or(VerifyError::InvalidVerificationKey)
     }
 
-    pub fn prewarm(domain_log2_sizes: &[u8]) -> Result<(), VerifyError> {
-        if domain_log2_sizes.iter().any(|domain_log2_size| {
-            !(VESTA16_MIN_DOMAIN_LOG2_SIZE..=VESTA16_MAX_DOMAIN_LOG2_SIZE)
-                .contains(domain_log2_size)
-        }) {
-            return Err(VerifyError::InvalidVerificationKey);
+    pub fn prewarm(cache_root: &Path) -> Result<Vesta16PrewarmStatus, VerifyError> {
+        prewarm_with_shapes(cache_root, &supported_lagrange_shapes())
+    }
+
+    fn prewarm_with_shapes(
+        cache_root: &Path,
+        shapes: &[LagrangeShape],
+    ) -> Result<Vesta16PrewarmStatus, VerifyError> {
+        let _guard = VESTA16_PREWARM_LOCK
+            .lock()
+            .map_err(|_| VerifyError::IncompatibleParameters)?;
+        checked_srs()?;
+
+        let cache_path = cache_root.join(CACHE_FILE_NAME);
+        match load_lagrange_cache(&cache_path, shapes) {
+            Ok(cached_bases) => {
+                install_cached_bases(cached_bases)?;
+                return Ok(Vesta16PrewarmStatus::Loaded);
+            }
+            Err(error) if error.kind() != io::ErrorKind::NotFound => {
+                log::warn!(
+                    "Ignoring invalid Kimchi Vesta16 parameter cache at {}: {error}",
+                    cache_path.display()
+                );
+            }
+            Err(_) => {}
         }
 
-        let srs = checked_srs()?;
-        for &domain_log2_size in domain_log2_sizes {
-            let domain_size = 1_usize
-                .checked_shl(u32::from(domain_log2_size))
-                .ok_or(VerifyError::InvalidVerificationKey)?;
-            let basis = srs.get_lagrange_basis_from_domain_size(domain_size);
-            if !cached_lagrange_basis_matches_expected(
-                VESTA16_SRS_SIZE,
+        prewarm_shapes(shapes)?;
+        match persist_lagrange_cache(&cache_path, shapes) {
+            Ok(()) => Ok(Vesta16PrewarmStatus::Generated),
+            Err(error) => {
+                log::warn!(
+                    "Could not persist Kimchi Vesta16 parameter cache at {}: {error}",
+                    cache_path.display()
+                );
+                Ok(Vesta16PrewarmStatus::GeneratedWithoutCache)
+            }
+        }
+    }
+
+    fn supported_lagrange_shapes() -> Vec<LagrangeShape> {
+        let domain_count =
+            usize::from(VESTA16_MAX_DOMAIN_LOG2_SIZE - VESTA16_MIN_DOMAIN_LOG2_SIZE + 1);
+        let prefix_count = usize::from(VESTA16_SRS_LOG2_SIZE - VESTA16_MIN_DOMAIN_LOG2_SIZE + 1);
+        let mut shapes = Vec::with_capacity(domain_count + prefix_count);
+
+        for domain_log2_size in VESTA16_MIN_DOMAIN_LOG2_SIZE..=VESTA16_MAX_DOMAIN_LOG2_SIZE {
+            shapes.push(LagrangeShape {
+                max_poly_size: VESTA16_SRS_SIZE,
                 domain_log2_size,
+            });
+
+            if domain_log2_size <= VESTA16_SRS_LOG2_SIZE {
+                let domain_size = 1_usize << domain_log2_size;
+                shapes.push(LagrangeShape {
+                    max_poly_size: domain_size / PREWARM_PREFIX_CHECK_CHUNKS,
+                    domain_log2_size,
+                });
+            }
+        }
+
+        shapes
+    }
+
+    fn prewarm_shapes(shapes: &[LagrangeShape]) -> Result<(), VerifyError> {
+        for &shape in shapes {
+            let domain_size = shape_domain_size(shape)?;
+            let basis = srs_for_shape(shape)?.get_lagrange_basis_from_domain_size(domain_size);
+            if !cached_lagrange_basis_matches_expected(
+                shape.max_poly_size,
+                shape.domain_log2_size,
                 basis.as_slice(),
             ) {
                 return Err(VerifyError::IncompatibleParameters);
             }
+        }
 
-            if domain_size <= VESTA16_SRS_SIZE {
-                let max_poly_size = domain_size / PREWARM_PREFIX_CHECK_CHUNKS;
-                let basis = checked_srs_prefix(max_poly_size)?
-                    .get_lagrange_basis_from_domain_size(domain_size);
-                if !cached_lagrange_basis_matches_expected(
-                    max_poly_size,
-                    domain_log2_size,
-                    basis.as_slice(),
-                ) {
-                    return Err(VerifyError::IncompatibleParameters);
+        Ok(())
+    }
+
+    fn install_cached_bases(cached_bases: Vec<CachedLagrangeBasis>) -> Result<(), VerifyError> {
+        for CachedLagrangeBasis { shape, basis } in cached_bases {
+            let domain_size = shape_domain_size(shape)?;
+            let srs = srs_for_shape(shape)?;
+            srs.lagrange_bases().set_once(domain_size, basis);
+
+            let installed = srs.get_lagrange_basis_from_domain_size(domain_size);
+            if !lagrange_basis_matches_expected(
+                shape.max_poly_size,
+                shape.domain_log2_size,
+                installed.as_slice(),
+            ) {
+                return Err(VerifyError::IncompatibleParameters);
+            }
+            mark_lagrange_basis_checked(shape)?;
+        }
+
+        Ok(())
+    }
+
+    fn srs_for_shape(shape: LagrangeShape) -> Result<&'static IpaSrs<Vesta>, VerifyError> {
+        let domain_size = shape_domain_size(shape)?;
+        if shape.max_poly_size == 0
+            || !shape.max_poly_size.is_power_of_two()
+            || shape.max_poly_size > VESTA16_SRS_SIZE
+            || domain_size.div_ceil(shape.max_poly_size) > VESTA16_MAX_CHUNKS
+            || expected_lagrange_basis_digest(shape.max_poly_size, shape.domain_log2_size).is_none()
+        {
+            return Err(VerifyError::InvalidVerificationKey);
+        }
+
+        if domain_size <= shape.max_poly_size {
+            checked_srs()
+        } else {
+            checked_srs_prefix(shape.max_poly_size)
+        }
+    }
+
+    fn shape_domain_size(shape: LagrangeShape) -> Result<usize, VerifyError> {
+        if !(VESTA16_MIN_DOMAIN_LOG2_SIZE..=VESTA16_MAX_DOMAIN_LOG2_SIZE)
+            .contains(&shape.domain_log2_size)
+        {
+            return Err(VerifyError::InvalidVerificationKey);
+        }
+
+        1_usize
+            .checked_shl(u32::from(shape.domain_log2_size))
+            .ok_or(VerifyError::InvalidVerificationKey)
+    }
+
+    fn persist_lagrange_cache(cache_path: &Path, shapes: &[LagrangeShape]) -> io::Result<()> {
+        let parent = cache_path.parent().ok_or_else(|| {
+            io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "Vesta16 cache path has no parent directory",
+            )
+        })?;
+        fs::create_dir_all(parent)?;
+
+        let temporary_path = temporary_cache_path(cache_path);
+        let result = write_lagrange_cache(&temporary_path, shapes)
+            .and_then(|()| fs::rename(&temporary_path, cache_path));
+        if result.is_err() {
+            let _ = fs::remove_file(&temporary_path);
+        }
+        result
+    }
+
+    fn temporary_cache_path(cache_path: &Path) -> PathBuf {
+        let mut temporary_path = cache_path.as_os_str().to_owned();
+        temporary_path.push(format!(".tmp-{}", std::process::id()));
+        temporary_path.into()
+    }
+
+    fn write_lagrange_cache(cache_path: &Path, shapes: &[LagrangeShape]) -> io::Result<()> {
+        let file = OpenOptions::new()
+            .create(true)
+            .truncate(true)
+            .write(true)
+            .open(cache_path)?;
+        let mut writer = BufWriter::new(file);
+
+        writer.write_all(CACHE_MAGIC)?;
+        writer.write_all(&CACHE_FORMAT_VERSION.to_le_bytes())?;
+        writer.write_all(&cache_fingerprint())?;
+        write_u32(&mut writer, shapes.len())?;
+
+        for &shape in shapes {
+            let domain_size = shape_domain_size(shape).map_err(cache_parameter_error)?;
+            let chunks = domain_size.div_ceil(shape.max_poly_size);
+            let basis = srs_for_shape(shape)
+                .map_err(cache_parameter_error)?
+                .get_lagrange_basis_from_domain_size(domain_size);
+            if !lagrange_basis_matches_expected(
+                shape.max_poly_size,
+                shape.domain_log2_size,
+                basis.as_slice(),
+            ) {
+                return Err(invalid_cache(
+                    "refusing to persist an invalid Lagrange basis",
+                ));
+            }
+
+            writer.write_all(&[shape.domain_log2_size])?;
+            writer.write_all(&[max_poly_log2(shape)?])?;
+            write_u32(&mut writer, basis.len())?;
+            write_u32(&mut writer, chunks)?;
+            for commitment in basis.iter() {
+                if commitment.chunks.len() != chunks {
+                    return Err(invalid_cache(
+                        "Lagrange commitment has an unexpected number of chunks",
+                    ));
+                }
+                for point in &commitment.chunks {
+                    point
+                        .serialize_uncompressed(&mut writer)
+                        .map_err(cache_serialization_error)?;
                 }
             }
         }
 
-        Ok(())
+        writer.flush()?;
+        writer.get_ref().sync_all()
+    }
+
+    fn load_lagrange_cache(
+        cache_path: &Path,
+        shapes: &[LagrangeShape],
+    ) -> io::Result<Vec<CachedLagrangeBasis>> {
+        let file = File::open(cache_path)?;
+        let mut reader = BufReader::new(file);
+        let mut magic = [0_u8; CACHE_MAGIC.len()];
+        reader.read_exact(&mut magic)?;
+        if &magic != CACHE_MAGIC {
+            return Err(invalid_cache("invalid Vesta16 cache magic"));
+        }
+
+        if read_u32(&mut reader)? != CACHE_FORMAT_VERSION {
+            return Err(invalid_cache("unsupported Vesta16 cache format"));
+        }
+
+        let mut fingerprint = [0_u8; 32];
+        reader.read_exact(&mut fingerprint)?;
+        if fingerprint != cache_fingerprint() {
+            return Err(invalid_cache("Vesta16 cache parameters do not match"));
+        }
+
+        if read_usize(&mut reader)? != shapes.len() {
+            return Err(invalid_cache("Vesta16 cache shape count does not match"));
+        }
+
+        let mut cached_bases = Vec::with_capacity(shapes.len());
+        for &shape in shapes {
+            let domain_size = shape_domain_size(shape).map_err(cache_parameter_error)?;
+            let chunks = domain_size.div_ceil(shape.max_poly_size);
+            if read_u8(&mut reader)? != shape.domain_log2_size
+                || read_u8(&mut reader)? != max_poly_log2(shape)?
+                || read_usize(&mut reader)? != domain_size
+                || read_usize(&mut reader)? != chunks
+            {
+                return Err(invalid_cache("Vesta16 cache shape metadata does not match"));
+            }
+
+            let mut basis = Vec::with_capacity(domain_size);
+            for _ in 0..domain_size {
+                let mut commitment_chunks = Vec::with_capacity(chunks);
+                for _ in 0..chunks {
+                    // Cache entries are untrusted until the complete basis digest is checked below.
+                    let point = Vesta::deserialize_uncompressed_unchecked(&mut reader)
+                        .map_err(cache_serialization_error)?;
+                    commitment_chunks.push(point);
+                }
+                basis.push(PolyComm {
+                    chunks: commitment_chunks,
+                });
+            }
+
+            if !lagrange_basis_matches_expected(shape.max_poly_size, shape.domain_log2_size, &basis)
+            {
+                return Err(invalid_cache("Vesta16 cache basis digest does not match"));
+            }
+            cached_bases.push(CachedLagrangeBasis { shape, basis });
+        }
+
+        let mut trailing = [0_u8; 1];
+        if reader.read(&mut trailing)? != 0 {
+            return Err(invalid_cache("Vesta16 cache contains trailing data"));
+        }
+
+        Ok(cached_bases)
+    }
+
+    fn cache_fingerprint() -> [u8; 32] {
+        let mut hasher = Blake2b256::new();
+        hasher.update(b"kimchi:v1:vesta16:local-cache");
+        hasher.update(CACHE_FORMAT_VERSION.to_le_bytes());
+        hasher.update([
+            VESTA16_SRS_LOG2_SIZE,
+            VESTA16_MIN_DOMAIN_LOG2_SIZE,
+            VESTA16_MAX_DOMAIN_LOG2_SIZE,
+        ]);
+        hash_usize(&mut hasher, VESTA16_MAX_CHUNKS);
+        hasher.update(VESTA_SRS_16_DIGEST);
+        hash_digest_table(&mut hasher, 1, VESTA_SRS_16_LAGRANGE_DIGESTS);
+        hash_digest_table(&mut hasher, 2, VESTA_SRS_16_MULTI_CHUNK_LAGRANGE_DIGESTS);
+        hash_digest_table(&mut hasher, 4, VESTA_SRS_16_FOUR_CHUNK_LAGRANGE_DIGESTS);
+        hasher.finalize().into()
+    }
+
+    fn hash_digest_table(hasher: &mut Blake2b256, chunks: u8, table: &[(u8, [u8; 32])]) {
+        hasher.update([chunks]);
+        hash_usize(hasher, table.len());
+        for (domain_log2_size, digest) in table {
+            hasher.update([*domain_log2_size]);
+            hasher.update(digest);
+        }
+    }
+
+    fn max_poly_log2(shape: LagrangeShape) -> io::Result<u8> {
+        if shape.max_poly_size == 0 || !shape.max_poly_size.is_power_of_two() {
+            return Err(invalid_cache("invalid maximum polynomial size"));
+        }
+        u8::try_from(shape.max_poly_size.trailing_zeros())
+            .map_err(|_| invalid_cache("maximum polynomial size does not fit the cache format"))
+    }
+
+    fn write_u32(writer: &mut impl Write, value: usize) -> io::Result<()> {
+        let value = u32::try_from(value)
+            .map_err(|_| invalid_cache("cache value does not fit the cache format"))?;
+        writer.write_all(&value.to_le_bytes())
+    }
+
+    fn read_u8(reader: &mut impl Read) -> io::Result<u8> {
+        let mut value = [0_u8; 1];
+        reader.read_exact(&mut value)?;
+        Ok(value[0])
+    }
+
+    fn read_u32(reader: &mut impl Read) -> io::Result<u32> {
+        let mut value = [0_u8; 4];
+        reader.read_exact(&mut value)?;
+        Ok(u32::from_le_bytes(value))
+    }
+
+    fn read_usize(reader: &mut impl Read) -> io::Result<usize> {
+        usize::try_from(read_u32(reader)?)
+            .map_err(|_| invalid_cache("cache value does not fit this platform"))
+    }
+
+    fn invalid_cache(message: &'static str) -> io::Error {
+        io::Error::new(io::ErrorKind::InvalidData, message)
+    }
+
+    fn cache_parameter_error(error: VerifyError) -> io::Error {
+        io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!("invalid Vesta16 cache parameters: {error:?}"),
+        )
+    }
+
+    fn cache_serialization_error(error: ark_scale::ark_serialize::SerializationError) -> io::Error {
+        io::Error::new(io::ErrorKind::InvalidData, error)
     }
 
     pub fn blinding_commitment() -> Result<Vec<u8>, ()> {
@@ -559,16 +904,6 @@ mod native_builtin_srs {
         domain_log2_size: u8,
         basis: &[poly_commitment::PolyComm<Vesta>],
     ) -> bool {
-        let Some(domain_size) = 1_usize.checked_shl(u32::from(domain_log2_size)) else {
-            return false;
-        };
-        if basis.len() != domain_size {
-            return false;
-        }
-
-        let Some(expected) = expected_lagrange_basis_digest(max_poly_size, domain_log2_size) else {
-            return false;
-        };
         let Some(slot) = lagrange_basis_check_slot(max_poly_size, domain_log2_size) else {
             return false;
         };
@@ -580,7 +915,7 @@ mod native_builtin_srs {
         }
 
         let matches_expected =
-            lagrange_basis_digest(domain_log2_size, basis).is_ok_and(|digest| &digest == expected);
+            lagrange_basis_matches_expected(max_poly_size, domain_log2_size, basis);
         if !matches_expected {
             slot.store(LAGRANGE_BASIS_CHECK_FAILED, Ordering::Release);
             return false;
@@ -595,6 +930,38 @@ mod native_builtin_srs {
             Ok(_) => true,
             Err(LAGRANGE_BASIS_CHECK_PASSED) => true,
             Err(_) => false,
+        }
+    }
+
+    fn lagrange_basis_matches_expected(
+        max_poly_size: usize,
+        domain_log2_size: u8,
+        basis: &[PolyComm<Vesta>],
+    ) -> bool {
+        let Some(domain_size) = 1_usize.checked_shl(u32::from(domain_log2_size)) else {
+            return false;
+        };
+        if basis.len() != domain_size {
+            return false;
+        }
+
+        let Some(expected) = expected_lagrange_basis_digest(max_poly_size, domain_log2_size) else {
+            return false;
+        };
+        lagrange_basis_digest(domain_log2_size, basis).is_ok_and(|digest| &digest == expected)
+    }
+
+    fn mark_lagrange_basis_checked(shape: LagrangeShape) -> Result<(), VerifyError> {
+        let slot = lagrange_basis_check_slot(shape.max_poly_size, shape.domain_log2_size)
+            .ok_or(VerifyError::IncompatibleParameters)?;
+        match slot.compare_exchange(
+            LAGRANGE_BASIS_CHECK_UNKNOWN,
+            LAGRANGE_BASIS_CHECK_PASSED,
+            Ordering::AcqRel,
+            Ordering::Acquire,
+        ) {
+            Ok(_) | Err(LAGRANGE_BASIS_CHECK_PASSED) => Ok(()),
+            Err(_) => Err(VerifyError::IncompatibleParameters),
         }
     }
 
@@ -679,6 +1046,48 @@ mod native_builtin_srs {
     }
 
     #[cfg(test)]
+    pub(super) fn prewarm_domains_for_test(
+        cache_root: &Path,
+        domain_log2_sizes: &[u8],
+    ) -> Result<Vesta16PrewarmStatus, VerifyError> {
+        if domain_log2_sizes.iter().any(|domain_log2_size| {
+            !(VESTA16_MIN_DOMAIN_LOG2_SIZE..=VESTA16_MAX_DOMAIN_LOG2_SIZE)
+                .contains(domain_log2_size)
+        }) {
+            return Err(VerifyError::InvalidVerificationKey);
+        }
+
+        let shapes = supported_lagrange_shapes()
+            .into_iter()
+            .filter(|shape| domain_log2_sizes.contains(&shape.domain_log2_size))
+            .collect::<Vec<_>>();
+        prewarm_with_shapes(cache_root, &shapes)
+    }
+
+    #[cfg(test)]
+    pub(super) fn supported_shapes_for_test() -> Vec<(usize, u8)> {
+        supported_lagrange_shapes()
+            .into_iter()
+            .map(|shape| (shape.max_poly_size, shape.domain_log2_size))
+            .collect()
+    }
+
+    #[cfg(test)]
+    pub(super) fn cache_path_for_test(cache_root: &Path) -> PathBuf {
+        cache_root.join(CACHE_FILE_NAME)
+    }
+
+    #[cfg(test)]
+    pub(super) fn first_cached_point_offset_for_test() -> usize {
+        CACHE_MAGIC.len()
+            + std::mem::size_of::<u32>()
+            + 32
+            + std::mem::size_of::<u32>()
+            + 2
+            + 2 * std::mem::size_of::<u32>()
+    }
+
+    #[cfg(test)]
     pub(super) fn lagrange_basis_digest_for_test(
         max_poly_size: usize,
         domain_log2_size: u8,
@@ -724,6 +1133,18 @@ mod tests {
     use ark_ec::{AffineRepr, VariableBaseMSM};
     use ark_ff::{One, Zero};
     use poly_commitment::{ipa::SRS as IpaSrs, SRS as _};
+    use std::{
+        fs,
+        path::PathBuf,
+        sync::atomic::{AtomicU64, Ordering},
+    };
+
+    static TEST_CACHE_ID: AtomicU64 = AtomicU64::new(0);
+
+    fn temporary_cache_root(test_name: &str) -> PathBuf {
+        let id = TEST_CACHE_ID.fetch_add(1, Ordering::Relaxed);
+        std::env::temp_dir().join(format!("zkverify-{test_name}-{}-{id}", std::process::id()))
+    }
 
     #[test]
     fn vesta16_lagrange_basis_prefix_returns_requested_prefix() {
@@ -810,22 +1231,79 @@ mod tests {
 
     #[test]
     fn vesta16_prewarm_accepts_supported_domains() {
-        prewarm_vesta16_srs(&[3, 10, 11, 12]).expect("prewarm succeeds");
+        let cache_root = temporary_cache_root("vesta16-prewarm-supported");
+        let status = native_builtin_srs::prewarm_domains_for_test(&cache_root, &[3, 10])
+            .expect("prewarm succeeds");
+        assert_eq!(status, Vesta16PrewarmStatus::Generated);
+
+        let status = native_builtin_srs::prewarm_domains_for_test(&cache_root, &[3, 10])
+            .expect("cached prewarm succeeds");
+        assert_eq!(status, Vesta16PrewarmStatus::Loaded);
+        fs::remove_dir_all(cache_root).expect("test cache cleanup succeeds");
+    }
+
+    #[test]
+    fn vesta16_prewarm_rebuilds_a_corrupt_cache() {
+        let cache_root = temporary_cache_root("vesta16-prewarm-corrupt");
+        native_builtin_srs::prewarm_domains_for_test(&cache_root, &[3])
+            .expect("initial prewarm succeeds");
+        let cache_path = native_builtin_srs::cache_path_for_test(&cache_root);
+        let mut cache = fs::read(&cache_path).expect("reading test cache succeeds");
+        let first_point_byte = cache
+            .get_mut(native_builtin_srs::first_cached_point_offset_for_test())
+            .expect("test cache contains a basis point");
+        *first_point_byte ^= 1;
+        fs::write(cache_path, cache).expect("corrupting cached basis succeeds");
+
+        let status = native_builtin_srs::prewarm_domains_for_test(&cache_root, &[3])
+            .expect("corrupt cache is rebuilt");
+        assert_eq!(status, Vesta16PrewarmStatus::Generated);
+        let status = native_builtin_srs::prewarm_domains_for_test(&cache_root, &[3])
+            .expect("rebuilt cache loads");
+        assert_eq!(status, Vesta16PrewarmStatus::Loaded);
+        fs::remove_dir_all(cache_root).expect("test cache cleanup succeeds");
     }
 
     #[test]
     #[ignore = "expensive full consensus-parameter prewarm"]
     fn vesta16_prewarm_accepts_all_consensus_domains() {
-        prewarm_vesta16_srs(&[3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18])
-            .expect("full prewarm succeeds");
+        let cache_root = temporary_cache_root("vesta16-prewarm-all");
+        assert_eq!(
+            prewarm_vesta16_srs(&cache_root),
+            Ok(Vesta16PrewarmStatus::Generated)
+        );
+        assert_eq!(
+            prewarm_vesta16_srs(&cache_root),
+            Ok(Vesta16PrewarmStatus::Loaded)
+        );
+        fs::remove_dir_all(cache_root).expect("test cache cleanup succeeds");
     }
 
     #[test]
     fn vesta16_prewarm_rejects_unsupported_domains() {
+        let cache_root = temporary_cache_root("vesta16-prewarm-unsupported");
         assert_eq!(
-            prewarm_vesta16_srs(&[2]),
+            native_builtin_srs::prewarm_domains_for_test(&cache_root, &[2]),
             Err(VerifyError::InvalidVerificationKey)
         );
+    }
+
+    #[test]
+    fn vesta16_prewarm_shapes_cover_all_supported_domains_without_holes() {
+        let shapes = native_builtin_srs::supported_shapes_for_test();
+        for domain_log2_size in VESTA16_MIN_DOMAIN_LOG2_SIZE..=VESTA16_MAX_DOMAIN_LOG2_SIZE {
+            assert!(
+                shapes
+                    .iter()
+                    .any(|(_, shape_domain)| *shape_domain == domain_log2_size),
+                "missing prewarm shape for domain 2^{domain_log2_size}"
+            );
+        }
+
+        assert!(shapes.iter().all(|(max_poly_size, domain_log2_size)| {
+            let domain_size = 1_usize << domain_log2_size;
+            domain_size.div_ceil(*max_poly_size) <= VESTA16_MAX_CHUNKS
+        }));
     }
 
     #[test]

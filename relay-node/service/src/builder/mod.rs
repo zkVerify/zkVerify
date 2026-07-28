@@ -197,7 +197,7 @@ where
         mut config: Configuration,
         params: NewFullParams<OverseerGenerator>,
     ) -> Result<ServiceBuilder<OverseerGenerator, Network>, Error> {
-        crate::prewarm_native_verifier_parameters()?;
+        crate::prewarm_native_verifier_parameters(config.base_path.path())?;
         let basics = new_partial_basics(&mut config, params.telemetry_worker_handle.clone())?;
 
         let prometheus_registry = config.prometheus_registry().cloned();
