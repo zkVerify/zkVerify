@@ -52,7 +52,10 @@ members = [
     "patches/polkadot/node/core/pvf/common",
 ]
 
-exclude = ["utils/generate-bags/node-runtime"]
+exclude = [
+    "utils/generate-bags/node-runtime",
+    "utils/kimchi-fixture-generator",
+]
 
 [workspace.dependencies]
 anyhow = { version = "1.0", default-features = false }

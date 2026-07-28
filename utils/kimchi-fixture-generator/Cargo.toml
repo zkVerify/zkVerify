@@ -3,6 +3,7 @@ name = "kimchi-fixture-generator"
 version = "0.1.0"
 edition = "2021"
 license = "Apache-2.0"
+description = "Generate deterministic proof fixtures for the Kimchi verifier"
 publish = false
 
 [workspace]
