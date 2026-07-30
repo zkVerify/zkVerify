@@ -14,6 +14,15 @@
 // limitations under the License.
 
 //! Vesta verifier-parameter host functions.
+//!
+//! # Compatibility and upgrades
+//!
+//! `Vesta16` pins the Vesta IPA SRS to `2^16` generators, together with the
+//! supported domain/chunk envelope and authenticated parameter digests. These
+//! are native node compatibility parameters and must not be changed in place.
+//! Supporting a different SRS, curve, domain envelope, or parameter set
+//! requires a distinct, versioned verifier/profile path and a coordinated node
+//! and runtime upgrade; it cannot be delivered by a runtime-only upgrade.
 
 extern crate alloc;
 
