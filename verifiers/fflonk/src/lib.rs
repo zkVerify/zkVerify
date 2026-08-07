@@ -63,10 +63,10 @@ impl Verifier for Fflonk {
             .map_err(|_| VerifyError::InvalidProofData)?;
         log::trace!(
             "Extracted public inputs [{:?}...{:?}] and proof data [{:?}...{:?}]",
-            &raw_pubs[0],
-            &raw_pubs[PUBS_SIZE - 1],
-            &raw_proof[0],
-            &raw_proof[PROOF_SIZE - 1]
+            raw_pubs[0],
+            raw_pubs[PUBS_SIZE - 1],
+            raw_proof[0],
+            raw_proof[PROOF_SIZE - 1]
         );
 
         fflonk_verifier::verify(&vk, &proof, &pubs)
