@@ -83,6 +83,21 @@ ignore = [
     # (2) `signals_based_traps` disabled with guard pages enabled, (3) guest executes
     # `f64x2.splat` SIMD instruction. Substrate runtime Wasm does not use SIMD, and any
     # x86-64 CPU from the last 20 years has SSE3. Unaffected.
+    "RUSTSEC-2026-0222", # LOW — Stores can mix up type indices between engines.
+    # https://rustsec.org/advisories/RUSTSEC-2026-0222 ->
+    # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-hgjw-h833-99q9
+    # Per the advisory: "Embedders using a single Engine for the lifetime of the process are not
+    # affected. Embedders not directly calling one of the affected methods are not affected."
+    # Guest Wasm cannot trigger this — it requires embedder code that hands an object created by
+    # one Engine to a Store created by another. Nothing in the workspace uses wasmtime directly;
+    # the only consumer is sc-executor-wasmtime v0.43.0, where each `WasmtimeRuntime` owns a single
+    # `Engine` and its `Module`/`InstancePre` are built from that same `Engine`; `InstanceWrapper`
+    # then does `Store::new(engine, ..)` + `instance_pre.instantiate(&mut store)` with that same
+    # cloned `Engine` (runtime.rs:82,146 / instance_wrapper.rs:131). Engines are never mixed. The
+    # other affected APIs (`Tag::new`, `StructRefPre`/`ArrayRefPre`/`ExnRefPre::new`,
+    # `Store::debug_register_module`/`_component`, breakpoint edits) are never called. Unaffected.
+    # No patched 35.x release exists (fixes are in 24.0.12/36.0.13/46.0.2/47.0.3) and
+    # sc-executor-wasmtime 0.43.0 requires wasmtime "35.0.0", pinned by polkadot-sdk stable2512.
     "RUSTSEC-2026-0002", # lru v0.12.5 — used by libp2p-identify v0.45.0 and libp2p-swarm v0.45.1
     # (polkadot-sdk transitive dependency via libp2p v0.54.1).
     # https://rustsec.org/advisories/RUSTSEC-2026-0002
