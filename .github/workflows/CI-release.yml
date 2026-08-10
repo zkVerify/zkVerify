@@ -231,16 +231,11 @@ jobs:
                     },
                     {
                       "type": "mrkdwn",
-                      "text": "*Build URL:*  <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Build>"
-                    }
-                  ]
-                }
-                {
-                  "type": "section",
-                  "text": [
+                      "text": "*Docker Image Tag:*  <https://hub.docker.com/r/${{ env.DOCKER_HUB_ORG }}/${{ env.DOCKER_IMAGE_BUILD_NAME }}/tags?page=1&name=${{ needs.check-requirements.outputs.version-str }}| ${{ needs.check-requirements.outputs.version-str }}>\n"
+                    },
                     {
                       "type": "mrkdwn",
-                      "text": "*Docker Image Tag:*  <https://hub.docker.com/r/${{ env.DOCKER_HUB_ORG }}/${{ env.DOCKER_IMAGE_BUILD_NAME }}/tags?page=1&name=${{ needs.check-requirements.outputs.version-str }}| ${{ needs.check-requirements.outputs.version-str }}>\n"
+                      "text": "*Build URL:*  <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Build>"
                     }
                   ]
                 },
