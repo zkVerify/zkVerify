@@ -143,6 +143,8 @@ pallet-ultraplonk-verifier = { path = "verifiers/ultraplonk", default-features =
 pallet-sp1-verifier = { path = "verifiers/sp1", default-features = false }
 pallet-tee-verifier = { path = "verifiers/tee", default-features = false }
 risc0-verifier = { git = "https://github.com/zkVerify/risc0-verifier.git", tag = "v0.11.0", default-features = false }
+plonky2 = { git = "https://github.com/zkVerify/plonky2.git", tag = "v0.1.0", default-features = false }
+plonky2-verifier = { git = "https://github.com/zkVerify/plonky2-verifier", tag = "v0.2.1", default-features = false }
 pallet-plonky2-verifier = { path = "verifiers/plonky2", default-features = false }
 ezkl-no-std = { git = "https://github.com/zkVerify/ezkl_verifier.git", default-features = false, tag = "v0.1.0" }
 ultrahonk-no-std-v0_84 = { git = "https://github.com/zkVerify/ultrahonk_verifier.git", package = "ultrahonk-no-std", default-features = false, tag = "v0.2.1" }
@@ -376,6 +378,12 @@ cumulus-relay-chain-inprocess-interface = { path = "patches/cumulus/client/relay
 cumulus-relay-chain-minimal-node = { path = "patches/cumulus/client/relay-chain-minimal-node" }
 polkadot-node-core-pvf-common = { path = "patches/polkadot/node/core/pvf/common" }
 substrate-wasm-builder = { path = "patches/substrate/utils/wasm-builder" }
+
+[patch."https://github.com/zkVerify/ezkl_verifier.git"]
+ezkl-no-std = { path = "../ezkl_verifier" }
+
+[patch."https://github.com/zkVerify/plonky2"]
+plonky2 = { path = "../plonky2/plonky2" }
 
 [profile.release]
 # Polkadot runtime requires unwinding.
