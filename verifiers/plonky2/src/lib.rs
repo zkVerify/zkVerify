@@ -30,6 +30,7 @@ use plonky2::field::extension::Extendable;
 use plonky2::hash::hash_types::RichField;
 use plonky2::plonk::circuit_data::CircuitConfig;
 use plonky2::plonk::config::{GenericConfig, KeccakGoldilocksConfig, PoseidonGoldilocksConfig};
+use plonky2::util::serialization::{Buffer, Read as _};
 use plonky2_verifier::validate::ValidateError;
 use plonky2_verifier::{deserialize_vk, verify};
 
@@ -121,30 +122,27 @@ impl<T: Config> Verifier for Plonky2<T> {
         let vk = plonky2_verifier::Vk::from(vk.clone());
         let proof = plonky2_verifier::Proof::from(raw_proof.clone());
 
-        let degree_bits = match vk.config {
+        let (degree_bits, proof_size) = match vk.config {
             plonky2_verifier::Plonky2Config::Keccak => {
                 const D: usize = 2;
                 type C = KeccakGoldilocksConfig;
                 type F = <C as GenericConfig<D>>::F;
 
-                deserialize_vk::<F, C, D>(&vk.bytes)
-                    .map_err(|_| VerifyError::InvalidVerificationKey)?
-                    .common
-                    .fri_params
-                    .degree_bits
+                vk_info::<F, C, D>(&vk.bytes)?
             }
             plonky2_verifier::Plonky2Config::Poseidon => {
                 const D: usize = 2;
                 type C = PoseidonGoldilocksConfig;
                 type F = <C as GenericConfig<D>>::F;
 
-                deserialize_vk::<F, C, D>(&vk.bytes)
-                    .map_err(|_| VerifyError::InvalidVerificationKey)?
-                    .common
-                    .fri_params
-                    .degree_bits
+                vk_info::<F, C, D>(&vk.bytes)?
             }
         };
+
+        ensure!(
+            raw_proof.bytes.len() == proof_size,
+            VerifyError::InvalidProofData
+        );
 
         let w = compute_weight::<T>(degree_bits, vk.config);
 
@@ -183,6 +181,20 @@ impl<T: Config> Verifier for Plonky2<T> {
     fn pubs_bytes(pubs: &Self::Pubs) -> Cow<'_, [u8]> {
         Cow::Borrowed(pubs)
     }
+}
+
+/// Deserialize the vk and return its `degree_bits` together with the exact
+/// byte length a serialized proof for this circuit must have.
+fn vk_info<F, C, const D: usize>(vk: &[u8]) -> Result<(usize, usize), VerifyError>
+where
+    F: RichField + Extendable<D>,
+    C: GenericConfig<D, F = F>,
+{
+    let data = deserialize_vk::<F, C, D>(vk).map_err(|_| VerifyError::InvalidVerificationKey)?;
+    Ok((
+        data.common.fri_params.degree_bits,
+        Buffer::proof_size::<F, C, D>(&data.common),
+    ))
 }
 
 fn validate_vk_inner<F, C, const D: usize>(vk: &[u8]) -> plonky2_verifier::ValidateResult
