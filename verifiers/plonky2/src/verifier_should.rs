@@ -159,6 +159,38 @@ mod reject {
     }
 
     #[rstest]
+    fn should_not_verify_truncated_proof(worst_case_test_data: TestData<MockConfig>) {
+        let TestData {
+            vk,
+            mut proof,
+            pubs,
+        } = worst_case_test_data;
+
+        proof.bytes.pop();
+
+        assert_err!(
+            Plonky2::<MockConfig>::verify_proof(&vk, &proof, &pubs),
+            VerifyError::InvalidProofData
+        );
+    }
+
+    #[rstest]
+    fn should_not_verify_padded_proof(worst_case_test_data: TestData<MockConfig>) {
+        let TestData {
+            vk,
+            mut proof,
+            pubs,
+        } = worst_case_test_data;
+
+        proof.bytes.push(0);
+
+        assert_err!(
+            Plonky2::<MockConfig>::verify_proof(&vk, &proof, &pubs),
+            VerifyError::InvalidProofData
+        );
+    }
+
+    #[rstest]
     fn should_not_verify_oversized_proof(worst_case_test_data: TestData<MockConfig>) {
         let TestData {
             vk,
