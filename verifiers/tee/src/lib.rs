@@ -177,8 +177,12 @@ impl<T: Config> Verifier for Tee<T> {
                     .map_err(|_| VerifyError::VerifyError)
             }
             // Nitro has no VK data to validate, the attestation document is self-contained
-            // => no point in registering a vk
-            Vk::Nitro => Err(VerifyError::InvalidVerificationKey),
+            // => no point in validating a vk.
+            // One useless registration is allowed (although not needed), subsequent registrations
+            // from different accounts only increment the ref count in the Vks map.
+            Vk::Nitro => T::Crl::get_crl(T::CaName::ca_name_for(vk))
+                .map(|_| ())
+                .map_err(|_| VerifyError::VerifyError),
         }
     }
 

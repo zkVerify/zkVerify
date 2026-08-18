@@ -63,6 +63,14 @@ impl CrlProvider for RevokedCrl {
     }
 }
 
+/// CRL provider for a CA that has not been registered.
+struct MissingCaCrl;
+impl CrlProvider for MissingCaCrl {
+    fn get_crl(_ca_name: &str) -> Result<Crl, CaNotFoundError> {
+        Err(CaNotFoundError)
+    }
+}
+
 struct MockCaName;
 impl CaNameProvider for MockCaName {
     fn ca_name_for(vk: &Vk) -> &'static str {
@@ -296,8 +304,17 @@ mod nitro {
     }
 
     #[test]
-    fn validate_vk_always_fails() {
+    fn validate_vk_succeeds() {
         let vk = Vk::Nitro;
-        assert!(Tee::<Mock<MockTime<ConstU64<NITRO_NOW>>>>::validate_vk(&vk).is_err());
+        assert!(Tee::<Mock<MockTime<ConstU64<NITRO_NOW>>>>::validate_vk(&vk).is_ok());
+    }
+
+    #[test]
+    fn reject_validate_vk_on_unregistered_ca() {
+        let vk = Vk::Nitro;
+        assert_eq!(
+            Tee::<Mock<MockTime<ConstU64<NITRO_NOW>>, MissingCaCrl>>::validate_vk(&vk),
+            Err(VerifyError::VerifyError)
+        );
     }
 }
