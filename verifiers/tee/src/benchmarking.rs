@@ -52,6 +52,23 @@ where
     );
 }
 
+/// Derive the worst-case pubs blob for a quote: the canonical TD report policy
+/// encoding with every field pinned, so the policy comparison cost is maximal.
+fn intel_pubs(proof: &[u8]) -> alloc::vec::Vec<u8> {
+    let quote = tee_verifier::intel_parse_quote(proof).expect("valid benchmark quote");
+    tee_verifier::TdReportPolicy {
+        xfam: Some(*quote.xfam()),
+        mrtd: *quote.mrtd(),
+        mrconfigid: Some(*quote.mrconfigid()),
+        mrowner: Some(*quote.mrowner()),
+        mrownerconfig: Some(*quote.mrownerconfig()),
+        rtmrs: quote.rtmrs().map(Some),
+        report_data: *quote.report_data(),
+    }
+    .to_bytes()
+    .to_vec()
+}
+
 fn set_timestamp<T>(ts: u64)
 where
     T: pallet_babe::Config + pallet_timestamp::Config,
@@ -74,7 +91,7 @@ mod benchmarks {
     #[benchmark]
     fn intel_verify_proof() {
         let proof = include_bytes!("resources/intel/valid_quote.dat").to_vec();
-        let pubs = vec![];
+        let pubs = intel_pubs(&proof);
         let vk = Vk::Intel {
             tcb_response: include_bytes!("resources/intel/valid_tcbinfo.json")
                 .to_vec()
@@ -165,7 +182,8 @@ mod benchmarks {
     #[benchmark]
     fn compute_statement_hash() {
         let proof = include_bytes!("resources/intel/valid_quote.dat").to_vec();
-        let pubs = vec![];
+        // Worst-case keccak input: a full-size (458-byte) pubs blob.
+        let pubs = intel_pubs(&proof);
         let vk = Vk::Intel {
             tcb_response: include_bytes!("resources/intel/valid_tcbinfo.json")
                 .to_vec()

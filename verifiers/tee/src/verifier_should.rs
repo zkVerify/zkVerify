@@ -124,10 +124,27 @@ impl<T: UnixTime, C: CrlProvider> Config for Mock<T, C> {
 mod intel {
     use super::*;
 
+    /// Derive a valid pubs blob (canonical TD report policy encoding) from a quote,
+    /// pinning every field the policy can express.
+    fn intel_pubs(proof: &[u8]) -> Vec<u8> {
+        let q = tee_verifier::intel_parse_quote(proof).unwrap();
+        tee_verifier::TdReportPolicy {
+            xfam: Some(*q.xfam()),
+            mrtd: *q.mrtd(),
+            mrconfigid: Some(*q.mrconfigid()),
+            mrowner: Some(*q.mrowner()),
+            mrownerconfig: Some(*q.mrownerconfig()),
+            rtmrs: q.rtmrs().map(Some),
+            report_data: *q.report_data(),
+        }
+        .to_bytes()
+        .to_vec()
+    }
+
     #[test]
     fn verify_valid_proof() {
         let proof = include_bytes!("resources/intel/valid_quote.dat").to_vec();
-        let pubs = vec![];
+        let pubs = intel_pubs(&proof);
         let vk = Vk::Intel {
             tcb_response: include_bytes!("resources/intel/valid_tcbinfo.json").to_vec(),
             certificates: include_bytes!("resources/intel/valid_tcbinfo_certs.pem").to_vec(),
@@ -142,7 +159,7 @@ mod intel {
     #[test]
     fn reject_valid_proof_with_revoked_cert() {
         let proof = include_bytes!("resources/intel/valid_quote.dat").to_vec();
-        let pubs = vec![];
+        let pubs = intel_pubs(&proof);
         let vk = Vk::Intel {
             tcb_response: include_bytes!("resources/intel/valid_tcbinfo.json").to_vec(),
             certificates: include_bytes!("resources/intel/valid_tcbinfo_certs.pem").to_vec(),
@@ -157,7 +174,7 @@ mod intel {
     #[test]
     fn reject_invalid_proof() {
         let proof = include_bytes!("resources/intel/invalid_quote.dat").to_vec();
-        let pubs = vec![];
+        let pubs = intel_pubs(&proof);
         let vk = Vk::Intel {
             tcb_response: include_bytes!("resources/intel/valid_tcbinfo.json").to_vec(),
             certificates: include_bytes!("resources/intel/valid_tcbinfo_certs.pem").to_vec(),
@@ -185,7 +202,7 @@ mod intel {
     #[test]
     fn reject_invalid_time() {
         let proof = include_bytes!("resources/intel/valid_quote.dat").to_vec();
-        let pubs = vec![];
+        let pubs = intel_pubs(&proof);
         let vk = Vk::Intel {
             tcb_response: include_bytes!("resources/intel/valid_tcbinfo.json").to_vec(),
             certificates: include_bytes!("resources/intel/valid_tcbinfo_certs.pem").to_vec(),
@@ -243,7 +260,7 @@ mod intel {
     }
 
     #[test]
-    fn reject_invalid_pubs() {
+    fn reject_too_long_pubs() {
         let proof = vec![];
         let pubs = vec![0u8; crate::MAX_PUBS_LENGTH as usize + 1];
         let vk = Vk::Intel {
@@ -255,6 +272,41 @@ mod intel {
             Tee::<Mock<MockTime<ConstU64<PRESENT>>>>::verify_proof(&vk, &proof, &pubs),
             Err(VerifyError::InvalidInput)
         )
+    }
+
+    #[test]
+    fn reject_invalid_pubs() {
+        let proof = include_bytes!("resources/intel/valid_quote.dat").to_vec();
+        let vk = Vk::Intel {
+            tcb_response: include_bytes!("resources/intel/valid_tcbinfo.json").to_vec(),
+            certificates: include_bytes!("resources/intel/valid_tcbinfo_certs.pem").to_vec(),
+        };
+        let valid_pubs = intel_pubs(&proof);
+
+        // Wrong length, below the cap.
+        let short_pubs = vec![0u8; 64];
+
+        // Unknown version byte (offset 0).
+        let mut wrong_version = valid_pubs.clone();
+        wrong_version[0] = 0xfe;
+
+        // Non-canonical: clear the xfam bitmap bit (offset 1, bit 0) while the xfam
+        // field bytes stay non-zero.
+        let mut non_canonical = valid_pubs.clone();
+        non_canonical[1] &= !1;
+        non_canonical[2] |= 1;
+
+        // Well-formed policy that does not match the quote: flip a byte inside the
+        // mrtd region (mrtd is at offset 10, right after version, bitmap and xfam).
+        let mut mismatched = valid_pubs.clone();
+        mismatched[10] ^= 1;
+
+        for pubs in [short_pubs, wrong_version, non_canonical, mismatched] {
+            assert_eq!(
+                Tee::<Mock<MockTime<ConstU64<PRESENT>>>>::verify_proof(&vk, &proof, &pubs),
+                Err(VerifyError::InvalidInput)
+            );
+        }
     }
 }
 
@@ -300,6 +352,18 @@ mod nitro {
         assert_eq!(
             Tee::<Mock<MockTime<ConstU64<NITRO_FUTURE>>>>::verify_proof(&vk, &proof, &pubs),
             Err(VerifyError::VerifyError)
+        );
+    }
+
+    #[test]
+    fn reject_non_empty_pubs() {
+        let proof = include_bytes!("resources/nitro/valid_attestation.bin").to_vec();
+        let pubs = vec![0u8];
+        let vk = Vk::Nitro;
+
+        assert_eq!(
+            Tee::<Mock<MockTime<ConstU64<NITRO_NOW>>>>::verify_proof(&vk, &proof, &pubs),
+            Err(VerifyError::InvalidInput)
         );
     }
 

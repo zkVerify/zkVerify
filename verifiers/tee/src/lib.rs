@@ -33,6 +33,7 @@ use pallet_crl::CrlProvider;
 use pallet_verifiers::traits::VerifyError;
 use tee_verifier::{
     intel_parse_quote, intel_parse_tcb_response, nitro_parse_attestation, TcbResponse,
+    TdReportPolicy, TD_REPORT_POLICY_SIZE,
 };
 
 use codec::{Decode, DecodeWithMemTracking, Encode, MaxEncodedLen};
@@ -48,8 +49,9 @@ pub type Pubs = Vec<u8>;
 pub const MAX_VK_LENGTH: u32 = 65536;
 // Max size in bytes of the quote
 pub const MAX_PROOF_LENGTH: u32 = 65536;
-// Max size in bytes of the pubs; this pallet does not need any pubs
-pub const MAX_PUBS_LENGTH: u32 = 0;
+// Max size in bytes of the pubs; for Intel quotes the pubs carry the canonical
+// TD report policy encoding, while Nitro attestations take no pubs at all.
+pub const MAX_PUBS_LENGTH: u32 = TD_REPORT_POLICY_SIZE as u32;
 
 #[derive(Clone, Debug, PartialEq, Encode, Decode, DecodeWithMemTracking, TypeInfo)]
 pub enum Vk {
@@ -94,14 +96,14 @@ impl<T: Config> Verifier for Tee<T> {
     fn verify_proof(
         vk: &Self::Vk,
         proof: &Self::Proof,
-        _pubs: &Self::Pubs,
+        pubs: &Self::Pubs,
     ) -> Result<Option<Weight>, VerifyError> {
         ensure!(
             proof.len() <= MAX_PROOF_LENGTH as usize,
             VerifyError::InvalidProofData
         );
         ensure!(
-            _pubs.len() <= MAX_PUBS_LENGTH as usize,
+            pubs.len() <= MAX_PUBS_LENGTH as usize,
             VerifyError::InvalidInput
         );
 
@@ -126,6 +128,14 @@ impl<T: Config> Verifier for Tee<T> {
                 );
 
                 let quote = intel_parse_quote(proof).map_err(|_| VerifyError::InvalidProofData)?;
+
+                // Checking pubs is cheaper than heavy cryptography, do it first
+                let policy =
+                    TdReportPolicy::from_bytes(pubs).map_err(|_| VerifyError::InvalidInput)?;
+                quote
+                    .check_policy(&policy)
+                    .map_err(|_| VerifyError::InvalidInput)?;
+
                 let tcb_response = intel_parse_tcb_response(&tcb_response[..])
                     .map_err(|_| VerifyError::InvalidInput)?;
 
@@ -140,6 +150,10 @@ impl<T: Config> Verifier for Tee<T> {
                     .map(|_| Some(T::WeightInfo::intel_verify_proof()))
             }
             Vk::Nitro => {
+                // Nitro attestations take no pubs; an exact emptiness check is required so a
+                // single attestation cannot yield multiple distinct statements.
+                ensure!(pubs.is_empty(), VerifyError::InvalidInput);
+
                 let attestation =
                     nitro_parse_attestation(proof).map_err(|_| VerifyError::InvalidProofData)?;
 
