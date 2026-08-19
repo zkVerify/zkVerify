@@ -14,7 +14,7 @@ jobs:
     name: Cargo audit
     steps:
       - name: Git checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Cargo audit
         uses: ./.github/actions/cmd-in-docker
@@ -25,7 +25,7 @@ jobs:
 
       - name: Upload cargo audit output
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: audit-output
           path: audit_output.txt
@@ -41,8 +41,11 @@ jobs:
     if: ${{ failure() && !cancelled() && github.event_name == 'schedule' }}
     steps:
       - name: Send Slack notification
-        uses: slackapi/slack-github-action@v1.25.0
+        uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d # v4.0.0
         with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_ALERTS_ZKVERIFY }}
+          webhook-type: incoming-webhook
+          errors: true
           payload: |
             {
               "blocks": [
@@ -50,7 +53,7 @@ jobs:
                   "type": "header",
                   "text": {
                     "type": "plain_text",
-                    "text": "🚨 ALERT - ${{ github.workflow }} Job Failed! 🚨"
+                    "text": "🚨 zkVerify ALERT - ${{ github.workflow }} Job Failed! 🚨"
                   }
                 },
                 {
@@ -64,6 +67,3 @@ jobs:
                 }
               ]
             }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.QA_SLACK_WEBHOOK_URL }}
-          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK

@@ -24,7 +24,7 @@ jobs:
           - rustdoc
     steps:
       - name: "Deleting '${{ matrix.cache_key }}' cache key"
-        uses: WarpBuilds/cache@v1
+        uses: WarpBuilds/cache@40f3443ae7b70e568d6e2070ea897f3df94d7553 # v1.4.13
         with:
           path: |
             ~/.cargo/bin/
