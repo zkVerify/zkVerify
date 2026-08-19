@@ -2,8 +2,8 @@
 
 // Helpers to build the `pubs` blob for an Intel TDX submission to the tee verifier.
 //
-// Usable both as a module (`require('./tee_policy.js')`) and from the command line
-// (`./tee_policy.js --help`).
+// Usable both as a module (`require('./tee_intel_policy.js')`) and from the command line
+// (`./tee_intel_policy.js --help`).
 //
 // The pubs are the canonical `TdReportPolicy` encoding: the TD report values the
 // submitter asserts the quote must carry. Layout (458 bytes, fixed):
@@ -296,10 +296,10 @@ const USAGE = `Build or inspect the pubs blob (canonical TdReportPolicy) for an 
 submission to the tee verifier.
 
 Usage:
-  tee_policy.js from-quote <quote> [--pin <fields>] [--json]
-  tee_policy.js build --mrtd <v> --reportdata <v> [--<field> <v> ...] [--json]
-  tee_policy.js parse <pubs> [--json]
-  tee_policy.js fields [--json]
+  tee_intel_policy.js from-quote <quote> [--pin <fields>] [--json]
+  tee_intel_policy.js build --mrtd <v> --reportdata <v> [--<field> <v> ...] [--json]
+  tee_intel_policy.js parse <pubs> [--json]
+  tee_intel_policy.js fields [--json]
 
 Commands:
   from-quote  Read the TD report values out of a quote and pin the requested fields.
@@ -324,10 +324,10 @@ are optional (xfam is 8 bytes, the rest 48). Omitted optional fields are left un
 to a file holding either hex text or raw bytes, or '-' to read stdin.
 
 Examples:
-  tee_policy.js from-quote quote.bin > pubs.hex
-  tee_policy.js from-quote quote.bin --pin rtmr0,rtmr2 --json
-  tee_policy.js build --mrtd 0x91eb... --reportdata 0x9a9d... --xfam 0xe702060000000000
-  tee_policy.js parse pubs.hex --json
+  tee_intel_policy.js from-quote quote.bin > pubs.hex
+  tee_intel_policy.js from-quote quote.bin --pin rtmr0,rtmr2 --json
+  tee_intel_policy.js build --mrtd 0x91eb... --reportdata 0x9a9d... --xfam 0xe702060000000000
+  tee_intel_policy.js parse pubs.hex --json
 `;
 
 const HEX_TEXT = /^(0[xX])?[0-9a-fA-F\s]+$/;
