@@ -316,11 +316,27 @@ mod intel {
 
 mod nitro {
     use super::*;
+    use tee_verifier::NITRO_PCR_COUNT;
+
+    /// Derive a valid pubs blob (canonical Nitro policy encoding) from an attestation
+    /// document, pinning every PCR and the user_data.
+    fn nitro_pubs(proof: &[u8]) -> Vec<u8> {
+        let att = tee_verifier::nitro_parse_attestation(proof).unwrap();
+        let mut pcrs = [None; NITRO_PCR_COUNT];
+        for (i, pcr) in pcrs.iter_mut().enumerate() {
+            *pcr = Some(att.pcrs[&(i as u32)].as_slice().try_into().unwrap());
+        }
+        NitroPolicy {
+            pcrs,
+            user_data: Some(att.user_data.unwrap_or_default()),
+        }
+        .to_bytes()
+    }
 
     #[test]
     fn verify_valid_proof() {
         let proof = include_bytes!("resources/nitro/valid_attestation.bin").to_vec();
-        let pubs = vec![];
+        let pubs = nitro_pubs(&proof);
         let vk = Vk::Nitro;
 
         let res = Tee::<Mock<MockTime<ConstU64<NITRO_NOW>>>>::verify_proof(&vk, &proof, &pubs);
@@ -332,7 +348,7 @@ mod nitro {
     #[test]
     fn reject_invalid_proof() {
         let proof = include_bytes!("resources/nitro/invalid_attestation.bin").to_vec();
-        let pubs = vec![];
+        let pubs = nitro_pubs(&proof);
         let vk = Vk::Nitro;
 
         assert_eq!(
@@ -344,7 +360,7 @@ mod nitro {
     #[test]
     fn reject_with_expired_timestamp() {
         let proof = include_bytes!("resources/nitro/valid_attestation.bin").to_vec();
-        let pubs = vec![];
+        let pubs = nitro_pubs(&proof);
         let vk = Vk::Nitro;
 
         // One year after: certificates will have expired
@@ -356,15 +372,62 @@ mod nitro {
     }
 
     #[test]
-    fn reject_non_empty_pubs() {
+    fn reject_empty_pubs() {
         let proof = include_bytes!("resources/nitro/valid_attestation.bin").to_vec();
-        let pubs = vec![0u8];
+        let pubs = vec![];
         let vk = Vk::Nitro;
 
         assert_eq!(
             Tee::<Mock<MockTime<ConstU64<NITRO_NOW>>>>::verify_proof(&vk, &proof, &pubs),
             Err(VerifyError::InvalidInput)
         );
+    }
+
+    #[test]
+    fn reject_invalid_pubs() {
+        let proof = include_bytes!("resources/nitro/valid_attestation.bin").to_vec();
+        let vk = Vk::Nitro;
+        let valid_pubs = nitro_pubs(&proof);
+
+        // Wrong length, below the cap.
+        let short_pubs = vec![0u8; 64];
+
+        // Unknown version byte (offset 0).
+        let mut wrong_version = valid_pubs.clone();
+        wrong_version[0] = 0xfe;
+
+        // PCR0 not pinned (bitmap bit 0, at offset 1).
+        let mut unpinned_pcr0 = valid_pubs.clone();
+        unpinned_pcr0[1] &= !1;
+
+        // Non-canonical: clear the PCR3 bitmap bit while its slot (starting at offset
+        // 4 + 3 * 48 = 148) stays non-zero.
+        let mut non_canonical = valid_pubs.clone();
+        non_canonical[1] &= !(1 << 3);
+        non_canonical[148] |= 1;
+
+        // Well-formed policy that does not match the attestation: flip a byte inside
+        // the PCR0 slot (right after version, bitmap and flags).
+        let mut mismatched_pcr = valid_pubs.clone();
+        mismatched_pcr[4] ^= 1;
+
+        // Well-formed policy with a mismatched user_data: flip its last byte.
+        let mut mismatched_user_data = valid_pubs.clone();
+        *mismatched_user_data.last_mut().unwrap() ^= 1;
+
+        for pubs in [
+            short_pubs,
+            wrong_version,
+            unpinned_pcr0,
+            non_canonical,
+            mismatched_pcr,
+            mismatched_user_data,
+        ] {
+            assert_eq!(
+                Tee::<Mock<MockTime<ConstU64<NITRO_NOW>>>>::verify_proof(&vk, &proof, &pubs),
+                Err(VerifyError::InvalidInput)
+            );
+        }
     }
 
     #[test]

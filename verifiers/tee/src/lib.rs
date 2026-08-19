@@ -32,8 +32,8 @@ pub use weight::WeightInfo;
 use pallet_crl::CrlProvider;
 use pallet_verifiers::traits::VerifyError;
 use tee_verifier::{
-    intel_parse_quote, intel_parse_tcb_response, nitro_parse_attestation, TcbResponse,
-    TdReportPolicy, TD_REPORT_POLICY_SIZE,
+    intel_parse_quote, intel_parse_tcb_response, nitro_parse_attestation, NitroPolicy,
+    TcbResponse, TdReportPolicy, NITRO_POLICY_MAX_SIZE, TD_REPORT_POLICY_SIZE,
 };
 
 use codec::{Decode, DecodeWithMemTracking, Encode, MaxEncodedLen};
@@ -49,9 +49,14 @@ pub type Pubs = Vec<u8>;
 pub const MAX_VK_LENGTH: u32 = 65536;
 // Max size in bytes of the quote
 pub const MAX_PROOF_LENGTH: u32 = 65536;
-// Max size in bytes of the pubs; for Intel quotes the pubs carry the canonical
-// TD report policy encoding, while Nitro attestations take no pubs at all.
-pub const MAX_PUBS_LENGTH: u32 = TD_REPORT_POLICY_SIZE as u32;
+// Max size in bytes of the pubs; the pubs carry the canonical policy encoding of the
+// attestation values the submitter expects: a TD report policy for Intel quotes, a
+// Nitro policy (PCRs and user_data) for Nitro attestations.
+pub const MAX_PUBS_LENGTH: u32 = if TD_REPORT_POLICY_SIZE > NITRO_POLICY_MAX_SIZE {
+    TD_REPORT_POLICY_SIZE as u32
+} else {
+    NITRO_POLICY_MAX_SIZE as u32
+};
 
 #[derive(Clone, Debug, PartialEq, Encode, Decode, DecodeWithMemTracking, TypeInfo)]
 pub enum Vk {
@@ -150,12 +155,16 @@ impl<T: Config> Verifier for Tee<T> {
                     .map(|_| Some(T::WeightInfo::intel_verify_proof()))
             }
             Vk::Nitro => {
-                // Nitro attestations take no pubs; an exact emptiness check is required so a
-                // single attestation cannot yield multiple distinct statements.
-                ensure!(pubs.is_empty(), VerifyError::InvalidInput);
+                let policy =
+                    NitroPolicy::from_bytes(pubs).map_err(|_| VerifyError::InvalidInput)?;
 
                 let attestation =
                     nitro_parse_attestation(proof).map_err(|_| VerifyError::InvalidProofData)?;
+
+                // Checking pubs is cheaper than heavy cryptography, do it first
+                attestation
+                    .check_policy(&policy)
+                    .map_err(|_| VerifyError::InvalidInput)?;
 
                 attestation
                     .verify(Some(&crl), now)

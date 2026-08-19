@@ -69,6 +69,28 @@ fn intel_pubs(proof: &[u8]) -> alloc::vec::Vec<u8> {
     .to_vec()
 }
 
+/// Derive the worst-case pubs blob for a Nitro attestation: the canonical policy
+/// encoding with every PCR and the user_data pinned, so the policy comparison cost
+/// is maximal.
+fn nitro_pubs(proof: &[u8]) -> alloc::vec::Vec<u8> {
+    let attestation =
+        tee_verifier::nitro_parse_attestation(proof).expect("valid benchmark attestation");
+    let mut pcrs = [None; tee_verifier::NITRO_PCR_COUNT];
+    for (i, pcr) in pcrs.iter_mut().enumerate() {
+        *pcr = Some(
+            attestation.pcrs[&(i as u32)]
+                .as_slice()
+                .try_into()
+                .expect("benchmark PCRs are SHA-384 digests"),
+        );
+    }
+    tee_verifier::NitroPolicy {
+        pcrs,
+        user_data: Some(attestation.user_data.unwrap_or_default()),
+    }
+    .to_bytes()
+}
+
 fn set_timestamp<T>(ts: u64)
 where
     T: pallet_babe::Config + pallet_timestamp::Config,
@@ -117,7 +139,7 @@ mod benchmarks {
     #[benchmark]
     fn nitro_verify_proof() {
         let proof = include_bytes!("resources/nitro/valid_attestation.bin").to_vec();
-        let pubs = vec![];
+        let pubs = nitro_pubs(&proof);
         let vk = Vk::Nitro;
 
         set_timestamp::<T>(NITRO_PRESENT);
@@ -182,8 +204,9 @@ mod benchmarks {
     #[benchmark]
     fn compute_statement_hash() {
         let proof = include_bytes!("resources/intel/valid_quote.dat").to_vec();
-        // Worst-case keccak input: a full-size (458-byte) pubs blob.
-        let pubs = intel_pubs(&proof);
+        // Worst-case keccak input: a maximum-size pubs blob (the statement hash does
+        // not require the pubs to be a well-formed policy).
+        let pubs = vec![0u8; crate::MAX_PUBS_LENGTH as usize];
         let vk = Vk::Intel {
             tcb_response: include_bytes!("resources/intel/valid_tcbinfo.json")
                 .to_vec()
