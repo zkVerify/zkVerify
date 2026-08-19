@@ -87,6 +87,67 @@ for (const [field, size] of BODY_LAYOUT) {
 }
 const QUOTE_BODY_SIZE = bodyCursor; // 584
 
+// =============================================================================
+// Field inventory
+// =============================================================================
+
+/// What each field of the pubs encoding pins.
+const DESCRIPTIONS = {
+    version: 'encoding version, must be 1',
+    bitmap: 'which optional fields are pinned; derived, never set by hand',
+    xfam: 'eXtended Features Available Mask, in XCR0/IA32_XSS format',
+    mrtd: "measurement of the TD's initial contents (SHA-384)",
+    mrconfigid: 'software-defined ID for non-owner-defined TD configuration',
+    mrowner: 'software-defined ID for the TD owner',
+    mrownerconfig: 'software-defined ID for owner-defined TD configuration',
+    rtmr0: 'runtime extendable measurement register 0 (SHA-384)',
+    rtmr1: 'runtime extendable measurement register 1 (SHA-384)',
+    rtmr2: 'runtime extendable measurement register 2 (SHA-384)',
+    rtmr3: 'runtime extendable measurement register 3 (SHA-384)',
+    reportdata: 'the 64 bytes the TD bound into the quote (nonce, key hash, ...)',
+};
+
+/// Every field of the pubs encoding, in byte order — the exhaustive set a policy can
+/// carry. `bit` is the presence-bitmap mask, null for fields that are always present.
+/// Derived from SIZES/OFFSETS/BITS so it cannot drift from the encoder.
+const POLICY_FIELDS = Object.entries(SIZES).map(([name, size]) => ({
+    name,
+    offset: OFFSETS[name],
+    size,
+    bit: BITS[name] === undefined ? null : BITS[name],
+    kind:
+        name === 'version' || name === 'bitmap'
+            ? 'header'
+            : MANDATORY.includes(name)
+              ? 'always checked'
+              : 'optional',
+    description: DESCRIPTIONS[name],
+}));
+
+/// Where the TD report fields that have no policy slot are enforced instead, if at
+/// all. Every one of them is still covered by the quote signature over header||body,
+/// so they cannot be tampered with — they just are not compared to a submitter value.
+const ENFORCEMENT = {
+    tee_tcb_svn:
+        "checked against the collateral's tdxtcbcomponents (and the TDX module identity), not the policy",
+    mrseam: 'parsed only; never compared (measurement of the Intel TDX module)',
+    mrsignerseam: 'parsed only; never compared (zero for the Intel TDX module)',
+    seamattributes: 'parsed only; never compared (must be zero for TDX 1.0)',
+    tdattributes:
+        'byte 0 must have the debug bit clear, enforced by extended_checks; the rest is not compared',
+};
+
+/// TD report body fields with no counterpart in the policy encoding: things a
+/// submitter cannot pin through the pubs. Derived from the body layout.
+const TD_REPORT_ONLY_FIELDS = BODY_LAYOUT.filter(([name]) => !(name in SIZES)).map(
+    ([name, size]) => ({
+        name,
+        bodyOffset: BODY_OFFSETS[name],
+        size,
+        enforcement: ENFORCEMENT[name],
+    }),
+);
+
 /// Coerce a hex string (with or without `0x`), Buffer, or Uint8Array to a Buffer.
 function toBuffer(value, field) {
     if (Buffer.isBuffer(value)) {
@@ -238,6 +299,7 @@ Usage:
   tee_policy.js from-quote <quote> [--pin <fields>] [--json]
   tee_policy.js build --mrtd <v> --reportdata <v> [--<field> <v> ...] [--json]
   tee_policy.js parse <pubs> [--json]
+  tee_policy.js fields [--json]
 
 Commands:
   from-quote  Read the TD report values out of a quote and pin the requested fields.
@@ -246,6 +308,8 @@ Commands:
   build       Assemble a policy from values given on the command line.
   parse       Decode a pubs blob into named fields, applying the same validation the
               on-chain parser does. Unpinned fields print as null.
+  fields      List every field the encoding can carry - offset, size, bitmap bit and
+              meaning - plus the TD report fields that no policy can pin.
 
 Options:
   --pin <fields>  from-quote only: 'all' (default), 'none', or a comma-separated list
@@ -342,6 +406,41 @@ function main(argv) {
 
     const command = argv[0];
     const { positional, flags } = parseArgv(argv.slice(1), ['json']);
+
+    if (command === 'fields') {
+        if (flags.json) {
+            process.stdout.write(
+                JSON.stringify(
+                    {
+                        totalSize: TD_REPORT_POLICY_SIZE,
+                        version: POLICY_VERSION_V1,
+                        fields: POLICY_FIELDS,
+                        tdReportOnlyFields: TD_REPORT_ONLY_FIELDS,
+                    },
+                    null,
+                    2,
+                ) + '\n',
+            );
+            return 0;
+        }
+        const p = (line) => process.stdout.write(line + '\n');
+        p(`pubs encoding: ${TD_REPORT_POLICY_SIZE} bytes, version ${POLICY_VERSION_V1}`);
+        p('');
+        p('  off  size  bit   field           kind            meaning');
+        for (const f of POLICY_FIELDS) {
+            p(`  ${String(f.offset).padStart(3)}  ${String(f.size).padStart(4)}  ` +
+              `${(f.bit === null ? '-' : '0x' + f.bit.toString(16).padStart(2, '0')).padEnd(5)} ` +
+              `${f.name.padEnd(15)} ${f.kind.padEnd(15)} ${f.description}`);
+        }
+        p('');
+        p('TD report fields with no policy slot (cannot be pinned through pubs):');
+        for (const f of TD_REPORT_ONLY_FIELDS) {
+            p(`  ${f.name.padEnd(15)} body offset ${String(f.bodyOffset).padStart(3)}, ` +
+              `${f.size} bytes`);
+            p(`  ${''.padEnd(15)} ${f.enforcement}`);
+        }
+        return 0;
+    }
     let pubs;
 
     switch (command) {
@@ -410,6 +509,8 @@ exports.TD_REPORT_POLICY_SIZE = TD_REPORT_POLICY_SIZE;
 exports.POLICY_SIZES = SIZES;
 exports.POLICY_OFFSETS = OFFSETS;
 exports.POLICY_BITS = BITS;
+exports.POLICY_FIELDS = POLICY_FIELDS;
+exports.TD_REPORT_ONLY_FIELDS = TD_REPORT_ONLY_FIELDS;
 exports.buildTdReportPolicy = buildTdReportPolicy;
 exports.buildTdReportPolicyHex = buildTdReportPolicyHex;
 exports.tdReportPolicyFromQuote = tdReportPolicyFromQuote;
