@@ -169,6 +169,36 @@ ignore = [
     # remote attacker has no path to the out-of-bounds trigger. (The only theoretical trigger is a
     # locally truncated index file making map.len() < META_SIZE underflow the len — this needs
     # local DB write access, which is outside the remote threat model.)
+    "RUSTSEC-2026-0258", # h2 v0.3.27 — unbounded empty DATA frames (DoS).
+    # https://rustsec.org/advisories/RUSTSEC-2026-0258
+    # Stale lockfile entry: the only path to h2 0.3.x is igd-next -> hyper v0.14.32 -> h2 ^0.3,
+    # and igd-next is pulled in only by libp2p-upnp, i.e. libp2p 0.54.1's optional `upnp` feature,
+    # which we do not enable. `cargo tree -i h2@0.3.27` / `-i hyper@0.14.32` / `-i libp2p-upnp`
+    # all report "nothing to print" (even with --target all --edges all): none of these crates are
+    # ever compiled. They remain in Cargo.lock because Cargo resolves optional dependencies there.
+    # Cannot be updated anyway: 0.3.27 is the last 0.3.x release, the fix is only in >=0.4.16, and
+    # hyper 0.14.x requires h2 ^0.3. (The h2 copy that is actually built, used by hyper 1.8.1, was
+    # updated to 0.4.17, which is patched.)
+    "RUSTSEC-2026-0253", # lru v0.7.8 and v0.12.5 — `LruCache::pop()` is not panic-safe (unsound).
+    # https://rustsec.org/advisories/RUSTSEC-2026-0253 ->
+    # https://github.com/jeromefroe/lru-rs/pull/238
+    # If the key's `Drop` panics during `pop()`, `detach()` is skipped and a dangling node stays
+    # linked in the LRU list, so a later eviction writes to freed memory. Per the advisory the UB
+    # "can be invoked in safe Rust, but only if unwinding panics are enabled and
+    # `std::panic::catch_unwind` is used with key types that have potentially-panicking `Drop`
+    # implementations". Only patched in lru >= 0.18.2; both copies here are polkadot-sdk stable2512
+    # transitive deps with no patched 0.7.x/0.12.x release.
+    # - lru 0.7.8 comes from tracing-log v0.2.0 (`interest-cache` feature, enabled by
+    #   sc-tracing v44.0.0). Its cache is `LruCache<Key, u64, ahash::RandomState>` where `Key` is
+    #   `#[derive(Copy)] struct Key { target_address: usize, level_and_length: usize }`, so the key
+    #   has a trivial no-op drop. Moreover `pop()` is never called: interest_cache.rs only uses
+    #   `cap()`, `get()` and `put()` (lines 172, 204, 226). The affected function is unreachable.
+    # - lru 0.12.5 comes from libp2p-swarm v0.45.1 and libp2p-identify v0.45.0 (libp2p v0.54.1).
+    #   libp2p-identify does not reference lru anywhere in its sources. libp2p-swarm has exactly one
+    #   `pop()` call, in behaviour/peer_addresses.rs:81 (`addrs.pop(&address)`), on an inner
+    #   `LruCache<Multiaddr, ()>`. `Multiaddr` is `struct Multiaddr { bytes: Arc<Vec<u8>> }` with no
+    #   `Drop` impl (multiaddr 0.18.2), so dropping the key cannot panic. Neither consumer wraps a
+    #   `pop()` in `catch_unwind`. Unaffected.
 ]
 informational_warnings = ["unmaintained", "yanked"]
 
