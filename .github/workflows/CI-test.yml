@@ -12,7 +12,7 @@ jobs:
     name: Cargo unit test
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Cargo unit test
         uses: ./.github/actions/cmd-in-docker
@@ -39,7 +39,7 @@ jobs:
 
       - name: Upload unit test output
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: unit-test-output
           path: unit_test_output.txt
@@ -52,7 +52,7 @@ jobs:
     name: Cargo integration test
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Cargo integration test
         uses: ./.github/actions/cmd-in-docker
@@ -63,7 +63,7 @@ jobs:
 
       - name: Upload integration test output
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: integration-test-output
           path: integration_test_output.txt

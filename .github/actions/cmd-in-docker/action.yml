@@ -57,7 +57,7 @@ runs:
     - name: Restore cache
       id: cache_restore
       if: ${{ inputs.use_cache == 'yes' }}
-      uses: WarpBuilds/cache/restore@v1
+      uses: WarpBuilds/cache/restore@40f3443ae7b70e568d6e2070ea897f3df94d7553 # v1.4.13
       with:
         path: |
           ~/.cargo/bin/
@@ -92,7 +92,7 @@ runs:
     - name: Clear cache before saving new version
       id: clear_cache
       if: ${{ inputs.use_cache == 'yes' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
-      uses: WarpBuilds/cache@v1
+      uses: WarpBuilds/cache@40f3443ae7b70e568d6e2070ea897f3df94d7553 # v1.4.13
       with:
         path: |
           ~/.cargo/bin/
@@ -107,7 +107,7 @@ runs:
     # Save cache key for default_branch triggered by merge into default_branch event ONLY
     - name: Save cache
       if: ${{ inputs.use_cache == 'yes' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && steps.clear_cache.outcome == 'success' }}
-      uses: WarpBuilds/cache/save@v1
+      uses: WarpBuilds/cache/save@40f3443ae7b70e568d6e2070ea897f3df94d7553 # v1.4.13
       with:
         path: |
           ~/.cargo/bin/

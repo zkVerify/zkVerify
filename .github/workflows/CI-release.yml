@@ -45,7 +45,7 @@ jobs:
       version-str: ${{ steps.check-requirements.outputs.VERSION_STR }}
     steps:
       - name: Git checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.ref }}
           fetch-depth: 0
@@ -70,7 +70,7 @@ jobs:
     needs: [ check-requirements ]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Docker build
         id: build-docker-image
@@ -90,7 +90,7 @@ jobs:
     needs: [ check-requirements ]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Docker build
         id: build-docker-image
@@ -113,13 +113,13 @@ jobs:
     needs: [ check-requirements, build-docker ]
     steps:
       - name: Git checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.ref }}
           fetch-depth: 0
 
       - name: Download zkVerify Docker image artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: ${{ needs.build-docker.outputs.artifact_name }}
           path: ./
@@ -139,7 +139,7 @@ jobs:
           "${GITHUB_WORKSPACE}/ci/publish-docker-image.sh" --image-artifact ${{ needs.build-docker.outputs.artifact_name }}
 
       - name: Upload runtime artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: runtimes
           path: ./*.compact.compressed.wasm
@@ -152,13 +152,13 @@ jobs:
     needs: [ check-requirements, build-docker-fastruntime ]
     steps:
       - name: Git checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.ref }}
           fetch-depth: 0
 
       - name: Download zkVerify Docker image fastruntime artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: ${{ needs.build-docker-fastruntime.outputs.artifact_name }}
           path: ./
@@ -187,7 +187,7 @@ jobs:
     needs: [ check-requirements, publish-docker-image, publish-docker-image-fastruntime ]
     steps:
       - name: Retrieve saved runtimes wasm
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: runtimes
           path: wasm
@@ -195,7 +195,7 @@ jobs:
       - name: Create Release
         id: create-release
         if: ${{ needs.check-requirements.outputs.is-a-release == 'true' }}
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           tag_name: ${{ github.ref_name }}
           name: ${{ inputs.release_name }}
@@ -210,8 +210,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Notify Slack Production Releases
         if: ${{ inputs.dry_run == false }}
-        uses: slackapi/slack-github-action@v1.25.0
+        # The release has already published at this point; a notification problem
+        # should be visible but must not red the job or skip what needs: it.
+        continue-on-error: true
+        uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d # v4.0.0
         with:
+          webhook: ${{ secrets.RELEASES_PROD_SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          errors: true
           payload: |
             {
               "blocks": [
@@ -234,15 +240,13 @@ jobs:
                       "text": "*Build URL:*  <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Build>"
                     }
                   ]
-                }
+                },
                 {
                   "type": "section",
-                  "text": [
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Docker Image Tag:*  <https://hub.docker.com/r/${{ env.DOCKER_HUB_ORG }}/${{ env.DOCKER_IMAGE_BUILD_NAME }}/tags?page=1&name=${{ needs.check-requirements.outputs.version-str }}| ${{ needs.check-requirements.outputs.version-str }}>\n"
-                    }
-                  ]
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Docker Image Tag:*  <https://hub.docker.com/r/${{ env.DOCKER_HUB_ORG }}/${{ env.DOCKER_IMAGE_BUILD_NAME }}/tags?page=1&name=${{ needs.check-requirements.outputs.version-str }}| ${{ needs.check-requirements.outputs.version-str }}>\n"
+                  }
                 },
                 {
                   "type": "section",
@@ -253,6 +257,3 @@ jobs:
                 }
               ]
             }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.RELEASES_PROD_SLACK_WEBHOOK_URL }}
-          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
