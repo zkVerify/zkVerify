@@ -3767,7 +3767,8 @@ dependencies = [
 
 [[package]]
 name = "ezkl-no-std"
-version = "0.1.0"
+version = "0.1.1"
+source = "git+https://github.com/zkVerify/ezkl_verifier.git?branch=dr/hardening#e12eb2779404427de68fa6326d0167bd49209887"
 dependencies = [
  "ark-bn254 0.5.0",
  "ark-bn254-ext",
@@ -9856,6 +9857,7 @@ checksum = "7edddbd0b52d732b21ad9a5fab5c704c14cd949e5e9a1ec5929a24fded1b904c"
 [[package]]
 name = "plonky2"
 version = "1.0.2"
+source = "git+https://github.com/zkVerify/plonky2.git?branch=dr/more_key_validation#cfce1ca668f179237dd3ef67ebcf3d6ed81ca755"
 dependencies = [
  "anyhow",
  "hashbrown 0.15.5",
@@ -9875,7 +9877,7 @@ dependencies = [
 [[package]]
 name = "plonky2-verifier"
 version = "0.2.1"
-source = "git+https://github.com/zkVerify/plonky2-verifier?tag=v0.2.1#59a390d42ae19985cf20e8d13595c0649be4967d"
+source = "git+https://github.com/zkVerify/plonky2-verifier?branch=dr/update_plonky2#64be25be1d30d14401d825cf834b2007c26eda83"
 dependencies = [
  "plonky2",
  "serde",
@@ -9886,6 +9888,7 @@ dependencies = [
 [[package]]
 name = "plonky2_field"
 version = "1.0.0"
+source = "git+https://github.com/zkVerify/plonky2.git?branch=dr/more_key_validation#cfce1ca668f179237dd3ef67ebcf3d6ed81ca755"
 dependencies = [
  "anyhow",
  "itertools 0.11.0",
@@ -9901,10 +9904,12 @@ dependencies = [
 [[package]]
 name = "plonky2_maybe_rayon"
 version = "1.0.0"
+source = "git+https://github.com/zkVerify/plonky2.git?branch=dr/more_key_validation#cfce1ca668f179237dd3ef67ebcf3d6ed81ca755"
 
 [[package]]
 name = "plonky2_util"
 version = "1.0.0"
+source = "git+https://github.com/zkVerify/plonky2.git?branch=dr/more_key_validation#cfce1ca668f179237dd3ef67ebcf3d6ed81ca755"
 
 [[package]]
 name = "polkadot-approval-distribution"
@@ -16601,6 +16606,7 @@ checksum = "b1dd07eb858a2067e2f3c7155d54e929265c264e6f37efe3ee7a8d1b5a1dd0ba"
 [[package]]
 name = "tee-verifier"
 version = "0.3.0"
+source = "git+https://github.com/zkVerify/tee-verifier.git?branch=dr/pubs_validation#63e1b386159e00790492af851ee2f6cea19ef297"
 dependencies = [
  "asn1_der",
  "chrono",
