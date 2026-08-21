@@ -30,7 +30,6 @@ use plonky2::field::extension::Extendable;
 use plonky2::hash::hash_types::RichField;
 use plonky2::plonk::circuit_data::CircuitConfig;
 use plonky2::plonk::config::{GenericConfig, KeccakGoldilocksConfig, PoseidonGoldilocksConfig};
-use plonky2::util::serialization::{Buffer, Read as _};
 use plonky2_verifier::validate::ValidateError;
 use plonky2_verifier::{deserialize_vk, verify};
 
@@ -191,10 +190,11 @@ where
     C: GenericConfig<D, F = F>,
 {
     let data = deserialize_vk::<F, C, D>(vk).map_err(|_| VerifyError::InvalidVerificationKey)?;
-    Ok((
-        data.common.fri_params.degree_bits,
-        Buffer::proof_size::<F, C, D>(&data.common),
-    ))
+    let proof_size = data
+        .common
+        .proof_size::<C>()
+        .ok_or(VerifyError::InvalidVerificationKey)?;
+    Ok((data.common.fri_params.degree_bits, proof_size))
 }
 
 fn validate_vk_inner<F, C, const D: usize>(vk: &[u8]) -> plonky2_verifier::ValidateResult
