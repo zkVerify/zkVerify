@@ -20,9 +20,9 @@ async function run(nodeName, networkInfo, _args) {
   const api = await init_api(zombie, nodeName, networkInfo);
   
   // Signature generated with https://etherscan.io/verifiedSignatures#
-    const ss58Prefix = 251;
-    // Dest address: xpkQVjJtgK2jwbAkNLEPnWxxuxmBkaLtie7oug3WuRBSZXHz8
-    const eth_signature = '0x3485f6726eb2efee5356f3b5bdd4df6287c70a73e2b3b9b82e54d8df5395421543456d948bff2109db8fc2342bf4cdc424f70c0161091ff83cb68227a32713e81c';
+  const ss58Prefix = 251;
+  // Dest address: xpkQVjJtgK2jwbAkNLEPnWxxuxmBkaLtie7oug3WuRBSZXHz8
+  const eth_signature = '0x3485f6726eb2efee5356f3b5bdd4df6287c70a73e2b3b9b82e54d8df5395421543456d948bff2109db8fc2342bf4cdc424f70c0161091ff83cb68227a32713e81c';
 
   // Check token claim pallet account exists
   const palletAddressOption = await api.query.tokenClaim.palletAccountId();
