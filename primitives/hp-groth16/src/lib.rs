@@ -165,9 +165,7 @@ mod should {
             let (proof, vk, mut inputs) = dummy_circuit::get_instance::<E>(10, None);
             // tamper input so that it overflows scalar modulus
             for v in &mut inputs {
-                for byte in &mut v.0 {
-                    *byte = 0xff;
-                }
+                v.0.fill(0xff);
             }
 
             assert_eq!(

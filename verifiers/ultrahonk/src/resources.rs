@@ -91,9 +91,9 @@ pub fn get_parameterized_test_data(test_params: TestParams) -> Result<TestData, 
             let versioned_proof = crate::VersionedProof::V3_0(proof);
             let pubs = raw_test_data
                 .pubs
-                .chunks_exact(crate::PUB_SIZE)
-                .map(|c| c.try_into().unwrap())
-                .collect();
+                .as_chunks::<{ crate::PUB_SIZE }>()
+                .0
+                .to_vec();
 
             Ok(TestData {
                 versioned_vk,
@@ -124,9 +124,9 @@ pub fn get_parameterized_test_data(test_params: TestParams) -> Result<TestData, 
             };
             let pubs = raw_test_data
                 .pubs
-                .chunks_exact(crate::PUB_SIZE)
-                .map(|c| c.try_into().unwrap())
-                .collect();
+                .as_chunks::<{ crate::PUB_SIZE }>()
+                .0
+                .to_vec();
 
             Ok(TestData {
                 versioned_vk,

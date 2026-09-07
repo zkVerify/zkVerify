@@ -78,9 +78,7 @@ mod reject {
     #[apply(curves)]
     fn malformed_inputs(curve: Curve) {
         let (proof, vk, mut inputs) = groth16::Groth16::get_instance(1, Some(0), curve);
-        for byte in &mut inputs[0].0 {
-            *byte = 0xff;
-        }
+        inputs[0].0.fill(0xff);
 
         assert_eq!(
             Groth16::<Mock>::verify_proof(&vk, &proof, &inputs),
