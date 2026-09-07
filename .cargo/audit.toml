@@ -34,6 +34,19 @@ ignore = [
     # "Specific to implementations using the wasi:http/types.fields resource in wasmtime-wasi-http."
     # We do not use wasmtime-wasi-http (not present in Cargo.lock) — wasmtime is used only for
     # Substrate PVF/runtime Wasm execution, so we are unaffected.
+    "RUSTSEC-2026-0269", # HIGH — WASI filesystem sandbox escape with trailing slashes.
+    # https://rustsec.org/advisories/RUSTSEC-2026-0269 ->
+    # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-vqjp-4c8c-hfgg
+    # Per the advisory: "Wasmtime's filesystem implementation provided in the `wasmtime-wasi` crate
+    # contained a bug which allowed guests to escape their filesystem sandbox". The root cause is
+    # the cap-std advisory GHSA-hp8f-xmx4-4qrg. Neither `wasmtime-wasi` nor `cap-std` (nor
+    # `wasi-common`) is present in Cargo.lock: sc-executor-wasmtime v0.43.0 pulls wasmtime with
+    # `default-features = false` and only the addr2line/cache/cranelift/demangle/gc/gc-null/
+    # parallel-compilation/pooling-allocator/profiling/threads features — no WASI at all. wasmtime
+    # is used exclusively to execute Substrate PVF/runtime Wasm blobs, which get no filesystem
+    # access whatsoever. Unaffected.
+    # No patched 35.x release exists (fixes are in 24.0.13/36.0.14/46.0.3/47.0.4) and
+    # sc-executor-wasmtime 0.43.0 requires wasmtime "35.0.0", pinned by polkadot-sdk stable2512.
     "RUSTSEC-2026-0114", # wasmtime v35.0.0 — panic when allocating oversized table (MEDIUM, DoS only).
     # https://rustsec.org/advisories/RUSTSEC-2026-0114 ->
     # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-p8xm-42r7-89xg
