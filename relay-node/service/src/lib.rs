@@ -70,7 +70,11 @@ pub use {
     sp_consensus_babe::BabeApi,
 };
 
-use std::{path::PathBuf, sync::Arc};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+    time::Instant,
+};
 
 use prometheus_endpoint::Registry;
 pub use sc_service as service;
@@ -228,6 +232,9 @@ pub enum Error {
         node_version: String,
         worker_path: PathBuf,
     },
+
+    #[error("Failed to prewarm Kimchi native verifier parameters: {0:?}")]
+    KimchiNativePrewarm(native::VerifyError),
 }
 
 /// Identifies the variant of the chain.
@@ -348,11 +355,30 @@ pub fn open_database(db_source: &DatabaseSource) -> Result<Arc<dyn Database>, Er
     Ok(parachains_db)
 }
 
+/// Prepare all consensus-supported native verifier parameters before block execution.
+pub fn prewarm_native_verifier_parameters(base_path: &Path) -> Result<(), Error> {
+    let cache_root = base_path.join("native-verifier-parameters");
+    let started_at = Instant::now();
+    log::info!(
+        "Prewarming Kimchi native verifier parameters for Vesta SRS 2^16 using cache {}",
+        cache_root.display()
+    );
+    let status =
+        native::vesta::prewarm_vesta16_srs(&cache_root).map_err(Error::KimchiNativePrewarm)?;
+    log::info!(
+        "Prewarmed Kimchi native verifier parameters in {:?} ({status:?})",
+        started_at.elapsed(),
+    );
+
+    Ok(())
+}
+
 #[cfg(feature = "full-node")]
 macro_rules! chain_ops {
     ($config:expr, $telemetry_worker_handle:expr) => {{
         let telemetry_worker_handle = $telemetry_worker_handle;
         let mut config = $config;
+        prewarm_native_verifier_parameters(config.base_path.path())?;
         let basics = new_partial_basics(config, telemetry_worker_handle)?;
 
         use ::sc_consensus::LongestChain;

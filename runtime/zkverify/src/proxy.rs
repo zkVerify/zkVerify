@@ -60,6 +60,7 @@ impl ProxyType {
                 | RuntimeCall::SettlementUltraplonkPallet(
                     pallet_verifiers::Call::submit_proof { .. }
                 )
+                | RuntimeCall::SettlementKimchiPallet(pallet_verifiers::Call::submit_proof { .. })
                 | RuntimeCall::SettlementPlonky2Pallet(pallet_verifiers::Call::submit_proof { .. })
                 | RuntimeCall::SettlementSp1Pallet(pallet_verifiers::Call::submit_proof { .. })
                 | RuntimeCall::SettlementTeePallet(pallet_verifiers::Call::submit_proof { .. })
@@ -103,6 +104,7 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
                 RuntimeCall::SettlementRisc0Pallet(..) |
                 RuntimeCall::SettlementUltrahonkPallet(..) |
                 RuntimeCall::SettlementUltraplonkPallet(..) |
+                RuntimeCall::SettlementKimchiPallet(..) |
                 RuntimeCall::SettlementPlonky2Pallet(..) |
                 RuntimeCall::SettlementSp1Pallet(..) |
                 RuntimeCall::SettlementTeePallet(..)

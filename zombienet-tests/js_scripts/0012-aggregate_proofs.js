@@ -27,6 +27,7 @@ const { init_api, submitProof, receivedEvents, registerDomain, sudoRegisterDomai
 const { PROOF: EZKL_PROOF, PUBS: EZKL_PUBS, VK: EZKL_VK } = require('./ezkl_data.js');
 const { PROOF: FFLONK_PROOF, PUBS: FFLONK_PUBS, VK: FFLONK_VK } = require('./fflonk_data.js');
 const { PROOF: GROTH16_PROOF, PUBS: GROTH16_PUBS, VK: GROTH16_VK } = require('./groth16_data.js');
+const { PROOF: KIMCHI_PROOF, PUBS: KIMCHI_PUBS, VK: KIMCHI_VK } = require('./kimchi_data.js');
 const { PROOF: RISC0_V2_2_PROOF, PUBS: RISC0_V2_2_PUBS, VK: RISC0_V2_2_VK } = require('./risc0_v2_2_data.js');
 const { PROOF: RISC0_V3_0_PROOF, PUBS: RISC0_V3_0_PUBS, VK: RISC0_V3_0_VK } = require('./risc0_v3_0_data.js');
 const { ZK_PROOF: ULTRAHONK_V0_84_ZK_PROOF, PLAIN_PROOF: ULTRAHONK_V0_84_PLAIN_PROOF, PUBS: ULTRAHONK_V0_84_PUBS, VK: ULTRAHONK_V0_84_VK } = require('./ultrahonk_v0_84_data.js');
@@ -74,6 +75,11 @@ async function run(nodeName, networkInfo, _args) {
             name: "Groth16",
             pallet: api.tx.settlementGroth16Pallet,
             args: [{ 'Vk': GROTH16_VK }, GROTH16_PROOF, GROTH16_PUBS],
+        },
+        {
+            name: "Kimchi",
+            pallet: api.tx.settlementKimchiPallet,
+            args: [{ 'Vk': KIMCHI_VK }, KIMCHI_PROOF, KIMCHI_PUBS],
         },
         {
             name: "Ultrahonk.V.3.0 (ZK)",
@@ -163,11 +169,11 @@ async function run(nodeName, networkInfo, _args) {
             verifier.domain_id = verifier.data.events[0].data[1];
             verifier.aggregation_id = verifier.data.events[0].data[2];
             proofHashesArray.push(verifier.statementHash);
+            AggregationComplete = AggregationComplete.concat(verifier.data.events.filter((event) => event.section === 'aggregate' && event.method === 'AggregationComplete'));
         } else {
             console.log(`${verifier.name} proof submission failed`);
             failed = true;
         }
-        AggregationComplete = AggregationComplete.concat(verifier.data.events.filter((event) => event.section === 'aggregate' && event.method === 'AggregationComplete'));
     }
 
     if (failed) {
@@ -422,4 +428,3 @@ function verifyProof(proof, publishedRoot) {
 }
 
 module.exports = { run }
-

@@ -116,6 +116,10 @@ mod weights;
 pub use configs::*;
 
 pub(crate) mod weight_aliases {
+    pub mod pallet_kimchi_verifier_verify_proof {
+        pub use pallet_kimchi_verifier::WeightInfoVerifyProof as WeightInfo;
+    }
+
     pub mod pallet_plonky2_verifier_verify_proof {
         pub use pallet_plonky2_verifier::WeightInfoVerifyProof as WeightInfo;
     }
@@ -1125,6 +1129,47 @@ impl pallet_verifiers::Config<UltraplonkVerifier> for Runtime {
     type Currency = Balances;
 }
 
+// Consensus limits for the Vesta16 Kimchi verification profile.
+parameter_types! {
+    pub const KimchiMaxPubs: u32 = 1024;
+}
+
+parameter_types! {
+    pub const KimchiMaxProofSize: u32 = 262_144;
+    pub const KimchiMaxVkSize: u32 = 65_536;
+}
+
+impl pallet_kimchi_verifier::Config for Runtime {
+    type MaxProofSize = KimchiMaxProofSize;
+    type MaxPubs = KimchiMaxPubs;
+    type MaxVkSize = KimchiMaxVkSize;
+    type WeightInfo = weights::pallet_kimchi_verifier_verify_proof::ZKVWeight<Runtime>;
+}
+
+const_assert!(
+    KimchiMaxProofSize::get() as usize
+        <= pallet_kimchi_verifier::KimchiProfileId::Vesta16.max_proof_size()
+);
+const_assert!(
+    KimchiMaxPubs::get() as usize
+        <= pallet_kimchi_verifier::KimchiProfileId::Vesta16.max_public_inputs()
+);
+const_assert!(
+    KimchiMaxVkSize::get() as usize
+        <= pallet_kimchi_verifier::KimchiProfileId::Vesta16.max_vk_size()
+);
+
+pub type KimchiVerifier = pallet_kimchi_verifier::Kimchi<Runtime>;
+
+impl pallet_verifiers::Config<KimchiVerifier> for Runtime {
+    type OnProofVerified = Aggregate;
+    type Ticket = VkRegistrationHoldConsideration;
+    type WeightInfo =
+        pallet_kimchi_verifier::KimchiWeight<weights::pallet_kimchi_verifier::ZKVWeight<Runtime>>;
+    #[cfg(feature = "runtime-benchmarks")]
+    type Currency = Balances;
+}
+
 parameter_types! {
     pub const Plonky2MaxPubsSize: u32 = 512; // eq of 64 public inputs
     pub const Plonky2MaxProofSize: u32 = 262_144;
@@ -1242,6 +1287,7 @@ construct_runtime!(
         SettlementUltrahonkPallet: pallet_ultrahonk_verifier = 168,
         SettlementEzklPallet: pallet_ezkl_verifier = 169,
         SettlementTeePallet: pallet_tee_verifier = 170,
+        SettlementKimchiPallet: pallet_kimchi_verifier = 171,
     }
 );
 
@@ -1337,6 +1383,8 @@ mod benches {
         [pallet_ezkl_verifier, EzklVerifierBench::<Runtime>]
         [pallet_fflonk_verifier, FflonkVerifierBench::<Runtime>]
         [pallet_groth16_verifier, Groth16VerifierBench::<Runtime>]
+        [pallet_kimchi_verifier, KimchiVerifierBench::<Runtime>]
+        [pallet_kimchi_verifier_verify_proof, KimchiVerifierVerifyProofBench::<Runtime>]
         [pallet_risc0_verifier, Risc0VerifierBench::<Runtime>]
         [pallet_risc0_verifier_verify_proof, Risc0VerifierVerifyProofBench::<Runtime>]
         [pallet_risc0_verifier_extend, Risc0VerifierExtendBench::<Runtime>]
@@ -1926,6 +1974,8 @@ impl_runtime_apis! {
             use pallet_session_benchmarking::Pallet as SessionBench;
             use pallet_fflonk_verifier::benchmarking::Pallet as FflonkVerifierBench;
             use pallet_groth16_verifier::benchmarking::Pallet as Groth16VerifierBench;
+            use pallet_kimchi_verifier::benchmarking::Pallet as KimchiVerifierBench;
+            use pallet_kimchi_verifier::benchmarking_verify_proof::Pallet as KimchiVerifierVerifyProofBench;
             use pallet_risc0_verifier::benchmarking::Pallet as Risc0VerifierBench;
             use pallet_risc0_verifier::benchmarking_verify_proof::Pallet as Risc0VerifierVerifyProofBench;
             use pallet_risc0_verifier::extend_benchmarking::Pallet as Risc0VerifierExtendBench;
@@ -1965,6 +2015,8 @@ impl_runtime_apis! {
             use pallet_ezkl_verifier::benchmarking::Pallet as EzklVerifierBench;
             use pallet_fflonk_verifier::benchmarking::Pallet as FflonkVerifierBench;
             use pallet_groth16_verifier::benchmarking::Pallet as Groth16VerifierBench;
+            use pallet_kimchi_verifier::benchmarking::Pallet as KimchiVerifierBench;
+            use pallet_kimchi_verifier::benchmarking_verify_proof::Pallet as KimchiVerifierVerifyProofBench;
             use pallet_risc0_verifier::benchmarking::Pallet as Risc0VerifierBench;
             use pallet_risc0_verifier::benchmarking_verify_proof::Pallet as Risc0VerifierVerifyProofBench;
             use pallet_risc0_verifier::extend_benchmarking::Pallet as Risc0VerifierExtendBench;
