@@ -39,8 +39,8 @@ use sp_core::{crypto::KeyTypeId, Get, OpaqueMetadata, H256};
 use sp_runtime::{
     generic, impl_opaque_keys,
     traits::{
-        AccountIdConversion, BlakeTwo256, Block as BlockT, Bounded, ConvertInto, IdentityLookup,
-        NumberFor, One, OpaqueKeys,
+        AccountIdConversion, BlakeTwo256, Block as BlockT, BlockNumberProvider, Bounded,
+        ConvertInto, IdentityLookup, NumberFor, One, OpaqueKeys, SaturatedConversion,
     },
     transaction_validity::{TransactionSource, TransactionValidity},
     ApplyExtrinsicResult, FixedPointNumber, MultiSignature, MultiSigner, Perquintill,
@@ -295,6 +295,24 @@ parameter_types! {
         WithdrawReasons::except(WithdrawReasons::TRANSFER | WithdrawReasons::RESERVE);
 }
 
+// Provides a stable height reference even in case of missed blocks
+pub struct SlotDiffNumber();
+impl BlockNumberProvider for SlotDiffNumber {
+    type BlockNumber = BlockNumber;
+
+    fn current_block_number() -> Self::BlockNumber {
+        u64::from(Babe::current_slot())
+            .saturating_sub(u64::from(Babe::genesis_slot()))
+            .saturated_into()
+    }
+
+    #[cfg(feature = "runtime-benchmarks")]
+    fn set_block_number(block: Self::BlockNumber) {
+        let slot = u64::from(Babe::genesis_slot()).saturating_add(block.into());
+        pallet_babe::CurrentSlot::<Runtime>::put(sp_consensus_babe::Slot::from(slot));
+    }
+}
+
 impl pallet_vesting::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type Currency = Balances;
@@ -302,7 +320,7 @@ impl pallet_vesting::Config for Runtime {
     type MinVestedTransfer = MinVestedTransfer;
     type WeightInfo = weights::pallet_vesting::ZKVWeight<Runtime>;
     type UnvestedFundsAllowedWithdrawReasons = UnvestedFundsAllowedWithdrawReasons;
-    type BlockNumberProvider = System;
+    type BlockNumberProvider = SlotDiffNumber;
     const MAX_VESTING_SCHEDULES: u32 = 28;
 }
 
