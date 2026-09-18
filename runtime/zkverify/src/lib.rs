@@ -296,19 +296,17 @@ parameter_types! {
 }
 
 // Provides a stable height reference even in case of missed blocks
-pub struct SlotDiffNumber();
-impl BlockNumberProvider for SlotDiffNumber {
+pub struct SlotNumber();
+impl BlockNumberProvider for SlotNumber {
     type BlockNumber = BlockNumber;
 
     fn current_block_number() -> Self::BlockNumber {
-        u64::from(Babe::current_slot())
-            .saturating_sub(u64::from(Babe::genesis_slot()))
-            .saturated_into()
+        u64::from(Babe::current_slot()).saturated_into()
     }
 
     #[cfg(feature = "runtime-benchmarks")]
     fn set_block_number(block: Self::BlockNumber) {
-        let slot = u64::from(Babe::genesis_slot()).saturating_add(block.into());
+        let slot: u64 = block.into();
         pallet_babe::CurrentSlot::<Runtime>::put(sp_consensus_babe::Slot::from(slot));
     }
 }
@@ -320,7 +318,7 @@ impl pallet_vesting::Config for Runtime {
     type MinVestedTransfer = MinVestedTransfer;
     type WeightInfo = weights::pallet_vesting::ZKVWeight<Runtime>;
     type UnvestedFundsAllowedWithdrawReasons = UnvestedFundsAllowedWithdrawReasons;
-    type BlockNumberProvider = SlotDiffNumber;
+    type BlockNumberProvider = SlotNumber;
     const MAX_VESTING_SCHEDULES: u32 = 28;
 }
 
