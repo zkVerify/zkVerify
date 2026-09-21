@@ -1,0 +1,15 @@
+Description: Testing that vesting schedules advance with the wall clock (absolute BABE slots), not with the block count
+Network: ./network_defs/single_node.toml
+Creds: config
+
+alice: is up
+
+alice: reports node_roles is 4
+
+### Babe::CurrentSlot is ValueQuery and stays 0 until the first block is
+### authored: wait for it, otherwise the script reads slot 0 and the
+### wall-clock assertions fail spuriously.
+alice: reports block height is at least 1 within 60 seconds
+
+### Javascript test invocation
+alice: js-script ./js_scripts/0016-vesting_wall_clock.js return is equal to 1 within 300 seconds
