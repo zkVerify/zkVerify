@@ -16,8 +16,8 @@
 #![cfg(feature = "runtime-benchmarks")]
 
 use crate::{
-    resources::{get_parameterized_test_data, TestData, TestParams},
-    ProofType, ProtocolVersion, Ultrahonk as Verifier, MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
+    resources::{get_parameterized_test_data, TestData, TestParams, MAX_FIXTURE_LOG_CIRCUIT_SIZE},
+    ProofType, ProtocolVersion, Ultrahonk as Verifier,
 };
 use frame_benchmarking::v2::*;
 use frame_system::RawOrigin;
@@ -39,9 +39,9 @@ pub mod benchmarks {
     #[benchmark]
     fn get_vk() {
         let test_params = TestParams::new(
-            MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
+            MAX_FIXTURE_LOG_CIRCUIT_SIZE,
             ProofType::ZK,
-            ProtocolVersion::V3_0,
+            ProtocolVersion::V5_0,
         );
         let TestData { versioned_vk, .. } = get_parameterized_test_data(test_params).unwrap();
         let hash = sp_core::H256::repeat_byte(2);
@@ -59,9 +59,9 @@ pub mod benchmarks {
     #[benchmark]
     fn validate_vk() {
         let test_params = TestParams::new(
-            MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
+            MAX_FIXTURE_LOG_CIRCUIT_SIZE,
             ProofType::ZK,
-            ProtocolVersion::V3_0,
+            ProtocolVersion::V5_0,
         );
         let TestData { versioned_vk, .. } = get_parameterized_test_data(test_params).unwrap();
 
@@ -76,9 +76,9 @@ pub mod benchmarks {
     #[benchmark]
     fn compute_statement_hash() {
         let test_params = TestParams::new(
-            MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
+            MAX_FIXTURE_LOG_CIRCUIT_SIZE,
             ProofType::ZK,
-            ProtocolVersion::V3_0,
+            ProtocolVersion::V5_0,
         );
         let TestData {
             versioned_vk,
@@ -99,9 +99,9 @@ pub mod benchmarks {
         // setup code
         let caller = funded_account::<T>();
         let test_params = TestParams::new(
-            MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
+            MAX_FIXTURE_LOG_CIRCUIT_SIZE,
             ProofType::ZK,
-            ProtocolVersion::V3_0,
+            ProtocolVersion::V5_0,
         );
         let TestData { versioned_vk, .. } = get_parameterized_test_data(test_params).unwrap();
 
@@ -118,9 +118,9 @@ pub mod benchmarks {
         let caller = funded_account::<T>();
         let hash = sp_core::H256::repeat_byte(2);
         let test_params = TestParams::new(
-            MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
+            MAX_FIXTURE_LOG_CIRCUIT_SIZE,
             ProofType::ZK,
-            ProtocolVersion::V3_0,
+            ProtocolVersion::V5_0,
         );
         let TestData { versioned_vk, .. } = get_parameterized_test_data(test_params).unwrap();
 

@@ -24,8 +24,7 @@ hex-literal = { workspace = true }
 native = { workspace = true }
 sp-io = { workspace = true }
 sp-runtime = { workspace = true }
-ultrahonk-no-std-v0_84 = { workspace = true }
-ultrahonk-no-std-v3_0 = { workspace = true }
+ultrahonk-no-std-v5_0 = { workspace = true }
 
 [dev-dependencies]
 hex-literal = { workspace = true }
@@ -50,8 +49,7 @@ std = [
 	"sp-core/std",
 	"sp-io/std",
 	"sp-runtime/std",
-	"ultrahonk-no-std-v0_84/std",
-	"ultrahonk-no-std-v3_0/std",
+	"ultrahonk-no-std-v5_0/std",
 ]
 default = [ "std" ]
 try-runtime = [
