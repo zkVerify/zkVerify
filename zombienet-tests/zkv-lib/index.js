@@ -33,7 +33,8 @@ zkvTypes = {
     _enum: {
       V0_84: 'Bytes',
       V3_0: 'Bytes',
-      Legacy: 'Bytes'
+      Legacy: 'Bytes',
+      V5_0: 'Bytes'
     }
   },
   FflonkVk: {
