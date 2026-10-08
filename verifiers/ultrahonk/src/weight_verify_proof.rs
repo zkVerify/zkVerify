@@ -44,6 +44,9 @@
 // --template
 // /home/dimitris/current_sprint/zkVerify/relay-node/benchmarks/zkv-pallets-weight-template.hbs
 
+// NOTE: the V5_0 numbers below are carried over from the V3_0 benchmarks and must be
+// regenerated on the reference machine before release.
+
 #![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
 #![allow(unused_imports)]
@@ -55,16 +58,14 @@ use core::marker::PhantomData;
 
 /// Weight functions needed for `pallet_ultrahonk_verifier_verify_proof`.
 pub trait WeightInfo {
-    fn verify_zk_proof_v3_0(n: u32, ) -> Weight;
-    fn verify_plain_proof_v3_0(n: u32, ) -> Weight;
-    fn verify_zk_proof_v0_84() -> Weight;
-    fn verify_plain_proof_v0_84() -> Weight;
+    fn verify_zk_proof_v5_0(n: u32, ) -> Weight;
+    fn verify_plain_proof_v5_0(n: u32, ) -> Weight;
 }
 
 // For backwards compatibility and tests.
 impl WeightInfo for () {
     /// The range of component `n` is `[7, 25]`.
-    fn verify_zk_proof_v3_0(n: u32, ) -> Weight {
+    fn verify_zk_proof_v5_0(n: u32, ) -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `0`
         //  Estimated: `0`
@@ -74,7 +75,7 @@ impl WeightInfo for () {
             .saturating_add(Weight::from_parts(66_697_610, 0).saturating_mul(n.into()))
     }
     /// The range of component `n` is `[7, 25]`.
-    fn verify_plain_proof_v3_0(n: u32, ) -> Weight {
+    fn verify_plain_proof_v5_0(n: u32, ) -> Weight {
         // Proof Size summary in bytes:
         //  Measured:  `0`
         //  Estimated: `0`
@@ -82,19 +83,5 @@ impl WeightInfo for () {
         Weight::from_parts(6_345_016_546, 0)
             // Standard Error: 2_042_332
             .saturating_add(Weight::from_parts(43_412_888, 0).saturating_mul(n.into()))
-    }
-    fn verify_zk_proof_v0_84() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 7_733_681_000 picoseconds.
-        Weight::from_parts(8_918_319_000, 0)
-    }
-    fn verify_plain_proof_v0_84() -> Weight {
-        // Proof Size summary in bytes:
-        //  Measured:  `0`
-        //  Estimated: `0`
-        // Minimum execution time: 7_351_139_000 picoseconds.
-        Weight::from_parts(8_166_412_000, 0)
     }
 }
