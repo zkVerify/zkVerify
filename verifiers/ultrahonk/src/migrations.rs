@@ -48,7 +48,7 @@ mod v1 {
     /// Migration-only struct mirroring `VkEntry<[u8; VK_SIZE]>` with accessible fields.
     #[derive(Decode, Encode)]
     pub struct OldVkEntry {
-        pub vk: [u8; ultrahonk_no_std_v0_84::VK_SIZE],
+        pub vk: [u8; crate::VK_SIZE_V0_84],
         pub ref_count: u64,
     }
 
@@ -242,11 +242,14 @@ mod tests {
     }
 
     /// Build raw VK bytes from test data resources.
-    fn test_vk_bytes() -> [u8; ultrahonk_no_std_v0_84::VK_SIZE] {
+    fn test_vk_bytes() -> [u8; crate::VK_SIZE_V0_84] {
         use crate::resources::{get_parameterized_test_data, TestParams};
         use crate::ProofType;
-        let test_data = get_parameterized_test_data(TestParams::new_legacy(ProofType::Plain))
-            .expect("test data should be available");
+        let test_data = get_parameterized_test_data(TestParams::new_deprecated(
+            ProofType::Plain,
+            crate::ProtocolVersion::Legacy,
+        ))
+        .expect("test data should be available");
         match test_data.versioned_vk {
             VersionedVk::Legacy(bytes) => bytes,
             _ => panic!("Expected Legacy variant from test data"),
@@ -255,7 +258,7 @@ mod tests {
 
     /// Compute the V1 hash for raw VK bytes: SHA2-256 of the raw bytes
     /// (matches pre-versioning code at commit 113a728c).
-    fn v1_vk_hash(raw_vk: &[u8; ultrahonk_no_std_v0_84::VK_SIZE]) -> H256 {
+    fn v1_vk_hash(raw_vk: &[u8; crate::VK_SIZE_V0_84]) -> H256 {
         sp_io::hashing::sha2_256(raw_vk).into()
     }
 
