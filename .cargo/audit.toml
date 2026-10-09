@@ -79,6 +79,14 @@ ignore = [
     "RUSTSEC-2026-0085", # MEDIUM — Panic when lifting `flags` component value.
     # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-m758-wjhj-p3jq
     # Component model only. Unaffected.
+    "RUSTSEC-2026-0316", # LOW — Dynamic record lifting can allocate beyond the hostcall fuel limit.
+    # https://rustsec.org/advisories/RUSTSEC-2026-0316 ->
+    # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-jqpg-j7w6-42pr
+    # Affects only the dynamically-typed component model `Val` API. sc-executor-wasmtime v0.43.0
+    # pulls wasmtime with `default-features = false` and without the `component-model` feature
+    # (no wasmtime-component-* crate in Cargo.lock), so that API is not even compiled. Unaffected.
+    # No patched 35.x release exists (fixes are in 36.0.16/48.0.3/49.0.1) and
+    # sc-executor-wasmtime 0.43.0 requires wasmtime "35.0.0", pinned by polkadot-sdk stable2512.
     "RUSTSEC-2026-0096", # CRITICAL — Miscompiled guest heap access on aarch64 Cranelift.
     # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-jhxm-h53p-jm7w
     # Requires ALL of: (1) 64-bit Wasm linear memory (`Config::wasm_memory64` enabled),
