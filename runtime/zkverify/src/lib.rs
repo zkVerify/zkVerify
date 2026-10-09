@@ -75,8 +75,8 @@ use frame_support::{
     traits::{
         fungible::HoldConsideration,
         tokens::{imbalance::ResolveTo, PayFromAccount, UnityAssetBalanceConversion},
-        ConstU32, ConstU64, ConstU8, EqualPrivilegeOnly, KeyOwnerProofSystem, LinearStoragePrice,
-        Time, WithdrawReasons,
+        ConstU32, ConstU64, ConstU8, Contains, EqualPrivilegeOnly, KeyOwnerProofSystem,
+        LinearStoragePrice, Time, WithdrawReasons,
     },
     weights::{constants::WEIGHT_REF_TIME_PER_SECOND, ConstantMultiplier, Weight},
     Blake2_128Concat, Identity as IdentityT, PalletId, StorageHasher,
@@ -215,6 +215,8 @@ impl frame_system::Config for Runtime {
     type MaxConsumers = frame_support::traits::ConstU32<16>;
     type SystemWeightInfo = weights::frame_system::ZKVWeight<Runtime>;
     type ExtensionsWeightInfo = weights::frame_system_extensions::ZKVWeight<Runtime>;
+    /// Filter applied to all the extrinsics dispatched as non-root.
+    type BaseCallFilter = VestingStartIsSlot;
 }
 
 parameter_types! {
@@ -308,6 +310,20 @@ impl BlockNumberProvider for SlotNumber {
     fn set_block_number(block: Self::BlockNumber) {
         let slot: u64 = block.into();
         pallet_babe::CurrentSlot::<Runtime>::put(sp_consensus_babe::Slot::from(slot));
+    }
+}
+
+/// Reject vesting schedules whose start is not a sensible slot number, preventing potential confusion with block numbers.
+pub struct VestingStartIsSlot;
+impl Contains<RuntimeCall> for VestingStartIsSlot {
+    fn contains(call: &RuntimeCall) -> bool {
+        match call {
+            RuntimeCall::Vesting(
+                pallet_vesting::Call::vested_transfer { schedule, .. }
+                | pallet_vesting::Call::force_vested_transfer { schedule, .. },
+            ) => u64::from(schedule.starting_block()) >= u64::from(Babe::genesis_slot()),
+            _ => true,
+        }
     }
 }
 
