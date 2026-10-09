@@ -24,7 +24,7 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::BlockNumberFor;
 use pallet_vesting::{MaxVestingSchedulesGet, VestingInfo};
-use sp_runtime::{traits::BlockNumberProvider, SaturatedConversion, Saturating};
+use sp_runtime::{SaturatedConversion, Saturating};
 
 #[cfg(feature = "try-runtime")]
 use codec::{Decode, Encode};
@@ -32,7 +32,7 @@ use codec::{Decode, Encode};
 use frame_support::ensure;
 #[cfg(feature = "try-runtime")]
 use sp_runtime::{
-    traits::{CheckedAdd, CheckedSub, Convert},
+    traits::{BlockNumberProvider, CheckedSub, Convert},
     TryRuntimeError,
 };
 
