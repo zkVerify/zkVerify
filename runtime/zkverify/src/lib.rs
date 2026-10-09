@@ -313,15 +313,16 @@ impl BlockNumberProvider for SlotNumber {
     }
 }
 
-/// Reject vesting schedules whose start is not a sensible slot number, preventing potential confusion with block numbers.
+/// Reject vesting schedules whose start is not a sensible slot number, preventing potential
+/// confusion with block numbers.
+/// `force_vested_transfer` is not checked: it requires Root, which bypasses `BaseCallFilter`.
 pub struct VestingStartIsSlot;
 impl Contains<RuntimeCall> for VestingStartIsSlot {
     fn contains(call: &RuntimeCall) -> bool {
         match call {
-            RuntimeCall::Vesting(
-                pallet_vesting::Call::vested_transfer { schedule, .. }
-                | pallet_vesting::Call::force_vested_transfer { schedule, .. },
-            ) => u64::from(schedule.starting_block()) >= u64::from(Babe::genesis_slot()),
+            RuntimeCall::Vesting(pallet_vesting::Call::vested_transfer { schedule, .. }) => {
+                u64::from(schedule.starting_block()) >= u64::from(Babe::genesis_slot())
+            }
             _ => true,
         }
     }

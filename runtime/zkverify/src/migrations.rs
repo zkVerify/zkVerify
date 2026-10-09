@@ -43,7 +43,7 @@ type BalanceOf<T> = <<T as pallet_vesting::Config>::Currency as Currency<
 type SchedulesOf<T> =
     BoundedVec<VestingInfo<BalanceOf<T>, BlockNumberFor<T>>, MaxVestingSchedulesGet<T>>;
 
-/// Migrate the vesting schedules from block numbers to slots elapsed since genesis.
+/// Migrate the vesting schedules from block numbers to absolute BABE slots.
 ///
 /// `pallet_vesting`'s `BlockNumberProvider` moved from `frame_system` (block numbers) to
 /// [`crate::SlotNumber`] (slots numbers).
@@ -51,8 +51,13 @@ pub struct VestingConfiguration<T>(PhantomData<T>);
 
 impl<T: pallet_vesting::Config + pallet_babe::Config> VestingConfiguration<T> {
     /// Distance between the new block number provider and the old one (`frame_system`).
+    ///
+    /// BABE's genesis slot is the slot of block 1, so block `n` runs at slot
+    /// `genesis_slot + n - 1` at the earliest.
     fn offset() -> BlockNumberFor<T> {
-        u64::from(pallet_babe::Pallet::<T>::genesis_slot()).saturated_into()
+        u64::from(pallet_babe::Pallet::<T>::genesis_slot())
+            .saturating_sub(1)
+            .saturated_into()
     }
 }
 
@@ -114,7 +119,7 @@ impl<T: pallet_vesting::Config + pallet_babe::Config> OnRuntimeUpgrade for Vesti
         let elapsed_slots = now.saturating_sub(offset);
         let produced_blocks = frame_system::Pallet::<T>::block_number();
 
-        // Every schedule moves forward by _drift_ units at once, and keeps the wall clock from then on.
+        // Every schedule moves forward by _drift_ units at once, then follows the wall clock.
         let drift = elapsed_slots.saturating_sub(produced_blocks);
 
         log::info!(
@@ -138,7 +143,7 @@ impl<T: pallet_vesting::Config + pallet_babe::Config> OnRuntimeUpgrade for Vesti
                 );
                 ensure!(
                     before.starting_block().saturating_add(offset) == after.starting_block(),
-                    "VestingConfiguration: a schedule was not shifted by the genesis slot"
+                    "VestingConfiguration: a schedule was not shifted by the expected offset"
                 );
 
                 let locked_after = after.locked_at::<T::BlockNumberToBalance>(now);
