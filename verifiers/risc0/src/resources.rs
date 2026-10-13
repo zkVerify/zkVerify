@@ -71,7 +71,7 @@ pub mod v3_0 {
     pub static VALID_PROOF: &[u8] = PROOF_POSEIDON2_16;
     pub static PUBS: &[u8] = PUBS_16;
 
-    pub static PUBS_COMPOSITE_3_SLOTS: &[u8] = &hex_literal::hex!("TODO");
+    pub static PUBS_COMPOSITE_3_SLOTS: &[u8] = &hex_literal::hex!("3c00200000000000");
     pub static PROOF_COMPOSITE_3_SLOTS: &[u8] =
         include_bytes!("resources/v_3_0_poseidon2_composite_3_slots.bin");
 
