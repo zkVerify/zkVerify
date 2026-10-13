@@ -57,7 +57,7 @@ use crate::RuntimeCall;
 #[case::risc0_submit_proof(
     RuntimeCall::SettlementRisc0Pallet(pallet_verifiers::Call::submit_proof {
         vk_or_hash: Default::default(),
-        proof: pallet_risc0_verifier::Proof::V2_1(Default::default()).into(),
+        proof: pallet_risc0_verifier::Proof::V3_0(Default::default()).into(),
         pubs: Default::default(),
         domain_id: None,
     })

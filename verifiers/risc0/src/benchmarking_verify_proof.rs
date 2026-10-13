@@ -40,7 +40,7 @@ mod benchmarks {
     fn verify_proof_succinct() {
         let vk = VK;
         let inner_proof = include_bytes!("resources_benchmarking/succinct.bin").to_vec();
-        let proof = Proof::V2_1(inner_proof);
+        let proof = Proof::V3_0(inner_proof);
         let pubs = PUBS_SUCCINCT.to_vec();
 
         let r;
@@ -55,7 +55,7 @@ mod benchmarks {
     fn verify_proof_segment_poseidon2_16() {
         let vk = VK;
         let inner_proof = include_bytes!("resources_benchmarking/poseidon2_16.bin").to_vec();
-        let proof = Proof::V2_1(inner_proof);
+        let proof = Proof::V3_0(inner_proof);
         let pubs = PUBS_16.to_vec();
 
         let r;
@@ -70,7 +70,7 @@ mod benchmarks {
     fn verify_proof_segment_poseidon2_17() {
         let vk = VK;
         let inner_proof = include_bytes!("resources_benchmarking/poseidon2_17.bin").to_vec();
-        let proof = Proof::V2_1(inner_proof);
+        let proof = Proof::V3_0(inner_proof);
         let pubs = PUBS_17.to_vec();
 
         let r;
@@ -85,7 +85,7 @@ mod benchmarks {
     fn verify_proof_segment_poseidon2_18() {
         let vk = VK;
         let inner_proof = include_bytes!("resources_benchmarking/poseidon2_18.bin").to_vec();
-        let proof = Proof::V2_1(inner_proof);
+        let proof = Proof::V3_0(inner_proof);
         let pubs = PUBS_18.to_vec();
 
         let r;
@@ -100,7 +100,7 @@ mod benchmarks {
     fn verify_proof_segment_poseidon2_19() {
         let vk = VK;
         let inner_proof = include_bytes!("resources_benchmarking/poseidon2_19.bin").to_vec();
-        let proof = Proof::V2_1(inner_proof);
+        let proof = Proof::V3_0(inner_proof);
         let pubs = PUBS_19.to_vec();
 
         let r;
@@ -115,7 +115,7 @@ mod benchmarks {
     fn verify_proof_segment_poseidon2_20() {
         let vk = VK;
         let inner_proof = include_bytes!("resources_benchmarking/poseidon2_20.bin").to_vec();
-        let proof = Proof::V2_1(inner_proof);
+        let proof = Proof::V3_0(inner_proof);
         let pubs = PUBS_20.to_vec();
 
         let r;
@@ -130,7 +130,7 @@ mod benchmarks {
     fn verify_proof_segment_poseidon2_21() {
         let vk = VK;
         let inner_proof = include_bytes!("resources_benchmarking/poseidon2_21.bin").to_vec();
-        let proof = Proof::V2_1(inner_proof);
+        let proof = Proof::V3_0(inner_proof);
         let pubs = PUBS_21.to_vec();
 
         let r;

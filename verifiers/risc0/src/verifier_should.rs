@@ -31,9 +31,6 @@ impl Config for Mock {
 include!("resources.rs");
 
 #[rstest]
-#[case(&v2_1::VK, Proof::V2_1(v2_1::PROOF_SUCCINCT.to_vec()), &v2_1::PUBS_SUCCINCT)]
-#[case(&v2_1::VK, Proof::V2_1(v2_1::PROOF_POSEIDON2_16.to_vec()), &v2_1::PUBS_16)]
-#[case(&v2_1::VK, Proof::V2_1(v2_1::PROOF_POSEIDON2_22.to_vec()), &v2_1::PUBS_22)]
 #[case(&v2_2::VK, Proof::V2_2(v2_2::PROOF_SUCCINCT.to_vec()), &v2_2::PUBS_SUCCINCT)]
 #[case(&v2_2::VK, Proof::V2_2(v2_2::PROOF_POSEIDON2_16.to_vec()), &v2_2::PUBS_16)]
 #[case(&v2_2::VK, Proof::V2_2(v2_2::PROOF_POSEIDON2_22.to_vec()), &v2_2::PUBS_22)]
@@ -43,7 +40,7 @@ include!("resources.rs");
 #[case(&v3_0::VK, Proof::V3_0(v3_0::PROOF_SUCCINCT.to_vec()), &v3_0::PUBS_SUCCINCT)]
 #[case(&v3_0::VK, Proof::V3_0(v3_0::PROOF_POSEIDON2_16.to_vec()), &v3_0::PUBS_16)]
 #[case(&v3_0::VK, Proof::V3_0(v3_0::PROOF_POSEIDON2_22.to_vec()), &v3_0::PUBS_22)]
-#[case::accept_and_verify_the_upper_bound_proof(&v2_1::VK, Proof::V2_1(v2_1::PROOF_UPPER_BOUND.to_vec()), &v2_1::PUBS_UPPER_BOUND
+#[case::accept_and_verify_the_upper_bound_proof(&v3_0::VK, Proof::V3_0(v3_0::PROOF_UPPER_BOUND.to_vec()), &v3_0::PUBS_UPPER_BOUND
 )]
 fn verify_valid_proof(#[case] vk: &Vk, #[case] proof: Proof, #[case] pubs: &[u8]) {
     assert!(Risc0::<Mock>::verify_proof(vk, &proof, &pubs.to_vec()).is_ok());
@@ -54,6 +51,7 @@ fn verify_valid_proof(#[case] vk: &Vk, #[case] proof: Proof, #[case] pubs: &[u8]
 #[case(Proof::V1_1(any_mock::PROOF.to_vec()))]
 #[case(Proof::V1_2(any_mock::PROOF.to_vec()))]
 #[case(Proof::V2_0(any_mock::PROOF.to_vec()))]
+#[case(Proof::V2_1(any_mock::PROOF.to_vec()))]
 fn reject_unsupported_proof_version(#[case] proof: Proof) {
     assert_eq!(
         Risc0::<Mock>::verify_proof(&any_mock::VK, &proof, &any_mock::PUBS.to_vec()),
@@ -95,8 +93,8 @@ fn reject_unsupported_proof_version(#[case] proof: Proof) {
     H256::from(sp_io::hashing::sha2_256(b"risc0:v3.0"))
 )]
 #[case::do_not_depend_on_proof_content(
-    Proof::V2_1([0xde;16].to_vec()),
-    H256::from(sp_io::hashing::sha2_256(b"risc0:v2.1"))
+    Proof::V3_0([0xde;16].to_vec()),
+    H256::from(sp_io::hashing::sha2_256(b"risc0:v3.0"))
 )]
 fn return_the_correct_verifier_version_hash(#[case] proof: Proof, #[case] expected: H256) {
     let h = Risc0::<Mock>::verifier_version_hash(&proof);
@@ -110,23 +108,32 @@ mod reject {
     use super::*;
 
     #[test]
-    fn invalid_proof() {
-        let mut invalid_pubs = v2_1::PUBS.to_vec();
-        invalid_pubs[0] = invalid_pubs[0].wrapping_add(1);
-        let proof = Proof::V2_1(v2_1::VALID_PROOF.to_vec());
+    fn valid_proof_with_unsupported_version() {
+        let proof = Proof::V2_1(v2_1::PROOF_POSEIDON2_16.to_vec());
         assert_eq!(
-            Risc0::<Mock>::verify_proof(&v2_1::VK, &proof, &invalid_pubs),
+            Risc0::<Mock>::verify_proof(&v2_1::VK, &proof, &v2_1::PUBS_16.to_vec()),
+            Err(VerifyError::UnsupportedVersion)
+        )
+    }
+
+    #[test]
+    fn invalid_proof() {
+        let mut invalid_pubs = v3_0::PUBS.to_vec();
+        invalid_pubs[0] = invalid_pubs[0].wrapping_add(1);
+        let proof = Proof::V3_0(v3_0::VALID_PROOF.to_vec());
+        assert_eq!(
+            Risc0::<Mock>::verify_proof(&v3_0::VK, &proof, &invalid_pubs),
             Err(VerifyError::VerifyError)
         )
     }
 
     #[test]
     fn undeserializable_proof() {
-        let mut malformed_proof = v2_1::VALID_PROOF.to_vec();
+        let mut malformed_proof = v3_0::VALID_PROOF.to_vec();
         malformed_proof[0] = malformed_proof[0].wrapping_add(1);
-        let proof = Proof::V2_1(malformed_proof);
+        let proof = Proof::V3_0(malformed_proof);
         assert_eq!(
-            Risc0::<Mock>::verify_proof(&v2_1::VK, &proof, &v2_1::PUBS.to_vec()),
+            Risc0::<Mock>::verify_proof(&v3_0::VK, &proof, &v3_0::PUBS.to_vec()),
             Err(VerifyError::InvalidProofData)
         )
     }
@@ -134,9 +141,9 @@ mod reject {
     #[test]
     fn too_big_proof() {
         let too_big_proof = vec![0; Mock::max_proof_size() as usize + 1];
-        let proof = Proof::V2_1(too_big_proof);
+        let proof = Proof::V3_0(too_big_proof);
         assert_eq!(
-            Risc0::<Mock>::verify_proof(&v2_1::VK, &proof, &v2_1::PUBS.to_vec()),
+            Risc0::<Mock>::verify_proof(&v3_0::VK, &proof, &v3_0::PUBS.to_vec()),
             Err(VerifyError::InvalidProofData)
         )
     }
@@ -144,18 +151,18 @@ mod reject {
     #[test]
     fn too_big_pubs() {
         let too_big_pubs = vec![0; Mock::max_pubs_size() as usize + 1];
-        let proof = Proof::V2_1(v2_1::VALID_PROOF.to_vec());
+        let proof = Proof::V3_0(v3_0::VALID_PROOF.to_vec());
         assert_eq!(
-            Risc0::<Mock>::verify_proof(&v2_1::VK, &proof, &too_big_pubs),
+            Risc0::<Mock>::verify_proof(&v3_0::VK, &proof, &too_big_pubs),
             Err(VerifyError::InvalidInput)
         )
     }
 
     #[test]
     fn too_weight_proof() {
-        let vk = v2_1::VK;
-        let proof = Proof::V2_1(v2_1::PROOF_COMPOSITE_3_SLOTS.to_vec());
-        let pubs = v2_1::PUBS_COMPOSITE_3_SLOTS.to_vec();
+        let vk = v3_0::VK;
+        let proof = Proof::V3_0(v3_0::PROOF_COMPOSITE_3_SLOTS.to_vec());
+        let pubs = v3_0::PUBS_COMPOSITE_3_SLOTS.to_vec();
         assert!(Risc0::<Mock>::verify_proof(&vk, &proof, &pubs).is_ok());
 
         struct PassSizeButNotWeight;
@@ -169,7 +176,7 @@ mod reject {
         assert_eq!(
             Risc0::<PassSizeButNotWeight>::verify_proof(
                 &vk,
-                &Proof::V2_1(v2_1::PROOF_COMPOSITE_3_SLOTS.to_vec()),
+                &Proof::V3_0(v3_0::PROOF_COMPOSITE_3_SLOTS.to_vec()),
                 &pubs
             ),
             Err(VerifyError::InvalidProofData)
@@ -179,9 +186,9 @@ mod reject {
 
 #[test]
 fn compute_correct_weight_for_composite_proof() {
-    let vk = v2_1::VK;
-    let proof = Proof::V2_1(v2_1::PROOF_COMPOSITE_3_SLOTS.to_vec());
-    let pubs = v2_1::PUBS_COMPOSITE_3_SLOTS.to_vec();
+    let vk = v3_0::VK;
+    let proof = Proof::V3_0(v3_0::PROOF_COMPOSITE_3_SLOTS.to_vec());
+    let pubs = v3_0::PUBS_COMPOSITE_3_SLOTS.to_vec();
 
     // This proof is composed by two 2^20 segments and one 2^17 segment
     let expected = Weight::from_parts(
@@ -198,9 +205,9 @@ fn compute_correct_weight_for_composite_proof() {
 
 #[test]
 fn compute_correct_weight_for_succinct_proof() {
-    let vk = v2_1::VK;
-    let proof = Proof::V2_1(v2_1::PROOF_SUCCINCT.to_vec());
-    let pubs = v2_1::PUBS_SUCCINCT.to_vec();
+    let vk = v3_0::VK;
+    let proof = Proof::V3_0(v3_0::PROOF_SUCCINCT.to_vec());
+    let pubs = v3_0::PUBS_SUCCINCT.to_vec();
 
     // This proof is composed by two 2^20 segments and one 2^17 segment
     let expected = Weight::from_parts(
@@ -236,7 +243,7 @@ mod weight {
         let pubs = (0..pubs_size).map(|_| 22).collect::<Vec<_>>();
         assert_eq!(
             <Risc0Weight::<()> as pallet_verifiers::WeightInfo<Risc0<Mock>>>::verify_proof(
-                &Proof::V2_1(proof),
+                &Proof::V3_0(proof),
                 &pubs.to_vec()
             ),
             Mock::max_verify_proof_weight()

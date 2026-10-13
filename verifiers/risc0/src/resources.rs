@@ -22,24 +22,9 @@ pub mod v2_1 {
     pub static VK: sp_core::H256 = sp_core::H256(hex_literal::hex!(
         "8e3794e8255e7810de2be7710fe19f79e538de060f038a21b24529e28d0b744c"
     ));
-    pub static PUBS_22: &[u8] = &hex_literal::hex!("00003c0000000000");
     pub static PUBS_16: &[u8] = &hex_literal::hex!("1c40000000000000");
 
-    pub static PROOF_SUCCINCT: &[u8] = include_bytes!("resources/v_2_1_succinct_22.bin");
-    pub static PUBS_SUCCINCT: &[u8] = PUBS_22;
-
-    pub static PROOF_POSEIDON2_22: &[u8] = include_bytes!("resources/v_2_1_poseidon2_22.bin");
     pub static PROOF_POSEIDON2_16: &[u8] = include_bytes!("resources/v_2_1_poseidon2_16.bin");
-
-    pub static VALID_PROOF: &[u8] = PROOF_POSEIDON2_16;
-    pub static PUBS: &[u8] = PUBS_16;
-
-    pub static PUBS_COMPOSITE_3_SLOTS: &[u8] = &hex_literal::hex!("1a00200000000000");
-    pub static PROOF_COMPOSITE_3_SLOTS: &[u8] =
-        include_bytes!("resources/v_2_1_poseidon2_composite_3_slots.bin");
-
-    pub static PROOF_UPPER_BOUND: &[u8] = include_bytes!("resources/v_2_1_poseidon2_22.bin");
-    pub static PUBS_UPPER_BOUND: &[u8] = &hex_literal::hex!("00003c0000000000");
 }
 
 pub mod v2_2 {
@@ -82,4 +67,14 @@ pub mod v3_0 {
 
     pub static PROOF_POSEIDON2_22: &[u8] = include_bytes!("resources/v_3_0_poseidon2_22.bin");
     pub static PROOF_POSEIDON2_16: &[u8] = include_bytes!("resources/v_3_0_poseidon2_16.bin");
+
+    pub static VALID_PROOF: &[u8] = PROOF_POSEIDON2_16;
+    pub static PUBS: &[u8] = PUBS_16;
+
+    pub static PUBS_COMPOSITE_3_SLOTS: &[u8] = &hex_literal::hex!("TODO");
+    pub static PROOF_COMPOSITE_3_SLOTS: &[u8] =
+        include_bytes!("resources/v_3_0_poseidon2_composite_3_slots.bin");
+
+    pub static PROOF_UPPER_BOUND: &[u8] = PROOF_POSEIDON2_22;
+    pub static PUBS_UPPER_BOUND: &[u8] = PUBS_22;
 }
