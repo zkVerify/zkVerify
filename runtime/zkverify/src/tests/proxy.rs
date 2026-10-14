@@ -54,6 +54,14 @@ use crate::RuntimeCall;
         domain_id: None,
         })
 )]
+#[case::kimchi_submit_proof(
+    RuntimeCall::SettlementKimchiPallet(pallet_verifiers::Call::submit_proof{
+        vk_or_hash: Default::default(),
+        proof: Default::default(),
+        pubs: Default::default(),
+        domain_id: None,
+        })
+)]
 #[case::risc0_submit_proof(
     RuntimeCall::SettlementRisc0Pallet(pallet_verifiers::Call::submit_proof {
         vk_or_hash: Default::default(),
@@ -110,6 +118,11 @@ fn nontransfer_deny_extrinsic(#[case] call: RuntimeCall) {
 )]
 #[case::plonky2_submit_proof(
     RuntimeCall::SettlementPlonky2Pallet(pallet_verifiers::Call::unregister_vk{
+        vk_hash: Default::default(),
+        })
+)]
+#[case::kimchi_submit_proof(
+    RuntimeCall::SettlementKimchiPallet(pallet_verifiers::Call::unregister_vk{
         vk_hash: Default::default(),
         })
 )]

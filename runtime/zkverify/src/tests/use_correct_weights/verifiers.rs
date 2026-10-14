@@ -147,6 +147,71 @@ fn pallet_settlement_plonky2() {
 }
 
 #[test]
+fn pallet_settlement_kimchi() {
+    use pallet_kimchi_verifier::{Kimchi, KimchiProfileId, Vk, WeightInfo};
+
+    let proof = Vec::<u8>::new();
+    let pubs = Vec::<[u8; pallet_kimchi_verifier::PUB_SIZE]>::new();
+
+    assert_eq!(
+        <<Runtime as pallet_verifiers::Config<Kimchi<Runtime>>>::WeightInfo as
+        pallet_verifiers::WeightInfo<Kimchi<Runtime>>>
+        ::verify_proof(
+            &proof,
+            &pubs
+        ),
+        crate::weights::pallet_kimchi_verifier::ZKVWeight::<Runtime>::verify_proof()
+    );
+
+    assert_eq!(
+        <<Runtime as pallet_verifiers::Config<Kimchi<Runtime>>>::WeightInfo as
+        pallet_verifiers::WeightInfo<Kimchi<Runtime>>>
+        ::register_vk(
+            &Vk::new(Vec::new(), KimchiProfileId::Vesta16)
+        ),
+        crate::weights::pallet_kimchi_verifier::ZKVWeight::<Runtime>::register_vk()
+    );
+}
+
+#[test]
+fn pallet_settlement_kimchi_verify_proof() {
+    use pallet_kimchi_verifier::{WeightInfo, WeightInfoVerifyProof};
+
+    assert_eq!(
+        <Runtime as pallet_kimchi_verifier::Config>::WeightInfo::verify_proof_domain_4096_pubs_0(),
+        crate::weights::pallet_kimchi_verifier_verify_proof::ZKVWeight::<Runtime>::verify_proof_domain_4096_pubs_0()
+    );
+    assert_eq!(
+        <Runtime as pallet_kimchi_verifier::Config>::WeightInfo::verify_proof_domain_65536_pubs_0(),
+        crate::weights::pallet_kimchi_verifier_verify_proof::ZKVWeight::<Runtime>::verify_proof_domain_65536_pubs_0()
+    );
+    assert_eq!(
+        <Runtime as pallet_kimchi_verifier::Config>::WeightInfo::verify_proof_domain_131072_pubs_0(),
+        crate::weights::pallet_kimchi_verifier_verify_proof::ZKVWeight::<Runtime>::verify_proof_domain_131072_pubs_0()
+    );
+    assert_eq!(
+        <Runtime as pallet_kimchi_verifier::Config>::WeightInfo::verify_proof_domain_262144_pubs_0(),
+        crate::weights::pallet_kimchi_verifier_verify_proof::ZKVWeight::<Runtime>::verify_proof_domain_262144_pubs_0()
+    );
+    assert_eq!(
+        <Runtime as pallet_kimchi_verifier::Config>::WeightInfo::verify_proof_public_input(),
+        crate::weights::pallet_kimchi_verifier_verify_proof::ZKVWeight::<Runtime>::verify_proof_public_input()
+    );
+
+    let worst_supported_verify_proof =
+        <Runtime as pallet_kimchi_verifier::Config>::WeightInfo::verify_proof_domain_262144_pubs_0(
+        )
+        .saturating_add(
+            <Runtime as pallet_kimchi_verifier::Config>::WeightInfo::verify_proof_public_input()
+                .saturating_mul(1024),
+        );
+    assert!(
+        crate::weights::pallet_kimchi_verifier::ZKVWeight::<Runtime>::verify_proof().ref_time()
+            >= worst_supported_verify_proof.ref_time()
+    );
+}
+
+#[test]
 fn pallet_settlement_plonky2_verify_proof() {
     use pallet_plonky2_verifier::WeightInfoVerifyProof;
 

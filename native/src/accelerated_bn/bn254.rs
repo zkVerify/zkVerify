@@ -15,7 +15,7 @@
 
 //! *BN254* types and host functions.
 
-use crate::accelerated_bn::utils;
+use crate::arkworks_utils as utils;
 use ark_bn254_ext::CurveHooks;
 use ark_ec::{pairing::Pairing, CurveConfig};
 use sp_runtime_interface::pass_by::{AllocateAndReturnByCodec, PassFatPointerAndRead};

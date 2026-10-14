@@ -21,6 +21,7 @@ members = [
     "primitives/hp-groth16",
     "verifiers/fflonk",
     "verifiers/groth16",
+    "verifiers/kimchi",
     "verifiers/risc0",
     "verifiers/risc0/risc0-derive",
     "verifiers/ultrahonk",
@@ -51,14 +52,28 @@ members = [
     "patches/polkadot/node/core/pvf/common",
 ]
 
-exclude = ["utils/generate-bags/node-runtime"]
+exclude = [
+    "utils/generate-bags/node-runtime",
+    "utils/kimchi-fixture-generator",
+]
 
 [workspace.dependencies]
 anyhow = { version = "1.0", default-features = false }
+ark-ff = { version = "0.5", default-features = false }
+ark-poly = { version = "0.5", default-features = false }
+ark-serialize = { version = "0.5", default-features = false }
+bincode = { version = "2", default-features = false, features = ["alloc", "serde"] }
 clap = { version = "4.4.10", features = ["derive"] }
 futures = { version = "0.3.21", features = ["thread-pool"] }
 futures-timer = { version = "3.0.2" }
 jsonrpsee = { version = "0.24.8", features = ["server"] }
+kimchi = { git = "https://github.com/o1-labs/proof-systems", tag = "0.7.0", default-features = false }
+mina-curves = { git = "https://github.com/o1-labs/proof-systems", tag = "0.7.0", default-features = false }
+mina-poseidon = { git = "https://github.com/o1-labs/proof-systems", tag = "0.7.0", default-features = false }
+poly-commitment = { git = "https://github.com/o1-labs/proof-systems", tag = "0.7.0", default-features = false }
+rand_chacha = { version = "0.3", default-features = false }
+rand_core = { version = "0.6", default-features = false }
+static_assertions = { version = "1.1.0" }
 binary-merkle-tree = { version = "16.1.0", default-features = false }
 async-trait = { version = "0.1.57" }
 async-channel = { version = "1.8.0" }
@@ -137,6 +152,7 @@ hp-groth16 = { path = "primitives/hp-groth16", default-features = false }
 pallet-ezkl-verifier = { path = "verifiers/ezkl", default-features = false }
 pallet-fflonk-verifier = { path = "verifiers/fflonk", default-features = false }
 pallet-groth16-verifier = { path = "verifiers/groth16", default-features = false }
+pallet-kimchi-verifier = { path = "verifiers/kimchi", default-features = false }
 pallet-risc0-verifier = { path = "verifiers/risc0", default-features = false }
 pallet-ultrahonk-verifier = { path = "verifiers/ultrahonk", default-features = false }
 pallet-ultraplonk-verifier = { path = "verifiers/ultraplonk", default-features = false }
@@ -372,6 +388,9 @@ cumulus-relay-chain-rpc-interface = { version = "0.28.0" }
 substrate-rpc-client = { version = "0.54.0" }
 
 [patch.crates-io]
+# Kimchi pulls `bcs` through `o1-utils`; the crates.io release enables
+# `serde/std`, which breaks Substrate runtime WASM with duplicate `panic_impl`.
+bcs = { git = "https://github.com/o1-labs/bcs", rev = "d9c996b0" }
 cumulus-relay-chain-inprocess-interface = { path = "patches/cumulus/client/relay-chain-inprocess-interface" }
 cumulus-relay-chain-minimal-node = { path = "patches/cumulus/client/relay-chain-minimal-node" }
 polkadot-node-core-pvf-common = { path = "patches/polkadot/node/core/pvf/common" }
