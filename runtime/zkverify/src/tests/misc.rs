@@ -270,3 +270,56 @@ fn check_version() {
     assert_eq!(5_010, convert("0.5.10"));
     assert_eq!(1_000_000, convert("1.0.0"));
 }
+
+mod vesting_start_is_slot {
+    use super::*;
+    use sp_runtime::traits::Dispatchable;
+
+    fn vested_transfer(starting_block: BlockNumber) -> RuntimeCall {
+        RuntimeCall::Vesting(pallet_vesting::Call::vested_transfer {
+            target: sample_user_account(2).into(),
+            schedule: pallet_vesting::VestingInfo::new(10 * VFY, VFY, starting_block),
+        })
+    }
+
+    fn genesis_slot() -> BlockNumber {
+        u64::from(Babe::genesis_slot()).saturated_into()
+    }
+
+    fn dispatch(call: RuntimeCall) -> DispatchResult {
+        call.dispatch(RuntimeOrigin::signed(sample_user_account(1)))
+            .map(|_| ())
+            .map_err(|e| e.error)
+    }
+
+    #[test]
+    fn accepts_a_schedule_starting_at_a_slot() {
+        test().execute_with(|| {
+            assert_eq!(dispatch(vested_transfer(genesis_slot())), Ok(()));
+            assert_eq!(dispatch(vested_transfer(genesis_slot() + 100)), Ok(()));
+        });
+    }
+
+    #[test]
+    fn rejects_a_schedule_starting_before_the_genesis_slot() {
+        test().execute_with(|| {
+            assert_eq!(
+                dispatch(vested_transfer(genesis_slot() - 1)),
+                Err(frame_system::Error::<Runtime>::CallFiltered.into())
+            );
+        });
+    }
+
+    #[test]
+    fn rejects_a_schedule_starting_before_the_genesis_slot_in_a_batch() {
+        test().execute_with(|| {
+            let batch = RuntimeCall::Utility(pallet_utility::Call::batch_all {
+                calls: vec![vested_transfer(genesis_slot() - 1)],
+            });
+            assert_eq!(
+                dispatch(batch),
+                Err(frame_system::Error::<Runtime>::CallFiltered.into())
+            );
+        });
+    }
+}
