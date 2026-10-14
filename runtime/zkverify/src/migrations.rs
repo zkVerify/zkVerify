@@ -64,7 +64,7 @@ impl<T: pallet_vesting::Config + pallet_babe::Config> VestingConfiguration<T> {
 impl<T: pallet_vesting::Config + pallet_babe::Config> OnRuntimeUpgrade for VestingConfiguration<T> {
     fn on_runtime_upgrade() -> Weight {
         if frame_system::Pallet::<T>::last_runtime_upgrade_spec_version() != 2_000_000 {
-            return Default::default();
+            return <T as frame_system::Config>::DbWeight::get().reads(1);
         }
         let offset = Self::offset();
         let mut accounts = 0u64;
@@ -91,10 +91,10 @@ impl<T: pallet_vesting::Config + pallet_babe::Config> OnRuntimeUpgrade for Vesti
             "VestingConfiguration: shifted the schedules of {accounts} account(s) by {offset:?}",
         );
 
-        // One read for the block number of each provider (the system one, and the BABE current
-        // and genesis slots), plus a read and a write for every migrated account.
+        // Two reads for the last runtime upgrade spec version and the BABE genesis slot, plus a
+        // read and a write for every migrated account.
         <T as frame_system::Config>::DbWeight::get()
-            .reads_writes(accounts.saturating_add(3), accounts)
+            .reads_writes(accounts.saturating_add(2), accounts)
     }
 
     #[cfg(feature = "try-runtime")]
