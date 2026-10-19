@@ -29,6 +29,26 @@ pub enum Curve {
     Bls12_381,
 }
 
+impl Curve {
+    /// Byte length of an uncompressed G1 point on this curve.
+    pub const fn g1_size(self) -> usize {
+        match self {
+            Curve::Bn254 => 64,
+            Curve::Bls12_381 => 96,
+        }
+    }
+
+    /// Byte length of an uncompressed G2 point on this curve.
+    pub const fn g2_size(self) -> usize {
+        2 * self.g1_size()
+    }
+
+    /// Byte length of a scalar field element on this curve.
+    pub const fn scalar_size(self) -> usize {
+        32
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Encode, Decode, DecodeWithMemTracking, TypeInfo)]
 pub struct VerificationKeyWithCurve {
     pub curve: Curve,

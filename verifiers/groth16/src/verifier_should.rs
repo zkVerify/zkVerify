@@ -98,6 +98,17 @@ mod reject {
     }
 
     #[apply(curves)]
+    fn vk_with_too_many_inputs(curve: Curve) {
+        let (_, vk, _) =
+            groth16::Groth16::get_instance(Mock::MAX_NUM_INPUTS as usize + 1, Some(0), curve);
+
+        assert_eq!(
+            Groth16::<Mock>::validate_vk(&vk),
+            Err(VerifyError::InvalidVerificationKey)
+        );
+    }
+
+    #[apply(curves)]
     fn incoherent_vk_and_num_inputs(curve: Curve) {
         let (proof, vk, _) = groth16::Groth16::get_instance(4, Some(0), curve);
         let (_, _, inputs) = groth16::Groth16::get_instance(5, Some(0), curve);
@@ -121,5 +132,46 @@ mod reject {
             Groth16::<Mock>::verify_proof(&vk, &proof, &inputs),
             Err(VerifyError::InvalidProofData)
         );
+    }
+
+    mod non_canonical_length {
+        use super::*;
+
+        #[apply(curves)]
+        fn input_with_trailing_bytes(curve: Curve) {
+            let (proof, vk, mut inputs) = groth16::Groth16::get_instance(4, Some(0), curve);
+            inputs[0].0.push(0xaa);
+
+            assert_eq!(
+                Groth16::<Mock>::verify_proof(&vk, &proof, &inputs),
+                Err(VerifyError::InvalidInput)
+            );
+        }
+
+        #[apply(curves)]
+        fn truncated_input(curve: Curve) {
+            let (proof, vk, mut inputs) = groth16::Groth16::get_instance(4, Some(0), curve);
+            inputs[0].0.pop();
+
+            assert_eq!(
+                Groth16::<Mock>::verify_proof(&vk, &proof, &inputs),
+                Err(VerifyError::InvalidInput)
+            );
+        }
+
+        #[apply(curves)]
+        fn vk_point_with_trailing_bytes(curve: Curve, #[values(0, 1, 2)] point: usize) {
+            let (_, mut vk, _) = groth16::Groth16::get_instance(4, Some(0), curve);
+            match point {
+                0 => vk.alpha_g1.0.push(0),
+                1 => vk.delta_g2.0.push(0),
+                _ => vk.gamma_abc_g1[1].0.push(0),
+            }
+
+            assert_eq!(
+                Groth16::<Mock>::validate_vk(&vk),
+                Err(VerifyError::InvalidVerificationKey)
+            );
+        }
     }
 }

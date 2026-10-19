@@ -68,6 +68,10 @@ impl<T: Config> Verifier for Groth16<T> {
         if proof.curve != vk.curve {
             return Err(VerifyError::InvalidProofData);
         }
+        // arkworks ignores trailing bytes, but `pubs_bytes` hashes them.
+        if pubs.iter().any(|s| s.0.len() != vk.curve.scalar_size()) {
+            return Err(VerifyError::InvalidInput);
+        }
 
         groth16::Groth16::verify_proof(proof.clone().into(), vk.clone(), pubs)
             .and_then(|r| r.then_some(()).ok_or(VerifyError::VerifyError))
@@ -85,6 +89,12 @@ impl<T: Config> Verifier for Groth16<T> {
     /// Validates internal consistency of the VK on its own curve.
     /// Cross-field curve coherence (proof.curve == vk.curve) is checked in `verify_proof`.
     fn validate_vk(vk: &Self::Vk) -> Result<(), VerifyError> {
+        if vk.gamma_abc_g1.len() > T::MAX_NUM_INPUTS as usize + 1 {
+            return Err(VerifyError::InvalidVerificationKey);
+        }
+        if !vk_has_exact_lengths(vk) {
+            return Err(VerifyError::InvalidVerificationKey);
+        }
         let curve = vk.curve;
         let vk = vk.clone().vk();
         match curve {
@@ -93,6 +103,15 @@ impl<T: Config> Verifier for Groth16<T> {
         }
         .map_err(Into::into)
     }
+}
+
+fn vk_has_exact_lengths(vk: &Vk) -> bool {
+    let (g1, g2) = (vk.curve.g1_size(), vk.curve.g2_size());
+    vk.alpha_g1.0.len() == g1
+        && [&vk.beta_g2, &vk.gamma_g2, &vk.delta_g2]
+            .iter()
+            .all(|p| p.0.len() == g2)
+        && vk.gamma_abc_g1.iter().all(|p| p.0.len() == g1)
 }
 
 /// The struct to use in runtime pallet configuration to map the weight computed by this crate
