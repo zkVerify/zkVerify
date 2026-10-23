@@ -18,14 +18,6 @@ pub mod any_mock {
     pub static PUBS: &[u8] = &hex_literal::hex!("0000000000000000");
     pub static PROOF: &[u8] = include_bytes!("resources/v_2_1_poseidon2_16.bin");
 }
-pub mod v2_1 {
-    pub static VK: sp_core::H256 = sp_core::H256(hex_literal::hex!(
-        "8e3794e8255e7810de2be7710fe19f79e538de060f038a21b24529e28d0b744c"
-    ));
-    pub static PUBS_16: &[u8] = &hex_literal::hex!("1c40000000000000");
-
-    pub static PROOF_POSEIDON2_16: &[u8] = include_bytes!("resources/v_2_1_poseidon2_16.bin");
-}
 
 pub mod v2_2 {
     pub static VK: sp_core::H256 = sp_core::H256(hex_literal::hex!(

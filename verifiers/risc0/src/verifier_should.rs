@@ -108,15 +108,6 @@ mod reject {
     use super::*;
 
     #[test]
-    fn valid_proof_with_unsupported_version() {
-        let proof = Proof::V2_1(v2_1::PROOF_POSEIDON2_16.to_vec());
-        assert_eq!(
-            Risc0::<Mock>::verify_proof(&v2_1::VK, &proof, &v2_1::PUBS_16.to_vec()),
-            Err(VerifyError::UnsupportedVersion)
-        )
-    }
-
-    #[test]
     fn invalid_proof() {
         let mut invalid_pubs = v3_0::PUBS.to_vec();
         invalid_pubs[0] = invalid_pubs[0].wrapping_add(1);
@@ -209,7 +200,6 @@ fn compute_correct_weight_for_succinct_proof() {
     let proof = Proof::V3_0(v3_0::PROOF_SUCCINCT.to_vec());
     let pubs = v3_0::PUBS_SUCCINCT.to_vec();
 
-    // This proof is composed by two 2^20 segments and one 2^17 segment
     let expected = Weight::from_parts(
         <() as crate::WeightInfoVerifyProof>::verify_proof_succinct().ref_time(),
         0,
