@@ -44,7 +44,9 @@ const BABY_BEAR_P: u32 = 0x7800_0001;
 /// Check that every 4-byte big-endian word of the vk is a canonical `BabyBear` element.
 fn is_canonical_vk(vk: &H256) -> bool {
     vk.as_bytes()
-        .chunks_exact(4)
+        .as_chunks::<4>()
+        .0
+        .iter()
         // `H256` is 32 bytes, so `chunks_exact(4)` only yields 4-byte chunks; qed
         .map(|word| u32::from_be_bytes([word[0], word[1], word[2], word[3]]))
         .all(|word| word < BABY_BEAR_P)
