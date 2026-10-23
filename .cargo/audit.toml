@@ -220,6 +220,57 @@ ignore = [
     #   `LruCache<Multiaddr, ()>`. `Multiaddr` is `struct Multiaddr { bytes: Arc<Vec<u8>> }` with no
     #   `Drop` impl (multiaddr 0.18.2), so dropping the key cannot panic. Neither consumer wraps a
     #   `pop()` in `catch_unwind`. Unaffected.
+    "RUSTSEC-2026-0379", # CRITICAL — Cranelift on aarch64 can jump to wrong target on huge `br_table`.
+    # https://rustsec.org/advisories/RUSTSEC-2026-0379 ->
+    # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-mghf-wjfp-p5xm
+    "RUSTSEC-2026-0380", # CRITICAL — Cranelift SSA value index bit-packing overflow -> miscompilation.
+    # https://rustsec.org/advisories/RUSTSEC-2026-0380 ->
+    # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-897f-g5gm-fmxm
+    # Both affect wasmtime v35.0.0 with default settings (0379 on aarch64 only, 0380 on every
+    # architecture) and both need a specially crafted Wasm module (a `br_table` with >~256k targets,
+    # or a function body with an enormous number of SSA values). NOT a configuration we can opt
+    # out of: this is accepted as a residual risk, mitigated by who can supply Wasm to our nodes.
+    # wasmtime only compiles (1) the relay runtime, which changes only through root/governance
+    # `set_code`, and (2) PVFs of onboarded parachains. Permissionless parachain onboarding is
+    # disabled: `paras_registrar` has `ParaDeposit = DataDepositPerByte = Balance::MAX`
+    # (runtime/zkverify/src/parachains.rs), so paras are added only via root (`ParasSudoWrapper`).
+    # PVFs are additionally prepared/executed in sandboxed worker processes (polkadot-node-core-pvf).
+    # No patched 35.x release exists (fixes are in 36.0.19/48.0.7/49.0.4) and
+    # sc-executor-wasmtime 0.43.0 requires wasmtime "35.0.0", pinned by polkadot-sdk stable2512.
+    # Upstream moved to wasmtime ^36.0.7 in sc-executor-wasmtime 0.47.0: the real fix is the next
+    # polkadot-sdk bump. Remove these entries as soon as that happens.
+    "RUSTSEC-2026-0363", # MEDIUM — Component-model handle tables charged to no limit (host OOM).
+    # https://rustsec.org/advisories/RUSTSEC-2026-0363 ->
+    # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-q554-3cjc-rx7p
+    # Exploited only through component-model `resource.new`. sc-executor-wasmtime v0.43.0 pulls
+    # wasmtime with `default-features = false` and without the `component-model` feature (no
+    # wasmtime-component-* crate in Cargo.lock), so components cannot even be loaded. Unaffected.
+    # No patched 35.x release exists (fixes are in 36.0.18/48.0.6/49.0.3); pinned by stable2512.
+    "RUSTSEC-2026-0381", # webpki-roots v0.25.4 — bundled roots trust distrusted emSign intermediates.
+    # https://rustsec.org/advisories/RUSTSEC-2026-0381 -> https://github.com/rustls/webpki-roots/pull/133
+    # Comes from libp2p-websocket v0.44.0 (libp2p v0.54.1, polkadot-sdk via sc-network), which uses
+    # it as the client root store for outgoing `/wss` dials. Fixed only in 1.0.10, which
+    # libp2p-websocket 0.44 cannot use (requires ^0.25). (The 1.x copy was updated to 1.0.10.)
+    # Not exploitable here: (1) libp2p-websocket's TLS goes through rustls 0.23.46 ->
+    # rustls-webpki 0.103.16, which itself rejects any certificate path containing the
+    # distrusted emSign intermediate keys (fix for RUSTSEC-2026-0382), so the stale root can no
+    # longer validate such a path; (2) the WSS TLS layer is only an outer transport: libp2p then
+    # runs Noise on top and authenticates the remote PeerId, so a misissued certificate cannot be
+    # used to impersonate a peer.
+    "RUSTSEC-2026-0382", # rustls-webpki v0.101.7 — may accept distrusted emSign intermediates.
+    # https://rustsec.org/advisories/RUSTSEC-2026-0382 -> https://github.com/rustls/webpki/pull/546
+    # Stale lockfile entry: the only path is libp2p-quic -> libp2p-tls v0.5.0 -> rustls-webpki
+    # 0.101.7, i.e. libp2p 0.54.1's optional `quic` feature, which we do not enable.
+    # `cargo tree -i rustls-webpki@0.101.7` / `-i libp2p-tls` / `-i libp2p-quic` all report
+    # "nothing to print" (even with --target all --edges all). Cannot be updated anyway: libp2p-tls
+    # 0.5.0 requires ^0.101. (The copy that is actually built was updated to 0.103.16, patched.)
+    "RUSTSEC-2026-0344", # ruzstd v0.8.3 — decompression bomb (OOM, DoS).
+    # https://rustsec.org/advisories/RUSTSEC-2026-0344
+    # Stale lockfile entry: the only path is subxt-lightclient -> smoldot v0.19.4 -> ruzstd, i.e.
+    # subxt 0.43.1's optional `unstable-light-client` feature, which is not enabled (subxt is used
+    # only by frame-benchmarking-cli with the `native` feature). `cargo tree -i ruzstd` /
+    # `-i smoldot` / `-i subxt-lightclient` all report "nothing to print" (even with --target all
+    # --edges all). Fix is only in 0.9.1, which smoldot 0.19.4 cannot use.
 ]
 informational_warnings = ["unmaintained", "yanked"]
 
