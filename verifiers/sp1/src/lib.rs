@@ -38,6 +38,20 @@ pub type Pubs = Vec<u8>;
 
 const MAX_PROOF_SIZE: usize = 786432;
 
+/// The `BabyBear` modulus.
+const BABY_BEAR_P: u32 = 0x7800_0001;
+
+/// Check that every 4-byte big-endian word of the vk is a canonical `BabyBear` element.
+fn is_canonical_vk(vk: &H256) -> bool {
+    vk.as_bytes()
+        .as_chunks::<4>()
+        .0
+        .iter()
+        // `H256` is 32 bytes, so `chunks_exact(4)` only yields 4-byte chunks; qed
+        .map(|word| u32::from_be_bytes([word[0], word[1], word[2], word[3]]))
+        .all(|word| word < BABY_BEAR_P)
+}
+
 pub trait Config {
     /// Maximum number of bytes contained in the public inputs (otherwise rejected)
     type MaxPubsSize: Get<u32>;
@@ -71,6 +85,10 @@ impl<T: Config> Verifier for Sp1<T> {
             log::debug!("Public input exceeds maximum size");
             Err(VerifyError::InvalidInput)?;
         }
+        if !is_canonical_vk(vk) {
+            log::debug!("Vk is not a canonical BabyBear digest");
+            Err(VerifyError::InvalidVerificationKey)?;
+        }
 
         let proof: SP1Proof =
             bincode::serde::decode_from_slice(&proof[..], bincode::config::legacy())
@@ -83,6 +101,15 @@ impl<T: Config> Verifier for Sp1<T> {
             .map_err(|_| VerifyError::VerifyError)?;
 
         Ok(None)
+    }
+
+    fn validate_vk(vk: &Self::Vk) -> Result<(), VerifyError> {
+        if !is_canonical_vk(vk) {
+            log::debug!("Vk is not a canonical BabyBear digest");
+            Err(VerifyError::InvalidVerificationKey)?;
+        }
+
+        Ok(())
     }
 
     fn vk_hash(vk: &Self::Vk) -> H256 {

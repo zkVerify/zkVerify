@@ -101,3 +101,80 @@ fn reject_invalid_pubs() {
         Err(VerifyError::VerifyError)
     )
 }
+
+/// Add the `BabyBear` modulus to the `word`-th big-endian 4-byte word of `vk`.
+///
+/// The result is a different 32-byte string that the SP1 verifier maps to the same field
+/// element, because `P < 2^31` makes `w + P` fit in a `u32` for every canonical `w`.
+fn alias_word(mut vk: H256, word: usize) -> H256 {
+    let at = word * 4;
+    let bytes = vk.as_bytes_mut();
+    let aliased = u32::from_be_bytes([bytes[at], bytes[at + 1], bytes[at + 2], bytes[at + 3]])
+        .checked_add(BABY_BEAR_P)
+        .expect("a canonical word plus P always fits in a u32");
+    bytes[at..at + 4].copy_from_slice(&aliased.to_be_bytes());
+    vk
+}
+
+#[test]
+fn reject_non_canonical_vk() {
+    let proof = include_bytes!("resources/proof.bin").to_vec();
+    let pubs = VALID_PUBS.to_vec();
+
+    // Unlike `reject_invalid_vk`, which perturbs the vk into a genuinely different digest and
+    // so fails at verification, each of these is an alias of `VALID_VK`: the verifier would
+    // accept it and attest it as a distinct statement.
+    for word in 0..8 {
+        assert_eq!(
+            Sp1::<Mock>::verify_proof(&alias_word(VALID_VK, word), &proof, &pubs),
+            Err(VerifyError::InvalidVerificationKey),
+            "word {word} aliased by P was not rejected"
+        );
+    }
+}
+
+#[test]
+fn reject_non_canonical_vk_on_every_word() {
+    let proof = include_bytes!("resources/proof.bin").to_vec();
+    let pubs = VALID_PUBS.to_vec();
+    let vk = (0..8).fold(VALID_VK, alias_word);
+
+    assert_eq!(
+        Sp1::<Mock>::verify_proof(&vk, &proof, &pubs),
+        Err(VerifyError::InvalidVerificationKey)
+    )
+}
+
+#[test]
+fn validate_canonical_vk() {
+    assert_eq!(Sp1::<Mock>::validate_vk(&VALID_VK), Ok(()));
+}
+
+#[test]
+fn reject_non_canonical_vk_on_validate() {
+    for word in 0..8 {
+        assert_eq!(
+            Sp1::<Mock>::validate_vk(&alias_word(VALID_VK, word)),
+            Err(VerifyError::InvalidVerificationKey),
+            "word {word} aliased by P was not rejected"
+        );
+    }
+}
+
+#[test]
+fn validate_vk_on_the_canonical_boundary() {
+    let vk_from_first_word = |word: u32| {
+        let mut vk = H256::zero();
+        vk.as_bytes_mut()[..4].copy_from_slice(&word.to_be_bytes());
+        vk
+    };
+
+    assert_eq!(
+        Sp1::<Mock>::validate_vk(&vk_from_first_word(BABY_BEAR_P - 1)),
+        Ok(())
+    );
+    assert_eq!(
+        Sp1::<Mock>::validate_vk(&vk_from_first_word(BABY_BEAR_P)),
+        Err(VerifyError::InvalidVerificationKey)
+    );
+}
