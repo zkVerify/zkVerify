@@ -82,4 +82,21 @@ impl<T: frame_system::Config> pallet_ultrahonk_verifier_verify_proof::WeightInfo
             // Standard Error: 73_309
             .saturating_add(Weight::from_parts(33_699_744, 0).saturating_mul(n.into()))
     }
+    /// The range of component `n` is `[7, 25]`.
+    fn verify_plain_proof_v3_0(n: u32, ) -> Weight {
+        // Proof Size summary in bytes:
+        //  Measured:  `0`
+        //  Estimated: `0`
+        // Minimum execution time: 2_696_951_000 picoseconds.
+        Weight::from_parts(2_485_554_847, 0)
+            // Standard Error: 73_309
+            .saturating_add(Weight::from_parts(33_699_744, 0).saturating_mul(n.into()))
+    }
+    fn verify_plain_proof_v0_84() -> Weight {
+        // Proof Size summary in bytes:
+        //  Measured:  `0`
+        //  Estimated: `0`
+        // Minimum execution time: 3_694_753_000 picoseconds.
+        Weight::from_parts(3_731_581_000, 0)
+    }
 }

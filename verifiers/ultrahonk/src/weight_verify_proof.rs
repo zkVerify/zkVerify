@@ -60,6 +60,8 @@ use core::marker::PhantomData;
 pub trait WeightInfo {
     fn verify_zk_proof_v5_0(n: u32, ) -> Weight;
     fn verify_plain_proof_v5_0(n: u32, ) -> Weight;
+    fn verify_plain_proof_v3_0(n: u32, ) -> Weight;
+    fn verify_plain_proof_v0_84() -> Weight;
 }
 
 // For backwards compatibility and tests.
@@ -83,5 +85,22 @@ impl WeightInfo for () {
         Weight::from_parts(6_345_016_546, 0)
             // Standard Error: 2_042_332
             .saturating_add(Weight::from_parts(43_412_888, 0).saturating_mul(n.into()))
+    }
+    /// The range of component `n` is `[7, 25]`.
+    fn verify_plain_proof_v3_0(n: u32, ) -> Weight {
+        // Proof Size summary in bytes:
+        //  Measured:  `0`
+        //  Estimated: `0`
+        // Minimum execution time: 5_677_098_000 picoseconds.
+        Weight::from_parts(6_345_016_546, 0)
+            // Standard Error: 2_042_332
+            .saturating_add(Weight::from_parts(43_412_888, 0).saturating_mul(n.into()))
+    }
+    fn verify_plain_proof_v0_84() -> Weight {
+        // Proof Size summary in bytes:
+        //  Measured:  `0`
+        //  Estimated: `0`
+        // Minimum execution time: 7_351_139_000 picoseconds.
+        Weight::from_parts(8_166_412_000, 0)
     }
 }
