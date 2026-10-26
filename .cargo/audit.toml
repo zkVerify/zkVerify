@@ -271,6 +271,23 @@ ignore = [
     # only by frame-benchmarking-cli with the `native` feature). `cargo tree -i ruzstd` /
     # `-i smoldot` / `-i subxt-lightclient` all report "nothing to print" (even with --target all
     # --edges all). Fix is only in 0.9.1, which smoldot 0.19.4 cannot use.
+    "RUSTSEC-2026-0387", # crypto-bigint v0.5.5 — timing variability in "constant-time" operations.
+    # https://rustsec.org/advisories/RUSTSEC-2026-0387 ->
+    # https://github.com/RustCrypto/crypto-bigint/pull/1365
+    # Secret-dependent branches in sub/CTZ/div_rem/Montgomery mul/invert: a timing side channel
+    # that only matters when those operations run on SECRET integers. Comes only from
+    # elliptic-curve v0.13.8 (k256 0.13.4, p256 0.13.2, p384 0.13.1, p521 0.13.3). Fix is only in
+    # 0.7.6 (no patched 0.5.x), which needs elliptic-curve 0.14 and the 0.14 curve crates; the
+    # consumers (sp-core/frame-support from polkadot-sdk stable2512, tee-verifier/x509-verify)
+    # require 0.13. No consumer handles secret keys with these crates:
+    # - sp-core v39.0.0 uses k256 for ECDSA only under `not(feature = "std")` (src/ecdsa.rs:28-42),
+    #   i.e. inside the runtime Wasm, which holds no keys (signing goes through keystore host
+    #   functions). The node (std) signs with the `secp256k1` crate (libsecp256k1), not k256.
+    # - frame-support v45.1.0 uses k256 only in `ECDSAExt::to_eth_address` (public key decoding).
+    # - subxt-signer v0.43.0 uses bip32/k256 only in its `eth` module; its only consumer,
+    #   frame-benchmarking-cli v53.0.0, uses just `sr25519::dev::alice()` (remark_builder.rs:110).
+    # - tee-verifier v0.2.0 and x509-verify v0.4.8 use p256/p384/p521 only through `VerifyingKey`
+    #   to check attestation quote and certificate signatures, all over public data. Unaffected.
 ]
 informational_warnings = ["unmaintained", "yanked"]
 
