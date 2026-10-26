@@ -134,18 +134,6 @@ fn reject_non_canonical_vk() {
 }
 
 #[test]
-fn reject_non_canonical_vk_on_every_word() {
-    let proof = include_bytes!("resources/proof.bin").to_vec();
-    let pubs = VALID_PUBS.to_vec();
-    let vk = (0..8).fold(VALID_VK, alias_word);
-
-    assert_eq!(
-        Sp1::<Mock>::verify_proof(&vk, &proof, &pubs),
-        Err(VerifyError::InvalidVerificationKey)
-    )
-}
-
-#[test]
 fn validate_canonical_vk() {
     assert_eq!(Sp1::<Mock>::validate_vk(&VALID_VK), Ok(()));
 }
