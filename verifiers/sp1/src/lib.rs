@@ -48,7 +48,7 @@ fn is_canonical_vk(vk: &H256) -> bool {
         .0
         .iter()
         // `H256` is 32 bytes, so `chunks_exact(4)` only yields 4-byte chunks; qed
-        .map(|word| u32::from_be_bytes([word[0], word[1], word[2], word[3]]))
+        .map(|word| u32::from_be_bytes(*word))
         .all(|word| word < BABY_BEAR_P)
 }
 
