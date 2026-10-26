@@ -90,7 +90,7 @@ Key concepts:
 
 Pallet indices relevant to custom pallets:
 - `Aggregate` = 81, `TokenClaim` = 83, `Crl` = 84
-- Verifiers: `Groth16` = 161, `Risc0` = 162, `Ultraplonk` = 163, `Plonky2` = 165, `Fflonk` = 166, `Sp1` = 167, `Ultrahonk` = 168, `Ezkl` = 169, `Tee` = 170
+- Verifiers: `Groth16` = 161, `Risc0` = 162, `Ultraplonk` = 163, `Plonky2` = 165, `Fflonk` = 166, `Sp1` = 167, `Ultrahonk` = 168, `Ezkl` = 169, `Tee` = 170, `Kimchi` = 171
 
 Runtime features: `runtime-benchmarks`, `try-runtime`, `fast-runtime`, `volta`.
 

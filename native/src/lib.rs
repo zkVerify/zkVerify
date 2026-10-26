@@ -18,17 +18,19 @@
 use codec::{Decode, Encode};
 
 mod accelerated_bn;
+mod accelerated_pasta;
+mod arkworks_utils;
 mod compat;
 mod groth16;
 mod risc0;
 
-#[derive(Encode, Decode)]
-#[cfg_attr(test, derive(Debug))]
+#[derive(Encode, Decode, Debug, PartialEq, Eq)]
 pub enum VerifyError {
     InvalidInput,
     InvalidProofData,
     VerifyError,
     InvalidVerificationKey,
+    IncompatibleParameters,
 }
 
 impl From<VerifyError> for verifiers_traits::VerifyError {
@@ -39,6 +41,7 @@ impl From<VerifyError> for verifiers_traits::VerifyError {
             VerifyError::InvalidVerificationKey => {
                 verifiers_traits::VerifyError::InvalidVerificationKey
             }
+            VerifyError::IncompatibleParameters => verifiers_traits::VerifyError::VerifyError,
             VerifyError::VerifyError => verifiers_traits::VerifyError::VerifyError,
         }
     }
@@ -58,6 +61,9 @@ pub use groth16::groth_16_bn_254_verify::HostFunctions as Groth16Bn254VerifierHo
 pub use accelerated_bn::bn254;
 #[cfg(feature = "std")]
 pub use accelerated_bn::bn254::host_calls::HostFunctions as AcceleratedBn254HostFunctions;
+pub use accelerated_pasta::vesta;
+#[cfg(feature = "std")]
+pub use accelerated_pasta::vesta::host_calls::HostFunctions as AcceleratedVestaHostFunctions;
 
 #[cfg(feature = "std")]
 pub type HLNativeHostFunctions = (
@@ -65,4 +71,5 @@ pub type HLNativeHostFunctions = (
     Groth16Bls12VerifierHostFunctions,
     Risc0AccelerateHostFunctions,
     AcceleratedBn254HostFunctions,
+    AcceleratedVestaHostFunctions,
 );

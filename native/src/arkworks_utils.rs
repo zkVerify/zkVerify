@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Generic executions of the operations for *Arkworks* elliptic curves.
+//! Shared operations for *Arkworks* elliptic curves.
 
 // As not all functions are used by each elliptic curve and some elliptic
 // curve may be excluded by the build we resort to `#[allow(unused)]` to

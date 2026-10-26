@@ -1,0 +1,77 @@
+[package]
+name = "pallet-kimchi-verifier"
+version = "0.1.0"
+description = "A Kimchi verifier pallet implementation based on pallet-verifiers abstraction."
+homepage.workspace = true
+edition.workspace = true
+authors.workspace = true
+repository.workspace = true
+license = "Apache-2.0"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+ark-ff = { workspace = true }
+ark-poly = { workspace = true }
+ark-serialize = { workspace = true }
+bincode = { workspace = true }
+codec = { workspace = true }
+frame-benchmarking = { workspace = true, optional = true }
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+hex-literal = { workspace = true, optional = true }
+kimchi = { workspace = true }
+log = { workspace = true }
+mina-curves = { workspace = true }
+mina-poseidon = { workspace = true }
+native = { workspace = true }
+pallet-verifiers = { workspace = true }
+poly-commitment = { workspace = true }
+rand_chacha = { workspace = true }
+rand_core = { workspace = true }
+scale-info = { workspace = true }
+serde = { workspace = true }
+sp-core = { workspace = true }
+sp-io = { workspace = true }
+static_assertions = { workspace = true }
+
+[dev-dependencies]
+hex-literal = { workspace = true }
+pallet-balances = { workspace = true }
+
+[features]
+default = [ "std" ]
+std = [
+	"ark-ff/std",
+	"ark-poly/std",
+	"ark-serialize/std",
+	"bincode/std",
+	"codec/std",
+	"frame-benchmarking?/std",
+	"frame-support/std",
+	"frame-system/std",
+	"kimchi/std",
+	"log/std",
+	"mina-poseidon/std",
+	"native/std",
+	"pallet-balances/std",
+	"pallet-verifiers/std",
+	"poly-commitment/parallel",
+	"poly-commitment/std",
+	"rand_chacha/std",
+	"rand_core/std",
+	"scale-info/std",
+	"serde/std",
+	"sp-core/std",
+	"sp-io/std",
+]
+runtime-benchmarks = [
+	"dep:frame-benchmarking",
+	"dep:hex-literal",
+	"frame-benchmarking/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"pallet-balances/runtime-benchmarks",
+	"pallet-verifiers/runtime-benchmarks",
+]
