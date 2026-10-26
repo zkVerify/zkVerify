@@ -28,6 +28,8 @@ use scale_info::TypeInfo;
 use sp_core::{Get, H256};
 
 pub use crate::weight_verify_proof::WeightInfo as WeightInfoVerifyProof;
+pub use ultrahonk_no_std_v0_84::VK_SIZE as VK_SIZE_V0_84;
+pub use ultrahonk_no_std_v3_0::VK_SIZE as VK_SIZE_V3_0;
 pub use ultrahonk_no_std_v5_0::PUB_SIZE;
 pub use ultrahonk_no_std_v5_0::VK_SIZE as VK_SIZE_V5_0;
 pub use weight::WeightInfo;
@@ -39,13 +41,6 @@ mod resources;
 mod verifier_should;
 mod weight;
 mod weight_verify_proof;
-
-/// VK size of the deprecated `V0_84` and `Legacy` versions (`ultrahonk-no-std` v0.2.1). Their
-/// verifier is no longer linked, but VKs already registered with it must stay decodable so that
-/// their owners can still unregister them.
-pub const VK_SIZE_V0_84: usize = 1760;
-/// VK size of the deprecated `V3_0` version (`ultrahonk-no-std` v0.3.2). See [`VK_SIZE_V0_84`].
-pub const VK_SIZE_V3_0: usize = 1888;
 
 pub type RawProof = Vec<u8>;
 pub type Pubs = Vec<[u8; PUB_SIZE]>;
@@ -87,6 +82,29 @@ impl TryFrom<Proof> for ultrahonk_no_std_v5_0::ProofType {
     }
 }
 
+impl TryFrom<Proof> for ultrahonk_no_std_v3_0::ProofType {
+    type Error = VerifyError;
+
+    fn try_from(proof: Proof) -> Result<Self, Self::Error> {
+        Ok(match proof {
+            Proof::ZK(proof_bytes) => Self::ZK(proof_bytes.into_boxed_slice()),
+            Proof::Plain(proof_bytes) => Self::Plain(proof_bytes.into_boxed_slice()),
+        })
+    }
+}
+
+impl TryFrom<Proof> for ultrahonk_no_std_v0_84::ProofType {
+    type Error = VerifyError;
+
+    fn try_from(proof: Proof) -> Result<Self, Self::Error> {
+        match proof {
+            Proof::ZK(proof_bytes) => proof_bytes.try_into().map(Self::ZK),
+            Proof::Plain(proof_bytes) => proof_bytes.try_into().map(Self::Plain),
+        }
+        .map_err(|_| VerifyError::InvalidProofData)
+    }
+}
+
 #[derive(PartialEq, Eq, Debug)]
 pub enum ProtocolVersion {
     V0_84,
@@ -111,10 +129,10 @@ impl From<&VersionedProof> for ProtocolVersion {
 // ii) If you are introducing new VersionedProof variants, ensure that
 // indices match those in VersionedVk.
 //
-// `V0_84`, `V3_0` and `Legacy` are deprecated: they carry the pre-fix Barretenberg
-// SmallSubgroupIPA (sound only from bb v5.0.0) and accept non-canonical public inputs. They are
-// kept so that indices and stored VKs stay valid, but every proof and VK for them is rejected
-// with `VerifyError::UnsupportedVersion`.
+// The ZK flavor of `V0_84`, `V3_0` and `Legacy` is deprecated: it carries the pre-fix
+// Barretenberg SmallSubgroupIPA (sound only from bb v5.0.0), so ZK proofs of those versions are
+// rejected with `VerifyError::UnsupportedVersion`. Their Plain flavor does not use the
+// SmallSubgroupIPA and is still supported.
 #[derive(Clone, Debug, PartialEq, Encode, Decode, DecodeWithMemTracking, TypeInfo)]
 pub enum VersionedProof {
     #[codec(index = 0)]
@@ -172,6 +190,15 @@ impl From<&ultrahonk_no_std_v5_0::ProofType> for ProofType {
     }
 }
 
+impl From<&ultrahonk_no_std_v3_0::ProofType> for ProofType {
+    fn from(proof: &ultrahonk_no_std_v3_0::ProofType) -> Self {
+        match proof {
+            ultrahonk_no_std_v3_0::ProofType::ZK(_) => Self::ZK,
+            ultrahonk_no_std_v3_0::ProofType::Plain(_) => Self::Plain,
+        }
+    }
+}
+
 impl From<Proof> for RawProof {
     fn from(proof: Proof) -> Self {
         match proof {
@@ -182,6 +209,46 @@ impl From<Proof> for RawProof {
 
 trait IntoVerifyError {
     fn into_verify_error(self) -> VerifyError;
+}
+
+impl IntoVerifyError for ultrahonk_no_std_v0_84::errors::VerifyError {
+    fn into_verify_error(self) -> VerifyError {
+        match self {
+            ultrahonk_no_std_v0_84::errors::VerifyError::VerificationError { message: _ } => {
+                VerifyError::VerifyError
+            }
+            ultrahonk_no_std_v0_84::errors::VerifyError::PublicInputError { message: _ } => {
+                VerifyError::InvalidInput
+            }
+            ultrahonk_no_std_v0_84::errors::VerifyError::KeyError => {
+                VerifyError::InvalidVerificationKey
+            }
+            ultrahonk_no_std_v0_84::errors::VerifyError::InvalidProofError => {
+                VerifyError::InvalidProofData
+            }
+            ultrahonk_no_std_v0_84::errors::VerifyError::OtherError => VerifyError::VerifyError,
+        }
+    }
+}
+
+impl IntoVerifyError for ultrahonk_no_std_v3_0::errors::VerifyError {
+    fn into_verify_error(self) -> VerifyError {
+        match self {
+            ultrahonk_no_std_v3_0::errors::VerifyError::VerificationError { message: _ } => {
+                VerifyError::VerifyError
+            }
+            ultrahonk_no_std_v3_0::errors::VerifyError::PublicInputError { message: _ } => {
+                VerifyError::InvalidInput
+            }
+            ultrahonk_no_std_v3_0::errors::VerifyError::KeyError => {
+                VerifyError::InvalidVerificationKey
+            }
+            ultrahonk_no_std_v3_0::errors::VerifyError::InvalidProofError { message: _ } => {
+                VerifyError::InvalidProofData
+            }
+            ultrahonk_no_std_v3_0::errors::VerifyError::OtherError => VerifyError::VerifyError,
+        }
+    }
 }
 
 impl IntoVerifyError for ultrahonk_no_std_v5_0::errors::VerifyError {
@@ -230,11 +297,16 @@ impl<T: Config> Verifier for Ultrahonk<T> {
             VerifyError::InvalidInput
         );
 
+        if is_deprecated(proof) {
+            log::debug!("Deprecated proof version");
+            return Err(VerifyError::UnsupportedVersion);
+        }
+
         match (proof, vk) {
             (VersionedProof::V5_0(inner_proof), VersionedVk::V5_0(vk_bytes)) => {
                 // Transform input proof into an UltraHonk verifier-compatible proof
                 let prepared: ultrahonk_no_std_v5_0::ProofType = inner_proof.clone().try_into()?;
-                let log_circuit_size = valid_log_circuit_size(vk_bytes)?;
+                let log_circuit_size = valid_log_circuit_size_v5_0(vk_bytes)?;
 
                 log::trace!("Verifying (no-std)");
                 ultrahonk_no_std_v5_0::verify::<CurveHooksImpl>(vk_bytes, &prepared, pubs)
@@ -245,11 +317,34 @@ impl<T: Config> Verifier for Ultrahonk<T> {
                             .into()
                     })
             }
-            // V5_0 is the only supported version: any other combination has a deprecated proof
-            // or vk (e.g. a V5_0 proof against a V3_0 vk that was never re-registered).
+            (VersionedProof::V3_0(inner_proof), VersionedVk::V3_0(vk_bytes)) => {
+                // Transform input proof into an UltraHonk verifier-compatible proof
+                let prepared: ultrahonk_no_std_v3_0::ProofType = inner_proof.clone().try_into()?;
+                let log_circuit_size = valid_log_circuit_size_v3_0(vk_bytes)?;
+
+                log::trace!("Verifying (no-std)");
+                ultrahonk_no_std_v3_0::verify::<CurveHooksImpl>(vk_bytes, &prepared, pubs)
+                    .inspect_err(|e| log::debug!("Cannot verify proof: {e:?}"))
+                    .map_err(IntoVerifyError::into_verify_error)
+                    .map(|_| {
+                        compute_weight::<T>(proof.into(), (&prepared).into(), log_circuit_size)
+                            .into()
+                    })
+            }
+            (VersionedProof::V0_84(inner_proof), VersionedVk::V0_84(vk_bytes))
+            | (VersionedProof::Legacy(inner_proof), VersionedVk::Legacy(vk_bytes)) => {
+                // Transform input proof into an UltraHonk verifier-compatible proof
+                let prepared: ultrahonk_no_std_v0_84::ProofType = inner_proof.clone().try_into()?;
+
+                log::trace!("Verifying (no-std)");
+                ultrahonk_no_std_v0_84::verify::<CurveHooksImpl>(vk_bytes, &prepared, pubs)
+                    .inspect_err(|e| log::debug!("Cannot verify proof: {e:?}"))
+                    .map_err(IntoVerifyError::into_verify_error)
+                    .map(|_| None)
+            }
             _ => {
-                log::debug!("Deprecated proof or vk version");
-                Err(VerifyError::UnsupportedVersion)
+                log::debug!("Proof version does not match Vk version!");
+                Err(VerifyError::VerifyError)
             }
         }
     }
@@ -264,9 +359,22 @@ impl<T: Config> Verifier for Ultrahonk<T> {
                 .map_err(|_| VerifyError::InvalidVerificationKey)?;
                 Ok(())
             }
-            VersionedVk::V0_84(_) | VersionedVk::V3_0(_) | VersionedVk::Legacy(_) => {
-                log::debug!("Deprecated vk version");
-                Err(VerifyError::UnsupportedVersion)
+            // Still needed by the Plain proofs of these versions.
+            VersionedVk::V3_0(vk_bytes) => {
+                let _vk = ultrahonk_no_std_v3_0::key::VerificationKey::<CurveHooksImpl>::try_from(
+                    &vk_bytes[..],
+                )
+                .map_err(|e| log::debug!("Invalid Vk: {e:?}"))
+                .map_err(|_| VerifyError::InvalidVerificationKey)?;
+                Ok(())
+            }
+            VersionedVk::V0_84(vk_bytes) | VersionedVk::Legacy(vk_bytes) => {
+                let _vk = ultrahonk_no_std_v0_84::key::VerificationKey::<CurveHooksImpl>::try_from(
+                    &vk_bytes[..],
+                )
+                .map_err(|e| log::debug!("Invalid Vk: {e:?}"))
+                .map_err(|_| VerifyError::InvalidVerificationKey)?;
+                Ok(())
             }
         }
     }
@@ -316,12 +424,35 @@ impl<T: Config> Verifier for Ultrahonk<T> {
     }
 }
 
-fn valid_log_circuit_size(vk_bytes: &[u8; VK_SIZE_V5_0]) -> Result<u64, VerifyError> {
-    let log_circuit_size =
+/// Whether `proof` is a ZK proof of a version prior to V5_0, whose SmallSubgroupIPA is unsound.
+fn is_deprecated(proof: &VersionedProof) -> bool {
+    matches!(
+        proof,
+        VersionedProof::V0_84(Proof::ZK(_))
+            | VersionedProof::V3_0(Proof::ZK(_))
+            | VersionedProof::Legacy(Proof::ZK(_))
+    )
+}
+
+fn valid_log_circuit_size_v5_0(vk_bytes: &[u8; VK_SIZE_V5_0]) -> Result<u64, VerifyError> {
+    valid_log_circuit_size(
         ultrahonk_no_std_v5_0::key::VerificationKey::<CurveHooksImpl>::extract_log_circuit_size(
             vk_bytes,
         )
-        .map_err(|_| VerifyError::InvalidVerificationKey)?;
+        .map_err(|_| VerifyError::InvalidVerificationKey)?,
+    )
+}
+
+fn valid_log_circuit_size_v3_0(vk_bytes: &[u8; VK_SIZE_V3_0]) -> Result<u64, VerifyError> {
+    valid_log_circuit_size(
+        ultrahonk_no_std_v3_0::key::VerificationKey::<CurveHooksImpl>::extract_log_circuit_size(
+            vk_bytes,
+        )
+        .map_err(|_| VerifyError::InvalidVerificationKey)?,
+    )
+}
+
+fn valid_log_circuit_size(log_circuit_size: u64) -> Result<u64, VerifyError> {
     ensure!(
         log_circuit_size <= MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
         VerifyError::InvalidVerificationKey
@@ -347,6 +478,9 @@ fn compute_weight<T: Config>(
         (ProtocolVersion::V5_0, ProofType::Plain, log_n) => {
             T::WeightInfo::verify_plain_proof_v5_0(log_n as u32)
         }
+        (ProtocolVersion::V3_0, ProofType::Plain, log_n) => {
+            T::WeightInfo::verify_plain_proof_v3_0(log_n as u32)
+        }
         _ => panic!("Invalid value given for log_circuit_size."),
     }
 }
@@ -360,19 +494,28 @@ impl<T: Config, W: WeightInfo> pallet_verifiers::WeightInfo<Ultrahonk<T>> for Ul
         proof: &<Ultrahonk<T> as Verifier>::Proof,
         _pubs: &<Ultrahonk<T> as Verifier>::Pubs,
     ) -> Weight {
-        // The weight is parameterized by log_circuit_size: we conservatively charge the maximum
-        // (worst case = 25) and refund after verification. Deprecated versions are rejected
-        // before any verification, but are charged the same so that they are no cheaper to spam.
-        let inner = match proof {
-            VersionedProof::V5_0(inner)
-            | VersionedProof::V0_84(inner)
-            | VersionedProof::V3_0(inner)
-            | VersionedProof::Legacy(inner) => inner,
-        };
-        (match inner {
-            Proof::ZK(_) => T::WeightInfo::verify_zk_proof_v5_0,
-            Proof::Plain(_) => T::WeightInfo::verify_plain_proof_v5_0,
-        })(MAX_BENCHMARKED_LOG_CIRCUIT_SIZE as u32)
+        // For V5_0 and V3_0 the weight is parameterized by log_circuit_size: we conservatively
+        // charge the maximum (worst case = 25) and refund after verification. Deprecated ZK
+        // proofs are rejected before any verification, but are charged as much as a V5_0 ZK
+        // proof so that they are no cheaper to spam.
+        const MAX_LOG_N: u32 = MAX_BENCHMARKED_LOG_CIRCUIT_SIZE as u32;
+        match proof {
+            VersionedProof::V5_0(Proof::ZK(_))
+            | VersionedProof::V3_0(Proof::ZK(_))
+            | VersionedProof::V0_84(Proof::ZK(_))
+            | VersionedProof::Legacy(Proof::ZK(_)) => {
+                T::WeightInfo::verify_zk_proof_v5_0(MAX_LOG_N)
+            }
+            VersionedProof::V5_0(Proof::Plain(_)) => {
+                T::WeightInfo::verify_plain_proof_v5_0(MAX_LOG_N)
+            }
+            VersionedProof::V3_0(Proof::Plain(_)) => {
+                T::WeightInfo::verify_plain_proof_v3_0(MAX_LOG_N)
+            }
+            VersionedProof::V0_84(Proof::Plain(_)) | VersionedProof::Legacy(Proof::Plain(_)) => {
+                T::WeightInfo::verify_plain_proof_v0_84()
+            }
+        }
     }
 
     fn register_vk(_vk: &<Ultrahonk<T> as Verifier>::Vk) -> Weight {

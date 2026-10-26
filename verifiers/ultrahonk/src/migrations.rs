@@ -245,7 +245,7 @@ mod tests {
     fn test_vk_bytes() -> [u8; crate::VK_SIZE_V0_84] {
         use crate::resources::{get_parameterized_test_data, TestParams};
         use crate::ProofType;
-        let test_data = get_parameterized_test_data(TestParams::new_deprecated(
+        let test_data = get_parameterized_test_data(TestParams::new_single(
             ProofType::Plain,
             crate::ProtocolVersion::Legacy,
         ))
