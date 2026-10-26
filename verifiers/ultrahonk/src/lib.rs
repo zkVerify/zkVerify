@@ -301,6 +301,12 @@ impl<T: Config> Verifier for Ultrahonk<T> {
             log::debug!("Deprecated proof version");
             return Err(VerifyError::UnsupportedVersion);
         }
+        // The V5_0 verifier rejects non-canonical public inputs by itself, while the older ones
+        // reduce them: accepting `v + r` in place of `v` would attest the same statement under
+        // a different statement hash.
+        if !matches!(proof, VersionedProof::V5_0(_)) {
+            ensure!(pubs.iter().all(is_canonical), VerifyError::InvalidInput);
+        }
 
         match (proof, vk) {
             (VersionedProof::V5_0(inner_proof), VersionedVk::V5_0(vk_bytes)) => {
@@ -422,6 +428,16 @@ impl<T: Config> Verifier for Ultrahonk<T> {
             )),
         }
     }
+}
+
+/// The BN254 scalar field modulus, big-endian.
+const FR_MODULUS: [u8; PUB_SIZE] =
+    hex_literal::hex!("30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001");
+
+/// Whether the big-endian `public_input` is the canonical encoding of a field element, i.e. it
+/// is smaller than the field modulus.
+fn is_canonical(public_input: &[u8; PUB_SIZE]) -> bool {
+    *public_input < FR_MODULUS
 }
 
 /// Whether `proof` is a ZK proof of a version prior to V5_0, whose SmallSubgroupIPA is unsound.
