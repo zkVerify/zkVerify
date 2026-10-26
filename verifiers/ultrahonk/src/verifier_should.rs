@@ -57,6 +57,18 @@ fn load_test_data(proof_type: ProofType, version: ProtocolVersion) -> TestData {
     get_parameterized_test_data(test_params).expect("test data should be present")
 }
 
+/// Turns `public_input` into the non-canonical encoding `public_input + r` of the same field
+/// element.
+fn add_modulus(public_input: &mut [u8; PUB_SIZE]) {
+    let mut carry = 0u16;
+    for (byte, modulus_byte) in public_input.iter_mut().zip(FR_MODULUS).rev() {
+        let sum = *byte as u16 + modulus_byte as u16 + carry;
+        *byte = sum as u8;
+        carry = sum >> 8;
+    }
+    assert_eq!(carry, 0);
+}
+
 fn mutate_proof_bytes_with_type(
     versioned_proof: VersionedProof,
     new_type: Option<ProofType>,
@@ -402,6 +414,25 @@ mod pre_v5_0_plain {
         use super::*;
 
         #[rstest]
+        fn proof_with_a_non_canonical_public_input(
+            #[values(ProtocolVersion::V0_84, ProtocolVersion::V3_0, ProtocolVersion::Legacy)]
+            version: ProtocolVersion,
+        ) {
+            let TestData {
+                versioned_vk,
+                versioned_proof,
+                mut pubs,
+            } = load_test_data(ProofType::Plain, version);
+
+            add_modulus(&mut pubs[0]);
+
+            assert_eq!(
+                Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &versioned_proof, &pubs),
+                Err(VerifyError::InvalidInput)
+            );
+        }
+
+        #[rstest]
         fn proof_with_one_invalid_public_input(
             #[values(ProtocolVersion::V0_84, ProtocolVersion::V3_0, ProtocolVersion::Legacy)]
             version: ProtocolVersion,
@@ -649,21 +680,13 @@ mod reject {
     fn proof_with_a_non_canonical_public_input(
         #[values(ProofType::ZK, ProofType::Plain)] proof_type: ProofType,
     ) {
-        const MODULUS: [u8; 32] =
-            hex!("30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001");
         let TestData {
             versioned_vk,
             versioned_proof,
             mut pubs,
         } = load_test_data(proof_type, ProtocolVersion::V5_0);
 
-        let mut carry = 0u16;
-        for i in (0..PUB_SIZE).rev() {
-            let sum = pubs[0][i] as u16 + MODULUS[i] as u16 + carry;
-            pubs[0][i] = sum as u8;
-            carry = sum >> 8;
-        }
-        assert_eq!(carry, 0);
+        add_modulus(&mut pubs[0]);
 
         assert_eq!(
             Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &versioned_proof, &pubs),
