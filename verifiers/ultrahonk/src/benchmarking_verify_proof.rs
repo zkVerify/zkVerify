@@ -16,7 +16,7 @@
 #![cfg(feature = "runtime-benchmarks")]
 
 use crate::{
-    resources::{get_parameterized_test_data, TestData, TestParams, MAX_FIXTURE_LOG_CIRCUIT_SIZE},
+    resources::{get_parameterized_test_data, TestData, TestParams},
     ProofType, ProtocolVersion, Ultrahonk as Verifier, MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
     MIN_BENCHMARKED_LOG_CIRCUIT_SIZE,
 };
@@ -40,7 +40,7 @@ pub mod benchmarks {
     fn verify_zk_proof_v5_0(
         n: Linear<
             { MIN_BENCHMARKED_LOG_CIRCUIT_SIZE as u32 },
-            { MAX_FIXTURE_LOG_CIRCUIT_SIZE as u32 },
+            { MAX_BENCHMARKED_LOG_CIRCUIT_SIZE as u32 },
         >,
     ) {
         let test_params = TestParams::new(n as u64, ProofType::ZK, ProtocolVersion::V5_0);
@@ -61,7 +61,7 @@ pub mod benchmarks {
     fn verify_plain_proof_v5_0(
         n: Linear<
             { MIN_BENCHMARKED_LOG_CIRCUIT_SIZE as u32 },
-            { MAX_FIXTURE_LOG_CIRCUIT_SIZE as u32 },
+            { MAX_BENCHMARKED_LOG_CIRCUIT_SIZE as u32 },
         >,
     ) {
         let test_params = TestParams::new(n as u64, ProofType::Plain, ProtocolVersion::V5_0);

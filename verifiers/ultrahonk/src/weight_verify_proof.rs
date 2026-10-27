@@ -44,8 +44,9 @@
 // --template
 // /home/dimitris/current_sprint/zkVerify/relay-node/benchmarks/zkv-pallets-weight-template.hbs
 
-// NOTE: the V5_0 numbers below are carried over from the V3_0 benchmarks and must be
-// regenerated on the reference machine before release.
+// NOTE: the V5_0 numbers of the `()` implementation below are carried over from the V3_0
+// benchmarks; the runtime uses its own weights in
+// `runtime/zkverify/src/weights/pallet_ultrahonk_verifier_verify_proof.rs`.
 
 #![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
