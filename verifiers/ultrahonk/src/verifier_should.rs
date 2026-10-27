@@ -15,9 +15,7 @@
 
 #![cfg(test)]
 
-use crate::resources::{
-    get_parameterized_test_data, TestData, TestParams, MAX_FIXTURE_LOG_CIRCUIT_SIZE,
-};
+use crate::resources::{get_parameterized_test_data, TestData, TestParams};
 
 use super::*;
 use hex_literal::hex;
@@ -45,7 +43,7 @@ impl crate::Config for MockRuntime {
 fn load_test_data(proof_type: ProofType, version: ProtocolVersion) -> TestData {
     let test_params = match (&version, proof_type) {
         (ProtocolVersion::V5_0, _) => {
-            TestParams::new(MAX_FIXTURE_LOG_CIRCUIT_SIZE, proof_type, version)
+            TestParams::new(MAX_BENCHMARKED_LOG_CIRCUIT_SIZE, proof_type, version)
         }
         (ProtocolVersion::V3_0, ProofType::Plain) => {
             TestParams::new(MAX_BENCHMARKED_LOG_CIRCUIT_SIZE, proof_type, version)
@@ -55,6 +53,12 @@ fn load_test_data(proof_type: ProofType, version: ProtocolVersion) -> TestData {
         }
     };
     get_parameterized_test_data(test_params).expect("test data should be present")
+}
+
+/// The V5_0 fixture also used by `zombienet-tests/js_scripts/ultrahonk_v5_0_data.js`.
+fn load_zombienet_v5_0_data(proof_type: ProofType) -> TestData {
+    get_parameterized_test_data(TestParams::new(24, proof_type, ProtocolVersion::V5_0))
+        .expect("test data should be present")
 }
 
 /// Turns `public_input` into the non-canonical encoding `public_input + r` of the same field
@@ -131,7 +135,7 @@ fn verify_valid_proof(#[values(ProofType::ZK, ProofType::Plain)] proof_type: Pro
 fn verify_valid_proof_at_every_benchmarked_size(
     #[values(ProofType::ZK, ProofType::Plain)] proof_type: ProofType,
 ) {
-    for log_n in MIN_BENCHMARKED_LOG_CIRCUIT_SIZE..=MAX_FIXTURE_LOG_CIRCUIT_SIZE {
+    for log_n in MIN_BENCHMARKED_LOG_CIRCUIT_SIZE..=MAX_BENCHMARKED_LOG_CIRCUIT_SIZE {
         let TestData {
             versioned_vk,
             versioned_proof,
@@ -167,7 +171,10 @@ fn verify_valid_proof_at_every_benchmarked_size(
     hex!("f28c8c634872785e7c6ae10684b7952f9d4822d065cee182489d5e49c995080d"),
 )]
 fn verify_vk_hash(#[case] version: ProtocolVersion, #[case] expected: [u8; 32]) {
-    let TestData { versioned_vk, .. } = load_test_data(ProofType::Plain, version);
+    let TestData { versioned_vk, .. } = match version {
+        ProtocolVersion::V5_0 => load_zombienet_v5_0_data(ProofType::Plain),
+        _ => load_test_data(ProofType::Plain, version),
+    };
 
     let vk_hash = Ultrahonk::<MockRuntime>::vk_hash(&versioned_vk);
 
@@ -194,7 +201,7 @@ fn v5_0_statement_hash() {
         versioned_vk,
         versioned_proof,
         pubs,
-    } = load_test_data(ProofType::Plain, ProtocolVersion::V5_0);
+    } = load_zombienet_v5_0_data(ProofType::Plain);
 
     let vk_or_hash = pallet_verifiers::VkOrHash::Vk(versioned_vk.into());
     let statement_hash = pallet_verifiers::compute_statement_hash::<Ultrahonk<MockRuntime>>(

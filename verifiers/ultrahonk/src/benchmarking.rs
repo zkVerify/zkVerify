@@ -16,8 +16,8 @@
 #![cfg(feature = "runtime-benchmarks")]
 
 use crate::{
-    resources::{get_parameterized_test_data, TestData, TestParams, MAX_FIXTURE_LOG_CIRCUIT_SIZE},
-    ProofType, ProtocolVersion, Ultrahonk as Verifier,
+    resources::{get_parameterized_test_data, TestData, TestParams},
+    ProofType, ProtocolVersion, Ultrahonk as Verifier, MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
 };
 use frame_benchmarking::v2::*;
 use frame_system::RawOrigin;
@@ -39,7 +39,7 @@ pub mod benchmarks {
     #[benchmark]
     fn get_vk() {
         let test_params = TestParams::new(
-            MAX_FIXTURE_LOG_CIRCUIT_SIZE,
+            MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
             ProofType::ZK,
             ProtocolVersion::V5_0,
         );
@@ -59,7 +59,7 @@ pub mod benchmarks {
     #[benchmark]
     fn validate_vk() {
         let test_params = TestParams::new(
-            MAX_FIXTURE_LOG_CIRCUIT_SIZE,
+            MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
             ProofType::ZK,
             ProtocolVersion::V5_0,
         );
@@ -76,7 +76,7 @@ pub mod benchmarks {
     #[benchmark]
     fn compute_statement_hash() {
         let test_params = TestParams::new(
-            MAX_FIXTURE_LOG_CIRCUIT_SIZE,
+            MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
             ProofType::ZK,
             ProtocolVersion::V5_0,
         );
@@ -99,7 +99,7 @@ pub mod benchmarks {
         // setup code
         let caller = funded_account::<T>();
         let test_params = TestParams::new(
-            MAX_FIXTURE_LOG_CIRCUIT_SIZE,
+            MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
             ProofType::ZK,
             ProtocolVersion::V5_0,
         );
@@ -118,7 +118,7 @@ pub mod benchmarks {
         let caller = funded_account::<T>();
         let hash = sp_core::H256::repeat_byte(2);
         let test_params = TestParams::new(
-            MAX_FIXTURE_LOG_CIRCUIT_SIZE,
+            MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
             ProofType::ZK,
             ProtocolVersion::V5_0,
         );
