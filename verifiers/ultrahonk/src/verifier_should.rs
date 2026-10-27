@@ -564,6 +564,49 @@ mod pre_v5_0_plain {
                 Err(VerifyError::InvalidVerificationKey)
             );
         }
+
+        // Unlike its V5_0 counterpart, the proof keeps the Plain flavor: relabelled as ZK it
+        // would be rejected as deprecated before reaching the verifier.
+        #[rstest]
+        fn invalid_plain_proof(
+            #[values(ProtocolVersion::V0_84, ProtocolVersion::V3_0, ProtocolVersion::Legacy)]
+            version: ProtocolVersion,
+        ) {
+            let TestData {
+                versioned_vk,
+                versioned_proof,
+                pubs,
+            } = load_test_data(ProofType::Plain, version);
+
+            let invalid_proof = mutate_proof_bytes(versioned_proof, |bytes| {
+                let len = bytes.len();
+                bytes[len - 1] ^= 0x01;
+            });
+
+            assert!(matches!(
+                Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &invalid_proof, &pubs),
+                Err(VerifyError::VerifyError) | Err(VerifyError::InvalidProofData)
+            ));
+        }
+
+        #[rstest]
+        fn malformed_proof(
+            #[values(ProtocolVersion::V0_84, ProtocolVersion::V3_0, ProtocolVersion::Legacy)]
+            version: ProtocolVersion,
+        ) {
+            let TestData {
+                versioned_vk,
+                versioned_proof,
+                pubs,
+            } = load_test_data(ProofType::Plain, version);
+
+            let invalid_proof = mutate_proof_bytes(versioned_proof, |bytes| bytes[0] = 0x07);
+
+            assert_eq!(
+                Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &invalid_proof, &pubs),
+                Err(VerifyError::VerifyError)
+            );
+        }
     }
 }
 
