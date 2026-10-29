@@ -150,6 +150,13 @@ fn verify_valid_proof_at_every_benchmarked_size(
     }
 }
 
+/// Sets the log_circuit_size, stored in the first EVM word of the Vk.
+fn set_vk_log_circuit_size(vk: VersionedVk, log_n: u64) -> VersionedVk {
+    mutate_vk_bytes(vk, |bytes| {
+        bytes[24..32].copy_from_slice(&log_n.to_be_bytes())
+    })
+}
+
 // The hashes of the pre-V5_0 versions must not change: they key the stored VKs.
 #[rstest]
 #[case::v5_0(
@@ -565,6 +572,27 @@ mod pre_v5_0_plain {
             );
         }
 
+        #[test]
+        fn v3_0_vk_for_a_circuit_larger_than_benchmarked() {
+            let TestData {
+                versioned_vk,
+                versioned_proof,
+                pubs,
+            } = load_test_data(ProofType::Plain, ProtocolVersion::V3_0);
+
+            let invalid_vk =
+                set_vk_log_circuit_size(versioned_vk, MAX_BENCHMARKED_LOG_CIRCUIT_SIZE + 1);
+
+            assert_eq!(
+                Ultrahonk::<MockRuntime>::validate_vk(&invalid_vk),
+                Err(VerifyError::InvalidVerificationKey)
+            );
+            assert_eq!(
+                Ultrahonk::<MockRuntime>::verify_proof(&invalid_vk, &versioned_proof, &pubs),
+                Err(VerifyError::InvalidVerificationKey)
+            );
+        }
+
         // Unlike its V5_0 counterpart, the proof keeps the Plain flavor: relabelled as ZK it
         // would be rejected as deprecated before reaching the verifier.
         #[rstest]
@@ -871,6 +899,29 @@ mod reject {
         );
         assert_eq!(
             Ultrahonk::<MockRuntime>::validate_vk(&invalid_vk),
+            Err(VerifyError::InvalidVerificationKey)
+        );
+    }
+
+    #[rstest]
+    fn vk_for_a_circuit_larger_than_benchmarked(
+        #[values(ProofType::ZK, ProofType::Plain)] proof_type: ProofType,
+    ) {
+        let TestData {
+            versioned_vk,
+            versioned_proof,
+            pubs,
+        } = load_test_data(proof_type, ProtocolVersion::V5_0);
+
+        let invalid_vk =
+            set_vk_log_circuit_size(versioned_vk, MAX_BENCHMARKED_LOG_CIRCUIT_SIZE + 1);
+
+        assert_eq!(
+            Ultrahonk::<MockRuntime>::validate_vk(&invalid_vk),
+            Err(VerifyError::InvalidVerificationKey)
+        );
+        assert_eq!(
+            Ultrahonk::<MockRuntime>::verify_proof(&invalid_vk, &versioned_proof, &pubs),
             Err(VerifyError::InvalidVerificationKey)
         );
     }
