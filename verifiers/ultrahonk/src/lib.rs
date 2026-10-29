@@ -363,7 +363,8 @@ impl<T: Config> Verifier for Ultrahonk<T> {
                 )
                 .map_err(|e| log::debug!("Invalid Vk: {e:?}"))
                 .map_err(|_| VerifyError::InvalidVerificationKey)?;
-                Ok(())
+                // A Vk for a circuit larger than the benchmarked ones could never verify a proof.
+                valid_log_circuit_size_v5_0(vk_bytes).map(|_| ())
             }
             // Still needed by the Plain proofs of these versions.
             VersionedVk::V3_0(vk_bytes) => {
@@ -372,7 +373,7 @@ impl<T: Config> Verifier for Ultrahonk<T> {
                 )
                 .map_err(|e| log::debug!("Invalid Vk: {e:?}"))
                 .map_err(|_| VerifyError::InvalidVerificationKey)?;
-                Ok(())
+                valid_log_circuit_size_v3_0(vk_bytes).map(|_| ())
             }
             VersionedVk::V0_84(vk_bytes) | VersionedVk::Legacy(vk_bytes) => {
                 let _vk = ultrahonk_no_std_v0_84::key::VerificationKey::<CurveHooksImpl>::try_from(
