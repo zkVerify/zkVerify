@@ -73,13 +73,12 @@ fn add_modulus(public_input: &mut [u8; PUB_SIZE]) {
     assert_eq!(carry, 0);
 }
 
-fn mutate_proof_bytes_with_type(
+fn mutate_proof_bytes(
     versioned_proof: VersionedProof,
-    new_type: Option<ProofType>,
     mutator: impl FnOnce(&mut Vec<u8>),
 ) -> VersionedProof {
     let rebuild = |proof: Proof| {
-        let pt = new_type.unwrap_or(ProofType::from(&proof));
+        let pt = ProofType::from(&proof);
         let mut raw: RawProof = proof.into();
         mutator(&mut raw);
         Proof::new(pt, raw)
@@ -90,13 +89,6 @@ fn mutate_proof_bytes_with_type(
         VersionedProof::Legacy(proof) => VersionedProof::Legacy(rebuild(proof)),
         VersionedProof::V5_0(proof) => VersionedProof::V5_0(rebuild(proof)),
     }
-}
-
-fn mutate_proof_bytes(
-    versioned_proof: VersionedProof,
-    mutator: impl FnOnce(&mut Vec<u8>),
-) -> VersionedProof {
-    mutate_proof_bytes_with_type(versioned_proof, None, mutator)
 }
 
 fn mutate_vk_bytes(versioned_vk: VersionedVk, mutator: impl FnOnce(&mut [u8])) -> VersionedVk {
@@ -593,8 +585,6 @@ mod pre_v5_0_plain {
             );
         }
 
-        // Unlike its V5_0 counterpart, the proof keeps the Plain flavor: relabelled as ZK it
-        // would be rejected as deprecated before reaching the verifier.
         #[rstest]
         fn invalid_plain_proof(
             #[values(ProtocolVersion::V0_84, ProtocolVersion::V3_0, ProtocolVersion::Legacy)]
@@ -810,38 +800,18 @@ mod reject {
         );
     }
 
-    #[test]
-    fn invalid_zk_proof() {
+    #[rstest]
+    fn invalid_proof(#[values(ProofType::ZK, ProofType::Plain)] proof_type: ProofType) {
         let TestData {
             versioned_vk,
             versioned_proof,
             pubs,
-        } = load_test_data(ProofType::ZK, ProtocolVersion::V5_0);
+        } = load_test_data(proof_type, ProtocolVersion::V5_0);
 
         let invalid_proof = mutate_proof_bytes(versioned_proof, |bytes| {
             let len = bytes.len();
-            bytes[len - 1] = 0x00;
+            bytes[len - 1] ^= 0x01;
         });
-
-        assert!(matches!(
-            Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &invalid_proof, &pubs),
-            Err(VerifyError::VerifyError) | Err(VerifyError::InvalidProofData)
-        ));
-    }
-
-    #[test]
-    fn invalid_plain_proof() {
-        let TestData {
-            versioned_vk,
-            versioned_proof,
-            pubs,
-        } = load_test_data(ProofType::Plain, ProtocolVersion::V5_0);
-
-        let invalid_proof =
-            mutate_proof_bytes_with_type(versioned_proof, Some(ProofType::ZK), |bytes| {
-                let len = bytes.len();
-                bytes[len - 1] = 0x00;
-            });
 
         assert!(matches!(
             Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &invalid_proof, &pubs),
