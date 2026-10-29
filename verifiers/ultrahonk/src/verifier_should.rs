@@ -142,6 +142,37 @@ fn verify_valid_proof_at_every_benchmarked_size(
     }
 }
 
+#[rstest]
+fn refund_proof_weight_by_circuit_size(
+    #[values(ProofType::ZK, ProofType::Plain)] proof_type: ProofType,
+) {
+    let TestData {
+        versioned_vk,
+        versioned_proof,
+        pubs,
+    } = get_parameterized_test_data(TestParams::new(
+        MIN_BENCHMARKED_LOG_CIRCUIT_SIZE,
+        proof_type,
+        ProtocolVersion::V5_0,
+    ))
+    .expect("test data should be present");
+    let log_n = MIN_BENCHMARKED_LOG_CIRCUIT_SIZE as u32;
+    let expected = match proof_type {
+        ProofType::ZK => <() as WeightInfoVerifyProof>::verify_zk_proof_v5_0(log_n),
+        ProofType::Plain => <() as WeightInfoVerifyProof>::verify_plain_proof_v5_0(log_n),
+    };
+
+    assert_eq!(
+        Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &versioned_proof, &pubs),
+        Ok(Some(expected))
+    );
+    let charged = <W as pallet_verifiers::WeightInfo<Ultrahonk<MockRuntime>>>::verify_proof(
+        &versioned_proof,
+        &pubs,
+    );
+    assert!(expected.ref_time() < charged.ref_time());
+}
+
 /// Sets the log_circuit_size, stored in the first EVM word of the Vk.
 fn set_vk_log_circuit_size(vk: VersionedVk, log_n: u64) -> VersionedVk {
     mutate_vk_bytes(vk, |bytes| {
