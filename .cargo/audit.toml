@@ -271,6 +271,75 @@ ignore = [
     # only by frame-benchmarking-cli with the `native` feature). `cargo tree -i ruzstd` /
     # `-i smoldot` / `-i subxt-lightclient` all report "nothing to print" (even with --target all
     # --edges all). Fix is only in 0.9.1, which smoldot 0.19.4 cannot use.
+    "RUSTSEC-2026-0387", # crypto-bigint v0.5.5 — timing variability in "constant-time" operations.
+    # https://rustsec.org/advisories/RUSTSEC-2026-0387 ->
+    # https://github.com/RustCrypto/crypto-bigint/pull/1365
+    # Secret-dependent branches in sub/CTZ/div_rem/Montgomery mul/invert: a timing side channel
+    # that only matters when those operations run on SECRET integers. Comes only from
+    # elliptic-curve v0.13.8 (k256 0.13.4, p256 0.13.2, p384 0.13.1, p521 0.13.3). Fix is only in
+    # 0.7.6 (no patched 0.5.x), which needs elliptic-curve 0.14 and the 0.14 curve crates; the
+    # consumers (sp-core/frame-support from polkadot-sdk stable2512, tee-verifier/x509-verify)
+    # require 0.13. No consumer handles secret keys with these crates:
+    # - sp-core v39.0.0 uses k256 for ECDSA only under `not(feature = "std")` (src/ecdsa.rs:28-42),
+    #   i.e. inside the runtime Wasm, which holds no keys (signing goes through keystore host
+    #   functions). The node (std) signs with the `secp256k1` crate (libsecp256k1), not k256.
+    # - frame-support v45.1.0 uses k256 only in `ECDSAExt::to_eth_address` (public key decoding).
+    # - subxt-signer v0.43.0 uses bip32/k256 only in its `eth` module; its only consumer,
+    #   frame-benchmarking-cli v53.0.0, uses just `sr25519::dev::alice()` (remark_builder.rs:110).
+    # - tee-verifier v0.2.0 and x509-verify v0.4.8 use p256/p384/p521 only through `VerifyingKey`
+    #   to check attestation quote and certificate signatures, all over public data. Unaffected.
+    # zstd v0.12.4 / zstd-safe v6.0.6 and zstd v0.13.3 / zstd-safe v7.2.4 — batch of advisories
+    # from https://github.com/gyscos/zstd-rs/pull/384 (fixed only in zstd >=0.14.3 / zstd-safe
+    # >=8.2.0, no patched 0.12.x/0.13.x or 6.x/7.x release). zstd 0.12.4 comes from
+    # sp-maybe-compressed-blob v11.1.0 (latest release) and polkadot-node-primitives v23.0.0;
+    # zstd 0.13.3 comes from wasmtime-internal-cache v35.0.0 (wasmtime 35.0.0). All pinned by
+    # polkadot-sdk stable2512. (zstd-sys was updated to 2.1.2, which fixes RUSTSEC-2026-0410.)
+    # Every copy is built with `default-features = false` and no extra features: `cargo metadata`
+    # resolves zstd to [] and zstd-safe/zstd-sys to ["std"] only, so the `legacy`, `experimental`,
+    # `zstdmt`, `seekable` and `zdict_builder` features are all OFF. The only callers are
+    # sp-maybe-compressed-blob (fresh `zstd::Encoder::new` / `zstd::Decoder::new` per blob,
+    # src/lib.rs:68,124) and wasmtime-internal-cache (`zstd::encode_all` / `zstd::decode_all`,
+    # src/lib.rs:267,276, src/worker.rs:329,336); polkadot-node-primitives only goes through
+    # sp_maybe_compressed_blob. Nothing in the workspace uses zstd directly.
+    "RUSTSEC-2026-0391", # zstd v0.13.3 — data leak across streams on a reused context.
+    # https://rustsec.org/advisories/RUSTSEC-2026-0391
+    # Affects only `Encoder/Decoder::with_context`. wasmtime-internal-cache never calls it (it
+    # uses `encode_all`/`decode_all`, which create a new context each time). Unaffected.
+    "RUSTSEC-2026-0403", # zstd-safe v6.0.6/v7.2.4 — uninit memory on failed legacy-frame decode.
+    # https://rustsec.org/advisories/RUSTSEC-2026-0403
+    # Needs legacy (zstd v0.4-v0.7) frame support, enabled only by the `legacy` feature: zstd-sys
+    # is built with ZSTD_LEGACY_SUPPORT=OFF, so legacy frames are rejected. Also only reachable via
+    # `zstd::stream::write::Decoder`, which no caller uses. Unaffected.
+    "RUSTSEC-2026-0398", # zstd-safe v7.2.4 — `Seekable::decompress` Vec length beyond capacity.
+    "RUSTSEC-2026-0396", # zstd-safe v7.2.4 — `Seekable` reads a NULL/OOB seek table (unsound).
+    "RUSTSEC-2026-0405", # zstd-safe v7.2.4 — OOB read in `SeekableCStream::compress_stream` (unsound).
+    # https://rustsec.org/advisories/RUSTSEC-2026-0398 / -0396 / -0405
+    # The `zstd_safe::seekable` module is behind the `seekable` feature, which is not enabled:
+    # the affected code is not compiled. Unaffected.
+    "RUSTSEC-2026-0395", # zstd-safe v6.0.6/v7.2.4 — UAF with `CParameter::StableInBuffer` (unsound).
+    "RUSTSEC-2026-0399", # zstd-safe v6.0.6/v7.2.4 — UAF via `init_using_cdict/ddict` (unsound).
+    "RUSTSEC-2026-0402", # zstd-safe v6.0.6/v7.2.4 — heap overflow in `CCtx::try_clone` (unsound).
+    "RUSTSEC-2026-0404", # zstd-safe v6.0.6/v7.2.4 — double free in `DCtx::try_clone` (unsound).
+    # https://rustsec.org/advisories/RUSTSEC-2026-0395 / -0399 / -0402 / -0404
+    # All these APIs are behind the `experimental` feature, which is not enabled: the affected code
+    # is not compiled. Unaffected.
+    "RUSTSEC-2026-0401", # zstd-safe v6.0.6/v7.2.4 — OOB read in `train_from_buffer` (unsound).
+    # https://rustsec.org/advisories/RUSTSEC-2026-0401
+    # `train_from_buffer` is behind the `zdict_builder` feature, which is not enabled. Unaffected.
+    "RUSTSEC-2026-0406", # zstd-safe v6.0.6/v7.2.4 — UAF changing a multithreaded context (unsound).
+    # https://rustsec.org/advisories/RUSTSEC-2026-0406
+    # Requires an unfinished multithreaded frame (`CParameter::NbWorkers` > 0). zstd-sys is built
+    # without the `zstdmt` feature (no ZSTD_MULTITHREAD), so the C library has no worker threads,
+    # and no caller sets `NbWorkers`. Unaffected.
+    "RUSTSEC-2026-0397", # zstd-safe v6.0.6/v7.2.4 — `OutBuffer::around_pos` exposes uninit memory (unsound).
+    # https://rustsec.org/advisories/RUSTSEC-2026-0397
+    # `around_pos` is a public constructor that neither zstd 0.12.4/0.13.3 nor zstd-safe itself
+    # calls, and none of the callers above use zstd-safe directly. Unaffected.
+    "RUSTSEC-2026-0400", # zstd-safe v6.0.6/v7.2.4 — UAF of a dictionary after a one-shot call (unsound).
+    # https://rustsec.org/advisories/RUSTSEC-2026-0400
+    # Requires the same context to be used for both streaming and one-shot calls. In the zstd
+    # crate, the one-shot `bulk::Decompressor` owns its own `DCtx` that never streams, and the
+    # streaming Encoder/Decoder own separate contexts; callers do not use dictionaries. Unaffected.
 ]
 informational_warnings = ["unmaintained", "yanked"]
 
