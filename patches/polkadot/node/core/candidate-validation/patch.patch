@@ -1,0 +1,196 @@
+diff -ruN '--exclude=*.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' '--exclude=Cargo.lock' '--exclude=Cargo.toml.orig' '--exclude=.cargo-ok' '--exclude=.cargo_vcs_info.json' /home/daniele/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polkadot-node-core-candidate-validation-28.0.0/Cargo.toml candidate-validation/Cargo.toml
+--- /home/daniele/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polkadot-node-core-candidate-validation-28.0.0/Cargo.toml	2006-07-24 03:21:28.000000000 +0200
++++ candidate-validation/Cargo.toml	2026-11-02 16:08:00.881820910 +0100
+@@ -96,8 +96,25 @@
+ version = "0.3.31"
+ features = ["thread-pool"]
+ 
++[dev-dependencies.polkadot-node-subsystem-test-helpers]
++path = "../../../../../relay-node/test/subsystem-helpers"
++package = "node-subsystem-test-helpers"
++
++[dev-dependencies.polkadot-primitives-test-helpers]
++version = "0.2.0"
++
+ [dev-dependencies.rstest]
+-version = "0.18.2"
++workspace = true
++
++[dev-dependencies.sp-core]
++workspace = true
++features = ["std"]
++
++[dev-dependencies.sp-keyring]
++workspace = true
++
++[dev-dependencies.sp-maybe-compressed-blob]
++workspace = true
+ 
+ [target.'cfg(not(any(target_os = "android", target_os = "unknown")))'.dependencies.polkadot-node-core-pvf]
+ version = "28.0.0"
+diff -ruN '--exclude=*.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' '--exclude=Cargo.lock' '--exclude=Cargo.toml.orig' '--exclude=.cargo-ok' '--exclude=.cargo_vcs_info.json' /home/daniele/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polkadot-node-core-candidate-validation-28.0.0/src/lib.rs candidate-validation/src/lib.rs
+--- /home/daniele/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polkadot-node-core-candidate-validation-28.0.0/src/lib.rs	2006-07-24 03:21:28.000000000 +0200
++++ candidate-validation/src/lib.rs	2026-11-02 16:11:36.903342734 +0100
+@@ -882,6 +882,29 @@
+ 		(_, _) => {},
+ 	};
+ 
++	// zkVerify patch -- backport of polkadot-sdk PR 13637 "Check the validation data".
++	//
++	// Ensure the supplied `PersistedValidationData` matches the hash committed in the
++	// candidate descriptor.
++	//
++	// Upstream reports a dedicated `InvalidCandidate::PersistedValidationDataMismatch`.
++	// That variant lives in `polkadot-node-primitives`, which we do not vendor, so we
++	// report `BadParent` instead: approval-voting and the dispute coordinator treat
++	// every `ValidationResult::Invalid` identically, so only the log label differs.
++	if persisted_validation_data.hash() !=
++		candidate_receipt.descriptor.persisted_validation_data_hash()
++	{
++		gum::warn!(
++			target: LOG_TARGET,
++			?para_id,
++			?candidate_hash,
++			expected = ?candidate_receipt.descriptor.persisted_validation_data_hash(),
++			actual = ?persisted_validation_data.hash(),
++			"Invalid candidate (persisted validation data mismatch)"
++		);
++		return Ok(ValidationResult::Invalid(InvalidCandidate::BadParent))
++	}
++
+ 	if let Err(e) = perform_basic_checks(
+ 		&candidate_receipt.descriptor,
+ 		persisted_validation_data.max_pov_size,
+diff -ruN '--exclude=*.patch' '--exclude=PATCH.md' '--exclude=rustfmt.toml' '--exclude=Cargo.lock' '--exclude=Cargo.toml.orig' '--exclude=.cargo-ok' '--exclude=.cargo_vcs_info.json' /home/daniele/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polkadot-node-core-candidate-validation-28.0.0/src/tests.rs candidate-validation/src/tests.rs
+--- /home/daniele/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polkadot-node-core-candidate-validation-28.0.0/src/tests.rs	2006-07-24 03:21:28.000000000 +0200
++++ candidate-validation/src/tests.rs	2026-11-02 16:11:24.952527192 +0100
+@@ -485,7 +485,7 @@
+ 			dummy_hash(),
+ 			CoreIndex(1),
+ 			1,
+-			dummy_hash(),
++			validation_data.hash(),
+ 			pov.hash(),
+ 			validation_code.hash(),
+ 			head_data.hash(),
+@@ -590,7 +590,7 @@
+ 		dummy_hash(),
+ 		CoreIndex(1),
+ 		100,
+-		dummy_hash(),
++		validation_data.hash(),
+ 		pov.hash(),
+ 		validation_code.hash(),
+ 		head_data.hash(),
+@@ -745,7 +745,7 @@
+ 	let descriptor_v1 = make_valid_candidate_descriptor(
+ 		ParaId::from(1_u32),
+ 		dummy_hash(),
+-		dummy_hash(),
++		validation_data.hash(),
+ 		pov.hash(),
+ 		validation_code.hash(),
+ 		validation_result.head_data.hash(),
+@@ -817,7 +817,7 @@
+ 		dummy_hash(),
+ 		CoreIndex(1),
+ 		1,
+-		dummy_hash(),
++		validation_data.hash(),
+ 		pov.hash(),
+ 		validation_code.hash(),
+ 		head_data.hash(),
+@@ -1230,6 +1230,93 @@
+ 	assert_matches!(v, Ok(ValidationResult::Invalid(InvalidCandidate::Timeout)));
+ }
+ 
++// zkVerify patch -- regression test for the backport of polkadot-sdk PR 13637
++// "Check the validation data".
++//
++// A candidate that would otherwise validate successfully must be rejected whenever the
++// `PersistedValidationData` handed to the subsystem does not hash to the
++// `persisted_validation_data_hash` committed in the candidate descriptor.
++#[test]
++fn candidate_validation_persisted_validation_data_mismatch_is_invalid() {
++	let validation_data = PersistedValidationData { max_pov_size: 1024, ..Default::default() };
++
++	let pov = PoV { block_data: BlockData(vec![1; 32]) };
++	let head_data = HeadData(vec![1, 1, 1]);
++	let validation_code = ValidationCode(vec![2; 16]);
++
++	// The descriptor commits to a different `PersistedValidationData` than the one passed
++	// to `validate_candidate_exhaustive` below.
++	assert_ne!(validation_data.hash(), dummy_hash());
++	let descriptor = make_valid_candidate_descriptor(
++		ParaId::from(1_u32),
++		dummy_hash(),
++		dummy_hash(),
++		pov.hash(),
++		validation_code.hash(),
++		head_data.hash(),
++		dummy_hash(),
++		Sr25519Keyring::Alice,
++	)
++	.into();
++
++	// Everything the pre-existing checks look at is valid.
++	let check = perform_basic_checks(
++		&descriptor,
++		validation_data.max_pov_size,
++		&pov,
++		&validation_code.hash(),
++	);
++	assert!(check.is_ok());
++
++	let validation_result = WasmValidationResult {
++		head_data,
++		new_validation_code: None,
++		upward_messages: Default::default(),
++		horizontal_messages: Default::default(),
++		processed_downward_messages: 0,
++		hrmp_watermark: 0,
++	};
++
++	let commitments = CandidateCommitments {
++		head_data: validation_result.head_data.clone(),
++		upward_messages: validation_result.upward_messages.clone(),
++		horizontal_messages: validation_result.horizontal_messages.clone(),
++		new_validation_code: validation_result.new_validation_code.clone(),
++		processed_downward_messages: validation_result.processed_downward_messages,
++		hrmp_watermark: validation_result.hrmp_watermark,
++	};
++
++	let candidate_receipt = CandidateReceipt { descriptor, commitments_hash: commitments.hash() };
++	let mut cq = BTreeMap::new();
++	let _ = cq.insert(CoreIndex(0), vec![1.into(), 2.into()].into());
++	let _ = cq.insert(CoreIndex(1), vec![1.into(), 1.into()].into());
++
++	// The mismatch is rejected on every execution path, not just backing.
++	for exec_kind in [
++		PvfExecKind::Backing(dummy_hash()),
++		PvfExecKind::BackingSystemParas(dummy_hash()),
++		PvfExecKind::Approval,
++		PvfExecKind::Dispute,
++	] {
++		let v = executor::block_on(validate_candidate_exhaustive(
++			1,
++			MockValidateCandidateBackend::with_hardcoded_result(Ok(validation_result.clone())),
++			validation_data.clone(),
++			validation_code.clone(),
++			candidate_receipt.clone(),
++			Arc::new(pov.clone()),
++			ExecutorParams::default(),
++			exec_kind,
++			&Default::default(),
++			Some(ClaimQueueSnapshot(cq.clone())),
++			VALIDATION_CODE_BOMB_LIMIT,
++		))
++		.unwrap();
++
++		assert_matches!(v, ValidationResult::Invalid(InvalidCandidate::BadParent));
++	}
++}
++
+ #[test]
+ fn candidate_validation_commitment_hash_mismatch_is_invalid() {
+ 	let validation_data = PersistedValidationData { max_pov_size: 1024, ..Default::default() };
