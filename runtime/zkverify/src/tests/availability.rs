@@ -265,10 +265,10 @@ fn pallet_ultrahonk() {
     test().execute_with(|| {
         let dummy_origin = AccountId32::new([0; 32]);
 
-        const VK_SIZE: usize = pallet_ultrahonk_verifier::VK_SIZE_V3_0;
+        const VK_SIZE: usize = pallet_ultrahonk_verifier::VK_SIZE_V5_0;
 
-        let dummy_vk = pallet_ultrahonk_verifier::VersionedVk::V3_0([0; VK_SIZE]);
-        let dummy_proof = pallet_ultrahonk_verifier::VersionedProof::V3_0(
+        let dummy_vk = pallet_ultrahonk_verifier::VersionedVk::V5_0([0; VK_SIZE]);
+        let dummy_proof = pallet_ultrahonk_verifier::VersionedProof::V5_0(
             pallet_ultrahonk_verifier::Proof::new(pallet_ultrahonk_verifier::ProofType::ZK, vec![]),
         );
         let dummy_pubs = Vec::new();

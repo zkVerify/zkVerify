@@ -29,7 +29,7 @@ impl Default for Proof {
 
 impl Default for VersionedProof {
     fn default() -> Self {
-        Self::V3_0(Proof::default())
+        Self::V5_0(Proof::default())
     }
 }
 
@@ -41,69 +41,56 @@ impl crate::Config for MockRuntime {
 }
 
 fn load_test_data(proof_type: ProofType, version: ProtocolVersion) -> TestData {
-    let test_params = match version {
-        ProtocolVersion::V3_0 => {
+    let test_params = match (&version, proof_type) {
+        (ProtocolVersion::V5_0, _) => {
             TestParams::new(MAX_BENCHMARKED_LOG_CIRCUIT_SIZE, proof_type, version)
         }
-        ProtocolVersion::V0_84 => TestParams::new_v0_84(proof_type),
-        ProtocolVersion::Legacy => TestParams::new_legacy(proof_type),
+        (ProtocolVersion::V3_0, ProofType::Plain) => {
+            TestParams::new(MAX_BENCHMARKED_LOG_CIRCUIT_SIZE, proof_type, version)
+        }
+        (ProtocolVersion::V0_84 | ProtocolVersion::V3_0 | ProtocolVersion::Legacy, _) => {
+            TestParams::new_single(proof_type, version)
+        }
     };
     get_parameterized_test_data(test_params).expect("test data should be present")
 }
 
-/// Mutate the raw proof bytes within a VersionedProof, preserving the proof type.
+/// The V5_0 fixture also used by `zombienet-tests/js_scripts/ultrahonk_v5_0_data.js`.
+fn load_zombienet_v5_0_data(proof_type: ProofType) -> TestData {
+    get_parameterized_test_data(TestParams::new(24, proof_type, ProtocolVersion::V5_0))
+        .expect("test data should be present")
+}
+
+/// Turns `public_input` into the non-canonical encoding `public_input + r` of the same field
+/// element.
+fn add_modulus(public_input: &mut [u8; PUB_SIZE]) {
+    let mut carry = 0u16;
+    for (byte, modulus_byte) in public_input.iter_mut().zip(FR_MODULUS).rev() {
+        let sum = *byte as u16 + modulus_byte as u16 + carry;
+        *byte = sum as u8;
+        carry = sum >> 8;
+    }
+    assert_eq!(carry, 0);
+}
+
 fn mutate_proof_bytes(
     versioned_proof: VersionedProof,
     mutator: impl FnOnce(&mut Vec<u8>),
 ) -> VersionedProof {
+    let rebuild = |proof: Proof| {
+        let pt = ProofType::from(&proof);
+        let mut raw: RawProof = proof.into();
+        mutator(&mut raw);
+        Proof::new(pt, raw)
+    };
     match versioned_proof {
-        VersionedProof::V0_84(proof) => {
-            let pt = ProofType::from(&proof);
-            let mut raw: RawProof = proof.into();
-            mutator(&mut raw);
-            VersionedProof::V0_84(Proof::new(pt, raw))
-        }
-        VersionedProof::V3_0(proof) => {
-            let pt = ProofType::from(&proof);
-            let mut raw: RawProof = proof.into();
-            mutator(&mut raw);
-            VersionedProof::V3_0(Proof::new(pt, raw))
-        }
-        VersionedProof::Legacy(proof) => {
-            let pt = ProofType::from(&proof);
-            let mut raw: RawProof = proof.into();
-            mutator(&mut raw);
-            VersionedProof::Legacy(Proof::new(pt, raw))
-        }
+        VersionedProof::V0_84(proof) => VersionedProof::V0_84(rebuild(proof)),
+        VersionedProof::V3_0(proof) => VersionedProof::V3_0(rebuild(proof)),
+        VersionedProof::Legacy(proof) => VersionedProof::Legacy(rebuild(proof)),
+        VersionedProof::V5_0(proof) => VersionedProof::V5_0(rebuild(proof)),
     }
 }
 
-/// Mutate the raw proof bytes and override the proof type.
-fn mutate_proof_bytes_with_type(
-    versioned_proof: VersionedProof,
-    new_type: ProofType,
-    mutator: impl FnOnce(&mut Vec<u8>),
-) -> VersionedProof {
-    match versioned_proof {
-        VersionedProof::V0_84(proof) => {
-            let mut raw: RawProof = proof.into();
-            mutator(&mut raw);
-            VersionedProof::V0_84(Proof::new(new_type, raw))
-        }
-        VersionedProof::V3_0(proof) => {
-            let mut raw: RawProof = proof.into();
-            mutator(&mut raw);
-            VersionedProof::V3_0(Proof::new(new_type, raw))
-        }
-        VersionedProof::Legacy(proof) => {
-            let mut raw: RawProof = proof.into();
-            mutator(&mut raw);
-            VersionedProof::Legacy(Proof::new(new_type, raw))
-        }
-    }
-}
-
-/// Mutate the raw VK bytes within a VersionedVk.
 fn mutate_vk_bytes(versioned_vk: VersionedVk, mutator: impl FnOnce(&mut [u8])) -> VersionedVk {
     match versioned_vk {
         VersionedVk::V0_84(mut vk) => {
@@ -118,25 +105,87 @@ fn mutate_vk_bytes(versioned_vk: VersionedVk, mutator: impl FnOnce(&mut [u8])) -
             mutator(&mut vk);
             VersionedVk::Legacy(vk)
         }
+        VersionedVk::V5_0(mut vk) => {
+            mutator(&mut vk);
+            VersionedVk::V5_0(vk)
+        }
     }
 }
 
 #[rstest]
-fn verify_valid_proof(
-    #[values(ProofType::ZK, ProofType::Plain)] proof_type: ProofType,
-    #[values(ProtocolVersion::V3_0, ProtocolVersion::V0_84, ProtocolVersion::Legacy)]
-    version: ProtocolVersion,
-) {
+fn verify_valid_proof(#[values(ProofType::ZK, ProofType::Plain)] proof_type: ProofType) {
     let TestData {
         versioned_vk,
         versioned_proof,
         pubs,
-    } = load_test_data(proof_type, version);
+    } = load_test_data(proof_type, ProtocolVersion::V5_0);
 
     assert!(Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &versioned_proof, &pubs).is_ok());
 }
 
 #[rstest]
+fn verify_valid_proof_at_every_benchmarked_size(
+    #[values(ProofType::ZK, ProofType::Plain)] proof_type: ProofType,
+) {
+    for log_n in MIN_BENCHMARKED_LOG_CIRCUIT_SIZE..=MAX_BENCHMARKED_LOG_CIRCUIT_SIZE {
+        let TestData {
+            versioned_vk,
+            versioned_proof,
+            pubs,
+        } = get_parameterized_test_data(TestParams::new(log_n, proof_type, ProtocolVersion::V5_0))
+            .expect("test data should be present");
+
+        assert!(
+            Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &versioned_proof, &pubs).is_ok(),
+            "log_n = {log_n}"
+        );
+    }
+}
+
+#[rstest]
+fn refund_proof_weight_by_circuit_size(
+    #[values(ProofType::ZK, ProofType::Plain)] proof_type: ProofType,
+) {
+    let TestData {
+        versioned_vk,
+        versioned_proof,
+        pubs,
+    } = get_parameterized_test_data(TestParams::new(
+        MIN_BENCHMARKED_LOG_CIRCUIT_SIZE,
+        proof_type,
+        ProtocolVersion::V5_0,
+    ))
+    .expect("test data should be present");
+    let log_n = MIN_BENCHMARKED_LOG_CIRCUIT_SIZE as u32;
+    let expected = match proof_type {
+        ProofType::ZK => <() as WeightInfoVerifyProof>::verify_zk_proof_v5_0(log_n),
+        ProofType::Plain => <() as WeightInfoVerifyProof>::verify_plain_proof_v5_0(log_n),
+    };
+
+    assert_eq!(
+        Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &versioned_proof, &pubs),
+        Ok(Some(expected))
+    );
+    let charged = <W as pallet_verifiers::WeightInfo<Ultrahonk<MockRuntime>>>::verify_proof(
+        &versioned_proof,
+        &pubs,
+    );
+    assert!(expected.ref_time() < charged.ref_time());
+}
+
+/// Sets the log_circuit_size, stored in the first EVM word of the Vk.
+fn set_vk_log_circuit_size(vk: VersionedVk, log_n: u64) -> VersionedVk {
+    mutate_vk_bytes(vk, |bytes| {
+        bytes[24..32].copy_from_slice(&log_n.to_be_bytes())
+    })
+}
+
+// The hashes of the pre-V5_0 versions must not change: they key the stored VKs.
+#[rstest]
+#[case::v5_0(
+    ProtocolVersion::V5_0,
+    hex!("e1d59b1d735413be6ca1005f48b0e20b932125b1f03d8335c0ff17362ab65ef6"),
+)]
 #[case::v0_84(
     ProtocolVersion::V0_84,
     hex!("293060325b05b7f7ce08e13d028d791f598b4856e3523e1e3e7c8b7f341805d1"),
@@ -152,19 +201,61 @@ fn verify_valid_proof(
     hex!("f28c8c634872785e7c6ae10684b7952f9d4822d065cee182489d5e49c995080d"),
 )]
 fn verify_vk_hash(#[case] version: ProtocolVersion, #[case] expected: [u8; 32]) {
-    let TestData { versioned_vk, .. } = load_test_data(ProofType::Plain, version);
+    let TestData { versioned_vk, .. } = match version {
+        ProtocolVersion::V5_0 => load_zombienet_v5_0_data(ProofType::Plain),
+        _ => load_test_data(ProofType::Plain, version),
+    };
 
     let vk_hash = Ultrahonk::<MockRuntime>::vk_hash(&versioned_vk);
 
     assert_eq!(vk_hash.as_bytes(), expected);
 }
 
-mod reject {
+#[test]
+fn v5_0_verifier_version_hash() {
+    let TestData {
+        versioned_proof, ..
+    } = load_test_data(ProofType::ZK, ProtocolVersion::V5_0);
+
+    assert_eq!(
+        Ultrahonk::<MockRuntime>::verifier_version_hash(&versioned_proof),
+        H256(sp_io::hashing::sha2_256(b"ultrahonk:v5.0")),
+    );
+}
+
+// The same circuit, vk and public inputs give a different statement hash under V5_0 than
+// under the deprecated versions: consumers pinning statement hashes have to migrate.
+#[test]
+fn v5_0_statement_hash() {
+    let TestData {
+        versioned_vk,
+        versioned_proof,
+        pubs,
+    } = load_zombienet_v5_0_data(ProofType::Plain);
+
+    let vk_or_hash = pallet_verifiers::VkOrHash::Vk(versioned_vk.into());
+    let statement_hash = pallet_verifiers::compute_statement_hash::<Ultrahonk<MockRuntime>>(
+        &vk_or_hash,
+        &versioned_proof,
+        &pubs,
+    );
+
+    // Also used by zombienet-tests/js_scripts/ultrahonk_v5_0_data.js
+    assert_eq!(
+        statement_hash.as_bytes(),
+        &hex!("cfbe9b49a4471bc8f0f7d4ac6b71e9ec043c57e19250f419a4903b18d43da107"),
+    );
+}
+
+type W = UltrahonkWeight<()>;
+
+/// Only the ZK flavor of the versions prior to V5_0 is deprecated.
+mod deprecated_zk {
     use super::*;
 
     #[rstest]
-    fn invalid_public_values(
-        #[values(ProtocolVersion::V3_0, ProtocolVersion::V0_84, ProtocolVersion::Legacy)]
+    fn reject_proofs(
+        #[values(ProtocolVersion::V0_84, ProtocolVersion::V3_0, ProtocolVersion::Legacy)]
         version: ProtocolVersion,
     ) {
         let TestData {
@@ -172,6 +263,488 @@ mod reject {
             versioned_proof,
             pubs,
         } = load_test_data(ProofType::ZK, version);
+
+        assert_eq!(
+            Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &versioned_proof, &pubs),
+            Err(VerifyError::UnsupportedVersion)
+        );
+    }
+
+    #[rstest]
+    fn reject_proofs_with_a_v5_0_vk(
+        #[values(ProtocolVersion::V0_84, ProtocolVersion::V3_0, ProtocolVersion::Legacy)]
+        version: ProtocolVersion,
+    ) {
+        let TestData {
+            versioned_proof: deprecated_proof,
+            ..
+        } = load_test_data(ProofType::ZK, version);
+        let TestData {
+            versioned_vk, pubs, ..
+        } = load_test_data(ProofType::ZK, ProtocolVersion::V5_0);
+
+        assert_eq!(
+            Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &deprecated_proof, &pubs),
+            Err(VerifyError::UnsupportedVersion)
+        );
+    }
+
+    // A V3_0 proof wrapped as V5_0 (an integrator bumping the version tag without regenerating
+    // the proof with bb >= 5.0.0) must not verify either.
+    #[rstest]
+    fn reject_a_v3_0_proof_relabelled_as_v5_0(
+        #[values(ProofType::ZK, ProofType::Plain)] proof_type: ProofType,
+    ) {
+        let TestData {
+            versioned_proof: VersionedProof::V3_0(v3_0_proof),
+            pubs,
+            ..
+        } = load_test_data(proof_type, ProtocolVersion::V3_0)
+        else {
+            unreachable!()
+        };
+        let TestData { versioned_vk, .. } = load_test_data(proof_type, ProtocolVersion::V5_0);
+
+        assert!(Ultrahonk::<MockRuntime>::verify_proof(
+            &versioned_vk,
+            &VersionedProof::V5_0(v3_0_proof),
+            &pubs
+        )
+        .is_err());
+    }
+
+    #[rstest]
+    fn are_charged_as_much_as_v5_0(
+        #[values(ProtocolVersion::V0_84, ProtocolVersion::V3_0, ProtocolVersion::Legacy)]
+        version: ProtocolVersion,
+    ) {
+        let TestData {
+            versioned_proof: deprecated_proof,
+            pubs,
+            ..
+        } = load_test_data(ProofType::ZK, version);
+        let TestData {
+            versioned_proof, ..
+        } = load_test_data(ProofType::ZK, ProtocolVersion::V5_0);
+
+        assert_eq!(
+            <W as pallet_verifiers::WeightInfo<Ultrahonk<MockRuntime>>>::verify_proof(
+                &deprecated_proof,
+                &pubs
+            ),
+            <W as pallet_verifiers::WeightInfo<Ultrahonk<MockRuntime>>>::verify_proof(
+                &versioned_proof,
+                &pubs
+            ),
+        );
+    }
+}
+
+/// The Plain flavor of the versions prior to V5_0 does not use the SmallSubgroupIPA and is still
+/// supported.
+mod pre_v5_0_plain {
+    use super::*;
+
+    #[rstest]
+    fn verify_valid_proof(
+        #[values(ProtocolVersion::V0_84, ProtocolVersion::V3_0, ProtocolVersion::Legacy)]
+        version: ProtocolVersion,
+    ) {
+        let TestData {
+            versioned_vk,
+            versioned_proof,
+            pubs,
+        } = load_test_data(ProofType::Plain, version);
+
+        assert!(
+            Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &versioned_proof, &pubs).is_ok()
+        );
+    }
+
+    #[test]
+    fn verify_valid_v3_0_proof_at_every_benchmarked_size() {
+        for log_n in MIN_BENCHMARKED_LOG_CIRCUIT_SIZE..=MAX_BENCHMARKED_LOG_CIRCUIT_SIZE {
+            let TestData {
+                versioned_vk,
+                versioned_proof,
+                pubs,
+            } = get_parameterized_test_data(TestParams::new(
+                log_n,
+                ProofType::Plain,
+                ProtocolVersion::V3_0,
+            ))
+            .expect("test data should be present");
+
+            assert!(
+                Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &versioned_proof, &pubs)
+                    .is_ok(),
+                "log_n = {log_n}"
+            );
+        }
+    }
+
+    #[test]
+    fn refund_v3_0_proof_weight_by_circuit_size() {
+        let TestData {
+            versioned_vk,
+            versioned_proof,
+            pubs,
+        } = get_parameterized_test_data(TestParams::new(
+            MIN_BENCHMARKED_LOG_CIRCUIT_SIZE,
+            ProofType::Plain,
+            ProtocolVersion::V3_0,
+        ))
+        .expect("test data should be present");
+
+        assert_eq!(
+            Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &versioned_proof, &pubs),
+            Ok(Some(
+                <() as WeightInfoVerifyProof>::verify_plain_proof_v3_0(
+                    MIN_BENCHMARKED_LOG_CIRCUIT_SIZE as u32
+                )
+            ))
+        );
+    }
+
+    #[rstest]
+    #[case::v0_84(
+        ProtocolVersion::V0_84,
+        <() as WeightInfoVerifyProof>::verify_plain_proof_v0_84()
+    )]
+    #[case::legacy(
+        ProtocolVersion::Legacy,
+        <() as WeightInfoVerifyProof>::verify_plain_proof_v0_84()
+    )]
+    #[case::v3_0(
+        ProtocolVersion::V3_0,
+        <() as WeightInfoVerifyProof>::verify_plain_proof_v3_0(
+            MAX_BENCHMARKED_LOG_CIRCUIT_SIZE as u32
+        )
+    )]
+    fn are_charged_their_own_weight(#[case] version: ProtocolVersion, #[case] expected: Weight) {
+        let TestData {
+            versioned_proof,
+            pubs,
+            ..
+        } = load_test_data(ProofType::Plain, version);
+
+        assert_eq!(
+            <W as pallet_verifiers::WeightInfo<Ultrahonk<MockRuntime>>>::verify_proof(
+                &versioned_proof,
+                &pubs
+            ),
+            expected
+        );
+    }
+
+    #[rstest]
+    fn accept_vks(
+        #[values(ProtocolVersion::V0_84, ProtocolVersion::V3_0, ProtocolVersion::Legacy)]
+        version: ProtocolVersion,
+    ) {
+        let TestData { versioned_vk, .. } = load_test_data(ProofType::Plain, version);
+
+        assert_eq!(Ultrahonk::<MockRuntime>::validate_vk(&versioned_vk), Ok(()));
+    }
+
+    mod reject {
+        use super::*;
+
+        #[rstest]
+        fn proof_with_a_non_canonical_public_input(
+            #[values(ProtocolVersion::V0_84, ProtocolVersion::V3_0, ProtocolVersion::Legacy)]
+            version: ProtocolVersion,
+        ) {
+            let TestData {
+                versioned_vk,
+                versioned_proof,
+                mut pubs,
+            } = load_test_data(ProofType::Plain, version);
+
+            add_modulus(&mut pubs[0]);
+
+            assert_eq!(
+                Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &versioned_proof, &pubs),
+                Err(VerifyError::InvalidInput)
+            );
+        }
+
+        #[rstest]
+        fn proof_with_one_invalid_public_input(
+            #[values(ProtocolVersion::V0_84, ProtocolVersion::V3_0, ProtocolVersion::Legacy)]
+            version: ProtocolVersion,
+        ) {
+            let TestData {
+                versioned_vk,
+                versioned_proof,
+                mut pubs,
+            } = load_test_data(ProofType::Plain, version);
+
+            pubs[0][0] += 1;
+
+            assert_eq!(
+                Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &versioned_proof, &pubs),
+                Err(VerifyError::VerifyError)
+            );
+        }
+
+        #[rstest]
+        fn too_many_public_inputs(
+            #[values(ProtocolVersion::V0_84, ProtocolVersion::V3_0, ProtocolVersion::Legacy)]
+            version: ProtocolVersion,
+        ) {
+            let TestData {
+                versioned_vk,
+                versioned_proof,
+                mut pubs,
+            } = load_test_data(ProofType::Plain, version);
+
+            while (pubs.len() as u32) <= <MockRuntime as Config>::MaxPubs::get() {
+                pubs.push([0u8; PUB_SIZE]);
+            }
+
+            assert_eq!(
+                Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &versioned_proof, &pubs),
+                Err(VerifyError::InvalidInput)
+            );
+        }
+
+        #[rstest]
+        fn invalid_number_of_public_inputs(
+            #[values(ProtocolVersion::V0_84, ProtocolVersion::V3_0, ProtocolVersion::Legacy)]
+            version: ProtocolVersion,
+        ) {
+            let TestData {
+                versioned_vk,
+                versioned_proof,
+                mut pubs,
+            } = load_test_data(ProofType::Plain, version);
+
+            if pubs.is_empty() {
+                pubs.push([0u8; PUB_SIZE]);
+            } else {
+                pubs.pop();
+            }
+
+            assert_eq!(
+                Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &versioned_proof, &pubs),
+                Err(VerifyError::InvalidInput)
+            );
+        }
+
+        #[rstest]
+        fn oversized_proof(
+            #[values(ProtocolVersion::V0_84, ProtocolVersion::V3_0, ProtocolVersion::Legacy)]
+            version: ProtocolVersion,
+        ) {
+            let TestData {
+                versioned_vk,
+                versioned_proof,
+                pubs,
+            } = load_test_data(ProofType::Plain, version);
+
+            let invalid_proof = mutate_proof_bytes(versioned_proof, |bytes| bytes.push(0x00));
+
+            assert_eq!(
+                Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &invalid_proof, &pubs),
+                Err(VerifyError::InvalidProofData)
+            );
+        }
+
+        #[rstest]
+        fn undersized_proof(
+            #[values(ProtocolVersion::V0_84, ProtocolVersion::V3_0, ProtocolVersion::Legacy)]
+            version: ProtocolVersion,
+        ) {
+            let TestData {
+                versioned_vk,
+                versioned_proof,
+                pubs,
+            } = load_test_data(ProofType::Plain, version);
+
+            let invalid_proof = mutate_proof_bytes(versioned_proof, |bytes| {
+                bytes.pop();
+            });
+
+            assert_eq!(
+                Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &invalid_proof, &pubs),
+                Err(VerifyError::InvalidProofData)
+            );
+        }
+
+        #[rstest]
+        fn invalid_vk(
+            #[values(ProtocolVersion::V0_84, ProtocolVersion::V3_0, ProtocolVersion::Legacy)]
+            version: ProtocolVersion,
+        ) {
+            let TestData {
+                versioned_vk,
+                versioned_proof,
+                pubs,
+            } = load_test_data(ProofType::Plain, version);
+
+            let invalid_vk = mutate_vk_bytes(versioned_vk, |bytes| bytes[0] = 0x10);
+
+            assert_eq!(
+                Ultrahonk::<MockRuntime>::verify_proof(&invalid_vk, &versioned_proof, &pubs),
+                Err(VerifyError::InvalidVerificationKey)
+            );
+            assert_eq!(
+                Ultrahonk::<MockRuntime>::validate_vk(&invalid_vk),
+                Err(VerifyError::InvalidVerificationKey)
+            );
+        }
+
+        #[test]
+        fn v3_0_vk_for_a_circuit_larger_than_benchmarked() {
+            let TestData {
+                versioned_vk,
+                versioned_proof,
+                pubs,
+            } = load_test_data(ProofType::Plain, ProtocolVersion::V3_0);
+
+            let invalid_vk =
+                set_vk_log_circuit_size(versioned_vk, MAX_BENCHMARKED_LOG_CIRCUIT_SIZE + 1);
+
+            assert_eq!(
+                Ultrahonk::<MockRuntime>::validate_vk(&invalid_vk),
+                Err(VerifyError::InvalidVerificationKey)
+            );
+            assert_eq!(
+                Ultrahonk::<MockRuntime>::verify_proof(&invalid_vk, &versioned_proof, &pubs),
+                Err(VerifyError::InvalidVerificationKey)
+            );
+        }
+
+        #[rstest]
+        fn invalid_plain_proof(
+            #[values(ProtocolVersion::V0_84, ProtocolVersion::V3_0, ProtocolVersion::Legacy)]
+            version: ProtocolVersion,
+        ) {
+            let TestData {
+                versioned_vk,
+                versioned_proof,
+                pubs,
+            } = load_test_data(ProofType::Plain, version);
+
+            let invalid_proof = mutate_proof_bytes(versioned_proof, |bytes| {
+                let len = bytes.len();
+                bytes[len - 1] ^= 0x01;
+            });
+
+            assert!(matches!(
+                Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &invalid_proof, &pubs),
+                Err(VerifyError::VerifyError) | Err(VerifyError::InvalidProofData)
+            ));
+        }
+
+        #[rstest]
+        fn malformed_proof(
+            #[values(ProtocolVersion::V0_84, ProtocolVersion::V3_0, ProtocolVersion::Legacy)]
+            version: ProtocolVersion,
+        ) {
+            let TestData {
+                versioned_vk,
+                versioned_proof,
+                pubs,
+            } = load_test_data(ProofType::Plain, version);
+
+            let invalid_proof = mutate_proof_bytes(versioned_proof, |bytes| bytes[0] = 0x07);
+
+            assert_eq!(
+                Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &invalid_proof, &pubs),
+                Err(VerifyError::VerifyError)
+            );
+        }
+    }
+}
+
+mod version_mismatch {
+    use super::*;
+
+    // E.g. a stored V3_0 vk that was never re-registered as V5_0.
+    #[rstest]
+    fn reject_a_v5_0_proof_with_a_pre_v5_0_vk(
+        #[values(ProofType::ZK, ProofType::Plain)] proof_type: ProofType,
+        #[values(ProtocolVersion::V0_84, ProtocolVersion::V3_0, ProtocolVersion::Legacy)]
+        version: ProtocolVersion,
+    ) {
+        let TestData { versioned_vk, .. } = load_test_data(ProofType::Plain, version);
+        let TestData {
+            versioned_proof,
+            pubs,
+            ..
+        } = load_test_data(proof_type, ProtocolVersion::V5_0);
+
+        assert_eq!(
+            Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &versioned_proof, &pubs),
+            Err(VerifyError::VerifyError)
+        );
+    }
+
+    #[rstest]
+    fn reject_a_pre_v5_0_plain_proof_with_a_v5_0_vk(
+        #[values(ProtocolVersion::V0_84, ProtocolVersion::V3_0, ProtocolVersion::Legacy)]
+        version: ProtocolVersion,
+    ) {
+        let TestData {
+            versioned_proof,
+            pubs,
+            ..
+        } = load_test_data(ProofType::Plain, version);
+        let TestData { versioned_vk, .. } = load_test_data(ProofType::Plain, ProtocolVersion::V5_0);
+
+        assert_eq!(
+            Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &versioned_proof, &pubs),
+            Err(VerifyError::VerifyError)
+        );
+    }
+
+    #[test]
+    fn reject_a_legacy_plain_proof_with_a_v0_84_vk() {
+        let TestData {
+            versioned_vk, pubs, ..
+        } = load_test_data(ProofType::Plain, ProtocolVersion::V0_84);
+        let TestData {
+            versioned_proof: legacy_proof,
+            ..
+        } = load_test_data(ProofType::Plain, ProtocolVersion::Legacy);
+
+        assert_eq!(
+            Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &legacy_proof, &pubs),
+            Err(VerifyError::VerifyError)
+        );
+    }
+
+    #[test]
+    fn reject_a_v0_84_plain_proof_with_a_legacy_vk() {
+        let TestData {
+            versioned_vk: legacy_vk,
+            pubs,
+            ..
+        } = load_test_data(ProofType::Plain, ProtocolVersion::Legacy);
+        let TestData {
+            versioned_proof: v0_84_proof,
+            ..
+        } = load_test_data(ProofType::Plain, ProtocolVersion::V0_84);
+
+        assert_eq!(
+            Ultrahonk::<MockRuntime>::verify_proof(&legacy_vk, &v0_84_proof, &pubs),
+            Err(VerifyError::VerifyError)
+        );
+    }
+}
+
+mod reject {
+    use super::*;
+
+    #[test]
+    fn invalid_public_values() {
+        let TestData {
+            versioned_vk,
+            versioned_proof,
+            pubs,
+        } = load_test_data(ProofType::ZK, ProtocolVersion::V5_0);
 
         let mut invalid_pubs = pubs;
         invalid_pubs[0][0] = 0x10;
@@ -185,14 +758,12 @@ mod reject {
     #[rstest]
     fn proof_with_one_invalid_public_input(
         #[values(ProofType::ZK, ProofType::Plain)] proof_type: ProofType,
-        #[values(ProtocolVersion::V3_0, ProtocolVersion::V0_84, ProtocolVersion::Legacy)]
-        version: ProtocolVersion,
     ) {
         let TestData {
             versioned_vk,
             versioned_proof,
             mut pubs,
-        } = load_test_data(proof_type, version);
+        } = load_test_data(proof_type, ProtocolVersion::V5_0);
 
         pubs[0][0] += 1;
 
@@ -202,17 +773,33 @@ mod reject {
         );
     }
 
+    // `v + r` encodes the same field element as `v`; accepting it would attest a different
+    // statement hash for the same statement.
     #[rstest]
-    fn too_many_public_inputs(
+    fn proof_with_a_non_canonical_public_input(
         #[values(ProofType::ZK, ProofType::Plain)] proof_type: ProofType,
-        #[values(ProtocolVersion::V3_0, ProtocolVersion::V0_84, ProtocolVersion::Legacy)]
-        version: ProtocolVersion,
     ) {
         let TestData {
             versioned_vk,
             versioned_proof,
             mut pubs,
-        } = load_test_data(proof_type, version);
+        } = load_test_data(proof_type, ProtocolVersion::V5_0);
+
+        add_modulus(&mut pubs[0]);
+
+        assert_eq!(
+            Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &versioned_proof, &pubs),
+            Err(VerifyError::InvalidInput)
+        );
+    }
+
+    #[rstest]
+    fn too_many_public_inputs(#[values(ProofType::ZK, ProofType::Plain)] proof_type: ProofType) {
+        let TestData {
+            versioned_vk,
+            versioned_proof,
+            mut pubs,
+        } = load_test_data(proof_type, ProtocolVersion::V5_0);
 
         while (pubs.len() as u32) <= <MockRuntime as Config>::MaxPubs::get() {
             pubs.push([0u8; PUB_SIZE]);
@@ -224,16 +811,13 @@ mod reject {
         );
     }
 
-    #[rstest]
-    fn invalid_number_of_public_inputs(
-        #[values(ProtocolVersion::V3_0, ProtocolVersion::V0_84, ProtocolVersion::Legacy)]
-        version: ProtocolVersion,
-    ) {
+    #[test]
+    fn invalid_number_of_public_inputs() {
         let TestData {
             versioned_vk,
             versioned_proof,
             mut pubs,
-        } = load_test_data(ProofType::Plain, version);
+        } = load_test_data(ProofType::Plain, ProtocolVersion::V5_0);
 
         if pubs.is_empty() {
             pubs.push([0u8; PUB_SIZE]);
@@ -248,19 +832,16 @@ mod reject {
     }
 
     #[rstest]
-    fn invalid_zk_proof(
-        #[values(ProtocolVersion::V3_0, ProtocolVersion::V0_84, ProtocolVersion::Legacy)]
-        version: ProtocolVersion,
-    ) {
+    fn invalid_proof(#[values(ProofType::ZK, ProofType::Plain)] proof_type: ProofType) {
         let TestData {
             versioned_vk,
             versioned_proof,
             pubs,
-        } = load_test_data(ProofType::ZK, version);
+        } = load_test_data(proof_type, ProtocolVersion::V5_0);
 
         let invalid_proof = mutate_proof_bytes(versioned_proof, |bytes| {
             let len = bytes.len();
-            bytes[len - 1] = 0x00;
+            bytes[len - 1] ^= 0x01;
         });
 
         assert!(matches!(
@@ -270,38 +851,12 @@ mod reject {
     }
 
     #[rstest]
-    fn invalid_plain_proof(
-        #[values(ProtocolVersion::V3_0, ProtocolVersion::V0_84, ProtocolVersion::Legacy)]
-        version: ProtocolVersion,
-    ) {
+    fn oversized_proof(#[values(ProofType::ZK, ProofType::Plain)] proof_type: ProofType) {
         let TestData {
             versioned_vk,
             versioned_proof,
             pubs,
-        } = load_test_data(ProofType::Plain, version);
-
-        let invalid_proof = mutate_proof_bytes_with_type(versioned_proof, ProofType::ZK, |bytes| {
-            let len = bytes.len();
-            bytes[len - 1] = 0x00;
-        });
-
-        assert!(matches!(
-            Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &invalid_proof, &pubs),
-            Err(VerifyError::VerifyError) | Err(VerifyError::InvalidProofData)
-        ));
-    }
-
-    #[rstest]
-    fn oversized_proof(
-        #[values(ProofType::ZK, ProofType::Plain)] proof_type: ProofType,
-        #[values(ProtocolVersion::V3_0, ProtocolVersion::V0_84, ProtocolVersion::Legacy)]
-        version: ProtocolVersion,
-    ) {
-        let TestData {
-            versioned_vk,
-            versioned_proof,
-            pubs,
-        } = load_test_data(proof_type, version);
+        } = load_test_data(proof_type, ProtocolVersion::V5_0);
 
         let invalid_proof = mutate_proof_bytes(versioned_proof, |bytes| bytes.push(0x00));
 
@@ -312,16 +867,12 @@ mod reject {
     }
 
     #[rstest]
-    fn undersized_proof(
-        #[values(ProofType::ZK, ProofType::Plain)] proof_type: ProofType,
-        #[values(ProtocolVersion::V3_0, ProtocolVersion::V0_84, ProtocolVersion::Legacy)]
-        version: ProtocolVersion,
-    ) {
+    fn undersized_proof(#[values(ProofType::ZK, ProofType::Plain)] proof_type: ProofType) {
         let TestData {
             versioned_vk,
             versioned_proof,
             pubs,
-        } = load_test_data(proof_type, version);
+        } = load_test_data(proof_type, ProtocolVersion::V5_0);
 
         let invalid_proof = mutate_proof_bytes(versioned_proof, |bytes| {
             bytes.pop();
@@ -333,16 +884,13 @@ mod reject {
         );
     }
 
-    #[rstest]
-    fn invalid_vk(
-        #[values(ProtocolVersion::V3_0, ProtocolVersion::V0_84, ProtocolVersion::Legacy)]
-        version: ProtocolVersion,
-    ) {
+    #[test]
+    fn invalid_vk() {
         let TestData {
             versioned_vk,
             versioned_proof,
             pubs,
-        } = load_test_data(ProofType::ZK, version);
+        } = load_test_data(ProofType::ZK, ProtocolVersion::V5_0);
 
         let invalid_vk = mutate_vk_bytes(versioned_vk, |bytes| bytes[0] = 0x10);
 
@@ -350,75 +898,49 @@ mod reject {
             Ultrahonk::<MockRuntime>::verify_proof(&invalid_vk, &versioned_proof, &pubs),
             Err(VerifyError::InvalidVerificationKey)
         );
-    }
-
-    #[test]
-    fn proof_with_version_not_matching_the_vk_version() {
-        let TestData {
-            versioned_vk, pubs, ..
-        } = load_test_data(ProofType::ZK, ProtocolVersion::V0_84);
-
-        let v3_0_versioned_proof = VersionedProof::V3_0(Proof::default());
-
         assert_eq!(
-            Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &v3_0_versioned_proof, &pubs),
-            Err(VerifyError::VerifyError)
-        );
-    }
-
-    #[test]
-    fn legacy_proof_with_v0_84_vk() {
-        let TestData {
-            versioned_vk, pubs, ..
-        } = load_test_data(ProofType::ZK, ProtocolVersion::V0_84);
-
-        let TestData {
-            versioned_proof: legacy_proof,
-            ..
-        } = load_test_data(ProofType::ZK, ProtocolVersion::Legacy);
-
-        assert_eq!(
-            Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &legacy_proof, &pubs),
-            Err(VerifyError::VerifyError)
-        );
-    }
-
-    #[test]
-    fn v0_84_proof_with_legacy_vk() {
-        let TestData {
-            versioned_vk: legacy_vk,
-            pubs,
-            ..
-        } = load_test_data(ProofType::ZK, ProtocolVersion::Legacy);
-
-        let TestData {
-            versioned_proof: v0_84_proof,
-            ..
-        } = load_test_data(ProofType::ZK, ProtocolVersion::V0_84);
-
-        assert_eq!(
-            Ultrahonk::<MockRuntime>::verify_proof(&legacy_vk, &v0_84_proof, &pubs),
-            Err(VerifyError::VerifyError)
+            Ultrahonk::<MockRuntime>::validate_vk(&invalid_vk),
+            Err(VerifyError::InvalidVerificationKey)
         );
     }
 
     #[rstest]
-    fn malformed_proof(
+    fn vk_for_a_circuit_larger_than_benchmarked(
         #[values(ProofType::ZK, ProofType::Plain)] proof_type: ProofType,
-        #[values(ProtocolVersion::V3_0, ProtocolVersion::V0_84, ProtocolVersion::Legacy)]
-        version: ProtocolVersion,
     ) {
         let TestData {
             versioned_vk,
             versioned_proof,
             pubs,
-        } = load_test_data(proof_type, version);
+        } = load_test_data(proof_type, ProtocolVersion::V5_0);
+
+        let invalid_vk =
+            set_vk_log_circuit_size(versioned_vk, MAX_BENCHMARKED_LOG_CIRCUIT_SIZE + 1);
+
+        assert_eq!(
+            Ultrahonk::<MockRuntime>::validate_vk(&invalid_vk),
+            Err(VerifyError::InvalidVerificationKey)
+        );
+        assert_eq!(
+            Ultrahonk::<MockRuntime>::verify_proof(&invalid_vk, &versioned_proof, &pubs),
+            Err(VerifyError::InvalidVerificationKey)
+        );
+    }
+
+    // The first word of a proof is the low limb of a pairing point, which must be < 2^136.
+    #[rstest]
+    fn malformed_proof(#[values(ProofType::ZK, ProofType::Plain)] proof_type: ProofType) {
+        let TestData {
+            versioned_vk,
+            versioned_proof,
+            pubs,
+        } = load_test_data(proof_type, ProtocolVersion::V5_0);
 
         let invalid_proof = mutate_proof_bytes(versioned_proof, |bytes| bytes[0] = 0x07);
 
         assert_eq!(
             Ultrahonk::<MockRuntime>::verify_proof(&versioned_vk, &invalid_proof, &pubs),
-            Err(VerifyError::VerifyError)
+            Err(VerifyError::InvalidProofData)
         );
     }
 }

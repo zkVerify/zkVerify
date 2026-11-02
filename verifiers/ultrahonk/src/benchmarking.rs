@@ -41,7 +41,7 @@ pub mod benchmarks {
         let test_params = TestParams::new(
             MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
             ProofType::ZK,
-            ProtocolVersion::V3_0,
+            ProtocolVersion::V5_0,
         );
         let TestData { versioned_vk, .. } = get_parameterized_test_data(test_params).unwrap();
         let hash = sp_core::H256::repeat_byte(2);
@@ -61,7 +61,7 @@ pub mod benchmarks {
         let test_params = TestParams::new(
             MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
             ProofType::ZK,
-            ProtocolVersion::V3_0,
+            ProtocolVersion::V5_0,
         );
         let TestData { versioned_vk, .. } = get_parameterized_test_data(test_params).unwrap();
 
@@ -78,7 +78,7 @@ pub mod benchmarks {
         let test_params = TestParams::new(
             MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
             ProofType::ZK,
-            ProtocolVersion::V3_0,
+            ProtocolVersion::V5_0,
         );
         let TestData {
             versioned_vk,
@@ -101,7 +101,7 @@ pub mod benchmarks {
         let test_params = TestParams::new(
             MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
             ProofType::ZK,
-            ProtocolVersion::V3_0,
+            ProtocolVersion::V5_0,
         );
         let TestData { versioned_vk, .. } = get_parameterized_test_data(test_params).unwrap();
 
@@ -120,7 +120,7 @@ pub mod benchmarks {
         let test_params = TestParams::new(
             MAX_BENCHMARKED_LOG_CIRCUIT_SIZE,
             ProofType::ZK,
-            ProtocolVersion::V3_0,
+            ProtocolVersion::V5_0,
         );
         let TestData { versioned_vk, .. } = get_parameterized_test_data(test_params).unwrap();
 

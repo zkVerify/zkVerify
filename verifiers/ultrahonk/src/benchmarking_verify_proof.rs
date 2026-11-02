@@ -37,13 +37,34 @@ pub mod benchmarks {
     benchmarking_utils!(Verifier<T>, crate::Config);
 
     #[benchmark]
-    fn verify_zk_proof_v3_0(
+    fn verify_zk_proof_v5_0(
         n: Linear<
             { MIN_BENCHMARKED_LOG_CIRCUIT_SIZE as u32 },
             { MAX_BENCHMARKED_LOG_CIRCUIT_SIZE as u32 },
         >,
     ) {
-        let test_params = TestParams::new(n as u64, ProofType::ZK, ProtocolVersion::V3_0);
+        let test_params = TestParams::new(n as u64, ProofType::ZK, ProtocolVersion::V5_0);
+        let TestData {
+            versioned_vk,
+            versioned_proof,
+            pubs,
+        } = get_parameterized_test_data(test_params).unwrap();
+        let r;
+        #[block]
+        {
+            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
+        };
+        assert!(r.is_ok());
+    }
+
+    #[benchmark]
+    fn verify_plain_proof_v5_0(
+        n: Linear<
+            { MIN_BENCHMARKED_LOG_CIRCUIT_SIZE as u32 },
+            { MAX_BENCHMARKED_LOG_CIRCUIT_SIZE as u32 },
+        >,
+    ) {
+        let test_params = TestParams::new(n as u64, ProofType::Plain, ProtocolVersion::V5_0);
         let TestData {
             versioned_vk,
             versioned_proof,
@@ -79,24 +100,8 @@ pub mod benchmarks {
     }
 
     #[benchmark]
-    fn verify_zk_proof_v0_84() {
-        let test_params = TestParams::new_v0_84(ProofType::ZK);
-        let TestData {
-            versioned_vk,
-            versioned_proof,
-            pubs,
-        } = get_parameterized_test_data(test_params).unwrap();
-        let r;
-        #[block]
-        {
-            r = do_verify_proof::<T>(&versioned_vk, &versioned_proof, &pubs)
-        };
-        assert!(r.is_ok());
-    }
-
-    #[benchmark]
     fn verify_plain_proof_v0_84() {
-        let test_params = TestParams::new_v0_84(ProofType::Plain);
+        let test_params = TestParams::new_single(ProofType::Plain, ProtocolVersion::V0_84);
         let TestData {
             versioned_vk,
             versioned_proof,
