@@ -246,6 +246,12 @@ ignore = [
     # wasmtime with `default-features = false` and without the `component-model` feature (no
     # wasmtime-component-* crate in Cargo.lock), so components cannot even be loaded. Unaffected.
     # No patched 35.x release exists (fixes are in 36.0.18/48.0.6/49.0.3); pinned by stable2512.
+    "RUSTSEC-2026-0424", # Unchecked memory usage transferring borrowed resources between components.
+    # https://rustsec.org/advisories/RUSTSEC-2026-0424 ->
+    # https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-6fr9-xmw9-5352
+    # Component-model `borrow<T>` resources only. As above, wasmtime is built without the
+    # `component-model` feature (no wasmtime-component-* crate in Cargo.lock). Unaffected.
+    # No patched 35.x release exists (fixes are in 36.0.20/48.0.8/49.0.5/50.0.1); pinned by stable2512.
     "RUSTSEC-2026-0381", # webpki-roots v0.25.4 — bundled roots trust distrusted emSign intermediates.
     # https://rustsec.org/advisories/RUSTSEC-2026-0381 -> https://github.com/rustls/webpki-roots/pull/133
     # Comes from libp2p-websocket v0.44.0 (libp2p v0.54.1, polkadot-sdk via sc-network), which uses
