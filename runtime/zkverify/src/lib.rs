@@ -39,8 +39,8 @@ use sp_core::{crypto::KeyTypeId, Get, OpaqueMetadata, H256};
 use sp_runtime::{
     generic, impl_opaque_keys,
     traits::{
-        AccountIdConversion, BlakeTwo256, Block as BlockT, Bounded, ConvertInto, IdentityLookup,
-        NumberFor, One, OpaqueKeys,
+        AccountIdConversion, BlakeTwo256, Block as BlockT, BlockNumberProvider, Bounded,
+        ConvertInto, IdentityLookup, NumberFor, One, OpaqueKeys, SaturatedConversion,
     },
     transaction_validity::{TransactionSource, TransactionValidity},
     ApplyExtrinsicResult, FixedPointNumber, MultiSignature, MultiSigner, Perquintill,
@@ -75,8 +75,8 @@ use frame_support::{
     traits::{
         fungible::HoldConsideration,
         tokens::{imbalance::ResolveTo, PayFromAccount, UnityAssetBalanceConversion},
-        ConstU32, ConstU64, ConstU8, EqualPrivilegeOnly, KeyOwnerProofSystem, LinearStoragePrice,
-        Time, WithdrawReasons,
+        ConstU32, ConstU64, ConstU8, Contains, EqualPrivilegeOnly, KeyOwnerProofSystem,
+        LinearStoragePrice, Time, WithdrawReasons,
     },
     weights::{constants::WEIGHT_REF_TIME_PER_SECOND, ConstantMultiplier, Weight},
     Blake2_128Concat, Identity as IdentityT, PalletId, StorageHasher,
@@ -215,6 +215,8 @@ impl frame_system::Config for Runtime {
     type MaxConsumers = frame_support::traits::ConstU32<16>;
     type SystemWeightInfo = weights::frame_system::ZKVWeight<Runtime>;
     type ExtensionsWeightInfo = weights::frame_system_extensions::ZKVWeight<Runtime>;
+    /// Filter applied to all the extrinsics dispatched as non-root.
+    type BaseCallFilter = VestingStartIsSlot;
 }
 
 parameter_types! {
@@ -295,6 +297,37 @@ parameter_types! {
         WithdrawReasons::except(WithdrawReasons::TRANSFER | WithdrawReasons::RESERVE);
 }
 
+// Provides a stable height reference even in case of missed blocks
+pub struct SlotNumber();
+impl BlockNumberProvider for SlotNumber {
+    type BlockNumber = BlockNumber;
+
+    fn current_block_number() -> Self::BlockNumber {
+        u64::from(Babe::current_slot()).saturated_into()
+    }
+
+    #[cfg(feature = "runtime-benchmarks")]
+    fn set_block_number(block: Self::BlockNumber) {
+        let slot: u64 = block.into();
+        pallet_babe::CurrentSlot::<Runtime>::put(sp_consensus_babe::Slot::from(slot));
+    }
+}
+
+/// Reject vesting schedules whose start is not a sensible slot number, preventing potential
+/// confusion with block numbers.
+/// `force_vested_transfer` is not checked: it requires Root, which bypasses `BaseCallFilter`.
+pub struct VestingStartIsSlot;
+impl Contains<RuntimeCall> for VestingStartIsSlot {
+    fn contains(call: &RuntimeCall) -> bool {
+        match call {
+            RuntimeCall::Vesting(pallet_vesting::Call::vested_transfer { schedule, .. }) => {
+                u64::from(schedule.starting_block()) >= u64::from(Babe::genesis_slot())
+            }
+            _ => true,
+        }
+    }
+}
+
 impl pallet_vesting::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type Currency = Balances;
@@ -302,7 +335,7 @@ impl pallet_vesting::Config for Runtime {
     type MinVestedTransfer = MinVestedTransfer;
     type WeightInfo = weights::pallet_vesting::ZKVWeight<Runtime>;
     type UnvestedFundsAllowedWithdrawReasons = UnvestedFundsAllowedWithdrawReasons;
-    type BlockNumberProvider = System;
+    type BlockNumberProvider = SlotNumber;
     const MAX_VESTING_SCHEDULES: u32 = 28;
 }
 
