@@ -143,7 +143,8 @@ pallet-ultrahonk-verifier = { path = "verifiers/ultrahonk", default-features = f
 pallet-ultraplonk-verifier = { path = "verifiers/ultraplonk", default-features = false }
 pallet-sp1-verifier = { path = "verifiers/sp1", default-features = false }
 pallet-tee-verifier = { path = "verifiers/tee", default-features = false }
-risc0-verifier = { git = "https://github.com/zkVerify/risc0-verifier.git", tag = "v0.11.0", default-features = false }
+# TODO: switch to the git tag once risc0-verifier v0.12.0 (risc0 v3.1 support) is released
+risc0-verifier = { git = "https://github.com/zkVerify/risc0-verifier.git", branch = "lg/v3.1", default-features = false }
 pallet-plonky2-verifier = { path = "verifiers/plonky2", default-features = false }
 ezkl-no-std = { git = "https://github.com/zkVerify/ezkl_verifier.git", default-features = false, tag = "v0.1.0" }
 ultrahonk-no-std-v0_84 = { git = "https://github.com/zkVerify/ultrahonk_verifier.git", package = "ultrahonk-no-std", default-features = false, tag = "v0.2.1" }

@@ -12270,27 +12270,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "risc0-binfmt"
-version = "3.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1883f0c5d19b865f395209a137dcb29e56dc49951424967b8d0114c129f46e77"
-dependencies = [
- "anyhow",
- "borsh",
- "bytemuck",
- "derive_more 2.1.1",
- "elf",
- "lazy_static",
- "postcard",
- "risc0-zkp 3.0.4",
- "risc0-zkvm-platform 2.2.2",
- "ruint",
- "semver 1.0.27",
- "serde",
- "tracing",
-]
-
-[[package]]
 name = "risc0-circuit-rv32im"
 version = "1.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -12320,24 +12299,6 @@ dependencies = [
  "risc0-binfmt 2.0.3",
  "risc0-core 2.0.0",
  "risc0-zkp 2.0.3",
- "serde",
- "tracing",
-]
-
-[[package]]
-name = "risc0-circuit-rv32im"
-version = "4.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "61676419814a818fdb5e10066b13c5488b3f54aa9668794bd06c99bc91bff1f2"
-dependencies = [
- "anyhow",
- "bit-vec",
- "bytemuck",
- "derive_more 2.1.1",
- "paste",
- "risc0-binfmt 3.0.4",
- "risc0-core 3.0.1",
- "risc0-zkp 3.0.4",
  "serde",
  "tracing",
 ]
@@ -12385,8 +12346,8 @@ dependencies = [
 
 [[package]]
 name = "risc0-verifier"
-version = "0.11.0"
-source = "git+https://github.com/zkVerify/risc0-verifier.git?tag=v0.11.0#246268957161b8936cef1c5b9a2940e042916d3c"
+version = "0.12.0"
+source = "git+https://github.com/zkVerify/risc0-verifier.git?branch=lg/v3.1#b683aefe392c2835936f22b1148dbadbf6be6310"
 dependencies = [
  "anyhow",
  "bytemuck",
@@ -12395,7 +12356,6 @@ dependencies = [
  "risc0-binfmt 1.2.6",
  "risc0-circuit-rv32im 1.2.6",
  "risc0-circuit-rv32im 3.0.1",
- "risc0-circuit-rv32im 4.0.4",
  "risc0-core 1.2.6",
  "risc0-core 2.0.0",
  "risc0-core 3.0.1",
@@ -12718,28 +12678,6 @@ dependencies = [
  "libc",
  "windows-sys 0.52.0",
 ]
-
-[[package]]
-name = "ruint"
-version = "1.20.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f5e99bff0393163bb25029a6af25d3d8d202ba5b5438a74d1bd8789f5c822970"
-dependencies = [
- "borsh",
- "proptest",
- "rand 0.8.5",
- "rand 0.9.4",
- "ruint-macro",
- "serde_core",
- "valuable",
- "zeroize",
-]
-
-[[package]]
-name = "ruint-macro"
-version = "1.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "48fd7bd8a6377e15ad9d42a8ec25371b94ddc67abe7c8b9127bec79bebaaae18"
 
 [[package]]
 name = "rustc-demangle"

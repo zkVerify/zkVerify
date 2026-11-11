@@ -19,53 +19,28 @@ pub mod any_mock {
     pub static PROOF: &[u8] = include_bytes!("resources/v_2_1_poseidon2_16.bin");
 }
 
-pub mod v2_2 {
+pub mod v3_1 {
     pub static VK: sp_core::H256 = sp_core::H256(hex_literal::hex!(
-        "096adc2485db3717d21133bcc66068f1924b172b555be45fa9a3a68d7988d5c4"
+        "5bfbc39295e3a0c0572640ac729b9223942efc130e1768b1eb142abaa843994a"
     ));
-    pub static PUBS_22: &[u8] = &hex_literal::hex!("00003c0000000000");
-    pub static PUBS_16: &[u8] = &hex_literal::hex!("1c40000000000000");
+    pub static PUBS_22: &[u8] = &hex_literal::hex!("27003c0000000000");
+    pub static PUBS_16: &[u8] = &hex_literal::hex!("3f40000000000000");
 
-    pub static PROOF_SUCCINCT: &[u8] = include_bytes!("resources/v_2_2_succinct_22.bin");
+    pub static PROOF_SUCCINCT: &[u8] = include_bytes!("resources/v_3_1_succinct_22.bin");
     pub static PUBS_SUCCINCT: &[u8] = PUBS_22;
 
-    pub static PROOF_POSEIDON2_22: &[u8] = include_bytes!("resources/v_2_2_poseidon2_22.bin");
-    pub static PROOF_POSEIDON2_16: &[u8] = include_bytes!("resources/v_2_2_poseidon2_16.bin");
-}
+    pub static PROOF_SUCCINCT_16: &[u8] = include_bytes!("resources/v_3_1_succinct_16.bin");
+    pub static PUBS_SUCCINCT_16: &[u8] = PUBS_16;
 
-pub mod v2_3 {
-    pub static VK: sp_core::H256 = sp_core::H256(hex_literal::hex!(
-        "23aa8e69b6fe32677982830a2a9e43b2d16163365fcbf8d191a819f3274dec6b"
-    ));
-    pub static PUBS_22: &[u8] = &hex_literal::hex!("19003c0000000000");
-    pub static PUBS_16: &[u8] = &hex_literal::hex!("0f40000000000000");
-
-    pub static PROOF_SUCCINCT: &[u8] = include_bytes!("resources/v_2_3_succinct_22.bin");
-    pub static PUBS_SUCCINCT: &[u8] = PUBS_22;
-
-    pub static PROOF_POSEIDON2_22: &[u8] = include_bytes!("resources/v_2_3_poseidon2_22.bin");
-    pub static PROOF_POSEIDON2_16: &[u8] = include_bytes!("resources/v_2_3_poseidon2_16.bin");
-}
-
-pub mod v3_0 {
-    pub static VK: sp_core::H256 = sp_core::H256(hex_literal::hex!(
-        "7f423b2f1095359fe3305c5328e9f5cc3eba01c9f9559bfbf6a3a59d73cc77ae"
-    ));
-    pub static PUBS_22: &[u8] = &hex_literal::hex!("22003c0000000000");
-    pub static PUBS_16: &[u8] = &hex_literal::hex!("3a40000000000000");
-
-    pub static PROOF_SUCCINCT: &[u8] = include_bytes!("resources/v_3_0_succinct_22.bin");
-    pub static PUBS_SUCCINCT: &[u8] = PUBS_22;
-
-    pub static PROOF_POSEIDON2_22: &[u8] = include_bytes!("resources/v_3_0_poseidon2_22.bin");
-    pub static PROOF_POSEIDON2_16: &[u8] = include_bytes!("resources/v_3_0_poseidon2_16.bin");
+    pub static PROOF_POSEIDON2_22: &[u8] = include_bytes!("resources/v_3_1_poseidon2_22.bin");
+    pub static PROOF_POSEIDON2_16: &[u8] = include_bytes!("resources/v_3_1_poseidon2_16.bin");
 
     pub static VALID_PROOF: &[u8] = PROOF_POSEIDON2_16;
     pub static PUBS: &[u8] = PUBS_16;
 
-    pub static PUBS_COMPOSITE_3_SLOTS: &[u8] = &hex_literal::hex!("3c00200000000000");
+    pub static PUBS_COMPOSITE_3_SLOTS: &[u8] = &hex_literal::hex!("4100200000000000");
     pub static PROOF_COMPOSITE_3_SLOTS: &[u8] =
-        include_bytes!("resources/v_3_0_poseidon2_composite_3_slots.bin");
+        include_bytes!("resources/v_3_1_poseidon2_composite_3_slots.bin");
 
     pub static PROOF_UPPER_BOUND: &[u8] = PROOF_POSEIDON2_22;
     pub static PUBS_UPPER_BOUND: &[u8] = PUBS_22;

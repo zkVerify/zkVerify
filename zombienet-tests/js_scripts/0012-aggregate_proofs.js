@@ -27,8 +27,7 @@ const { init_api, submitProof, receivedEvents, registerDomain, sudoRegisterDomai
 const { PROOF: EZKL_PROOF, PUBS: EZKL_PUBS, VK: EZKL_VK } = require('./ezkl_data.js');
 const { PROOF: FFLONK_PROOF, PUBS: FFLONK_PUBS, VK: FFLONK_VK } = require('./fflonk_data.js');
 const { PROOF: GROTH16_PROOF, PUBS: GROTH16_PUBS, VK: GROTH16_VK } = require('./groth16_data.js');
-const { PROOF: RISC0_V2_2_PROOF, PUBS: RISC0_V2_2_PUBS, VK: RISC0_V2_2_VK } = require('./risc0_v2_2_data.js');
-const { PROOF: RISC0_V3_0_PROOF, PUBS: RISC0_V3_0_PUBS, VK: RISC0_V3_0_VK } = require('./risc0_v3_0_data.js');
+const { PROOF: RISC0_V3_1_PROOF, PUBS: RISC0_V3_1_PUBS, VK: RISC0_V3_1_VK } = require('./risc0_v3_1_data.js');
 const { PLAIN_PROOF: ULTRAHONK_V0_84_PLAIN_PROOF, PUBS: ULTRAHONK_V0_84_PUBS, VK: ULTRAHONK_V0_84_VK } = require('./ultrahonk_v0_84_data.js');
 const { PLAIN_PROOF: ULTRAHONK_V3_0_PLAIN_PROOF, PUBS: ULTRAHONK_V3_0_PUBS, VK: ULTRAHONK_V3_0_VK } = require('./ultrahonk_v3_0_data.js');
 const { PLAIN_PROOF: ULTRAHONK_LEGACY_PLAIN_PROOF, PUBS: ULTRAHONK_LEGACY_PUBS, VK: ULTRAHONK_LEGACY_VK } = require('./ultrahonk_legacy_data.js');
@@ -62,14 +61,9 @@ async function run(nodeName, networkInfo, _args) {
             args: [{ 'Vk': FFLONK_VK }, FFLONK_PROOF, FFLONK_PUBS],
         },
         {
-            name: "Risc0.V.2.2",
+            name: "Risc0.V.3.1",
             pallet: api.tx.settlementRisc0Pallet,
-            args: [{ 'Vk': RISC0_V2_2_VK }, RISC0_V2_2_PROOF, RISC0_V2_2_PUBS],
-        },
-        {
-            name: "Risc0.V.3.0",
-            pallet: api.tx.settlementRisc0Pallet,
-            args: [{ 'Vk': RISC0_V3_0_VK }, RISC0_V3_0_PROOF, RISC0_V3_0_PUBS],
+            args: [{ 'Vk': RISC0_V3_1_VK }, RISC0_V3_1_PROOF, RISC0_V3_1_PUBS],
         },
         {
             name: "Groth16",
