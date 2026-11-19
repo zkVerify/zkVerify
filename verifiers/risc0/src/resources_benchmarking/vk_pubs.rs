@@ -14,19 +14,19 @@
 // limitations under the License.
 
 pub static VK: sp_core::H256 = sp_core::H256(hex_literal::hex!(
-    "7f423b2f1095359fe3305c5328e9f5cc3eba01c9f9559bfbf6a3a59d73cc77ae"
+    "5bfbc39295e3a0c0572640ac729b9223942efc130e1768b1eb142abaa843994a"
 ));
 
-pub static PUBS_16: &[u8] = &hex_literal::hex!("3a40000000000000");
+pub static PUBS_16: &[u8] = &hex_literal::hex!("1f30000000000000");
 
-pub static PUBS_17: &[u8] = &hex_literal::hex!("0c00010000000000");
+pub static PUBS_17: &[u8] = &hex_literal::hex!("1100010000000000");
 
-pub static PUBS_18: &[u8] = &hex_literal::hex!("0800020000000000");
+pub static PUBS_18: &[u8] = &hex_literal::hex!("0d00020000000000");
 
-pub static PUBS_19: &[u8] = &hex_literal::hex!("0000040000000000");
+pub static PUBS_19: &[u8] = &hex_literal::hex!("0500040000000000");
 
-pub static PUBS_20: &[u8] = &hex_literal::hex!("36000c0000000000");
+pub static PUBS_20: &[u8] = &hex_literal::hex!("3b000c0000000000");
 
-pub static PUBS_21: &[u8] = &hex_literal::hex!("4c001c0000000000");
+pub static PUBS_21: &[u8] = &hex_literal::hex!("51001c0000000000");
 
-pub static PUBS_SUCCINCT: &[u8] = &hex_literal::hex!("22003c0000000000");
+pub static PUBS_SUCCINCT: &[u8] = &hex_literal::hex!("27003c0000000000");
